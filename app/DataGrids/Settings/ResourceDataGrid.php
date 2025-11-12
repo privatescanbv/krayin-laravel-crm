@@ -26,18 +26,35 @@ class ResourceDataGrid extends DataGrid
                 'resources.name',
                 'resources.clinic_id',
                 'resources.is_active',
+                'resource_types.id as resource_type_id',
                 'resource_types.name as resource_type_name',
                 'clinics.name as clinic_name'
             );
 
         $this->addFilter('id', 'resources.id');
-        $this->addFilter('clinic_id', 'resources.clinic_id');
         $this->addFilter('is_active', 'resources.is_active');
+        // Note: resource_type_name and clinic_id filters are handled specially below
 
         // Default filter: only active resources unless user provides a filter
         $requestedFilters = request()->input('filters', []);
         if (! array_key_exists('is_active', $requestedFilters)) {
             $queryBuilder->where('resources.is_active', 1);
+        }
+
+        // Apply entity selector filter for resource_type_name
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'resource_type_name', 'resource_types.id');
+
+        // Apply entity selector filter for clinic_id
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'clinic_id', 'clinics.id');
+
+        // Update request with cleaned filters
+        $originalFilters = request()->input('filters');
+        if (! empty($requestedFilters)) {
+            request()->merge(['filters' => $requestedFilters]);
+        } elseif ($originalFilters !== null) {
+            // If filters was present but is now empty, remove it entirely to avoid validation issues
+            request()->request->remove('filters');
+            request()->query->remove('filters');
         }
 
         return $queryBuilder;
@@ -68,11 +85,16 @@ class ResourceDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'resource_type_name',
-            'type'       => 'string',
-            'label'      => trans('admin::app.settings.resources.index.datagrid.resource_type'),
-            'searchable' => true,
-            'filterable' => true,
+            'index'              => 'resource_type_name',
+            'type'               => 'string',
+            'label'              => trans('admin::app.settings.resources.index.datagrid.resource_type'),
+            'searchable'         => true,
+            'filterable'         => true,
+            'filterable_type'    => 'entity_selector',
+            'filterable_options' => [
+                'search_route' => route('admin.settings.resource_types.search'),
+                'entity_type'  => 'resource_type',
+            ],
             'sortable'   => true,
             'columnName' => 'resource_types.name',
         ]);
@@ -103,17 +125,20 @@ class ResourceDataGrid extends DataGrid
             },
         ]);
 
-        // Hidden clinic_id column for filtering purposes
+        // Clinic filter column (using entity selector)
         $this->addColumn([
             'index'              => 'clinic_id',
             'type'               => 'string',
-            'label'              => 'Clinic (Filter)',
+            'label'              => trans('admin::app.settings.resources.index.datagrid.clinic'),
             'searchable'         => false,
             'filterable'         => true,
             'sortable'           => false,
-            'filterable_type'    => 'dropdown',
-            'filterable_options' => $this->clinicRepository->all(['name as label', 'id as value'])->toArray(),
-            'hidden'             => true, // werkt niet
+            'filterable_type'    => 'entity_selector',
+            'filterable_options' => [
+                'search_route' => route('admin.clinics.search'),
+                'entity_type'  => 'clinic',
+            ],
+            'visibility'        => false, // Hidden from view, only used for filtering
         ]);
     }
 

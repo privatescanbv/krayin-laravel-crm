@@ -9,6 +9,13 @@ use Webkul\Core\Eloquent\Repository;
 
 class ClinicRepository extends Repository
 {
+    /**
+     * Searchable fields.
+     */
+    protected $fieldSearchable = [
+        'name',
+    ];
+
     public function model(): string
     {
         return Clinic::class;

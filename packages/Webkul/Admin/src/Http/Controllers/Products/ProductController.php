@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
 use App\Helpers\ProductHelper;
+use App\Http\Controllers\Concerns\HasEntitySearch;
 use App\Rules\PartnerProductsMatchResourceType;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -11,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
-use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
@@ -21,6 +21,8 @@ use Webkul\Product\Repositories\ProductRepository;
 
 class ProductController extends Controller
 {
+    use HasEntitySearch;
+
     /**
      * Create a new controller instance.
      *
@@ -147,14 +149,17 @@ class ProductController extends Controller
     // Inventory APIs removed (not supported)
 
     /**
-     * Search product results
+     * Search product results.
+     * 
+     * Uses the search logic from HasEntitySearch trait but returns ProductResource collection.
      */
-    public function search(): JsonResource
+    public function search(Request $request): JsonResource
     {
-        $products = $this->productRepository
-            ->with('productGroup')
-            ->pushCriteria(app(RequestCriteria::class))
-            ->all();
+        // Use the search logic from HasEntitySearch trait
+        // Note: productGroup is already eager loaded in the original implementation,
+        // but we need to ensure it's loaded before calling performEntitySearch
+        $repository = $this->productRepository->with('productGroup');
+        $products = $this->performEntitySearch($request, $repository);
 
         return ProductResource::collection($products);
     }

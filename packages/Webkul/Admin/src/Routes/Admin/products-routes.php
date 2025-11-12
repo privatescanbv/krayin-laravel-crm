@@ -48,6 +48,7 @@ Route::group(['middleware' => ['user']], function () {
         Route::post('create', 'store')->name('admin.productgroups.store');
         Route::get('edit/{id}', 'edit')->name('admin.productgroups.edit');
         Route::put('edit/{id}', 'update')->name('admin.productgroups.update');
+        Route::get('search', 'search')->name('admin.productgroups.search');
         Route::delete('{id}', 'destroy')->name('admin.productgroups.delete');
     });
 });

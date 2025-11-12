@@ -3,9 +3,12 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\View\View;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Products\ProductGroupDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Resources\ProductGroupResource;
 use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductGroupController extends Controller
@@ -102,5 +105,17 @@ class ProductGroupController extends Controller
         return new JsonResponse([
             'message' => trans('admin::app.products.product-groups.delete-success'),
         ]);
+    }
+
+    /**
+     * Search product group results.
+     */
+    public function search(): JsonResource
+    {
+        $productGroups = $this->productGroupRepository
+            ->pushCriteria(app(RequestCriteria::class))
+            ->all();
+
+        return ProductGroupResource::collection($productGroups);
     }
 }

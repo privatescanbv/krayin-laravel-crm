@@ -16,7 +16,8 @@ class ProductGroupResource extends JsonResource
     {
         return [
             'id'             => $this->id,
-            'name'           => $this->name,
+            'name'           => $this->path ?? $this->name, // Use path (hierarchical) for display, fallback to name
+            'label'          => $this->path ?? $this->name, // Alias for entity selector compatibility
             'path'           => $this->path,
             'description'    => $this->description,
             'products_count' => $this->products->count(),

@@ -1,3 +1,5 @@
+@include('adminc.components.entity-selector')
+
 <v-datagrid-filter
     :src="src"
     :is-loading="isLoading"
@@ -618,6 +620,54 @@
                                                             v-for="appliedColumnValue in getAppliedColumnValues(column.index)"
                                                         >
                                                             <span v-text="appliedColumnValue"></span>
+                                    
+                                                            <span
+                                                                class="icon-cross-large cursor-pointer text-lg text-white ltr:ml-1.5 rtl:mr-1.5"
+                                                                @click="removeAppliedColumnValue(column.index, appliedColumnValue)"
+                                                            >
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Entity Selector -->
+                                                <template v-else-if="column.filterable_type === 'entity_selector'">
+                                                    <div class="flex items-center justify-between">
+                                                        <p
+                                                            class="text-xs font-medium text-gray-800 dark:text-white"
+                                                            v-text="column.label"
+                                                        >
+                                                        </p>
+                                    
+                                                        <div
+                                                            class="flex items-center gap-x-1.5"
+                                                            @click="removeAppliedColumnAllValues(column.index)"
+                                                        >
+                                                            <p
+                                                                class="cursor-pointer text-xs font-medium leading-6 text-blue-600"
+                                                                v-if="hasAnyAppliedColumnValues(column.index)"
+                                                            >
+                                                                @lang('admin::app.components.datagrid.filters.custom-filters.clear-all')
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                    
+                                                    <div class="mb-2 mt-1.5">
+                                                        <v-entity-selector
+                                                            :search-route="column.filterable_options?.search_route"
+                                                            :multiple="true"
+                                                            :items="getEntitySelectorItems(column.index)"
+                                                            @update:items="onEntitySelectorUpdate($event, column)"
+                                                            placeholder="Zoek gebruiker..."
+                                                        />
+                                                    </div>
+                                    
+                                                    <div class="mb-4 flex flex-wrap gap-2">
+                                                        <p
+                                                            class="flex items-center rounded bg-gray-600 px-2 py-1 font-semibold text-white"
+                                                            v-for="appliedColumnValue in getAppliedColumnValues(column.index)"
+                                                        >
+                                                            <span v-text="getEntitySelectorLabel(column.index, appliedColumnValue)"></span>
                                     
                                                             <span
                                                                 class="icon-cross-large cursor-pointer text-lg text-white ltr:ml-1.5 rtl:mr-1.5"
@@ -1361,11 +1411,105 @@
                 getAppliedColumnValues(columnIndex) {
                     const appliedColumn = this.findAppliedColumn(columnIndex);
 
-                    if (appliedColumn?.allow_multiple_values) {
-                        return appliedColumn?.value ?? [];
+                    if (!appliedColumn) {
+                        return [];
                     }
 
-                    return appliedColumn?.value ?? '';
+                    if (appliedColumn.allow_multiple_values || Array.isArray(appliedColumn.value)) {
+                        return appliedColumn.value ?? [];
+                    }
+
+                    return appliedColumn.value ? [appliedColumn.value] : [];
+                },
+
+                /**
+                 * Get entity selector items for the specified column.
+                 *
+                 * @param {string} columnIndex
+                 * @returns {Array}
+                 */
+                getEntitySelectorItems(columnIndex) {
+                    const appliedColumn = this.findAppliedColumn(columnIndex);
+                    if (!appliedColumn || !appliedColumn.value || appliedColumn.value.length === 0) {
+                        return [];
+                    }
+
+                    // Convert applied values to entity selector format
+                    // Use stored entityData if available, otherwise return IDs
+                    // The entity selector will handle fetching the full data when needed
+                    const values = Array.isArray(appliedColumn.value) ? appliedColumn.value : [appliedColumn.value];
+                    return values.map(id => {
+                        // If we have stored entity data, use it
+                        if (appliedColumn.entityData && appliedColumn.entityData[id]) {
+                            return appliedColumn.entityData[id];
+                        }
+                        // Otherwise return basic structure with ID
+                        return {
+                            id: id,
+                            name: id, // Will be replaced when entity selector loads
+                        };
+                    });
+                },
+
+                /**
+                 * Handle entity selector update.
+                 *
+                 * @param {Array} items
+                 * @param {object} column
+                 * @returns {void}
+                 */
+                onEntitySelectorUpdate(items, column) {
+                    // Extract IDs from selected items
+                    const values = items.map(item => String(item.id || item.value)).filter(v => v);
+                    
+                    // Find or create applied column
+                    let appliedColumn = this.findAppliedColumn(column.index);
+                    
+                    if (!appliedColumn) {
+                        appliedColumn = {
+                            index: column.index,
+                            label: column.label,
+                            type: column.type,
+                            value: [],
+                            allow_multiple_values: true,
+                            entityData: {},
+                        };
+                        this.filters.columns.push(appliedColumn);
+                    }
+                    
+                    // Update values
+                    appliedColumn.value = values;
+                    appliedColumn.allow_multiple_values = true; // Always allow multiple for entity selector
+                    
+                    // Store full item data for label display
+                    if (!appliedColumn.entityData) {
+                        appliedColumn.entityData = {};
+                    }
+                    items.forEach(item => {
+                        const id = String(item.id || item.value);
+                        if (id) {
+                            appliedColumn.entityData[id] = item;
+                        }
+                    });
+                    
+                    this.isFilterDirty = true;
+                },
+
+                /**
+                 * Get entity selector label for a value.
+                 *
+                 * @param {string} columnIndex
+                 * @param {string} value
+                 * @returns {string}
+                 */
+                getEntitySelectorLabel(columnIndex, value) {
+                    const appliedColumn = this.findAppliedColumn(columnIndex);
+                    const valueStr = String(value);
+                    if (appliedColumn?.entityData && appliedColumn.entityData[valueStr]) {
+                        const item = appliedColumn.entityData[valueStr];
+                        return item.name || item.label || item.text || valueStr;
+                    }
+                    return valueStr;
                 },
 
                 /**

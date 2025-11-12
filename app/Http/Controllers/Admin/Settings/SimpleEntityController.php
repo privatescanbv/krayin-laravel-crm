@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
+use App\Http\Controllers\Concerns\HasEntitySearch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +13,8 @@ use Webkul\Admin\Http\Controllers\Controller;
 
 abstract class SimpleEntityController extends Controller
 {
+    use HasEntitySearch;
+
     protected string $entityName;
 
     protected string $datagridClass;
@@ -141,6 +144,28 @@ abstract class SimpleEntityController extends Controller
                 ->route($this->indexRoute)
                 ->with('error', $this->getDeleteFailedMessage());
         }
+    }
+
+    /**
+     * Search entity results.
+     *
+     * Supports both `query` parameter (for entity selector) and `search`/`searchFields` (for RequestCriteria).
+     * If `query` is provided, it's converted to `search` and `searchFields` format for RequestCriteria.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $entities = $this->performEntitySearch($request);
+
+        // Return simple array format for entity selector
+        $data = $entities->map(function ($entity) {
+            return [
+                'id'    => $entity->id,
+                'name'  => $entity->name,
+                'label' => $entity->name, // Alias for entity selector compatibility
+            ];
+        });
+
+        return response()->json($data);
     }
 
     protected function getIndexViewData(Request $request): array

@@ -36,9 +36,10 @@ class ProductDataGrid extends DataGrid
                 'products.price',
                 'products.active',
                 DB::raw('MIN(tags.name) as tag_name'),
-                'product_groups.name as group_name',
-                'product_groups.parent_id as group_parent_id',
+                'product_groups.id as group_id',
+                'product_types.id as product_type_id',
                 'product_types.name as product_type_name',
+                'resource_types.id as resource_type_id',
                 'resource_types.name as resource_type_name',
                 DB::raw('COUNT(DISTINCT partner_products.id) as partner_products_count')
             )
@@ -46,7 +47,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addFilter('id', 'products.id');
 //        $this->addFilter('tag_name', 'tags.name');
-        $this->addFilter('group_name', 'product_groups.name');
+        // Note: group_name, product_type_name, and resource_type_name filters are handled specially below
         $this->addFilter('active', 'products.active');
 
         // Default filter: only active resources unless user provides a filter
@@ -55,9 +56,27 @@ class ProductDataGrid extends DataGrid
             $queryBuilder->where('products.active', 1);
         }
 
-        // 🚨 reset alle automatisch toegevoegde order by’s en zet jouw eigen fallback
+        // Apply entity selector filters (group_name, product_type_name, resource_type_name)
+        // These filters use IDs from entity selector, so we filter on the ID column instead of name
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'group_name', 'product_groups.id');
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'product_type_name', 'product_types.id');
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'resource_type_name', 'resource_types.id');
+
+        // Update request with cleaned filters
+        // If there are still filters, merge them. If filters was originally present but is now empty, remove it.
+        $originalFilters = request()->input('filters');
+        if (!empty($requestedFilters)) {
+            request()->merge(['filters' => $requestedFilters]);
+        } elseif ($originalFilters !== null) {
+            // If filters was present but is now empty, remove it entirely to avoid validation issues
+            // Remove from both request body and query parameters
+            request()->request->remove('filters');
+            request()->query->remove('filters');
+        }
+
+        // 🚨 reset alle automatisch toegevoegde order by's en zet jouw eigen fallback
         return $queryBuilder
-            ->reorder()                       // wist ALLE order by’s, ook die van datagrid
+            ->reorder()                       // wist ALLE order by's, ook die van datagrid
             ->orderBy('products.id', 'desc'); // voeg expliciet jouw order toe
     }
 
@@ -97,26 +116,36 @@ class ProductDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'product_type_name',
-            'columnName' => 'product_types.name',
-            'label'      => trans('admin::app.products.create.product_type'),
-            'type'       => 'string',
-            'searchable' => true,
-            'sortable'   => true,
-            'filterable' => true,
+            'index'              => 'product_type_name',
+            'columnName'         => 'product_types.name',
+            'label'              => trans('admin::app.products.create.product_type'),
+            'type'               => 'string',
+            'searchable'         => true,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'entity_selector',
+            'filterable_options' => [
+                'search_route' => route('admin.settings.product_types.search'),
+                'entity_type'  => 'product_type',
+            ],
             'closure'    => function ($row) {
                 return $row->product_type_name ?? '--';
             },
         ]);
 
         $this->addColumn([
-            'index'      => 'resource_type_name',
-            'columnName' => 'resource_types.name',
-            'label'      => trans('admin::app.products.create.resource_type'),
-            'type'       => 'string',
-            'searchable' => true,
-            'sortable'   => true,
-            'filterable' => true,
+            'index'              => 'resource_type_name',
+            'columnName'         => 'resource_types.name',
+            'label'              => trans('admin::app.products.create.resource_type'),
+            'type'               => 'string',
+            'searchable'         => true,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'entity_selector',
+            'filterable_options' => [
+                'search_route' => route('admin.settings.resource_types.search'),
+                'entity_type'  => 'resource_type',
+            ],
             'closure'    => function ($row) {
                 return $row->resource_type_name ?? '--';
             },
@@ -136,25 +165,24 @@ class ProductDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'group_name',
-            'columnName' => 'products.group_name',
-            'label'      => trans('admin::app.productgroups.title'),
-            'type'       => 'string',
-            'searchable' => true,
-            'sortable'   => true,
-            'filterable' => true,
+            'index'              => 'group_name',
+            'columnName'         => 'products.group_name',
+            'label'              => trans('admin::app.productgroups.title'),
+            'type'               => 'string',
+            'searchable'         => true,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'entity_selector',
+            'filterable_options' => [
+                'search_route' => route('admin.productgroups.search'),
+                'entity_type'  => 'product_group',
+            ],
             'closure'    => function ($row) {
-                if (!$row->group_name) {
+                if (!$row->group_id) {
                     return '--';
                 }
 
-                // Create a mock object with the row data
-                $mockRow = (object) [
-                    'name' => $row->group_name,
-                    'parent_id' => $row->group_parent_id
-                ];
-
-                return $this->productGroupRepository->getGroupPathByRow($mockRow);
+                return $this->productGroupRepository->getGroupPathById($row->group_id);
             },
         ]);
 

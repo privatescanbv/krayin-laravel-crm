@@ -59,6 +59,7 @@ Route::prefix('settings')->group(function () {
         Route::get('view/{id}', 'view')->name('admin.clinics.view');
         Route::get('edit/{id}', 'edit')->name('admin.clinics.edit');
         Route::put('edit/{id}', 'update')->name('admin.clinics.update');
+        Route::get('search', 'search')->name('admin.clinics.search');
         // Some datagrid actions may send DELETE to base path; support both
         Route::delete('', 'destroy')->name('admin.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.clinics.delete');
@@ -87,6 +88,7 @@ Route::prefix('settings')->group(function () {
         Route::post('create', 'store')->name('admin.settings.product_types.store');
         Route::get('edit/{id}', 'edit')->name('admin.settings.product_types.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.product_types.update');
+        Route::get('search', 'search')->name('admin.settings.product_types.search');
         Route::delete('', 'destroy')->name('admin.settings.product_types.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.product_types.delete');
     });
@@ -120,6 +122,7 @@ Route::prefix('settings')->group(function () {
         Route::post('create', 'store')->name('admin.settings.resource_types.store');
         Route::get('edit/{id}', 'edit')->name('admin.settings.resource_types.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.resource_types.update');
+        Route::get('search', 'search')->name('admin.settings.resource_types.search');
         Route::delete('', 'destroy')->name('admin.settings.resource_types.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.resource_types.delete');
     });

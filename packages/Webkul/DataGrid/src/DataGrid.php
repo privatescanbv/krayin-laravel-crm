@@ -354,6 +354,49 @@ abstract class DataGrid
     }
 
     /**
+     * Apply entity selector filter to query builder.
+     * 
+     * This method handles filters that use entity selectors (which send IDs instead of names).
+     * It filters on the specified column and removes the filter from the requested filters
+     * to avoid duplicate filter application by the generic filter engine.
+     * 
+     * @param \Illuminate\Database\Query\Builder $queryBuilder
+     * @param array &$requestedFilters
+     * @param string $filterKey
+     * @param string $columnName
+     * @return void
+     */
+    protected function applyEntitySelectorFilter($queryBuilder, array &$requestedFilters, string $filterKey, string $columnName): void
+    {
+        if (!isset($requestedFilters[$filterKey])) {
+            return;
+        }
+
+        $values = $requestedFilters[$filterKey];
+        if (!is_array($values)) {
+            $values = [$values];
+        }
+        
+        // Clean empty values
+        $values = array_values(array_filter($values, static fn($v) => $v !== null && $v !== ''));
+        
+        if (!empty($values)) {
+            $queryBuilder->where(function ($q) use ($values, $columnName) {
+                foreach ($values as $i => $value) {
+                    if ($i === 0) {
+                        $q->where($columnName, '=', $value);
+                    } else {
+                        $q->orWhere($columnName, '=', $value);
+                    }
+                }
+            });
+        }
+        
+        // Remove to avoid duplicate filter application by the generic filter engine
+        unset($requestedFilters[$filterKey]);
+    }
+
+    /**
      * Process requested sorting.
      *
      * @return \Illuminate\Database\Query\Builder

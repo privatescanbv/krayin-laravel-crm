@@ -178,7 +178,22 @@ class ActivityDataGrid extends DataGrid
 
             // Remove to avoid WHERE on alias by the generic filter application
             unset($filters['entity_type']);
+        }
+
+        /**
+         * Special handling for "Toegewezen aan" (assigned_user_id) filter.
+         * Uses entity selector filter method from base class.
+         */
+        $this->applyEntitySelectorFilter($queryBuilder, $filters, 'assigned_user_id', 'users.id');
+        
+        // Update request with cleaned filters
+        $originalFilters = request()->input('filters');
+        if (!empty($filters)) {
             request()->merge(['filters' => $filters]);
+        } elseif ($originalFilters !== null) {
+            // If filters was present but is now empty, remove it entirely to avoid validation issues
+            request()->request->remove('filters');
+            request()->query->remove('filters');
         }
 
         return $queryBuilder;
@@ -308,13 +323,10 @@ class ActivityDataGrid extends DataGrid
             'searchable'         => false,
             'sortable'           => true,
             'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
+            'filterable_type'    => 'entity_selector',
             'filterable_options' => [
-                'repository' => UserRepository::class,
-                'column'     => [
-                    'label' => 'name',
-                    'value' => 'name',
-                ],
+                'search_route' => route('admin.settings.users.search'),
+                'entity_type'  => 'user',
             ],
             'closure'    => function ($row) {
                 $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
@@ -380,17 +392,6 @@ class ActivityDataGrid extends DataGrid
                 }
                 return "<span class='px-2 py-0.5 rounded-full text-xs ".$classes."'>".$date.'</span>';
             },
-        ]);
-
-        // Hidden column to support filtering by group via URL params like filters[group][0]=...
-        $this->addColumn([
-            'index'      => 'group',
-            'label'      => 'Groep',
-            'type'       => 'string',
-            'searchable' => false,
-            'filterable' => true,
-            'sortable'   => false,
-            'visibility' => false,
         ]);
 
         // Hidden technical column remains for filtering, plus visual "done" icon column at the end

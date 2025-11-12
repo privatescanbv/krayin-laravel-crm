@@ -9,6 +9,13 @@ use Webkul\Product\Models\ProductGroup;
 class ProductGroupRepository extends Repository
 {
     /**
+     * Searchable fields.
+     */
+    protected $fieldSearchable = [
+        'name',
+    ];
+
+    /**
      * Specify Model class name
      */
     public function model(): string

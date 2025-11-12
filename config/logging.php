@@ -74,12 +74,12 @@ return [
         ],
 
         'stderr' => [
-            'driver' => 'monolog',
+            'driver'  => 'monolog',
             'handler' => Monolog\Handler\StreamHandler::class,
-            'with' => [
+            'with'    => [
                 'stream' => 'php://stderr',
             ],
-            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter'      => Monolog\Formatter\JsonFormatter::class,
             'formatter_with' => [
                 'include_stacktraces' => true,
             ],

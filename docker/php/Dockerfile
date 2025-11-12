@@ -118,7 +118,8 @@ COPY  --from=vite /build/.docker/php/php.ini /usr/local/etc/php/conf.d/docker-ph
 COPY  --from=vite /build/.docker/nginx/templates/default.cloud.conf /etc/nginx/sites-enabled/default
 COPY  --from=vite /build/.docker/nginx/nginx.conf /etc/nginx/nginx.conf
 
-RUN chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
+RUN mkdir -p /var/log/nginx /var/log/php-fpm /var/log/supervisor \
+    && chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
 
 # Ensure storage directories have correct permissions for log writing
 RUN mkdir -p /usr/share/nginx/html/storage/logs \
@@ -144,6 +145,8 @@ COPY --from=vite /build/.env.prod /docker/.env.prod
 RUN mkdir -p ./storage && touch ./storage/installed
 
 COPY --from=vite /build/.docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY --from=vite /build/.docker/json-logger.sh /usr/share/nginx/html/.docker/json-logger.sh
+RUN chmod +x /usr/share/nginx/html/.docker/json-logger.sh
 # temporary for mail server
 COPY --from=vite /build/./docker/config /docker/config
 #COPY --from=vite /build/./mailserver.env /docker/mailserver.env

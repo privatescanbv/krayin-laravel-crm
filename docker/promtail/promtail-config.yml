@@ -32,22 +32,27 @@ scrape_configs:
         regex: '.+'
 
     pipeline_stages:
-      # 1️⃣ Combine JSON and PHP stacktrace logs
+      # 1️⃣ Combine multi-line JSON logs BEFORE parsing Docker wrapper
+      # Only combine Docker JSON entries where the log content starts with { (actual JSON objects)
+      # This prevents non-JSON logs (like n8n plain text) from being incorrectly combined
       - multiline:
-          # Combine JSON logs ({}) and PHP stacktraces ([ or #)
-          firstline: '^(?:\s*\{|\[.*exception\]|\#\d+)'
+          # Match Docker JSON wrapper where log content starts with {
+          firstline: '^\\s*\\{\\s*"log"\\s*:\\s*"\\s*\\{'
           max_wait_time: 3s
           max_lines: 500
+          # Continue if line doesn't end with complete Docker JSON entry (ending with "})
+          continuation: '.*[^"]\\}\\s*$'
 
-      # 2️⃣ Parse Docker’s JSON wrapper
+      # 2️⃣ Parse Docker's JSON wrapper
       - json:
           expressions:
             output: log
             stream: stream
 
       # 3️⃣ Handle JSON Laravel logs (complete JSON objects only)
+      # Only parse as JSON if it starts and ends with { }
       - match:
-          selector: '{output=~"^\\{.*\\}\\s*$"}'
+          selector: '{output=~"^\\s*\\{.*\\}\\s*$"}'
           stages:
             - json:
                 expressions:
@@ -81,13 +86,27 @@ scrape_configs:
                   - labels:
                       context_error:
 
-      # 4️⃣ Handle non-JSON logs (PHP, MySQL, Nginx, etc.)
+      # 4️⃣ Handle non-JSON logs (n8n, PHP, MySQL, Nginx, etc.)
+      # Match logs that don't start with { (not JSON) OR logs that start with { but don't end with } (incomplete JSON)
       - match:
-          selector: '{output!~"^{.*"}'
+          selector: '{output!~"^\\s*\\{.*\\}\\s*$"}'
           stages:
+            # Try multiple regex patterns to extract log level
+            # Pattern 1: "[INFO] message" or "[ERROR] message"
             - regex:
-                # Detect typical log lines or PHP traces
-                expression: '^(?P<level_name>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|ALERT|EMERGENCY|FATAL)?\s*(?P<message>.*)$'
+                expression: '^\\[(?P<level_name>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|ALERT|EMERGENCY|FATAL)\\]\\s+(?P<message>.*)$'
+                source: output
+            # Pattern 2: "ERROR message" or "WARN message" (without brackets)
+            - regex:
+                expression: '^(?P<level_name>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|ALERT|EMERGENCY|FATAL)\\s+(?P<message>.*)$'
+                source: output
+            # Pattern 3: Timestamp + level (e.g., "2024-01-01 12:00:00 INFO message")
+            - regex:
+                expression: '^\\d{4}-\\d{2}-\\d{2}[\\sT]\\d{2}:\\d{2}:\\d{2}[,\\.]?\\d*\\s+(?P<level_name>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|ALERT|EMERGENCY|FATAL)\\s+(?P<message>.*)$'
+                source: output
+            # Pattern 4: Default - extract entire line as message if no level found
+            - regex:
+                expression: '^(?P<message>.*)$'
                 source: output
             - replace:
                 expression: '^WARN$'

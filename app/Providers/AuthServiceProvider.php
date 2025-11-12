@@ -22,6 +22,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('viewLogViewer', fn ($user = null) => config('log-viewer.enabled'));
+        //
     }
 }

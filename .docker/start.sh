@@ -8,13 +8,6 @@ php artisan config:cache
 php artisan storage:link || true
 # migrate database by supervisord
 
-# Ensure log-viewer assets are available (idempotent)
-if [ ! -d "public/vendor/log-viewer" ]; then
-    echo "Publishing log-viewer assets..."
-    php artisan vendor:publish --tag=log-viewer-assets --force || true
-    # remove old logs, by default.
-    rm ./storage/logs/*.log
-fi
 
 # Fix storage permissions to prevent log write errors
 echo "Fixing storage permissions..."

@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -37,7 +38,7 @@ return [
     'channels' => [
         'stack' => [
             'driver'            => 'stack',
-            'channels'          => ['daily'],
+            'channels'          => ['stderr'],
             'ignore_exceptions' => false,
         ],
 
@@ -73,12 +74,25 @@ return [
         ],
 
         'stderr' => [
-            'driver'    => 'monolog',
-            'handler'   => StreamHandler::class,
-            'formatter' => env('LOG_STDERR_FORMATTER'),
-            'with'      => [
+            'driver' => 'monolog',
+            'handler' => Monolog\Handler\StreamHandler::class,
+            'with' => [
                 'stream' => 'php://stderr',
             ],
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter_with' => [
+                'include_stacktraces' => true,
+            ],
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        'stdout' => [
+            'driver'    => 'monolog',
+            'handler'   => StreamHandler::class,
+            'with'      => [
+                'stream' => 'php://stdout',
+            ],
+            'formatter' => JsonFormatter::class,
         ],
 
         'syslog' => [

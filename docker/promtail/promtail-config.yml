@@ -1,0 +1,84 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+      # Alleen jouw relevante containers
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: '(crm|forms|n8n|mysql|traefik|suitecrm|phpmyadmin)'
+        target_label: 'app'
+      # Behoud alle logs
+      - action: keep
+        source_labels: ['__meta_docker_container_name']
+        regex: '.+'
+
+    pipeline_stages:
+      # 1️⃣ Combineer meerregelige Docker JSON-logs (zoals Laravel stacktraces)
+      - multiline:
+          firstline: '^\s*\{'
+          max_wait_time: 3s
+          max_lines: 500
+
+      # 2️⃣ Parse Docker's JSON-logstructuur {"log":"...","stream":"stdout"}
+      - json:
+          expressions:
+            output: log
+            stream: stream
+
+      # 3️⃣ Filter op Laravel-JSON logs (die met { ... } beginnen)
+      - match:
+          selector: '{output=~"^{.*"}'
+          stages:
+            # Parse het JSON-object zelf
+            - json:
+                expressions:
+                  message: message
+                  context: context
+                  level: level
+                  level_name: level_name
+                  channel: channel
+                  datetime: datetime
+                  extra: extra
+                source: output
+                drop_malformed: false
+
+            # 👇 Extra stap om nested JSON uit `context` te flattenen
+            - json:
+                expressions:
+                  context_error: error
+                  context_trace: trace
+                source: context
+                drop_malformed: true
+
+            # Voeg belangrijke velden toe als labels
+            - labels:
+                level:
+                level_name:
+                channel:
+                context_error:
+
+      # 4️⃣ Gebruik Laravel-timestamp als logtijd
+      - timestamp:
+          source: datetime
+          format: RFC3339Nano

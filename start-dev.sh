@@ -21,7 +21,7 @@ echo "📦 Starting Docker containers..."
 
 # Wacht tot de containers draaien
 echo "⏳ Waiting for containers to start..."
-sleep 15
+sleep 5
 
 # Check if CRM container is running
 if ! docker-compose ps crm | grep -q "Up"; then

@@ -3,26 +3,22 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
-use App\Helpers\ProductHelper;
-use App\Http\Controllers\Concerns\HasEntitySearch;
+use App\Http\Controllers\Admin\Settings\SimpleEntityController;
 use App\Rules\PartnerProductsMatchResourceType;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
-use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\ProductResource;
 use Webkul\Product\Repositories\ProductRepository;
 
-class ProductController extends Controller
+class ProductController extends SimpleEntityController
 {
-    use HasEntitySearch;
-
     /**
      * Create a new controller instance.
      *
@@ -30,15 +26,25 @@ class ProductController extends Controller
      */
     public function __construct(protected ProductRepository $productRepository)
     {
+        parent::__construct($productRepository);
+
+        $this->entityName = 'product';
+        $this->datagridClass = ProductDataGrid::class;
+        $this->indexView = 'admin::products.index';
+        $this->createView = 'admin::products.create';
+        $this->editView = 'admin::products.edit';
+        $this->indexRoute = 'admin.products.index';
+        $this->permissionPrefix = 'products';
+
         request()->request->add(['entity_type' => 'products']);
     }
 
     /**
      * Display a listing of the resource.
      */
-    public function index(): View|JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
-        if (request()->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             // Clear stale client-side sort (e.g., removed columns like total_in_stock)
             if (request()->query->has('sort')) {
                 request()->query->remove('sort');
@@ -49,44 +55,43 @@ class ProductController extends Controller
                 ['field' => 'id', 'order' => 'desc']
             ]]);
 
-            return datagrid(ProductDataGrid::class)->process();
+            return datagrid($this->datagridClass)->process();
         }
 
-        return view('admin::products.index');
+        return view($this->indexView);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('admin::products.create', [
-            'currencies'      => Currency::options(),
-            'defaultCurrency' => Currency::default()->value,
-        ]);
+        return view($this->createView, $this->getCreateViewData($request));
     }
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function store(AttributeForm $request)
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $this->validateStore($request);
 
         Event::dispatch('product.create.before');
 
-        $payload = request()->all();
-        $payload['entity_type'] = 'products';
-        $data = $this->cleanProductData($payload);
-        $product = $this->productRepository->create($data);
+        $entity = $this->repository->create($this->transformPayload($request->all()));
 
-        Event::dispatch('product.create.after', $product);
+        Event::dispatch('product.create.after', $entity);
 
-        session()->flash('success', trans('admin::app.products.index.create-success'));
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'data'    => $entity,
+                'message' => $this->getCreateSuccessMessage(),
+            ], 200);
+        }
 
-        return redirect()->route('admin.products.index');
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getCreateSuccessMessage());
     }
 
     /**
@@ -94,7 +99,7 @@ class ProductController extends Controller
      */
     public function view(int $id): View
     {
-        $product = $this->productRepository->findOrFail($id);
+        $product = $this->repository->findOrFail($id);
 
         return view('admin::products.view', compact('product'));
     }
@@ -102,45 +107,40 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(int $id): View|JsonResponse
+    public function edit(Request $request, int $id): View|JsonResponse
     {
-        $product = $this->productRepository->findOrFail($id);
+        $product = $this->repository->findOrFail($id);
 
-        // Get formatted partner products with clinic names
-        $selectedPartnerProducts = $this->productRepository->getFormattedPartnerProducts($product);
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['data' => $product]);
+        }
 
-        $currencies = Currency::options();
-        $defaultCurrency = Currency::default()->value;
-
-        // Inventory/warehouse logic removed for this deployment
-        return view('admin::products.edit', compact('product', 'currencies', 'defaultCurrency', 'selectedPartnerProducts'));
+        return view($this->editView, $this->getEditViewData($request, $product));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(AttributeForm $request, int $id)
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
         $this->validateUpdate($request, $id);
 
         Event::dispatch('product.update.before', $id);
 
-        $payload = request()->all();
-        $payload['entity_type'] = 'products';
-        $data = $this->cleanProductData($payload);
-        $product = $this->productRepository->update($data, $id);
+        $entity = $this->repository->update($this->transformPayload($request->all(), $id), $id);
 
-        Event::dispatch('product.update.after', $product);
+        Event::dispatch('product.update.after', $entity);
 
-        if (request()->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
-                'message' => trans('admin::app.products.index.update-success'),
+                'data'    => $entity,
+                'message' => $this->getUpdateSuccessMessage(),
             ]);
         }
 
-        session()->flash('success', trans('admin::app.products.index.update-success'));
-
-        return redirect()->route('admin.products.index');
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getUpdateSuccessMessage());
     }
 
     /**
@@ -150,18 +150,19 @@ class ProductController extends Controller
 
     /**
      * Search product results.
-     * 
-     * Uses the search logic from HasEntitySearch trait but returns ProductResource collection.
+     *
+     * Overrides parent search to return ProductResource collection instead of simple array.
      */
-    public function search(Request $request): JsonResource
+    public function search(Request $request): JsonResponse
     {
         // Use the search logic from HasEntitySearch trait
-        // Note: productGroup is already eager loaded in the original implementation,
-        // but we need to ensure it's loaded before calling performEntitySearch
-        $repository = $this->productRepository->with('productGroup');
-        $products = $this->performEntitySearch($request, $repository);
+        $products = $this->performEntitySearch($request, $this->repository);
 
-        return ProductResource::collection($products);
+        // Eager load productGroup relation after search
+        $products->load('productGroup');
+
+        // Return resource collection - Laravel automatically wraps it in 'data' key
+        return ProductResource::collection($products)->response();
     }
 
     /**
@@ -172,24 +173,49 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse
     {
-        $product = $this->productRepository->findOrFail($id);
+        if (! $id) {
+            $indices = $request['indices'];
+            if (is_array($indices) && count($indices) > 0) {
+                $id = (int) $indices[0];
+            }
+        }
+
+        if (! $id) {
+            return redirect()
+                ->route($this->indexRoute)
+                ->with('error', 'Geen geldig ID opgegeven.');
+        }
+
+        $entity = $this->repository->findOrFail($id);
 
         try {
             Event::dispatch('settings.products.delete.before', $id);
 
-            $product->delete($id);
+            $entity->delete();
 
             Event::dispatch('settings.products.delete.after', $id);
 
-            return new JsonResponse([
-                'message' => trans('admin::app.products.index.delete-success'),
-            ], 200);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => $this->getDestroySuccessMessage(),
+                ], 200);
+            }
+
+            return redirect()
+                ->route($this->indexRoute)
+                ->with('success', $this->getDestroySuccessMessage());
         } catch (Exception $exception) {
-            return new JsonResponse([
-                'message' => trans('admin::app.products.index.delete-failed'),
-            ], 400);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => $this->getDeleteFailedMessage(),
+                ], 400);
+            }
+
+            return redirect()
+                ->route($this->indexRoute)
+                ->with('error', $this->getDeleteFailedMessage());
         }
     }
 
@@ -204,7 +230,7 @@ class ProductController extends Controller
         foreach ($indices as $index) {
             Event::dispatch('product.delete.before', $index);
 
-            $this->productRepository->delete($index);
+            $this->repository->delete($index);
 
             Event::dispatch('product.delete.after', $index);
         }
@@ -236,6 +262,74 @@ class ProductController extends Controller
             'active' => $request->boolean('active', true),
         ]);
         $request->validate($this->getValidationRules($id));
+    }
+
+    /**
+     * Get create view data.
+     */
+    protected function getCreateViewData(Request $request): array
+    {
+        return [
+            'currencies'      => Currency::options(),
+            'defaultCurrency' => Currency::default()->value,
+        ];
+    }
+
+    /**
+     * Get edit view data.
+     */
+    protected function getEditViewData(Request $request, Model $entity): array
+    {
+        // Get formatted partner products with clinic names
+        $selectedPartnerProducts = $this->repository->getFormattedPartnerProducts($entity);
+
+        return [
+            $this->entityName => $entity,
+            'currencies'      => Currency::options(),
+            'defaultCurrency' => Currency::default()->value,
+            'selectedPartnerProducts' => $selectedPartnerProducts,
+        ];
+    }
+
+    /**
+     * Transform payload before saving.
+     */
+    protected function transformPayload(array $payload, ?int $id = null): array
+    {
+        $payload['entity_type'] = 'products';
+        return $this->cleanProductData($payload);
+    }
+
+    /**
+     * Get create success message.
+     */
+    protected function getCreateSuccessMessage(): string
+    {
+        return trans('admin::app.products.index.create-success');
+    }
+
+    /**
+     * Get update success message.
+     */
+    protected function getUpdateSuccessMessage(): string
+    {
+        return trans('admin::app.products.index.update-success');
+    }
+
+    /**
+     * Get destroy success message.
+     */
+    protected function getDestroySuccessMessage(): string
+    {
+        return trans('admin::app.products.index.delete-success');
+    }
+
+    /**
+     * Get delete failed message.
+     */
+    protected function getDeleteFailedMessage(): string
+    {
+        return trans('admin::app.products.index.delete-failed');
     }
 
     /**

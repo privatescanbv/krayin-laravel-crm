@@ -14,6 +14,8 @@ RUN ./build.sh ${APP_ENV}
 
 FROM docker.io/php:8.3-fpm-bullseye
 ARG APP_ENV=production
+ARG WWWGROUP=1000
+ARG WWWUSER=1000
 ENV APP_ENV=${APP_ENV}
 WORKDIR /usr/share/nginx/html
 
@@ -78,6 +80,18 @@ COPY --from=vite /build/artisan ./artisan
 COPY --from=vite /build/node_modules ./node_modules
 COPY --from=vite /build/packages ./packages
 
+# Create sail user and group (required for Laravel Sail)
+# Use same approach as Laravel Sail: create with fixed UID, adjust in start script
+# Handle case where WWWGROUP might be empty or non-numeric by using default 1000
+RUN set -eux; \
+    if [ -z "$WWWGROUP" ] || ! [ "$WWWGROUP" -eq "$WWWGROUP" ] 2>/dev/null; then \
+        WWWGROUP_VAL=1000; \
+    else \
+        WWWGROUP_VAL=$WWWGROUP; \
+    fi; \
+    groupadd --force -g $WWWGROUP_VAL sail; \
+    useradd -ms /bin/bash --no-user-group -g $WWWGROUP_VAL -u 1337 sail
+
 # Zorg dat Laravel zijn cache paths heeft vóór composer install. These steps are fixes for;php artisan package:discover --ansi
 RUN mkdir -p ./storage/framework/{cache,sessions,views,testing} \
     && mkdir -p ./bootstrap/cache \
@@ -133,7 +147,10 @@ COPY --from=vite /build/.docker/supervisord.conf /etc/supervisor/conf.d/supervis
 # temporary for mail server
 COPY --from=vite /build/./docker/config /docker/config
 #COPY --from=vite /build/./mailserver.env /docker/mailserver.env
-#COPY .docker/update-flows-n8n.sh /usr/local/bin/update-flows-n8n.sh
+#COPY --from=vite /build.docker/update-flows-n8n.sh /usr/local/bin/update-flows-n8n.sh
+COPY --from=vite /build/docker/loki/loki-config.yml ./docker/loki/loki-config.yml
+COPY --from=vite /build/docker/promtail/promtail-config.yml ./docker/promtail/promtail-config.yml
+
 
 COPY --from=vite /build/.docker/execute-folder-scripts.sh ./execute-folder-scripts.sh
 RUN chmod 0755 ./execute-folder-scripts.sh

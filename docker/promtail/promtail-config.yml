@@ -24,33 +24,31 @@ scrape_configs:
         target_label: 'service'
       - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
         target_label: 'project'
-      # Alleen jouw relevante containers
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         regex: '(crm|forms|n8n|mysql|traefik|suitecrm|phpmyadmin)'
         target_label: 'app'
-      # Behoud alle logs
       - action: keep
         source_labels: ['__meta_docker_container_name']
         regex: '.+'
 
     pipeline_stages:
-      # 1️⃣ Combineer meerregelige Docker JSON-logs (zoals Laravel stacktraces)
+      # 1️⃣ Combine JSON and PHP stacktrace logs
       - multiline:
-          firstline: '^\s*\{'
+          # Combine JSON logs ({}) and PHP stacktraces ([ or #)
+          firstline: '^(?:\s*\{|\[.*exception\]|\#\d+)'
           max_wait_time: 3s
           max_lines: 500
 
-      # 2️⃣ Parse Docker's JSON-logstructuur {"log":"...","stream":"stdout"}
+      # 2️⃣ Parse Docker’s JSON wrapper
       - json:
           expressions:
             output: log
             stream: stream
 
-      # 3️⃣ Filter op Laravel-JSON logs (die met { ... } beginnen)
+      # 3️⃣ Handle JSON Laravel logs (complete JSON objects only)
       - match:
-          selector: '{output=~"^{.*"}'
+          selector: '{output=~"^\\{.*\\}\\s*$"}'
           stages:
-            # Parse het JSON-object zelf
             - json:
                 expressions:
                   message: message
@@ -61,24 +59,44 @@ scrape_configs:
                   datetime: datetime
                   extra: extra
                 source: output
-                drop_malformed: false
-
-            # 👇 Extra stap om nested JSON uit `context` te flattenen
-            - json:
-                expressions:
-                  context_error: error
-                  context_trace: trace
-                source: context
                 drop_malformed: true
-
-            # Voeg belangrijke velden toe als labels
             - labels:
-                level:
                 level_name:
                 channel:
-                context_error:
+            - match:
+                selector: '{datetime!=""}'
+                stages:
+                  - timestamp:
+                      source: datetime
+                      format: RFC3339Nano
+            - match:
+                selector: '{context!=""}'
+                stages:
+                  - json:
+                      expressions:
+                        context_error: error
+                        context_trace: trace
+                      source: context
+                      drop_malformed: true
+                  - labels:
+                      context_error:
 
-      # 4️⃣ Gebruik Laravel-timestamp als logtijd
-      - timestamp:
-          source: datetime
-          format: RFC3339Nano
+      # 4️⃣ Handle non-JSON logs (PHP, MySQL, Nginx, etc.)
+      - match:
+          selector: '{output!~"^{.*"}'
+          stages:
+            - regex:
+                # Detect typical log lines or PHP traces
+                expression: '^(?P<level_name>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|ALERT|EMERGENCY|FATAL)?\s*(?P<message>.*)$'
+                source: output
+            - replace:
+                expression: '^WARN$'
+                source: level_name
+                replace: 'WARNING'
+            - replace:
+                expression: '^$'
+                source: level_name
+                replace: 'INFO'
+            - labels:
+                level_name:
+                message:

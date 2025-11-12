@@ -1,1 +1,39 @@
-./vendor
+# Dependencies
+/vendor
+/node_modules
+
+# Git
+/.git
+/.gitignore
+
+# Environment files (TODO)
+
+# IDE
+/.idea
+/.vscode
+/.fleet
+/.zed
+/.nova
+
+# Testing
+/tests
+/.phpunit.cache
+/.phpunit.result.cache
+
+# Build artifacts
+/public/build
+/public/hot
+/public/storage
+
+# Storage (will be created in container)
+/storage/*.key
+/storage/pail
+
+# Other
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.phpactor.json
+/auth.json
+

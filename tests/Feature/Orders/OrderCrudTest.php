@@ -181,7 +181,7 @@ test('can detach gvl form when forms api returns 200', function () {
     $response->assertOk()
         ->assertJsonPath('message', 'GVL formulier is ontkoppeld.');
 
-    $this->assertDatabaseHas('sales_leads', [
+    $this->assertDatabaseHas('salesleads', [
         'id'             => $salesLead->id,
         'gvl_form_link'  => null,
     ]);
@@ -214,7 +214,7 @@ test('gvl form stays linked when forms api responds with error', function () {
     $response->assertStatus(404)
         ->assertJsonPath('message', 'not found');
 
-    $this->assertDatabaseHas('sales_leads', [
+    $this->assertDatabaseHas('salesleads', [
         'id'            => $salesLead->id,
         'gvl_form_link' => $originalLink,
     ]);

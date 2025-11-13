@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Activity;
 
+use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -27,7 +28,7 @@ class ActivityDataGrid extends DataGrid
                 'activities.*',
                 'leads.lead_pipeline_id',
                 'users.id as assigned_user_id',
-                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as created_by"),
+                DB::raw(DatabaseHelper::concatUserName('users.', 'created_by')),
                 'groups.name as group_name',
                 // Also select related entity names where possible
                 'persons.name as person_name',
@@ -142,7 +143,7 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('type', 'activities.type');
         $this->addFilter('status', 'activities.status');
         $this->addFilter('is_done', 'activities.is_done');
-        $this->addFilter('created_by', DB::raw("CONCAT(users.first_name, ' ', users.last_name)"));
+        $this->addFilter('created_by', DB::raw(DatabaseHelper::concatUserName('users.')));
         $this->addFilter('assigned_user_id', 'users.id');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');

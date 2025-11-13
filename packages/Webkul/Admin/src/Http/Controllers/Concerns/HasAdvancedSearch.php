@@ -121,6 +121,39 @@ trait HasAdvancedSearch
             }
         }
 
+        // Handle search parameter without searchFields (common case from frontend)
+        // Convert plain text search to proper format if searchFields is missing
+        if ($search && !$searchFields && !str_contains($search, ':')) {
+            // Plain text search without field tokens - convert to name search
+            $rawSearchTerm = trim((string) $search);
+            $tokens = preg_split('/\s+/', $rawSearchTerm, -1, PREG_SPLIT_NO_EMPTY);
+            
+            if (count($tokens) > 1) {
+                // Multi-token: apply tokenized AND-of-ORs
+                $this->applyMultiTokenSearch($repository, $tokens, $config['name_fields']);
+                // Clear search params to prevent RequestCriteria from applying additional filters
+                $search = '';
+                $searchFields = '';
+            } else {
+                // Single token: convert to name search with like operator
+                $nameFields = $config['name_fields'];
+                $searchTokens = [];
+                $searchFieldTokens = [];
+
+                foreach ($nameFields as $field) {
+                    $searchTokens[] = $field . ':' . $rawSearchTerm;
+                    $searchFieldTokens[] = $field . ':like';
+                }
+
+                $search = implode(';', $searchTokens) . ';';
+                $searchFields = implode(';', $searchFieldTokens) . ';';
+                $searchJoin = 'or';
+
+                // Store for email/phone search (will be added in normalizeEmailPhoneSearch)
+                $simpleQueryTerm = $rawSearchTerm;
+            }
+        }
+
         // Normalize legacy search params: map `name` to configured name fields
         [$search, $searchFields, $searchJoin] = $this->normalizeNameSearch($config['name_fields'], $search, $searchFields, $searchJoin);
 
@@ -152,8 +185,11 @@ trait HasAdvancedSearch
             ]);
         }
 
-        // Validate requested search fields against repository's searchable fields
+        // Validate and sanitize search fields - remove invalid field tokens from search
         $fieldsSearchable = $getFieldsSearchable();
+        [$search, $searchFields] = $this->sanitizeInvalidSearchFields($fieldsSearchable, $search, $searchFields);
+
+        // Validate requested search fields against repository's searchable fields
         if ($resp = $this->validateSearchFieldsAgainstAllowed($fieldsSearchable, $searchFields)) {
             return $resp;
         }
@@ -455,6 +491,80 @@ trait HasAdvancedSearch
                 $repository->whereIn('user_id', $userIds);
             }
         }
+    }
+
+    /**
+     * Sanitize search string by removing invalid field tokens and converting them to plain text search.
+     * 
+     * @return array [sanitizedSearch, sanitizedSearchFields]
+     */
+    protected function sanitizeInvalidSearchFields(array $fieldsSearchable, string $search, string $searchFields): array
+    {
+        if (empty($search) || !str_contains($search, ':')) {
+            return [$search, $searchFields];
+        }
+
+        $allowed = [];
+        foreach ($fieldsSearchable as $key => $value) {
+            $allowed[] = is_int($key) ? $value : $key;
+        }
+
+        $tokens = array_filter(array_map('trim', explode(';', $search)));
+        $validTokens = [];
+        $invalidTerms = [];
+
+        foreach ($tokens as $token) {
+            if (!str_contains($token, ':')) {
+                // Plain text token, keep as-is
+                $validTokens[] = $token;
+                continue;
+            }
+
+            $parts = explode(':', $token, 2);
+            $field = trim($parts[0] ?? '');
+            $value = trim($parts[1] ?? '');
+
+            if ($field === '' || $value === '') {
+                // Invalid format, treat as plain text
+                $invalidTerms[] = $token;
+                continue;
+            }
+
+            if (in_array($field, $allowed, true)) {
+                // Valid field, keep token
+                $validTokens[] = $token;
+            } else {
+                // Invalid field, extract value as plain text search term
+                $invalidTerms[] = $value;
+            }
+        }
+
+        // If we have invalid terms, add them as plain text search on name fields
+        if (!empty($invalidTerms)) {
+            $nameFields = $this->getSearchConfig()['name_fields'] ?? ['first_name', 'last_name'];
+            foreach ($invalidTerms as $term) {
+                foreach ($nameFields as $nameField) {
+                    $validTokens[] = $nameField . ':' . $term;
+                }
+            }
+            // Update searchFields to include name fields if not already present
+            if ($searchFields) {
+                $sfParts = array_filter(array_map('trim', explode(';', $searchFields)));
+                $existingFields = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
+                foreach ($nameFields as $nf) {
+                    if (!in_array($nf, $existingFields, true)) {
+                        $sfParts[] = $nf . ':like';
+                    }
+                }
+                $searchFields = implode(';', $sfParts) . ';';
+            } else {
+                $searchFields = implode(';', array_map(fn($nf) => $nf . ':like', $nameFields)) . ';';
+            }
+        }
+
+        $sanitizedSearch = !empty($validTokens) ? implode(';', $validTokens) . ';' : '';
+
+        return [$sanitizedSearch, $searchFields];
     }
 
     /**

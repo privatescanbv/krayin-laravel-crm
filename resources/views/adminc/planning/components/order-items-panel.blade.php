@@ -8,7 +8,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @foreach ($orderItems as $item)
             @php
-                $statusValue = is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw');
+                $statusValue = is_string($item->status) ? $item->status : ($item->status?->value ?? 'new');
                 $statusLabel = is_object($item->status) && method_exists($item->status, 'label')
                     ? $item->status->label()
                     : ucfirst(str_replace('_', ' ', $statusValue));
@@ -19,7 +19,7 @@
                 <div class="flex justify-between items-start mb-2">
                     <h4 class="font-medium text-sm">{{ $item->product->fullName ?? 'Onbekend product' }}</h4>
                     <span
-                        class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'ingepland' ? 'bg-green-100 text-green-800' : ($statusValue === 'moet_worden_ingepland' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
+                        class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'planned' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                         {{ $statusLabel }}
                     </span>
                 </div>

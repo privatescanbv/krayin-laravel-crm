@@ -126,11 +126,8 @@ class AttributeRepository extends Repository
             
             $searchTerm = '%'.urldecode($query).'%';
 
-            // Database-agnostic concatenation: SQLite uses ||, MySQL uses CONCAT
-            $driver = \Illuminate\Support\Facades\DB::getDriverName();
-            $concatExpr = $driver === 'sqlite' 
-                ? "(users.first_name || ' ' || users.last_name)"
-                : "CONCAT(users.first_name, ' ', users.last_name)";
+            // Database-agnostic concatenation
+            $concatExpr = \App\Helpers\DatabaseHelper::concatUserName('users.');
 
             if ($currentUser?->view_permission === 'group') {
                 return $userRepository->leftJoin('user_groups', 'users.id', '=', 'user_groups.user_id')

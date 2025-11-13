@@ -4,31 +4,31 @@ namespace App\Enums;
 
 enum OrderStatus: string
 {
-    case NIEUW = 'nieuw';
-    case INGEPLAND = 'ingepland';
-    case VERSTUURD = 'verstuurd';
-    case AKKOORD = 'akkoord';
-    case AFGEWEZEN = 'afgewezen';
+    case NEW = 'new';
+    case PLANNED = 'planned';
+    case SENT = 'sent';
+    case APPROVED = 'approved';
+    case REJECTED = 'rejected';
 
     public function label(): string
     {
         return match ($this) {
-            self::NIEUW      => 'Nieuw',
-            self::INGEPLAND  => 'Ingepland',
-            self::VERSTUURD  => 'Verstuurd',
-            self::AKKOORD    => 'Akkoord',
-            self::AFGEWEZEN  => 'Afgewezen',
+            self::NEW       => 'Nieuw',
+            self::PLANNED   => 'Ingepland',
+            self::SENT      => 'Verstuurd',
+            self::APPROVED  => 'Akkoord',
+            self::REJECTED  => 'Afgewezen',
         };
     }
 
     public function getStatusClass(): string
     {
         return match ($this) {
-            self::NIEUW      => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-            self::INGEPLAND  => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-            self::VERSTUURD  => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-            self::AKKOORD    => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-            self::AFGEWEZEN  => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+            self::NEW       => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+            self::PLANNED   => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+            self::SENT      => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+            self::APPROVED  => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+            self::REJECTED  => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
         };
     }
 }

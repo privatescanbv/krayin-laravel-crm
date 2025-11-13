@@ -109,7 +109,7 @@ test('lead won creates sales lead and order', function (): void {
 
     $order = Order::where('sales_lead_id', $salesLead->id)->first();
     $this->assertNotNull($order, 'Order not created for new SalesLead');
-    $this->assertSame(OrderStatus::NIEUW, $order->status);
+    $this->assertSame(OrderStatus::NEW, $order->status);
     $this->assertSame(0.00, (float) $order->total_price);
 
     // Assert: a system activity was created on the lead linking to the new sales lead

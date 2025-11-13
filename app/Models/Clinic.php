@@ -54,4 +54,9 @@ class Clinic extends Model
     {
         return $this->hasMany(Activity::class);
     }
+
+    public function emails()
+    {
+        return $this->hasMany(\Webkul\Email\Models\Email::class);
+    }
 }

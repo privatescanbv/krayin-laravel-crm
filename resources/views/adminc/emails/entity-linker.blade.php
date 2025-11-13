@@ -2,6 +2,7 @@
 @include('adminc.components.contact-person-selector')
 @include('adminc.components.lead-selector')
 @include('adminc.components.sales-lead-selector')
+@include('adminc.components.clinic-selector')
 
 @pushOnce('scripts')
     @verbatim
@@ -60,6 +61,18 @@
                         @update:value="val => { /* handled by @change */ }"
                     />
                 </template>
+
+                <template v-else-if="selectedEntityType === 'clinic'">
+                    <v-clinic-selector
+                        label="Clinic"
+                        placeholder="Zoek clinic..."
+                        :current-value="email?.clinic_id || null"
+                        :current-label="email?.clinic?.name || ''"
+                        :can-add-new="false"
+                        @change="onClinicSelected"
+                        @update:value="val => { /* handled by @change */ }"
+                    />
+                </template>
             </div>
         </script>
 
@@ -84,6 +97,7 @@
                             { value: 'lead', label: 'Lead' },
                             { value: 'sales_lead', label: 'Sales' },
                             { value: 'person', label: 'Contact' },
+                            { value: 'clinic', label: 'Clinic' },
                         ],
                     };
                 },
@@ -97,6 +111,8 @@
                         this.salesLeadItems = [{ id: this.email.sales_lead_id, name: this.email.sales_lead?.name || `Sales #${this.email.sales_lead_id}` }];
                     } else if (this.email?.person_id) {
                         this.selectedEntityType = 'person';
+                    } else if (this.email?.clinic_id) {
+                        this.selectedEntityType = 'clinic';
                     }
                 },
                 methods: {
@@ -116,6 +132,12 @@
                     onPersonSelected(person) {
                         if (person) {
                             this.pendingEntity = { ...person, type: 'person' };
+                            this.saveSelection();
+                        }
+                    },
+                    onClinicSelected(clinic) {
+                        if (clinic) {
+                            this.pendingEntity = { ...clinic, type: 'clinic' };
                             this.saveSelection();
                         }
                     },

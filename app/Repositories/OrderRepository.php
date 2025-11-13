@@ -18,7 +18,7 @@ class OrderRepository extends Repository
         return $this->create(
             ['title'            => 'Order voor '.$salesLeadName,
                 'total_price'   => 0.00,
-                'status'        => OrderStatus::NIEUW,
+                'status'        => OrderStatus::NEW,
                 'sales_lead_id' => $salesLeadId]
         );
     }

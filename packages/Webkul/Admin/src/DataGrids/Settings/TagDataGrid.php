@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Settings;
 
+use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -19,7 +20,7 @@ class TagDataGrid extends DataGrid
                 'tags.name',
                 'tags.color',
                 'tags.created_at',
-                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as user_name"),
+                DB::raw(DatabaseHelper::concatUserName('users.', 'user_name')),
             )
             ->leftJoin('users', 'tags.user_id', '=', 'users.id');
 

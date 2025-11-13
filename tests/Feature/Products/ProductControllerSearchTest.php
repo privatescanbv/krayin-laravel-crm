@@ -1,72 +1,42 @@
 <?php
 
-use Database\Seeders\TestSeeder;
-use Illuminate\Auth\Middleware\Authenticate;
+use Tests\Feature\Concerns\ControllerSearchTestHelpers;
 use Webkul\Product\Models\Product;
-use Webkul\User\Models\User;
+
+uses(ControllerSearchTestHelpers::class);
 
 beforeEach(function () {
-    $this->seed(TestSeeder::class);
-
-    // Create and authenticate a back-office user
-    $this->user = User::factory()->create(['first_name' => 'Admin', 'last_name' => 'Tester']);
-    $this->actingAs($this->user, 'user');
-    $this->withoutMiddleware(Authenticate::class);
+    $this->setUpSearchTest();
 });
 
 test('product search with query parameter filters by name', function () {
-    // Create products that should be found
     $productMatch = Product::factory()->create(['name' => 'MRI Scan']);
     $productPartial = Product::factory()->create(['name' => 'MRI Scan with Contrast']);
-
-    // Create product that should NOT be found
     $productNoMatch = Product::factory()->create(['name' => 'CT Scan']);
 
-    // Search with query parameter
-    $response = $this->getJson(route('admin.products.search', [
-        'query' => 'MRI',
-    ]));
+    $response = $this->performSearch('admin.products.search', ['query' => 'MRI']);
 
-    $response->assertOk();
-    $data = $response->json('data');
-
-    expect($data)->toBeArray();
-    $ids = collect($data)->pluck('id')->toArray();
-
-    expect($ids)->toContain($productMatch->id)
-        ->and($ids)->toContain($productPartial->id)
-        ->and($ids)->not->toContain($productNoMatch->id);
+    $this->assertEntityFound($response, $productMatch->id);
+    $this->assertEntityFound($response, $productPartial->id);
+    $this->assertEntityNotFound($response, $productNoMatch->id);
 });
 
 test('product search returns empty array when no matches', function () {
     Product::factory()->create(['name' => 'MRI Scan']);
     Product::factory()->create(['name' => 'CT Scan']);
 
-    $response = $this->getJson(route('admin.products.search', [
-        'query' => 'NonExistent',
-    ]));
+    $response = $this->performSearch('admin.products.search', ['query' => 'NonExistent']);
 
-    $response->assertOk();
-    $data = $response->json('data');
-
-    expect($data)->toBeArray()
-        ->and($data)->toBeEmpty();
+    $this->assertSearchEmpty($response);
 });
 
 test('product search returns all when query is empty', function () {
     $product1 = Product::factory()->create(['name' => 'MRI Scan']);
     $product2 = Product::factory()->create(['name' => 'CT Scan']);
 
-    $response = $this->getJson(route('admin.products.search'));
+    $response = $this->performSearch('admin.products.search');
 
-    $response->assertOk();
-    $data = $response->json('data');
-
-    expect($data)->toBeArray();
-    $ids = collect($data)->pluck('id')->toArray();
-
-    expect($ids)->toContain($product1->id)
-        ->and($ids)->toContain($product2->id);
+    $this->assertSearchReturnsAll($response, [$product1->id, $product2->id]);
 });
 
 test('product search response has correct structure', function () {
@@ -93,26 +63,12 @@ test('product search is case insensitive', function () {
     $product2 = Product::factory()->create(['name' => 'mri scan with contrast']);
 
     // Search with lowercase
-    $response = $this->getJson(route('admin.products.search', [
-        'query' => 'mri',
-    ]));
-
-    $response->assertOk();
-    $data = $response->json('data');
-    $ids = collect($data)->pluck('id')->toArray();
-
-    expect($ids)->toContain($product1->id)
-        ->and($ids)->toContain($product2->id);
+    $response = $this->performSearch('admin.products.search', ['query' => 'mri']);
+    $this->assertEntityFound($response, $product1->id);
+    $this->assertEntityFound($response, $product2->id);
 
     // Search with uppercase
-    $response = $this->getJson(route('admin.products.search', [
-        'query' => 'MRI',
-    ]));
-
-    $response->assertOk();
-    $data = $response->json('data');
-    $ids = collect($data)->pluck('id')->toArray();
-
-    expect($ids)->toContain($product1->id)
-        ->and($ids)->toContain($product2->id);
+    $response = $this->performSearch('admin.products.search', ['query' => 'MRI']);
+    $this->assertEntityFound($response, $product1->id);
+    $this->assertEntityFound($response, $product2->id);
 });

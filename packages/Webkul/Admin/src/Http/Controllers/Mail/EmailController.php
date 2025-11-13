@@ -91,7 +91,7 @@ class EmailController extends Controller
     {
         try {
             $email = $this->emailRepository
-                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead'])
+                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead', 'clinic'])
                 ->findOrFail(request('id'));
 
             if (request('route') == 'draft') {

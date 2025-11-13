@@ -23,8 +23,19 @@
                     params.search = `phone:${digitsOnly};`;
                     params.searchFields = `phones:like;`;
                 } else {
-                    // Regular text search
-                    params.search = cleaned;
+                    // Check if query contains colon but is not a valid fielded search pattern
+                    // If it contains colon but doesn't match known patterns, treat as plain text
+                    const hasColon = cleaned.includes(':');
+                    const looksLikeFieldedSearch = /^(email|emails|phone|phones|name|first_name|last_name|married_name|organization\.name|user\.name):/.test(cleaned);
+
+                    if (hasColon && !looksLikeFieldedSearch) {
+                        // Contains colon but not a valid field pattern - treat as plain text query
+                        // This prevents errors when users accidentally type colons (e.g., "desiree:" or "des:1")
+                        params.query = cleaned;
+                    } else {
+                        // Regular text search or valid fielded search
+                        params.search = cleaned;
+                    }
                 }
 
                 if (opts.leadId) {

@@ -2,6 +2,7 @@
 
 namespace Webkul\Activity\Repositories;
 
+use App\Helpers\DatabaseHelper;
 use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
@@ -95,7 +96,7 @@ class ActivityRepository extends Repository
             'activities.title',
             'activities.schedule_from as start',
             'activities.schedule_to as end',
-            DB::raw("CONCAT(users.first_name, ' ', users.last_name) as user_name"),
+            DB::raw(DatabaseHelper::concatUserName('users.', 'user_name')),
         )
             ->addSelect(DB::raw('IF(activities.is_done, "done", "") as class'))
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')

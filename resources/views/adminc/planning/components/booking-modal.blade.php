@@ -7,7 +7,12 @@
         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
             <!-- Order item selection -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orderitem</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Orderitem
+                    <span class="text-xs text-gray-500 font-normal ml-2">
+                        (Nog niet ingeplande items staan bovenaan)
+                    </span>
+                </label>
                 <select
                     v-model.number="form.order_item_id"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
@@ -15,12 +20,53 @@
                     @click.stop
                 >
                     <option value="">Selecteer orderitem</option>
-                    <option v-for="item in orderItems" :key="item.id" :value="item.id"
-                            :disabled="!item.can_plan">
-                        @{{ item.product_name }} (Aantal: @{{ item.quantity }}) @{{
-                        !item.can_plan ? '- Niet planbaar' : '' }}
-                    </option>
+                    <!-- Unplanned items first -->
+                    <optgroup v-if="sortedOrderItems.filter(item => item.can_plan && (!item.bookings || item.bookings.length === 0)).length > 0"
+                              label="━━━ Nog niet ingepland (voorrang) ━━━">
+                        <option
+                            v-for="item in sortedOrderItems.filter(item => item.can_plan && (!item.bookings || item.bookings.length === 0))"
+                            :key="item.id"
+                            :value="item.id"
+                        >
+                            ✓ @{{ item.product_name }} (Aantal: @{{ item.quantity }})
+                        </option>
+                    </optgroup>
+                    <!-- Planned items -->
+                    <optgroup v-if="sortedOrderItems.filter(item => item.can_plan && item.bookings && item.bookings.length > 0).length > 0"
+                              label="━━━ Al ingepland (aanpassen) ━━━">
+                        <option
+                            v-for="item in sortedOrderItems.filter(item => item.can_plan && item.bookings && item.bookings.length > 0)"
+                            :key="item.id"
+                            :value="item.id"
+                        >
+                            📅 @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
+                        </option>
+                    </optgroup>
+                    <!-- Not planable items -->
+                    <optgroup v-if="sortedOrderItems.filter(item => !item.can_plan).length > 0"
+                              label="━━━ Niet planbaar ━━━">
+                        <option
+                            v-for="item in sortedOrderItems.filter(item => !item.can_plan)"
+                            :key="item.id"
+                            :value="item.id"
+                            :disabled="true"
+                        >
+                            ⚠ @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - Niet planbaar
+                        </option>
+                    </optgroup>
                 </select>
+                <!-- Show booking details for selected item -->
+                <div v-if="selectedOrderItem && selectedOrderItem.bookings && selectedOrderItem.bookings.length > 0"
+                     class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                    <div class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                        Huidige planning voor dit orderitem:
+                    </div>
+                    <div v-for="(booking, index) in selectedOrderItem.bookings" :key="booking.id"
+                         class="text-xs text-blue-700 dark:text-blue-300 mb-1">
+                        <span class="font-medium">@{{ booking.resource_name }}</span> -
+                        @{{ formatBookingDate(booking.from) }} tot @{{ formatBookingTime(booking.to) }}
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>

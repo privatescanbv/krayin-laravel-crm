@@ -11,25 +11,53 @@ class OrderStatusService
 {
     /**
      * Calculate the correct status for an Order.
+     *
+     * Rules:
+     * - Only order items that can be planned (have partner products) are considered
+     * - If all planable order items are PLANNED → Order status is PLANNED
+     * - If any planable order item is not PLANNED → Order status is NEW
+     * - If no planable order items exist → Order status is NEW
      */
     public function calculate(Order $order): OrderStatus
     {
+        // Get order items with their product information
         $orderItems = DB::table('order_items')
             ->where('order_id', $order->id)
-            ->get(['status']);
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
+            ->select(
+                'order_items.id',
+                'order_items.status',
+                'order_items.product_id',
+                DB::raw('COUNT(partner_products.id) as partner_product_count')
+            )
+            ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id')
+            ->get();
 
         if ($orderItems->isEmpty()) {
-            return OrderStatus::NIEUW;
+            return OrderStatus::NEW;
         }
 
-        foreach ($orderItems as $orderItem) {
-            if ((int) $orderItem->status === OrderItemStatus::MOET_WORDEN_INGEPLAND->value) {
-                // Any item that still must be planned means the order is not fully ready
-                return $order->status ?? OrderStatus::NIEUW;
+        // Filter to only planable items (items with partner products)
+        $planableItems = $orderItems->filter(function ($item) {
+            return $item->partner_product_count > 0;
+        });
+
+        // If there are no planable items, order status is NEW
+        if ($planableItems->isEmpty()) {
+            return OrderStatus::NEW;
+        }
+
+        // Check if all planable items are planned
+        foreach ($planableItems as $orderItem) {
+            if ($orderItem->status !== OrderItemStatus::PLANNED->value) {
+                // At least one planable item is not planned, so order should be NEW
+                return OrderStatus::NEW;
             }
         }
 
-        return OrderStatus::INGEPLAND;
+        // All planable items are planned
+        return OrderStatus::PLANNED;
     }
 
     /**
@@ -56,7 +84,7 @@ class OrderStatusService
         // Fetch current status minimally
         $row = DB::table('orders')->where('id', $orderId)->first(['status']);
         if ($row) {
-            $order->status = OrderStatus::tryFrom((int) $row->status);
+            $order->status = OrderStatus::tryFrom($row->status);
         }
 
         $this->recalculateAndPersist($order);

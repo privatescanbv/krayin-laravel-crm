@@ -81,21 +81,11 @@ class OrderItemObserver
             ->exists();
 
         if ($hasResourceOrderItem) {
-            return OrderItemStatus::INGEPLAND;
+            return OrderItemStatus::PLANNED;
         }
 
-        // Check if product has partner products (needs planning)
-        if ($orderItem->product_id) {
-            $hasPartnerProducts = DB::table('partner_products')
-                ->where('product_id', $orderItem->product_id)
-                ->exists();
-
-            if ($hasPartnerProducts) {
-                return OrderItemStatus::MOET_WORDEN_INGEPLAND;
-            }
-        }
-
-        return OrderItemStatus::NIEUW;
+        // If not planned, status is NEW
+        return OrderItemStatus::NEW;
     }
 
     /**

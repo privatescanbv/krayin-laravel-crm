@@ -1257,7 +1257,7 @@ class LeadController extends Controller
                 'filterable_options' => [
                     'repository' => UserRepository::class,
                     'column' => [
-                        'label' => DB::raw("CONCAT(users.first_name, ' ', users.last_name)"),
+                        'label' => DB::raw(\App\Helpers\DatabaseHelper::concatUserName('users.')),
                         'value' => 'id',
                     ],
                 ],

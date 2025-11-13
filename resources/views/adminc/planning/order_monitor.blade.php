@@ -35,7 +35,7 @@
                     'product_name' => $item->product?->name ?? 'Onbekend product',
                     'quantity' => $item->quantity,
                     'duration' => $duration, // Duration in minutes
-                    'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw')),
+                    'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'new')),
                     'can_plan' => $item->product && method_exists($item->product, 'partnerProducts') && $item->product->partnerProducts()->exists(),
                     'bookings' => $item->resourceOrderItems->map(function ($booking) {
                         return [
@@ -252,6 +252,17 @@
                             label: item.product_name + ' (Aantal: ' + item.quantity + ')' + (!item.can_plan ? ' - Niet planbaar' : '')
                         }));
                     },
+                    // Sorted order items: unplanned first, then planned
+                    sortedOrderItems() {
+                        const unplanned = this.orderItems.filter(item =>
+                            item.can_plan && (!item.bookings || item.bookings.length === 0)
+                        );
+                        const planned = this.orderItems.filter(item =>
+                            item.can_plan && item.bookings && item.bookings.length > 0
+                        );
+                        const notPlanable = this.orderItems.filter(item => !item.can_plan);
+                        return [...unplanned, ...planned, ...notPlanable];
+                    },
                     selectedOrderItem() {
                         if (!this.form.order_item_id) return null;
                         return this.orderItems.find(item => item.id === this.form.order_item_id);
@@ -312,6 +323,19 @@
                             this.loadAvailability();
                         }
                     },
+                    formatBookingDate(dateString) {
+                        const date = new Date(dateString);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        return `${day}-${month}-${year}`;
+                    },
+                    formatBookingTime(dateString) {
+                        const date = new Date(dateString);
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        return `${hours}:${minutes}`;
+                    },
                     openBook(block) {
                         this.form.resource_id = block.resource_id;
                         const pad = (n) => String(n).padStart(2, '0');
@@ -320,7 +344,7 @@
                         this.form.to = toLocal(new Date(block.to));
                         // Preselect the first order item that is planable and not yet planned
                         if (!this.form.order_item_id) {
-                            const candidate = this.orderItems.find(item => item.can_plan && item.status !== 'ingepland');
+                            const candidate = this.sortedOrderItems.find(item => item.can_plan && (!item.bookings || item.bookings.length === 0));
                             if (candidate) {
                                 this.form.order_item_id = candidate.id;
                             }

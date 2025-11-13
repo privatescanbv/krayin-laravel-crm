@@ -42,8 +42,8 @@ class ResourceOrderItemObserver
             ->exists();
 
         $newStatus = $hasResourceOrderItem
-            ? OrderItemStatus::INGEPLAND
-            : $this->calculateStatusWithoutPlanning($resourceOrderItem->orderitem_id);
+            ? OrderItemStatus::PLANNED
+            : OrderItemStatus::NEW;
 
         // Update the OrderItem status
         DB::table('order_items')
@@ -58,28 +58,5 @@ class ResourceOrderItemObserver
         if ($orderItem && $orderItem->order_id) {
             $this->orderStatusService->recalculateAndPersistById((int) $orderItem->order_id);
         }
-    }
-
-    /**
-     * Calculate status for an OrderItem without planning.
-     */
-    private function calculateStatusWithoutPlanning(int $orderItemId): OrderItemStatus
-    {
-        $orderItem = DB::table('order_items')
-            ->where('id', $orderItemId)
-            ->first();
-
-        if (! $orderItem || ! $orderItem->product_id) {
-            return OrderItemStatus::NIEUW;
-        }
-
-        // Check if product has partner products
-        $hasPartnerProducts = DB::table('partner_products')
-            ->where('product_id', $orderItem->product_id)
-            ->exists();
-
-        return $hasPartnerProducts
-            ? OrderItemStatus::MOET_WORDEN_INGEPLAND
-            : OrderItemStatus::NIEUW;
     }
 }

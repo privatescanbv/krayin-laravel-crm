@@ -12,6 +12,10 @@ use Illuminate\Support\ServiceProvider;
 use Webkul\Admin\Exceptions\Handler;
 use Webkul\Admin\Http\Middleware\Bouncer as BouncerMiddleware;
 use Webkul\Admin\Http\Middleware\Locale;
+use Webkul\Contact\Models\Organization;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
+use Webkul\Product\Models\Product;
 
 class AdminServiceProvider extends ServiceProvider
 {
@@ -44,10 +48,10 @@ class AdminServiceProvider extends ServiceProvider
         $this->app->bind(ExceptionHandler::class, Handler::class);
 
         Relation::morphMap([
-            'leads'         => \Webkul\Lead\Models\Lead::class,
-            'organizations' => \Webkul\Contact\Models\Organization::class,
-            'persons'       => \Webkul\Contact\Models\Person::class,
-            'products'      => \Webkul\Product\Models\Product::class,
+            'leads'         => Lead::class,
+            'organizations' => Organization::class,
+            'persons'       => Person::class,
+            'products'      => Product::class,
         ]);
 
         $this->app->register(EventServiceProvider::class);

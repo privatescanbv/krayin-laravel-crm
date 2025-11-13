@@ -33,7 +33,7 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
-                    @php $mailDisabled = $orders->status !== OrderStatus::INGEPLAND; @endphp
+                    @php $mailDisabled = $orders->status !== OrderStatus::PLANNED; @endphp
                     @if ($orders->sales_lead_id)
                         <button
                             type="button"

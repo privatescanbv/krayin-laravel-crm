@@ -53,7 +53,7 @@ trait ConcatsEmailActivities
                         'updated_at'          => $attachment->updated_at,
                     ];
                 })->toArray(),
-                'emailLinkedEntityType' => $email->activity_id ? 'activity' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : 'unknown'))),
+                'emailLinkedEntityType' => $email->activity_id ? 'activity' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))),
                 'created_at'    => $email->created_at,
                 'updated_at'    => $email->updated_at,
             ];

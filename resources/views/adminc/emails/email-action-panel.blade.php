@@ -118,6 +118,7 @@
                     lead: false,
                     contact: false,
                     sales_lead: false,
+                    clinic: false,
                 },
 
                 tagTextColor: {
@@ -176,6 +177,15 @@
                         url: '{{ route('admin.contacts.persons.view', ':id') }}'.replace(':id', this.email.person_id),
                     };
                 }
+                if (this.email?.clinic_id && this.email?.clinic) {
+                    return {
+                        type: 'clinic',
+                        id: this.email.clinic_id,
+                        label: this.email.clinic.name,
+                        subtitle: 'Clinic',
+                        url: '{{ route('admin.clinics.view', ':id') }}'.replace(':id', this.email.clinic_id),
+                    };
+                }
                 if (this.email?.activity_id && this.email?.activity) {
                     return {
                         type: 'activity',
@@ -202,6 +212,11 @@
                 this.email.sales_lead = @json($email->salesLead);
                 this.email.sales_lead_id = {{ $email->sales_lead_id ?? 'null' }};
             @endif
+
+            @if ($email->clinic)
+                this.email.clinic = @json($email->clinic);
+                this.email.clinic_id = {{ $email->clinic_id ?? 'null' }};
+            @endif
         },
 
         methods: {
@@ -213,6 +228,7 @@
                             person_id: null,
                             lead_id: null,
                             sales_lead_id: null,
+                            clinic_id: null,
                             activity_id: null,
                         }).then(response => {
                             this.email.person = null;
@@ -221,6 +237,8 @@
                             this.email.lead_id = null;
                             this.email.sales_lead = null;
                             this.email.sales_lead_id = null;
+                            this.email.clinic = null;
+                            this.email.clinic_id = null;
                             this.email.activity = null;
                             this.email.activity_id = null;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
@@ -240,10 +258,12 @@
                     person_id: person.id,
                     lead_id: null,
                     sales_lead_id: null,
+                    clinic_id: null,
                 })
                     .then (response => {
                         this.email.lead = this.email.lead_id = null;
                         this.email.sales_lead = this.email.sales_lead_id = null;
+                        this.email.clinic = this.email.clinic_id = null;
                         this.email.person = person;
                         this.email.person_id = person.id;
                         this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
@@ -279,10 +299,12 @@
                     lead_id: lead.id,
                     person_id: null,
                     sales_lead_id: null,
+                    clinic_id: null,
                 })
                     .then (response => {
                         this.email.person = this.email.person_id = null;
                         this.email.sales_lead = this.email.sales_lead_id = null;
+                        this.email.clinic = this.email.clinic_id = null;
                         this.email.lead = lead;
                         this.email.lead_id = lead.id;
                         this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
@@ -297,11 +319,13 @@
                     sales_lead_id: salesLead.id,
                     person_id: null,
                     lead_id: null,
+                    clinic_id: null,
                     activity_id: null,
                 })
                     .then (response => {
                         this.email.person = this.email.person_id = null;
                         this.email.lead = this.email.lead_id = null;
+                        this.email.clinic = this.email.clinic_id = null;
                         this.email.sales_lead = salesLead;
                         this.email.sales_lead_id = salesLead.id;
                         this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
@@ -380,6 +404,48 @@
                 });
             },
 
+            linkClinic(clinic) {
+                this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                    _method: 'PUT',
+                    clinic_id: clinic.id,
+                    person_id: null,
+                    lead_id: null,
+                    sales_lead_id: null,
+                    activity_id: null,
+                })
+                    .then (response => {
+                        this.email.person = this.email.person_id = null;
+                        this.email.lead = this.email.lead_id = null;
+                        this.email.sales_lead = this.email.sales_lead_id = null;
+                        this.email.clinic = clinic;
+                        this.email.clinic_id = clinic.id;
+                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        window.location.reload();
+                    })
+                    .catch (error => {});
+            },
+
+            unlinkClinic() {
+                this.$emitter.emit('open-confirm-modal', {
+                    agree: () => {
+                        this.unlinking.clinic = true;
+
+                        this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                            _method: 'PUT',
+                            clinic_id: null,
+                        })
+                            .then (response => {
+                                this.email['clinic'] = this.email['clinic_id'] = null;
+
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                window.location.reload();
+                            })
+                            .catch (error => {})
+                            .finally(() => this.unlinking.clinic = false);
+                    },
+                });
+            },
+
             openContactModal() {
                 this.$refs.createContact.$refs.contactModal.open();
             },
@@ -395,6 +461,8 @@
                     this.linkSalesLead(entity);
                 } else if (entity.type === 'person') {
                     this.linkContact(entity);
+                } else if (entity.type === 'clinic') {
+                    this.linkClinic(entity);
                 } else if (entity.type === 'activity') {
                     this.linkActivity(entity);
                 }
@@ -407,6 +475,8 @@
                     this.unlinkSalesLead();
                 } else if (entityType === 'person') {
                     this.unlinkContact();
+                } else if (entityType === 'clinic') {
+                    this.unlinkClinic();
                 } else if (entityType === 'activity') {
                     this.resetLink();
                 }

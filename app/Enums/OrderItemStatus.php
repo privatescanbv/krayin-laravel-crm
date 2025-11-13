@@ -4,16 +4,14 @@ namespace App\Enums;
 
 enum OrderItemStatus: string
 {
-    case NIEUW = 'nieuw';
-    case MOET_WORDEN_INGEPLAND = 'moet_worden_ingepland';
-    case INGEPLAND = 'ingepland';
+    case NEW = 'new';
+    case PLANNED = 'planned';
 
     public function label(): string
     {
         return match ($this) {
-            self::NIEUW                   => 'Nieuw',
-            self::MOET_WORDEN_INGEPLAND   => 'Moet worden ingepland',
-            self::INGEPLAND               => 'Ingepland',
+            self::NEW     => 'Nieuw',
+            self::PLANNED => 'Ingepland',
         };
     }
 }

@@ -45,7 +45,7 @@
 
                     // Calculate template product ID for Vue component
                     $templateProductId = old('product_id', $preSelectedProductId ?? null);
-                    
+
                     // Calculate selected resources for Vue component
                     $selectedResources = old('resources', []);
                 @endphp
@@ -61,10 +61,10 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 @lang('admin::app.partner_products.index.create.select_template_product')
                             </label>
-                            
+
                             @include('adminc.components.product-selector')
-                            
-                            @if($templateProductId)
+
+                            @if ($templateProductId)
                             <v-product-selector
                                 id="template-product-selector"
                                 name="product_id"
@@ -134,7 +134,7 @@
 
             el.dispatchEvent(new Event('input', {bubbles: true}));
             el.dispatchEvent(new Event('change', {bubbles: true}));
-            
+
             if (el.__vnode) {
                 el.dispatchEvent(new Event('input', { bubbles: true }));
             }
@@ -162,7 +162,7 @@
             });
 
             observer.observe(document.body, { childList: true, subtree: true });
-            
+
             // Also try immediately in case element was just added
             requestAnimationFrame(() => {
                 const element = document.querySelector(`[name="${name}"]`);
@@ -251,7 +251,7 @@
                     });
             };
         })();
-        
+
         window._loadTemplateProduct = loadTemplateProduct;
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -263,10 +263,10 @@
             });
 
             // Find the form
-            let form = document.querySelector('form[action*="partner_products"]') || 
+            let form = document.querySelector('form[action*="partner_products"]') ||
                        document.querySelector('form:not(.phpdebugbar-settings)') ||
                        document.querySelector('form');
-            
+
             if (form) {
                 // Use MutationObserver to detect when the Vue component adds/updates the hidden input
                 let lastProductId = null;
@@ -287,7 +287,7 @@
                                 }
                             });
                         }
-                        
+
                         // Check for attribute changes (when hidden input value is updated)
                         if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
                             const target = mutation.target;
@@ -320,7 +320,7 @@
                         }
                     }
                 });
-                
+
                 form.addEventListener('input', function(e) {
                     if (e.target.name === 'product_id' && e.target.value) {
                         const productId = parseInt(e.target.value);
@@ -351,9 +351,9 @@
                         }
                     }
                 });
-                
+
                 vueObserver.observe(document.body, { childList: true, subtree: true });
-                
+
                 // Also try immediately in case component is already mounted
                 requestAnimationFrame(() => {
                     const templateSelector = document.getElementById('template-product-selector');

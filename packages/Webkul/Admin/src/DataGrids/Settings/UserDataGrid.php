@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Settings;
 
+use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +20,7 @@ class UserDataGrid extends DataGrid
             ->distinct()
             ->addSelect(
                 'id',
-                DB::raw("TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) as name"),
+                DB::raw(DatabaseHelper::concat(['first_name', 'last_name'], ' ', true, true, 'name')),
                 'email',
                 'image',
                 'status',
@@ -184,7 +185,7 @@ class UserDataGrid extends DataGrid
                                     $scopeQueryBuilder->orWhere(function ($nameQuery) use ($value) {
                                         $nameQuery->where('users.first_name', 'LIKE', '%'.$value.'%')
                                                  ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
-                                                 ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ['%'.$value.'%']);
+                                                 ->orWhereRaw(DatabaseHelper::concatUserName('users.') . " LIKE ?", ['%'.$value.'%']);
                                     });
                                 } else {
                                     $scopeQueryBuilder->orWhere($column->getColumnName(), 'LIKE', '%'.$value.'%');
@@ -205,7 +206,7 @@ class UserDataGrid extends DataGrid
                                 $nameQuery->where(function ($subQuery) use ($value) {
                                     $subQuery->where('users.first_name', 'LIKE', '%'.$value.'%')
                                              ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
-                                             ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ['%'.$value.'%']);
+                                             ->orWhereRaw(DatabaseHelper::concatUserName('users.') . " LIKE ?", ['%'.$value.'%']);
                                 });
                             }
                         });

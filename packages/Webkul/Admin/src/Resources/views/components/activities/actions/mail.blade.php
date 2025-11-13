@@ -466,10 +466,14 @@
                               params.sales_lead_id = this.entity.id;
                           } else if (controlName === 'lead_id') {
                               params.lead_id = this.entity.id;
+                          } else if (controlName === 'clinic_id') {
+                              params.clinic_id = this.entity.id;
                           } else if (entityType === 'leads' || entityType === 'lead') {
                               params.lead_id = this.entity.id;
                           } else if (entityType === 'sales_leads' || entityType === 'sales_lead') {
                               params.sales_lead_id = this.entity.id;
+                          } else if (entityType === 'clinics' || entityType === 'clinic') {
+                              params.clinic_id = this.entity.id;
                           } else {
                               // Cannot determine entity type - throw error
                               const errorMsg = 'Kan entity type niet bepalen. entityControlName: "' + controlName + '", entityType: "' + entityType + '"';
@@ -683,11 +687,35 @@
                   save(params, { resetForm, setErrors  }) {
                       this.isStoring = true;
 
-                      const fallbackUrlTemplate = "{{ route('admin.leads.emails.store', 'replaceEntityId') }}";
                       const entityId = this.entity?.id ?? null;
-                      const resolvedStoreUrl = this.storeUrl && this.storeUrl.length
-                          ? this.storeUrl
-                          : (entityId ? fallbackUrlTemplate.replace('replaceEntityId', entityId) : '');
+                      let fallbackUrlTemplate = null;
+
+                      // Determine fallback URL based on entity control name
+                      if (this.entityControlName === 'clinic_id') {
+                          fallbackUrlTemplate = "{{ route('admin.clinics.emails.store', 'replaceEntityId') }}";
+                      } else if (this.entityControlName === 'lead_id') {
+                          fallbackUrlTemplate = "{{ route('admin.leads.emails.store', 'replaceEntityId') }}";
+                      } else if (this.entityControlName === 'sales_lead_id') {
+                          fallbackUrlTemplate = "{{ route('admin.sales-leads.emails.store', 'replaceEntityId') }}";
+                      } else if (this.entityControlName === 'person_id') {
+                          // Persons use the general mail store route, person_id is sent via form data
+                          fallbackUrlTemplate = "{{ route('admin.mail.store') }}";
+                      } else {
+                          // Default to leads for backward compatibility
+                          fallbackUrlTemplate = "{{ route('admin.leads.emails.store', 'replaceEntityId') }}";
+                      }
+
+                      let resolvedStoreUrl = null;
+                      if (this.storeUrl && this.storeUrl.length) {
+                          resolvedStoreUrl = this.storeUrl;
+                      } else if (fallbackUrlTemplate) {
+                          // For person_id, use the route as-is (no entity ID in URL)
+                          if (this.entityControlName === 'person_id') {
+                              resolvedStoreUrl = fallbackUrlTemplate;
+                          } else if (entityId) {
+                              resolvedStoreUrl = fallbackUrlTemplate.replace('replaceEntityId', entityId);
+                          }
+                      }
 
                       if (!resolvedStoreUrl || resolvedStoreUrl.includes('replaceEntityId')) {
                           this.isStoring = false;

@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Lead;
 
+use App\Helpers\DatabaseHelper;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -58,7 +59,7 @@ class LeadDataGrid extends DataGrid
                 'lead_pipeline_stages.name as stage',
                 'lead_tags.tag_id as tag_id',
                 'users.id as user_id',
-                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as sales_person"),
+                DB::raw(DatabaseHelper::concatUserName('users.', 'sales_person')),
                 DB::raw('GROUP_CONCAT(DISTINCT persons.name SEPARATOR ", ") as person_names'),
                 'tags.name as tag_name',
                 'lead_pipelines.rotten_days as pipeline_rotten_days',
@@ -87,7 +88,7 @@ class LeadDataGrid extends DataGrid
 
         $this->addFilter('id', 'leads.id');
         $this->addFilter('user', 'leads.user_id');
-        $this->addFilter('sales_person', DB::raw("CONCAT(users.first_name, ' ', users.last_name)"));
+        $this->addFilter('sales_person', DB::raw(DatabaseHelper::concatUserName('users.')));
         $this->addFilter('lead_source_name', 'lead_sources.name');
         $this->addFilter('lead_type_name', 'lead_types.name');
         $this->addFilter('person_names', 'persons.name');

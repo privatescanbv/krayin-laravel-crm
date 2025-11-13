@@ -70,6 +70,12 @@ Route::prefix('settings')->group(function () {
             Route::post('', 'store')->name('admin.clinics.activities.store');
         });
 
+        // Clinic Emails
+        Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\EmailController::class)->prefix('{id}/emails')->group(function () {
+            Route::post('', 'store')->name('admin.clinics.emails.store');
+            Route::delete('', 'detach')->name('admin.clinics.emails.detach');
+        });
+
         // Clinic Partner Products
         Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController::class)->prefix('{id}/partner-products')->group(function () {
             Route::get('', 'index')->name('admin.clinics.partner_products.index');

@@ -1,20 +1,15 @@
 <?php
 
 use App\Enums\ContactLabel;
-use Database\Seeders\TestSeeder;
-use Illuminate\Auth\Middleware\Authenticate;
+use Tests\Feature\Concerns\ControllerSearchTestHelpers;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
-use Webkul\User\Models\User;
+
+uses(ControllerSearchTestHelpers::class);
 
 beforeEach(function () {
-    $this->seed(TestSeeder::class);
-
-    // Authenticate on admin guard
-    $this->user = User::factory()->create(['name' => 'Admin Tester']);
-    $this->actingAs($this->user, 'user');
+    $this->setUpSearchTest();
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
-    $this->withoutMiddleware(Authenticate::class);
 });
 
 test('person search by name fields works', function () {
@@ -24,14 +19,12 @@ test('person search by name fields works', function () {
         'user_id'    => $this->user->id,
     ]);
 
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'search'       => 'name:Kuijer;',
         'searchFields' => 'first_name:like;last_name:like;married_name:like;',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search by phone token works', function () {
@@ -45,13 +38,11 @@ test('person search by phone token works', function () {
     ]);
 
     // Use the convenience token path ("phone:") to ensure normalization is exercised
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'search' => 'phone:0687654321;',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search by firstname and lastname tokens works', function () {
@@ -61,13 +52,11 @@ test('person search by firstname and lastname tokens works', function () {
         'user_id'    => $this->user->id,
     ]);
 
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'search' => 'firstname:EvaToken;lastname:KuyperToken;',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search by lastname token also matches married_name', function () {
@@ -79,13 +68,11 @@ test('person search by lastname token also matches married_name', function () {
     ]);
 
     // Should match on married_name using lastname: token
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'search' => 'lastname:De Bruin;',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search accepts plain email via query param', function () {
@@ -100,13 +87,11 @@ test('person search accepts plain email via query param', function () {
     ]);
 
     // Send as plain query so backend's email-normalization path is exercised
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'query' => $email,
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search accepts plain name via query param', function () {
@@ -116,13 +101,11 @@ test('person search accepts plain name via query param', function () {
         'user_id'    => $this->user->id,
     ]);
 
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'query' => 'Karel Zoek',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search matches partial email via query param', function () {
@@ -137,13 +120,11 @@ test('person search matches partial email via query param', function () {
     ]);
 
     // Search by partial local-part of the email (as users often do)
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'query' => 'harmkev',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search by organization.name works', function () {
@@ -155,14 +136,12 @@ test('person search by organization.name works', function () {
         'user_id'         => $this->user->id,
     ]);
 
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
+    $resp = $this->performSearch('admin.contacts.persons.search', [
         'search'       => 'organization.name:Kuijer;',
         'searchFields' => 'organization.name:like;',
-    ]));
+    ]);
 
-    $resp->assertOk();
-    $ids = collect($resp->json('data'))->pluck('id');
-    expect($ids)->toContain($p->id);
+    $this->assertEntityFound($resp, $p->id);
 });
 
 test('person search by email and phone works', function () {
@@ -179,22 +158,18 @@ test('person search by email and phone works', function () {
     ]);
 
     // Email
-    $respEmail = $this->getJson(route('admin.contacts.persons.search', [
+    $respEmail = $this->performSearch('admin.contacts.persons.search', [
         'search'       => 'emails:john.doe@example.com;',
         'searchFields' => 'emails:like;',
-    ]));
-    $respEmail->assertOk();
-    $idsEmail = collect($respEmail->json('data'))->pluck('id');
-    expect($idsEmail)->toContain($p->id);
+    ]);
+    $this->assertEntityFound($respEmail, $p->id);
 
     // Phone
-    $respPhone = $this->getJson(route('admin.contacts.persons.search', [
+    $respPhone = $this->performSearch('admin.contacts.persons.search', [
         'search'       => 'phones:0687654321;',
         'searchFields' => 'phones:like;',
-    ]));
-    $respPhone->assertOk();
-    $idsPhone = collect($respPhone->json('data'))->pluck('id');
-    expect($idsPhone)->toContain($p->id);
+    ]);
+    $this->assertEntityFound($respPhone, $p->id);
 });
 
 test('person search by phone works', function () {
@@ -210,22 +185,119 @@ test('person search by phone works', function () {
         'user_id'    => $this->user->id,
     ]);
 
-    // Email
-    $respPhone = $this->getJson(route('admin.contacts.persons.search', [
-        'query'       => '6876543',
-    ]));
-    $respPhone->assertOk();
-    $personIdsFound = collect($respPhone->json('data'))->pluck('id');
-    expect($personIdsFound)->toContain($p->id);
+    $respPhone = $this->performSearch('admin.contacts.persons.search', [
+        'query' => '6876543',
+    ]);
+    $this->assertEntityFound($respPhone, $p->id);
 });
 
-test('person search returns 400 for invalid field', function () {
-    $resp = $this->getJson(route('admin.contacts.persons.search', [
-        'search'       => 'foo:bar;',
-        'searchFields' => 'foo:like;',
-    ]));
+test('person search converts invalid field tokens to name search', function () {
+    Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'user_id'    => $this->user->id,
+    ]);
 
-    // Some controllers may not enforce 400; if not, relax to 200 OK and empty/ignored
-    $status = $resp->getStatusCode();
-    expect($status == 400)->toBeTrue();
+    // Invalid field token 'des:1' should be converted to name search
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search' => 'des:1',
+    ]);
+
+    // The invalid field token should be sanitized and converted to name search
+    // Since '1' doesn't match 'Desiree' or 'Test', we might not find results
+    // But the important thing is it doesn't return 400 error
+    $resp->assertOk();
+});
+
+test('person search handles invalid field tokens and finds matching names', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Invalid field token 'des:Desiree' should be converted to name search
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search' => 'des:Desiree',
+    ]);
+
+    // Should find the person because 'Desiree' matches first_name
+    $this->assertEntityFound($resp, $p->id);
+});
+
+test('person search handles invalid field tokens like des:1 without error', function () {
+    Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Simulate the exact scenario: search=des:1 (invalid field 'des')
+    // This should be sanitized and converted to name search for '1'
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search' => 'des:1',
+    ]);
+
+    // Should not return 500 error, should return 200 OK
+    // The search term '1' won't match, but that's fine - no error should occur
+    $resp->assertOk();
+});
+
+test('person search handles plain text query with colon correctly', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Plain text query 'desiree' should work normally
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'query' => 'desiree',
+    ]);
+
+    $this->assertEntityFound($resp, $p->id);
+});
+
+test('person search handles search parameter without searchFields', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'user_id'    => $this->user->id,
+    ]);
+
+    // This is the exact scenario from the frontend: search=desiree without searchFields
+    // The backend should convert this to proper name search format
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search' => 'desiree',
+    ]);
+
+    // Should find the person because 'desiree' matches first_name
+    $this->assertEntityFound($resp, $p->id);
+});
+
+test('person search handles search parameter without searchFields for multi-word query', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Multi-word search without searchFields should also work
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search' => 'Desiree Test',
+    ]);
+
+    // Should find the person because both words match
+    $this->assertEntityFound($resp, $p->id);
+});
+
+test('person search returns 400 for invalid field in searchFields only', function () {
+    // If searchFields contains invalid field but search doesn't, still validate searchFields
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search'       => 'test',
+        'searchFields' => 'invalid_field:like;',
+    ]);
+
+    // searchFields validation should still return 400
+    $resp->assertStatus(400);
 });

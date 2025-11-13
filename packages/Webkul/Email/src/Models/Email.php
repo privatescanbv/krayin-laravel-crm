@@ -71,6 +71,7 @@ class Email extends Model implements EmailContract
         'parent_id',
         'lead_id',
         'sales_lead_id',
+        'clinic_id',
         'activity_id',
         'created_at',
         'updated_at',
@@ -113,6 +114,14 @@ class Email extends Model implements EmailContract
     public function salesLead()
     {
         return $this->belongsTo(\App\Models\SalesLead::class, 'sales_lead_id');
+    }
+
+    /**
+     * Get the clinic.
+     */
+    public function clinic()
+    {
+        return $this->belongsTo(\App\Models\Clinic::class);
     }
 
     /**
@@ -252,7 +261,7 @@ class Email extends Model implements EmailContract
      */
     public function getHasRelationshipsAttribute(): bool
     {
-        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->activity_id;
+        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id || $this->activity_id;
     }
 
     /**

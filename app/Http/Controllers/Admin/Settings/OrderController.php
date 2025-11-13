@@ -10,6 +10,7 @@ use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
+use App\Services\OrderStatusService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,8 @@ class OrderController extends SimpleEntityController
     public function __construct(
         protected OrderRepository $orderRepository,
         protected OrderCheckService $orderCheckService,
-        protected OrderMailService $orderMailService
+        protected OrderMailService $orderMailService,
+        protected OrderStatusService $orderStatusService
     ) {
         parent::__construct($orderRepository);
 
@@ -97,7 +99,7 @@ class OrderController extends SimpleEntityController
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => $quantity,
                     'total_price' => $totalPrice,
-                    'status'      => OrderItemStatus::NIEUW,
+                    'status'      => OrderItemStatus::NEW,
                 ]);
             }
         }
@@ -121,11 +123,18 @@ class OrderController extends SimpleEntityController
     {
         $this->validateUpdate($request, $id);
 
+        logger()->info('OrderController@update request', [
+            'order_id' => $id,
+            'payload'  => $request->all(),
+        ]);
         Event::dispatch("{$this->entityName}.update.before", $id);
 
         $payload = $this->transformPayload($request->all(), $id);
         $items = $payload['items'] ?? [];
         unset($payload['items']);
+
+        // Get original keys mapping if available (from validation normalization)
+        $originalKeys = $request->input('_items_original_keys', []);
 
         $order = $this->orderRepository->update($payload, $id);
 
@@ -134,11 +143,16 @@ class OrderController extends SimpleEntityController
             // Load current items keyed by id for quick lookup
             $currentItems = $order->orderItems()->get()->keyBy('id');
 
-            foreach ($items as $key => $item) {
+            foreach ($items as $normalizedKey => $item) {
                 // Skip invalid rows
                 if (empty($item['product_id']) || empty($item['quantity'])) {
                     continue;
                 }
+
+                // Use original key if available, otherwise use normalized key
+                // Original keys mapping helps us distinguish between existing items (numeric keys)
+                // and new items (non-numeric keys like "item_1")
+                $key = $originalKeys[$normalizedKey] ?? $normalizedKey;
 
                 $productId = (int) $item['product_id'];
                 $quantity = (int) $item['quantity'];
@@ -164,10 +178,9 @@ class OrderController extends SimpleEntityController
                     $current = $currentItems->get((int) $key);
                     $current->update($attributes);
                 } else {
-                    // New item: create with default status NIEUW
-                    $order->orderItems()->create($attributes + [
-                        'status' => OrderItemStatus::NIEUW,
-                    ]);
+                    // New item: create with default status NEW
+                    // Status will be automatically calculated by OrderItemObserver
+                    $order->orderItems()->create($attributes);
                 }
             }
         }
@@ -186,6 +199,9 @@ class OrderController extends SimpleEntityController
 
         // Update partner product checks after order items are updated
         $this->orderCheckService->updatePartnerProductChecks($order);
+
+        // Recalculate and update order status based on order items
+        $this->orderStatusService->recalculateAndPersist($order);
 
         // Debug logging to trace redirect behavior
         try {
@@ -345,7 +361,7 @@ class OrderController extends SimpleEntityController
         $order = $this->orderRepository->findOrFail($orderId);
 
         $order->update([
-            'status' => OrderStatus::VERSTUURD,
+            'status' => OrderStatus::SENT,
         ]);
 
         return response()->json([
@@ -394,6 +410,62 @@ class OrderController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
+        // Normalize items array keys and values before validation
+        // Frontend sends items with keys like "1" (for existing) or "item_1" (for new)
+        // Laravel validation requires numeric keys for items.* pattern
+        // Also normalize product_id, person_id, quantity to integers
+        $items = $request->input('items', []);
+
+        logger()->info('OrderController@validateStore - before normalization', [
+            'items'      => $items,
+            'items_keys' => is_array($items) ? array_keys($items) : 'not_array',
+        ]);
+
+        if (is_array($items) && ! empty($items)) {
+            $normalizedItems = [];
+            $originalKeys = []; // Store mapping of normalized key -> original key
+            $nextNewKey = 1000000; // Start high to avoid conflicts with existing IDs
+
+            foreach ($items as $key => $item) {
+                // Normalize item values to integers
+                if (isset($item['product_id']) && $item['product_id'] !== null && $item['product_id'] !== '') {
+                    $item['product_id'] = (int) $item['product_id'];
+                }
+                if (isset($item['person_id']) && $item['person_id'] !== null && $item['person_id'] !== '') {
+                    $item['person_id'] = (int) $item['person_id'];
+                }
+                if (isset($item['quantity']) && $item['quantity'] !== null && $item['quantity'] !== '') {
+                    $item['quantity'] = (int) $item['quantity'];
+                }
+
+                // Normalize array keys
+                if (is_numeric($key)) {
+                    // If key is numeric, use it directly (existing item)
+                    $normalizedKey = (int) $key;
+                    $normalizedItems[$normalizedKey] = $item;
+                    $originalKeys[$normalizedKey] = $key;
+                } else {
+                    // For non-numeric keys like "item_1", use a high numeric key to avoid conflicts
+                    // This ensures validation works with items.* pattern while preserving uniqueness
+                    $normalizedKey = $nextNewKey++;
+                    $normalizedItems[$normalizedKey] = $item;
+                    $originalKeys[$normalizedKey] = $key;
+                }
+            }
+
+            logger()->info('OrderController@validateStore - after normalization', [
+                'normalized_items' => $normalizedItems,
+                'normalized_keys'  => array_keys($normalizedItems),
+                'original_keys'    => $originalKeys,
+            ]);
+
+            // Replace the items in the request using replace method which properly handles arrays
+            $request->replace(array_merge($request->except('items'), [
+                'items'                => $normalizedItems,
+                '_items_original_keys' => $originalKeys,
+            ]));
+        }
+
         $request->validate([
             'title'               => ['required', 'string', 'max:255'],
             'total_price'         => ['nullable', 'numeric', 'min:0'],
@@ -419,17 +491,17 @@ class OrderController extends SimpleEntityController
 
     protected function validateOrderStatus(string $requestedStatus, int $orderId): void
     {
-        // If trying to set status to INGEPLAND, check if all order items are ready
-        if ($requestedStatus === OrderStatus::INGEPLAND->value) {
+        // If trying to set status to PLANNED, check if all order items are planned
+        if ($requestedStatus === OrderStatus::PLANNED->value) {
             $order = $this->orderRepository->findOrFail($orderId);
 
-            $hasItemsNeedingPlanning = $order->orderItems()
-                ->where('status', OrderItemStatus::MOET_WORDEN_INGEPLAND->value)
+            $hasUnplannedItems = $order->orderItems()
+                ->where('status', '!=', OrderItemStatus::PLANNED->value)
                 ->exists();
 
-            if ($hasItemsNeedingPlanning) {
+            if ($hasUnplannedItems) {
                 throw ValidationException::withMessages([
-                    'status' => 'Order kan niet op INGEPLAND gezet worden: er zijn nog orderitems die moeten worden ingepland.',
+                    'status' => 'Order kan niet op Ingepland gezet worden: er zijn nog orderitems die niet ingepland zijn.',
                 ]);
             }
         }

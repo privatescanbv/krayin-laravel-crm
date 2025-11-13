@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Helpers\ProductHelper;
 use App\Models\PartnerProduct;
 use Webkul\Core\Eloquent\Repository;
 
@@ -46,7 +47,7 @@ class PartnerProductRepository extends Repository
             // Get product name with path if product exists
             $nameWithPath = $displayName;
             if ($product->product && $product->product->productGroup) {
-                $productNameWithPath = \App\Helpers\ProductHelper::formatNameWithPathLazy($product->product);
+                $productNameWithPath = ProductHelper::formatNameWithPathLazy($product->product);
                 // Combine partner product name with product path
                 $nameWithPath = $productNameWithPath.' - '.$product->name;
             }

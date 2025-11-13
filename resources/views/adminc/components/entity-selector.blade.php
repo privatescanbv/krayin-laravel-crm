@@ -114,9 +114,9 @@
                                 // Update items if they have the same IDs but potentially updated names/paths
                                 const newItemIds = newVal.map(item => item.id ?? item.value).filter(Boolean);
                                 const currentItemIds = this.selectedItems.map(item => item.id ?? item.value).filter(Boolean);
-                                
+
                                 // If IDs match, update the items (e.g., when name_with_path is loaded)
-                                if (newItemIds.length === currentItemIds.length && 
+                                if (newItemIds.length === currentItemIds.length &&
                                     newItemIds.every(id => currentItemIds.includes(id))) {
                                     this.selectedItems = [...newVal];
                                     // Update hidden inputs when items are updated

@@ -200,7 +200,7 @@ class SalesLeadController extends Controller
 
         // Handle person relationships
         $personIds = RequestHelper::filterIntegerArray($request, 'person_ids');
-        if(!empty($personIds)) {
+        if (! empty($personIds)) {
             // override the default persons from lead
             $salesLead->syncPersons($personIds);
         }
@@ -652,9 +652,10 @@ class SalesLeadController extends Controller
         return $data;
     }
 
-    private function getValidationRules(bool $isCreate = false):array
+    private function getValidationRules(bool $isCreate = false): array
     {
         $leadRule = ($isCreate) ? 'required|exists:leads,id' : 'nullable|exists:leads,id';
+
         return [
             'name'                      => 'required|string|max:255',
             'description'               => 'nullable|string',

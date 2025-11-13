@@ -1,4 +1,4 @@
-@php 
+@php
 use App\Enums\ContactLabel;
 use App\Enums\PersonSalutation;
 use App\Enums\PersonGender;
@@ -174,6 +174,7 @@ $salutationToGenderMapping = [
                 <div>
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
+                        @include('adminc.components.validation-errors')
                         <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
                         <!-- Hidden selected person id to link to lead on save -->
                         <input type="hidden" name="person_ids[0]" :value="selectedPersonId || ''" />
@@ -530,8 +531,8 @@ $salutationToGenderMapping = [
                             last_name: this.initialLeadPerson?.last_name || this.userDefaults.last_name || '',
                             married_name_prefix: this.initialLeadPerson?.married_name_prefix || this.userDefaults.married_name_prefix || '',
                             married_name: this.initialLeadPerson?.married_name || this.userDefaults.married_name || '',
-                            email: (this.initialLeadPerson?.emails && this.initialLeadPerson.emails.length > 0) 
-                                ? (this.initialLeadPerson.emails[0].value || '') 
+                            email: (this.initialLeadPerson?.emails && this.initialLeadPerson.emails.length > 0)
+                                ? (this.initialLeadPerson.emails[0].value || '')
                                 : (this.userDefaults.email || ''),
                             phone: (this.initialLeadPerson?.phones && this.initialLeadPerson.phones.length > 0)
                                 ? (this.initialLeadPerson.phones[0].value || '')
@@ -556,7 +557,7 @@ $salutationToGenderMapping = [
                         if (newSalutation && !this.formData.gender) {
                             // Use the mapping passed from PHP (based on enum definitions)
                             const mapping = this.salutationToGenderMapping || {};
-                            
+
                             if (mapping[newSalutation]) {
                                 this.formData.gender = mapping[newSalutation];
                                 // Also update the form field if it exists
@@ -654,7 +655,7 @@ $salutationToGenderMapping = [
                         if (salutation && !this.formData.gender) {
                             // Use the mapping passed from PHP (based on enum definitions)
                             const mapping = this.salutationToGenderMapping || {};
-                            
+
                             if (mapping[salutation]) {
                                 this.formData.gender = mapping[salutation];
                                 // Also update the form field

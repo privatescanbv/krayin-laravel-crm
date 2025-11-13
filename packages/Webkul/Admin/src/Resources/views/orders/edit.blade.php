@@ -6,6 +6,7 @@
 
     <x-admin::form id="order-edit-form" :action="route('admin.orders.update', ['id' => $orders->id])" method="POST">
         <input type="hidden" name="_method" value="put">
+        @include('adminc.components.validation-errors')
         <x-admin::form.control-group>
             <x-admin::form.control-group.control type="hidden" name="redirect_to"
                                                  value="{{ route('admin.orders.edit', ['id' => $orders->id]) }}"/>

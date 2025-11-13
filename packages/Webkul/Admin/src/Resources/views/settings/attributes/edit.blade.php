@@ -11,6 +11,7 @@
         encType="multipart/form-data"
         method="PUT"
     >
+        @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
             {!! view_render_event('admin.settings.attributes.edit.form_controls.before', ['attribute' => $attribute]) !!}
 

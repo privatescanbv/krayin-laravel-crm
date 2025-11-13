@@ -12,6 +12,7 @@
         :action="route('admin.leads.update', $lead->id)"
         method="PUT"
     >
+        @include('adminc.components.validation-errors')
         @if($errors->has('error'))
             <div
                 class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-800 dark:bg-red-900 dark:text-red-200">

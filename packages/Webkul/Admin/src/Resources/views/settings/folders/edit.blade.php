@@ -26,6 +26,7 @@
             >
                 @csrf
                 @method('PUT')
+                @include('adminc.components.validation-errors')
 
                 <div class="p-6">
                     <div class="grid gap-6">

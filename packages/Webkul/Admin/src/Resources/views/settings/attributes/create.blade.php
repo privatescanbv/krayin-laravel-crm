@@ -10,6 +10,7 @@
         :action="route('admin.settings.attributes.store')"
         enctype="multipart/form-data"
     >
+        @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
             {!! view_render_event('admin.settings.attributes.create.form_controls.before') !!}
 

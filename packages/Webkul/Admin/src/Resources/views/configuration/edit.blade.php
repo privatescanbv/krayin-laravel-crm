@@ -14,6 +14,7 @@
         action=""
         enctype="multipart/form-data"
     >
+        @include('adminc.components.validation-errors')
         <!-- Save Inventory -->
         <div class="mt-3.5 flex items-center justify-between gap-4 max-sm:flex-wrap">
             <p class="text-xl font-bold text-gray-800 dark:text-white">

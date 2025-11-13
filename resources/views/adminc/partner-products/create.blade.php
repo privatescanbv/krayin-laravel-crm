@@ -5,6 +5,7 @@
     </x-slot>
 
     <x-admin::form :action="route('admin.partner_products.store')" method="POST">
+        @include('adminc.components.validation-errors')
         <!-- Hidden field for return_to -->
         @if (isset($returnTo))
             <input type="hidden" name="return_to" value="{{ $returnTo }}"/>

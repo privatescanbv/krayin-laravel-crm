@@ -10,6 +10,7 @@
         :action="route('admin.settings.pipelines.update', $pipeline->id)"
         method="POST"
     >
+        @include('adminc.components.validation-errors')
         <!-- Header section -->
         <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex items-center justify-between px-4 py-2">

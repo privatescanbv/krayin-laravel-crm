@@ -11,6 +11,7 @@
         method="PUT"
         enctype="multipart/form-data"
     >
+        @include('adminc.components.validation-errors')
         {!! view_render_event('admin.settings.data_transfer.imports.edit.edit_form_controls.before', ['import' => $import]) !!}
 
         <!-- Page Header -->

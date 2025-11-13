@@ -133,7 +133,14 @@
 
             <x-adminc::leads.compact-overview :lead="$lead"/>
 
-            <x-adminc::leads.persons :lead="$lead"/>
+            <x-adminc::leads.persons 
+                :entity="$lead" 
+                entity-type="lead"
+                :show-add-button="false"
+                :show-sync-link="true"
+                :show-match-score="true"
+                :show-anamnesis="true"
+            />
 
             <!-- Footer with creation and modification dates -->
             <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">

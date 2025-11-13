@@ -215,33 +215,39 @@ class LeadStatusTransitionValidator
 
     /**
      * Validate transition to won/lost status.
-     * Requires exactly 1 person with 100% match score.
+     * Requires at least 1 person (contact person or linked persons).
+     * Requires that at least one person (contact person or linked) has a 100% match score.
      */
     private static function validateWonLostTransition(Lead $lead): array
     {
         $errors = [];
 
-        // Check if lead has exactly 1 person
-        $personCount = $lead->persons()->count();
-        if ($personCount !== 1) {
-            $errors[] = 'Een lead mag alleen naar status "gewonnen" of "verloren" als er precies 1 persoon aan gekoppeld is. Huidige aantal personen: '.$personCount;
+        // Get all persons (contact person and linked persons) as a single collection
+        $allPersons = $lead->getContactAndPersons();
+
+        // Check if lead has at least 1 person
+        if ($allPersons->isEmpty()) {
+            $errors[] = 'Een lead mag alleen naar status "gewonnen" of "verloren" als er minimaal 1 persoon aan gekoppeld is (contact person of gekoppelde personen).';
 
             return $errors;
         }
 
-        // Get the single person
-        $person = $lead->persons()->first();
-        if (! $person) {
-            $errors[] = 'Geen persoon gevonden voor deze lead.';
+        // Check if at least one person has 100% match score
+        $maxScore = 0;
+        $hasPerfectMatch = false;
 
-            return $errors;
+        foreach ($allPersons as $person) {
+            $personScore = self::calculateMatchScore($lead, $person);
+            $maxScore = max($maxScore, $personScore);
+
+            if ($personScore >= 100) {
+                $hasPerfectMatch = true;
+                break; // Found a perfect match, no need to continue
+            }
         }
 
-        // Calculate match score between lead and person
-        $matchScore = self::calculateMatchScore($lead, $person);
-
-        if ($matchScore < 100) {
-            $errors[] = 'Een lead mag alleen naar status "gewonnen" of "verloren" als de contact match score 100% is. Huidige match score: '.round($matchScore, 1).'%';
+        if (! $hasPerfectMatch) {
+            $errors[] = 'Een lead mag alleen naar status "gewonnen" of "verloren" als de contact person of een van de gekoppelde personen een match score van 100% heeft. Hoogste match score: '.round($maxScore, 1).'%';
         }
 
         return $errors;

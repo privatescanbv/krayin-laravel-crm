@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -415,6 +416,28 @@ class Lead extends Model implements LeadContract
             return $this->contactPerson()->first();
         }
         return $this->persons()->first();
+    }
+
+    /**
+     * Get all persons (contact person and linked persons) as a single collection.
+     * Duplicates are removed based on person ID.
+     *
+     * @return Collection
+     */
+    public function getContactAndPersons(): Collection
+    {
+        $allPersons = collect();
+
+        // Add contact person if exists
+        if ($this->hasContactPerson() && $this->contactPerson) {
+            $allPersons->push($this->contactPerson);
+        }
+
+        // Add linked persons
+        $linkedPersons = $this->persons()->get();
+        $allPersons = $allPersons->merge($linkedPersons)->unique('id');
+
+        return $allPersons;
     }
 
     /**

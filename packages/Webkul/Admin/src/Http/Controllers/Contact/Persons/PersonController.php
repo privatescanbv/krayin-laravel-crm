@@ -305,10 +305,17 @@ class PersonController extends Controller
                 $lead = app(LeadRepository::class)->with(['address'])->findOrFail($leadId);
 
                 // Calculate match scores for each person
-                $personsWithScores = $persons->map(function ($person) use ($lead) {
+                // Note: $persons contains PersonResource objects, we need to get the underlying Person model
+                $personsWithScores = $persons->map(function ($personResource) use ($lead) {
+                    // Get the underlying Person model from the resource
+                    $person = $personResource->resource;
+                    
+                    // Calculate match score using the Person model
                     $score = $this->calculateMatchScore($lead, $person);
-                    $person->match_score = $score;
-                    $person->match_score_percentage = round($score, 1);
+                    
+                    // Add score to the resource (which will be included in toArray())
+                    $personResource->match_score = $score;
+                    $personResource->match_score_percentage = round($score, 1);
 
                     // Debug: Log which persons are being scored
                     if ($this->enableLogging) {
@@ -321,15 +328,17 @@ class PersonController extends Controller
                         ]);
                     }
 
-                    return $person;
+                    return $personResource;
                 });
 
                 // Sort by match score (highest first) and only return persons with score > 0
                 $personsWithScores = $personsWithScores
-                    ->filter(function ($person) {
-                        return $person->match_score > 0;
+                    ->filter(function ($personResource) {
+                        return ($personResource->match_score ?? 0) > 0;
                     })
-                    ->sortByDesc('match_score')
+                    ->sortByDesc(function ($personResource) {
+                        return $personResource->match_score ?? 0;
+                    })
                     ->values();
 
                 return PersonResource::collection($personsWithScores);

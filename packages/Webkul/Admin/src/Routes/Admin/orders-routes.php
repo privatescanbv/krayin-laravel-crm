@@ -17,6 +17,8 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::put('edit/{id}', 'update')->name('admin.orders.update');
     Route::delete('', 'destroy')->name('admin.orders.delete');
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
+    Route::post('{orderId}/gvl-form', 'attachGvlForm')->name('admin.orders.gvl-form.attach');
+    Route::delete('{orderId}/gvl-form', 'detachGvlForm')->name('admin.orders.gvl-form.detach');
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
     Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
     Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');

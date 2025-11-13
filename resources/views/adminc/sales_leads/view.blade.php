@@ -132,7 +132,14 @@
             <!-- Lead Overview (compact overview with all information) -->
             <x-adminc::sales_leads.view.compact-overview :salesLead="$salesLead" :lead="$lead"/>
 
-            <x-adminc::leads.persons :lead="$lead" />
+            <x-adminc::leads.persons
+                :entity="$salesLead"
+                entity-type="salesLead"
+                :show-add-button="false"
+                :show-sync-link="false"
+                :show-match-score="false"
+                :show-anamnesis="true"
+            />
 
             <!-- Footer with creation and modification dates -->
             <div

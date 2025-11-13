@@ -67,6 +67,31 @@
                     </div>
                 </div>
 
+                <!-- Contact Person Selection -->
+                <div class="mt-6">
+                    <div class="flex flex-col gap-4" id="contact-person-selection">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Contactpersoon
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Selecteer de contactpersoon voor deze sales
+                            </p>
+                        </div>
+                        <div class="w-1/2 max-md:w-full">
+                            @include('adminc.components.contact-person-selector')
+                            <v-contact-person-selector
+                                name="contact_person_id"
+                                label="Contactpersoon"
+                                placeholder="Selecteer contactpersoon..."
+                                :current-value='@json($salesLead->contact_person_id)'
+                                :current-label='@json($salesLead->contactPerson ? $salesLead->contactPerson->name : null)'
+                                :can-add-new="true"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Contact Persons Section -->
                 <div class="mt-6">
                     <div class="flex flex-col gap-4" id="contact-person">
@@ -83,22 +108,6 @@
                             :leads=" (object)['id' => $salesLead->id]"
                             :persons="$salesLead->persons"
                         />
-                    </div>
-                </div>
-
-                <!-- Contact Person Selection -->
-                <div class="mt-6">
-                    <div class="flex flex-col gap-4" id="contact-person-selection">
-                        <div class="w-1/2 max-md:w-full">
-                            <v-contact-person-selector
-                                name="contact_person_id"
-                                label="Contactpersoon"
-                                placeholder="Selecteer contactpersoon..."
-                                :current-value='@json($salesLead->contact_person_id)'
-                                :current-label='@json($salesLead->contactPerson ? $salesLead->contactPerson->name : null)'
-                                :can-add-new="true"
-                            />
-                        </div>
                     </div>
                 </div>
 

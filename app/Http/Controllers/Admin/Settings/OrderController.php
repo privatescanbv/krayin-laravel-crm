@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
+use Exception;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
+use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
@@ -16,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -256,6 +259,142 @@ class OrderController extends SimpleEntityController
         }
 
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
+    }
+
+    public function attachGvlForm(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with('salesLead')->findOrFail($orderId);
+
+        if (! $order->salesLead) {
+            return response()->json([
+                'message' => 'Order heeft geen gekoppelde sales.',
+            ], 422);
+        }
+
+        // Check if GVL form already exists (early return for better API response)
+        if (! empty($order->salesLead->gvl_form_link)) {
+            return response()->json([
+                'message' => 'GVL formulier is al gekoppeld.',
+                'gvl_form_link' => $order->salesLead->gvl_form_link,
+            ], 422);
+        }
+
+        try {
+            // Use OrderMailService to create the form (this method also checks for existing link)
+            $formLink = $this->orderMailService->createFormRequestAndGetLink($order);
+
+            // Reload the order to get updated sales lead
+            $order->refresh();
+            $order->load('salesLead');
+
+            return response()->json([
+                'message' => 'GVL formulier is gekoppeld.',
+                'gvl_form_link' => $formLink,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('OrderController@attachGvlForm failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier koppelen is mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function detachGvlForm(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with('salesLead')->findOrFail($orderId);
+
+        if (! $order->salesLead || empty($order->salesLead->gvl_form_link)) {
+            return response()->json([
+                'message' => 'Er is geen GVL formulier gekoppeld aan deze order.',
+            ], 422);
+        }
+
+        $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
+
+        $formId = null;
+        // Try multiple regex patterns to extract form ID from URL
+        // Pattern 1: 'forms/3/step/1' or 'forms/3'
+        if (preg_match('#forms/(\d+)(?:/step|/|$)#', $order->salesLead->gvl_form_link, $m)) {
+            $formId = (int) $m[1];
+        }
+        
+        // Pattern 2: Try to extract from API response ID if stored differently
+        // This handles cases where the form URL might have a different structure
+        if ($formId === null && preg_match('#/(\d+)(?:/step|/|$)#', $order->salesLead->gvl_form_link, $m)) {
+            $formId = (int) $m[1];
+        }
+        
+        if ($formId === null) {
+            Log::error('OrderController@detachGvlForm could not resolve form id from URL', [
+                'order_id' => $order->id,
+                'gvl_form_link' => $order->salesLead->gvl_form_link,
+            ]);
+            throw new Exception('Could not resolve form id from url: '.$order->salesLead->gvl_form_link);
+        }
+        
+        $deleteUrl = "{$apiUrl}/api/forms/".$formId;
+        $token = config('services.forms.api_token');
+
+        $httpClient = Http::timeout(10)->acceptJson();
+        if ($token) {
+            $httpClient = $httpClient->withHeaders([
+                'X-API-KEY' => $token,
+            ]);
+        }
+
+        try {
+            $response = $httpClient->delete($deleteUrl,);
+        } catch (Throwable $exception) {
+            Log::error('OrderController@detachGvlForm kon Forms API niet bereiken', [
+                'order_id'  => $order->id,
+                'deleteUrl' => $deleteUrl,
+                'message'   => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier ontkoppelen is mislukt. Forms API kon niet worden bereikt.',
+            ], 502);
+        }
+
+        $status = $response->status();
+        $body = $response->body();
+        $json = null;
+
+        try {
+            $json = $response->json();
+        } catch (Throwable) {
+            $json = null;
+        }
+
+        if ($status !== 200) {
+            Log::warning('OrderController@detachGvlForm Forms API fout', [
+                'order_id'     => $order->id,
+                'deleteUrl'    => $deleteUrl,
+                'status'       => $status,
+                'responseBody' => strlen($body) > 500 ? substr($body, 0, 500).'...' : $body,
+                'responseJson' => $json,
+            ]);
+
+            return response()->json([
+                'message' => $json['message'] ?? 'GVL formulier ontkoppelen is mislukt.',
+            ], $status ?: 500);
+        }
+
+        $order->salesLead->update([
+            'gvl_form_link' => null,
+        ]);
+
+        Log::info('OrderController@detachGvlForm geslaagd', [
+            'order_id' => $order->id,
+        ]);
+
+        return response()->json([
+            'message' => 'GVL formulier is ontkoppeld.',
+        ]);
     }
 
     public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse

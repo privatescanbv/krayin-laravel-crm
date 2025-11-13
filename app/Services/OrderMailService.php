@@ -317,7 +317,7 @@ HTML;
      * Create a form request via the forms API and return the form link.
      * Uses existing link from sales lead if available, otherwise creates new one and saves it.
      */
-    protected function createFormRequestAndGetLink(Order $order): string
+    public function createFormRequestAndGetLink(Order $order): string
     {
         // Ensure salesLead is loaded
         if (! $order->salesLead) {
@@ -599,7 +599,7 @@ HTML;
     {
         $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
         $token = config('services.forms.api_token');
-        $url = "{$apiUrl}/api/form-requests";
+        $url = "{$apiUrl}/api/forms";
 
         // Log request details
         Log::info('OrderMailService: Creating form request', [

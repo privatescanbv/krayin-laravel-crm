@@ -211,7 +211,7 @@ class SalesLeadController extends Controller
 
     public function edit($id)
     {
-        $salesLead = SalesLead::with(['contactPerson', 'lead', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['contactPerson', 'lead.contactPerson', 'user'])->findOrFail($id);
 
         return view('adminc.sales_leads.edit', ['salesLead' => $salesLead]);
     }
@@ -244,7 +244,7 @@ class SalesLeadController extends Controller
     public function view($id)
     {
         // First load the Sales to check if it has a lead_id
-        $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user', 'lead'])->findOrFail($id);
 
         // If there's no related lead_id, return 404
         if (! $salesLead->lead_id) {

@@ -121,7 +121,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
         // Lead has no persons attached
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('precies 1 persoon aan gekoppeld is');
+        $this->expectExceptionMessage('minimaal 1 persoon aan gekoppeld is');
 
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
     }
@@ -132,47 +132,175 @@ class LeadStatusTransitionValidatorTest extends TestCase
         // Lead has no persons attached
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('precies 1 persoon aan gekoppeld is');
+        $this->expectExceptionMessage('minimaal 1 persoon aan gekoppeld is');
 
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->lostStage->id);
     }
 
     /** @test */
-    public function it_prevents_transition_to_won_when_lead_has_multiple_persons()
+    public function it_allows_transition_to_won_when_lead_has_multiple_persons_with_one_having_100_percent()
     {
-        // Create a second person
+        // Create a second person with matching data (100% score)
         $person2 = Person::create([
+            'first_name'      => 'John',
+            'last_name'       => 'Doe',
+            'lastname_prefix' => 'van',
+            'emails'          => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'phones'          => [['value' => '0612345678', 'is_default' => true]],
+        ]);
+
+        // Create a third person with different data (lower score)
+        $person3 = Person::create([
             'first_name' => 'Jane',
             'last_name'  => 'Smith',
             'emails'     => [['value' => 'jane.smith@example.com', 'is_default' => true]],
         ]);
 
-        // Attach multiple persons to the lead
-        $this->lead->attachPersons([$this->person->id, $person2->id]);
+        // Attach multiple persons to the lead (one has 100%, one doesn't)
+        $this->lead->attachPersons([$person2->id, $person3->id]);
+
+        // This should not throw an exception - at least one person has 100% score
+        LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
+
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_allows_transition_to_lost_when_lead_has_multiple_persons_with_one_having_100_percent()
+    {
+        // Create a second person with matching data (100% score)
+        $person2 = Person::create([
+            'first_name'      => 'John',
+            'last_name'       => 'Doe',
+            'lastname_prefix' => 'van',
+            'emails'          => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'phones'          => [['value' => '0612345678', 'is_default' => true]],
+        ]);
+
+        // Create a third person with different data (lower score)
+        $person3 = Person::create([
+            'first_name' => 'Jane',
+            'last_name'  => 'Smith',
+            'emails'     => [['value' => 'jane.smith@example.com', 'is_default' => true]],
+        ]);
+
+        // Attach multiple persons to the lead (one has 100%, one doesn't)
+        $this->lead->attachPersons([$person2->id, $person3->id]);
+
+        // This should not throw an exception - at least one person has 100% score
+        LeadStatusTransitionValidator::validateTransition($this->lead, $this->lostStage->id);
+
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_prevents_transition_to_won_when_multiple_persons_all_have_less_than_100_percent()
+    {
+        // Create persons with different data (lower match scores)
+        $person2 = Person::create([
+            'first_name' => 'John',
+            'last_name'  => 'Smith', // Different last name
+            'emails'     => [['value' => 'john.smith@example.com', 'is_default' => true]], // Different email
+        ]);
+
+        $person3 = Person::create([
+            'first_name' => 'Jane',
+            'last_name'  => 'Doe',
+            'emails'     => [['value' => 'jane.doe@example.com', 'is_default' => true]],
+        ]);
+
+        // Attach multiple persons to the lead (none have 100% score)
+        $this->lead->attachPersons([$person2->id, $person3->id]);
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('precies 1 persoon aan gekoppeld is');
+        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
     }
 
     /** @test */
-    public function it_prevents_transition_to_lost_when_lead_has_multiple_persons()
+    public function it_allows_transition_to_won_when_contact_person_has_100_percent_match()
     {
-        // Create a second person
-        $person2 = Person::create([
+        // Set contact person with matching data (100% score)
+        $this->lead->update(['contact_person_id' => $this->person->id]);
+
+        // This should not throw an exception - contact person has 100% score
+        LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
+
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_allows_transition_to_won_when_contact_person_has_100_percent_even_if_linked_persons_dont()
+    {
+        // Create a person with different data (lower match score)
+        $personWithDifferentData = Person::create([
             'first_name' => 'Jane',
             'last_name'  => 'Smith',
             'emails'     => [['value' => 'jane.smith@example.com', 'is_default' => true]],
         ]);
 
-        // Attach multiple persons to the lead
-        $this->lead->attachPersons([$this->person->id, $person2->id]);
+        // Set contact person with matching data (100% score)
+        $this->lead->update(['contact_person_id' => $this->person->id]);
+
+        // Attach a person with lower score
+        $this->lead->attachPersons([$personWithDifferentData->id]);
+
+        // This should not throw an exception - contact person has 100% score
+        LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
+
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_allows_transition_to_won_when_linked_person_has_100_percent_even_if_contact_person_doesnt()
+    {
+        // Create a person with different data (lower match score) for contact person
+        $personWithDifferentData = Person::create([
+            'first_name' => 'Jane',
+            'last_name'  => 'Smith',
+            'emails'     => [['value' => 'jane.smith@example.com', 'is_default' => true]],
+        ]);
+
+        // Set contact person with different data (lower score)
+        $this->lead->update(['contact_person_id' => $personWithDifferentData->id]);
+
+        // Attach a person with matching data (100% score)
+        $this->lead->attachPersons([$this->person->id]);
+
+        // This should not throw an exception - linked person has 100% score
+        LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
+
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_prevents_transition_to_won_when_neither_contact_person_nor_linked_persons_have_100_percent()
+    {
+        // Create a person with different data (lower match score) for contact person
+        $personWithDifferentData1 = Person::create([
+            'first_name' => 'Jane',
+            'last_name'  => 'Smith',
+            'emails'     => [['value' => 'jane.smith@example.com', 'is_default' => true]],
+        ]);
+
+        // Create another person with different data (lower match score)
+        $personWithDifferentData2 = Person::create([
+            'first_name' => 'Bob',
+            'last_name'  => 'Johnson',
+            'emails'     => [['value' => 'bob.johnson@example.com', 'is_default' => true]],
+        ]);
+
+        // Set contact person with different data (lower score)
+        $this->lead->update(['contact_person_id' => $personWithDifferentData1->id]);
+
+        // Attach a person with different data (lower score)
+        $this->lead->attachPersons([$personWithDifferentData2->id]);
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('precies 1 persoon aan gekoppeld is');
+        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
-        LeadStatusTransitionValidator::validateTransition($this->lead, $this->lostStage->id);
+        LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
     }
 
     /** @test */
@@ -189,7 +317,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
         $this->lead->attachPersons([$personWithDifferentData->id]);
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('contact match score 100% is');
+        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
     }
@@ -208,7 +336,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
         $this->lead->attachPersons([$personWithDifferentData->id]);
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('contact match score 100% is');
+        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->lostStage->id);
     }
@@ -326,7 +454,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
         // This should throw an exception because match score will be less than 100%
         // (name fields match but email mismatch = ~90% score)
         $this->expectException(\Illuminate\Validation\ValidationException::class);
-        $this->expectExceptionMessage('contact match score 100% is');
+        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($leadWithEmail, $this->wonStage->id);
     }
@@ -386,7 +514,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
         $leadWithDob->attachPersons([$personWithDifferentDob->id]);
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('contact match score 100% is');
+        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($leadWithDob, $this->wonStage->id);
     }

@@ -4,6 +4,9 @@ use App\Enums\ContactLabel;
 use Tests\Feature\Concerns\ControllerSearchTestHelpers;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
+use Webkul\Lead\Models\Stage;
 
 uses(ControllerSearchTestHelpers::class);
 
@@ -300,4 +303,91 @@ test('person search returns 400 for invalid field in searchFields only', functio
 
     // searchFields validation should still return 400
     $resp->assertStatus(400);
+});
+
+test('person search with lead_id calculates match scores', function () {
+    // Create a lead with matching data
+    $pipeline = Pipeline::first() ?? Pipeline::factory()->create(['is_default' => 1]);
+    $stage = Stage::where('lead_pipeline_id', $pipeline->id)->first() ?? Stage::factory()->create([
+        'lead_pipeline_id' => $pipeline->id,
+        'sort_order'       => 1,
+    ]);
+
+    $lead = Lead::factory()->create([
+        'first_name'             => 'Desiree',
+        'last_name'              => 'Test',
+        'emails'                 => [['value' => 'desiree.test@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+        'phones'                 => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Create a person that matches the lead
+    $matchingPerson = Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'emails'     => [['value' => 'desiree.test@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+        'phones'     => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Create a person that partially matches (only name, not email/phone)
+    $partialMatchPerson = Person::factory()->create([
+        'first_name' => 'Desiree',
+        'last_name'  => 'Test',
+        'emails'     => [['value' => 'different@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+        'phones'     => [['value' => '0687654321', 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Create a person that doesn't match at all
+    $nonMatchingPerson = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+        'emails'     => [['value' => 'john.doe@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+        'phones'     => [['value' => '0699999999', 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Search with lead_id parameter
+    $resp = $this->performSearch('admin.contacts.persons.search', [
+        'search'  => 'desi',
+        'lead_id' => $lead->id,
+    ]);
+
+    // Should return 200 OK
+    $resp->assertOk();
+
+    // Get the response data
+    $data = $resp->json('data') ?? $resp->json();
+    expect($data)->toBeArray();
+
+    // Find persons in the response
+    $matchingPersonData = collect($data)->firstWhere('id', $matchingPerson->id);
+    $partialMatchPersonData = collect($data)->firstWhere('id', $partialMatchPerson->id);
+    $nonMatchingPersonData = collect($data)->firstWhere('id', $nonMatchingPerson->id);
+
+    // Matching person should be found with a match score
+    expect($matchingPersonData)->not->toBeNull();
+    expect($matchingPersonData)->toHaveKey('match_score');
+    expect($matchingPersonData)->toHaveKey('match_score_percentage');
+    expect($matchingPersonData['match_score'])->toBeGreaterThan(0);
+
+    // Partial match person should also be found if score > 0
+    if ($partialMatchPersonData) {
+        expect($partialMatchPersonData['match_score'])->toBeGreaterThan(0);
+        // Partial match should have lower score than full match
+        expect($matchingPersonData['match_score'])->toBeGreaterThan($partialMatchPersonData['match_score']);
+    }
+
+    // Non-matching person should not be in results (or have score 0 and be filtered out)
+    if ($nonMatchingPersonData) {
+        expect($nonMatchingPersonData['match_score'] ?? 0)->toBe(0);
+    }
+
+    // Results should be sorted by match score (highest first)
+    $scores = collect($data)->pluck('match_score')->filter(fn ($score) => $score > 0)->toArray();
+    $sortedScores = $scores;
+    rsort($sortedScores);
+    expect($scores)->toBe($sortedScores);
 });

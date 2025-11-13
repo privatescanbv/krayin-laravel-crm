@@ -336,8 +336,16 @@ class OrderController extends SimpleEntityController
             throw new Exception('Could not resolve form id from url: '.$order->salesLead->gvl_form_link);
         }
         
-        $deleteUrl = "{$apiUrl}/api/forms/".$formId;
         $token = config('services.forms.api_token');
+        $deleteUrl = "{$apiUrl}/api/forms/{$formId}";
+        $deletePayload = [];
+
+        if (empty($token)) {
+            $deleteUrl = "{$apiUrl}/api/forms";
+            $deletePayload = [
+                'form_id' => $formId,
+            ];
+        }
 
         $httpClient = Http::timeout(10)->acceptJson();
         if ($token) {
@@ -347,11 +355,14 @@ class OrderController extends SimpleEntityController
         }
 
         try {
-            $response = $httpClient->delete($deleteUrl,);
+            $response = empty($deletePayload)
+                ? $httpClient->delete($deleteUrl)
+                : $httpClient->delete($deleteUrl, $deletePayload);
         } catch (Throwable $exception) {
             Log::error('OrderController@detachGvlForm kon Forms API niet bereiken', [
                 'order_id'  => $order->id,
                 'deleteUrl' => $deleteUrl,
+                'payload'   => $deletePayload,
                 'message'   => $exception->getMessage(),
             ]);
 
@@ -374,6 +385,7 @@ class OrderController extends SimpleEntityController
             Log::warning('OrderController@detachGvlForm Forms API fout', [
                 'order_id'     => $order->id,
                 'deleteUrl'    => $deleteUrl,
+                'payload'      => $deletePayload,
                 'status'       => $status,
                 'responseBody' => strlen($body) > 500 ? substr($body, 0, 500).'...' : $body,
                 'responseJson' => $json,

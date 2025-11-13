@@ -13,8 +13,8 @@
             <x-admin::table>
                 <x-admin::table.thead>
                     <x-admin::table.thead.tr>
-                        <x-admin::table.th>Product</x-admin::table.th>
-                        <x-admin::table.th>Persoon</x-admin::table.th>
+                        <x-admin::table.th class="min-w-[300px] w-2/5">Product</x-admin::table.th>
+                        <x-admin::table.th class="min-w-[150px] w-1/5">Persoon</x-admin::table.th>
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Status</x-admin::table.th>
@@ -35,17 +35,17 @@
 
     <script type="text/x-template" id="v-order-item-template">
         <x-admin::table.thead.tr>
-            <x-admin::table.td>
-                @include('adminc.components.entity-selector')
-                <v-entity-selector
+            <x-admin::table.td class="min-w-[300px] w-2/5">
+                @include('adminc.components.product-selector')
+                <v-product-selector
                     :name="`${inputName}[product_id]`"
                     label=""
                     placeholder="Zoek product..."
-                    :search-route="src"
-                    :multiple="false"
-                    :items="displayValue && displayValue.id ? [displayValue] : []"
-                    @select="(p) => selectProduct(p)"
-                    @update:items="(list) => { const p = (list && list[0]) || null; if(p){ selectProduct(p); } else { item.product_id=null; item.product_name=''; } }"
+                    :current-value="item.product_id"
+                    :current-label="item.product_name || (item.product && (item.product.name_with_path || item.product.name)) || ''"
+                    :can-add-new="false"
+                    @change="(p) => selectProduct(p)"
+                    @update:value="(id) => { item.product_id = id; }"
                 />
             </x-admin::table.td>
             <x-admin::table.td>
@@ -70,7 +70,7 @@
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <x-admin::form.control-group class="!mb-0">
-                    <x-admin::form.control-group.control type="inline" ::name="`${inputName}[quantity]`" ::value="item.quantity" rules="required|integer|min:1" ::errors="errors" label="Aantal" placeholder="Aantal" @on-change="(e) => item.quantity = e.value" position="center" />
+                    <x-admin::form.control-group.control type="inline" ::name="`${inputName}[quantity]`" ::value="item.quantity" rules="required|integer|min:1" ::errors="errors" label="Aantal" placeholder="Aantal" @on-change="(e) => updateQuantity(e.value)" position="center" />
                 </x-admin::form.control-group>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
@@ -107,29 +107,37 @@
             props: ['errors', 'data', 'persons'],
             data() {
                 return {
-                    items: this.data && this.data.length ? this.data.map(r => ({
-                        id: r.id ?? null,
-                        product_id: r.product_id ?? null,
-                        person_id: r.person_id ?? null,
-                        quantity: r.quantity ?? 1,
-                        total_price: r.total_price ?? 0,
-                        status: r.status ?? null,
-                        // include product and partner products info if present (server eager-loaded)
-                        product: r.product || null,
-                        partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
-                        planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
-                    })) : [{ id: null, product_id: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
+                    items: this.data && this.data.length ? this.data.map(r => {
+                        // Get product name with path if available
+                        const productName = (r.product && r.product.name_with_path) 
+                            || (r.product && r.product.name) 
+                            || r.product_name 
+                            || null;
+                        return {
+                            id: r.id ?? null,
+                            product_id: r.product_id ?? null,
+                            product_name: productName,
+                            person_id: r.person_id ?? null,
+                            quantity: r.quantity ?? 1,
+                            total_price: r.total_price ?? 0,
+                            status: r.status ?? null,
+                            // include product and partner products info if present (server eager-loaded)
+                            product: r.product || null,
+                            partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
+                            planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
+                        };
+                    }) : [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
                 };
             },
             methods: {
                 addItem() {
-                    this.items.push({ id: null, product_id: null, person_id: null, quantity: 1, total_price: 0 });
+                    this.items.push({ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null });
                 },
                 removeItem(item) {
                     this.$emitter.emit('open-confirm-modal', {
                         agree: () => {
                             if (this.items.length === 1) {
-                                this.items = [{ id: null, product_id: null, person_id: null, quantity: 1, total_price: 0, status: null, planning_summary: null }];
+                                this.items = [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }];
                             } else {
                                 const index = this.items.indexOf(item);
                                 if (index !== -1) this.items.splice(index, 1);
@@ -161,25 +169,14 @@
         app.component('v-order-item', {
             template: '#v-order-item-template',
             props: ['index', 'item', 'errors', 'persons'],
-            mounted() {
-                if (this.item.product_id && !this.displayValue.name) {
-                    this.fetchProductName();
-                }
+            data() {
+                return {
+                    productPrice: null, // Store the product price for calculations
+                };
             },
             computed: {
                 inputName() {
                     return this.item.id ? `items[${this.item.id}]` : `items[item_${this.index}]`;
-                },
-                src() {
-                    return "{{ route('admin.products.search') }}";
-                },
-                displayValue() {
-                    const id = this.item.product_id || null;
-                    const name = (this.item.product && this.item.product.name)
-                        || this.item.product_name
-                        || this.item.name
-                        || '';
-                    return id ? { id, name } : {};
                 },
                 canPlan() {
                     // Accept different shapes coming from backend
@@ -192,23 +189,32 @@
                 },
             },
             methods: {
-                async fetchProductName() {
-                    try {
-                        const response = await axios.get(this.src, { params: { query: String(this.item.product_id) } });
-                        const list = (response && response.data && (response.data.data || response.data)) || [];
-                        const match = (Array.isArray(list) ? list : []).find(p => (p.id ?? p.value) == this.item.product_id);
-                        const name = match ? (match.name ?? match.label ?? match.text ?? '') : '';
-                        if (name) {
-                            this.item.product_name = name;
-                        }
-                    } catch (e) {
-                        try { console.warn('[v-order-item] fetchProductName failed', e); } catch (e2) {}
-                    }
-                },
                 selectProduct(result) {
                     try { console.log('[v-order-item] selectProduct', result); } catch (e) {}
-                    this.item.product_id = result.id;
-                    this.item.product_name = result.name;
+                    if (result) {
+                        this.item.product_id = result.id || result;
+                        // Use name_with_path if available, otherwise fallback to name
+                        this.item.product_name = result.name_with_path || result.name || '';
+                        // Store product price for quantity updates
+                        this.productPrice = result.price ? parseFloat(result.price) : null;
+                        // Set total_price from product price if available and total_price is empty or 0
+                        if (this.productPrice && (!this.item.total_price || this.item.total_price === 0)) {
+                            const quantity = this.item.quantity || 1;
+                            this.item.total_price = this.productPrice * quantity;
+                        }
+                    } else {
+                        this.item.product_id = null;
+                        this.item.product_name = '';
+                        this.item.total_price = 0;
+                        this.productPrice = null;
+                    }
+                },
+                updateQuantity(quantity) {
+                    this.item.quantity = quantity;
+                    // Recalculate total_price if product price is available
+                    if (this.productPrice) {
+                        this.item.total_price = this.productPrice * quantity;
+                    }
                 },
                 removeItem() {
                     try { console.log('[v-order-item] removeItem'); } catch (e) {}

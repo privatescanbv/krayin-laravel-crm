@@ -18,7 +18,7 @@
                                     class="p-2 border rounded bg-green-50 border-green-200 flex items-center justify-between"
                             >
                                 <div class="text-sm font-medium truncate">
-                                    {{ item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}
+                                    {{ item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}
                                 </div>
                                 <button
                                         type="button"
@@ -66,7 +66,7 @@
                             >
                                 <slot name="suggestion" :item="s">
                                     <div class="flex items-center justify-between">
-                                        <div class="font-medium">{{ s.name ?? s.label ?? s.text ?? s }}</div>
+                                        <div class="font-medium">{{ s.name_with_path ?? s.name ?? s.label ?? s.text ?? s }}</div>
                                         <span class="ml-2 text-green-600 text-xs">+ Toevoegen</span>
                                     </div>
                                 </slot>

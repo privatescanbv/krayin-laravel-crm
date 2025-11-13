@@ -5,6 +5,7 @@ namespace Tests\Feature\Settings;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Webkul\Installer\Http\Middleware\CanInstall;
+use Webkul\Product\Models\Product;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
@@ -70,5 +71,92 @@ test('can delete order', function () {
 
     $this->assertDatabaseMissing('orders', [
         'id' => $order->id,
+    ]);
+});
+
+test('order item total_price is automatically calculated from product price when creating order', function () {
+    $salesLead = SalesLead::factory()->create();
+    $product = Product::factory()->create(['price' => 99.50]);
+
+    $payload = [
+        'title'         => 'Test Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        'items'         => [
+            [
+                'product_id'  => $product->id,
+                'quantity'    => 3,
+                'total_price' => 0, // Should be calculated automatically
+            ],
+        ],
+    ];
+
+    $response = $this->postJson(route('admin.orders.store'), $payload);
+    $response->assertOk();
+
+    // Check that order item was created with calculated total_price
+    $this->assertDatabaseHas('order_items', [
+        'product_id'  => $product->id,
+        'quantity'    => 3,
+        'total_price' => 298.50, // 99.50 * 3
+    ]);
+});
+
+test('order item total_price is automatically calculated from product price when updating order', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $product = Product::factory()->create(['price' => 150.75]);
+
+    $payload = [
+        'title'         => 'Updated Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
+        'items'         => [
+            [
+                'product_id'  => $product->id,
+                'quantity'    => 2,
+                'total_price' => 0, // Should be calculated automatically
+            ],
+        ],
+    ];
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), $payload);
+    $response->assertOk();
+
+    // Check that order item was created/updated with calculated total_price
+    $this->assertDatabaseHas('order_items', [
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'quantity'    => 2,
+        'total_price' => 301.50, // 150.75 * 2
+    ]);
+});
+
+test('order item total_price uses provided value when not zero', function () {
+    $salesLead = SalesLead::factory()->create();
+    $product = Product::factory()->create(['price' => 100.00]);
+
+    $payload = [
+        'title'         => 'Test Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        'items'         => [
+            [
+                'product_id'  => $product->id,
+                'quantity'    => 2,
+                'total_price' => 250.00, // Custom price, should not be overridden
+            ],
+        ],
+    ];
+
+    $response = $this->postJson(route('admin.orders.store'), $payload);
+    $response->assertOk();
+
+    // Check that order item uses the provided total_price, not calculated one
+    $this->assertDatabaseHas('order_items', [
+        'product_id'  => $product->id,
+        'quantity'    => 2,
+        'total_price' => 250.00, // Custom price, not 200.00 (100.00 * 2)
     ]);
 });

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
+use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
 {
@@ -79,11 +80,23 @@ class OrderController extends SimpleEntityController
         // Persist items
         foreach ($items as $item) {
             if (! empty($item['product_id']) && ! empty($item['quantity'])) {
+                $productId = (int) $item['product_id'];
+                $quantity = (int) $item['quantity'];
+
+                // Get total_price from request, or calculate from product price
+                $totalPrice = (float) ($item['total_price'] ?? 0);
+                if ($totalPrice == 0) {
+                    $product = Product::find($productId);
+                    if ($product && $product->price) {
+                        $totalPrice = (float) $product->price * $quantity;
+                    }
+                }
+
                 $order->orderItems()->create([
-                    'product_id'  => (int) $item['product_id'],
+                    'product_id'  => $productId,
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
-                    'quantity'    => (int) $item['quantity'],
-                    'total_price' => (float) ($item['total_price'] ?? 0),
+                    'quantity'    => $quantity,
+                    'total_price' => $totalPrice,
                     'status'      => OrderItemStatus::NIEUW,
                 ]);
             }
@@ -127,11 +140,23 @@ class OrderController extends SimpleEntityController
                     continue;
                 }
 
+                $productId = (int) $item['product_id'];
+                $quantity = (int) $item['quantity'];
+
+                // Get total_price from request, or calculate from product price
+                $totalPrice = (float) ($item['total_price'] ?? 0);
+                if ($totalPrice == 0) {
+                    $product = Product::find($productId);
+                    if ($product && $product->price) {
+                        $totalPrice = (float) $product->price * $quantity;
+                    }
+                }
+
                 $attributes = [
-                    'product_id'  => (int) $item['product_id'],
+                    'product_id'  => $productId,
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
-                    'quantity'    => (int) $item['quantity'],
-                    'total_price' => (float) ($item['total_price'] ?? 0),
+                    'quantity'    => $quantity,
+                    'total_price' => $totalPrice,
                 ];
 
                 // If key is a numeric id and exists, update without touching status
@@ -332,6 +357,7 @@ class OrderController extends SimpleEntityController
     {
         // Eager-load relations needed for planning button visibility and planning info
         $entity->load([
+            'orderItems.product.productGroup', // Load productGroup for name_with_path
             'orderItems.product.partnerProducts' => function ($q) {
                 $q->select('partner_products.id', 'partner_products.product_id');
             },

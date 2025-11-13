@@ -58,6 +58,13 @@ class Product extends Model implements ProductContract
         'resource_type_id' => 'integer',
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['name_with_path'];
+
 
     /**
      * The tags that belong to the Products.
@@ -121,5 +128,13 @@ class Product extends Model implements ProductContract
     public function getFullNameAttribute(): string {
 
         return ProductHelper::formatNameWithPath($this);
+    }
+
+    /**
+     * Get the product name with full path.
+     */
+    public function getNameWithPathAttribute(): string
+    {
+        return ProductHelper::formatNameWithPathLazy($this);
     }
 }

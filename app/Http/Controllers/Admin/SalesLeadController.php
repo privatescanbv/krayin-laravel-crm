@@ -6,6 +6,7 @@ use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\ActivityStatus;
 use App\Enums\LostReason;
 use App\Enums\PipelineType;
+use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SalesLead;
@@ -206,11 +207,8 @@ class SalesLeadController extends Controller
         $salesLead = SalesLead::create($this->prepareSalesLeadData($request->all()));
 
         // Handle person relationships
-        if ($request->has('person_ids') && ! empty($request->person_ids)) {
-            // Filter out empty values
-            $personIds = array_filter($request->person_ids, function ($id) {
-                return ! empty($id);
-            });
+        $personIds = RequestHelper::filterIntegerArray($request, 'person_ids');
+        if (! empty($personIds)) {
             $salesLead->syncPersons($personIds);
         } elseif ($request->has('lead_id') && $request->lead_id) {
             // Copy persons and contact person from the selected lead
@@ -249,11 +247,8 @@ class SalesLeadController extends Controller
         $salesLead->update($this->prepareSalesLeadData($request->all()));
 
         // Handle person relationships
-        if ($request->has('person_ids')) {
-            // Filter out empty values
-            $personIds = array_filter($request->person_ids ?? [], function ($id) {
-                return ! empty($id);
-            });
+        $personIds = RequestHelper::filterIntegerArray($request, 'person_ids');
+        if (! empty($personIds)) {
             $salesLead->syncPersons($personIds);
         }
 

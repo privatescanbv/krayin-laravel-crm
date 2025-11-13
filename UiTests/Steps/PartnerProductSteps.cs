@@ -12,6 +12,7 @@ namespace UiTests.Steps
     {
         private readonly BrowserDriver _driver;
         private string _createdProductName = "";
+        private string _createdProductPrice = "";
         private string _editedProductId = "";
 
         public PartnerProductSteps(BrowserDriver driver)
@@ -48,6 +49,11 @@ namespace UiTests.Steps
 
             // Wait for the form to be loaded
             await _driver.Page.WaitForSelectorAsync("input[name='name']", new() { Timeout = 5000 });
+            await _driver.Page.WaitForFunctionAsync(
+                "() => window.app && window.app._container",
+                arg: null,
+                new() { Timeout = 10000 }
+            );
 
             // Fill in required fields with explicit waits
             var nameInput = _driver.Page.Locator("input[name='name']");
@@ -56,6 +62,7 @@ namespace UiTests.Steps
 
             // Normalize price for CI (comma decimal) and blur to trigger validation
             var ciPrice = price.Replace('.', ',');
+            _createdProductPrice = ciPrice;
             var priceInput = _driver.Page.Locator("input[name='sales_price']");
             await priceInput.FillAsync("");
             await priceInput.FillAsync(ciPrice);
@@ -106,8 +113,28 @@ namespace UiTests.Steps
             await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
             await _driver.Page.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))", await clinicSelect.ElementHandleAsync());
 
+            // Ensure critical values have not been cleared by late Vue hydration
+            var currentNameValue = await nameInput.InputValueAsync();
+            if (string.IsNullOrWhiteSpace(currentNameValue))
+            {
+                Console.WriteLine("[WARN] Name input cleared after hydration; restoring cached value.");
+                await nameInput.FillAsync(_createdProductName);
+                await nameInput.BlurAsync();
+                currentNameValue = await nameInput.InputValueAsync();
+            }
+
+            var currentPriceValue = await priceInput.InputValueAsync();
+            if (string.IsNullOrWhiteSpace(currentPriceValue) && !string.IsNullOrWhiteSpace(_createdProductPrice))
+            {
+                Console.WriteLine("[WARN] Sales price input cleared after hydration; restoring cached value.");
+                await priceInput.FillAsync("");
+                await priceInput.FillAsync(_createdProductPrice);
+                await priceInput.BlurAsync();
+                currentPriceValue = await priceInput.InputValueAsync();
+            }
+
             // Extra diagnostics
-            var dbgPrice = await priceInput.InputValueAsync();
+            var dbgPrice = currentPriceValue;
             var dbgCurrency = await (await currencySelect.ElementHandleAsync())?.EvaluateAsync<string>("el => el && el.value");
             var dbgResourceType = await (await resourceTypeSelect.ElementHandleAsync())?.EvaluateAsync<string>("el => el && el.value");
             Console.WriteLine($"[DEBUG] Pre-save name: {_createdProductName}");
@@ -119,11 +146,39 @@ namespace UiTests.Steps
         [When("I save the partner product")]
         public async Task WhenISaveThePartnerProduct()
         {
+            var nameLocator = _driver.Page.Locator("input[name='name']");
+            var priceLocator = _driver.Page.Locator("input[name='sales_price']");
+
+            var currentName = await nameLocator.InputValueAsync();
+            if (string.IsNullOrWhiteSpace(currentName) && !string.IsNullOrWhiteSpace(_createdProductName))
+            {
+                Console.WriteLine("[WARN] Name input empty before save; restoring cached value.");
+                await nameLocator.FillAsync(_createdProductName);
+                await nameLocator.BlurAsync();
+                currentName = await nameLocator.InputValueAsync();
+            }
+
+            var currentPrice = await priceLocator.InputValueAsync();
+            if (string.IsNullOrWhiteSpace(currentPrice) && !string.IsNullOrWhiteSpace(_createdProductPrice))
+            {
+                Console.WriteLine("[WARN] Sales price input empty before save; restoring cached value.");
+                await priceLocator.FillAsync("");
+                await priceLocator.FillAsync(_createdProductPrice);
+                await priceLocator.BlurAsync();
+                currentPrice = await priceLocator.InputValueAsync();
+            }
+
             // Log current form state before saving
             var clinicsSelected = await _driver.Page.Locator("select[name='clinics[]']").EvaluateAsync<string>("el => Array.from(el.selectedOptions).map(o => o.value).join(', ')");
-            var resourcesSelected = await _driver.Page.Locator("select[name='resources[]']").EvaluateAsync<string>("el => Array.from(el.selectedOptions).map(o => o.value).join(', ')");
-            var currentName = await _driver.Page.Locator("input[name='name']").InputValueAsync();
-            var currentPrice = await _driver.Page.Locator("input[name='sales_price']").InputValueAsync();
+            string resourcesSelected = "";
+            try
+            {
+                resourcesSelected = await _driver.Page.Locator("select[name='resources[]']").EvaluateAsync<string>("el => Array.from(el.selectedOptions).map(o => o.value).join(', ')");
+            }
+            catch
+            {
+                resourcesSelected = string.Empty;
+            }
             var currentCurrency = await _driver.Page.Locator("select[name='currency']").EvaluateAsync<string>("el => el ? el.value : ''");
             var currentResourceType = await _driver.Page.Locator("select[name='resource_type_id']").EvaluateAsync<string>("el => el ? el.value : ''");
             Console.WriteLine($"[DEBUG] Clinics selected: [{clinicsSelected}]");

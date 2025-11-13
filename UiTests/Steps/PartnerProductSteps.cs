@@ -159,6 +159,9 @@ namespace UiTests.Steps
 
             if (await submitButton.CountAsync() > 0)
             {
+                // Wait a bit to ensure Vue has updated all form values
+                await Task.Delay(300);
+
                 // Use JavaScript to submit the form directly, bypassing Vue handlers
                 await _driver.Page.EvaluateAsync(@"
                     () => {
@@ -170,48 +173,131 @@ namespace UiTests.Steps
                                 form = vForm.querySelector('form');
                             }
                         }
-                        
+
                         if (!form) {
                             throw new Error('Could not find partner-products form');
                         }
-                        
+
+                        // First, explicitly read values from input elements to ensure Vue-bound values are captured
+                        const getFieldValue = (name) => {
+                            const el = form.querySelector(`[name=""${name}""]`);
+                            if (!el) return null;
+                            if (el.tagName === 'SELECT') return el.value;
+                            if (el.type === 'checkbox') return el.checked ? el.value : null;
+                            if (el.type === 'radio') {
+                                const checked = form.querySelector(`[name=""${name}""]:checked`);
+                                return checked ? checked.value : null;
+                            }
+                            return el.value || null;
+                        };
+
+                        // Get all array field values
+                        const getArrayFieldValues = (name) => {
+                            const elements = form.querySelectorAll(`[name=""${name}""]`);
+                            const values = [];
+                            elements.forEach(el => {
+                                if (el.tagName === 'SELECT' && el.multiple) {
+                                    Array.from(el.selectedOptions).forEach(opt => {
+                                        if (opt.value) values.push(opt.value);
+                                    });
+                                } else if (el.type === 'checkbox' && el.checked) {
+                                    if (el.value) values.push(el.value);
+                                } else if (el.type !== 'checkbox' && el.value) {
+                                    values.push(el.value);
+                                }
+                            });
+                            return values;
+                        };
+
                         // Create a new form and copy all values
                         const newForm = document.createElement('form');
                         newForm.method = form.method || 'POST';
                         newForm.action = form.action || form.getAttribute('action');
                         newForm.style.display = 'none';
-                        
-                        // Copy all form fields, filtering out empty values for array fields
+
+                        // Explicitly read critical fields first
+                        const nameValue = getFieldValue('name');
+                        const salesPriceValue = getFieldValue('sales_price');
+                        const currencyValue = getFieldValue('currency');
+                        const resourceTypeValue = getFieldValue('resource_type_id');
+
+                        // Add critical fields explicitly
+                        if (nameValue) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'name';
+                            input.value = nameValue;
+                            newForm.appendChild(input);
+                        }
+
+                        if (salesPriceValue) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'sales_price';
+                            input.value = salesPriceValue;
+                            newForm.appendChild(input);
+                        }
+
+                        if (currencyValue) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'currency';
+                            input.value = currencyValue;
+                            newForm.appendChild(input);
+                        }
+
+                        if (resourceTypeValue) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'resource_type_id';
+                            input.value = resourceTypeValue;
+                            newForm.appendChild(input);
+                        }
+
+                        // Copy all other form fields using FormData as fallback
                         const formData = new FormData(form);
-                        const fieldCounts = {}; // Track counts for array fields
-                        
+                        const addedFields = new Set(['name', 'sales_price', 'currency', 'resource_type_id']);
+
                         for (const [key, value] of formData.entries()) {
+                            // Skip if we already added this field explicitly
+                            if (addedFields.has(key)) continue;
+
                             // Skip empty values for array fields (like related_products[], clinics[], etc.)
                             if (key.endsWith('[]') && (!value || value.trim() === '')) {
                                 continue;
                             }
-                            
+
                             // Skip empty strings for regular fields (but keep '0' and other falsy but valid values)
                             if (!key.endsWith('[]') && value === '') {
                                 continue;
                             }
-                            
+
                             const input = document.createElement('input');
                             input.type = 'hidden';
                             input.name = key;
                             input.value = value;
                             newForm.appendChild(input);
-                            
-                            // Track array field counts
-                            if (key.endsWith('[]')) {
-                                const baseKey = key;
-                                fieldCounts[baseKey] = (fieldCounts[baseKey] || 0) + 1;
-                            }
                         }
-                        
-                        // If array fields have no values, don't include them at all (Laravel will use empty array)
-                        // This is already handled by the filter above
-                        
+
+                        // Handle array fields explicitly
+                        const clinics = getArrayFieldValues('clinics[]');
+                        clinics.forEach(val => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'clinics[]';
+                            input.value = val;
+                            newForm.appendChild(input);
+                        });
+
+                        const resources = getArrayFieldValues('resources[]');
+                        resources.forEach(val => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'resources[]';
+                            input.value = val;
+                            newForm.appendChild(input);
+                        });
+
                         // Ensure CSRF token
                         const csrf = form.querySelector('input[name=""_token""]') || document.querySelector('input[name=""_token""]') || document.querySelector('meta[name=""csrf-token""]');
                         if (csrf) {
@@ -221,7 +307,7 @@ namespace UiTests.Steps
                             csrfInput.value = csrf.value || csrf.getAttribute('content');
                             newForm.appendChild(csrfInput);
                         }
-                        
+
                         // Add method override if needed
                         const method = form.querySelector('input[name=""_method""]');
                         if (method) {
@@ -231,9 +317,9 @@ namespace UiTests.Steps
                             methodInput.value = method.value;
                             newForm.appendChild(methodInput);
                         }
-                        
+
                         document.body.appendChild(newForm);
-                        
+
                         // Submit immediately - this causes full page navigation
                         // Use setTimeout to ensure the form is fully in the DOM before submitting
                         setTimeout(() => {
@@ -241,7 +327,7 @@ namespace UiTests.Steps
                         }, 100);
                     }
                 ");
-                
+
                 // Wait for navigation to start (URL change or page unload)
                 await Task.Delay(500);
             }

@@ -192,30 +192,17 @@ class SalesLeadController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name'                      => 'required|string|max:255',
-            'description'               => 'nullable|string',
-            'pipeline_stage_id'         => 'nullable|exists:lead_pipeline_stages,id',
-            'lead_id'                   => 'nullable|exists:leads,id',
-            'user_id'                   => 'nullable|exists:users,id',
-            'contact_person_id'         => 'nullable|exists:persons,id',
-            'contact_person_id_display' => 'nullable|string',
-            'person_ids'                => 'nullable|array',
-            'person_ids.*'              => 'exists:persons,id',
-        ]);
+        $request->validate($this->getValidationRules(true));
 
         $salesLead = SalesLead::create($this->prepareSalesLeadData($request->all()));
+        $lead = Lead::find($request->lead_id);
+        $salesLead->copyFromLead($lead);
 
         // Handle person relationships
         $personIds = RequestHelper::filterIntegerArray($request, 'person_ids');
-        if (! empty($personIds)) {
+        if(!empty($personIds)) {
+            // override the default persons from lead
             $salesLead->syncPersons($personIds);
-        } elseif ($request->has('lead_id') && $request->lead_id) {
-            // Copy persons and contact person from the selected lead
-            $lead = Lead::find($request->lead_id);
-            if ($lead) {
-                $salesLead->copyFromLead($lead);
-            }
         }
 
         return redirect()->route('admin.sales-leads.index')
@@ -231,24 +218,14 @@ class SalesLeadController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name'                      => 'sometimes|required|string|max:255',
-            'description'               => 'nullable|string',
-            'pipeline_stage_id'         => 'sometimes|nullable|exists:lead_pipeline_stages,id',
-            'lead_id'                   => 'nullable|exists:leads,id',
-            'user_id'                   => 'nullable|exists:users,id',
-            'contact_person_id'         => 'nullable|exists:persons,id',
-            'contact_person_id_display' => 'nullable|string',
-            'person_ids'                => 'nullable|array',
-            'person_ids.*'              => 'exists:persons,id',
-        ]);
+        $request->validate($this->getValidationRules());
 
         $salesLead = SalesLead::findOrFail($id);
         $salesLead->update($this->prepareSalesLeadData($request->all()));
 
-        // Handle person relationships
-        $personIds = RequestHelper::filterIntegerArray($request, 'person_ids');
-        if (! empty($personIds)) {
+        // Handle person relationships - always sync if person_ids is in request, even if empty array
+        if ($request->has('person_ids')) {
+            $personIds = RequestHelper::filterIntegerArray($request, 'person_ids');
             $salesLead->syncPersons($personIds);
         }
 
@@ -673,5 +650,21 @@ class SalesLeadController extends Controller
         }
 
         return $data;
+    }
+
+    private function getValidationRules(bool $isCreate = false):array
+    {
+        $leadRule = ($isCreate) ? 'required|exists:leads,id' : 'nullable|exists:leads,id';
+        return [
+            'name'                      => 'required|string|max:255',
+            'description'               => 'nullable|string',
+            'pipeline_stage_id'         => 'nullable|exists:lead_pipeline_stages,id',
+            'lead_id'                   => $leadRule,
+            'user_id'                   => 'nullable|exists:users,id',
+            'contact_person_id'         => 'nullable|exists:persons,id',
+            'contact_person_id_display' => 'nullable|string',
+            'person_ids'                => 'nullable|array',
+            'person_ids.*'              => 'exists:persons,id',
+        ];
     }
 }

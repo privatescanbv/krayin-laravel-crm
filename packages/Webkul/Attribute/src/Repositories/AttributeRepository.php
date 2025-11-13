@@ -126,22 +126,28 @@ class AttributeRepository extends Repository
             
             $searchTerm = '%'.urldecode($query).'%';
 
+            // Database-agnostic concatenation: SQLite uses ||, MySQL uses CONCAT
+            $driver = \Illuminate\Support\Facades\DB::getDriverName();
+            $concatExpr = $driver === 'sqlite' 
+                ? "(users.first_name || ' ' || users.last_name)"
+                : "CONCAT(users.first_name, ' ', users.last_name)";
+
             if ($currentUser?->view_permission === 'group') {
                 return $userRepository->leftJoin('user_groups', 'users.id', '=', 'user_groups.user_id')
-                    ->where(function($q) use ($searchTerm) {
+                    ->where(function($q) use ($searchTerm, $concatExpr) {
                         $q->where('users.first_name', 'like', $searchTerm)
                           ->orWhere('users.last_name', 'like', $searchTerm)
-                          ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", [$searchTerm]);
+                          ->orWhereRaw("{$concatExpr} LIKE ?", [$searchTerm]);
                     })
                     ->get();
             } elseif ($currentUser?->view_permission === 'individual') {
                 return $userRepository->where('users.id', $currentUser->id);
             }
 
-            return $userRepository->where(function($q) use ($searchTerm) {
+            return $userRepository->where(function($q) use ($searchTerm, $concatExpr) {
                 $q->where('users.first_name', 'like', $searchTerm)
                   ->orWhere('users.last_name', 'like', $searchTerm)
-                  ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", [$searchTerm]);
+                  ->orWhereRaw("{$concatExpr} LIKE ?", [$searchTerm]);
             })->get();
         }
 

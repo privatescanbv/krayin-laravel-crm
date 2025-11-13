@@ -331,3 +331,134 @@ test('validation fails when resource type is not set but partner products are se
     $response = $this->post(route('admin.products.store'), $payload);
     $response->assertSessionHasErrors('partner_products');
 });
+
+test('can update product with partner products via edit form', function () {
+    $product = Product::factory()->create();
+    $resourceType = ResourceType::factory()->create();
+    $product->update(['resource_type_id' => $resourceType->id]);
+
+    // Create partner products with same resource type
+    $partnerProduct1 = PartnerProduct::factory()->create([
+        'product_id'       => null,
+        'resource_type_id' => $resourceType->id,
+    ]);
+    $partnerProduct2 = PartnerProduct::factory()->create([
+        'product_id'       => null,
+        'resource_type_id' => $resourceType->id,
+    ]);
+    $partnerProduct3 = PartnerProduct::factory()->create([
+        'product_id'       => null,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    // Simulate edit form submission with partner products selected
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType->id,
+        'partner_products'  => [$partnerProduct1->id, $partnerProduct2->id], // Select 2 out of 3
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    // Refresh all partner products
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+    $partnerProduct3->refresh();
+
+    // Verify selected partner products are linked
+    expect($partnerProduct1->product_id)->toBe($product->id)
+        ->and($partnerProduct2->product_id)->toBe($product->id)
+        // Verify unselected partner product is not linked
+        ->and($partnerProduct3->product_id)->toBeNull();
+});
+
+test('can update product and change partner products selection', function () {
+    $product = Product::factory()->create();
+    $resourceType = ResourceType::factory()->create();
+    $product->update(['resource_type_id' => $resourceType->id]);
+
+    // Create partner products
+    $partnerProduct1 = PartnerProduct::factory()->create([
+        'product_id'       => $product->id, // Initially linked
+        'resource_type_id' => $resourceType->id,
+    ]);
+    $partnerProduct2 = PartnerProduct::factory()->create([
+        'product_id'       => null,
+        'resource_type_id' => $resourceType->id,
+    ]);
+    $partnerProduct3 = PartnerProduct::factory()->create([
+        'product_id'       => null,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    // Update: remove partnerProduct1, add partnerProduct2 and partnerProduct3
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType->id,
+        'partner_products'  => [$partnerProduct2->id, $partnerProduct3->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    // Refresh all partner products
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+    $partnerProduct3->refresh();
+
+    // Verify partnerProduct1 is unlinked
+    expect($partnerProduct1->product_id)->toBeNull()
+        // Verify partnerProduct2 and partnerProduct3 are linked
+        ->and($partnerProduct2->product_id)->toBe($product->id)
+        ->and($partnerProduct3->product_id)->toBe($product->id);
+});
+
+test('can update product and remove all partner products', function () {
+    $product = Product::factory()->create();
+    $resourceType = ResourceType::factory()->create();
+    $product->update(['resource_type_id' => $resourceType->id]);
+
+    // Create partner products that are linked
+    $partnerProduct1 = PartnerProduct::factory()->create([
+        'product_id'       => $product->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+    $partnerProduct2 = PartnerProduct::factory()->create([
+        'product_id'       => $product->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    // Update: remove all partner products (empty array)
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType->id,
+        'partner_products'  => [], // Empty array
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    // Refresh partner products
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    // Verify both are unlinked
+    expect($partnerProduct1->product_id)->toBeNull()
+        ->and($partnerProduct2->product_id)->toBeNull();
+});

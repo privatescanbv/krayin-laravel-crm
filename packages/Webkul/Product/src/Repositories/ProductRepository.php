@@ -73,6 +73,9 @@ class ProductRepository extends Repository
      */
     public function update(array $data, $id, $attributes = [])
     {
+        // Store partner_products before parent::update() might remove it
+        $partnerProducts = $data['partner_products'] ?? null;
+        
         $product = parent::update($data, $id);
 
         /**
@@ -93,6 +96,11 @@ class ProductRepository extends Repository
                 'entity_id' => $product->id,
             ]), $attributes);
 
+            // Sync partner products even in quick_add mode
+            if ($partnerProducts !== null) {
+                $this->syncPartnerProducts($product, ['partner_products' => $partnerProducts]);
+            }
+
             return $product;
         }
 
@@ -100,7 +108,9 @@ class ProductRepository extends Repository
             'entity_id' => $product->id,
         ]));
 
-        $this->syncPartnerProducts($product, $data);
+        // Use stored partner_products or fallback to data array
+        $syncData = ['partner_products' => $partnerProducts ?? ($data['partner_products'] ?? [])];
+        $this->syncPartnerProducts($product, $syncData);
 
         return $product;
     }
@@ -108,18 +118,30 @@ class ProductRepository extends Repository
     /**
      * Sync partner products relationship.
      *
-     * @param  \Webkul\Product\Contracts\Product  $product
+     * @param  \Webkul\Product\Contracts\Product|\Webkul\Product\Models\Product  $product
      * @param  array  $data
      * @return void
      */
     protected function syncPartnerProducts($product, array $data): void
     {
         // Always reset product_id for all partner products that were previously linked to this product
+        /** @var \Webkul\Product\Models\Product $product */
         $product->partnerProducts()->update(['product_id' => null]);
 
         // If partner_products key exists in data, sync the selected ones
         if (array_key_exists('partner_products', $data)) {
             $partnerProductIds = $data['partner_products'] ?? [];
+
+            // Ensure it's an array and filter out invalid values
+            if (! is_array($partnerProductIds)) {
+                $partnerProductIds = [];
+            }
+
+            // Filter out empty values and convert to integers
+            $partnerProductIds = array_filter(
+                array_map('intval', $partnerProductIds),
+                fn($id) => $id > 0
+            );
 
             // Set product_id for the selected partner products
             if (! empty($partnerProductIds)) {

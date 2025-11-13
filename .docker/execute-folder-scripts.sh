@@ -4,7 +4,7 @@
 SCRIPT_DIR="./bin/post-deploy/user-entry-scripts"
 
 # create symlink for artisan, so we can keep our custom scripts to a different path (shock env)
-ln -s /usr/share/nginx/html/artisan /var/www/html/artisan
+ln -s /usr/share/nginx/html/artisan /var/www/html/artisan || true
 
 # Controleer of de directory bestaat
 if [ ! -d "$SCRIPT_DIR" ]; then

@@ -16,5 +16,8 @@ abstract class TestCase extends BaseTestCase
 
         // Set locale to English for consistent test messages
         app()->setLocale('en');
+
+        // Disable CSRF token verification for tests
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
     }
 }

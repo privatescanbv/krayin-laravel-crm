@@ -6,6 +6,8 @@ use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
 use App\Enums\ProductReports;
 use App\Helpers\ProductHelper;
+use App\Helpers\RequestHelper;
+use App\Models\PartnerProduct;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Repositories\ClinicRepository;
@@ -40,7 +42,7 @@ class PartnerProductController extends SimpleEntityController
     {
         $partnerProduct = $this->partnerProductRepository->findOrFail($id);
 
-        return view('admin.partner-products.view', [
+        return view('adminc.partner-products.view', [
             'partner_product' => $partnerProduct,
         ]);
     }
@@ -95,9 +97,7 @@ class PartnerProductController extends SimpleEntityController
 
         $entity = $this->partnerProductRepository->create($this->transformPayload($request->all()));
 
-        $entity->clinics()->sync($request->input('clinics', []));
-        $entity->relatedProducts()->sync($request->input('related_products', []));
-        $entity->resources()->sync($request->input('resources', []));
+        $this->syncRelationships($entity, $request);
 
         Event::dispatch("settings.{$this->entityName}.create.after", $entity);
 
@@ -134,9 +134,7 @@ class PartnerProductController extends SimpleEntityController
 
         $entity = $this->partnerProductRepository->update($this->transformPayload($request->all(), $id), $id);
 
-        $entity->clinics()->sync($request->input('clinics', []));
-        $entity->relatedProducts()->sync($request->input('related_products', []));
-        $entity->resources()->sync($request->input('resources', []));
+        $this->syncRelationships($entity, $request);
 
         Event::dispatch("settings.{$this->entityName}.update.after", $entity);
 
@@ -397,9 +395,15 @@ class PartnerProductController extends SimpleEntityController
         ];
         $payload = $this->normalizeAndCalculatePurchasePrices($payload, $relatedPurchasePriceFields, 'rel_purchase_price');
 
-        // Normalize reporting field - convert to JSON array
+        // Normalize reporting field - ensure it's always an array or null
         if (array_key_exists('reporting', $payload)) {
-            $payload['reporting'] = $payload['reporting'] ? json_encode($payload['reporting']) : null;
+            // Normalize using the model's static method
+            $normalized = PartnerProduct::normalizeReporting($payload['reporting']);
+            // Set to null if empty, otherwise keep as array (Laravel will auto-convert to JSON via cast)
+            $payload['reporting'] = ! empty($normalized) ? $normalized : null;
+        } else {
+            // If reporting is not in payload (no checkboxes checked), set to null
+            $payload['reporting'] = null;
         }
 
         return parent::transformPayload($payload, $id);
@@ -423,6 +427,16 @@ class PartnerProductController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return trans('admin::app.partner_products.index.delete-failed');
+    }
+
+    /**
+     * Sync all relationships for a partner product.
+     */
+    protected function syncRelationships(Model $entity, Request $request): void
+    {
+        RequestHelper::syncRelationFromRequest($entity, 'clinics', $request, 'clinics');
+        RequestHelper::syncRelationFromRequest($entity, 'relatedProducts', $request, 'related_products');
+        RequestHelper::syncRelationFromRequest($entity, 'resources', $request, 'resources');
     }
 
     // Price normalization centralized in App\Enums\Currency::normalizePrice

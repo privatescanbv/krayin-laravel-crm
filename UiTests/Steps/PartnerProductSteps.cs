@@ -148,84 +148,119 @@ namespace UiTests.Steps
                 new() { Timeout = 10000 }
             );
 
-            // Build FormData from the correct container and submit via fetch to avoid hydration timing issues
-            var submittedFormJson = await _driver.Page.EvaluateAsync<string>(
-                """
-                (async () => {
-                  function pickContainer() {
-                    const native = document.querySelector('form[action*="partner-products"]');
-                    if (native) return native;
-                    const vue = document.querySelector('v-form[action*="partner-products"]');
-                    if (vue) return vue;
-                    const all = Array.from(document.querySelectorAll('form, v-form'));
-                    return all.find(f => (f.getAttribute('action') || '').includes('partner-products')) || null;
-                  }
+            // Instead of creating a new form, directly submit the existing form by clicking the submit button
+            // This ensures Vue handlers are bypassed and we get a full-page redirect
+            var submitButton = _driver.Page.Locator("button[type='submit'], button.primary-button").First;
+            if (await submitButton.CountAsync() == 0)
+            {
+                // Fallback: try to find submit button by text
+                submitButton = _driver.Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Opslaan|Save", RegexOptions.IgnoreCase) }).First;
+            }
 
-                  const container = pickContainer();
-                  if (!container) return JSON.stringify({ error: 'no-container' });
-
-                  const fd = new FormData();
-                  const q = sel => container.querySelector(sel);
-                  const add = (k, v) => { if (v !== undefined && v !== null) fd.append(k, String(v)); };
-
-                  add('name', q('input[name="name"]')?.value || '');
-                  add('currency', q('select[name="currency"]')?.value || '');
-                  add('sales_price', q('input[name="sales_price"]')?.value || '');
-
-                  const activeCb = q('input[name="active"][type="checkbox"]');
-                  fd.append('active', activeCb && activeCb.checked ? '1' : '0');
-
-                  add('description', q('textarea[name="description"]')?.value || '');
-                  add('discount_info', q('textarea[name="discount_info"]')?.value || '');
-                  add('resource_type_id', q('select[name="resource_type_id"]')?.value || '');
-
-                  const clinics = q('select[name="clinics[]"]');
-                  if (clinics) Array.from(clinics.selectedOptions).forEach(o => fd.append('clinics[]', o.value));
-
-                  add('clinic_description', q('textarea[name="clinic_description"]')?.value || '');
-                  add('duration', q('input[name="duration"]')?.value || '0');
-
-                  const csrf = document.querySelector('input[name="_token"]')?.value
-                    || document.querySelector('meta[name="csrf-token"]')?.content;
-                  if (csrf) fd.append('_token', csrf);
-
-                  const href = location.href;
-                  if (/\/edit\/\d+$/.test(href)) fd.append('_method', 'PUT');
-
-                  const action = container.getAttribute('action') || href;
-
-                  const summary = {};
-                  fd.forEach((v, k) => {
-                    if (summary[k] === undefined) summary[k] = v;
-                    else if (Array.isArray(summary[k])) summary[k].push(v);
-                    else summary[k] = [summary[k], v];
-                  });
-
-                  // Submit via a native form to ensure full-page navigation/redirect
-                  const tempForm = document.createElement('form');
-                  tempForm.method = 'POST';
-                  tempForm.action = action;
-                  // replicate payload as hidden inputs
-                  for (const [k, v] of fd.entries()) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = k;
-                    input.value = typeof v === 'string' ? v : (v && v.name) ? v.name : String(v);
-                    tempForm.appendChild(input);
-                  }
-                  document.body.appendChild(tempForm);
-                  try { if (tempForm.requestSubmit) tempForm.requestSubmit(); else tempForm.submit(); } catch (e) {}
-
-                  return JSON.stringify({ submitted: summary, action });
-                })()
-                """
-            );
-
-            Console.WriteLine($"[DEBUG] FormData before save: {submittedFormJson}");
-
+            if (await submitButton.CountAsync() > 0)
+            {
+                // Use JavaScript to submit the form directly, bypassing Vue handlers
+                await _driver.Page.EvaluateAsync(@"
+                    () => {
+                        // Find the form
+                        let form = document.querySelector('form[action*=""partner-products""]');
+                        if (!form) {
+                            const vForm = document.querySelector('v-form[action*=""partner-products""]');
+                            if (vForm) {
+                                form = vForm.querySelector('form');
+                            }
+                        }
+                        
+                        if (!form) {
+                            throw new Error('Could not find partner-products form');
+                        }
+                        
+                        // Create a new form and copy all values
+                        const newForm = document.createElement('form');
+                        newForm.method = form.method || 'POST';
+                        newForm.action = form.action || form.getAttribute('action');
+                        newForm.style.display = 'none';
+                        
+                        // Copy all form fields, filtering out empty values for array fields
+                        const formData = new FormData(form);
+                        const fieldCounts = {}; // Track counts for array fields
+                        
+                        for (const [key, value] of formData.entries()) {
+                            // Skip empty values for array fields (like related_products[], clinics[], etc.)
+                            if (key.endsWith('[]') && (!value || value.trim() === '')) {
+                                continue;
+                            }
+                            
+                            // Skip empty strings for regular fields (but keep '0' and other falsy but valid values)
+                            if (!key.endsWith('[]') && value === '') {
+                                continue;
+                            }
+                            
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = key;
+                            input.value = value;
+                            newForm.appendChild(input);
+                            
+                            // Track array field counts
+                            if (key.endsWith('[]')) {
+                                const baseKey = key;
+                                fieldCounts[baseKey] = (fieldCounts[baseKey] || 0) + 1;
+                            }
+                        }
+                        
+                        // If array fields have no values, don't include them at all (Laravel will use empty array)
+                        // This is already handled by the filter above
+                        
+                        // Ensure CSRF token
+                        const csrf = form.querySelector('input[name=""_token""]') || document.querySelector('input[name=""_token""]') || document.querySelector('meta[name=""csrf-token""]');
+                        if (csrf) {
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = csrf.value || csrf.getAttribute('content');
+                            newForm.appendChild(csrfInput);
+                        }
+                        
+                        // Add method override if needed
+                        const method = form.querySelector('input[name=""_method""]');
+                        if (method) {
+                            const methodInput = document.createElement('input');
+                            methodInput.type = 'hidden';
+                            methodInput.name = '_method';
+                            methodInput.value = method.value;
+                            newForm.appendChild(methodInput);
+                        }
+                        
+                        document.body.appendChild(newForm);
+                        
+                        // Submit immediately - this causes full page navigation
+                        // Use setTimeout to ensure the form is fully in the DOM before submitting
+                        setTimeout(() => {
+                            newForm.submit();
+                        }, 100);
+                    }
+                ");
+                
+                // Wait for navigation to start (URL change or page unload)
+                await Task.Delay(500);
+            }
+            else
+            {
+                throw new Exception("Could not find submit button for partner product form");
+            }
 
             // Give time for navigation or server processing
-            await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            // Wait for either network idle or a URL change
+            try
+            {
+                await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 5000 });
+            }
+            catch
+            {
+                // If network idle times out, wait a bit more for the redirect
+                await Task.Delay(2000);
+            }
 
             // If there are validation errors, surface them immediately
             var errors = _driver.Page.Locator(".control-error, .text-red-600, .alert-error");

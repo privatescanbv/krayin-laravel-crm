@@ -37,6 +37,7 @@ class ProductDataGrid extends DataGrid
                 'products.active',
                 DB::raw('MIN(tags.name) as tag_name'),
                 'product_groups.id as group_id',
+                'product_groups.name as group_name',
                 'product_types.id as product_type_id',
                 'product_types.name as product_type_name',
                 'resource_types.id as resource_type_id',
@@ -166,7 +167,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'              => 'group_name',
-            'columnName'         => 'products.group_name',
+            'columnName'         => 'product_groups.name',
             'label'              => trans('admin::app.productgroups.title'),
             'type'               => 'string',
             'searchable'         => true,

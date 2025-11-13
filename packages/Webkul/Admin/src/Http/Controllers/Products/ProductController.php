@@ -127,7 +127,9 @@ class ProductController extends SimpleEntityController
 
         Event::dispatch('product.update.before', $id);
 
-        $entity = $this->repository->update($this->transformPayload($request->all(), $id), $id);
+        $payload = $this->transformPayload($request->all(), $id);
+
+        $entity = $this->repository->update($payload, $id);
 
         Event::dispatch('product.update.after', $entity);
 
@@ -339,7 +341,7 @@ class ProductController extends SimpleEntityController
     {
         $resourceTypeId = request()->input('resource_type_id');
 
-        logger()->info('request '.print_r(request()->all(), true));
+        // Debug logging removed - was too verbose
         return [
             'name'              => 'required|string|max:255',
             'active'            => 'required|boolean',
@@ -384,9 +386,22 @@ class ProductController extends SimpleEntityController
             $data['active'] = (bool) $data['active'];
         }
 
-        // Ensure partner_products is always present (empty array if not provided)
+        // Ensure partner_products is always present and normalized as array of integers
         if (! array_key_exists('partner_products', $data)) {
             $data['partner_products'] = [];
+        } else {
+            // Normalize partner_products to array of integers
+            if (! is_array($data['partner_products'])) {
+                $data['partner_products'] = [];
+            } else {
+                // Filter out empty values and convert to integers
+                $data['partner_products'] = array_filter(
+                    array_map('intval', $data['partner_products']),
+                    fn($id) => $id > 0
+                );
+                // Re-index array to ensure sequential keys
+                $data['partner_products'] = array_values($data['partner_products']);
+            }
         }
 
         // Convert empty strings to null for foreign key fields

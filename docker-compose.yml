@@ -35,7 +35,7 @@ services:
       - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-api-svc
       - traefik.http.services.laravel-template-api-svc.loadbalancer.server.port=80
     volumes:
-      - '.:/var/www/html'
+      - '.:/usr/share/nginx/html'
     networks:
       - sail
       - mb_traefik
@@ -226,7 +226,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki-data:/loki
-      - ./docker/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - ./.docker/config/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
     networks:
       - sail
     labels:
@@ -239,7 +239,7 @@ services:
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./docker/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - ./.docker/config/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
       - sail

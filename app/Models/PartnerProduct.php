@@ -106,6 +106,30 @@ class PartnerProduct extends BaseProduct
         return [];
     }
 
+    /**
+     * Get the reporting attribute, ensuring it's always an array.
+     */
+    public function getReportingAttribute($value)
+    {
+        if (is_null($value)) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        // If it's a string, try to decode it
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
+    }
+
     public function clinics()
     {
         return $this->belongsToMany(Clinic::class, 'clinic_partner_product');

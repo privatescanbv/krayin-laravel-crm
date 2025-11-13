@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Concerns\HasEntitySearch;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -133,7 +134,8 @@ abstract class SimpleEntityController extends Controller
             return redirect()
                 ->route($this->indexRoute)
                 ->with('success', $this->getDestroySuccessMessage());
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
+            logger()->error('Could not delete: '.$exception->getMessage());
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => $this->getDeleteFailedMessage(),

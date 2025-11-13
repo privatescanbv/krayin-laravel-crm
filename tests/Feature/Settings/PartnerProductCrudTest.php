@@ -443,3 +443,121 @@ test('edit partner product shows linked product with full path', function () {
     // The view should contain the linked product with full path
     $response->assertSee('Parent Group/Child Group/Template Product');
 });
+
+test('can create partner product with reporting', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    $payload = [
+        'name'                         => 'Product with Reporting',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 199.99,
+        'active'                       => 1,
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'reporting'                    => ['rad_mri', 'rad_ct', 'cardio_1'],
+    ];
+
+    $response = $this->postJson(route('admin.partner_products.store'), $payload);
+    $response->assertOk();
+
+    $createdProduct = PartnerProduct::where('name', 'Product with Reporting')->first();
+    expect($createdProduct->reporting)->toBeArray()
+        ->and($createdProduct->reporting)->toContain('rad_mri', 'rad_ct', 'cardio_1')
+        ->and($createdProduct->reporting)->toHaveCount(3);
+
+    // Verify reporting labels are correct
+    $labels = $createdProduct->getReportingLabels();
+    expect($labels)->toContain('Radiologie MRI', 'Radiologie CT', 'Cardiologie');
+});
+
+test('can update partner product reporting', function () {
+    $pp = PartnerProduct::factory()->create([
+        'reporting' => ['rad_mri', 'rad_ct'],
+    ]);
+
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    $payload = [
+        'name'                         => $pp->name,
+        'currency'                     => 'EUR',
+        'sales_price'                  => $pp->sales_price,
+        'active'                       => 1,
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'reporting'                    => ['cardio_1', 'lab_1', 'gastro_1'], // Different reporting values
+        '_method'                      => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.partner_products.update', ['id' => $pp->id]), $payload);
+    $response->assertOk();
+
+    $pp->refresh();
+    expect($pp->reporting)->toBeArray()
+        ->and($pp->reporting)->toContain('cardio_1', 'lab_1', 'gastro_1')
+        ->and($pp->reporting)->not->toContain('rad_mri', 'rad_ct')
+        ->and($pp->reporting)->toHaveCount(3);
+
+    // Verify reporting labels are updated
+    $labels = $pp->getReportingLabels();
+    expect($labels)->toContain('Cardiologie', 'Laboratoriumuitslag', 'Gastroscopie');
+});
+
+test('can clear reporting by sending empty array', function () {
+    $pp = PartnerProduct::factory()->create([
+        'reporting' => ['rad_mri', 'rad_ct', 'cardio_1'],
+    ]);
+
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    $payload = [
+        'name'                         => $pp->name,
+        'currency'                     => 'EUR',
+        'sales_price'                  => $pp->sales_price,
+        'active'                       => 1,
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'reporting'                    => [], // Empty array
+        '_method'                      => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.partner_products.update', ['id' => $pp->id]), $payload);
+    $response->assertOk();
+
+    $pp->refresh();
+    // Accessor returns empty array when null, so check for empty array
+    expect($pp->reporting)->toBeArray()->toBeEmpty();
+
+    // Verify no reporting labels
+    $labels = $pp->getReportingLabels();
+    expect($labels)->toBeArray()->toBeEmpty();
+});
+
+test('can remove reporting by not sending field', function () {
+    $pp = PartnerProduct::factory()->create([
+        'reporting' => ['rad_mri', 'rad_ct'],
+    ]);
+
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    $payload = [
+        'name'                         => $pp->name,
+        'currency'                     => 'EUR',
+        'sales_price'                  => $pp->sales_price,
+        'active'                       => 1,
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        // reporting field not included
+        '_method'                      => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.partner_products.update', ['id' => $pp->id]), $payload);
+    $response->assertOk();
+
+    $pp->refresh();
+    // Accessor returns empty array when null, so check for empty array
+    expect($pp->reporting)->toBeArray()->toBeEmpty();
+});

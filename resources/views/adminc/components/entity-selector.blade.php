@@ -81,15 +81,8 @@
                     </div>
                 </div>
 
-                <!-- Hidden inputs -->
-                <template v-if="name">
-                    <input
-                            v-for="(it, i) in selectedItems"
-                            type="hidden"
-                            :name="multiple ? (name + '[' + i + ']') : name"
-                            :value="it.id ?? it.value ?? ''"
-                    />
-                </template>
+                <!-- Hidden inputs are managed dynamically via updateHiddenInputs() method -->
+                <!-- This ensures they are always synchronized with selectedItems -->
             </div>
         </script>
 
@@ -105,14 +98,42 @@
                         isSearching: false,
                         searchTimeout: null,
                         selectedItems: Array.isArray(this.items) ? [...this.items] : [],
+                        isInitialized: false, // Track if component has been initialized
                     };
                 },
                 watch: {
                     items: {
                         deep: true,
                         handler(newVal){
-                            this.selectedItems = Array.isArray(newVal) ? [...newVal] : [];
-                        }
+                            // Only update selectedItems from items prop if component hasn't been initialized yet
+                            // This prevents overwriting user selections when items prop changes
+                            if (!this.isInitialized) {
+                                this.selectedItems = Array.isArray(newVal) ? [...newVal] : [];
+                            }
+                        },
+                        immediate: true
+                    }
+                },
+                mounted() {
+                    // Ensure selectedItems is initialized from items prop
+                    if (Array.isArray(this.items) && this.items.length > 0) {
+                        this.selectedItems = [...this.items];
+                    }
+
+                    // Mark component as initialized after mount
+                    this.isInitialized = true;
+
+                    // Initialize hidden inputs immediately
+                    this.$nextTick(() => {
+                        this.updateHiddenInputs();
+                    });
+
+                    // Ensure hidden inputs are updated when form is submitted
+                    const form = this.$el.closest('form');
+                    if (form) {
+                        form.addEventListener('submit', () => {
+                            this.updateHiddenInputs();
+                        });
                     }
                 },
                 methods: {
@@ -147,10 +168,17 @@
                         const item = typeof s === 'object' ? s : { id: s, name: String(s) };
                         if (!this.isSelected(item.id ?? item.value)) {
                             if (this.multiple !== false) {
-                                this.selectedItems.push(item);
+                                // Use Vue.set for Vue 2 compatibility, or direct assignment for Vue 3
+                                if (this.$set) {
+                                    this.$set(this.selectedItems, this.selectedItems.length, item);
+                                } else {
+                                    this.selectedItems.push(item);
+                                }
                             } else {
                                 this.selectedItems = [item];
                             }
+                            // Update hidden inputs to ensure form submission includes selected items
+                            this.updateHiddenInputs();
                             this.$emit('select', item);
                             this.$emit('update:items', this.selectedItems);
                         }
@@ -159,6 +187,8 @@
                     },
                     removeItem(index) {
                         const removed = this.selectedItems.splice(index, 1)[0];
+                        // Update hidden inputs to ensure form submission includes selected items
+                        this.updateHiddenInputs();
                         this.$emit('remove', removed);
                         this.$emit('update:items', this.selectedItems);
                     },
@@ -167,6 +197,38 @@
                     },
                     emitCreateNew() {
                         this.$emit('create-new', { query: this.search });
+                    },
+                    updateHiddenInputs() {
+                        // Ensure hidden inputs are synchronized with selectedItems for form submission
+                        const form = this.$el.closest('form');
+                        if (!form || !this.name) {
+                            return;
+                        }
+
+                        // Remove all existing hidden inputs for this field
+                        const selector = this.multiple
+                            ? `input[type="hidden"][name^="${this.name}["], input[type="hidden"][name="${this.name}[]"]`
+                            : `input[type="hidden"][name="${this.name}"]`;
+                        const existingInputs = form.querySelectorAll(selector);
+                        existingInputs.forEach(input => input.remove());
+
+                        // Add new hidden inputs for selected items
+                        if (this.selectedItems.length > 0) {
+                            this.selectedItems.forEach((item, index) => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = this.multiple ? `${this.name}[${index}]` : this.name;
+                                input.value = item.id ?? item.value ?? '';
+                                form.appendChild(input);
+                            });
+                        } else if (this.multiple) {
+                            // Add empty input for empty array to ensure Laravel receives an empty array
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = `${this.name}[]`;
+                            input.value = '';
+                            form.appendChild(input);
+                        }
                     }
                 }
             });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
+use Exception;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
@@ -260,6 +261,48 @@ class OrderController extends SimpleEntityController
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
     }
 
+    public function attachGvlForm(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with('salesLead')->findOrFail($orderId);
+
+        if (! $order->salesLead) {
+            return response()->json([
+                'message' => 'Order heeft geen gekoppelde sales.',
+            ], 422);
+        }
+
+        // Check if GVL form already exists (early return for better API response)
+        if (! empty($order->salesLead->gvl_form_link)) {
+            return response()->json([
+                'message' => 'GVL formulier is al gekoppeld.',
+                'gvl_form_link' => $order->salesLead->gvl_form_link,
+            ], 422);
+        }
+
+        try {
+            // Use OrderMailService to create the form (this method also checks for existing link)
+            $formLink = $this->orderMailService->createFormRequestAndGetLink($order);
+
+            // Reload the order to get updated sales lead
+            $order->refresh();
+            $order->load('salesLead');
+
+            return response()->json([
+                'message' => 'GVL formulier is gekoppeld.',
+                'gvl_form_link' => $formLink,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('OrderController@attachGvlForm failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier koppelen is mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function detachGvlForm(Request $request, int $orderId): JsonResponse
     {
         $order = Order::with('salesLead')->findOrFail($orderId);
@@ -271,7 +314,29 @@ class OrderController extends SimpleEntityController
         }
 
         $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
-        $deleteUrl = "{$apiUrl}/api/forms";
+
+        $formId = null;
+        // Try multiple regex patterns to extract form ID from URL
+        // Pattern 1: 'forms/3/step/1' or 'forms/3'
+        if (preg_match('#forms/(\d+)(?:/step|/|$)#', $order->salesLead->gvl_form_link, $m)) {
+            $formId = (int) $m[1];
+        }
+        
+        // Pattern 2: Try to extract from API response ID if stored differently
+        // This handles cases where the form URL might have a different structure
+        if ($formId === null && preg_match('#/(\d+)(?:/step|/|$)#', $order->salesLead->gvl_form_link, $m)) {
+            $formId = (int) $m[1];
+        }
+        
+        if ($formId === null) {
+            Log::error('OrderController@detachGvlForm could not resolve form id from URL', [
+                'order_id' => $order->id,
+                'gvl_form_link' => $order->salesLead->gvl_form_link,
+            ]);
+            throw new Exception('Could not resolve form id from url: '.$order->salesLead->gvl_form_link);
+        }
+        
+        $deleteUrl = "{$apiUrl}/api/forms/".$formId;
         $token = config('services.forms.api_token');
 
         $httpClient = Http::timeout(10)->acceptJson();
@@ -282,10 +347,7 @@ class OrderController extends SimpleEntityController
         }
 
         try {
-            $response = $httpClient->delete($deleteUrl, [
-                'form_link' => $order->salesLead->gvl_form_link,
-                'order_id'  => $order->id,
-            ]);
+            $response = $httpClient->delete($deleteUrl,);
         } catch (Throwable $exception) {
             Log::error('OrderController@detachGvlForm kon Forms API niet bereiken', [
                 'order_id'  => $order->id,

@@ -173,7 +173,7 @@ test('can detach gvl form when forms api returns 200', function () {
     $order = Order::factory()->for($salesLead)->create();
 
     Http::fake([
-        'http://forms/api/forms' => Http::response([], 200),
+        'http://forms/api/forms/123' => Http::response([], 200),
     ]);
 
     $response = $this->deleteJson(route('admin.orders.gvl-form.detach', ['orderId' => $order->id]));
@@ -186,12 +186,10 @@ test('can detach gvl form when forms api returns 200', function () {
         'gvl_form_link'  => null,
     ]);
 
-    Http::assertSent(function ($request) use ($order, $originalLink) {
+    Http::assertSent(function ($request) {
         return $request->method() === 'DELETE'
-            && $request->url() === 'http://forms/api/forms'
-            && ($request->header('X-API-KEY')[0] ?? null) === 'test-token'
-            && data_get($request->data(), 'form_link') === $originalLink
-            && data_get($request->data(), 'order_id') === $order->id;
+            && str_contains($request->url(), 'http://forms/api/forms/123')
+            && ($request->header('X-API-KEY')[0] ?? null) === 'test-token';
     });
 });
 

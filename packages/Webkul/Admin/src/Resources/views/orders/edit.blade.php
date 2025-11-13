@@ -152,6 +152,7 @@
                                         name="gvl_form_link"
                                         value="{{ $orders->salesLead?->gvl_form_link ?? '' }}"
                                         class="flex-1"
+                                        readonly
                                     />
                                     @if($orders->salesLead?->gvl_form_link)
                                         <button
@@ -162,6 +163,16 @@
                                             data-detach-url="{{ route('admin.orders.gvl-form.detach', ['orderId' => $orders->id]) }}"
                                         >
                                             Ontkoppel
+                                        </button>
+                                    @else
+                                        <button
+                                            type="button"
+                                            id="attach-gvl-form-link"
+                                            class="primary-button"
+                                            title="Koppel GVL formulier"
+                                            data-attach-url="{{ route('admin.orders.gvl-form.attach', ['orderId' => $orders->id]) }}"
+                                        >
+                                            Koppelen
                                         </button>
                                     @endif
                                 </div>
@@ -276,7 +287,13 @@
                 }
             };
 
-            const orderEditGetCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+            const orderEditGetCsrfToken = () => {
+                const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (metaToken) return metaToken;
+                const inputToken = document.querySelector('input[name="_token"]')?.value;
+                if (inputToken) return inputToken;
+                return '';
+            };
 
             const orderEditSetButtonLoadingState = (button, isLoading, loadingLabel = 'Bezig...') => {
                 if (!button) {
@@ -327,6 +344,66 @@
 
                     hidden.value = target;
                     form.submit();
+                }
+
+                // Attach GVL form link button via delegation
+                if (e.target && e.target.id === 'attach-gvl-form-link') {
+                    e.preventDefault();
+                    const button = e.target;
+
+                    if (button.dataset.loading === 'true') {
+                        return;
+                    }
+
+                    const attachUrl = button.dataset.attachUrl;
+                    if (!attachUrl) {
+                        orderEditEmitFlash('error', 'Koppel-URL ontbreekt.');
+                        return;
+                    }
+
+                    orderEditSetButtonLoadingState(button, true);
+
+                    let response;
+                    try {
+                        response = await fetch(attachUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': orderEditGetCsrfToken(),
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+                    } catch (error) {
+                        orderEditEmitFlash('error', 'GVL formulier koppelen is mislukt. Forms API niet bereikbaar.');
+                        console.error('[OrderEdit] GVL attach request failed', error);
+                        orderEditSetButtonLoadingState(button, false);
+                        return;
+                    }
+
+                    let payload = {};
+                    try {
+                        payload = await response.clone().json();
+                    } catch (error) {
+                        payload = {};
+                    }
+
+                    if (response.status === 200) {
+                        const input = document.querySelector('input[name="gvl_form_link"]');
+                        if (input && payload.gvl_form_link) {
+                            input.value = payload.gvl_form_link;
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+
+                        orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is gekoppeld.');
+                        
+                        // Reload page to show updated UI with detach button
+                        window.location.reload();
+                    } else {
+                        orderEditEmitFlash('error', payload?.message ?? 'GVL formulier koppelen is mislukt.');
+                        orderEditSetButtonLoadingState(button, false);
+                    }
+
+                    return;
                 }
 
                 // Reset GVL form link button via delegation
@@ -382,7 +459,9 @@
                         }
 
                         orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is ontkoppeld.');
-                        button.remove();
+                        
+                        // Reload page to show updated UI with attach button
+                        window.location.reload();
                     } else {
                         orderEditEmitFlash('error', payload?.message ?? 'GVL formulier ontkoppelen is mislukt.');
                         orderEditSetButtonLoadingState(button, false);

@@ -263,9 +263,18 @@
 
             // Use event delegation to handle Vue.js DOM changes
             document.addEventListener('click', function (e) {
-                // Check if clicked element is one of our buttons
-                if (e.target.id === 'order-edit-planner' ||
-                    e.target.id === 'order-edit-apply' ||
+                // Resource planner button: navigate directly without submitting form
+                if (e.target.id === 'order-edit-planner') {
+                    e.preventDefault();
+                    var target = e.target.getAttribute('data-redirect-to');
+                    if (target) {
+                        window.location.href = target;
+                    }
+                    return;
+                }
+
+                // Check if clicked element is one of our buttons that need to submit form
+                if (e.target.id === 'order-edit-apply' ||
                     e.target.id === 'order-edit-save') {
 
                     e.preventDefault();

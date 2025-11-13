@@ -153,14 +153,15 @@
                                         value="{{ $orders->salesLead?->gvl_form_link ?? '' }}"
                                         class="flex-1"
                                     />
-                                    @if($orders->salesLead->gvl_form_link)
+                                    @if($orders->salesLead?->gvl_form_link)
                                         <button
                                             type="button"
                                             id="reset-gvl-form-link"
                                             class="secondary-button"
-                                            title="Reset GVL formulier link"
+                                            title="Ontkoppel GVL formulier"
+                                            data-detach-url="{{ route('admin.orders.gvl-form.detach', ['orderId' => $orders->id]) }}"
                                         >
-                                            Reset
+                                            Ontkoppel
                                         </button>
                                     @endif
                                 </div>
@@ -260,9 +261,45 @@
         </script>
 
         <script type="module">
+            const orderEditGetEmitter = () => window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+
+            const orderEditEmitFlash = (type, message) => {
+                const emitter = orderEditGetEmitter();
+                if (emitter) {
+                    try {
+                        emitter.emit('add-flash', { type, message });
+                    } catch (err) {
+                        console.error('[OrderEdit] Flash emit failed', err, message);
+                    }
+                } else {
+                    (type === 'error' ? console.error : console.log)(message);
+                }
+            };
+
+            const orderEditGetCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+            const orderEditSetButtonLoadingState = (button, isLoading, loadingLabel = 'Bezig...') => {
+                if (!button) {
+                    return;
+                }
+
+                if (isLoading) {
+                    const originalLabel = button.dataset.originalLabel || button.textContent.trim();
+                    button.dataset.originalLabel = originalLabel;
+                    button.textContent = loadingLabel;
+                    button.dataset.loading = 'true';
+                    button.classList.add('pointer-events-none', 'opacity-60');
+                } else {
+                    button.dataset.loading = 'false';
+                    if (button.dataset.originalLabel) {
+                        button.textContent = button.dataset.originalLabel;
+                    }
+                    button.classList.remove('pointer-events-none', 'opacity-60');
+                }
+            };
 
             // Use event delegation to handle Vue.js DOM changes
-            document.addEventListener('click', function (e) {
+            document.addEventListener('click', async function (e) {
                 // Resource planner button: navigate directly without submitting form
                 if (e.target.id === 'order-edit-planner') {
                     e.preventDefault();
@@ -295,10 +332,62 @@
                 // Reset GVL form link button via delegation
                 if (e.target && e.target.id === 'reset-gvl-form-link') {
                     e.preventDefault();
-                    const input = document.querySelector('input[name="gvl_form_link"]');
-                    if (input) {
-                        input.value = '';
+                    const button = e.target;
+
+                    if (button.dataset.loading === 'true') {
+                        return;
                     }
+
+                    const detachUrl = button.dataset.detachUrl;
+                    if (!detachUrl) {
+                        orderEditEmitFlash('error', 'Ontkoppel-URL ontbreekt.');
+                        return;
+                    }
+
+                    if (!window.confirm('Weet je zeker dat je het GVL formulier wil ontkoppelen?')) {
+                        return;
+                    }
+
+                    orderEditSetButtonLoadingState(button, true);
+
+                    let response;
+                    try {
+                        response = await fetch(detachUrl, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': orderEditGetCsrfToken(),
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+                    } catch (error) {
+                        orderEditEmitFlash('error', 'GVL formulier ontkoppelen is mislukt. Forms API niet bereikbaar.');
+                        console.error('[OrderEdit] GVL detach request failed', error);
+                        orderEditSetButtonLoadingState(button, false);
+                        return;
+                    }
+
+                    let payload = {};
+                    try {
+                        payload = await response.clone().json();
+                    } catch (error) {
+                        payload = {};
+                    }
+
+                    if (response.status === 200) {
+                        const input = document.querySelector('input[name="gvl_form_link"]');
+                        if (input) {
+                            input.value = '';
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+
+                        orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is ontkoppeld.');
+                        button.remove();
+                    } else {
+                        orderEditEmitFlash('error', payload?.message ?? 'GVL formulier ontkoppelen is mislukt.');
+                        orderEditSetButtonLoadingState(button, false);
+                    }
+
                     return;
                 }
 

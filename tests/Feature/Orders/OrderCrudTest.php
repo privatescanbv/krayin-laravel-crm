@@ -4,6 +4,7 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Order;
 use App\Models\SalesLead;
+use Illuminate\Support\Facades\Http;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
 
@@ -159,4 +160,64 @@ test('order item total_price uses provided value when not zero', function () {
         'quantity'    => 2,
         'total_price' => 250.00, // Custom price, not 200.00 (100.00 * 2)
     ]);
+});
+
+test('can detach gvl form when forms api returns 200', function () {
+    config([
+        'services.forms.api_url'   => 'http://forms',
+        'services.forms.api_token' => 'test-token',
+    ]);
+
+    $originalLink = 'https://forms.example.com/forms/123';
+    $salesLead = SalesLead::factory()->create(['gvl_form_link' => $originalLink]);
+    $order = Order::factory()->for($salesLead)->create();
+
+    Http::fake([
+        'http://forms/api/forms' => Http::response([], 200),
+    ]);
+
+    $response = $this->deleteJson(route('admin.orders.gvl-form.detach', ['orderId' => $order->id]));
+
+    $response->assertOk()
+        ->assertJsonPath('message', 'GVL formulier is ontkoppeld.');
+
+    $this->assertDatabaseHas('sales_leads', [
+        'id'             => $salesLead->id,
+        'gvl_form_link'  => null,
+    ]);
+
+    Http::assertSent(function ($request) use ($order, $originalLink) {
+        return $request->method() === 'DELETE'
+            && $request->url() === 'http://forms/api/forms'
+            && ($request->header('X-API-KEY')[0] ?? null) === 'test-token'
+            && data_get($request->data(), 'form_link') === $originalLink
+            && data_get($request->data(), 'order_id') === $order->id;
+    });
+});
+
+test('gvl form stays linked when forms api responds with error', function () {
+    config([
+        'services.forms.api_url'   => 'http://forms',
+        'services.forms.api_token' => null,
+    ]);
+
+    $originalLink = 'https://forms.example.com/forms/456';
+    $salesLead = SalesLead::factory()->create(['gvl_form_link' => $originalLink]);
+    $order = Order::factory()->for($salesLead)->create();
+
+    Http::fake([
+        'http://forms/api/forms' => Http::response(['message' => 'not found'], 404),
+    ]);
+
+    $response = $this->deleteJson(route('admin.orders.gvl-form.detach', ['orderId' => $order->id]));
+
+    $response->assertStatus(404)
+        ->assertJsonPath('message', 'not found');
+
+    $this->assertDatabaseHas('sales_leads', [
+        'id'            => $salesLead->id,
+        'gvl_form_link' => $originalLink,
+    ]);
+
+    Http::assertSentCount(1);
 });

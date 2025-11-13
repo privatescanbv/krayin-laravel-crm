@@ -186,6 +186,9 @@ class PartnerProductController extends SimpleEntityController
 
     protected function getEditViewData(Request $request, Model $entity): array
     {
+        // Load product relationship for name_with_path
+        $entity->load('product.productGroup');
+
         return [
             'partner_products' => $entity,
             'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
@@ -200,6 +203,10 @@ class PartnerProductController extends SimpleEntityController
         $request->merge([
             'sales_price' => Currency::normalizePrice($request->input('sales_price')),
         ]);
+
+        // Normalize related_products to always be an array using RequestHelper
+        $relatedProducts = RequestHelper::filterIntegerArray($request, 'related_products', []);
+        $request->merge(['related_products' => $relatedProducts]);
 
         // Normalize purchase price fields before validation
         $this->normalizePurchasePriceFields($request, [
@@ -230,6 +237,10 @@ class PartnerProductController extends SimpleEntityController
             'sales_price'         => Currency::normalizePrice($request->input('sales_price')),
             'related_sales_price' => Currency::normalizePrice($request->input('related_sales_price')),
         ]);
+
+        // Normalize related_products to always be an array using RequestHelper
+        $relatedProducts = RequestHelper::filterIntegerArray($request, 'related_products', []);
+        $request->merge(['related_products' => $relatedProducts]);
 
         // Normalize purchase price fields before validation
         $this->normalizePurchasePriceFields($request, [

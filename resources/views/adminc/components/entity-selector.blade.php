@@ -106,9 +106,24 @@
                         deep: true,
                         handler(newVal){
                             // Only update selectedItems from items prop if component hasn't been initialized yet
+                            // OR if the items have the same IDs but updated names (e.g., after loading full path)
                             // This prevents overwriting user selections when items prop changes
                             if (!this.isInitialized) {
                                 this.selectedItems = Array.isArray(newVal) ? [...newVal] : [];
+                            } else if (Array.isArray(newVal) && newVal.length > 0 && Array.isArray(this.selectedItems) && this.selectedItems.length > 0) {
+                                // Update items if they have the same IDs but potentially updated names/paths
+                                const newItemIds = newVal.map(item => item.id ?? item.value).filter(Boolean);
+                                const currentItemIds = this.selectedItems.map(item => item.id ?? item.value).filter(Boolean);
+                                
+                                // If IDs match, update the items (e.g., when name_with_path is loaded)
+                                if (newItemIds.length === currentItemIds.length && 
+                                    newItemIds.every(id => currentItemIds.includes(id))) {
+                                    this.selectedItems = [...newVal];
+                                    // Update hidden inputs when items are updated
+                                    this.$nextTick(() => {
+                                        this.updateHiddenInputs();
+                                    });
+                                }
                             }
                         },
                         immediate: true
@@ -214,21 +229,21 @@
 
                         // Add new hidden inputs for selected items
                         if (this.selectedItems.length > 0) {
-                            this.selectedItems.forEach((item, index) => {
+                            this.selectedItems.forEach((item) => {
                                 const input = document.createElement('input');
                                 input.type = 'hidden';
-                                input.name = this.multiple ? `${this.name}[${index}]` : this.name;
-                                input.value = item.id ?? item.value ?? '';
-                                form.appendChild(input);
+                                // For multiple select, use array notation with [] for Laravel
+                                input.name = this.multiple ? `${this.name}[]` : this.name;
+                                const itemId = item.id ?? item.value ?? '';
+                                // Only add non-empty values
+                                if (itemId) {
+                                    input.value = itemId;
+                                    form.appendChild(input);
+                                }
                             });
-                        } else if (this.multiple) {
-                            // Add empty input for empty array to ensure Laravel receives an empty array
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = `${this.name}[]`;
-                            input.value = '';
-                            form.appendChild(input);
                         }
+                        // Note: For multiple select, if no items are selected, Laravel will receive an empty array
+                        // when the field name ends with [] and no inputs are present
                     }
                 }
             });

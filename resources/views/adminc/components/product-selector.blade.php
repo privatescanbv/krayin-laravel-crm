@@ -11,8 +11,8 @@
             :search-route="resolvedSearchRoute"
             :items="computedItems"
             :can-add-new="canAddNew !== false"
-            :multiple="multiple !== false ? false : false"
-            :fetcher="fetchProducts"
+            :multiple="multiple !== false"
+            :fetcher="resolvedFetcher"
             @update:items="onItemsUpdated"
         />
     </script>
@@ -22,18 +22,60 @@
             template: '#v-product-selector-template',
             props: ['name','label','placeholder','currentValue','currentLabel','canAddNew','searchRoute','multiple'],
             emits: ['select','remove','create-new','change','update:value'],
+            data() {
+                return {
+                    loadedProductName: null,
+                };
+            },
             computed: {
                 resolvedSearchRoute() {
                     return this.searchRoute || '/admin/products/search';
                 },
+                resolvedFetcher() {
+                    // If searchRoute is set to partner_products.search, use searchRoute directly (no custom fetcher)
+                    // Otherwise use fetchProducts for regular product search
+                    if (this.searchRoute && this.searchRoute.includes('partner_products')) {
+                        return null; // Let v-entity-selector use searchRoute directly
+                    }
+                    return this.fetchProducts;
+                },
                 computedItems() {
                     if (this.currentValue) {
-                        return [{ id: this.currentValue, name: this.currentLabel || '', name_with_path: this.currentLabel || '' }];
+                        const displayName = this.currentLabel || this.loadedProductName || '';
+                        return [{ id: this.currentValue, name: displayName, name_with_path: displayName }];
                     }
                     return [];
                 }
             },
+            watch: {
+                currentValue: {
+                    immediate: true,
+                    handler(newVal) {
+                        // If we have a currentValue but no currentLabel, fetch the product name
+                        if (newVal && !this.currentLabel && !this.loadedProductName) {
+                            this.loadProductName(newVal);
+                        }
+                    }
+                }
+            },
+            mounted() {
+                // Also check on mount in case currentValue was set before component mounted
+                if (this.currentValue && !this.currentLabel && !this.loadedProductName) {
+                    this.loadProductName(this.currentValue);
+                }
+            },
             methods: {
+                async loadProductName(productId) {
+                    try {
+                        // Use dedicated endpoint to get product name by ID
+                        const response = await axios.get(`/admin/products/${productId}/name`);
+                        if (response && response.data) {
+                            this.loadedProductName = response.data.name_with_path || response.data.name || '';
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load product name for ID:', productId, e);
+                    }
+                },
                 async fetchProducts(query) {
                     if (window.adminc && typeof window.adminc.fetchProducts === 'function') {
                         const products = await window.adminc.fetchProducts(query);

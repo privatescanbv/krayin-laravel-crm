@@ -1,3 +1,5 @@
+@php use App\Helpers\ProductHelper;use App\Models\PartnerProduct; @endphp
+
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.partner_products.index.edit.title')
@@ -11,10 +13,25 @@
             <input type="hidden" name="return_to" value="clinic_view">
             <input type="hidden" name="clinic_id" value="{{ request('clinic_id') }}">
         @endif
+
+        <!-- Validation Errors -->
+        @if ($errors->any())
+            <div
+                class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
+                <h3 class="mb-2 text-sm font-medium">Er zijn validatiefouten opgetreden:</h3>
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs name="partner_products.edit" :entity="$partner_products" />
+                    <x-admin::breadcrumbs name="partner_products.edit" :entity="$partner_products"/>
 
                     <div class="text-xl font-bold dark:text-gray-300">
                         @lang('admin::app.partner_products.index.edit.title')
@@ -28,25 +45,43 @@
                 </div>
             </div>
 
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div
+                class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 @php
                     $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
                     $selectedResources = old('resources', $partner_products->resources->pluck('id')->toArray());
+
+                    // Load related products: use old() IDs if validation failed, otherwise use relationship
+                    $relatedProductIds = old('related_products', $partner_products->relatedProducts->pluck('id')->toArray());
+                    $relatedProducts = PartnerProduct::whereIn('id', $relatedProductIds)
+                        ->with('product.productGroup')
+                        ->get();
+
+                    $relatedProductsData = $relatedProducts->map(function($pp) {
+                        $product = $pp->product;
+                        return [
+                            'id' => (int) $pp->id,
+                            'name' => (string) ($pp->name ?? ''),
+                            'name_with_path' => (string) ($product && $product->productGroup
+                                ? ProductHelper::formatNameWithPathLazy($product)
+                                : ($pp->name ?? '')),
+                        ];
+                    })->toArray();
                 @endphp
 
                 <x-adminc::partner-products.partner-product-form-fields
                     :partner-product="$partner_products"
                     :selected-clinics="$selectedClinics"
                     :selected-resources="$selectedResources"
-                    :related-products="$partner_products->relatedProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"
+                    :related-products="$relatedProductsData"
                     :exclude-id="$partner_products->id"
                 />
             </div>
 
-            <x-adminc::partner-products.partner-product-purchase-prices :partner-product="$partner_products" />
+            <x-adminc::partner-products.partner-product-purchase-prices :partner-product="$partner_products"/>
 
             <!-- Related Purchase Prices -->
-            <x-adminc::partner-products.partner-product-related-purchase-prices :partner-product="$partner_products" />
+            <x-adminc::partner-products.partner-product-related-purchase-prices :partner-product="$partner_products"/>
 
         </div>
     </x-admin::form>

@@ -22,6 +22,8 @@ Route::group(['middleware' => ['user']], function () {
 
         Route::get('search', 'search')->name('admin.products.search');
 
+        Route::get('{id}/name', 'getNameById')->name('admin.products.name_by_id');
+
         // Route disabled: warehouses view is no longer supported
         // Route::get('{id}/warehouses', 'warehouses')->name('admin.products.warehouses');
 

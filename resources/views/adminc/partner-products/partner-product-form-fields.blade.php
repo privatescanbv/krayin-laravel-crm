@@ -16,9 +16,11 @@
     $reportingOptions = ProductReports::getOptions();
 @endphp
 
-    <!-- Hidden field for product_id (template product) -->
+    <!-- Hidden field for product_id -->
 @if ($templateProductId)
     <input type="hidden" name="product_id" value="{{ $templateProductId }}"/>
+@elseif ($partnerProduct && $partnerProduct->product_id)
+    <input type="hidden" name="product_id" value="{{ old('product_id', $partnerProduct->product_id) }}"/>
 @endif
 
 <!-- Naam en Duur -->
@@ -59,16 +61,16 @@
 
 <!-- Associated Product (Readonly) -->
 @if ($partnerProduct && $partnerProduct->product)
-    <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.associated_product')
-        </x-admin::form.control-group.label>
+    </x-admin::form.control-group.label>
 
         <div
             class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
         </div>
-    </x-admin::form.control-group>
+</x-admin::form.control-group>
 @endif
 
 <!-- Omschrijving en Omschrijving kliniek -->
@@ -238,15 +240,35 @@
        @lang('admin::app.partner_products.index.create.related_products')
     </x-admin::form.control-group.label>
 
-    @include('adminc.components.entity-selector')
+    @include('adminc.components.product-selector')
 
-    <v-entity-selector
+    @php
+        // Map relatedProducts to include name_with_path if available
+        // Convert to array if it's a Collection, then map to selector format
+        $relatedProductsForSelector = collect($relatedProducts ?? [])
+            ->map(function($pp) {
+                // Ensure we have an array with id/name keys
+                if (is_array($pp) && isset($pp['id'])) {
+                    return [
+                        'id' => $pp['id'] ?? null,
+                        'name' => $pp['name'] ?? '',
+                        'name_with_path' => $pp['name_with_path'] ?? $pp['name'] ?? '',
+                    ];
+                }
+                return null;
+            })
+            ->filter(fn($p) => $p !== null && !empty($p['id']))
+            ->values()
+            ->toArray();
+    @endphp
+
+    <v-product-selector
         name="related_products"
         placeholder="{{ trans('admin::app.partner_products.index.create.search_related_products') }}"
         search-route="{{ route('admin.partner_products.search') }}"
-        :can-add-new="true"
+        :can-add-new="false"
         :multiple="true"
-        :items='@json($relatedProducts)'
+        :items='@json($relatedProductsForSelector)'
     />
     <x-admin::form.control-group.error control-name="related_products"/>
 </x-admin::form.control-group>

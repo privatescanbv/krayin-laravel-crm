@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
+use App\Helpers\ProductHelper;
 use App\Http\Controllers\Admin\Settings\SimpleEntityController;
 use App\Rules\PartnerProductsMatchResourceType;
 use Exception;
@@ -165,6 +166,39 @@ class ProductController extends SimpleEntityController
 
         // Return resource collection - Laravel automatically wraps it in 'data' key
         return ProductResource::collection($products)->response();
+    }
+
+    /**
+     * Get product name by ID.
+     *
+     * Returns product name with path for a given product ID.
+     */
+    public function getNameById(int $id): JsonResponse
+    {
+        $product = $this->productRepository->find($id);
+
+        if (! $product) {
+            return response()->json([
+                'error' => 'Product not found',
+            ], 404);
+        }
+
+        // Load productGroup with full parent chain for path calculation
+        // Use the same pattern as getAllWithParents to ensure full hierarchy is loaded
+        if (! $product->relationLoaded('productGroup')) {
+            $product->load(['productGroup' => function ($query) {
+                $query->with(['parent.parent.parent.parent.parent']);
+            }]);
+        } elseif ($product->productGroup && ! $product->productGroup->relationLoaded('parent')) {
+            // If productGroup is loaded but parent chain is not, load it
+            $product->productGroup->load(['parent.parent.parent.parent.parent']);
+        }
+
+        return response()->json([
+            'id' => $product->id,
+            'name' => $product->name,
+            'name_with_path' => ProductHelper::formatNameWithPathLazy($product),
+        ]);
     }
 
     /**

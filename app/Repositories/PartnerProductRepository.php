@@ -37,13 +37,24 @@ class PartnerProductRepository extends Repository
                 ->limit($limit);
         })->all();
 
-        // Load clinics for each product separately to avoid N+1 queries
-        $products->load('clinics:id,name');
+        // Load clinics and product relationship for each product separately to avoid N+1 queries
+        $products->load(['clinics:id,name', 'product.productGroup']);
 
         return $products->map(function ($product) {
+            $displayName = $this->formatDisplayName($product);
+            
+            // Get product name with path if product exists
+            $nameWithPath = $displayName;
+            if ($product->product && $product->product->productGroup) {
+                $productNameWithPath = \App\Helpers\ProductHelper::formatNameWithPathLazy($product->product);
+                // Combine partner product name with product path
+                $nameWithPath = $productNameWithPath . ' - ' . $product->name;
+            }
+            
             return [
-                'id'   => $product->id,
-                'name' => $this->formatDisplayName($product),
+                'id'            => $product->id,
+                'name'           => $displayName,
+                'name_with_path' => $nameWithPath,
             ];
         });
     }

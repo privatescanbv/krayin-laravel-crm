@@ -22,8 +22,8 @@ docker cp temp-crm:/docker/.env.prod ./.env
 docker cp temp-crm:/docker/config ./docker/config
 # Ensure directories exist
 mkdir -p ./docker/loki ./docker/promtail
-docker cp temp-crm:/docker/docker/loki/loki-config.yml ./docker/loki/loki-config.yml
-docker cp temp-crm:/docker/docker/promtail/promtail-config.yml ./docker/promtail/promtail-config.yml
+docker cp temp-crm:/docker/loki/loki-config.yml ./docker/loki/loki-config.yml
+docker cp temp-crm:/docker/promtail/promtail-config.yml ./docker/promtail/promtail-config.yml
 
 # Verwijder tijdelijke container
 docker rm temp-crm

@@ -260,6 +260,7 @@
                             <!-- Attachments -->
                             <x-admin::form.control-group class="!mb-0">
                                 <x-admin::attachments
+                                    ref="attachmentsComponent"
                                     allow-multiple="true"
                                     hide-button="true"
                                 />
@@ -532,6 +533,7 @@
                           subject = '',
                           body = '',
                           emails = null,
+                          attachments = [],
                       } = payload || {};
 
                       this.selectedTemplate = ''; // Reset template selection
@@ -543,7 +545,7 @@
 
                       this.$refs.mailActivityModal.open();
 
-                      setTimeout(() => {
+                      setTimeout(async () => {
                           if (Array.isArray(emails) && emails.length) {
                               this.entityEmails = emails;
                           } else if (! this.entityEmails.length) {
@@ -602,12 +604,97 @@
                               }
                               hidden.value = activityId || this.activityId;
                           }
+
+                          // Add attachments if provided (sequentially to avoid race conditions)
+                          if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+                              for (let i = 0; i < attachments.length; i++) {
+                                  const attachment = attachments[i];
+                                  if (attachment.url && attachment.filename) {
+                                      // Add delay between attachments to ensure they're added sequentially
+                                      await new Promise(resolve => setTimeout(resolve, i * 200));
+                                      await this.addPdfAttachment(attachment.url, attachment.filename);
+                                  }
+                              }
+                          }
                       }, 100);
                   },
 
-                collectEntityEmails() {
-                    // If server-provided emails exist, use them
-                    if (this.emails && this.emails.length > 0) {
+                  async addPdfAttachment(pdfUrl, filename) {
+                      try {
+                          // Wait for the modal and attachments component to be fully rendered
+                          // Try multiple times to find the component
+                          let fileInput = null;
+                          
+                          for (let attempt = 0; attempt < 10; attempt++) {
+                              await this.$nextTick();
+                              await new Promise(resolve => setTimeout(resolve, 200));
+                              
+                              // Try to find via ref first
+                              const attachmentsComponent = this.$refs.attachmentsComponent;
+                              
+                              if (attachmentsComponent) {
+                                  // Found component via ref, now get file input
+                                  const componentUid = attachmentsComponent.$.uid;
+                                  fileInput = attachmentsComponent.$refs[componentUid + '_attachmentInput'];
+                                  if (fileInput) {
+                                      break;
+                                  }
+                              }
+                              
+                              // If not found via ref, try to find via DOM
+                              if (!fileInput) {
+                                  const formEl = this.$refs.mailActionForm;
+                                  if (formEl) {
+                                      fileInput = formEl.querySelector('input[type="file"][accept="attachment/*"]');
+                                      if (fileInput) {
+                                          break;
+                                      }
+                                  }
+                              }
+                          }
+
+                          if (!fileInput) {
+                              return;
+                          }
+
+                          // Download PDF as blob
+                          const response = await fetch(pdfUrl);
+                          if (!response.ok) {
+                              return;
+                          }
+
+                          const blob = await response.blob();
+                          
+                          // Convert blob to File object
+                          const file = new File([blob], filename, { type: 'application/pdf' });
+
+                          // Create DataTransfer object
+                          const dataTransfer = new DataTransfer();
+                          
+                          // Add existing files if any
+                          if (fileInput.files && fileInput.files.length > 0) {
+                              for (let i = 0; i < fileInput.files.length; i++) {
+                                  dataTransfer.items.add(fileInput.files[i]);
+                              }
+                          }
+                          
+                          // Add the new PDF file
+                          dataTransfer.items.add(file);
+                          
+                          // Set the files on the input
+                          fileInput.files = dataTransfer.files;
+                          
+                          // Trigger change event to add the attachment
+                          // This will trigger the add() method in the attachments component
+                          fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                      } catch (error) {
+                          // Silently fail - attachment addition is not critical
+                      }
+                  },
+
+                  collectEntityEmails() {
+                      // If server-provided emails exist, use them
+                      if (this.emails && this.emails.length > 0) {
                         return this.emails;
                     }
 

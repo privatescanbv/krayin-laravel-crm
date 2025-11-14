@@ -525,7 +525,7 @@
                         }
                     };
 
-                    (async () => {
+                    const handleOrderMail = async () => {
                         try {
                             button.dataset.loading = 'true';
                             const originalLabel = button.dataset.originalLabel || button.textContent.trim();
@@ -546,6 +546,7 @@
                                     subject: payload.subject || '',
                                     body: payload.body || '',
                                     emails: payload.emails || [],
+                                    attachments: payload.attachments || [],
                                 },
                             }));
 
@@ -559,7 +560,11 @@
                             button.textContent = button.dataset.originalLabel || 'Maak order mail';
                             button.classList.remove('pointer-events-none', 'opacity-60');
                         }
-                    })();
+                    };
+                    
+                    handleOrderMail().catch(() => {
+                        // Error already handled in try-catch
+                    });
                 }
             });
 
@@ -650,6 +655,7 @@
                                   subject: payload.subject || '',
                                   body: payload.body || '',
                                   emails: payload.emails || [],
+                                  attachments: payload.attachments || [],
                               };
 
                               let handled = false;

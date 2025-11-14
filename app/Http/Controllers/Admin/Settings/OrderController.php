@@ -462,7 +462,22 @@ class OrderController extends SimpleEntityController
             ], 422);
         }
 
+        // Validate that confirmation letter content exists
+        if (empty($order->confirmation_letter_content)) {
+            return response()->json([
+                'message' => 'De orderbevestiging brief moet eerst worden gegenereerd en opgeslagen voordat de order mail kan worden gemaakt.',
+            ], 422);
+        }
+
         $mailData = $this->orderMailService->buildMailData($order);
+
+        // Add attachments array to the response (supports multiple attachments)
+        $mailData['attachments'] = [
+            [
+                'url'      => route('admin.orders.confirmation.export-pdf', ['orderId' => $orderId]),
+                'filename' => 'order-bevestiging-'.$order->id.'-'.date('Y-m-d').'.pdf',
+            ],
+        ];
 
         return response()->json($mailData);
     }

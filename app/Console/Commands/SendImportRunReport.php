@@ -62,49 +62,110 @@ class SendImportRunReport extends Command
         $warningCount = $logs->where('level', 'warning')->count();
         $infoCount = $logs->where('level', 'info')->count();
 
-        // Build email body
-        $body = "Import Run Report\n";
-        $body .= "=================\n\n";
-        $body .= "Import Run ID: {$importRun->id}\n";
-        $body .= "Import Type: {$importRun->import_type}\n";
-        $body .= "Status: {$importRun->status}\n";
-        $body .= "Started At: {$importRun->started_at}\n";
-        $body .= "Completed At: {$importRun->completed_at}\n\n";
-        $body .= "Statistics:\n";
-        $body .= "-----------\n";
-        $body .= "Records Processed: {$importRun->records_processed}\n";
-        $body .= "Records Imported: {$importRun->records_imported}\n";
-        $body .= "Records Skipped: {$importRun->records_skipped}\n";
-        $body .= "Records Errored: {$importRun->records_errored}\n\n";
-        $body .= "Logs Summary:\n";
-        $body .= "-------------\n";
-        $body .= "Errors: {$errorCount}\n";
-        $body .= "Warnings: {$warningCount}\n";
-        $body .= "Info: {$infoCount}\n\n";
+        // Format dates
+        $startedAt = $importRun->started_at ? $importRun->started_at->format('d-m-Y H:i:s') : 'N/A';
+        $completedAt = $importRun->completed_at ? $importRun->completed_at->format('d-m-Y H:i:s') : 'N/A';
 
-        if ($logs->isEmpty()) {
-            $body .= "No logs found for this import run.\n";
-        } else {
-            $body .= "Detailed Logs:\n";
-            $body .= "==============\n\n";
+        // Determine status color
+        $statusColor = match ($importRun->status) {
+            'completed' => '#10b981', // green
+            'running'   => '#3b82f6',   // blue
+            'failed'    => '#ef4444',     // red
+            default     => '#6b7280',      // gray
+        };
 
-            foreach ($logs as $log) {
-                $body .= "[{$log->level}] {$log->created_at}\n";
-                $body .= "Message: {$log->message}\n";
-                if ($log->record_id) {
-                    $body .= "Record ID: {$log->record_id}\n";
-                }
-                if ($log->context) {
-                    $body .= 'Context: '.json_encode($log->context, JSON_PRETTY_PRINT)."\n";
-                }
-                $body .= str_repeat('-', 80)."\n\n";
-            }
-        }
+        // Build HTML email body
+        $htmlBody = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; }
+                .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+                .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                .info-item { padding: 15px; background: #f9fafb; border-radius: 6px; border-left: 3px solid #667eea; }
+                .info-label { font-size: 12px; text-transform: uppercase; color: #6b7280; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 5px; }
+                .info-value { font-size: 16px; color: #111827; font-weight: 500; }
+                .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: white; background: {$statusColor}; }
+                .summary-section { background: #f9fafb; padding: 25px; border-radius: 8px; margin-top: 30px; }
+                .summary-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 20px; }
+                .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+                .summary-card { background: white; padding: 20px; border-radius: 6px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                .summary-number { font-size: 32px; font-weight: 700; margin-bottom: 5px; }
+                .summary-label { font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+                .success { color: #10b981; }
+                .error { color: #ef4444; }
+                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>📊 Import Run Report</h1>
+                </div>
+                <div class='content'>
+                    <div class='info-grid'>
+                        <div class='info-item'>
+                            <div class='info-label'>Import Run ID</div>
+                            <div class='info-value'>#{$importRun->id}</div>
+                        </div>
+                        <div class='info-item'>
+                            <div class='info-label'>Import Type</div>
+                            <div class='info-value'>{$importRun->import_type}</div>
+                        </div>
+                        <div class='info-item'>
+                            <div class='info-label'>Status</div>
+                            <div class='info-value'><span class='status-badge'>{$importRun->status}</span></div>
+                        </div>
+                        <div class='info-item'>
+                            <div class='info-label'>Started At</div>
+                            <div class='info-value'>{$startedAt}</div>
+                        </div>
+                        <div class='info-item' style='grid-column: 1 / -1;'>
+                            <div class='info-label'>Completed At</div>
+                            <div class='info-value'>{$completedAt}</div>
+                        </div>
+                    </div>
+
+                    <div class='summary-section'>
+                        <div class='summary-title'>📈 Import Overzicht</div>
+                        <div class='summary-grid'>
+                            <div class='summary-card'>
+                                <div class='summary-number success'>{$importRun->records_imported}</div>
+                                <div class='summary-label'>Succesvol Geïmporteerd</div>
+                            </div>
+                            <div class='summary-card'>
+                                <div class='summary-number error'>{$importRun->records_errored}</div>
+                                <div class='summary-label'>Fouten</div>
+                            </div>
+                            <div class='summary-card'>
+                                <div class='summary-number' style='color: #6b7280;'>{$importRun->records_processed}</div>
+                                <div class='summary-label'>Totaal Verwerkt</div>
+                            </div>
+                            <div class='summary-card'>
+                                <div class='summary-number' style='color: #f59e0b;'>{$importRun->records_skipped}</div>
+                                <div class='summary-label'>Overgeslagen</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class='footer'>
+                        <p>Voor gedetailleerde logs, bekijk de import run in het CRM systeem.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
 
         // Try to send email, but don't fail if mail is not configured
         try {
             $this->info("Sending report to {$email}...");
-            Mail::raw($body, function ($message) use ($email, $subject) {
+            Mail::html($htmlBody, function ($message) use ($email, $subject) {
                 $message->to($email)
                     ->subject($subject);
             });

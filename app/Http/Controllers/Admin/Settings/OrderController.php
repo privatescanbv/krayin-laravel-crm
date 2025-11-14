@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use Exception;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
@@ -10,28 +9,34 @@ use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
+use App\Services\FormService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
 use App\Services\OrderStatusService;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
+use Webkul\Core\Traits\PDFHandler;
 use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
 {
+    use PDFHandler;
+
     public function __construct(
         protected OrderRepository $orderRepository,
         protected OrderCheckService $orderCheckService,
         protected OrderMailService $orderMailService,
-        protected OrderStatusService $orderStatusService
+        protected OrderStatusService $orderStatusService,
+        protected FormService $formService
     ) {
         parent::__construct($orderRepository);
 
@@ -274,7 +279,7 @@ class OrderController extends SimpleEntityController
         // Check if GVL form already exists (early return for better API response)
         if (! empty($order->salesLead->gvl_form_link)) {
             return response()->json([
-                'message' => 'GVL formulier is al gekoppeld.',
+                'message'       => 'GVL formulier is al gekoppeld.',
                 'gvl_form_link' => $order->salesLead->gvl_form_link,
             ], 422);
         }
@@ -288,13 +293,13 @@ class OrderController extends SimpleEntityController
             $order->load('salesLead');
 
             return response()->json([
-                'message' => 'GVL formulier is gekoppeld.',
+                'message'       => 'GVL formulier is gekoppeld.',
                 'gvl_form_link' => $formLink,
             ], 200);
         } catch (Exception $e) {
             Log::error('OrderController@attachGvlForm failed', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
 
             return response()->json([
@@ -313,88 +318,55 @@ class OrderController extends SimpleEntityController
             ], 422);
         }
 
-        $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
+        try {
+            $formId = $this->formService->extractFormIdFromUrl($order->salesLead->gvl_form_link);
 
-        $formId = null;
-        // Try multiple regex patterns to extract form ID from URL
-        // Pattern 1: 'forms/3/step/1' or 'forms/3'
-        if (preg_match('#forms/(\d+)(?:/step|/|$)#', $order->salesLead->gvl_form_link, $m)) {
-            $formId = (int) $m[1];
-        }
-        
-        // Pattern 2: Try to extract from API response ID if stored differently
-        // This handles cases where the form URL might have a different structure
-        if ($formId === null && preg_match('#/(\d+)(?:/step|/|$)#', $order->salesLead->gvl_form_link, $m)) {
-            $formId = (int) $m[1];
-        }
-        
-        if ($formId === null) {
-            Log::error('OrderController@detachGvlForm could not resolve form id from URL', [
+            if ($formId === null) {
+                Log::error('OrderController@detachGvlForm could not resolve form id from URL', [
+                    'order_id'      => $order->id,
+                    'gvl_form_link' => $order->salesLead->gvl_form_link,
+                ]);
+                throw new Exception('Could not resolve form id from url: '.$order->salesLead->gvl_form_link);
+            }
+
+            $result = $this->formService->deleteForm($formId);
+            $status = $result['status'];
+            $json = $result['response'];
+
+            if ($status !== 200) {
+                Log::warning('OrderController@detachGvlForm Forms API fout', [
+                    'order_id'      => $order->id,
+                    'form_id'       => $formId,
+                    'status'        => $status,
+                    'response_json' => $json,
+                ]);
+
+                return response()->json([
+                    'message' => $json['message'] ?? 'GVL formulier ontkoppelen is mislukt.',
+                ], $status ?: 500);
+            }
+
+            $order->salesLead->update([
+                'gvl_form_link' => null,
+            ]);
+
+            Log::info('OrderController@detachGvlForm geslaagd', [
                 'order_id' => $order->id,
-                'gvl_form_link' => $order->salesLead->gvl_form_link,
-            ]);
-            throw new Exception('Could not resolve form id from url: '.$order->salesLead->gvl_form_link);
-        }
-        
-        $deleteUrl = "{$apiUrl}/api/forms/".$formId;
-        $token = config('services.forms.api_token');
-
-        $httpClient = Http::timeout(10)->acceptJson();
-        if ($token) {
-            $httpClient = $httpClient->withHeaders([
-                'X-API-KEY' => $token,
-            ]);
-        }
-
-        try {
-            $response = $httpClient->delete($deleteUrl,);
-        } catch (Throwable $exception) {
-            Log::error('OrderController@detachGvlForm kon Forms API niet bereiken', [
-                'order_id'  => $order->id,
-                'deleteUrl' => $deleteUrl,
-                'message'   => $exception->getMessage(),
             ]);
 
             return response()->json([
-                'message' => 'GVL formulier ontkoppelen is mislukt. Forms API kon niet worden bereikt.',
-            ], 502);
-        }
-
-        $status = $response->status();
-        $body = $response->body();
-        $json = null;
-
-        try {
-            $json = $response->json();
-        } catch (Throwable) {
-            $json = null;
-        }
-
-        if ($status !== 200) {
-            Log::warning('OrderController@detachGvlForm Forms API fout', [
-                'order_id'     => $order->id,
-                'deleteUrl'    => $deleteUrl,
-                'status'       => $status,
-                'responseBody' => strlen($body) > 500 ? substr($body, 0, 500).'...' : $body,
-                'responseJson' => $json,
+                'message' => 'GVL formulier is ontkoppeld.',
+            ]);
+        } catch (Exception $e) {
+            Log::error('OrderController@detachGvlForm failed', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
             ]);
 
             return response()->json([
-                'message' => $json['message'] ?? 'GVL formulier ontkoppelen is mislukt.',
-            ], $status ?: 500);
+                'message' => 'GVL formulier ontkoppelen is mislukt: '.$e->getMessage(),
+            ], 500);
         }
-
-        $order->salesLead->update([
-            'gvl_form_link' => null,
-        ]);
-
-        Log::info('OrderController@detachGvlForm geslaagd', [
-            'order_id' => $order->id,
-        ]);
-
-        return response()->json([
-            'message' => 'GVL formulier is ontkoppeld.',
-        ]);
     }
 
     public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse
@@ -506,6 +478,173 @@ class OrderController extends SimpleEntityController
         return response()->json([
             'message' => 'Orderstatus gezet op verstuurd.',
         ], 200);
+    }
+
+    /**
+     * Get list of available order confirmation templates.
+     */
+    public function getConfirmationTemplates(): JsonResponse
+    {
+        $templatesPath = resource_path('views/adminc/email_templates/order');
+        $templates = [];
+
+        if (File::exists($templatesPath)) {
+            $files = File::files($templatesPath);
+
+            foreach ($files as $file) {
+                $filename = $file->getFilename();
+                if (str_ends_with($filename, '.blade.php')) {
+                    $name = str_replace('.blade.php', '', $filename);
+                    $templates[] = [
+                        'name'  => $name,
+                        'label' => ucfirst(str_replace('_', ' ', $name)),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'data' => $templates,
+        ]);
+    }
+
+    /**
+     * Get rendered order confirmation template content.
+     */
+    public function getConfirmationTemplateContent(Request $request, int $orderId): JsonResponse
+    {
+        $templateName = $request->query('template');
+
+        if (! $templateName) {
+            return response()->json([
+                'error' => 'Template name is required',
+            ], 400);
+        }
+
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        // Load necessary relations
+        $order->load([
+            'orderItems.product',
+            'orderItems.person',
+            'salesLead.lead',
+            'salesLead.contactPerson',
+        ]);
+
+        try {
+            // Prepare variables for template
+            $variables = $this->buildOrderTemplateVariables($order);
+
+            $viewPath = 'adminc.email_templates.order.'.$templateName;
+
+            // Check if view exists
+            if (! view()->exists($viewPath)) {
+                return response()->json([
+                    'error'   => 'Template not found',
+                    'message' => "View {$viewPath} does not exist",
+                ], 404);
+            }
+
+            $content = view($viewPath, $variables)->render();
+
+            return response()->json([
+                'data' => [
+                    'content' => $content,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Order confirmation template rendering error: '.$e->getMessage(), [
+                'template'  => $templateName ?? 'unknown',
+                'order_id'  => $orderId,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error'   => 'Template not found or error rendering template',
+                'message' => $e->getMessage(),
+                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 404);
+        }
+    }
+
+    /**
+     * Save confirmation letter content.
+     */
+    public function saveConfirmationLetter(Request $request, int $orderId): JsonResponse
+    {
+        $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $order->update([
+            'confirmation_letter_content' => $request->input('content'),
+        ]);
+
+        return response()->json([
+            'message' => 'Orderbevestiging opgeslagen.',
+            'data'    => [
+                'content' => $order->confirmation_letter_content,
+            ],
+        ]);
+    }
+
+    /**
+     * Export confirmation letter to PDF.
+     */
+    public function exportConfirmationLetterPDF(Request $request, int $orderId)
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        if (empty($order->confirmation_letter_content)) {
+            return response()->json([
+                'error' => 'Geen orderbevestiging beschikbaar om te exporteren.',
+            ], 422);
+        }
+
+        $fileName = 'order-bevestiging-'.$order->id.'-'.date('Y-m-d');
+
+        return $this->downloadPDF($order->confirmation_letter_content, $fileName);
+    }
+
+    /**
+     * Get GVL form status.
+     */
+    public function getGvlFormStatus(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with('salesLead')->findOrFail($orderId);
+
+        if (! $order->salesLead || empty($order->salesLead->gvl_form_link)) {
+            return response()->json([
+                'message' => 'Er is geen GVL formulier gekoppeld aan deze order.',
+            ], 422);
+        }
+
+        try {
+            $formId = $this->formService->extractFormIdFromUrl($order->salesLead->gvl_form_link);
+
+            if (! $formId) {
+                return response()->json([
+                    'message' => 'Kon formulier ID niet extraheren uit URL.',
+                ], 422);
+            }
+
+            $status = $this->formService->getFormStatus($formId);
+
+            return response()->json([
+                'data' => $status,
+            ]);
+        } catch (Exception $e) {
+            Log::error('OrderController@getGvlFormStatus failed', [
+                'order_id' => $orderId,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij ophalen formulier status: '.$e->getMessage(),
+            ], 500);
+        }
     }
 
     protected function getEditViewData(Request $request, Model $entity): array
@@ -678,5 +817,30 @@ class OrderController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return 'Verwijderen mislukt.';
+    }
+
+    /**
+     * Build template variables for order confirmation templates.
+     */
+    protected function buildOrderTemplateVariables(Order $order): array
+    {
+        // Resolve customer name from sales lead
+        $customerName = 'heer/mevrouw';
+        if ($order->salesLead) {
+            if ($order->salesLead->contactPerson) {
+                $person = $order->salesLead->contactPerson;
+                $customerName = trim(($person->first_name ?? '').' '.($person->last_name ?? ''));
+                if (empty($customerName)) {
+                    $customerName = $person->name ?? 'heer/mevrouw';
+                }
+            } elseif ($order->salesLead->lead) {
+                $customerName = $order->salesLead->lead->name ?? 'heer/mevrouw';
+            }
+        }
+
+        return [
+            'order'         => $order,
+            'customer_name' => $customerName,
+        ];
     }
 }

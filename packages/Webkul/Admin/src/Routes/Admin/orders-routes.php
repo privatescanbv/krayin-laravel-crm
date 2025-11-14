@@ -19,9 +19,16 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
     Route::post('{orderId}/gvl-form', 'attachGvlForm')->name('admin.orders.gvl-form.attach');
     Route::delete('{orderId}/gvl-form', 'detachGvlForm')->name('admin.orders.gvl-form.detach');
+    Route::get('{orderId}/gvl-form/status', 'getGvlFormStatus')->name('admin.orders.gvl-form.status');
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
     Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
     Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
+
+    // Order confirmation letter routes
+    Route::get('confirmation/templates', 'getConfirmationTemplates')->name('admin.orders.confirmation.templates');
+    Route::get('{orderId}/confirmation/template-content', 'getConfirmationTemplateContent')->name('admin.orders.confirmation.template-content');
+    Route::post('{orderId}/confirmation/save', 'saveConfirmationLetter')->name('admin.orders.confirmation.save');
+    Route::get('{orderId}/confirmation/export-pdf', 'exportConfirmationLetterPDF')->name('admin.orders.confirmation.export-pdf');
 
     // Order checks routes
     Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');

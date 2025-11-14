@@ -21,6 +21,7 @@ class Order extends Model
         'status',
         'sales_lead_id',
         'combine_order',
+        'confirmation_letter_content',
         'created_by',
         'updated_by',
     ];

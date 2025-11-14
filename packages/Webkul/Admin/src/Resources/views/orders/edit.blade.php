@@ -178,11 +178,18 @@
                                 </div>
                                 <x-admin::form.control-group.error control-name="gvl_form_link" />
                                 @if($orders->salesLead && $orders->salesLead->gvl_form_link)
-                                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                                        <a href="{{ $orders->salesLead->gvl_form_link }}" target="_blank" class="text-blue-600 hover:underline">
-                                            Open formulier
-                                        </a>
-                                    </p>
+                                    <div class="mt-1 flex items-center gap-2">
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">
+                                            <a href="{{ $orders->salesLead->gvl_form_link }}" target="_blank" class="text-blue-600 hover:underline">
+                                                Open formulier
+                                            </a>
+                                        </p>
+                                        <span class="text-xs text-gray-400">|</span>
+                                        <div id="gvl-form-status" class="text-xs">
+                                            <span class="text-gray-500">Status: </span>
+                                            <span id="gvl-form-status-value" class="font-medium">Laden...</span>
+                                        </div>
+                                    </div>
                                 @endif
                             </x-admin::form.control-group>
                             </div>
@@ -202,6 +209,11 @@
                             <v-order-checks :order-id="{{ $orders->id }}"
                                             :checks='@json($orders->orderChecks ?? [])'></v-order-checks>
                         </div>
+                    </template>
+
+                    <template #confirmation>
+                        <v-order-confirmation :order-id="{{ $orders->id }}"
+                                              :initial-content='@json($orders->confirmation_letter_content ?? null)'></v-order-confirmation>
                     </template>
                 </v-order-tabs>
             </div>
@@ -257,6 +269,17 @@
                             title="{{ $completedChecks }} checks gedaan van de {{ $totalChecks }}">
                         Checks ({{ $completedChecks }}/{{ $totalChecks }})
                     </button>
+
+                    <button type="button"
+                            :class="[
+                                'py-4 px-1 border-b-2 text-sm font-medium transition-colors duration-200',
+                                activeTab === 'confirmation'
+                                  ? 'text-brandColor border-brandColor'
+                                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                            ]"
+                            @click="activeTab = 'confirmation'">
+                        Orderbevestiging
+                    </button>
                 </div>
 
                 <div class="p-6">
@@ -266,6 +289,10 @@
 
                     <div v-show="activeTab === 'checks'">
                         <slot name="checks"></slot>
+                    </div>
+
+                    <div v-show="activeTab === 'confirmation'">
+                        <slot name="confirmation"></slot>
                     </div>
                 </div>
             </div>
@@ -395,9 +422,11 @@
                         }
 
                         orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is gekoppeld.');
-                        
-                        // Reload page to show updated UI with detach button
-                        window.location.reload();
+
+                        // Reload page to show updated UI with detach button and status
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         orderEditEmitFlash('error', payload?.message ?? 'GVL formulier koppelen is mislukt.');
                         orderEditSetButtonLoadingState(button, false);
@@ -459,9 +488,11 @@
                         }
 
                         orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is ontkoppeld.');
-                        
+
                         // Reload page to show updated UI with attach button
-                        window.location.reload();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         orderEditEmitFlash('error', payload?.message ?? 'GVL formulier ontkoppelen is mislukt.');
                         orderEditSetButtonLoadingState(button, false);
@@ -716,11 +747,105 @@
                 }
             };
 
+            // Load GVL form status function
+            const loadGvlFormStatus = async () => {
+                const statusContainer = document.getElementById('gvl-form-status');
+                const statusElement = document.getElementById('gvl-form-status-value');
+                
+                if (!statusContainer || !statusElement) {
+                    console.error('[OrderEdit] ERROR: gvl-form-status elements not found in DOM');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('{{ route('admin.orders.gvl-form.status', ['orderId' => $orders->id]) }}', {
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Status kon niet worden opgehaald');
+                    }
+
+                    const data = await response.json();
+                    const status = data.data?.status || data.data?.state || null;
+                    const statusLower = status ? status.toLowerCase() : '';
+
+                    // Map status to display text and color
+                    const statusMap = {
+                        'new': { text: 'Nieuw', color: 'text-gray-600' },
+                        'step1': { text: 'Stap 1 voltooid', color: 'text-yellow-600' },
+                        'step2': { text: 'Stap 2 voltooid', color: 'text-blue-600' },
+                        'step3': { text: 'Stap 3 voltooid', color: 'text-green-500' },
+                        'completed': { text: 'Voltooid', color: 'text-green-600' },
+                    };
+
+                    const statusInfo = statusMap[statusLower] || { text: 'Onbekend', color: 'text-gray-400' };
+                    statusElement.textContent = statusInfo.text;
+                    statusElement.className = `font-medium ${statusInfo.color}`;
+                } catch (error) {
+                    console.error('[OrderEdit] Error loading GVL form status:', error);
+                    const statusElement = document.getElementById('gvl-form-status-value');
+                    if (statusElement) {
+                        statusElement.textContent = 'Niet beschikbaar';
+                        statusElement.className = 'font-medium text-gray-400';
+                    }
+                }
+            };
+
+            // Function to wait for Vue component and then load status
+            const waitForVueAndLoadStatus = () => {
+                const checkAndLoad = () => {
+                    const statusContainer = document.getElementById('gvl-form-status');
+                    if (statusContainer) {
+                        loadGvlFormStatus();
+                        return true;
+                    }
+                    return false;
+                };
+
+                // Try immediately
+                if (checkAndLoad()) {
+                    return;
+                }
+
+                // Wait for Vue to mount (Vue mounts on 'load' event)
+                window.addEventListener('load', () => {
+                    setTimeout(() => {
+                        if (!checkAndLoad()) {
+                            // Try with MutationObserver as fallback
+                            const observer = new MutationObserver(() => {
+                                if (checkAndLoad()) {
+                                    observer.disconnect();
+                                }
+                            });
+                            
+                            observer.observe(document.body, {
+                                childList: true,
+                                subtree: true
+                            });
+                            
+                            // Stop observing after 5 seconds
+                            setTimeout(() => {
+                                observer.disconnect();
+                                if (!document.getElementById('gvl-form-status')) {
+                                    console.error('[OrderEdit] ERROR: gvl-form-status element never appeared in DOM');
+                                }
+                            }, 5000);
+                        }
+                    }, 100);
+                }, { once: true });
+            };
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
                     initOrderEditDebug();
                       initOrderMailCompose();
+
+                    // Wait for Vue to render and then load GVL form status
+                    waitForVueAndLoadStatus();
 
                     // After email stored, mark order as sent (min JS: one small call)
                     try {
@@ -749,6 +874,9 @@
                 initOrderEditSalesLead();
                 initOrderEditDebug();
                   initOrderMailCompose();
+
+                // Wait for Vue to render and then load GVL form status
+                waitForVueAndLoadStatus();
 
                 // After email stored, mark order as sent
                 try {
@@ -968,6 +1096,349 @@
                         }, 3000);
                     }
                 }
+            });
+        </script>
+
+        <!-- Order Confirmation Component -->
+        <script type="text/x-template" id="v-order-confirmation-template">
+            <div class="space-y-6">
+                <div class="flex flex-col gap-1">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Orderbevestiging</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Genereer en beheer de orderbevestiging voor deze order.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Template Selection -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Template
+                            </label>
+                            <select
+                                v-model="selectedTemplate"
+                                @change="loadTemplate"
+                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                            >
+                                <option value="">Selecteer een template</option>
+                                <option
+                                    v-for="template in templates"
+                                    :key="template.name"
+                                    :value="template.name"
+                                >
+                                    @{{ template.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-end gap-2">
+                            <button
+                                type="button"
+                                @click="generateLetter"
+                                :disabled="!selectedTemplate || isLoading"
+                                class="primary-button"
+                            >
+                                <span v-if="isLoading">Bezig...</span>
+                                <span v-else>Genereer brief</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Content Editor -->
+                    <div v-if="letterContent" class="space-y-4">
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                Brief inhoud
+                            </x-admin::form.control-group.label>
+                            <v-field
+                                v-slot="{ field }"
+                                name="confirmation_letter_content"
+                            >
+                                <textarea
+                                    id="confirmation-letter-editor"
+                                    v-bind="field"
+                                    v-model="letterContent"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    rows="15"
+                                ></textarea>
+                                <x-admin::tinymce
+                                    selector="textarea#confirmation-letter-editor"
+                                    ::field="field"
+                                />
+                            </v-field>
+                        </x-admin::form.control-group>
+
+                        <div class="flex items-center gap-2">
+                            <button
+                                type="button"
+                                @click="saveLetter"
+                                :disabled="isSaving"
+                                class="primary-button"
+                            >
+                                <span v-if="isSaving">Opslaan...</span>
+                                <span v-else>Opslaan</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                @click="exportPDF"
+                                :disabled="!letterContent || isExporting"
+                                class="secondary-button"
+                            >
+                                <span v-if="isExporting">Exporteren...</span>
+                                <span v-else>Exporteer naar PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <div class="flex flex-col items-center gap-3">
+                            <i class="icon-document text-4xl text-gray-300 dark:text-gray-600"></i>
+                            <p class="text-lg font-medium">Nog geen brief gegenereerd</p>
+                            <p class="text-sm">Selecteer een template en klik op "Genereer brief" om te beginnen</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </script>
+
+        <script type="module">
+            app.component('v-order-confirmation', {
+                template: '#v-order-confirmation-template',
+                props: ['orderId', 'initialContent'],
+                data() {
+                    return {
+                        templates: [],
+                        selectedTemplate: '',
+                        letterContent: this.initialContent || '',
+                        isLoading: false,
+                        isSaving: false,
+                        isExporting: false,
+                    };
+                },
+                mounted() {
+                    this.loadTemplates();
+                    // Initialize TinyMCE if initial content exists
+                    if (this.letterContent) {
+                        this.$nextTick(() => {
+                            this.initTinyMCE();
+                        });
+                    }
+                },
+                watch: {
+                    letterContent(newContent) {
+                        // Update TinyMCE content when letterContent changes
+                        if (newContent && window.tinymce) {
+                            this.$nextTick(() => {
+                                const editor = window.tinymce.get('confirmation-letter-editor');
+                                if (editor && !editor.removed) {
+                                    editor.setContent(newContent);
+                                }
+                            });
+                        }
+                    }
+                },
+                methods: {
+                    async loadTemplates() {
+                        try {
+                            const response = await fetch('{{ route('admin.orders.confirmation.templates') }}', {
+                                headers: {
+                                    'Accept': 'application/json',
+                                },
+                            });
+                            const data = await response.json();
+                            this.templates = data.data || [];
+                        } catch (error) {
+                            console.error('Error loading templates:', error);
+                            this.showNotification('Fout bij laden templates', 'error');
+                        }
+                    },
+                    async loadTemplate() {
+                        if (!this.selectedTemplate) {
+                            return;
+                        }
+                        // Template will be loaded when generating
+                    },
+                    async generateLetter() {
+                        if (!this.selectedTemplate) {
+                            this.showNotification('Selecteer eerst een template', 'error');
+                            return;
+                        }
+
+                        this.isLoading = true;
+                        try {
+                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/template-content?template=${this.selectedTemplate}`, {
+                                headers: {
+                                    'Accept': 'application/json',
+                                },
+                            });
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                throw new Error(error.message || 'Fout bij genereren brief');
+                            }
+
+                            const data = await response.json();
+                            this.letterContent = data.data.content || '';
+                            // Initialize or update TinyMCE with new content
+                            this.$nextTick(() => {
+                                this.setTinyMCEContent(this.letterContent);
+                            });
+                            this.showNotification('Brief gegenereerd', 'success');
+                        } catch (error) {
+                            console.error('Error generating letter:', error);
+                            this.showNotification(error.message || 'Fout bij genereren brief', 'error');
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    },
+                    async saveLetter() {
+                        // Get content from TinyMCE if available
+                        const content = this.getTinyMCEContent();
+                        if (!content) {
+                            this.showNotification('Geen inhoud om op te slaan', 'error');
+                            return;
+                        }
+
+                        this.isSaving = true;
+                        try {
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                                || document.querySelector('input[name="_token"]')?.value
+                                || '';
+
+                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/save`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                },
+                                body: JSON.stringify({
+                                    content: content,
+                                }),
+                            });
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                throw new Error(error.message || 'Fout bij opslaan');
+                            }
+
+                            // Update letterContent with saved content
+                            this.letterContent = content;
+                            this.showNotification('Brief opgeslagen', 'success');
+                        } catch (error) {
+                            console.error('Error saving letter:', error);
+                            this.showNotification(error.message || 'Fout bij opslaan brief', 'error');
+                        } finally {
+                            this.isSaving = false;
+                        }
+                    },
+                    async exportPDF() {
+                        // Get content from TinyMCE if available
+                        const content = this.getTinyMCEContent();
+                        if (!content) {
+                            this.showNotification('Geen inhoud om te exporteren', 'error');
+                            return;
+                        }
+
+                        // Save content first to ensure PDF has latest version
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                            || document.querySelector('input[name="_token"]')?.value
+                            || '';
+
+                        try {
+                            await fetch(`/admin/orders/${this.orderId}/confirmation/save`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                },
+                                body: JSON.stringify({
+                                    content: content,
+                                }),
+                            });
+                        } catch (error) {
+                            console.error('Error saving before export:', error);
+                        }
+
+                        this.isExporting = true;
+                        try {
+                            const url = `/admin/orders/${this.orderId}/confirmation/export-pdf`;
+                            window.location.href = url;
+                            this.showNotification('PDF wordt gedownload', 'success');
+                        } catch (error) {
+                            console.error('Error exporting PDF:', error);
+                            this.showNotification('Fout bij exporteren PDF', 'error');
+                        } finally {
+                            setTimeout(() => {
+                                this.isExporting = false;
+                            }, 1000);
+                        }
+                    },
+                    initTinyMCE() {
+                        // TinyMCE will be initialized by the x-admin::tinymce component
+                        // This method can be used for any additional setup if needed
+                        if (window.tinymce) {
+                            const editor = window.tinymce.get('confirmation-letter-editor');
+                            if (editor && !editor.removed && this.letterContent) {
+                                editor.setContent(this.letterContent);
+                            }
+                        }
+                    },
+                    setTinyMCEContent(content, retries = 25) {
+                        if (!content || !content.trim()) return;
+
+                        if (window.tinymce) {
+                            try {
+                                const editor = window.tinymce.get('confirmation-letter-editor');
+                                if (editor && !editor.removed && editor.initialized) {
+                                    editor.setContent(content);
+                                    // Also update v-model
+                                    this.letterContent = content;
+                                    return;
+                                }
+                            } catch (e) {
+                                // Editor not ready yet
+                            }
+                        }
+
+                        // Retry if TinyMCE not ready yet
+                        if (retries > 0) {
+                            setTimeout(() => this.setTinyMCEContent(content, retries - 1), 200);
+                        }
+                    },
+                    getTinyMCEContent() {
+                        if (window.tinymce) {
+                            try {
+                                const editor = window.tinymce.get('confirmation-letter-editor');
+                                if (editor && !editor.removed && editor.initialized) {
+                                    return editor.getContent();
+                                }
+                            } catch (e) {
+                                // Editor not available, fall back to v-model
+                            }
+                        }
+                        // Fallback to v-model content
+                        return this.letterContent || '';
+                    },
+                    showNotification(message, type = 'info') {
+                        try {
+                            const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+                            if (emitter) {
+                                emitter.emit('add-flash', { type, message });
+                            } else {
+                                console[type === 'error' ? 'error' : 'log'](message);
+                            }
+                        } catch (err) {
+                            console.error('[OrderConfirmation] Flash emit failed', err, message);
+                            // Fallback to console if emitter fails
+                            console[type === 'error' ? 'error' : 'log'](message);
+                        }
+                    },
+                },
             });
         </script>
     @endPushOnce

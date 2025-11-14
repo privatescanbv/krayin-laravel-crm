@@ -6,7 +6,6 @@ use App\Models\Order;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\EmailTemplate\Models\EmailTemplate;
@@ -14,6 +13,10 @@ use Webkul\EmailTemplate\Models\EmailTemplate;
 class OrderMailService
 {
     public const TEMPLATE_NAME = 'order mail';
+
+    public function __construct(
+        protected FormService $formService
+    ) {}
 
     public function buildMailData(Order $order): array
     {
@@ -114,6 +117,172 @@ class OrderMailService
         }
 
         return null;
+    }
+
+    /**
+     * Create a form request via the forms API and return the form link.
+     * Uses existing link from sales lead if available, otherwise creates new one and saves it.
+     */
+    public function createFormRequestAndGetLink(Order $order): string
+    {
+        // Ensure salesLead is loaded
+        if (! $order->salesLead) {
+            $order->load('salesLead');
+        }
+
+        // Check if sales lead already has a form link (only create if empty)
+        if ($order->salesLead && ! empty($order->salesLead->gvl_form_link)) {
+            Log::info('OrderMailService: Using existing GVL form link', [
+                'order_id'      => $order->id,
+                'sales_lead_id' => $order->salesLead->id,
+                'form_link'     => $order->salesLead->gvl_form_link,
+            ]);
+
+            return $order->salesLead->gvl_form_link;
+        }
+
+        // gvl_form_link is empty, create new form request
+        Log::info('OrderMailService: gvl_form_link is empty, creating new form request', [
+            'order_id'       => $order->id,
+            'sales_lead_id'  => $order->salesLead?->id,
+            'has_sales_lead' => ! is_null($order->salesLead),
+        ]);
+
+        try {
+            Log::info('OrderMailService: Getting person for form', ['order_id' => $order->id]);
+            $person = $this->getPersonForForm($order);
+            if (! $person) {
+                Log::error('OrderMailService: No person found for order', [
+                    'order_id'           => $order->id,
+                    'has_sales_lead'     => ! is_null($order->salesLead),
+                    'has_contact_person' => ! is_null($order->salesLead?->contactPerson),
+                    'has_lead'           => ! is_null($order->salesLead?->lead),
+                ]);
+                throw new Exception('No person found for order');
+            }
+
+            Log::info('OrderMailService: Person found, building form data', [
+                'order_id'  => $order->id,
+                'person_id' => $person->id,
+            ]);
+
+            $formData = $this->buildFormRequestData($order, $person);
+
+            Log::info('OrderMailService: Form data built, calling FormService', [
+                'order_id'  => $order->id,
+                'form_data' => $formData,
+            ]);
+
+            $result = $this->formService->createFormRequest($formData);
+            $response = $result['response'] ?? null;
+            $httpStatus = $result['status'] ?? null;
+
+            Log::info('OrderMailService: API response received', [
+                'order_id'           => $order->id,
+                'http_status'        => $httpStatus,
+                'has_response'       => ! is_null($response),
+                'response_has_id'    => $response && isset($response['data']['id']),
+                'response_structure' => $response ? ['has_data' => isset($response['data']), 'keys' => array_keys($response)] : null,
+            ]);
+
+            if (! $response || ! isset($response['data']['id'])) {
+                $errorMessage = 'Failed to create form request';
+                $errorDetails = [
+                    'order_id'         => $order->id,
+                    'http_status'      => $httpStatus,
+                    'response'         => $response,
+                    'response_keys'    => $response ? array_keys($response) : null,
+                    'response_message' => $response['message'] ?? null,
+                    'response_errors'  => $response['errors'] ?? null,
+                ];
+
+                Log::error('OrderMailService: Failed to create form request', $errorDetails);
+
+                // Build a more descriptive error message
+                if ($httpStatus === 200 && ! $response) {
+                    // Status 200 but no valid JSON response usually means authentication failed
+                    $errorMessage = 'Authentication failed: Forms API returned HTML login page instead of JSON. Please check FORMS_API_KEY configuration.';
+                } elseif ($response && isset($response['message'])) {
+                    $errorMessage .= ': '.$response['message'];
+                } elseif ($response && isset($response['errors'])) {
+                    $errorMessage .= ': '.json_encode($response['errors']);
+                } elseif (! $response) {
+                    $errorMessage .= ': API returned no response';
+                    if ($httpStatus) {
+                        $errorMessage .= " (HTTP {$httpStatus})";
+                    }
+                } else {
+                    $errorMessage .= ': Response missing form request ID';
+                }
+
+                throw new Exception($errorMessage);
+            }
+
+            $formRequestId = $response['data']['id'];
+            $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
+            $formLink = $response['form_url'] ?? '';
+            $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
+
+            // Save the link to the sales lead (one-time save)
+            if ($order->salesLead) {
+                $salesLead = $order->salesLead;
+
+                Log::info('OrderMailService: Attempting to save GVL form link', [
+                    'order_id'              => $order->id,
+                    'sales_lead_id'         => $salesLead->id,
+                    'form_request_id'       => $formRequestId,
+                    'form_link'             => $formLink,
+                    'current_gvl_form_link' => $salesLead->gvl_form_link,
+                ]);
+
+                // Use save() instead of update() for better control
+                $salesLead->gvl_form_link = $formLink;
+                $saved = $salesLead->save();
+
+                if (! $saved) {
+                    Log::error('OrderMailService: Failed to save GVL form link to sales', [
+                        'order_id'      => $order->id,
+                        'sales_lead_id' => $salesLead->id,
+                        'form_link'     => $formLink,
+                    ]);
+                } else {
+                    // Refresh the relation to ensure we have the updated value
+                    $order->load('salesLead');
+
+                    // Verify the save was successful
+                    $salesLead->refresh();
+                    $savedLink = $salesLead->gvl_form_link;
+
+                    Log::info('OrderMailService: GVL form link saved to sales', [
+                        'order_id'        => $order->id,
+                        'sales_lead_id'   => $salesLead->id,
+                        'form_request_id' => $formRequestId,
+                        'form_link'       => $formLink,
+                        'saved_link'      => $savedLink,
+                        'save_successful' => ($savedLink === $formLink),
+                    ]);
+                }
+            } else {
+                Log::warning('OrderMailService: Cannot save GVL form link - no sales found', [
+                    'order_id' => $order->id,
+                ]);
+            }
+
+            return $formLink;
+        } catch (Exception $e) {
+            Log::error('OrderMailService: Exception creating form request', [
+                'order_id'       => $order->id,
+                'error'          => $e->getMessage(),
+                'file'           => $e->getFile(),
+                'line'           => $e->getLine(),
+                'trace'          => $e->getTraceAsString(),
+                'has_sales_lead' => ! is_null($order->salesLead),
+                'sales_lead_id'  => $order->salesLead?->id,
+            ]);
+
+            // Re-throw the exception to break the flow
+            throw $e;
+        }
     }
 
     protected function ensureTemplateExists(): EmailTemplate
@@ -314,182 +483,6 @@ HTML;
     }
 
     /**
-     * Create a form request via the forms API and return the form link.
-     * Uses existing link from sales lead if available, otherwise creates new one and saves it.
-     */
-    public function createFormRequestAndGetLink(Order $order): string
-    {
-        // Ensure salesLead is loaded
-        if (! $order->salesLead) {
-            $order->load('salesLead');
-        }
-
-        // Check if sales lead already has a form link (only create if empty)
-        if ($order->salesLead && ! empty($order->salesLead->gvl_form_link)) {
-            Log::info('OrderMailService: Using existing GVL form link', [
-                'order_id'      => $order->id,
-                'sales_lead_id' => $order->salesLead->id,
-                'form_link'     => $order->salesLead->gvl_form_link,
-            ]);
-
-            return $order->salesLead->gvl_form_link;
-        }
-
-        // gvl_form_link is empty, create new form request
-        Log::info('OrderMailService: gvl_form_link is empty, creating new form request', [
-            'order_id'       => $order->id,
-            'sales_lead_id'  => $order->salesLead?->id,
-            'has_sales_lead' => ! is_null($order->salesLead),
-        ]);
-
-        try {
-            Log::info('OrderMailService: Getting person for form', ['order_id' => $order->id]);
-            $person = $this->getPersonForForm($order);
-            if (! $person) {
-                Log::error('OrderMailService: No person found for order', [
-                    'order_id'           => $order->id,
-                    'has_sales_lead'     => ! is_null($order->salesLead),
-                    'has_contact_person' => ! is_null($order->salesLead?->contactPerson),
-                    'has_lead'           => ! is_null($order->salesLead?->lead),
-                ]);
-                throw new Exception('No person found for order');
-            }
-
-            Log::info('OrderMailService: Person found, building form data', [
-                'order_id'  => $order->id,
-                'person_id' => $person->id,
-            ]);
-
-            $formData = $this->buildFormRequestData($order, $person);
-
-            // Check if API token is configured
-            $token = config('services.forms.api_token');
-            if (empty($token)) {
-                Log::error('OrderMailService: FORMS_API_KEY not configured', [
-                    'order_id' => $order->id,
-                ]);
-                throw new Exception('FORMS_API_KEY is not configured. Please set FORMS_API_KEY in your .env file.');
-            }
-
-            Log::info('OrderMailService: Form data built, calling API', [
-                'order_id'  => $order->id,
-                'form_data' => $formData,
-                'has_token' => ! empty($token),
-            ]);
-
-            $result = $this->createFormRequest($formData);
-            $response = $result['response'] ?? null;
-            $httpStatus = $result['status'] ?? null;
-
-            Log::info('OrderMailService: API response received', [
-                'order_id'           => $order->id,
-                'http_status'        => $httpStatus,
-                'has_response'       => ! is_null($response),
-                'response_has_id'    => $response && isset($response['data']['id']),
-                'response_structure' => $response ? ['has_data' => isset($response['data']), 'keys' => array_keys($response)] : null,
-            ]);
-
-            if (! $response || ! isset($response['data']['id'])) {
-                $errorMessage = 'Failed to create form request';
-                $errorDetails = [
-                    'order_id'         => $order->id,
-                    'http_status'      => $httpStatus,
-                    'response'         => $response,
-                    'response_keys'    => $response ? array_keys($response) : null,
-                    'response_message' => $response['message'] ?? null,
-                    'response_errors'  => $response['errors'] ?? null,
-                ];
-
-                Log::error('OrderMailService: Failed to create form request', $errorDetails);
-
-                // Build a more descriptive error message
-                if ($httpStatus === 200 && ! $response) {
-                    // Status 200 but no valid JSON response usually means authentication failed
-                    $errorMessage = 'Authentication failed: Forms API returned HTML login page instead of JSON. Please check FORMS_API_KEY configuration.';
-                } elseif ($response && isset($response['message'])) {
-                    $errorMessage .= ': '.$response['message'];
-                } elseif ($response && isset($response['errors'])) {
-                    $errorMessage .= ': '.json_encode($response['errors']);
-                } elseif (! $response) {
-                    $errorMessage .= ': API returned no response';
-                    if ($httpStatus) {
-                        $errorMessage .= " (HTTP {$httpStatus})";
-                    }
-                } else {
-                    $errorMessage .= ': Response missing form request ID';
-                }
-
-                throw new Exception($errorMessage);
-            }
-
-            $formRequestId = $response['data']['id'];
-            $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
-            $formLink = $response['form_url'] ?? '';
-            $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
-
-            // Save the link to the sales lead (one-time save)
-            if ($order->salesLead) {
-                $salesLead = $order->salesLead;
-
-                Log::info('OrderMailService: Attempting to save GVL form link', [
-                    'order_id'              => $order->id,
-                    'sales_lead_id'         => $salesLead->id,
-                    'form_request_id'       => $formRequestId,
-                    'form_link'             => $formLink,
-                    'current_gvl_form_link' => $salesLead->gvl_form_link,
-                ]);
-
-                // Use save() instead of update() for better control
-                $salesLead->gvl_form_link = $formLink;
-                $saved = $salesLead->save();
-
-                if (! $saved) {
-                    Log::error('OrderMailService: Failed to save GVL form link to sales', [
-                        'order_id'      => $order->id,
-                        'sales_lead_id' => $salesLead->id,
-                        'form_link'     => $formLink,
-                    ]);
-                } else {
-                    // Refresh the relation to ensure we have the updated value
-                    $order->load('salesLead');
-
-                    // Verify the save was successful
-                    $salesLead->refresh();
-                    $savedLink = $salesLead->gvl_form_link;
-
-                    Log::info('OrderMailService: GVL form link saved to sales', [
-                        'order_id'        => $order->id,
-                        'sales_lead_id'   => $salesLead->id,
-                        'form_request_id' => $formRequestId,
-                        'form_link'       => $formLink,
-                        'saved_link'      => $savedLink,
-                        'save_successful' => ($savedLink === $formLink),
-                    ]);
-                }
-            } else {
-                Log::warning('OrderMailService: Cannot save GVL form link - no sales found', [
-                    'order_id' => $order->id,
-                ]);
-            }
-
-            return $formLink;
-        } catch (Exception $e) {
-            Log::error('OrderMailService: Exception creating form request', [
-                'order_id'       => $order->id,
-                'error'          => $e->getMessage(),
-                'file'           => $e->getFile(),
-                'line'           => $e->getLine(),
-                'trace'          => $e->getTraceAsString(),
-                'has_sales_lead' => ! is_null($order->salesLead),
-                'sales_lead_id'  => $order->salesLead?->id,
-            ]);
-
-            // Re-throw the exception to break the flow
-            throw $e;
-        }
-    }
-
-    /**
      * Get the person to use for the form request.
      */
     protected function getPersonForForm(Order $order): ?Person
@@ -588,121 +581,5 @@ HTML;
         }
 
         return false;
-    }
-
-    /**
-     * Make API call to create form request.
-     *
-     * @return array{status: int, response: array|null}
-     */
-    protected function createFormRequest(array $data): array
-    {
-        $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
-        $token = config('services.forms.api_token');
-        $url = "{$apiUrl}/api/forms";
-
-        // Log request details
-        Log::info('OrderMailService: Creating form request', [
-            'url'           => $url,
-            'method'        => 'POST',
-            'request_body'  => $data,
-            'has_token'     => ! empty($token),
-            'token_preview' => $token ? substr($token, 0, 10).'...' : null,
-        ]);
-
-        // Build HTTP client with Bearer token for Sanctum
-        $httpClient = Http::timeout(10);
-
-        if ($token) {
-            // Sanctum expects: Authorization: Bearer {token}
-            $httpClient = $httpClient->withHeaders([
-                'X-API-KEY' => $token,
-                'Accept'    => 'application/json',
-            ]);
-        }
-
-        $response = $httpClient->post($url, $data);
-
-        // Log response details
-        $status = $response->status();
-        $responseBody = $response->body();
-        $responseHeaders = $response->headers();
-
-        // Check if response is HTML (likely a login page)
-        $isHtml = $response->header('Content-Type') && str_contains($response->header('Content-Type'), 'text/html');
-        $bodyPreview = strlen($responseBody) > 500 ? substr($responseBody, 0, 500).'...' : $responseBody;
-
-        $responseData = [
-            'status'                => $status,
-            'content_type'          => $response->header('Content-Type'),
-            'is_html'               => $isHtml,
-            'response_headers'      => $responseHeaders,
-            'response_body_preview' => $bodyPreview,
-            'response_body_length'  => strlen($responseBody),
-        ];
-
-        // If we get HTML back (login page), it means authentication failed
-        if ($isHtml || ($status === 200 && str_contains($responseBody, '<html'))) {
-            Log::error('OrderMailService: Forms API returned HTML (likely login page)', [
-                'status'       => $status,
-                'content_type' => $response->header('Content-Type'),
-                'body_preview' => $bodyPreview,
-                'message'      => 'Authentication failed - received HTML login page instead of JSON',
-            ]);
-
-            return [
-                'status'   => $status,
-                'response' => null,
-            ];
-        }
-
-        if (! $response->successful()) {
-            Log::error('OrderMailService: Forms API error', $responseData);
-
-            return [
-                'status'   => $status,
-                'response' => null,
-            ];
-        }
-
-        // Try to parse JSON response
-        $jsonResponse = null;
-        try {
-            $jsonResponse = $response->json();
-
-            // Check if json() returned null (empty body or invalid JSON)
-            if ($jsonResponse === null && ! empty($responseBody)) {
-                Log::warning('OrderMailService: JSON response is null but body is not empty', [
-                    'status'       => $status,
-                    'body_length'  => strlen($responseBody),
-                    'body_preview' => substr($responseBody, 0, 200),
-                ]);
-            }
-        } catch (Exception $e) {
-            Log::error('OrderMailService: Failed to parse JSON response', [
-                'status'      => $status,
-                'body'        => $responseBody,
-                'body_length' => strlen($responseBody ?? ''),
-                'error'       => $e->getMessage(),
-            ]);
-
-            return [
-                'status'   => $status,
-                'response' => null,
-            ];
-        }
-
-        Log::info('OrderMailService: Forms API success', array_merge($responseData, [
-            'json_response'      => $jsonResponse,
-            'json_response_type' => gettype($jsonResponse),
-            'has_data_key'       => isset($jsonResponse['data']),
-            'has_data_id'        => isset($jsonResponse['data']['id']),
-            'response_keys'      => is_array($jsonResponse) ? array_keys($jsonResponse) : null,
-        ]));
-
-        return [
-            'status'   => $status,
-            'response' => $jsonResponse,
-        ];
     }
 }

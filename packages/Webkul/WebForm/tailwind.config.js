@@ -26,8 +26,28 @@ module.exports = {
         extend: {
             colors: {
                 brandColor: '#0E90D9',
+                brand: {
+                    DEFAULT: '#0E90D9',
+                    soft: '#0E90D9',
+                    medium: '#0E90D9',
+                    strong: '#0E90D9',
+                },
+                neutral: {
+                    'secondary-medium': '#f3f4f6',
+                },
+                default: {
+                    medium: '#d1d5db',
+                },
+                heading: '#111827',
+                body: '#6b7280',
             },
-
+            borderRadius: {
+                base: '0.375rem',
+                xs: '0.125rem',
+            },
+            boxShadow: {
+                xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+            },
             fontFamily: {
                 inter: ['Inter'],
                 icon: ['icomoon']
@@ -37,7 +57,7 @@ module.exports = {
     
     darkMode: 'class',
 
-    plugins: [],
+    plugins: [require('@tailwindcss/forms')],
 
     safelist: [
         {

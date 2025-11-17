@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Mail;
 
+use App\Models\Anamnesis;
 use App\Repositories\SalesLeadRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -521,9 +522,35 @@ class EmailController extends Controller
     {
         // Lead and related person
         if ($leadId) {
-            return $this->leadRepository->resolveEmailVariablesById($leadId);
+            $variables = $this->leadRepository->resolveEmailVariablesById($leadId);
+
+            // If personId is also provided, try to get GVL link from anamnesis
+            if ($personId) {
+                $anamnesis = Anamnesis::where('lead_id', $leadId)
+                    ->where('person_id', $personId)
+                    ->first();
+
+                if ($anamnesis && !empty($anamnesis->gvl_form_link)) {
+                    $variables['gvl_form_link'] = $anamnesis->gvl_form_link;
+                }
+            }
+
+            return $variables;
         } else if ($personId) {
-            return $this->personRepository->resolveEmailVariablesById($personId);
+            $variables = $this->personRepository->resolveEmailVariablesById($personId);
+
+            // If leadId is also provided, try to get GVL link from anamnesis
+            if ($leadId) {
+                $anamnesis = Anamnesis::where('lead_id', $leadId)
+                    ->where('person_id', $personId)
+                    ->firstOrFail();
+
+                if ($anamnesis && !empty($anamnesis->gvl_form_link)) {
+                    $variables['gvl_form_link'] = $anamnesis->gvl_form_link;
+                }
+            }
+
+            return $variables;
         }else if ($salesLeadId) {
             return $this->salesRepository->resolveEmailVariablesById($salesLeadId);
         }

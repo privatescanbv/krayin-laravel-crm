@@ -18,7 +18,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 1,
+    "id": 0,
     "links": [],
     "panels": [
         {
@@ -266,7 +266,7 @@
                 {
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"crm\"}\n| json\n| channel=`php-fpm` or channel=`local`\n| line_format \"{{.datetime | default .ts}} {{.level_name | default \\\"INFO\\\"}} {{.message | default .log}}\"\n",
+                    "expr": "{service=\"crm\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{.context.template}} lead={{.context.lead_id}} vars={{.context.variables_keys}}\"\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -512,12 +512,12 @@
         ]
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-6h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 12
+    "version": 2
 }

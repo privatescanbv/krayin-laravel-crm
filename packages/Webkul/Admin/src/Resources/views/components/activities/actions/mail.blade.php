@@ -351,6 +351,10 @@
                     emailTemplates: [],
 
                     defaultTemplate: 'reply', // Default template for lead view
+                    
+                    // Store person_id and lead_id for info mail context
+                    infoMailPersonId: null,
+                    infoMailLeadId: null,
                 }
             },
 
@@ -361,6 +365,15 @@
               mounted() {
                   this.__mailDialogListener = (event) => {
                       const detail = event?.detail || {};
+                      
+                      // Store person_id and lead_id from payload for info mail context
+                      if (detail.person_id) {
+                          this.infoMailPersonId = detail.person_id;
+                      }
+                      if (detail.lead_id) {
+                          this.infoMailLeadId = detail.lead_id;
+                      }
+                      
                       this.openModalWithPayload(detail);
                   };
 
@@ -495,6 +508,29 @@
                       if (!params.lead_id && !params.sales_lead_id) {
                           if ((this.entityControlName || '').toString().toLowerCase() === 'sales_lead_id' && this.entity?.id) {
                               params.sales_lead_id = this.entity.id;
+                          }
+                      }
+
+                      // Check Vue data properties first (set by info mail button)
+                      if (this.infoMailLeadId) {
+                          params.lead_id = this.infoMailLeadId;
+                      }
+                      if (this.infoMailPersonId) {
+                          params.person_id = this.infoMailPersonId;
+                      }
+                      
+                      // Check form for lead_id and person_id (for info mail with person context)
+                      const form = this.$refs.mailActionForm;
+                      if (form) {
+                          const formLeadId = form.querySelector('[name="lead_id"]')?.value || form.dataset.leadId;
+                          const formPersonId = form.querySelector('[name="person_id"]')?.value || form.dataset.personId;
+                          
+                          // Always use form values if they exist (for info mail context)
+                          if (formLeadId && !params.lead_id) {
+                              params.lead_id = formLeadId;
+                          }
+                          if (formPersonId && !params.person_id) {
+                              params.person_id = formPersonId;
                           }
                       }
 

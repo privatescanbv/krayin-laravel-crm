@@ -68,6 +68,45 @@
                                 </div>
 
                                 <div class="flex items-center gap-1">
+                                    @php
+                                        // Get default email and anamnesis for this person
+                                        $defaultEmail = null;
+                                        if ($person->emails && count($person->emails) > 0) {
+                                            $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
+                                        }
+
+                                        $personAnamnesis = null;
+                                        if ($showAnamnesis) {
+                                            try {
+                                                // For sales leads, use the related lead to get anamnesis
+                                                if ($isSalesLead && $entity->lead && method_exists($entity->lead, 'findAnamnesisByPersonId')) {
+                                                    $personAnamnesis = $entity->lead->findAnamnesisByPersonId($person->id);
+                                                } elseif ($isLead && method_exists($entity, 'findAnamnesisByPersonId')) {
+                                                    $personAnamnesis = $entity->findAnamnesisByPersonId($person->id);
+                                                }
+                                            } catch (ModelNotFoundException $e) {
+                                                // Anamnesis not found for this person-lead combination, which is fine
+                                                $personAnamnesis = null;
+                                            }
+                                        }
+
+                                        $hasGvlLink = false;
+                                        if ($personAnamnesis && !empty($personAnamnesis->gvl_form_link)) {
+                                            $hasGvlLink = true;
+                                        }
+                                    @endphp
+                                    @if ($isLead && $defaultEmail)
+                                        <button
+                                            type="button"
+                                            id="info-mail-{{ $person->id }}-{{ $entityId }}"
+                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 {{ $hasGvlLink ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
+                                            title="{{ $hasGvlLink ? 'Stuur informatieve mail met GVL link' : 'GVL formulier link ontbreekt. Koppel eerst een GVL formulier aan de anamnesis.' }}"
+                                            @if (!$hasGvlLink) disabled @endif
+                                            data-person-id="{{ $person->id }}"
+                                            data-lead-id="{{ $entityId }}"
+                                            data-default-email="{{ $defaultEmail['value'] ?? '' }}"
+                                        ></button>
+                                    @endif
                                     @if (bouncer()->hasPermission('contacts.persons.edit'))
                                         <a
                                             href="{{ route('admin.contacts.persons.edit', $person->id) }}"
@@ -114,26 +153,6 @@
                                             <v-match-score person-id="{{ $person->id }}"
                                                            lead-id="{{ $entityId }}"></v-match-score>
                                         @endif
-                                        @php
-                                            $defaultEmail = null;
-                                            if ($person->emails && count($person->emails) > 0) {
-                                                $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
-                                            }
-                                            $personAnamnesis = null;
-                                            if ($showAnamnesis) {
-                                                try {
-                                                    // For sales leads, use the related lead to get anamnesis
-                                                    if ($isSalesLead && $entity->lead && method_exists($entity->lead, 'findAnamnesisByPersonId')) {
-                                                        $personAnamnesis = $entity->lead->findAnamnesisByPersonId($person->id);
-                                                    } elseif ($isLead && method_exists($entity, 'findAnamnesisByPersonId')) {
-                                                        $personAnamnesis = $entity->findAnamnesisByPersonId($person->id);
-                                                    }
-                                                } catch (ModelNotFoundException $e) {
-                                                    // Anamnesis not found for this person-lead combination, which is fine (happens when person has been attached within the sales)
-                                                    $personAnamnesis = null;
-                                                }
-                                            }
-                                        @endphp
 
                                         @if ($defaultEmail)
                                             <div>
@@ -170,4 +189,118 @@
 
 @if ($showMatchScore && $isLead)
     @include('admin::components.match-score')
+@endif
+
+@if ($isLead)
+    @pushOnce('scripts')
+    <script type="module">
+        (function() {
+            // Initialize info mail buttons
+            const initInfoMailButtons = () => {
+                document.querySelectorAll('[id^="info-mail-"]').forEach(button => {
+                    if (button.dataset.initialized === 'true') {
+                        return; // Already initialized
+                    }
+
+                    button.dataset.initialized = 'true';
+
+                    button.addEventListener('click', async function(e) {
+                        e.preventDefault();
+
+                        if (this.disabled) {
+                            return;
+                        }
+
+                        const personId = this.dataset.personId;
+                        const leadId = this.dataset.leadId;
+                        const defaultEmail = this.dataset.defaultEmail;
+
+                        if (!personId || !leadId || !defaultEmail) {
+                            return;
+                        }
+
+                        // Use the window event system to open mail dialog
+                        const payload = {
+                            defaultEmail: defaultEmail,
+                            subject: 'Informatie over uw aanvraag',
+                            body: '',
+                            emails: [{ value: defaultEmail, is_default: true }],
+                            lead_id: leadId,
+                            person_id: personId,
+                            template: 'informatief',
+                        };
+
+                        // Dispatch event to open mail dialog
+                        window.dispatchEvent(new CustomEvent('open-email-dialog', {
+                            detail: payload
+                        }));
+
+                        // Wait for modal to open, then set template
+                        // Use a retry mechanism to ensure form is ready
+                        const setupFormAndTemplate = (retries = 5) => {
+                            const form = document.querySelector('form[name="mail-action-form"]');
+                            if (!form && retries > 0) {
+                                setTimeout(() => setupFormAndTemplate(retries - 1), 200);
+                                return;
+                            }
+
+                            if (form) {
+                                // Add lead_id and person_id to form for template resolution
+                                let leadIdInput = form.querySelector('[name="lead_id"]');
+                                if (!leadIdInput) {
+                                    leadIdInput = document.createElement('input');
+                                    leadIdInput.type = 'hidden';
+                                    leadIdInput.name = 'lead_id';
+                                    form.appendChild(leadIdInput);
+                                }
+                                leadIdInput.value = leadId;
+
+                                let personIdInput = form.querySelector('[name="person_id"]');
+                                if (!personIdInput) {
+                                    personIdInput = document.createElement('input');
+                                    personIdInput.type = 'hidden';
+                                    personIdInput.name = 'person_id';
+                                    form.appendChild(personIdInput);
+                                }
+                                personIdInput.value = personId;
+
+                                // Store IDs in data attributes for loadTemplate to use
+                                form.dataset.leadId = leadId;
+                                form.dataset.personId = personId;
+
+                                // Set template (this will trigger loadTemplate)
+                                setTimeout(() => {
+                                    const templateSelect = document.querySelector('[name="email_template"]');
+                                    if (templateSelect) {
+                                        templateSelect.value = 'informatief';
+                                        templateSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    }
+                                }, 100);
+                            }
+                        };
+
+                        setTimeout(() => setupFormAndTemplate(), 300);
+                    });
+                });
+            };
+
+            // Initialize on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initInfoMailButtons);
+            } else {
+                initInfoMailButtons();
+            }
+
+            // Re-initialize after Vue renders (for dynamic content)
+            const observer = new MutationObserver(() => {
+                initInfoMailButtons();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        })();
+    </script>
+    @endPushOnce
 @endif

@@ -317,7 +317,7 @@
         {
             "datasource": {
                 "type": "loki",
-                "uid": "af3xcqn2k6io0a"
+                "uid": "bf4e4x8fruv40f"
             },
             "fieldConfig": {
                 "defaults": {},
@@ -346,7 +346,7 @@
                 {
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"forms\"}\n| json\n| line_format \"{{.datetime | default .ts}} {{.level_name | default \\\"INFO\\\"}} {{.message | default .log}}\"\n",
+                    "expr": "{service=\"forms\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{.context.template}} lead={{.context.lead_id}} vars={{.context.variables_keys}}\"\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -519,5 +519,5 @@
     "timezone": "",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 2
+    "version": 5
 }

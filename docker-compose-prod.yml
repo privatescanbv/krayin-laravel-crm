@@ -288,7 +288,7 @@ services:
       - logging=promtail
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:3.5.8
     container_name: promtail
     restart: unless-stopped
     volumes:

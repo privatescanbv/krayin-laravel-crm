@@ -466,6 +466,7 @@ TABLE(Anamnesis, "anamnesis") {
   heart_attack_risk: text
   active: tinyint(1)
   advice_notes: text
+  gvl_form_link: string
   FOREIGN_KEY(lead_id): bigint
   FOREIGN_KEY(person_id): bigint
 }

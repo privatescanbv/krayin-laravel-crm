@@ -14,8 +14,12 @@ class TelescopeServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Only register Telescope if it's available (development environment)
-        if (! class_exists('Laravel\Telescope\Telescope')) {
+        // Check if Telescope is enabled in config
+        if (! config('telescope.enabled', false)) {
+            return;
+        } elseif (! class_exists('Laravel\Telescope\Telescope')) {
+            logger()->error('Telescope is enabled in config but the package is not installed.');
+
             return;
         }
 
@@ -40,7 +44,11 @@ class TelescopeServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Only boot Telescope if not in testing environment
+        // Only boot Telescope if it's enabled and in local environment
+        if (! config('telescope.enabled', false)) {
+            return;
+        }
+
         if (! $this->app->environment('local')) {
             return;
         }

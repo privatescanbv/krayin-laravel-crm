@@ -664,7 +664,7 @@ class SalesLeadController extends Controller
             'user_id'                   => 'nullable|exists:users,id',
             'contact_person_id'         => 'nullable|exists:persons,id',
             'contact_person_id_display' => 'nullable|string',
-            'person_ids'                => 'nullable|array',
+            'person_ids'                => 'required|array|min:1',
             'person_ids.*'              => 'exists:persons,id',
         ];
     }

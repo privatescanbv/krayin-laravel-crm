@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
+use App\Services\FormService;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Webkul\Lead\Repositories\LeadRepository;
 
@@ -17,7 +21,8 @@ class AnamnesisController extends Controller
      * @return void
      */
     public function __construct(
-        protected LeadRepository $leadRepository
+        protected LeadRepository $leadRepository,
+        protected FormService $formService
     ) {}
 
     /**
@@ -105,5 +110,262 @@ class AnamnesisController extends Controller
         session()->flash('success', 'Anamnese is aangepast.');
 
         return redirect()->route('admin.leads.view', $anamnesis->lead_id);
+    }
+
+    public function attachGvlForm(Request $request, string $id): JsonResponse
+    {
+        $anamnesis = Anamnesis::with('person', 'lead')->findOrFail($id);
+
+        if (! $anamnesis->person) {
+            return response()->json([
+                'message' => 'Anamnesis heeft geen gekoppelde persoon.',
+            ], 422);
+        }
+
+        // Check if GVL form already exists
+        if (! empty($anamnesis->gvl_form_link)) {
+            return response()->json([
+                'message'       => 'GVL formulier is al gekoppeld.',
+                'gvl_form_link' => $anamnesis->gvl_form_link,
+            ], 422);
+        }
+
+        try {
+            // Create form request for this person
+            $formLink = $this->createFormRequestForAnamnesis($anamnesis);
+
+            // Reload the anamnesis to get updated gvl_form_link
+            $anamnesis->refresh();
+
+            return response()->json([
+                'message'       => 'GVL formulier is gekoppeld.',
+                'gvl_form_link' => $formLink,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('AnamnesisController@attachGvlForm failed', [
+                'anamnesis_id' => $id,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier koppelen is mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function detachGvlForm(Request $request, string $id): JsonResponse
+    {
+        $anamnesis = Anamnesis::findOrFail($id);
+
+        if (empty($anamnesis->gvl_form_link)) {
+            return response()->json([
+                'message' => 'Er is geen GVL formulier gekoppeld aan deze anamnesis.',
+            ], 422);
+        }
+
+        try {
+            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+
+            if ($formId === null) {
+                Log::error('AnamnesisController@detachGvlForm could not resolve form id from URL', [
+                    'anamnesis_id'  => $id,
+                    'gvl_form_link' => $anamnesis->gvl_form_link,
+                ]);
+                throw new Exception('Could not resolve form id from url: '.$anamnesis->gvl_form_link);
+            }
+
+            $result = $this->formService->deleteForm($formId);
+            $status = $result['status'];
+            $json = $result['response'];
+
+            if ($status !== 200) {
+                Log::warning('AnamnesisController@detachGvlForm Forms API fout', [
+                    'anamnesis_id'  => $id,
+                    'form_id'       => $formId,
+                    'status'        => $status,
+                    'response_json' => $json,
+                ]);
+
+                return response()->json([
+                    'message' => $json['message'] ?? 'GVL formulier ontkoppelen is mislukt.',
+                ], $status ?: 500);
+            }
+
+            $anamnesis->update([
+                'gvl_form_link' => null,
+            ]);
+
+            Log::info('AnamnesisController@detachGvlForm geslaagd', [
+                'anamnesis_id' => $id,
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier is ontkoppeld.',
+            ]);
+        } catch (Exception $e) {
+            Log::error('AnamnesisController@detachGvlForm failed', [
+                'anamnesis_id' => $id,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier ontkoppelen is mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getGvlFormStatus(Request $request, string $id): JsonResponse
+    {
+        $anamnesis = Anamnesis::findOrFail($id);
+
+        if (empty($anamnesis->gvl_form_link)) {
+            return response()->json([
+                'message' => 'Er is geen GVL formulier gekoppeld aan deze anamnesis.',
+            ], 422);
+        }
+
+        try {
+            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+
+            if (! $formId) {
+                return response()->json([
+                    'message' => 'Kon formulier ID niet extraheren uit URL.',
+                ], 422);
+            }
+
+            $status = $this->formService->getFormStatus($formId);
+
+            return response()->json([
+                'data' => $status,
+            ]);
+        } catch (Exception $e) {
+            Log::error('AnamnesisController@getGvlFormStatus failed', [
+                'anamnesis_id' => $id,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij ophalen formulier status: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a form request for anamnesis and return the form link.
+     */
+    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis): string
+    {
+        if (! $anamnesis->person) {
+            throw new Exception('Anamnesis heeft geen gekoppelde persoon.');
+        }
+
+        if (! $anamnesis->lead) {
+            throw new Exception('Anamnesis heeft geen gekoppelde lead.');
+        }
+
+        $person = $anamnesis->person;
+        $lead = $anamnesis->lead;
+
+        // Build form data
+        $email = $person->findDefaultEmail();
+        if (! $email) {
+            throw new Exception('Persoon heeft geen e-mailadres.');
+        }
+
+        $birthday = $person->date_of_birth
+            ? $person->date_of_birth->format('d-m-Y')
+            : '01-01-1900';
+
+        $firstName = $person->first_name ?? '';
+        $lastName = $person->last_name ?? '';
+
+        if (empty($firstName) && empty($lastName) && ! empty($person->name)) {
+            $nameParts = explode(' ', $person->name, 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? $firstName;
+        }
+
+        // Determine form type from lead department
+        $department = $lead->department;
+        $formType = $department && method_exists($department, 'isHernia') && $department->isHernia() ? 'herniapoli' : 'privatescan';
+
+        $formData = [
+            'user_crm_id'     => $person->id,
+            'user_firstname'  => $firstName ?: 'Onbekend',
+            'user_lastname'   => $lastName ?: 'Onbekend',
+            'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
+            'user_email'      => $email,
+            'user_birthday'   => $birthday,
+            'mri_research'    => 'Nee', // Default, can be updated later
+            'ct_scan'         => 'Nee', // Default, can be updated later
+            'form_type'       => $formType,
+        ];
+
+        $url = $this->formService->buildApiUrl('/api/forms');
+        $response = $this->formService->makeRequest('post', $url, ['url' => $url], $formData);
+        $result = $this->formService->parseResponse($response, ['url' => $url], true);
+
+        if ($result['is_html'] || ! $response->successful()) {
+            $errorMessage = 'Forms API fout';
+            $errorDetails = [
+                'anamnesis_id'     => $anamnesis->id,
+                'person_id'        => $person->id,
+                'lead_id'          => $lead->id,
+                'http_status'      => $result['status'],
+                'is_html'          => $result['is_html'],
+                'response'         => $result['json'],
+                'response_body'    => $response->body(),
+                'response_message' => $result['json']['message'] ?? null,
+                'response_errors'  => $result['json']['errors'] ?? null,
+            ];
+
+            Log::error('AnamnesisController: Forms API error', $errorDetails);
+
+            // Build a more descriptive error message
+            if ($result['is_html']) {
+                $errorMessage = 'Forms API authentication failed: received HTML login page instead of JSON. Please check FORMS_API_KEY configuration.';
+            } elseif ($result['json'] && isset($result['json']['message'])) {
+                $errorMessage .= ': '.$result['json']['message'];
+            } elseif ($result['json'] && isset($result['json']['errors'])) {
+                $errorMessage .= ': '.json_encode($result['json']['errors']);
+            } elseif (! $result['json']) {
+                $errorMessage .= ': API returned no response';
+                if ($result['status']) {
+                    $errorMessage .= " (HTTP {$result['status']})";
+                }
+            } else {
+                $errorMessage .= ': Server Error (HTTP '.$result['status'].')';
+            }
+
+            throw new Exception($errorMessage);
+        }
+
+        if (! isset($result['json']['data']['id'])) {
+            $errorDetails = [
+                'anamnesis_id'    => $anamnesis->id,
+                'person_id'       => $person->id,
+                'lead_id'         => $lead->id,
+                'http_status'     => $result['status'],
+                'response'        => $result['json'],
+                'response_body'   => $response->body(),
+                'response_keys'   => $result['json'] ? array_keys($result['json']) : null,
+            ];
+
+            Log::error('AnamnesisController: Forms API response missing form ID', $errorDetails);
+
+            throw new Exception('Forms API response mist formulier ID');
+        }
+
+        $formRequestId = $result['json']['data']['id'];
+        $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
+        $formLink = $result['json']['form_url'] ?? '';
+        $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
+
+        // Save the link to the anamnesis
+        $anamnesis->update([
+            'gvl_form_link' => $formLink,
+        ]);
+
+        return $formLink;
     }
 }

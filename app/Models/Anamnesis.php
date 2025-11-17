@@ -70,6 +70,7 @@ class Anamnesis extends Model
         'advice_notes',
         'lead_id',
         'person_id',
+        'gvl_form_link',
         'created_by',
         'updated_by',
     ];

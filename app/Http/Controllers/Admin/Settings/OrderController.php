@@ -193,15 +193,7 @@ class OrderController extends SimpleEntityController
             }
         }
 
-        // Update GVL form link if provided (empty string becomes null)
-        if ($request->has('gvl_form_link')) {
-            $gvlFormLink = $request->input('gvl_form_link');
-            if ($order->salesLead) {
-                $order->salesLead->update([
-                    'gvl_form_link' => empty(trim($gvlFormLink)) ? null : $gvlFormLink,
-                ]);
-            }
-        }
+        // GVL form link is now managed per person/anamnesis, not per order/salesLead
 
         Event::dispatch("{$this->entityName}.update.after", $order);
 
@@ -266,107 +258,24 @@ class OrderController extends SimpleEntityController
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
     }
 
+    /**
+     * @deprecated Use AnamnesisController methods instead. GVL forms are now managed per person/anamnesis.
+     */
     public function attachGvlForm(Request $request, int $orderId): JsonResponse
     {
-        $order = Order::with('salesLead')->findOrFail($orderId);
-
-        if (! $order->salesLead) {
-            return response()->json([
-                'message' => 'Order heeft geen gekoppelde sales.',
-            ], 422);
-        }
-
-        // Check if GVL form already exists (early return for better API response)
-        if (! empty($order->salesLead->gvl_form_link)) {
-            return response()->json([
-                'message'       => 'GVL formulier is al gekoppeld.',
-                'gvl_form_link' => $order->salesLead->gvl_form_link,
-            ], 422);
-        }
-
-        try {
-            // Use OrderMailService to create the form (this method also checks for existing link)
-            $formLink = $this->orderMailService->createFormRequestAndGetLink($order);
-
-            // Reload the order to get updated sales lead
-            $order->refresh();
-            $order->load('salesLead');
-
-            return response()->json([
-                'message'       => 'GVL formulier is gekoppeld.',
-                'gvl_form_link' => $formLink,
-            ], 200);
-        } catch (Exception $e) {
-            Log::error('OrderController@attachGvlForm failed', [
-                'order_id' => $order->id,
-                'error'    => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'GVL formulier koppelen is mislukt: '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'GVL formulier koppelen gebeurt nu per persoon via anamnesis.',
+        ], 410); // 410 Gone
     }
 
+    /**
+     * @deprecated Use AnamnesisController methods instead. GVL forms are now managed per person/anamnesis.
+     */
     public function detachGvlForm(Request $request, int $orderId): JsonResponse
     {
-        $order = Order::with('salesLead')->findOrFail($orderId);
-
-        if (! $order->salesLead || empty($order->salesLead->gvl_form_link)) {
-            return response()->json([
-                'message' => 'Er is geen GVL formulier gekoppeld aan deze order.',
-            ], 422);
-        }
-
-        try {
-            $formId = $this->formService->extractFormIdFromUrl($order->salesLead->gvl_form_link);
-
-            if ($formId === null) {
-                Log::error('OrderController@detachGvlForm could not resolve form id from URL', [
-                    'order_id'      => $order->id,
-                    'gvl_form_link' => $order->salesLead->gvl_form_link,
-                ]);
-                throw new Exception('Could not resolve form id from url: '.$order->salesLead->gvl_form_link);
-            }
-
-            $result = $this->formService->deleteForm($formId);
-            $status = $result['status'];
-            $json = $result['response'];
-
-            if ($status !== 200) {
-                Log::warning('OrderController@detachGvlForm Forms API fout', [
-                    'order_id'      => $order->id,
-                    'form_id'       => $formId,
-                    'status'        => $status,
-                    'response_json' => $json,
-                ]);
-
-                return response()->json([
-                    'message' => $json['message'] ?? 'GVL formulier ontkoppelen is mislukt.',
-                ], $status ?: 500);
-            }
-
-            $order->salesLead->update([
-                'gvl_form_link' => null,
-            ]);
-
-            Log::info('OrderController@detachGvlForm geslaagd', [
-                'order_id' => $order->id,
-            ]);
-
-            return response()->json([
-                'message' => 'GVL formulier is ontkoppeld.',
-            ]);
-        } catch (Exception $e) {
-            Log::error('OrderController@detachGvlForm failed', [
-                'order_id' => $order->id,
-                'error'    => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'GVL formulier ontkoppelen is mislukt: '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'GVL formulier ontkoppelen gebeurt nu per persoon via anamnesis.',
+        ], 410); // 410 Gone
     }
 
     public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse
@@ -472,12 +381,36 @@ class OrderController extends SimpleEntityController
         $mailData = $this->orderMailService->buildMailData($order);
 
         // Add attachments array to the response (supports multiple attachments)
-        $mailData['attachments'] = [
+        $attachments = [
             [
                 'url'      => route('admin.orders.confirmation.export-pdf', ['orderId' => $orderId]),
                 'filename' => 'order-bevestiging-'.$order->id.'-'.date('Y-m-d').'.pdf',
             ],
         ];
+
+        // Add GVL formulier exports as attachments if form links exist (one per person/anamnesis)
+        if ($order->salesLead && $order->salesLead->lead_id) {
+            $leadId = $order->salesLead->lead_id;
+            $persons = $order->salesLead->persons()->get();
+
+            foreach ($persons as $person) {
+                $anamnesis = \App\Models\Anamnesis::where('lead_id', $leadId)
+                    ->where('person_id', $person->id)
+                    ->first();
+
+                if ($anamnesis && ! empty($anamnesis->gvl_form_link)) {
+                    $gvlDownloadUrl = $this->formService->getFormDownloadUrl($anamnesis->gvl_form_link);
+                    if ($gvlDownloadUrl) {
+                        $attachments[] = [
+                            'url'      => $gvlDownloadUrl,
+                            'filename' => 'gvl-formulier-'.$person->name.'-'.$order->id.'-'.date('Y-m-d').'.pdf',
+                        ];
+                    }
+                }
+            }
+        }
+
+        $mailData['attachments'] = $attachments;
 
         return response()->json($mailData);
     }
@@ -626,40 +559,14 @@ class OrderController extends SimpleEntityController
     /**
      * Get GVL form status.
      */
+    /**
+     * @deprecated Use AnamnesisController methods instead. GVL forms are now managed per person/anamnesis.
+     */
     public function getGvlFormStatus(Request $request, int $orderId): JsonResponse
     {
-        $order = Order::with('salesLead')->findOrFail($orderId);
-
-        if (! $order->salesLead || empty($order->salesLead->gvl_form_link)) {
-            return response()->json([
-                'message' => 'Er is geen GVL formulier gekoppeld aan deze order.',
-            ], 422);
-        }
-
-        try {
-            $formId = $this->formService->extractFormIdFromUrl($order->salesLead->gvl_form_link);
-
-            if (! $formId) {
-                return response()->json([
-                    'message' => 'Kon formulier ID niet extraheren uit URL.',
-                ], 422);
-            }
-
-            $status = $this->formService->getFormStatus($formId);
-
-            return response()->json([
-                'data' => $status,
-            ]);
-        } catch (Exception $e) {
-            Log::error('OrderController@getGvlFormStatus failed', [
-                'order_id' => $orderId,
-                'error'    => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Fout bij ophalen formulier status: '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'GVL formulier status ophalen gebeurt nu per persoon via anamnesis.',
+        ], 410); // 410 Gone
     }
 
     protected function getEditViewData(Request $request, Model $entity): array
@@ -672,10 +579,23 @@ class OrderController extends SimpleEntityController
             },
             'orderItems.resourceOrderItems.resource',
             'orderItems.person',
-            'salesLead.lead',
-            'salesLead.contactPerson',
+            'salesLead',
             'orderChecks',
         ]);
+
+        // Load salesLead nested relations separately if salesLead exists
+        if ($entity->salesLead) {
+            try {
+                $entity->salesLead->load(['persons', 'contactPerson']);
+            } catch (\Exception $e) {
+                // If salesLead relations can't be loaded, just log and continue
+                Log::warning('Failed to load salesLead relations for order', [
+                    'order_id'      => $entity->id,
+                    'sales_lead_id' => $entity->sales_lead_id,
+                    'error'         => $e->getMessage(),
+                ]);
+            }
+        }
 
         $orderEmailOptions = $this->orderMailService->getEmailOptions($entity);
         $orderDefaultEmail = $this->orderMailService->getDefaultEmail($entity);
@@ -684,20 +604,71 @@ class OrderController extends SimpleEntityController
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
-        // Get persons from the sales lead
+        // Get persons from the sales lead (only from salesLead.persons, not from lead.persons)
         $persons = [];
-        if ($entity->salesLead && $entity->salesLead->lead) {
-            $persons = $entity->salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
+        $personsWithAnamnesis = [];
+        $missingPersonsWarning = null;
+
+        if ($entity->salesLead) {
+            $salesLeadPersons = collect();
+
+            // Get persons directly from sales lead only
+            try {
+                $salesLeadPersons = $entity->salesLead->persons()->get();
+            } catch (\Exception $e) {
+                Log::warning('Failed to load persons from salesLead', [
+                    'order_id'      => $entity->id,
+                    'sales_lead_id' => $entity->salesLead->id,
+                    'error'         => $e->getMessage(),
+                ]);
+            }
+
+            $persons = $salesLeadPersons->mapWithKeys(function ($person) {
                 return [$person->id => $person->name];
             })->toArray();
+
+            // Load anamnesis for each person (via lead_id and person_id)
+            if ($entity->salesLead->lead_id) {
+                $leadId = $entity->salesLead->lead_id;
+                foreach ($salesLeadPersons as $person) {
+                    $anamnesis = \App\Models\Anamnesis::where('lead_id', $leadId)
+                        ->where('person_id', $person->id)
+                        ->first();
+
+                    $personsWithAnamnesis[$person->id] = [
+                        'person'    => $person,
+                        'anamnesis' => $anamnesis,
+                    ];
+                }
+            }
+
+            // Check if all persons have an order item
+            if ($salesLeadPersons->isNotEmpty()) {
+                $personIds = $salesLeadPersons->pluck('id')->toArray();
+                $orderItemPersonIds = $entity->orderItems()
+                    ->whereNotNull('person_id')
+                    ->pluck('person_id')
+                    ->unique()
+                    ->toArray();
+
+                $missingPersonIds = array_diff($personIds, $orderItemPersonIds);
+
+                if (! empty($missingPersonIds)) {
+                    $missingPersons = $salesLeadPersons->whereIn('id', $missingPersonIds);
+                    $missingPersonNames = $missingPersons->pluck('name')->toArray();
+                    $missingPersonsWarning = 'Niet alle personen uit de sales lead hebben een order item regel. Ontbrekende personen: '.implode(', ', $missingPersonNames);
+                }
+            }
         }
 
         return [
-            $this->entityName   => $entity,
-            'salesLeads'        => $salesLeads,
-            'persons'           => $persons,
-            'orderEmailOptions' => $orderEmailOptions,
-            'orderDefaultEmail' => $orderDefaultEmail,
+            $this->entityName         => $entity,
+            'salesLeads'              => $salesLeads,
+            'persons'                 => $persons,
+            'personsWithAnamnesis'    => $personsWithAnamnesis,
+            'orderEmailOptions'       => $orderEmailOptions,
+            'orderDefaultEmail'       => $orderDefaultEmail,
+            'missingPersonsWarning'   => $missingPersonsWarning,
         ];
     }
 

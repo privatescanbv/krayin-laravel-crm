@@ -42,7 +42,6 @@ class SalesLead extends Model
         'lead_id',
         'user_id',
         'contact_person_id',
-        'gvl_form_link',
         'created_by',
         'updated_by',
     ];
@@ -303,5 +302,10 @@ class SalesLead extends Model
         if ($lead->contact_person_id) {
             $this->update(['contact_person_id' => $lead->contact_person_id]);
         }
+    }
+
+    public function getDepartment(): Department
+    {
+        return $this->lead->department;
     }
 }

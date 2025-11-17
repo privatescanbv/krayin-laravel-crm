@@ -121,7 +121,10 @@ class OrderMailService
 
     /**
      * Create a form request via the forms API and return the form link.
-     * Uses existing link from sales lead if available, otherwise creates new one and saves it.
+     * Uses existing link from anamnesis if available, otherwise creates new one and saves it.
+     *
+     * @deprecated This method is deprecated. Use AnamnesisController methods instead.
+     * For mail attachments, use getAnamnesisGvlFormLinks() instead.
      */
     public function createFormRequestAndGetLink(Order $order): string
     {
@@ -130,15 +133,26 @@ class OrderMailService
             $order->load('salesLead');
         }
 
-        // Check if sales lead already has a form link (only create if empty)
-        if ($order->salesLead && ! empty($order->salesLead->gvl_form_link)) {
-            Log::info('OrderMailService: Using existing GVL form link', [
+        // Get first person from sales lead
+        $person = $this->getPersonForForm($order);
+        if (! $person || ! $order->salesLead->lead_id) {
+            throw new Exception('No person or lead found for order');
+        }
+
+        // Check if anamnesis already has a form link
+        $anamnesis = \App\Models\Anamnesis::where('lead_id', $order->salesLead->lead_id)
+            ->where('person_id', $person->id)
+            ->first();
+
+        if ($anamnesis && ! empty($anamnesis->gvl_form_link)) {
+            Log::info('OrderMailService: Using existing GVL form link from anamnesis', [
                 'order_id'      => $order->id,
-                'sales_lead_id' => $order->salesLead->id,
-                'form_link'     => $order->salesLead->gvl_form_link,
+                'anamnesis_id'  => $anamnesis->id,
+                'person_id'     => $person->id,
+                'form_link'     => $anamnesis->gvl_form_link,
             ]);
 
-            return $order->salesLead->gvl_form_link;
+            return $anamnesis->gvl_form_link;
         }
 
         // gvl_form_link is empty, create new form request
@@ -166,14 +180,7 @@ class OrderMailService
                 'person_id' => $person->id,
             ]);
 
-            $formData = $this->buildFormRequestData($order, $person);
-
-            Log::info('OrderMailService: Form data built, calling FormService', [
-                'order_id'  => $order->id,
-                'form_data' => $formData,
-            ]);
-
-            $result = $this->formService->createFormRequest($formData);
+            $result = $this->formService->createFormRequest($order, $person);
             $response = $result['response'] ?? null;
             $httpStatus = $result['status'] ?? null;
 
@@ -223,48 +230,39 @@ class OrderMailService
             $formLink = $response['form_url'] ?? '';
             $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
 
-            // Save the link to the sales lead (one-time save)
-            if ($order->salesLead) {
-                $salesLead = $order->salesLead;
-
-                Log::info('OrderMailService: Attempting to save GVL form link', [
+            // Save the link to the anamnesis (one-time save)
+            if ($anamnesis) {
+                Log::info('OrderMailService: Attempting to save GVL form link to anamnesis', [
                     'order_id'              => $order->id,
-                    'sales_lead_id'         => $salesLead->id,
+                    'anamnesis_id'          => $anamnesis->id,
+                    'person_id'             => $person->id,
                     'form_request_id'       => $formRequestId,
                     'form_link'             => $formLink,
-                    'current_gvl_form_link' => $salesLead->gvl_form_link,
+                    'current_gvl_form_link' => $anamnesis->gvl_form_link,
                 ]);
 
-                // Use save() instead of update() for better control
-                $salesLead->gvl_form_link = $formLink;
-                $saved = $salesLead->save();
+                $anamnesis->gvl_form_link = $formLink;
+                $saved = $anamnesis->save();
 
                 if (! $saved) {
-                    Log::error('OrderMailService: Failed to save GVL form link to sales', [
-                        'order_id'      => $order->id,
-                        'sales_lead_id' => $salesLead->id,
-                        'form_link'     => $formLink,
+                    Log::error('OrderMailService: Failed to save GVL form link to anamnesis', [
+                        'order_id'     => $order->id,
+                        'anamnesis_id' => $anamnesis->id,
+                        'form_link'    => $formLink,
                     ]);
                 } else {
-                    // Refresh the relation to ensure we have the updated value
-                    $order->load('salesLead');
-
-                    // Verify the save was successful
-                    $salesLead->refresh();
-                    $savedLink = $salesLead->gvl_form_link;
-
-                    Log::info('OrderMailService: GVL form link saved to sales', [
+                    Log::info('OrderMailService: GVL form link saved to anamnesis', [
                         'order_id'        => $order->id,
-                        'sales_lead_id'   => $salesLead->id,
+                        'anamnesis_id'    => $anamnesis->id,
                         'form_request_id' => $formRequestId,
                         'form_link'       => $formLink,
-                        'saved_link'      => $savedLink,
-                        'save_successful' => ($savedLink === $formLink),
                     ]);
                 }
             } else {
-                Log::warning('OrderMailService: Cannot save GVL form link - no sales found', [
-                    'order_id' => $order->id,
+                Log::warning('OrderMailService: Cannot save GVL form link - no anamnesis found', [
+                    'order_id'  => $order->id,
+                    'person_id' => $person->id,
+                    'lead_id'   => $order->salesLead->lead_id,
                 ]);
             }
 
@@ -487,10 +485,6 @@ HTML;
      */
     protected function getPersonForForm(Order $order): ?Person
     {
-        if (! $order->salesLead) {
-            return null;
-        }
-
         // Prefer contact person, fallback to first person from lead
         $person = $order->salesLead->contactPerson;
         if (! $person) {
@@ -498,49 +492,6 @@ HTML;
         }
 
         return $person;
-    }
-
-    /**
-     * Build the form request data array.
-     *
-     * @throws Exception if no default email could be found
-     */
-    protected function buildFormRequestData(Order $order, Person $person): array
-    {
-        $email = $person->findDefaultEmail();
-        if (! $email) {
-            throw new Exception('Person has no email address');
-        }
-
-        $birthday = $person->date_of_birth
-            ? $person->date_of_birth->format('d-m-Y')
-            : '01-01-1900'; // Fallback if birthday is missing (API requires it)
-
-        // Determine MRI and CT scan needs based on order items
-        $mriResearch = $this->hasMriResearch($order) ? 'Ja' : 'Nee';
-        $ctScan = $this->hasCtScan($order) ? 'Ja' : 'Nee';
-
-        // Use name if first_name/last_name are not available
-        $firstName = $person->first_name ?? '';
-        $lastName = $person->last_name ?? '';
-
-        if (empty($firstName) && empty($lastName) && ! empty($person->name)) {
-            // Try to split name if we only have full name
-            $nameParts = explode(' ', $person->name, 2);
-            $firstName = $nameParts[0] ?? '';
-            $lastName = $nameParts[1] ?? $firstName;
-        }
-
-        return [
-            'user_crm_id'     => $person->id,
-            'user_firstname'  => $firstName ?: 'Onbekend',
-            'user_lastname'   => $lastName ?: 'Onbekend',
-            'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
-            'user_email'      => $email,
-            'user_birthday'   => $birthday,
-            'mri_research'    => $mriResearch,
-            'ct_scan'         => $ctScan,
-        ];
     }
 
     /**

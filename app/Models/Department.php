@@ -120,4 +120,9 @@ class Department extends Model
     {
         return $this->hasMany(Group::class, 'department_id');
     }
+
+    public function isHernia(): bool
+    {
+        return $this->name === Departments::HERNIA->value;
+    }
 }

@@ -103,6 +103,18 @@
                         </div>
 
                         <div class="mb-4">
+
+                            <x-admin::gvl-form-link
+                                :gvlFormLink="$anamnesis->gvl_form_link"
+                                :attachUrl="route('admin.anamnesis.gvl-form.attach', $anamnesis->id)"
+                                :detachUrl="route('admin.anamnesis.gvl-form.detach', $anamnesis->id)"
+                                :statusUrl="route('admin.anamnesis.gvl-form.status', $anamnesis->id)"
+                                :entityId="$anamnesis->id"
+                                entityType="anamnesis"
+                            />
+                        </div>
+
+                        <div class="mb-4">
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
                                     Kliniek opmerkingen
@@ -845,6 +857,7 @@
         </div>
     </x-admin::form>
 
+    @pushOnce('scripts')
     <script>
         function toggleCommentField(fieldName, showField) {
             const commentDiv = document.getElementById(fieldName + '_comment');
@@ -945,4 +958,5 @@
             });
         });
     </script>
+    @endPushOnce
 </x-admin::layouts>

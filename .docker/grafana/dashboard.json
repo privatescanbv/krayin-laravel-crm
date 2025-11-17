@@ -1,0 +1,523 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "bf3x3qa3mhgjkf"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "showPoints": "never",
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "count_over_time({level_name=\"ERROR\"} [1h])",
+                    "legendFormat": "{{app}}",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "🔥 Error count per service (hourly)",
+            "type": "timeseries"
+        },
+        {
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    },
+                    "mappings": []
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 8
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "sort": "desc",
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "expr": "sum(count_over_time({level_name=\"ERROR\"}[6h])) by (app)",
+                    "refId": "A"
+                }
+            ],
+            "title": "📊 Error distribution by service (last 6h)",
+            "type": "piechart"
+        },
+        {
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "orange",
+                                "value": 100
+                            },
+                            {
+                                "color": "red",
+                                "value": 500
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 8
+            },
+            "id": 3,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "expr": "sum(count_over_time({app!=\"\"}[1h])) by (app)",
+                    "refId": "A"
+                }
+            ],
+            "title": "⚙️ Total logs per service (last hour)",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "id": 8,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"crm\"}\n| json\n| channel=`php-fpm` or channel=`local`\n| line_format \"{{.datetime | default .ts}} {{.level_name | default \\\"INFO\\\"}} {{.message | default .log}}\"\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "CRM php-fpm",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "af3xcqn2k6io0a"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 24
+            },
+            "id": 6,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"n8n\"}\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "N8N Logs",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "af3xcqn2k6io0a"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 24
+            },
+            "id": 5,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"forms\"}\n| json\n| line_format \"{{.datetime | default .ts}} {{.level_name | default \\\"INFO\\\"}} {{.message | default .log}}\"\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Forms Logs",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 32
+            },
+            "id": 4,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"crm\"}\n| json\n| channel=`laravel-scheduler`\n| line_format \"{{.datetime}} {{.level_name}} {{.message}}\"\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "CRM scheduler",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 40
+            },
+            "id": 9,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"crm\"}\n| json\n| channel!=`laravel-scheduler` and channel!=`php-fpm` and channel!=`local`\n| channel!=`php-fpm`\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "CRM rest",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "af3xcqn2k6io0a"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 48
+            },
+            "id": 7,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"suitecrm\"}",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "SuiteCRM Logs",
+            "type": "logs"
+        }
+    ],
+    "preload": false,
+    "refresh": "30s",
+    "schemaVersion": 42,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "text": "crm",
+                    "value": "crm"
+                },
+                "datasource": {
+                    "type": "loki",
+                    "uid": "af3tuk16v9m9sa"
+                },
+                "name": "service",
+                "options": [],
+                "query": "label_values(app)",
+                "refresh": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "text": "",
+                    "value": ""
+                },
+                "datasource": {
+                    "type": "loki",
+                    "uid": "af3tuk16v9m9sa"
+                },
+                "name": "level",
+                "options": [],
+                "query": "label_values(level_name)",
+                "refresh": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Stack Monitoring Overview",
+    "uid": "stack-monitor",
+    "version": 12
+}

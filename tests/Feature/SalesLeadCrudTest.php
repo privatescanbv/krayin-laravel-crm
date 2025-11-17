@@ -247,7 +247,7 @@ test('can update Sales person relationships', function () {
     ]);
 });
 
-test('can remove all person relationships from Sales', function () {
+test('cannot remove all person relationships from Sales', function () {
     $lead = Lead::factory()->create();
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
@@ -263,7 +263,7 @@ test('can remove all person relationships from Sales', function () {
 
     $payload = [
         'name'        => 'Updated Sales',
-        'description' => 'Removed all persons',
+        'description' => 'Try to remove all persons',
         'person_ids'  => [],
         '_method'     => 'put',
     ];
@@ -271,18 +271,20 @@ test('can remove all person relationships from Sales', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Sales updated successfully.');
+    // Should fail validation - at least one person is required
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['person_ids']);
 
-    // Refresh the Sales
+    // Refresh the Sales - persons should still be attached
     $salesLead->refresh();
-    expect($salesLead->persons()->count())->toBe(0);
+    expect($salesLead->persons()->count())->toBe(2);
 
-    // Check database relationships are removed
-    $this->assertDatabaseMissing('saleslead_persons', [
+    // Check database relationships are still present
+    $this->assertDatabaseHas('saleslead_persons', [
         'saleslead_id' => $salesLead->id,
         'person_id'    => $person1->id,
     ]);
-    $this->assertDatabaseMissing('saleslead_persons', [
+    $this->assertDatabaseHas('saleslead_persons', [
         'saleslead_id' => $salesLead->id,
         'person_id'    => $person2->id,
     ]);

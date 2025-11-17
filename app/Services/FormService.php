@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Department;
+use App\Models\Order;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Webkul\Contact\Models\Person;
 
 class FormService
 {
@@ -41,19 +44,20 @@ class FormService
     /**
      * Create a form request via the forms API.
      *
-     * @param  array  $data  Form data to send
-     * @return array{status: int, response: array|null}
-     *
      * @throws Exception
      */
-    public function createFormRequest(array $data): array
+    public function createFormRequest(Order $order, Person $person): array
     {
+        $formData = $this->buildFormRequestData($order, $person);
+
+        Log::warning('TODO: only supporting GVL form for the first person');
         $url = $this->buildApiUrl('/api/forms');
 
         Log::info('FormService: Creating form request', [
+            'order_id'      => $order->id,
             'url'           => $url,
             'method'        => 'POST',
-            'request_body'  => $data,
+            'request_body'  => $formData,
         ]);
 
         $response = $this->makeRequest('post', $url, ['url' => $url], $data);
@@ -148,48 +152,32 @@ class FormService
     }
 
     /**
+     * Get GVL form download URL.
+     *
+     * @param  string|null  $gvlFormLink  The GVL form link URL
+     * @return string|null The download URL or null if form ID cannot be extracted
+     */
+    public function getFormDownloadUrl(?string $gvlFormLink): ?string
+    {
+        $formId = $this->extractFormIdFromUrl($gvlFormLink);
+
+        if (! $formId) {
+            return null;
+        }
+
+        $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
+
+        return $frontendUrl.'/forms/download/'.$formId.'/false';
+    }
+
+    /**
      * Build API URL from path.
      */
-    protected function buildApiUrl(string $path): string
+    public function buildApiUrl(string $path): string
     {
         $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
 
         return $apiUrl.$path;
-    }
-
-    /**
-     * Validate and get API token.
-     *
-     * @param  array  $context  Additional context for logging
-     *
-     * @throws Exception
-     */
-    protected function getApiToken(array $context = []): string
-    {
-        $token = config('services.forms.api_token');
-
-        if (empty($token)) {
-            Log::error('FormService: FORMS_API_TOKEN not configured', $context);
-            throw new Exception('FORMS_API_TOKEN is not configured. Please set FORMS_API_TOKEN in your .env file.');
-        }
-
-        return $token;
-    }
-
-    /**
-     * Create HTTP client with authentication.
-     *
-     * @throws Exception
-     */
-    protected function createHttpClient(): \Illuminate\Http\Client\PendingRequest
-    {
-        $token = $this->getApiToken();
-
-        return Http::timeout(10)
-            ->acceptJson()
-            ->withHeaders([
-                'X-API-KEY' => $token,
-            ]);
     }
 
     /**
@@ -202,7 +190,7 @@ class FormService
      *
      * @throws Exception
      */
-    protected function makeRequest(string $method, string $url, array $context = [], ?array $data = null): Response
+    public function makeRequest(string $method, string $url, array $context = [], ?array $data = null): Response
     {
         $httpClient = $this->createHttpClient();
 
@@ -228,7 +216,7 @@ class FormService
      * @param  bool  $checkHtml  Whether to check for HTML responses (login pages)
      * @return array{status: int, json: array|null, is_html: bool}
      */
-    protected function parseResponse(Response $response, array $context = [], bool $checkHtml = false): array
+    public function parseResponse(Response $response, array $context = [], bool $checkHtml = false): array
     {
         $status = $response->status();
         $body = $response->body();
@@ -276,5 +264,89 @@ class FormService
             'json'    => $json,
             'is_html' => $isHtml,
         ];
+    }
+
+    /**
+     * Validate and get API token.
+     *
+     * @param  array  $context  Additional context for logging
+     *
+     * @throws Exception
+     */
+    protected function getApiToken(array $context = []): string
+    {
+        $token = config('services.forms.api_token');
+
+        if (empty($token)) {
+            Log::error('FormService: FORMS_API_TOKEN not configured', $context);
+            throw new Exception('FORMS_API_TOKEN is not configured. Please set FORMS_API_TOKEN in your .env file.');
+        }
+
+        return $token;
+    }
+
+    /**
+     * Create HTTP client with authentication.
+     *
+     * @throws Exception
+     */
+    protected function createHttpClient(): \Illuminate\Http\Client\PendingRequest
+    {
+        $token = $this->getApiToken();
+
+        return Http::timeout(10)
+            ->acceptJson()
+            ->withHeaders([
+                'X-API-KEY' => $token,
+            ]);
+    }
+
+    /**
+     * Build the form request data array.
+     *
+     * @throws Exception if no default email could be found
+     */
+    protected function buildFormRequestData(Order $order, Person $person): array
+    {
+        $email = $person->findDefaultEmail();
+        if (! $email) {
+            throw new Exception('Person has no email address');
+        }
+
+        $birthday = $person->date_of_birth
+            ? $person->date_of_birth->format('d-m-Y')
+            : '01-01-1900'; // Fallback if birthday is missing (API requires it)
+
+        // Determine MRI and CT scan needs based on order items
+        $mriResearch = $this->hasMriResearch($order) ? 'Ja' : 'Nee';
+        $ctScan = $this->hasCtScan($order) ? 'Ja' : 'Nee';
+
+        // Use name if first_name/last_name are not available
+        $firstName = $person->first_name ?? '';
+        $lastName = $person->last_name ?? '';
+
+        if (empty($firstName) && empty($lastName) && ! empty($person->name)) {
+            // Try to split name if we only have full name
+            $nameParts = explode(' ', $person->name, 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? $firstName;
+        }
+
+        return [
+            'user_crm_id'     => $person->id,
+            'user_firstname'  => $firstName ?: 'Onbekend',
+            'user_lastname'   => $lastName ?: 'Onbekend',
+            'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
+            'user_email'      => $email,
+            'user_birthday'   => $birthday,
+            'mri_research'    => $mriResearch,
+            'ct_scan'         => $ctScan,
+            'form_type'       => $this->mapDepartmentToFormType($order->salesLead->getDepartment()),
+        ];
+    }
+
+    private function mapDepartmentToFormType(Department $department): string
+    {
+        return $department->isHernia() ? 'herniapoli' : 'privatescan';
     }
 }

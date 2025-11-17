@@ -135,9 +135,10 @@ RUN mkdir -p /usr/share/nginx/html/storage/logs \
 
 RUN rm -rf /usr/share/nginx/html/.env
 
+RUN mkdir -p /docker/mysql/
 # These files are not used within the container, but copied in the server
-COPY --from=vite /build/.docker/mysql/init-n8n.sql /docker/mysql/
-COPY --from=vite /build/.docker/mysql/init-forms.sql /docker/mysql/
+COPY --from=vite /build/.docker/mysql/init-n8n.sql /docker/mysql/init-n8n.sql
+COPY --from=vite /build/.docker/mysql/init-forms.sql /docker/mysql/init-forms.sql
 COPY --from=vite /build/docker-compose-prod.yml /docker/docker-compose.yml
 # TODO security wise, red flag. Change this CI implmementation later to a vault.
 COPY --from=vite /build/.env.prod /docker/.env.prod

@@ -18,7 +18,7 @@ class SendImportRunReport extends Command
     protected $signature = 'import:send-report
                             {--import-run-id= : Specific import run ID to report (defaults to all runs)}
                             {--limit= : Limit number of runs to include (defaults to all)}
-                            {--email=mark.bulthuis@mbsoftware.nl : Email address to send report to}';
+                            {--email=mark.bulthuis@mbsoftware.nl,mark.klaucke@digi4you.nl : Email address(es) to send report to (comma-separated)}';
 
     /**
      * The console command description.
@@ -34,7 +34,10 @@ class SendImportRunReport extends Command
     {
         $importRunId = $this->option('import-run-id');
         $limit = $this->option('limit');
-        $email = $this->option('email');
+        $emailOption = $this->option('email');
+        
+        // Parse email addresses (support comma-separated list)
+        $emails = array_map('trim', explode(',', $emailOption));
 
         // Get import runs
         if ($importRunId) {
@@ -147,9 +150,10 @@ class SendImportRunReport extends Command
 
         // Try to send email, but don't fail if mail is not configured
         try {
-            $this->info("Sending report to {$email}...");
-            Mail::html($htmlBody, function ($message) use ($email, $subject) {
-                $message->to($email)
+            $emailList = implode(', ', $emails);
+            $this->info("Sending report to {$emailList}...");
+            Mail::html($htmlBody, function ($message) use ($emails, $subject) {
+                $message->to($emails)
                     ->subject($subject);
             });
 

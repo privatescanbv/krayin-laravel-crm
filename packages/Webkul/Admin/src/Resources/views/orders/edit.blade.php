@@ -211,7 +211,7 @@
 
                             @if(isset($personsWithAnamnesis) && !empty($personsWithAnamnesis))
                                 <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                                    <h2 class="mb-4 text-lg font-semibold dark:text-white">GVL Formulieren per Persoon</h2>
+                                    <h2 class="mb-4 text-lg font-semibold dark:text-white">GVL Formulier(en)</h2>
                                     <div class="space-y-4">
                                         @foreach($personsWithAnamnesis as $personId => $data)
                                             @php
@@ -566,7 +566,7 @@
                             button.classList.remove('pointer-events-none', 'opacity-60');
                         }
                     };
-                    
+
                     handleOrderMail().catch(() => {
                         // Error already handled in try-catch
                     });
@@ -762,7 +762,7 @@
             const loadGvlFormStatus = async () => {
                 const statusContainer = document.getElementById('gvl-form-status');
                 const statusElement = document.getElementById('gvl-form-status-value');
-                
+
                 if (!statusContainer || !statusElement) {
                     console.error('[OrderEdit] ERROR: gvl-form-status elements not found in DOM');
                     return;
@@ -831,12 +831,12 @@
                                     observer.disconnect();
                                 }
                             });
-                            
+
                             observer.observe(document.body, {
                                 childList: true,
                                 subtree: true
                             });
-                            
+
                             // Stop observing after 5 seconds
                             setTimeout(() => {
                                 observer.disconnect();

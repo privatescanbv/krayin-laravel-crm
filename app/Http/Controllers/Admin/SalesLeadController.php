@@ -656,6 +656,10 @@ class SalesLeadController extends Controller
     {
         $leadRule = ($isCreate) ? 'required|exists:leads,id' : 'nullable|exists:leads,id';
 
+        // person_ids is optional on create (persons are copied from lead if not provided)
+        // but required with min:1 on update (at least one person must remain)
+        $personIdsRule = $isCreate ? 'nullable|array' : 'required|array|min:1';
+
         return [
             'name'                      => 'required|string|max:255',
             'description'               => 'nullable|string',
@@ -664,7 +668,7 @@ class SalesLeadController extends Controller
             'user_id'                   => 'nullable|exists:users,id',
             'contact_person_id'         => 'nullable|exists:persons,id',
             'contact_person_id_display' => 'nullable|string',
-            'person_ids'                => 'required|array|min:1',
+            'person_ids'                => $personIdsRule,
             'person_ids.*'              => 'exists:persons,id',
         ];
     }

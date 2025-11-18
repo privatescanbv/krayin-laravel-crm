@@ -4,7 +4,9 @@
     'detachUrl' => null,
     'statusUrl' => null,
     'entityId' => null,
-    'entityType' => 'order', // 'order' or 'anamnesis'
+    'entityType' => 'order', // 'order', 'anamnesis', or 'person'
+    'personId' => null,
+    'leadId' => null,
 ])
 
 <x-admin::form.control-group>
@@ -38,6 +40,8 @@
                 data-attach-url="{{ $attachUrl }}"
                 data-entity-type="{{ $entityType }}"
                 data-entity-id="{{ $entityId }}"
+                @if($personId) data-person-id="{{ $personId }}" @endif
+                @if($leadId) data-lead-id="{{ $leadId }}" @endif
             >
                 Koppelen
             </button>
@@ -127,6 +131,15 @@
 
                 setButtonLoadingState(button, true);
 
+                // Prepare request body for person type (create and attach)
+                let requestBody = {};
+                if (button.dataset.entityType === 'person' && button.dataset.personId && button.dataset.leadId) {
+                    requestBody = {
+                        person_id: parseInt(button.dataset.personId),
+                        lead_id: parseInt(button.dataset.leadId),
+                    };
+                }
+
                 let response;
                 try {
                     response = await fetch(attachUrl, {
@@ -134,8 +147,10 @@
                         headers: {
                             'X-CSRF-TOKEN': getCsrfToken(),
                             'Accept': 'application/json',
+                            'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
                         },
+                        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined,
                     });
                 } catch (error) {
                     emitFlash('error', 'GVL formulier koppelen is mislukt. Forms API niet bereikbaar.');
@@ -235,7 +250,7 @@
         const loadGvlFormStatus = async () => {
             const statusContainer = document.getElementById(statusContainerId);
             const statusElement = document.getElementById(statusValueId);
-            
+
             if (!statusContainer || !statusElement) {
                 return;
             }
@@ -277,7 +292,7 @@
                 };
 
                 const statusInfo = statusMap[statusLower] || { text: 'Onbekend', color: 'text-gray-400' };
-                
+
                 // Function to update the status element
                 const updateStatusElement = () => {
                     const currentStatusElement = document.getElementById(statusValueId);
@@ -292,7 +307,7 @@
                     }
                     return false;
                 };
-                
+
                 // Try to update immediately
                 if (!updateStatusElement()) {
                     // Fallback: update via parent innerHTML
@@ -301,7 +316,7 @@
                         statusContainer.innerHTML = `<span class="text-gray-500">Status: </span><span id="${statusValueId}" class="font-medium ${statusInfo.color}">${statusInfo.text}</span>`;
                     }
                 }
-                
+
                 // Set up a MutationObserver to re-update if Vue changes it back
                 const statusContainer = document.getElementById(statusContainerId);
                 if (statusContainer) {
@@ -317,13 +332,13 @@
                             }
                         });
                     });
-                    
+
                     observer.observe(statusContainer, {
                         childList: true,
                         subtree: true,
                         characterData: true,
                     });
-                    
+
                     // Stop observing after 5 seconds
                     setTimeout(() => {
                         observer.disconnect();
@@ -344,7 +359,7 @@
             const tryLoadStatus = () => {
                 const statusContainer = document.getElementById(statusContainerId);
                 const statusElement = document.getElementById(statusValueId);
-                
+
                 if (statusContainer && statusElement) {
                     loadGvlFormStatus();
                     return true;
@@ -357,7 +372,7 @@
                 const startTime = Date.now();
                 const checkVue = () => {
                     const vueReady = window.app || window.Vue || document.querySelector('[data-v-app]');
-                    
+
                     if (vueReady || (Date.now() - startTime) > maxWait) {
                         callback();
                         return;

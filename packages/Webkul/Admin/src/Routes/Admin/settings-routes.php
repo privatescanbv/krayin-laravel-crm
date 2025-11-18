@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\DepartmentController;
 use App\Http\Controllers\Admin\Settings\ImportLogController;
 use App\Http\Controllers\Admin\Settings\ImportRunController;
 use App\Http\Controllers\Admin\Settings\ProductTypeController;
@@ -83,7 +84,12 @@ Route::prefix('settings')->group(function () {
         });
     });
 
-
+    /**
+     * Department routes.
+     */
+    Route::controller(DepartmentController::class)->prefix('departments')->group(function () {
+        Route::get('search', 'search')->name('admin.departments.search');
+    });
 
     /**
      * Product Type routes.

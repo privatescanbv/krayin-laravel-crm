@@ -5,7 +5,10 @@ namespace App\Repositories;
 use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Anamnesis;
 use App\Models\SalesLead;
+use Illuminate\Container\Container;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Activity\Models\Activity;
@@ -33,7 +36,7 @@ class SalesLeadRepository extends Repository
     public function __construct(
         private readonly OrderRepository $orderRepository,
         private readonly ActivityRepository $activityRepository,
-        \Illuminate\Container\Container $container
+        Container $container
     ) {
         parent::__construct($container);
     }
@@ -101,6 +104,13 @@ class SalesLeadRepository extends Repository
     public function model()
     {
         return SalesLead::class;
+    }
+
+    public function findAnamnesisBySalesLeadId(int $leadId, array $personIds): Collection
+    {
+        return Anamnesis::where('lead_id', $leadId)
+            ->whereIn('person_id', $personIds)
+            ->get();
     }
 
     private function resolveEmailVariables(SalesLead $sales): array

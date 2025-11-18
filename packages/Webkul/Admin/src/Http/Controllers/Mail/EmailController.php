@@ -3,15 +3,19 @@
 namespace Webkul\Admin\Http\Controllers\Mail;
 
 use App\Models\Anamnesis;
+use App\Models\Order;
+use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use Webkul\Admin\DataGrids\Mail\EmailDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
@@ -24,9 +28,10 @@ use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
+use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Repositories\LeadRepository;
 use App\Models\SalesLead;
-use Illuminate\Support\Facades\File;
+use App\Enums\EmailTemplateType;
 
 class EmailController extends Controller
 {
@@ -41,7 +46,8 @@ class EmailController extends Controller
         protected EmailRepository $emailRepository,
         protected AttachmentRepository $attachmentRepository,
         protected FolderRepository $folderRepository,
-        protected PersonRepository $personRepository
+        protected PersonRepository $personRepository,
+        protected OrderRepository $orderRepository
     ) {}
 
     /**
@@ -428,31 +434,166 @@ class EmailController extends Controller
     // Removed: searchByEmail. Reuse existing search endpoints (leads/persons/sales-leads) from respective controllers.
 
     /**
+     * Get list of available email templates with filtering support.
+     * 
+     * Query Parameters:
+     * - `entity_type` (string): Filter by entity type (lead, order, algemeen, gvl)
+     *   - 'lead': Returns both 'lead' and 'algemeen' templates
+     *   - 'order': Returns only 'order' templates
+     *   - 'algemeen': Returns only 'algemeen' templates
+     *   - 'gvl': Returns only 'gvl' templates
+     * - `departments` (string|array): Filter by departments (comma-separated or array)
+     *   - Templates with no departments are included (available to all)
+     *   - Templates matching at least one department are included
+     * - `type` (string|array): Direct filter on template type
+     * - `language` (string|array): Filter by language (nl, de, en)
+     * - `code` (string): Filter by template code
+     * - `search` (string): Search in name and code fields
+     * 
+     * @return JsonResponse
+     */
+    public function get(): JsonResponse
+    {
+        try {
+            $query = EmailTemplate::query();
+
+            // Apply entity_type filter (backward compatibility)
+            $entityType = request()->query('entity_type');
+            if ($entityType) {
+                $this->applyEntityTypeFilter($query, $entityType);
+            }
+
+            // Apply direct type filter (more flexible)
+            $typeFilter = request()->query('type');
+            if ($typeFilter) {
+                $types = is_array($typeFilter) ? $typeFilter : [$typeFilter];
+                $query->whereIn('type', $types);
+            }
+
+            // Apply language filter
+            $languageFilter = request()->query('language');
+            if ($languageFilter) {
+                $languages = is_array($languageFilter) ? $languageFilter : [$languageFilter];
+                $query->whereIn('language', $languages);
+            }
+
+            // Apply code filter
+            $codeFilter = request()->query('code');
+            if ($codeFilter) {
+                $query->where('code', $codeFilter);
+            }
+
+            // Apply search filter (name and code)
+            $search = request()->query('search');
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('code', 'like', "%{$search}%");
+                });
+            }
+
+            // Apply departments filter
+            $departmentsFilter = request()->query('departments');
+            if ($departmentsFilter) {
+                $this->applyDepartmentsFilter($query, $departmentsFilter);
+            }
+
+            // Get results
+            $templates = $query->orderBy('name')->get();
+
+            // Map to response format
+            $data = $templates->map(function ($template) {
+                return [
+                    'id' => $template->id,
+                    'name' => $template->name,
+                    'code' => $template->code ?? $template->name,
+                    'label' => $template->name,
+                    'type' => $template->type,
+                    'language' => $template->language,
+                    'departments' => $template->departments ?? [],
+                ];
+            })->toArray();
+
+            return response()->json([
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in email templates.get endpoint', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_params' => request()->all(),
+            ]);
+
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Apply entity type filter to query.
+     * This maintains backward compatibility with the old entity_type parameter.
+     */
+    private function applyEntityTypeFilter($query, string $entityType): void
+    {
+        switch ($entityType) {
+            case EmailTemplateType::LEAD->value:
+                // For leads, show 'lead' and 'algemeen' templates
+                $query->whereIn('type', [EmailTemplateType::LEAD->value, EmailTemplateType::ALGEMEEN->value]);
+                break;
+            case EmailTemplateType::ORDER->value:
+                // For orders, show only 'order' templates
+                $query->where('type', EmailTemplateType::ORDER->value);
+                break;
+            case EmailTemplateType::ALGEMEEN->value:
+                // For general, show only 'algemeen' templates
+                $query->where('type', EmailTemplateType::ALGEMEEN->value);
+                break;
+            case EmailTemplateType::GVL->value:
+                // For GVL, show only 'gvl' templates
+                $query->where('type', EmailTemplateType::GVL->value);
+                break;
+        }
+    }
+
+    /**
+     * Apply departments filter to query.
+     * Templates with no departments are included (available to all).
+     * Templates matching at least one department are included.
+     */
+    private function applyDepartmentsFilter($query, $departmentsFilter): void
+    {
+        $departmentsArray = [];
+        if (is_string($departmentsFilter)) {
+            $departmentsArray = array_filter(array_map('trim', explode(',', $departmentsFilter)));
+        } elseif (is_array($departmentsFilter)) {
+            $departmentsArray = array_filter(array_map('trim', $departmentsFilter));
+        }
+
+        if (!empty($departmentsArray)) {
+            $query->where(function ($q) use ($departmentsArray) {
+                // Templates with no departments (available to all)
+                $q->whereNull('departments')
+                  ->orWhereJsonLength('departments', 0);
+                
+                // Templates that contain at least one of the requested departments
+                foreach ($departmentsArray as $dept) {
+                    $q->orWhereJsonContains('departments', $dept);
+                }
+            });
+        }
+    }
+
+    /**
      * Get list of available email templates.
+     * @deprecated Use get() instead for more flexible filtering
      */
     public function getTemplates(): JsonResponse
     {
-        $templatesPath = resource_path('views/adminc/email_templates');
-        $templates = [];
-
-        if (File::exists($templatesPath)) {
-            $files = File::files($templatesPath);
-
-            foreach ($files as $file) {
-                $filename = $file->getFilename();
-                if (str_ends_with($filename, '.blade.php')) {
-                    $name = str_replace('.blade.php', '', $filename);
-                    $templates[] = [
-                        'name' => $name,
-                        'label' => ucfirst(str_replace('_', ' ', $name)),
-                    ];
-                }
-            }
-        }
-
-        return response()->json([
-            'data' => $templates,
-        ]);
+        return $this->get();
     }
 
     /**
@@ -478,24 +619,28 @@ class EmailController extends Controller
         }
 
         try {
-            // Prepare variables for template (resolved server-side)
-            $variables = $this->resolveTemplateVariables($leadId, $personId, $salesLeadId);
+            // Search by code first, fallback to name for backward compatibility
+            $template = EmailTemplate::where('code', $templateName)
+                ->first();
 
-            $viewPath = 'adminc.email_templates.' . $templateName;
-
-            // Check if view exists
-            if (!view()->exists($viewPath)) {
+            if (!$template) {
                 return response()->json([
                     'error' => 'Template not found',
-                    'message' => "View {$viewPath} does not exist",
+                    'message' => "Template with code '{$templateName}' does not exist in database",
                 ], 404);
             }
 
-            $content = view($viewPath, $variables)->render();
+            // Prepare variables for template (resolved server-side)
+            $variables = $this->resolveTemplateVariables($leadId, $personId, $salesLeadId);
+
+            // Interpolate template content with variables and wrap in layout
+            $content = $this->renderTemplateWithLayout($template->content, $variables);
+            $subject = $this->interpolateTemplate($template->subject, $variables);
 
             return response()->json([
                 'data' => [
                     'content' => $content,
+                    'subject' => $subject,
                 ],
             ]);
         } catch (Exception $e) {
@@ -512,6 +657,217 @@ class EmailController extends Controller
                 'trace' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 404);
         }
+    }
+
+    /**
+     * Get template content body.
+     * Accepts entities array format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
+     */
+    public function getTemplateContentBody(): JsonResponse
+    {
+        $request = request();
+        $templateName = $request->input('email_template_identifier');
+        $entities = $request->input('entities', []);
+
+        if (!$templateName) {
+            return response()->json([
+                'error' => 'email_template_identifier is required',
+            ], 400);
+        }
+
+        if (empty($entities)) {
+            return response()->json([
+                'error' => 'entities array is required',
+            ], 400);
+        }
+
+        try {
+            // Search by code first, fallback to name for backward compatibility
+            $template = EmailTemplate::where('code', $templateName)
+                ->orWhere('name', $templateName)
+                ->first();
+
+            if (!$template) {
+                return response()->json([
+                    'error' => 'Template not found',
+                    'message' => "Template with code or name '{$templateName}' does not exist in database",
+                ], 404);
+            }
+
+            $variables = $this->resolveTemplateVariablesFromEntities($entities);
+            $content = $this->renderTemplateWithLayout($template->content, $variables);
+
+            return response()->json([
+                'data' => [
+                    'content' => $content,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Template body rendering error: ' . $e->getMessage(), [
+                'template' => $templateName ?? 'unknown',
+                'entities' => $entities,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error' => 'Template not found or error rendering template',
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Get template content subject.
+     * Accepts entities array format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
+     */
+    public function getTemplateContentSubject(): JsonResponse
+    {
+        $request = request();
+        $templateName = $request->input('email_template_identifier');
+        $entities = $request->input('entities', []);
+
+        if (!$templateName) {
+            return response()->json([
+                'error' => 'email_template_identifier is required',
+            ], 400);
+        }
+
+        if (empty($entities)) {
+            return response()->json([
+                'error' => 'entities array is required',
+            ], 400);
+        }
+
+        try {
+            // Search by code first, fallback to name for backward compatibility
+            $template = EmailTemplate::where('code', $templateName)
+                ->orWhere('name', $templateName)
+                ->first();
+
+            if (!$template) {
+                return response()->json([
+                    'error' => 'Template not found',
+                    'message' => "Template with code or name '{$templateName}' does not exist in database",
+                ], 404);
+            }
+
+            $variables = $this->resolveTemplateVariablesFromEntities($entities);
+            $subject = $this->interpolateTemplate($template->subject, $variables);
+
+            return response()->json([
+                'data' => [
+                    'subject' => $subject,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Template subject rendering error: ' . $e->getMessage(), [
+                'template' => $templateName ?? 'unknown',
+                'entities' => $entities,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error' => 'Template not found or error rendering template',
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Resolve template variables from entities array.
+     * Entities format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
+     */
+    public function resolveTemplateVariablesFromEntities(array $entities): array
+    {
+        $variables = [];
+        $leadId = $entities['lead'] ?? null;
+        $personId = $entities['person'] ?? null;
+        $salesLeadId = $entities['sales_lead'] ?? null;
+        $orderId = $entities['order'] ?? null;
+
+        // Resolve order variables (highest priority for order templates)
+        if ($orderId) {
+            $orderVariables = $this->orderRepository->resolveEmailVariablesForOrder($orderId);
+            
+            if (!empty($orderVariables)) {
+                $variables = array_merge($variables, $orderVariables);
+                
+                // Render order items table (needs order object)
+                if (isset($variables['order'])) {
+                    $variables['order_items_table'] = $this->renderOrderItemsTable($variables['order']);
+                }
+
+                // If order has sales lead, also resolve sales lead variables
+                if (isset($variables['order']) && $variables['order']->salesLead) {
+                    $salesLeadId = $variables['order']->salesLead->id;
+                    if ($variables['order']->salesLead->lead) {
+                        $leadId = $variables['order']->salesLead->lead->id;
+                    }
+                }
+            }
+        }
+
+        // Resolve lead variables
+        if ($leadId) {
+            $leadVariables = $this->leadRepository->resolveEmailVariablesById($leadId);
+            $variables = array_merge($variables, $leadVariables);
+
+            // Load lead model for nested access
+            $lead = $this->leadRepository->find($leadId);
+            if ($lead) {
+                $variables['lead'] = $lead;
+            }
+        }
+
+        // Resolve person variables
+        if ($personId) {
+            $personVariables = $this->personRepository->resolveEmailVariablesById($personId);
+            $variables = array_merge($variables, $personVariables);
+
+            // Load person model for nested access
+            $person = $this->personRepository->find($personId);
+            if ($person) {
+                $variables['person'] = $person;
+            }
+        }
+
+        // Resolve sales lead variables
+        if ($salesLeadId) {
+            $salesVariables = $this->salesRepository->resolveEmailVariablesById($salesLeadId);
+            $variables = array_merge($variables, $salesVariables);
+
+            // Load sales lead with relations for nested access
+            $salesLead = SalesLead::with(['lead', 'orders'])->find($salesLeadId);
+            if ($salesLead) {
+                $variables['sales_lead'] = $salesLead;
+                if ($salesLead->lead) {
+                    $variables['lead'] = $salesLead->lead;
+                }
+                // Only set order if not already set from direct order entity
+                if (!isset($variables['order'])) {
+                    $order = $salesLead->orders()->latest()->first();
+                    if ($order) {
+                        $variables['order'] = $order;
+                    }
+                }
+            }
+        }
+
+        // Handle GVL form link - prioritize person with lead, fallback to latest anamnesis for person
+        if ($personId) {
+            $gvlFormLink = $this->resolveGvlFormLink($personId, $leadId);
+            if ($gvlFormLink) {
+                $variables['gvl_form_link'] = $gvlFormLink;
+            }
+        }
+
+        if (empty($variables)) {
+            throw new Exception('No valid entities provided for template variable resolution');
+        }
+
+        return $variables;
     }
 
     /**
@@ -552,11 +908,223 @@ class EmailController extends Controller
 
             return $variables;
         }else if ($salesLeadId) {
-            return $this->salesRepository->resolveEmailVariablesById($salesLeadId);
+            $variables = $this->salesRepository->resolveEmailVariablesById($salesLeadId);
+
+            // Try to get order and lead from sales lead for order mail templates
+            $salesLead = \App\Models\SalesLead::with(['lead', 'orders'])->find($salesLeadId);
+            if ($salesLead) {
+                if ($salesLead->lead) {
+                    $variables['lead'] = $salesLead->lead;
+                }
+                // Get the most recent order if available
+                $order = $salesLead->orders()->latest()->first();
+                if ($order) {
+                    $variables['order'] = $order;
+                }
+            }
+
+            return $variables;
         }
         else {
             throw new Exception('No valid entity identifier provided for template variable resolution');
         }
+    }
+
+    /**
+     * Render template content with layout wrapper.
+     * This wraps the template content in the base layout blade template.
+     */
+    public function renderTemplateWithLayout(string $templateContent, array $variables): string
+    {
+        // First interpolate variables in the template content
+        $interpolatedContent = $this->interpolateTemplate($templateContent, $variables);
+        
+        // Read the CSS file
+        $cssPath = resource_path('css/email-templates.css');
+        $css = file_exists($cssPath) ? file_get_contents($cssPath) : '';
+        
+        // Build the HTML structure with the content
+        $html = '<div class="email-container">' . "\n";
+        $html .= $interpolatedContent . "\n";
+        $html .= '</div>';
+        
+        // Convert CSS to inline styles for email compatibility
+        // This is necessary because many email clients strip <style> tags
+        if (!empty($css)) {
+            $cssToInlineStyles = new CssToInlineStyles();
+            $html = $cssToInlineStyles->convert($html, $css);
+        }
+        
+        return $html;
+    }
+
+    /**
+     * Convert a value to string, handling enums properly.
+     */
+    private function convertValueToString($value): string
+    {
+        // Handle enum objects (PHP 8.1+)
+        if (is_object($value)) {
+            try {
+                $reflection = new \ReflectionClass($value);
+                if ($reflection->isEnum()) {
+                    // Try label() method first (custom method like OrderStatus->label())
+                    if (method_exists($value, 'label')) {
+                        return $value->label();
+                    }
+                    // For backed enums, use the value property
+                    if ($reflection->hasProperty('value')) {
+                        return (string) $value->value;
+                    }
+                    // Fallback: try to get name
+                    if (method_exists($value, 'name')) {
+                        return $value->name;
+                    }
+                }
+            } catch (\ReflectionException $e) {
+                // Not an enum, continue to normal conversion
+            }
+        }
+        
+        // For strings, return as-is; for objects/arrays, convert to string
+        if (is_string($value)) {
+            return $value;
+        }
+        
+        return (string) $value;
+    }
+
+    /**
+     * Interpolate template content with variables.
+     * Supports both {{ variable }} and {% variable %} syntax.
+     * Supports nested properties like {%lead.name%} or {{order.id}}.
+     */
+    protected function interpolateTemplate(string $template, array $variables): string
+    {
+        // Store reference to this for use in closure
+        $self = $this;
+        
+        // Helper function to resolve nested property access
+        $resolveValue = function ($key, $vars) use (&$resolveValue, $self) {
+            // Check if key exists directly (highest priority)
+            if (array_key_exists($key, $vars)) {
+                return $self->convertValueToString($vars[$key]);
+            }
+
+            // Check for nested property (e.g., "lead.name" or "order.id")
+            if (strpos($key, '.') !== false) {
+                $parts = explode('.', $key, 2);
+                $objectKey = $parts[0];
+                $propertyKey = $parts[1];
+
+                if (array_key_exists($objectKey, $vars)) {
+                    $object = $vars[$objectKey];
+
+                    if (is_object($object)) {
+                        // For Eloquent models, use getAttribute which handles accessors
+                        if (method_exists($object, 'getAttribute')) {
+                            try {
+                                $value = $object->getAttribute($propertyKey);
+                                if ($value !== null) {
+                                    return $self->convertValueToString($value);
+                                }
+                            } catch (Exception $e) {
+                                // Continue to next method
+                            }
+                        }
+                        // Try direct property access
+                        if (property_exists($object, $propertyKey)) {
+                            return $self->convertValueToString($object->$propertyKey);
+                        }
+                        // Try method call
+                        if (method_exists($object, $propertyKey)) {
+                            try {
+                                return $self->convertValueToString($object->$propertyKey());
+                            } catch (Exception $e) {
+                                // Ignore
+                            }
+                        }
+                        // Try magic getter
+                        if (method_exists($object, '__get')) {
+                            try {
+                                return $self->convertValueToString($object->__get($propertyKey));
+                            } catch (Exception $e) {
+                                // Ignore
+                            }
+                        }
+                    } elseif (is_array($object) && array_key_exists($propertyKey, $object)) {
+                        return $self->convertValueToString($object[$propertyKey]);
+                    }
+                }
+            }
+
+            return null;
+        };
+
+        // Replace {{ variable }} syntax
+        $template = preg_replace_callback('/\{\{\s*(.*?)\s*\}\}/', function ($matches) use ($variables, $resolveValue) {
+            $key = trim($matches[1]);
+            // Remove leading $ if present (for Blade-style variables like $lastname)
+            $key = ltrim($key, '$');
+            $value = $resolveValue($key, $variables);
+            return $value !== null ? (string) $value : $matches[0];
+        }, $template);
+
+        // Replace {% variable %} syntax
+        $template = preg_replace_callback('/\{\%\s*(.*?)\s*\%\}/', function ($matches) use ($variables, $resolveValue) {
+            $key = trim($matches[1]);
+            // Remove leading $ if present (for Blade-style variables like $lastname)
+            $key = ltrim($key, '$');
+            $value = $resolveValue($key, $variables);
+            return $value !== null ? (string) $value : $matches[0];
+        }, $template);
+
+        return $template;
+    }
+
+    /**
+     * Render order items table HTML using Blade template
+     */
+    private function renderOrderItemsTable(Order $order): string
+    {
+        return view('adminc.email_templates.order.order_items_table', [
+            'order' => $order,
+        ])->render();
+    }
+
+    /**
+     * Resolve GVL form link for a person.
+     * Prioritizes anamnesis with both lead_id and person_id, falls back to latest anamnesis for person.
+     *
+     * @param int $personId
+     * @param int|null $leadId
+     * @return string|null
+     */
+    private function resolveGvlFormLink(int $personId, ?int $leadId = null): ?string
+    {
+        $anamnesis = null;
+        
+        // If both lead and person are present, try to find specific anamnesis
+        if ($leadId) {
+            $anamnesis = Anamnesis::where('lead_id', $leadId)
+                ->where('person_id', $personId)
+                ->first();
+        }
+        
+        // If not found, get the latest anamnesis for this person
+        if (!$anamnesis) {
+            $anamnesis = Anamnesis::where('person_id', $personId)
+                ->whereNotNull('gvl_form_link')
+                ->where('gvl_form_link', '!=', '')
+                ->latest('updated_at')
+                ->first();
+        }
+
+        if ($anamnesis && !empty($anamnesis->gvl_form_link)) {
+            return $anamnesis->gvl_form_link;
+        }
+
+        return null;
     }
 }
 

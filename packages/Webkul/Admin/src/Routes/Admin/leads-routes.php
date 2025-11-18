@@ -83,6 +83,7 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 Route::controller(AnamnesisController::class)->prefix('anamnesis')->group(function () {
     Route::get('edit/{id}', 'edit')->name('admin.anamnesis.edit');
     Route::put('edit/{id}', 'update')->name('admin.anamnesis.update');
+    Route::post('create-and-attach-gvl-form', 'createAndAttachGvlForm')->name('admin.anamnesis.create-and-attach-gvl-form');
     Route::post('{id}/gvl-form', 'attachGvlForm')->name('admin.anamnesis.gvl-form.attach');
     Route::delete('{id}/gvl-form', 'detachGvlForm')->name('admin.anamnesis.gvl-form.detach');
     Route::get('{id}/gvl-form/status', 'getGvlFormStatus')->name('admin.anamnesis.gvl-form.status');

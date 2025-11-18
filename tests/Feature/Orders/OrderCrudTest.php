@@ -4,7 +4,6 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Order;
 use App\Models\SalesLead;
-use Illuminate\Support\Facades\Http;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
 
@@ -161,4 +160,3 @@ test('order item total_price uses provided value when not zero', function () {
         'total_price' => 250.00, // Custom price, not 200.00 (100.00 * 2)
     ]);
 });
-

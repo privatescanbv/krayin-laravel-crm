@@ -357,7 +357,7 @@ class Lead extends Model implements LeadContract
      */
     public function channel()
     {
-        return $this->belongsTo(\Webkul\Lead\Models\Channel::class, 'lead_channel_id');
+        return $this->belongsTo(Channel::class, 'lead_channel_id');
     }
 
     /**

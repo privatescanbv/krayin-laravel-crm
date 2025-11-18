@@ -145,6 +145,30 @@ class Address extends BaseModel
     }
 
     /**
+     * Format address as string for email templates.
+     * Returns street + house number and postal code + city.
+     */
+    public function formatAddress(): string
+    {
+        $addressParts = [];
+
+        if ($this->street && $this->house_number) {
+            $houseNumber = $this->house_number;
+            if ($this->house_number_suffix) {
+                $houseNumber .= ' '.$this->house_number_suffix;
+            }
+            $addressParts[] = $this->street.' '.$houseNumber;
+        }
+
+        if ($this->postal_code && $this->city) {
+            $postalCode = $this->formatPostalCodeForDisplay($this->postal_code);
+            $addressParts[] = $postalCode.' '.$this->city;
+        }
+
+        return implode(', ', $addressParts);
+    }
+
+    /**
      * Format stored postal codes for display. Keeps global support; only adds a space
      * for Dutch-style codes like 1234AB -> 1234 AB. Otherwise leaves as-is.
      */

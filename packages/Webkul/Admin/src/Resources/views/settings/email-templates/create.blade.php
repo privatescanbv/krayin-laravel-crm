@@ -1,3 +1,10 @@
+@php
+    use App\Enums\EmailTemplateType;
+    use App\Enums\EmailTemplateLanguage;
+    use App\Enums\Departments;
+@endphp
+
+@include('adminc.components.entity-selector')
 
 <x-admin::layouts>
     <!-- Page Title -->
@@ -170,6 +177,86 @@
                                     :placeholder="trans('admin::app.settings.email-template.create.name')"
                                 />
                                 <x-admin::form.control-group.error control-name="name" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group class="!mb-0">
+                                <x-admin::form.control-group.label>
+                                    Code
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    name="code"
+                                    id="code"
+                                    :value="old('code')"
+                                    :label="'Code'"
+                                    :placeholder="'Bijv: reply, activity-created'"
+                                />
+                                <x-admin::form.control-group.error control-name="code" />
+                            </x-admin::form.control-group>
+
+                            @php
+                                $selectedType = old('type', EmailTemplateType::ALGEMEEN->value);
+                                $selectedLanguage = old('language', EmailTemplateLanguage::NEDERLANDS->value);
+                            @endphp
+                            <x-admin::form.control-group class="!mb-0">
+                                <x-admin::form.control-group.label class="required">
+                                    Type
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="type"
+                                    id="type"
+                                    value="{{ $selectedType }}"
+                                    rules="required"
+                                    :label="'Type'"
+                                >
+                                    @foreach($templateTypes as $type)
+                                        <option value="{{ $type['value'] }}" @selected($selectedType === $type['value'])>
+                                            {{ $type['label'] }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="type" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group class="!mb-0">
+                                <x-admin::form.control-group.label class="required">
+                                    Taal
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="language"
+                                    id="language"
+                                    value="{{ $selectedLanguage }}"
+                                    rules="required"
+                                    :label="'Taal'"
+                                >
+                                    @foreach($templateLanguages as $language)
+                                        <option value="{{ $language['value'] }}" @selected($selectedLanguage === $language['value'])>
+                                            {{ $language['label'] }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="language" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group class="!mb-0">
+                                <x-admin::form.control-group.label class="required">
+                                    Afdelingen
+                                </x-admin::form.control-group.label>
+
+                                <v-entity-selector
+                                    name="departments"
+                                    label="Afdelingen"
+                                    placeholder="Zoek afdeling..."
+                                    search-route="{{ route('admin.departments.search') }}"
+                                    :multiple="true"
+                                    rules="required"
+                                />
+                                <x-admin::form.control-group.error control-name="departments" />
                             </x-admin::form.control-group>
                         </x-slot>
                     </x-admin::accordion>

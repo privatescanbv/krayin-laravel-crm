@@ -7,9 +7,13 @@ use Webkul\Admin\Http\Controllers\Mail\TagController;
 Route::prefix('mail')->group(function () {
     Route::controller(EmailController::class)->group(function () {
         // Specific routes must come FIRST, before any catch-all routes
-        Route::get('templates', 'getTemplates')->name('admin.mail.templates');
+        Route::get('templates', 'get')->name('admin.mail.templates');
 
         Route::get('template-content', 'getTemplateContent')->name('admin.mail.template_content');
+
+        Route::post('template-content-body', 'getTemplateContentBody')->name('admin.mail.template_content_body');
+
+        Route::post('template-content-subject', 'getTemplateContentSubject')->name('admin.mail.template_content_subject');
 
         Route::post('create', 'store')->name('admin.mail.store');
 

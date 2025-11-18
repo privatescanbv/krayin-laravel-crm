@@ -1,3 +1,7 @@
+@php
+    use App\Enums\EmailTemplateType;
+@endphp
+
 @props([
     'entity'            => null,
     'entityControlName' => null,
@@ -5,6 +9,8 @@
     'storeUrl'          => null,
     'showButton'        => true,
     'activityId'        => null,
+    'defaultTemplate'   => null,
+    'orderId'           => null,
 ])
 
 <!-- Mail Button -->
@@ -34,7 +40,9 @@
         entity-control-name="{{ $entityControlName }}"
         :activity-id="{{ $activityId ? (int) $activityId : 'null' }}"
         :emails="{{ json_encode($emails) }}"
-        @if ($storeUrl) store-url="{{ $storeUrl }}" @endif
+        :default-template="'{{ $defaultTemplate ?? '' }}'"
+        @if($orderId) :order-id="{{ $orderId }}" @endif
+        @if ($storeUrl) :store-url="'{{ $storeUrl }}'" @endif
     ></v-mail-activity>
 
     {!! view_render_event('admin.components.activities.actions.mail.after') !!}
@@ -215,8 +223,8 @@
                                     <option value="">Geen template</option>
                                     <option
                                         v-for="template in emailTemplates"
-                                        :key="template.name"
-                                        :value="template.name"
+                                        :key="template.code || template.name"
+                                        :value="template.code || template.name"
                                     >
                                         @{{ template.label }}
                                     </option>
@@ -299,71 +307,94 @@
     </script>
 
     <script type="module">
-        app.component('v-mail-activity', {
-            template: '#v-mail-activity-template',
+            app.component('v-mail-activity', {
+                template: '#v-mail-activity-template',
 
-            props: {
-                entity: {
-                    type: Object,
-                    required: true,
-                    default: () => {}
+                props: {
+                    entity: {
+                        type: Object,
+                        required: true,
+                        default: () => {}
+                    },
+
+                    entityControlName: {
+                        type: String,
+                        required: true,
+                        default: ''
+                    },
+
+                    activityId: {
+                        type: [Number, null],
+                        required: false,
+                        default: null,
+                    },
+
+                    emails: {
+                        type: Array,
+                        required: false,
+                        default: () => []
+                    },
+
+                    storeUrl: {
+                        type: String,
+                        required: false,
+                        default: ''
+                    },
+
+                    defaultTemplate: {
+                        type: String,
+                        required: false,
+                        default: ''
+                    },
+
+                    orderId: {
+                        type: [Number, String],
+                        required: false,
+                        default: null
+                    }
                 },
 
-                entityControlName: {
-                    type: String,
-                    required: true,
-                    default: ''
+                data() {
+                    return {
+                        // Local copy of defaultTemplate prop that can be mutated
+                        currentDefaultTemplate: this.defaultTemplate || '',
+                        showCC: false,
+
+                        showBCC: false,
+
+                        isStoring: false,
+
+                        entityEmails: [],
+
+                        selectedEmailLabel: '',
+
+                        selectedTemplate: '',
+
+                        emailTemplates: [],
+                        
+                        // Store person_id and lead_id for info mail context
+                        infoMailPersonId: null,
+                        infoMailLeadId: null,
+                        
+                        // Store entity type override (e.g., for order mails)
+                        entityTypeOverride: null,
+                        
+                        // Email template type enum values
+                        templateTypes: {
+                            LEAD: @json(EmailTemplateType::LEAD->value),
+                            ALGEMEEN: @json(EmailTemplateType::ALGEMEEN->value),
+                            ORDER: @json(EmailTemplateType::ORDER->value),
+                            GVL: @json(EmailTemplateType::GVL->value),
+                        },
+                    }
                 },
-
-                activityId: {
-                    type: [Number, null],
-                    required: false,
-                    default: null,
-                },
-
-                emails: {
-                    type: Array,
-                    required: false,
-                    default: () => []
-                },
-
-                storeUrl: {
-                    type: String,
-                    required: false,
-                    default: ''
-                }
-            },
-
-            data() {
-                return {
-                    showCC: false,
-
-                    showBCC: false,
-
-                    isStoring: false,
-
-                    entityEmails: [],
-
-                    selectedEmailLabel: '',
-
-                    selectedTemplate: '',
-
-                    emailTemplates: [],
-
-                    defaultTemplate: 'reply', // Default template for lead view
-                    
-                    // Store person_id and lead_id for info mail context
-                    infoMailPersonId: null,
-                    infoMailLeadId: null,
-                }
-            },
 
               created() {
                   this.loadTemplates();
               },
 
               mounted() {
-                  this.__mailDialogListener = (event) => {
+                  this.__mailDialogListener = async (event) => {
                       const detail = event?.detail || {};
                       
                       // Store person_id and lead_id from payload for info mail context
@@ -374,7 +405,22 @@
                           this.infoMailLeadId = detail.lead_id;
                       }
                       
-                      this.openModalWithPayload(detail);
+                      // Store entity_type if provided (e.g., for orders, gvl)
+                      if (detail.entity_type) {
+                          this.entityTypeOverride = detail.entity_type;
+                      }
+                      
+                      // Store default_template if provided (e.g., for order confirmation, gvl info mail)
+                      if (detail.default_template) {
+                          this.currentDefaultTemplate = detail.default_template;
+                      }
+                      
+                      // Reload templates if entity_type changed (to get correct filtered templates)
+                      if (detail.entity_type) {
+                          await this.loadTemplates();
+                      }
+                      
+                      await this.openModalWithPayload(detail);
                   };
 
                   window.addEventListener('open-email-dialog', this.__mailDialogListener);
@@ -413,16 +459,60 @@
               },
 
               methods: {
-                  loadTemplates() {
-                      this.$axios.get('{{ route('admin.mail.templates') }}')
-                          .then(response => {
-                              // Handle different response structures
+                  async loadTemplates() {
+                      // Use entity type override if provided (e.g., from order mail, gvl)
+                      if (this.entityTypeOverride) {
+                          const entityType = this.entityTypeOverride;
+                          try {
+                              const response = await this.$axios.get('{{ route('admin.mail.templates') }}', {
+                                  params: {
+                                      entity_type: entityType
+                                  }
+                              });
                               const templates = response.data?.data || response.data || [];
                               this.emailTemplates = Array.isArray(templates) ? templates : [];
-                          })
-                          .catch(error => {
+                          } catch (error) {
                               this.emailTemplates = [];
+                          }
+                          return;
+                      }
+                      
+                      // Determine entity type based on entityControlName or entity type
+                      const controlName = (this.entityControlName || '').toString().toLowerCase();
+                      const entityTypeStr = (this.entity?.entity_type || this.entity?.type || '').toString().toLowerCase();
+                      
+                      let entityType = this.templateTypes.LEAD; // Default to LEAD for leads (which includes ALGEMEEN)
+                      
+                      // Check for orders (sales_lead_id from order context)
+                      if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
+                          entityType = this.templateTypes.ORDER;
+                      }
+                      // Check for leads - LEAD type includes ALGEMEEN templates
+                      else if (controlName === 'lead_id' || entityTypeStr === 'lead' || entityTypeStr === 'leads') {
+                          entityType = this.templateTypes.LEAD; // LEAD type returns both LEAD and ALGEMEEN templates
+                      }
+                      // Check for orders (when sales_lead_id is used in order context)
+                      else if (controlName === 'sales_lead_id') {
+                          // Default to order for sales_lead_id when opened from order edit page
+                          entityType = this.templateTypes.ORDER;
+                      }
+                      // Default fallback: use LEAD (which includes ALGEMEEN)
+                      else {
+                          entityType = this.templateTypes.LEAD;
+                      }
+                      
+                      try {
+                          const response = await this.$axios.get('{{ route('admin.mail.templates') }}', {
+                              params: {
+                                  entity_type: entityType
+                              }
                           });
+                          // Handle different response structures
+                          const templates = response.data?.data || response.data || [];
+                          this.emailTemplates = Array.isArray(templates) ? templates : [];
+                      } catch (error) {
+                          this.emailTemplates = [];
+                      }
                   },
 
                   setContentWithRetry(html, retries = 25) {
@@ -455,91 +545,124 @@
                       }
                   },
 
+                  /**
+                   * Build entities array from available entity information
+                   */
+                  buildEntitiesArray() {
+
+                      const entities = {};
+
+                      // Helper to add entity if ID exists
+                      const addEntity = (key, id) => {
+                          if (id) {
+                              entities[key] = parseInt(id);
+                          }
+                      };
+
+                      // PRIORITY 1: Check Vue data properties (set by info mail button)
+                      if (this.infoMailLeadId) {
+                          addEntity('lead', this.infoMailLeadId);
+                      }
+                      if (this.infoMailPersonId) {
+                          addEntity('person', this.infoMailPersonId);
+                      }
+
+                      // PRIORITY 2: Add entity IDs from entity object (most reliable for lead view)
+                      if (this.entity?.id) {
+                          const controlName = (this.entityControlName || '').toString().toLowerCase();
+                          const entityType = (this.entity.entity_type || this.entity.type || '').toString().toLowerCase();
+                          
+                          
+                          // Prioritize entityControlName over entity type
+                          if (controlName === 'person_id') {
+                              addEntity('person', this.entity.id);
+                          } else if (controlName === 'sales_lead_id') {
+                              addEntity('sales_lead', this.entity.id);
+                          } else if (controlName === 'lead_id') {
+                              addEntity('lead', this.entity.id);
+                          } else if (entityType === 'leads' || entityType === 'lead') {
+                              addEntity('lead', this.entity.id);
+                          } else if (entityType === 'sales_leads' || entityType === 'sales_lead') {
+                              addEntity('sales_lead', this.entity.id);
+                          }
+                      }
+
+                      // PRIORITY 3: Fallbacks - if nested lead object exists
+                      if (!entities.lead && this.entity?.lead?.id) {
+                          console.log('Using nested lead', this.entity.lead.id);
+                          addEntity('lead', this.entity.lead.id);
+                      }
+
+                      // PRIORITY 4: Check form for lead_id, person_id, and order_id
+                      const form = this.$refs.mailActionForm;
+                      if (form) {
+                          const formLeadId = form.querySelector('[name="lead_id"]')?.value || form.dataset.leadId;
+                          const formPersonId = form.querySelector('[name="person_id"]')?.value || form.dataset.personId;
+                          const formOrderId = form.querySelector('[name="order_id"]')?.value || form.dataset.orderId;
+                          
+                          if (formLeadId && !entities.lead) {
+                              addEntity('lead', formLeadId);
+                          }
+                          if (formPersonId && !entities.person) {
+                              addEntity('person', formPersonId);
+                          }
+                          if (formOrderId && !entities.order) {
+                              addEntity('order', formOrderId);
+                          }
+                      }
+                      
+                      // PRIORITY 4.5: Check orderId prop (from order edit page)
+                      if (this.orderId && !entities.order) {
+                          addEntity('order', this.orderId);
+                      }
+
+                      // PRIORITY 5: Ensure at least one id is present; if still missing and entityControlName indicates sales lead
+                      if (!entities.lead && !entities.sales_lead) {
+                          if ((this.entityControlName || '').toString().toLowerCase() === 'sales_lead_id' && this.entity?.id) {
+                              addEntity('sales_lead', this.entity.id);
+                          }
+                      }
+
+                      return entities;
+                  },
+
                   loadTemplate() {
                       if (!this.selectedTemplate) {
                           return;
                       }
 
-                      // Prepare entity IDs for server-side resolution
-                      const params = {
-                          template: this.selectedTemplate,
-                      };
+                      const entities = this.buildEntitiesArray();
 
-                      // Add entity IDs if available
-                      if (this.entity?.id) {
-                          // First check entityControlName (most reliable, explicitly passed)
-                          const controlName = (this.entityControlName || '').toString().toLowerCase();
-                          
-                          // Then check entity_type or type from entity object
-                          const entityType = (this.entity.entity_type || this.entity.type || '').toString().toLowerCase();
-                          
-                          // Prioritize entityControlName over entity type
-                          if (controlName === 'person_id') {
-                              params.person_id = this.entity.id;
-                          } else if (controlName === 'sales_lead_id') {
-                              params.sales_lead_id = this.entity.id;
-                          } else if (controlName === 'lead_id') {
-                              params.lead_id = this.entity.id;
-                          } else if (controlName === 'clinic_id') {
-                              params.clinic_id = this.entity.id;
-                          } else if (entityType === 'leads' || entityType === 'lead') {
-                              params.lead_id = this.entity.id;
-                          } else if (entityType === 'sales_leads' || entityType === 'sales_lead') {
-                              params.sales_lead_id = this.entity.id;
-                          } else if (entityType === 'clinics' || entityType === 'clinic') {
-                              params.clinic_id = this.entity.id;
-                          } else {
-                              // Cannot determine entity type - throw error
-                              const errorMsg = 'Kan entity type niet bepalen. entityControlName: "' + controlName + '", entityType: "' + entityType + '"';
-                              this.$emitter.emit('add-flash', {
-                                  type: 'error',
-                                  message: errorMsg
-                              });
-                              return;
-                          }
+                      if (Object.keys(entities).length === 0) {
+                          this.$emitter.emit('add-flash', {
+                              type: 'error',
+                              message: 'Geen entities gevonden om template variabelen op te lossen'
+                          });
+                          return;
                       }
 
-                      // Fallbacks: if nested lead object exists
-                      if (!params.lead_id && this.entity?.lead?.id) {
-                          params.lead_id = this.entity.lead.id;
-                      }
-
-                      // Ensure at least one id is present; if still missing and entityControlName indicates sales lead
-                      if (!params.lead_id && !params.sales_lead_id) {
-                          if ((this.entityControlName || '').toString().toLowerCase() === 'sales_lead_id' && this.entity?.id) {
-                              params.sales_lead_id = this.entity.id;
-                          }
-                      }
-
-                      // Check Vue data properties first (set by info mail button)
-                      if (this.infoMailLeadId) {
-                          params.lead_id = this.infoMailLeadId;
-                      }
-                      if (this.infoMailPersonId) {
-                          params.person_id = this.infoMailPersonId;
-                      }
-                      
-                      // Check form for lead_id and person_id (for info mail with person context)
-                      const form = this.$refs.mailActionForm;
-                      if (form) {
-                          const formLeadId = form.querySelector('[name="lead_id"]')?.value || form.dataset.leadId;
-                          const formPersonId = form.querySelector('[name="person_id"]')?.value || form.dataset.personId;
-                          
-                          // Always use form values if they exist (for info mail context)
-                          if (formLeadId && !params.lead_id) {
-                              params.lead_id = formLeadId;
-                          }
-                          if (formPersonId && !params.person_id) {
-                              params.person_id = formPersonId;
-                          }
-                      }
-
-                      this.$axios.get('{{ route('admin.mail.template_content') }}', {
-                              params: params
+                      // Load body and subject separately using new API
+                      Promise.all([
+                          this.$axios.post('{{ route('admin.mail.template_content_body') }}', {
+                              email_template_identifier: this.selectedTemplate,
+                              entities: entities
+                          }),
+                          this.$axios.post('{{ route('admin.mail.template_content_subject') }}', {
+                              email_template_identifier: this.selectedTemplate,
+                              entities: entities
                           })
-                          .then(response => {
-                              const templateContent = response.data.data.content || '';
+                      ])
+                          .then(([bodyResponse, subjectResponse]) => {
+                              const templateContent = bodyResponse.data.data.content || '';
+                              const templateSubject = subjectResponse.data.data.subject || '';
                               const signature = @json(auth()->guard('user')->user()->signature ?? '');
+
+                              // Set subject field if template has a subject
+                              const subjectField = this.$refs.mailActionForm.querySelector('[name="subject"]');
+                              if (subjectField && templateSubject) {
+                                  subjectField.value = templateSubject;
+                                  subjectField.dispatchEvent(new Event('input', { bubbles: true }));
+                              }
 
                               // Combine template content with signature
                               const fullContent = templateContent + (signature ? '<br><br>' + signature : '');
@@ -548,9 +671,10 @@
                               this.setContentWithRetry(fullContent);
                           })
                           .catch(error => {
+                              console.error('Error loading template', error);
                               this.$emitter.emit('add-flash', {
                                   type: 'error',
-                                  message: 'Fout bij het laden van template'
+                                  message: 'Fout bij het laden van template: ' + (error.response?.data?.message || error.message)
                               });
                           });
                   },
@@ -562,7 +686,7 @@
                       this.openModalWithPayload({});
                   },
 
-                  openModalWithPayload(payload = {}) {
+                  async openModalWithPayload(payload = {}) {
                       const {
                           defaultEmail = null,
                           activityId = null,
@@ -572,11 +696,17 @@
                           attachments = [],
                       } = payload || {};
 
-                      this.selectedTemplate = ''; // Reset template selection
-
                       // Ensure templates are loaded before opening modal
                       if (!this.emailTemplates || this.emailTemplates.length === 0) {
-                          this.loadTemplates();
+                          await this.loadTemplates();
+                      }
+
+                      // Set default template if available (before opening modal)
+                      const defaultTemplateValue = this.currentDefaultTemplate || this.defaultTemplate;
+                      if (defaultTemplateValue && this.emailTemplates.some(t => (t.code || t.name) === defaultTemplateValue)) {
+                          this.selectedTemplate = defaultTemplateValue;
+                      } else {
+                          this.selectedTemplate = ''; // Reset template selection
                       }
 
                       this.$refs.mailActivityModal.open();
@@ -613,12 +743,16 @@
 
                           const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
 
-                          if (body && body.trim()) {
+                          // If default template was set, load it (even if body exists, template takes precedence)
+                          if (defaultTemplateValue && this.selectedTemplate === defaultTemplateValue) {
+                              setTimeout(() => this.loadTemplate(), 250);
+                          } else if (body && body.trim()) {
                               this.setContentWithRetry(body);
                           } else if (messageField && !messageField.value.trim()) {
-                              // Load default template for lead view if available (delay slightly to ensure editor setup)
-                              if (this.defaultTemplate && this.emailTemplates.some(t => t.name === this.defaultTemplate)) {
-                                  this.selectedTemplate = this.defaultTemplate;
+                              // Fallback to reply template or signature
+                              const fallbackTemplate = 'reply';
+                              if (this.emailTemplates.some(t => (t.code || t.name) === fallbackTemplate)) {
+                                  this.selectedTemplate = fallbackTemplate;
                                   setTimeout(() => this.loadTemplate(), 250);
                               } else {
                                   // Fallback to signature only
@@ -694,8 +828,15 @@
                           }
 
                           // Download PDF as blob
-                          const response = await fetch(pdfUrl);
-                          if (!response.ok) {
+                          let response;
+                          try {
+                              response = await fetch(pdfUrl);
+                              if (!response.ok) {
+                                  console.warn('[Mail] Failed to download PDF attachment:', pdfUrl, response.status);
+                                  return;
+                              }
+                          } catch (error) {
+                              console.warn('[Mail] Error downloading PDF attachment (CORS/network):', pdfUrl, error.message);
                               return;
                           }
 

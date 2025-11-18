@@ -1,4 +1,8 @@
-@php use App\Enums\OrderStatus;use App\Models\SalesLead; @endphp
+@php
+use App\Enums\OrderStatus;
+use App\Enums\EmailTemplateType;
+use App\Models\SalesLead;
+@endphp
 <x-admin::layouts>
     <x-slot:title>
         Order bewerken
@@ -42,7 +46,7 @@
                             {{ $mailDisabled ? 'disabled' : '' }}
                             title="{{ $mailDisabled ? 'Eerst order op Ingepland zetten' : '' }}"
                         >
-                            Maak order mail
+                            Afspraak bevestigen
                         </button>
                     @endif
 
@@ -206,6 +210,8 @@
               :emails="$orderEmailOptions ?? []"
               store-url="{{ route('admin.sales-leads.emails.store', ['id' => $orders->sales_lead_id]) }}"
               :show-button="false"
+              :default-template="'appointment-confirmation'"
+              :order-id="$orders->id"
           />
                             @endif
 
@@ -217,6 +223,7 @@
                                             @php
                                                 $person = $data['person'];
                                                 $anamnesis = $data['anamnesis'];
+                                                $leadId = $data['lead_id'] ?? null;
                                             @endphp
                                             <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                                                 <h3 class="mb-2 text-sm font-semibold text-gray-800 dark:text-white">
@@ -233,7 +240,7 @@
                                                     />
                                                 @else
                                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                        Geen anamnesis gevonden voor deze persoon.
+                                                        Geen lead gekoppeld. Koppel eerst een lead aan de sales lead om een GVL formulier te kunnen koppelen.
                                                     </p>
                                                 @endif
                                             </div>
@@ -552,6 +559,8 @@
                                     body: payload.body || '',
                                     emails: payload.emails || [],
                                     attachments: payload.attachments || [],
+                                    entity_type: @json(EmailTemplateType::ORDER->value),
+                                    default_template: 'appointment-confirmation',
                                 },
                             }));
 
@@ -661,6 +670,8 @@
                                   body: payload.body || '',
                                   emails: payload.emails || [],
                                   attachments: payload.attachments || [],
+                                  entity_type: @json(EmailTemplateType::ORDER->value),
+                                  default_template: 'appointment-confirmation',
                               };
 
                               let handled = false;
@@ -758,105 +769,15 @@
                 }
             };
 
-            // Load GVL form status function
-            const loadGvlFormStatus = async () => {
-                const statusContainer = document.getElementById('gvl-form-status');
-                const statusElement = document.getElementById('gvl-form-status-value');
-
-                if (!statusContainer || !statusElement) {
-                    console.error('[OrderEdit] ERROR: gvl-form-status elements not found in DOM');
-                    return;
-                }
-
-                try {
-                    const response = await fetch('{{ route('admin.orders.gvl-form.status', ['orderId' => $orders->id]) }}', {
-                        headers: {
-                            'Accept': 'application/json',
-                        },
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Status kon niet worden opgehaald');
-                    }
-
-                    const data = await response.json();
-                    const status = data.data?.status || data.data?.state || null;
-                    const statusLower = status ? status.toLowerCase() : '';
-
-                    // Map status to display text and color
-                    const statusMap = {
-                        'new': { text: 'Nieuw', color: 'text-gray-600' },
-                        'step1': { text: 'Stap 1 voltooid', color: 'text-yellow-600' },
-                        'step2': { text: 'Stap 2 voltooid', color: 'text-blue-600' },
-                        'step3': { text: 'Stap 3 voltooid', color: 'text-green-500' },
-                        'completed': { text: 'Voltooid', color: 'text-green-600' },
-                    };
-
-                    const statusInfo = statusMap[statusLower] || { text: 'Onbekend', color: 'text-gray-400' };
-                    statusElement.textContent = statusInfo.text;
-                    statusElement.className = `font-medium ${statusInfo.color}`;
-                } catch (error) {
-                    console.error('[OrderEdit] Error loading GVL form status:', error);
-                    const statusElement = document.getElementById('gvl-form-status-value');
-                    if (statusElement) {
-                        statusElement.textContent = 'Niet beschikbaar';
-                        statusElement.className = 'font-medium text-gray-400';
-                    }
-                }
-            };
-
-            // Function to wait for Vue component and then load status
-            const waitForVueAndLoadStatus = () => {
-                const checkAndLoad = () => {
-                    const statusContainer = document.getElementById('gvl-form-status');
-                    if (statusContainer) {
-                        loadGvlFormStatus();
-                        return true;
-                    }
-                    return false;
-                };
-
-                // Try immediately
-                if (checkAndLoad()) {
-                    return;
-                }
-
-                // Wait for Vue to mount (Vue mounts on 'load' event)
-                window.addEventListener('load', () => {
-                    setTimeout(() => {
-                        if (!checkAndLoad()) {
-                            // Try with MutationObserver as fallback
-                            const observer = new MutationObserver(() => {
-                                if (checkAndLoad()) {
-                                    observer.disconnect();
-                                }
-                            });
-
-                            observer.observe(document.body, {
-                                childList: true,
-                                subtree: true
-                            });
-
-                            // Stop observing after 5 seconds
-                            setTimeout(() => {
-                                observer.disconnect();
-                                if (!document.getElementById('gvl-form-status')) {
-                                    console.error('[OrderEdit] ERROR: gvl-form-status element never appeared in DOM');
-                                }
-                            }, 5000);
-                        }
-                    }, 100);
-                }, { once: true });
-            };
+            // Note: GVL form status is now handled by the gvl-form-link component itself
+            // Each anamnesis has its own status element with ID: gvl-form-status-anamnesis-{id}
+            // The component loads the status automatically via the statusUrl prop
 
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
                     initOrderEditDebug();
                       initOrderMailCompose();
-
-                    // Wait for Vue to render and then load GVL form status
-                    waitForVueAndLoadStatus();
 
                     // After email stored, mark order as sent (min JS: one small call)
                     try {
@@ -885,9 +806,6 @@
                 initOrderEditSalesLead();
                 initOrderEditDebug();
                   initOrderMailCompose();
-
-                // Wait for Vue to render and then load GVL form status
-                waitForVueAndLoadStatus();
 
                 // After email stored, mark order as sent
                 try {
@@ -1135,8 +1053,8 @@
                                 <option value="">Selecteer een template</option>
                                 <option
                                     v-for="template in templates"
-                                    :key="template.name"
-                                    :value="template.name"
+                                    :key="template.code || template.name"
+                                    :value="template.code || template.name"
                                 >
                                     @{{ template.label }}
                                 </option>
@@ -1254,7 +1172,7 @@
                 methods: {
                     async loadTemplates() {
                         try {
-                            const response = await fetch('{{ route('admin.orders.confirmation.templates') }}', {
+                            const response = await fetch('{{ route('admin.mail.templates') }}?entity_type=order', {
                                 headers: {
                                     'Accept': 'application/json',
                                 },

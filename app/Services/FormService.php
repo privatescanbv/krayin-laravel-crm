@@ -60,7 +60,7 @@ class FormService
             'request_body'  => $formData,
         ]);
 
-        $response = $this->makeRequest('post', $url, ['url' => $url], $data);
+        $response = $this->makeRequest('post', $url, ['url' => $url], $formData);
         $result = $this->parseResponse($response, ['url' => $url], true);
 
         // Check for HTML response (authentication failure)
@@ -343,6 +343,46 @@ class FormService
             'ct_scan'         => $ctScan,
             'form_type'       => $this->mapDepartmentToFormType($order->salesLead->getDepartment()),
         ];
+    }
+
+    /**
+     * Check if order contains MRI research products.
+     */
+    protected function hasMriResearch(Order $order): bool
+    {
+        $items = $order->orderItems ?? collect();
+        if (! $items instanceof \Illuminate\Support\Collection) {
+            $items = collect($items);
+        }
+
+        foreach ($items as $item) {
+            $productName = strtolower($item->product->name ?? '');
+            if (str_contains($productName, 'mri')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if order contains CT scan products.
+     */
+    protected function hasCtScan(Order $order): bool
+    {
+        $items = $order->orderItems ?? collect();
+        if (! $items instanceof \Illuminate\Support\Collection) {
+            $items = collect($items);
+        }
+
+        foreach ($items as $item) {
+            $productName = strtolower($item->product->name ?? '');
+            if (str_contains($productName, 'ct') || str_contains($productName, 'ct-scan')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function mapDepartmentToFormType(Department $department): string

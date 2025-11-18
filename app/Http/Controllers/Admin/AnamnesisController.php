@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Webkul\Lead\Repositories\LeadRepository;
 
@@ -149,6 +150,82 @@ class AnamnesisController extends Controller
 
             return response()->json([
                 'message' => 'GVL formulier koppelen is mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create anamnesis and attach GVL form for a person (used from order edit page)
+     */
+    public function createAndAttachGvlForm(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'lead_id'   => 'required|integer|exists:leads,id',
+            'person_id' => 'required|integer|exists:persons,id',
+        ]);
+
+        $leadId = $data['lead_id'];
+        $personId = $data['person_id'];
+
+        try {
+            // Get or create anamnesis
+            $lead = $this->leadRepository->find($leadId);
+            if (! $lead) {
+                return response()->json([
+                    'message' => 'Lead niet gevonden.',
+                ], 404);
+            }
+
+            $anamnesis = Anamnesis::firstOrCreate(
+                [
+                    'lead_id'   => $leadId,
+                    'person_id' => $personId,
+                ],
+                [
+                    'id'         => Str::uuid(),
+                    'name'       => 'Anamnesis voor '.$lead->name,
+                    'created_by' => auth()->id() ?? $lead->user_id ?? 1,
+                    'updated_by' => auth()->id() ?? $lead->user_id ?? 1,
+                ]
+            );
+
+            // Load relations
+            $anamnesis->load('person', 'lead');
+
+            if (! $anamnesis->person) {
+                return response()->json([
+                    'message' => 'Persoon niet gevonden.',
+                ], 422);
+            }
+
+            // Check if GVL form already exists
+            if (! empty($anamnesis->gvl_form_link)) {
+                return response()->json([
+                    'message'       => 'GVL formulier is al gekoppeld.',
+                    'gvl_form_link' => $anamnesis->gvl_form_link,
+                ], 422);
+            }
+
+            // Create form request for this person
+            $formLink = $this->createFormRequestForAnamnesis($anamnesis);
+
+            // Reload the anamnesis to get updated gvl_form_link
+            $anamnesis->refresh();
+
+            return response()->json([
+                'message'       => 'Anamnesis aangemaakt en GVL formulier gekoppeld.',
+                'gvl_form_link' => $formLink,
+                'anamnesis_id'  => $anamnesis->id,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('AnamnesisController@createAndAttachGvlForm failed', [
+                'lead_id'   => $leadId,
+                'person_id' => $personId,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Anamnesis aanmaken en GVL formulier koppelen is mislukt: '.$e->getMessage(),
             ], 500);
         }
     }

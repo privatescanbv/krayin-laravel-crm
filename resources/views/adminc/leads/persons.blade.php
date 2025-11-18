@@ -227,7 +227,8 @@
                             emails: [{ value: defaultEmail, is_default: true }],
                             lead_id: leadId,
                             person_id: personId,
-                            template: 'informatief',
+                            default_template: 'informatief-met-gvl',
+                            entity_type: 'gvl',
                         };
 
                         // Dispatch event to open mail dialog

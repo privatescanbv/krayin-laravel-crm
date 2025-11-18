@@ -35,7 +35,7 @@ class SendImportRunReport extends Command
         $importRunId = $this->option('import-run-id');
         $limit = $this->option('limit');
         $emailOption = $this->option('email');
-        
+
         // Parse email addresses (support comma-separated list)
         $emails = array_map('trim', explode(',', $emailOption));
 
@@ -53,7 +53,7 @@ class SendImportRunReport extends Command
                 $query->limit((int) $limit);
             }
             $importRuns = $query->get();
-            
+
             if ($importRuns->isEmpty()) {
                 $this->info('No import runs found. Skipping report.');
 
@@ -64,7 +64,7 @@ class SendImportRunReport extends Command
         $this->info("Preparing import run report for {$importRuns->count()} run(s)...");
 
         // Prepare email content
-        $subject = $importRuns->count() === 1 
+        $subject = $importRuns->count() === 1
             ? "Import Run Report #{$importRuns->first()->id} - {$importRuns->first()->import_type}"
             : "Import Run Report - {$importRuns->count()} runs";
 
@@ -73,7 +73,7 @@ class SendImportRunReport extends Command
         foreach ($importRuns as $importRun) {
             $startedAt = $importRun->started_at ? $importRun->started_at->format('d-m-Y H:i') : 'N/A';
             $completedAt = $importRun->completed_at ? $importRun->completed_at->format('d-m-Y H:i') : 'N/A';
-            
+
             // Determine status color
             $statusColor = match ($importRun->status) {
                 'completed' => '#10b981', // green
@@ -81,7 +81,7 @@ class SendImportRunReport extends Command
                 'failed'    => '#ef4444',     // red
                 default     => '#6b7280',      // gray
             };
-            
+
             $runsHtml .= "
                 <div class='run-item'>
                     <div class='run-header'>
@@ -170,7 +170,7 @@ class SendImportRunReport extends Command
                 $errorCount = $logs->where('level', 'error')->count();
                 $warningCount = $logs->where('level', 'warning')->count();
                 $infoCount = $logs->where('level', 'info')->count();
-                
+
                 $this->info("  Run #{$importRun->id} ({$importRun->import_type}): {$importRun->status}");
                 $this->info("    Imported: {$importRun->records_imported}, Errors: {$importRun->records_errored}, Processed: {$importRun->records_processed}");
             }
@@ -181,7 +181,7 @@ class SendImportRunReport extends Command
                 $errorCount = $logs->where('level', 'error')->count();
                 $warningCount = $logs->where('level', 'warning')->count();
                 $infoCount = $logs->where('level', 'info')->count();
-                
+
                 Log::info("Import Run Report #{$importRun->id}", [
                     'import_type'        => $importRun->import_type,
                     'status'             => $importRun->status,

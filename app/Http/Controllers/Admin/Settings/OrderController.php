@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
+use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
+use App\Repositories\SalesLeadRepository;
 use App\Services\FormService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
@@ -25,6 +27,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 use Webkul\Core\Traits\PDFHandler;
+use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
@@ -36,6 +39,7 @@ class OrderController extends SimpleEntityController
         protected OrderCheckService $orderCheckService,
         protected OrderMailService $orderMailService,
         protected OrderStatusService $orderStatusService,
+        protected SalesLeadRepository $salesLeadRepository,
         protected FormService $formService
     ) {
         parent::__construct($orderRepository);
@@ -388,28 +392,6 @@ class OrderController extends SimpleEntityController
             ],
         ];
 
-        // Add GVL formulier exports as attachments if form links exist (one per person/anamnesis)
-        if ($order->salesLead && $order->salesLead->lead_id) {
-            $leadId = $order->salesLead->lead_id;
-            $persons = $order->salesLead->persons()->get();
-
-            foreach ($persons as $person) {
-                $anamnesis = \App\Models\Anamnesis::where('lead_id', $leadId)
-                    ->where('person_id', $person->id)
-                    ->first();
-
-                if ($anamnesis && ! empty($anamnesis->gvl_form_link)) {
-                    $gvlDownloadUrl = $this->formService->getFormDownloadUrl($anamnesis->gvl_form_link);
-                    if ($gvlDownloadUrl) {
-                        $attachments[] = [
-                            'url'      => $gvlDownloadUrl,
-                            'filename' => 'gvl-formulier-'.$person->name.'-'.$order->id.'-'.date('Y-m-d').'.pdf',
-                        ];
-                    }
-                }
-            }
-        }
-
         $mailData['attachments'] = $attachments;
 
         return response()->json($mailData);
@@ -461,39 +443,40 @@ class OrderController extends SimpleEntityController
      */
     public function getConfirmationTemplateContent(Request $request, int $orderId): JsonResponse
     {
-        $templateName = $request->query('template');
+        $templateIdentifier = $request->query('template');
 
-        if (! $templateName) {
+        if (! $templateIdentifier) {
             return response()->json([
-                'error' => 'Template name is required',
+                'error' => 'Template identifier is required',
             ], 400);
         }
 
-        $order = $this->orderRepository->findOrFail($orderId);
-
-        // Load necessary relations
-        $order->load([
-            'orderItems.product',
-            'orderItems.person',
-            'salesLead.lead',
-            'salesLead.contactPerson',
-        ]);
-
         try {
-            // Prepare variables for template
-            $variables = $this->buildOrderTemplateVariables($order);
+            // Use EmailController to render template with order entity
+            $emailController = app(\Webkul\Admin\Http\Controllers\Mail\EmailController::class);
 
-            $viewPath = 'adminc.email_templates.order.'.$templateName;
+            // Build entities array with order
+            $entities = [
+                'order' => $orderId,
+            ];
 
-            // Check if view exists
-            if (! view()->exists($viewPath)) {
+            // Resolve variables from entities
+            $variables = $emailController->resolveTemplateVariablesFromEntities($entities);
+
+            // Get template from database
+            $template = EmailTemplate::where('code', $templateIdentifier)
+                ->orWhere('name', $templateIdentifier)
+                ->first();
+
+            if (! $template) {
                 return response()->json([
                     'error'   => 'Template not found',
-                    'message' => "View {$viewPath} does not exist",
+                    'message' => "Template with code or name '{$templateIdentifier}' does not exist in database",
                 ], 404);
             }
 
-            $content = view($viewPath, $variables)->render();
+            // Render template with layout
+            $content = $emailController->renderTemplateWithLayout($template->content, $variables);
 
             return response()->json([
                 'data' => [
@@ -502,7 +485,7 @@ class OrderController extends SimpleEntityController
             ]);
         } catch (Exception $e) {
             Log::error('Order confirmation template rendering error: '.$e->getMessage(), [
-                'template'  => $templateName ?? 'unknown',
+                'template'  => $templateIdentifier ?? 'unknown',
                 'order_id'  => $orderId,
                 'exception' => $e,
             ]);
@@ -511,7 +494,7 @@ class OrderController extends SimpleEntityController
                 'error'   => 'Template not found or error rendering template',
                 'message' => $e->getMessage(),
                 'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 404);
+            ], 500);
         }
     }
 
@@ -610,37 +593,26 @@ class OrderController extends SimpleEntityController
         $missingPersonsWarning = null;
 
         if ($entity->salesLead) {
-            $salesLeadPersons = collect();
-
             // Get persons directly from sales lead only
-            try {
-                $salesLeadPersons = $entity->salesLead->persons()->get();
-            } catch (\Exception $e) {
-                Log::warning('Failed to load persons from salesLead', [
-                    'order_id'      => $entity->id,
-                    'sales_lead_id' => $entity->salesLead->id,
-                    'error'         => $e->getMessage(),
-                ]);
-            }
+            $salesLeadPersons = $entity->salesLead->persons()->get();
 
             $persons = $salesLeadPersons->mapWithKeys(function ($person) {
                 return [$person->id => $person->name];
             })->toArray();
 
             // Load anamnesis for each person (via lead_id and person_id)
-            if ($entity->salesLead->lead_id) {
-                $leadId = $entity->salesLead->lead_id;
-                foreach ($salesLeadPersons as $person) {
-                    $anamnesis = \App\Models\Anamnesis::where('lead_id', $leadId)
-                        ->where('person_id', $person->id)
-                        ->first();
+            // Show all persons, even if they don't have an anamnesis yet
 
-                    $personsWithAnamnesis[$person->id] = [
-                        'person'    => $person,
+            $leadId = $entity->salesLead->lead_id;
+            $personsWithAnamnesis = $this->salesLeadRepository
+                ->findAnamnesisBySalesLeadId($leadId, $salesLeadPersons->pluck('id')->toArray())
+                ->mapWithKeys(fn ($anamnesis) => [
+                    $anamnesis->person_id => [
+                        'person'    => $salesLeadPersons->firstWhere('id', $anamnesis->person_id),
                         'anamnesis' => $anamnesis,
-                    ];
-                }
-            }
+                        'lead_id'   => $leadId,
+                    ],
+                ]);
 
             // Check if all persons have an order item
             if ($salesLeadPersons->isNotEmpty()) {

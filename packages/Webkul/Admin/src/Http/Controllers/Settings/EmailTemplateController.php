@@ -10,6 +10,9 @@ use Webkul\Admin\DataGrids\Settings\EmailTemplateDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Automation\Helpers\Entity;
 use Webkul\EmailTemplate\Repositories\EmailTemplateRepository;
+use App\Enums\EmailTemplateType;
+use App\Enums\EmailTemplateLanguage;
+use App\Models\Department;
 
 class EmailTemplateController extends Controller
 {
@@ -43,8 +46,14 @@ class EmailTemplateController extends Controller
     public function create()
     {
         $placeholders = $this->workflowEntityHelper->getEmailTemplatePlaceholders();
+        $templateTypes = EmailTemplateType::allWithLabels();
+        $templateLanguages = EmailTemplateLanguage::allWithLabels();
 
-        return view('admin::settings.email-templates.create', compact('placeholders'));
+        return view('admin::settings.email-templates.create', [
+            'placeholders' => $placeholders,
+            'templateTypes' => $templateTypes,
+            'templateLanguages' => $templateLanguages,
+        ]);
     }
 
     /**
@@ -53,14 +62,22 @@ class EmailTemplateController extends Controller
     public function store(): RedirectResponse
     {
         $this->validate(request(), [
-            'name'    => 'required',
-            'subject' => 'required',
-            'content' => 'required',
+            'name'        => 'required',
+            'code'        => 'required|string|unique:email_templates,code',
+            'type'        => 'required|in:'.implode(',', EmailTemplateType::allValues()),
+            'language'    => 'required|in:'.implode(',', EmailTemplateLanguage::allValues()),
+            'departments' => 'required|array|min:1',
+            'departments.*' => 'required|exists:departments,id',
+            'subject'     => 'required',
+            'content'     => 'required',
         ]);
 
         Event::dispatch('settings.email_templates.create.before');
 
-        $emailTemplate = $this->emailTemplateRepository->create(request()->all());
+        $data = request()->all();
+        $data['departments'] = $this->convertDepartmentIdsToNames($data['departments'] ?? []);
+
+        $emailTemplate = $this->emailTemplateRepository->create($data);
 
         Event::dispatch('settings.email_templates.create.after', $emailTemplate);
 
@@ -77,8 +94,19 @@ class EmailTemplateController extends Controller
         $emailTemplate = $this->emailTemplateRepository->findOrFail($id);
 
         $placeholders = $this->workflowEntityHelper->getEmailTemplatePlaceholders();
+        $templateTypes = EmailTemplateType::allWithLabels();
+        $templateLanguages = EmailTemplateLanguage::allWithLabels();
+        
+        // Get selected departments as Department models for entity selector
+        $selectedDepartments = $this->getSelectedDepartmentsForEntitySelector($emailTemplate->departments ?? []);
 
-        return view('admin::settings.email-templates.edit', compact('emailTemplate', 'placeholders'));
+        return view('admin::settings.email-templates.edit', [
+            'emailTemplate' => $emailTemplate,
+            'placeholders' => $placeholders,
+            'templateTypes' => $templateTypes,
+            'templateLanguages' => $templateLanguages,
+            'selectedDepartments' => $selectedDepartments,
+        ]);
     }
 
     /**
@@ -87,14 +115,22 @@ class EmailTemplateController extends Controller
     public function update(int $id): RedirectResponse
     {
         $this->validate(request(), [
-            'name'    => 'required',
-            'subject' => 'required',
-            'content' => 'required',
+            'name'        => 'required',
+            'code'        => 'required|string|unique:email_templates,code,'.$id,
+            'type'        => 'required|in:'.implode(',', EmailTemplateType::allValues()),
+            'language'    => 'required|in:'.implode(',', EmailTemplateLanguage::allValues()),
+            'departments' => 'required|array|min:1',
+            'departments.*' => 'required|exists:departments,id',
+            'subject'     => 'required',
+            'content'     => 'required',
         ]);
 
         Event::dispatch('settings.email_templates.update.before', $id);
 
-        $emailTemplate = $this->emailTemplateRepository->update(request()->all(), $id);
+        $data = request()->all();
+        $data['departments'] = $this->convertDepartmentIdsToNames($data['departments'] ?? []);
+
+        $emailTemplate = $this->emailTemplateRepository->update($data, $id);
 
         Event::dispatch('settings.email_templates.update.after', $emailTemplate);
 
@@ -125,9 +161,44 @@ class EmailTemplateController extends Controller
                 'message' => trans('admin::app.settings.email-template.index.delete-failed'),
             ], 400);
         }
+    }
 
-        return response()->json([
-            'message' => trans('admin::app.settings.email-template.index.delete-failed'),
-        ], 400);
+    /**
+     * Convert department IDs to department names.
+     */
+    private function convertDepartmentIdsToNames($departmentIds): array
+    {
+        // Normalize to array
+        if (!is_array($departmentIds)) {
+            $departmentIds = $departmentIds ? [$departmentIds] : [];
+        }
+        
+        // Filter empty values and convert to integers
+        $departmentIds = array_values(array_filter(array_map('intval', $departmentIds)));
+        
+        if (empty($departmentIds)) {
+            return [];
+        }
+        
+        // Convert IDs to names
+        return Department::whereIn('id', $departmentIds)->pluck('name')->toArray();
+    }
+
+    /**
+     * Get selected departments formatted for entity selector.
+     */
+    private function getSelectedDepartmentsForEntitySelector(array $departmentNames): array
+    {
+        if (empty($departmentNames)) {
+            return [];
+        }
+        
+        return Department::whereIn('name', $departmentNames)
+            ->get()
+            ->map(fn ($dept) => [
+                'id' => $dept->id,
+                'name' => $dept->name,
+            ])
+            ->toArray();
     }
 }

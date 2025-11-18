@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Anamnesis;
 use App\Models\Order;
 use Carbon\Carbon;
 use Exception;
@@ -140,7 +141,7 @@ class OrderMailService
         }
 
         // Check if anamnesis already has a form link
-        $anamnesis = \App\Models\Anamnesis::where('lead_id', $order->salesLead->lead_id)
+        $anamnesis = Anamnesis::where('lead_id', $order->salesLead->lead_id)
             ->where('person_id', $person->id)
             ->first();
 
@@ -285,22 +286,31 @@ class OrderMailService
 
     protected function ensureTemplateExists(): EmailTemplate
     {
-        return EmailTemplate::firstOrCreate(
+        $template = EmailTemplate::firstOrCreate(
             ['name' => self::TEMPLATE_NAME],
             [
                 'subject' => 'Order {{ order_reference }} | {{ order_title }}',
                 'content' => $this->defaultTemplateContent(),
             ]
         );
+
+        // Update template with latest content if it already existed
+        if ($template->wasRecentlyCreated === false) {
+            $template->update([
+                'subject' => 'Order {{ order_reference }} | {{ order_title }}',
+                'content' => $this->defaultTemplateContent(),
+            ]);
+        }
+
+        return $template;
     }
 
     protected function defaultTemplateContent(): string
     {
         return <<<'HTML'
 <p>Beste {{ customer_name }},</p>
-<p>Hierbij ontvangt u de samenvatting van order {{ order_reference }} ({{ order_title }}).</p>
-{{ order_summary_table }}
-<p><strong>Totaalbedrag:</strong> {{ order_total }}</p>
+<p>Hierbij bevestigen wij uw afspraak(en) voor order {{ order_reference }} ({{ order_title }}).</p>
+{{ appointments_by_person }}
 {{ form_link_section }}
 <p>{{ approval_instructions }}</p>
 <p>Met vriendelijke groet,<br>{{ company_signature }}</p>
@@ -319,19 +329,28 @@ HTML;
         // Always show the form link section (link is now always returned)
         $formLinkSection = '<p>Om uw order te kunnen verwerken, verzoeken wij u vriendelijk om <a href="'.e($formLink).'" style="color: #007bff; text-decoration: underline;">graag dit GVL formulier in te vullen</a>.</p>';
 
+        // Load order items with resource planner data
+        $order->load([
+            'orderItems.resourceOrderItems.resource.clinic.address',
+            'orderItems.resourceOrderItems.resource.resourceType',
+            'orderItems.person',
+            'orderItems.product',
+        ]);
+
         return [
-            'order_reference'      => (string) $order->id,
-            'order_title'          => e($order->title ?? ''),
-            'order_status'         => e($order->status?->label() ?? ''),
-            'order_total'          => $this->formatCurrency($order->total_price),
-            'order_summary_table'  => $this->renderItemsTable($order),
-            'customer_name'        => e($this->resolveCustomerName($order)),
-            'approval_instructions'=> 'Geef uw akkoord door op deze e-mail te reageren of telefonisch contact met ons op te nemen.',
-            'company_signature'    => e(config('app.name', 'Privatescan')),
-            'default_email'        => $this->getDefaultEmail($order),
-            'current_date'         => Carbon::now()->format('d-m-Y'),
-            'form_link'            => e($formLink),
-            'form_link_section'    => $formLinkSection,
+            'order_reference'        => (string) $order->id,
+            'order_title'            => e($order->title ?? ''),
+            'order_status'           => e($order->status?->label() ?? ''),
+            'order_total'            => $this->formatCurrency($order->total_price),
+            'order_summary_table'    => $this->renderItemsTable($order),
+            'appointments_by_person' => $this->renderAppointmentsByPerson($order),
+            'customer_name'          => e($this->resolveCustomerName($order)),
+            'approval_instructions'  => 'Geef uw akkoord door op deze e-mail te reageren of telefonisch contact met ons op te nemen.',
+            'company_signature'      => e(config('app.name', 'Privatescan')),
+            'default_email'          => $this->getDefaultEmail($order),
+            'current_date'           => Carbon::now()->format('d-m-Y'),
+            'form_link'              => e($formLink),
+            'form_link_section'      => $formLinkSection,
         ];
     }
 
@@ -393,6 +412,112 @@ HTML;
     </tbody>
 </table>
 HTML;
+    }
+
+    protected function renderAppointmentsByPerson(Order $order): string
+    {
+        $items = $order->orderItems ?: collect();
+
+        if (! $items instanceof Collection) {
+            $items = collect($items);
+        }
+
+        if ($items->isEmpty()) {
+            return '<p>Er zijn nog geen afspraken ingepland.</p>';
+        }
+
+        // Group appointments by person
+        $appointmentsByPerson = [];
+
+        foreach ($items as $item) {
+            $personId = $item->person_id;
+            $personName = $item->person->name ?? 'Onbekend';
+
+            if (! isset($appointmentsByPerson[$personId])) {
+                $appointmentsByPerson[$personId] = [
+                    'person_name'  => $personName,
+                    'appointments' => [],
+                ];
+            }
+
+            // Get resource order items (appointments) for this order item
+            $resourceOrderItems = $item->resourceOrderItems ?? collect();
+            if (! $resourceOrderItems instanceof Collection) {
+                $resourceOrderItems = collect($resourceOrderItems);
+            }
+
+            foreach ($resourceOrderItems as $resourceOrderItem) {
+                $resource = $resourceOrderItem->resource;
+                $clinic = $resource?->clinic;
+                $address = $clinic?->address;
+
+                $from = $resourceOrderItem->from ? Carbon::parse($resourceOrderItem->from) : null;
+                $to = $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to) : null;
+
+                $appointmentData = [
+                    'product_name'  => e($item->product->name ?? 'Onbekend product'),
+                    'resource_name' => e($resource->name ?? 'Onbekend'),
+                    'date'          => $from ? $from->format('d-m-Y') : 'N/A',
+                    'time_from'     => $from ? $from->format('H:i') : 'N/A',
+                    'time_to'       => $to ? $to->format('H:i') : 'N/A',
+                    'clinic_name'   => e($clinic->name ?? 'Onbekend'),
+                    'address'       => $this->formatAddress($address),
+                ];
+
+                $appointmentsByPerson[$personId]['appointments'][] = $appointmentData;
+            }
+        }
+
+        // Render HTML for each person
+        $html = '';
+
+        foreach ($appointmentsByPerson as $personData) {
+            if (empty($personData['appointments'])) {
+                continue;
+            }
+
+            $html .= '<div style="margin: 20px 0; padding: 15px; background-color: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 4px;">';
+            $html .= '<h3 style="margin-top: 0; margin-bottom: 15px; color: #111827; font-size: 18px;">Afspraken voor '.e($personData['person_name']).'</h3>';
+
+            foreach ($personData['appointments'] as $appointment) {
+                $html .= '<div style="margin-bottom: 15px; padding: 12px; background-color: #ffffff; border-radius: 4px; border: 1px solid #e5e7eb;">';
+                $html .= '<p style="margin: 0 0 8px 0; font-weight: 600; color: #111827;">'.$appointment['product_name'].'</p>';
+                $html .= '<p style="margin: 4px 0; color: #6b7280;"><strong>Datum:</strong> '.$appointment['date'].'</p>';
+                $html .= '<p style="margin: 4px 0; color: #6b7280;"><strong>Tijd:</strong> '.$appointment['time_from'].' - '.$appointment['time_to'].'</p>';
+                $html .= '<p style="margin: 4px 0; color: #6b7280;"><strong>Locatie:</strong> '.$appointment['clinic_name'].'</p>';
+
+                if ($appointment['address']) {
+                    $html .= '<p style="margin: 4px 0; color: #6b7280;"><strong>Adres:</strong> '.$appointment['address'].'</p>';
+                }
+
+                $html .= '<p style="margin: 4px 0; color: #6b7280;"><strong>Resource:</strong> '.$appointment['resource_name'].'</p>';
+                $html .= '</div>';
+            }
+
+            $html .= '</div>';
+        }
+
+        if (empty($html)) {
+            return '<p>Er zijn nog geen afspraken ingepland.</p>';
+        }
+
+        return $html;
+    }
+
+    protected function formatAddress($address): string
+    {
+        if (! $address) {
+            return '';
+        }
+
+        $parts = array_filter([
+            trim($address->street ?? ''),
+            trim(($address->house_number ?? '').($address->house_number_suffix ?? '')),
+            trim($address->postal_code ?? ''),
+            trim($address->city ?? ''),
+        ]);
+
+        return implode(' ', $parts);
     }
 
     protected function resolveCustomerName(Order $order): string
@@ -492,45 +617,5 @@ HTML;
         }
 
         return $person;
-    }
-
-    /**
-     * Check if order contains MRI research products.
-     */
-    protected function hasMriResearch(Order $order): bool
-    {
-        $items = $order->orderItems ?? collect();
-        if (! $items instanceof Collection) {
-            $items = collect($items);
-        }
-
-        foreach ($items as $item) {
-            $productName = strtolower($item->product->name ?? '');
-            if (str_contains($productName, 'mri')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if order contains CT scan products.
-     */
-    protected function hasCtScan(Order $order): bool
-    {
-        $items = $order->orderItems ?? collect();
-        if (! $items instanceof Collection) {
-            $items = collect($items);
-        }
-
-        foreach ($items as $item) {
-            $productName = strtolower($item->product->name ?? '');
-            if (str_contains($productName, 'ct') || str_contains($productName, 'ct-scan')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

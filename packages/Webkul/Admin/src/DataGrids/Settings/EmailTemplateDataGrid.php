@@ -16,6 +16,10 @@ class EmailTemplateDataGrid extends DataGrid
             ->addSelect(
                 'email_templates.id',
                 'email_templates.name',
+                'email_templates.code',
+                'email_templates.type',
+                'email_templates.language',
+                'email_templates.departments',
                 'email_templates.subject',
             );
 
@@ -46,6 +50,42 @@ class EmailTemplateDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'code',
+            'label'      => 'Code',
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => true,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'type',
+            'label'      => 'Type',
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'language',
+            'label'      => 'Taal',
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'departments',
+            'label'      => 'Afdelingen',
+            'type'       => 'string',
+            'sortable'   => false,
+            'searchable' => false,
             'filterable' => true,
         ]);
 

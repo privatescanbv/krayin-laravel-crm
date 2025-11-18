@@ -30,7 +30,6 @@ npm-debug.log
 /storage/*.key
 /storage/dcc-data/
 /vendor
-yarn.lock
 yarn-error.log
 
 # Playwright

@@ -45,20 +45,32 @@ class SyncKeycloakConfig extends Command
             $this->info('✓ Realm aangemaakt: '.config('services.keycloak.realm'));
         }
 
-        if ($results['client_exists']) {
-            $this->info('✓ Client bestaat al: '.config('services.keycloak.client_id'));
+        // Display client results
+        foreach ($results['clients'] ?? [] as $clientId => $clientResult) {
+            if ($clientResult['exists']) {
+                $this->info("✓ Client bestaat al: {$clientId}");
 
-            if ($results['client_updated']) {
-                $this->info('✓ Client geüpdatet: '.config('services.keycloak.client_id'));
-            }
-        } elseif ($results['client_created']) {
-            $this->info('✓ Client aangemaakt: '.config('services.keycloak.client_id'));
+                if ($clientResult['updated']) {
+                    $this->info("✓ Client geüpdatet: {$clientId}");
+                }
 
-            if (isset($results['client_secret'])) {
-                $this->warn('⚠ Client secret gegenereerd. Update KEYCLOAK_CLIENT_SECRET in .env met:');
-                $this->line('   '.$results['client_secret']);
-            } else {
-                $this->warn('⚠ Let op: Client secret is gegenereerd. Haal het op via Keycloak Admin Console of check de logs.');
+                // Show secret if available (useful for production setup)
+                if (isset($clientResult['secret'])) {
+                    $secretEnvKey = $clientId === 'forms-app' ? 'FORMS_KEYCLOAK_CLIENT_SECRET' : 'KEYCLOAK_CLIENT_SECRET';
+                    $this->warn("⚠ Client secret voor {$clientId}. Update {$secretEnvKey} in .env met:");
+                    $this->line('   '.$clientResult['secret']);
+                }
+            } elseif ($clientResult['created']) {
+                $this->info("✓ Client aangemaakt: {$clientId}");
+
+                if (isset($clientResult['secret'])) {
+                    // Determine secret env key based on client ID
+                    $secretEnvKey = $clientId === 'forms-app' ? 'FORMS_KEYCLOAK_CLIENT_SECRET' : 'KEYCLOAK_CLIENT_SECRET';
+                    $this->warn("⚠ Client secret gegenereerd. Update {$secretEnvKey} in .env met:");
+                    $this->line('   '.$clientResult['secret']);
+                } else {
+                    $this->warn('⚠ Let op: Client secret is gegenereerd. Haal het op via Keycloak Admin Console of check de logs.');
+                }
             }
         }
 

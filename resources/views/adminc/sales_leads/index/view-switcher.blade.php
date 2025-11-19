@@ -33,7 +33,7 @@
                         'pipeline_id' => $tempPipeline->id,
                         'view_type'   => request('view_type')
                     ]) }}"
-                    class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-gray-100 dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-gray-100 dark:bg-gray-950' : '' }}"
+                    class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-neutral-bg dark:bg-gray-950' : '' }}"
                 >
                     {{ $tempPipeline->name }}
                 </a>
@@ -58,7 +58,7 @@
         </x-slot>
     </x-admin::dropdown>
 
-    <div class="flex items-center gap-0.5">
+    <div class="flex items-center border bg-white gap-0.5">
         {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.view_type.before') !!}
 
         @if (request('view_type'))
@@ -66,12 +66,12 @@
                 class="flex"
                 href="{{ route('admin.sales-leads.index', ['pipeline_id' => request('pipeline_id')]) }}"
             >
-                <span class="icon-kanban p-2 text-2xl"></span>
+                <span class="icon-kanban p-1.5 text-2xl"></span>
             </a>
 
-            <span class="icon-list rounded-md bg-gray-100 p-2 text-2xl dark:bg-gray-950"></span>
+            <span class="icon-list rounded-md bg-neutral-bg p-1.5 text-2xl dark:bg-gray-950"></span>
         @else
-            <span class="icon-kanban rounded-md bg-white p-2 text-2xl dark:bg-gray-900"></span>
+            <span class="icon-kanban rounded-md bg-white p-1.5 text-2xl dark:bg-gray-900"></span>
 
             <a
                 href="{{ route('admin.sales-leads.index', [
@@ -80,7 +80,7 @@
                 ]) }}"
                 class="flex"
             >
-                <span class="icon-list p-2 text-2xl"></span>
+                <span class="icon-list p-1.5 text-2xl"></span>
             </a>
         @endif
 

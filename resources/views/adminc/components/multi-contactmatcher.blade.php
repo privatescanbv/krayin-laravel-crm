@@ -48,7 +48,7 @@
                         <button
                             @click="clearAllPersons"
                             v-if="selectedPersons.length > 0"
-                            class="text-red-600 hover:text-red-800 text-xs"
+                            class="text-error hover:text-red-800 text-xs"
                         >
                             Alles verwijderen
                         </button>
@@ -64,13 +64,13 @@
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">
                                         <a :href="'/admin/contacts/persons/view/' + person.id"
-                                           class="text-blue-600 hover:text-blue-800 underline font-medium"
+                                           class="text-blue-600 hover:text-activity-task-text underline font-medium"
                                            target="_blank">
                                             {{ person.name }}
                                         </a>
 
                                         <a :href="'/admin/leads/sync-lead-to-person/' + lead.id + '/' + person.id"
-                                           class="text-green-600 hover:text-green-800"
+                                           class="text-succes hover:text-green-800"
                                            target="_blank"
                                            title="Gegevens overnemen (lead → person)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,16 +91,16 @@
                                                         :class="{
                                                             'bg-red-500': person.match_score_percentage < 50,
                                                             'bg-yellow-500': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
-                                                            'bg-green-500': person.match_score_percentage >= 80
+                                                            'bg-succes': person.match_score_percentage >= 80
                                                         }"
                                                         :style="{ width: (person.match_score_percentage || 0) + '%' }"
                                                     ></div>
                                                 </div>
                                                 <span class="text-xs font-medium"
                                                       :class="{
-                                                          'text-red-600': person.match_score_percentage < 50,
+                                                          'text-error': person.match_score_percentage < 50,
                                                           'text-yellow-600': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
-                                                          'text-green-600': person.match_score_percentage >= 80
+                                                          'text-succes': person.match_score_percentage >= 80
                                                       }">
                                                     {{ Math.round(person.match_score_percentage || 0) }}%
                                                 </span>
@@ -110,7 +110,7 @@
                                 </div>
                                 <button
                                     @click="removePerson(index)"
-                                    class="text-red-600 hover:text-red-800 p-1"
+                                    class="text-error hover:text-red-800 p-1"
                                     title="Verwijder persoon"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,7 +479,7 @@
 
                 getScoreColorClass(score) {
                     if (score >= 80) {
-                        return 'bg-green-500';
+                        return 'bg-succes';
                     } else if (score >= 60) {
                         return 'bg-yellow-500';
                     } else if (score >= 40) {

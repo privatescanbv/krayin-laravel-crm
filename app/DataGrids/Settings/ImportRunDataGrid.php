@@ -104,10 +104,10 @@ class ImportRunDataGrid extends DataGrid
             'sortable'   => true,
             'closure'    => function ($row) {
                 if ($row->records_errored > 0) {
-                    return "<span class='text-red-600 font-semibold'>{$row->records_errored}</span>";
+                    return "<span class='text-error font-semibold'>{$row->records_errored}</span>";
                 }
 
-                return "<span class='text-green-600'>0</span>";
+                return "<span class='text-succes'>0</span>";
             },
         ]);
     }

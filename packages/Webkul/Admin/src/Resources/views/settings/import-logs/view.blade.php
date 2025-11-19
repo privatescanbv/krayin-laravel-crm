@@ -4,7 +4,7 @@
     </x-slot:title>
 
     <div class="flex gap-4 max-lg:flex-wrap">
-        <div class="max-lg:min-w-full max-lg:max-w-full lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="max-lg:min-w-full max-lg:max-w-full lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <div class="flex items-center justify-between">
                     <div class="flex justify-start max-lg:hidden">
@@ -33,7 +33,7 @@
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Level:</span>
                     <span class="text-sm font-semibold
-                        @if($importLog->level === 'error') text-red-600 dark:text-red-400
+                        @if($importLog->level === 'error') text-error dark:text-red-400
                         @elseif($importLog->level === 'warning') text-yellow-600 dark:text-yellow-400
                         @else text-blue-600 dark:text-blue-400
                         @endif">
@@ -42,7 +42,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Import Run:</span>
-                    <a href="{{ route('admin.settings.import-runs.view', $importLog->import_run_id) }}" 
+                    <a href="{{ route('admin.settings.import-runs.view', $importLog->import_run_id) }}"
                        class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                         #{{ $importLog->import_run_id }}
                     </a>
@@ -67,7 +67,7 @@
             @if($importLog->context)
                 <div class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 dark:border-gray-800">
                     <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Context</h4>
-                    <pre class="text-xs p-2 bg-gray-100 dark:bg-gray-800 rounded overflow-x-auto">{{ json_encode($importLog->context, JSON_PRETTY_PRINT) }}</pre>
+                    <pre class="text-xs p-2 bg-neutral-bg dark:bg-gray-800 rounded overflow-x-auto">{{ json_encode($importLog->context, JSON_PRETTY_PRINT) }}</pre>
                 </div>
             @endif
         </div>

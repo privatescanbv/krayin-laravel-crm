@@ -6,7 +6,7 @@
 
     <div class="flex flex-col gap-4">
         <!-- Header section -->
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.settings.groups.index.breadcrumbs.before') !!}
 
@@ -123,7 +123,7 @@
                                                 class="peer hidden"
                                                 v-model="applied.massActions.indices"
                                             >
-    
+
                                             <span class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
                                             </span>
                                         </label>

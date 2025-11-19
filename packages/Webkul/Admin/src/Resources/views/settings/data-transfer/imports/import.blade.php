@@ -4,12 +4,12 @@
     </x-slot>
 
     <!-- Page Header -->
-    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+    <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
         <div class="flex flex-col gap-2">
             {!! view_render_event('admin.settings.data_transfers.import.breadcrumbs.before') !!}
 
             <!-- Breadcrumbs -->
-            <x-admin::breadcrumbs 
+            <x-admin::breadcrumbs
                 name="settings.data_transfers.import"
                 :entity="$import"
             />
@@ -57,7 +57,7 @@
                     v-if="importResource.state == 'pending'"
                 >
                     <p class="flex items-center gap-2">
-                        <i class="icon-info rounded-full bg-orange-200 text-2xl text-orange-600 dark:!text-orange-600"></i>
+                        <i class="icon-info rounded-full bg-activity-note-bg text-2xl text-orange-600 dark:!text-orange-600"></i>
 
                         @lang('admin::app.settings.data-transfer.imports.import.validate-info')
                     </p>
@@ -76,7 +76,7 @@
                     v-if="importResource.state == 'validating'"
                 >
                     <p class="flex items-center gap-2">
-                        <i class="icon-info rounded-full bg-blue-200 text-2xl text-blue-600 dark:!text-blue-600"></i>
+                        <i class="icon-info rounded-full bg-activity-task-bg text-2xl text-blue-600 dark:!text-blue-600"></i>
 
                         @lang('admin::app.settings.data-transfer.imports.import.validating-info')
 
@@ -97,7 +97,7 @@
                             class="mb-2 flex items-center gap-2 dark:text-white"
                             v-if="isValid"
                         >
-                            <i class="icon-success h-fit rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                            <i class="icon-success h-fit rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                             @lang('admin::app.settings.data-transfer.imports.import.validation-success-info')
                         </p>
@@ -106,7 +106,7 @@
                             class="flex items-center gap-2 dark:text-white"
                             v-else
                         >
-                            <i class="icon-error h-fit rounded-full bg-red-200 text-2xl text-red-600 dark:!text-red-600"></i>
+                            <i class="icon-error h-fit rounded-full bg-red-200 text-2xl text-error dark:!text-error"></i>
 
                             @lang('admin::app.settings.data-transfer.imports.import.validation-failed-info')
                         </p>
@@ -114,7 +114,7 @@
                         <p class="flex items-center gap-2 dark:text-white">
                             <i
                                 class="icon-info rounded-full text-2xl"
-                                :class="isValid ? 'bg-green-200 text-green-600 dark:!text-green-600' : 'bg-red-200 text-red-600 dark:!text-red-600'"
+                                :class="isValid ? 'bg-activity-email-bg text-succes dark:!text-succes' : 'bg-red-200 text-error dark:!text-error'"
                             ></i>
 
                             <span class="font-medium text-gray-800 dark:text-white">
@@ -127,7 +127,7 @@
                         <p class="flex items-center gap-2 dark:text-white">
                             <i
                                 class="icon-info rounded-full text-2xl"
-                                :class="isValid ? 'bg-green-200 text-green-600 dark:!text-green-600' : 'bg-red-200 text-red-600 dark:!text-red-600'"
+                                :class="isValid ? 'bg-activity-email-bg text-succes dark:!text-succes' : 'bg-red-200 text-error dark:!text-error'"
                             ></i>
 
                             <span class="font-medium text-gray-800 dark:text-white">
@@ -140,7 +140,7 @@
                         <p class="flex items-center gap-2 dark:text-white">
                             <i
                                 class="icon-info rounded-full text-2xl"
-                                :class="isValid ? 'bg-green-200 text-green-600 dark:!text-green-600' : 'bg-red-200 text-red-600 dark:!text-red-600'"
+                                :class="isValid ? 'bg-activity-email-bg text-succes dark:!text-succes' : 'bg-red-200 text-error dark:!text-error'"
                             ></i>
 
                             <span class="font-medium text-gray-800 dark:text-white">
@@ -154,7 +154,7 @@
                             class="flex place-items-start items-center gap-2 dark:text-white"
                             v-if="importResource.errors.length"
                         >
-                            <i class="icon-info rounded-full bg-red-200 text-2xl text-red-600 dark:!text-red-600"></i>
+                            <i class="icon-info rounded-full bg-red-200 text-2xl text-error dark:!text-error"></i>
 
                             <div class="grid gap-2">
                                 <p
@@ -194,12 +194,12 @@
                     v-else-if="importResource.state == 'processing'"
                 >
                     <p class="flex items-center gap-2">
-                        <i class="icon-info rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                        <i class="icon-info rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                         @lang('admin::app.settings.data-transfer.imports.import.importing-info')
                     </p>
 
-                    <div class="h-5 w-full rounded-sm bg-green-200 dark:bg-green-700">
+                    <div class="h-5 w-full rounded-sm bg-activity-email-bg dark:bg-green-700">
                         <div
                             class="h-5 rounded-sm bg-green-600"
                             :style="{ 'width': stats.progress + '%' }"
@@ -261,12 +261,12 @@
                     v-else-if="importResource.state == 'linking'"
                 >
                     <p class="flex items-center gap-2">
-                        <i class="icon-info rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                        <i class="icon-info rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                         @lang('admin::app.settings.data-transfer.imports.import.linking-info')
                     </p>
 
-                    <div class="h-5 w-full rounded-sm bg-green-200 dark:bg-green-700">
+                    <div class="h-5 w-full rounded-sm bg-activity-email-bg dark:bg-green-700">
                         <div
                             class="h-5 rounded-sm bg-green-600"
                             :style="{ 'width': stats.progress + '%' }"
@@ -305,12 +305,12 @@
                 >
 
                     <p class="flex items-center gap-2">
-                        <i class="icon-info rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                        <i class="icon-info rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                         @lang('admin::app.settings.data-transfer.imports.import.indexing-info')
                     </p>
 
-                    <div class="h-5 w-full rounded-sm bg-green-200 dark:bg-green-700">
+                    <div class="h-5 w-full rounded-sm bg-activity-email-bg dark:bg-green-700">
                         <div
                             class="h-5 rounded-sm bg-green-600"
                             :style="{ 'width': stats.progress + '%' }"
@@ -353,13 +353,13 @@
                             class="mb-2 flex items-center gap-2 text-base dark:text-white"
                             v-if="isValid"
                         >
-                            <i class="icon-success h-fit rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                            <i class="icon-success h-fit rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                             @lang('admin::app.settings.data-transfer.imports.import.imported-info')
                         </p>
 
                         <p class="flex items-center gap-2">
-                            <i class="icon-info rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                            <i class="icon-info rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                             <span class="font-medium text-gray-800 dark:text-white">
                                 @lang('admin::app.settings.data-transfer.imports.import.total-created')
@@ -369,7 +369,7 @@
                         </p>
 
                         <p class="flex items-center gap-2">
-                            <i class="icon-info rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                            <i class="icon-info rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                             <span class="font-medium text-gray-800 dark:text-white">
                                 @lang('admin::app.settings.data-transfer.imports.import.total-updated')
@@ -379,7 +379,7 @@
                         </p>
 
                         <p class="flex items-center gap-2">
-                            <i class="icon-info rounded-full bg-green-200 text-2xl text-green-600 dark:!text-green-600"></i>
+                            <i class="icon-info rounded-full bg-activity-email-bg text-2xl text-succes dark:!text-succes"></i>
 
                             <span class="font-medium text-gray-800 dark:text-white">
                                 @lang('admin::app.settings.data-transfer.imports.import.total-deleted')

@@ -13,7 +13,7 @@
     >
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.organizations.edit.breadcrumbs.before', ['organization' => $organization]) !!}
 
@@ -47,7 +47,7 @@
             </div>
 
             <!-- Address Section -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
 
                 <x-adminc::components.address :entity={{  $organization }} />
 

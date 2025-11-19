@@ -6,7 +6,7 @@
 
     <div class="flex flex-col gap-4">
         <!-- Header section -->
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.settings.marketing.events.index.breadcrumbs.before') !!}
 
@@ -14,13 +14,13 @@
                 <x-admin::breadcrumbs name="settings.marketing.events" />
 
                 {!! view_render_event('admin.settings.marketing.events.index.breadcrumbs.after') !!}
-                
+
                 <div class="text-xl font-bold dark:text-gray-300">
                     @lang('admin::app.settings.marketing.events.index.title')
                 </div>
             </div>
 
-            <div class="flex items-center gap-x-2.5">                
+            <div class="flex items-center gap-x-2.5">
                 <!-- Create button for Marketing Event -->
                 <div class="flex items-center gap-x-2.5">
                     {!! view_render_event('admin.settings.marketing.events.index.breadcrumbs.after') !!}
@@ -39,15 +39,15 @@
                 </div>
             </div>
         </div>
-        
+
         <v-marketing-events ref="marketingEvent">
             <x-admin::shimmer.datagrid />
         </v-marketing-events>
     </div>
 
     @pushOnce('scripts')
-        <script 
-            type="text/x-template" 
+        <script
+            type="text/x-template"
             id="v-marketing-events-template"
         >
             <div>
@@ -67,7 +67,7 @@
                         <template v-if="isLoading">
                             <x-admin::shimmer.datagrid.table.body />
                         </template>
-            
+
                         <template v-else>
                             <div
                                 v-for="record in available.records"
@@ -92,10 +92,10 @@
                                         ></label>
                                     </div>
                                 @endif
-                                
+
                                 <!-- Marketing Event Id -->
                                 <p>@{{ record.id }}</p>
-            
+
                                 <!-- Marketing Event Name -->
                                 <p>@{{ record.name }}</p>
 
@@ -199,7 +199,7 @@
 
                 <Teleport to="body">
                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.before') !!}
-        
+
                     <x-admin::form
                         v-slot="{ meta, errors, handleSubmit }"
                         as="div"
@@ -207,25 +207,25 @@
                     >
                         <form @submit="handleSubmit($event, createOrUpdate)">
                             {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.before') !!}
-        
+
                             <x-admin::modal ref="marketingModal">
                                 <x-slot:header>
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.header.dropdown.before') !!}
-        
+
                                     <p class="text-lg font-bold text-gray-800 dark:text-white">
-                                        @{{ 
+                                        @{{
                                             actionType == 'create'
                                             ? "@lang('admin::app.settings.marketing.events.index.create.title')"
-                                            : "@lang('admin::app.settings.marketing.events.index.edit.title')" 
+                                            : "@lang('admin::app.settings.marketing.events.index.edit.title')"
                                         }}
                                     </p>
 
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.header.dropdown.after') !!}
                                 </x-slot>
-        
+
                                 <x-slot:content>
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.content.controls.before') !!}
-        
+
                                     <!-- Name -->
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label
@@ -234,7 +234,7 @@
                                         >
                                             @lang('admin::app.settings.marketing.events.index.create.name')
                                         </x-admin::form.control-group.label>
-                                        
+
                                         <x-admin::form.control-group.control
                                             type="hidden"
                                             name="id"
@@ -247,19 +247,19 @@
                                             rules="required|max:60"
                                             :label="trans('admin::app.settings.marketing.events.index.create.name')"
                                         />
-        
+
                                         <x-admin::form.control-group.error control-name="name" />
                                     </x-admin::form.control-group>
-        
+
                                     <!-- Description -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label 
+                                        <x-admin::form.control-group.label
                                             class="required"
                                             for="description"
                                         >
                                             @lang('admin::app.settings.marketing.events.index.create.description')
                                         </x-admin::form.control-group.label>
-                                        
+
                                         <x-admin::form.control-group.control
                                             type="textarea"
                                             name="description"
@@ -268,19 +268,19 @@
                                             rows="4"
                                             :label="trans('admin::app.settings.marketing.events.index.create.description')"
                                         />
-        
+
                                         <x-admin::form.control-group.error control-name="description" />
                                     </x-admin::form.control-group>
 
                                     <!-- Date -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label 
+                                        <x-admin::form.control-group.label
                                             class="required"
                                             for="date"
                                         >
                                             @lang('admin::app.settings.marketing.events.index.create.date')
                                         </x-admin::form.control-group.label>
-                                        
+
                                         <x-admin::form.control-group.control
                                             type="date"
                                             name="date"
@@ -288,16 +288,16 @@
                                             rules="required"
                                             :label="trans('admin::app.settings.marketing.events.index.create.date')"
                                         />
-        
+
                                         <x-admin::form.control-group.error control-name="date" />
                                     </x-admin::form.control-group>
 
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.content.controls.after') !!}
                                 </x-slot>
-        
+
                                 <x-slot:footer>
                                     {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.before') !!}
-        
+
                                     <x-admin::button
                                         type="submit"
                                         class="primary-button"
@@ -305,15 +305,15 @@
                                         ::loading="isStoring"
                                         ::disabled="isStoring"
                                     />
-        
+
                                     {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.after') !!}
                                 </x-slot>
                             </x-admin::modal>
-        
+
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.after') !!}
                         </form>
                     </x-admin::form>
-        
+
                     {!! view_render_event('admin.components.activities.actions.activity.form_controls.after') !!}
                 </Teleport>
             </div>
@@ -327,29 +327,29 @@
                     return {
                         isStoring: false,
 
-                        actionType: 'create',   
+                        actionType: 'create',
                     };
                 },
 
                 computed: {
                     gridsCount() {
                         let count = this.$refs.datagrid.available.columns.length;
-        
+
                         if (this.$refs.datagrid.available.actions.length) {
                             ++count;
                         }
-        
+
                         if (this.$refs.datagrid.available.massActions.length) {
                             ++count;
                         }
-        
+
                         return count;
                     },
                 },
 
                 methods: {
                     /**
-                     * Toggle the modal. 
+                     * Toggle the modal.
                      */
                     toggleModal() {
                         this.$refs.marketingModal.toggle();
@@ -357,11 +357,11 @@
 
                     /**
                      * Create or Update the Events.
-                     * 
+                     *
                      * @param {Object} params
                      * @param {Function} helpers.resetForm
                      * @param {Function} helpers.setErrors
-                     * 
+                     *
                      * @return {void}
                      */
                     createOrUpdate(paramas, { resetForm, setErrors }) {
@@ -374,7 +374,7 @@
                         this.$axios.post(
                             isUpdating
                             ? `{{ route('admin.settings.marketing.events.update', '') }}/${paramas.id}`
-                            : '{{ route('admin.settings.marketing.events.store') }}', 
+                            : '{{ route('admin.settings.marketing.events.store') }}',
                             paramas
                         )
                             .then(response => {
@@ -395,7 +395,7 @@
 
                     /**
                      * Get the particular event record, so that we can use for edit.
-                     * 
+                     *
                      * @param {Object} record
                      */
                     edit(record) {

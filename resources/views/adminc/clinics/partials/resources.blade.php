@@ -1,5 +1,5 @@
 <div class="p-4">
-    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="mb-4 flex items-center justify-between">
             <div>
                 <h4 class="text-lg font-semibold dark:text-white">
@@ -52,7 +52,7 @@
                                         @if (bouncer()->hasPermission('settings.resources.edit'))
                                             <a
                                                 href="{{ route('admin.settings.resources.edit', $resource->id) }}"
-                                                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                class="text-blue-600 hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
                                                 title="@lang('admin::app.settings.clinics.view.resources.table.edit')"
                                             >
                                                 <i class="icon-edit text-lg"></i>
@@ -60,7 +60,7 @@
                                         @endif
                                         <a
                                             href="{{ route('admin.settings.resources.show', $resource->id) }}"
-                                            class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                            class="text-succes hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                                             title="@lang('admin::app.settings.clinics.view.resources.table.view')"
                                         >
                                             <i class="icon-eye text-lg"></i>

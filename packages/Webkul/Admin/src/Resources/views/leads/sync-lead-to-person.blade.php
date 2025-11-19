@@ -15,15 +15,15 @@
             <div class="text-xl font-bold dark:text-white">
                 Lead gegevens overnemen naar Person
             </div>
-            
+
             <p class="text-gray-600 dark:text-gray-300">
                 Overneem gegevens van Lead <strong>{{ $lead->name }}</strong> naar Person <strong>{{ $person->name }}</strong>
             </p>
         </div>
 
         <div class="flex items-center gap-x-2.5">
-            <a 
-                href="{{ route('admin.leads.view', $lead->id) }}" 
+            <a
+                href="{{ route('admin.leads.view', $lead->id) }}"
                 class="secondary-button"
             >
                 @lang('admin::app.account.edit.back-btn')
@@ -48,10 +48,10 @@
                 <div class="p-4">
                     <div class="flex items-center gap-4">
                         <div class="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-300 {{ $matchBreakdown['percentage'] >= 80 ? 'bg-green-500' : ($matchBreakdown['percentage'] >= 50 ? 'bg-yellow-500' : 'bg-red-500') }}" 
+                            <div class="h-full rounded-full transition-all duration-300 {{ $matchBreakdown['percentage'] >= 80 ? 'bg-succes' : ($matchBreakdown['percentage'] >= 50 ? 'bg-yellow-500' : 'bg-red-500') }}"
                                  style="width: {{ $matchBreakdown['percentage'] }}%"></div>
                         </div>
-                        <span class="text-lg font-medium {{ $matchBreakdown['percentage'] >= 80 ? 'text-green-600' : ($matchBreakdown['percentage'] >= 50 ? 'text-yellow-600' : 'text-red-600') }}">
+                        <span class="text-lg font-medium {{ $matchBreakdown['percentage'] >= 80 ? 'text-succes' : ($matchBreakdown['percentage'] >= 50 ? 'text-yellow-600' : 'text-error') }}">
                             {{ $matchBreakdown['percentage'] }}%
                         </span>
                     </div>
@@ -204,7 +204,7 @@
                     .catch(error => {
                         console.error('Error:', error);
                         alert('Er is een fout opgetreden bij het overnemen: ' + error.message);
-                        
+
                         // Restore button state on error
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = originalText;

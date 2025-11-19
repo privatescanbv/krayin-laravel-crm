@@ -21,13 +21,13 @@
                     v-for="suggestion in suggestions"
                     :key="`${suggestion.type}-${suggestion.id}`"
                     @click="selectSuggestion(suggestion)"
-                    class="flex cursor-pointer items-center gap-3 rounded-md border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    class="flex cursor-pointer items-center gap-3 rounded-md border p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
                 >
                     <div class="flex h-8 w-8 items-center justify-center rounded-full"
                          :class="{
                              'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300': suggestion.type === 'lead',
                              'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300': suggestion.type === 'sales_lead',
-                             'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300': suggestion.type === 'person'
+                             'bg-green-100 text-succes dark:bg-green-900 dark:text-green-300': suggestion.type === 'person'
                          }"
                     >
                         <span class="text-xs font-semibold">

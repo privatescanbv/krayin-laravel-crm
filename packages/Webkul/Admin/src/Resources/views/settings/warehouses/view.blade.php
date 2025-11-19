@@ -7,7 +7,7 @@
         <!-- Left Panel -->
         {!! view_render_event('admin.settings.warehouses.view.left.before', ['warehouse' => $warehouse]) !!}
 
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Product Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumbs -->
@@ -75,7 +75,7 @@
 
                 {!! view_render_event('admin.settings.warehouses.view.left.actions.after', ['warehouse' => $warehouse]) !!}
             </div>
-            
+
             <!-- General Information -->
             @include ('admin::settings.warehouses.view.general-information')
 
@@ -86,14 +86,14 @@
         {!! view_render_event('admin.settings.warehouses.view.left.after', ['warehouse' => $warehouse]) !!}
 
         {!! view_render_event('admin.settings.warehouses.view.right.before', ['warehouse' => $warehouse]) !!}
-        
+
         <!-- Right Panel -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
             {!! view_render_event('admin.settings.warehouses.view.right.attributes.before', ['warehouse' => $warehouse]) !!}
 
             <!-- Activity Navigation -->
             <x-admin::activities
-                :endpoint="route('admin.settings.warehouse.activities.index', $warehouse->id)" 
+                :endpoint="route('admin.settings.warehouse.activities.index', $warehouse->id)"
                 :types="[
                     ['name' => 'all', 'label' => trans('admin::app.settings.warehouses.view.all')],
                     ['name' => 'note', 'label' => trans('admin::app.settings.warehouses.view.notes')],
@@ -113,5 +113,5 @@
         </div>
 
         {!! view_render_event('admin.warehouse.view.right.after', ['warehouse' => $warehouse]) !!}
-    </div>    
+    </div>
 </x-admin::layouts>

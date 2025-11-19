@@ -9,7 +9,7 @@
                 @if (bouncer()->hasPermission('persons.edit'))
                     <a
                         href="{{ route('admin.contacts.persons.edit', $person->id) }}"
-                        class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                        class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                     ></a>
                 @endif
             </div>
@@ -43,7 +43,7 @@
                             <a
                                 href="https://maps.google.com/?q={{ urlencode($person->address->full_address) }}"
                                 target="_blank"
-                                class="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                class="ml-2 text-blue-600 hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
                                 title="Bekijk op Google Maps"
                             >
                                 <span class="icon-location text-sm"></span>

@@ -11,7 +11,7 @@
         method="POST"
     >
         @include('adminc.components.validation-errors')
-        <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex flex-col gap-2 rounded-lg border text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex items-center justify-between px-4 py-2">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.settings.pipelines.create.breadcrumbs.before') !!}
@@ -177,23 +177,23 @@
                             ::class="{ draggable: isDragable(element) }"
                             class="flex gap-4 overflow-x-auto"
                         >
-                            <div class="flex min-w-[275px] max-w-[275px] flex-col justify-between rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                            <div class="flex min-w-[275px] max-w-[275px] flex-col justify-between rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <!-- Stage Crad -->
                                 <div class="flex flex-col gap-6 px-4 py-3">
                                     <!-- Stage Title and Action -->
                                     <div class="flex items-center justify-between">
                                         <span class="py-1 font-medium dark:text-gray-300">
-                                            @{{ element.name ? element.name : '@lang('admin::app.settings.pipelines.create.newly-added')'}} 
+                                            @{{ element.name ? element.name : '@lang('admin::app.settings.pipelines.create.newly-added')'}}
                                         </span>
 
                                         <!-- Drag Icon -->
                                         <i
-                                            v-if="isDragable(element)" 
-                                            class="icon-move cursor-grab rounded-md p-1 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                            v-if="isDragable(element)"
+                                            class="icon-move cursor-grab rounded-md p-1 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                                         >
                                         </i>
                                     </div>
-                                    
+
                                     <!-- Card Body -->
                                     <div>
                                         <input
@@ -210,7 +210,7 @@
                                             <x-admin::form.control-group.label class="required">
                                                 @lang('admin::app.settings.pipelines.create.name')
                                             </x-admin::form.control-group.label>
-                                            
+
                                             <x-admin::form.control-group.control
                                                 type="text"
                                                 ::name="'stages[' + element.id + '][name]'"
@@ -253,16 +253,16 @@
                                         {!! view_render_event('admin.settings.pipelines.create.form.stages.probability.after') !!}
                                     </div>
                                 </div>
-                                
+
                                 {!! view_render_event('admin.settings.pipelines.create.form.stages.delete_button.before') !!}
 
                                 <div
-                                    class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-red-600 dark:border-gray-800" 
-                                    @click="removeStage(element)" 
+                                    class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-error dark:border-gray-800"
+                                    @click="removeStage(element)"
                                     v-if="isDragable(element)"
                                 >
                                     <i class="icon-delete text-2xl"></i>
-                                    
+
                                     @lang('admin::app.settings.pipelines.create.delete-stage')
                                 </div>
 
@@ -274,7 +274,7 @@
                 </draggable>
 
                 <!-- Add New Stage Card -->
-                <div class="flex min-h-[400px] min-w-[275px] max-w-[275px] flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex min-h-[400px] min-w-[275px] max-w-[275px] flex-col items-center justify-center gap-1 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="flex flex-col items-center justify-center gap-6 px-4 py-3">
                         <div class="grid justify-center justify-items-center gap-3.5 text-center">
                             <div class="flex flex-col items-center gap-2">
@@ -313,7 +313,7 @@
                     return {
                         stages: [{
                             'id': 'stage_1',
-                            'code': 'new', 
+                            'code': 'new',
                             'name': "@lang('admin::app.settings.pipelines.create.new-stage')",
                             'probability': 100
                         }, {
@@ -372,7 +372,7 @@
                                 }
 
                                 this.removeUniqueNameErrors();
-                                
+
                                 this.$emitter.emit('add-flash', { type: 'success', message: "@lang('admin::app.settings.pipelines.create.stage-delete-success')" });
                             }
                         });
@@ -441,7 +441,7 @@
 
                     handleDragging(event) {
                         const draggedElement = event.draggedContext.element;
-                        
+
                         const relatedElement = event.relatedContext.element;
 
                         return this.isDragable(draggedElement) && this.isDragable(relatedElement);

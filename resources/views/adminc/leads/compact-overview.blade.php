@@ -15,7 +15,7 @@
 
 {!! view_render_event('admin.leads.view.compact_overview.before', ['lead' => $lead]) !!}
 
-<div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+<div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
         <div class="flex items-center gap-3">
@@ -45,7 +45,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $salutationLabel }}"
                     readonly
                 />
@@ -59,7 +59,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->first_name ?? '' }}"
                     readonly
                 />
@@ -73,7 +73,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->lastname_prefix ?? '' }}"
                     readonly
                 />
@@ -87,7 +87,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->last_name ?? '' }}"
                     readonly
                 />
@@ -101,7 +101,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $dateOfBirth }}"
                     readonly
                 />
@@ -123,7 +123,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->address ? ($lead->address->street . ' ' . $lead->address->house_number . ($lead->address->house_number_suffix ? '-' . $lead->address->house_number_suffix : '')) : '' }}"
                     readonly
                 />
@@ -137,7 +137,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->address->postal_code ?? '' }}"
                     readonly
                 />
@@ -151,7 +151,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->address->city ?? '' }}"
                     readonly
                 />
@@ -165,7 +165,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $lead->address->country ?? '' }}"
                     readonly
                 />
@@ -187,7 +187,7 @@
                 </label>
                 <input
                     type="tel"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $defaultPhone ?? '' }}"
                     readonly
                 />
@@ -201,7 +201,7 @@
                 </label>
                 <input
                     type="email"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value="{{ $defaultEmail ?? '' }}"
                     readonly
                 />
@@ -215,7 +215,7 @@
                 </label>
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     value=""
                     placeholder="BSN nummer"
                     readonly

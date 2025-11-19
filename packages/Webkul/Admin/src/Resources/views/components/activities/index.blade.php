@@ -39,7 +39,7 @@
         <template v-else>
             {!! view_render_event('admin.components.activities.content.before') !!}
 
-            <div class="w-full rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div class="w-full rounded-md border bg-white dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex gap-2 overflow-x-auto border-b border-gray-200 dark:border-gray-800">
                     {!! view_render_event('admin.components.activities.content.types.before') !!}
 
@@ -85,7 +85,7 @@
                                 <!-- Activity Details -->
                                 <div
                                     class="flex w-full justify-between gap-4 rounded-md p-4"
-                                    :class="{'bg-gray-100 dark:bg-gray-950': index % 2 != 0 }"
+                                    :class="{'bg-neutral-bg dark:bg-gray-950': index % 2 != 0 }"
                                 >
                                     <div class="flex flex-col gap-2">
                                         {!! view_render_event('admin.components.activities.content.activity.item.title.before') !!}
@@ -100,7 +100,7 @@
                                                     class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
                                                     :class="{
                                                         'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                        'text-red-600 dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from)
+                                                        'text-error dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from)
                                                     }"
                                                     :href="
                                                         activity.type == 'email'
@@ -109,7 +109,7 @@
                                                     "
                                                 >
                                                     @{{ activity.title }}
-                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-1 icon-tick text-green-600 text-base" title="Afgerond"></span>
+                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-1 icon-tick text-succes text-base" title="Afgerond"></span>
                                                     <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
                                                         <span class="icon-activity text-[10px]"></span>
                                                     </span>
@@ -125,7 +125,7 @@
                                                 </a>
                                                 <div v-if="activity.schedule_from" class="text-sm" :class="{
                                                     'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                    'text-red-600 dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from ),
+                                                    'text-error dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from ),
                                                     'text-gray-600 dark:text-gray-300': !(isToday(activity.schedule_from) || isPast(activity.schedule_from))
                                                 }">
                                                     Ingepland vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
@@ -181,9 +181,9 @@
                                                     <span class="font-medium flex items-center gap-1">Laatste: <call-status-icon :status="activity.call_statuses[activity.call_statuses.length - 1].status" size="w-4 h-4"></call-status-icon> @{{ getCallStatusLabel(activity.call_statuses[activity.call_statuses.length - 1].status) }} <span class="text-gray-500">(@{{ $admin.formatDate(activity.call_statuses[activity.call_statuses.length - 1].created_at, 'd MMM yyyy, hh:mm', timezone) }})</span></span>
                                                 </div>
                                                 <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
-                                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>
-                                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Gesproken: @{{ activity.call_status_summary.spoken }}</span>
+                                                    <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
+                                                    <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>
+                                                    <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Gesproken: @{{ activity.call_status_summary.spoken }}</span>
                                                     <button type="button" class="text-blue-600 hover:underline" @click="activity.__showCallDetails = !activity.__showCallDetails">@{{ activity.__showCallDetails ? 'Verberg' : 'Details' }}</button>
                                                 </div>
                                                 <div v-if="activity.__showCallDetails && activity.call_statuses?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
@@ -206,7 +206,7 @@
                                         <template v-if="activity.emails && activity.emails.length > 0">
                                             <div class="mt-1 text-sm">
                                                 <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                    <span class="px-2 py-0.5 rounded bg-blue-100 text-activity-task-text dark:bg-blue-900 dark:text-blue-300">
                                                         <span class="icon-mail text-xs mr-1"></span>
                                                         @{{ activity.emails.length }} @{{ activity.emails.length === 1 ? 'e-mail' : 'e-mails' }}
                                                     </span>
@@ -290,10 +290,10 @@
                                                 v-for="email in activity.emails"
                                                 :key="email.id"
                                             >
-                                                <span class="icon-mail text-green-600"></span>
+                                                <span class="icon-mail text-succes"></span>
                                                 <a
                                                     :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
-                                                    class="text-sm text-green-600 hover:underline"
+                                                    class="text-sm text-succes hover:underline"
                                                     target="_blank"
                                                 >
                                                     @{{ email.subject || 'E-Mail bekijken' }}
@@ -532,14 +532,14 @@
                     selectedType: this.activeType,
 
                     typeClasses: {
-                        email: 'icon-mail bg-green-200 text-green-900 dark:!text-green-900',
-                        note: 'icon-note bg-orange-200 text-orange-800 dark:!text-orange-800',
-                        call: 'icon-call bg-cyan-200 text-cyan-800 dark:!text-cyan-800',
-                        meeting: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
-                        task: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
-                        file: 'icon-file bg-green-200 text-green-900 dark:!text-green-900',
+                        email: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
+                        note: 'icon-note bg-activity-note-bg text-activity-note-text dark:!text-activity-note-text',
+                        call: 'icon-call bg-activity-file-bg text-cyan-800 dark:!text-cyan-800',
+                        meeting: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
+                        task: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
+                        file: 'icon-file bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
                         system: 'icon-system-generate bg-yellow-200 text-yellow-900 dark:!text-yellow-900',
-                        default: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
+                        default: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
                     },
 
                     typeIllustrations: {

@@ -11,7 +11,7 @@
     >
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.settings.workflows.edit.breadcrumbs.before', ['workflow' => $workflow]) !!}
 
@@ -56,7 +56,7 @@
             type="text/x-template"
             id="v-workflow-template"
         >
-            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow flex flex-col gap-4 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                 {!! view_render_event('admin.settings.workflows.edit.form_controls.before') !!}
 
                 <!-- Tab Switcher -->
@@ -410,7 +410,7 @@
                                 <input
                                     type="text"
                                     v-bind="field"
-                                    :class="{ 'border border-red-500': errorMessage }"
+                                    :class="{ 'border border-error': errorMessage }"
                                     class="min:w-1/3 flex h-10 w-1/3 rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                                 />
                             </v-field>
@@ -537,7 +537,7 @@
 
                 <!-- Remove Conditions -->
                 <span
-                    class="icon-delete max-h-9 max-w-9 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 max-sm:place-self-center"
+                    class="icon-delete max-h-9 max-w-9 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 max-sm:place-self-center"
                     @click="removeCondition"
                 ></span>
             </div>
@@ -613,7 +613,7 @@
                                             <input
                                                 type="text"
                                                 v-bind="field"
-                                                :class="{ 'border border-red-500': errorMessage }"
+                                                :class="{ 'border border-error': errorMessage }"
                                                 class="flex h-10 w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                                             />
                                         </v-field>
@@ -791,7 +791,7 @@
                                     <input
                                         type="text"
                                         v-bind="field"
-                                        :class="{ 'border border-red-500': errorMessage }"
+                                        :class="{ 'border border-error': errorMessage }"
                                         class="flex h-10 w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                                     />
                                 </v-field>
@@ -809,7 +809,7 @@
 
                 <x-admin::table.td class="text-right">
                     <span
-                        class="icon-delete cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                        class="icon-delete cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                         @click="removeAction"
                     ></span>
                 </x-admin::table.td>

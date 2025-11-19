@@ -29,7 +29,7 @@
                         <div class="flex items-center gap-2">
                             <input class="min-w-[120px] rounded border border-gray-300 p-2 dark:border-gray-800 dark:bg-gray-900" name="weekday_time_blocks[{{ $day }}][{{ $i }}][from]" value="{{ $block['from'] ?? '' }}" placeholder="08:00">
                             <input class="min-w-[120px] rounded border border-gray-300 p-2 dark:border-gray-800 dark:bg-gray-900" name="weekday_time_blocks[{{ $day }}][{{ $i }}][to]" value="{{ $block['to'] ?? '' }}" placeholder="12:00">
-                            <button type="button" class="icon-delete text-red-600" onclick="window.removeTimeBlock(this)"></button>
+                            <button type="button" class="icon-delete text-error" onclick="window.removeTimeBlock(this)"></button>
                         </div>
                     @endforeach
                 </div>
@@ -51,7 +51,7 @@
             row.className = 'flex items-center gap-2';
             row.innerHTML = '<input class="min-w-[120px] rounded border border-gray-300 p-2 dark:border-gray-800 dark:bg-gray-900" name="weekday_time_blocks['+day+']['+index+'][from]" placeholder="08:00">'
                 + '<input class="min-w-[120px] rounded border border-gray-300 p-2 dark:border-gray-800 dark:bg-gray-900" name="weekday_time_blocks['+day+']['+index+'][to]" placeholder="12:00">'
-                + '<button type="button" class="icon-delete text-red-600" onclick="window.removeTimeBlock(this)"></button>';
+                + '<button type="button" class="icon-delete text-error" onclick="window.removeTimeBlock(this)"></button>';
             container.appendChild(row);
         };
 

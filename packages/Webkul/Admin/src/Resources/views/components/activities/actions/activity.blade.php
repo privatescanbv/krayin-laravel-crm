@@ -8,10 +8,10 @@
     {!! view_render_event('admin.components.activities.actions.activity.create_btn.before') !!}
 
     <button
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-blue-200 font-medium text-blue-800 transition-all hover:border-blue-400"
+        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-task-bg font-medium text-activity-task-text transition-all hover:border-activity-task-border"
         @click="$refs.actionComponent.openModal('mail')"
     >
-        <span class="icon-activity text-2xl dark:!text-blue-800"></span>
+        <span class="icon-activity text-2xl dark:!text-activity-task-text"></span>
 
         @lang('admin::app.components.activities.actions.activity.btn')
     </button>
@@ -64,7 +64,7 @@
                                     {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.before') !!}
 
                                     <x-admin::dropdown.menu.item
-                                        ::class="{ 'bg-gray-100 dark:bg-gray-950': selectedType.value === type.value }"
+                                        ::class="{ 'bg-neutral-bg dark:bg-gray-950': selectedType.value === type.value }"
                                         v-for="type in availableTypes"
                                         @click="selectedType = type"
                                     >

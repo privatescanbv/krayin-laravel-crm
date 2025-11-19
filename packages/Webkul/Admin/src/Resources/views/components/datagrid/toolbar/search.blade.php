@@ -80,7 +80,7 @@
                     <!-- Reset Datagrid Preferences -->
                     <button
                         type="button"
-                        class="relative flex cursor-pointer items-center rounded-md bg-gray-100 px-4 py-[9px] font-semibold text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        class="relative flex cursor-pointer items-center rounded-md bg-neutral-bg px-4 py-[9px] font-semibold text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                         @click="resetDatagridState"
                         :title="'Reset filters & preferences'"
                         aria-label="Reset filters & preferences"

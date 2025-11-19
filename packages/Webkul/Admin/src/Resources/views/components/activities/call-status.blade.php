@@ -2,7 +2,7 @@
     use App\Enums\CallStatus;
 @endphp
 
-<div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+<div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <div class="flex items-center justify-between mb-3">
         <h3 class="text-base font-semibold text-gray-800 dark:text-white">Belstatus</h3>
     </div>

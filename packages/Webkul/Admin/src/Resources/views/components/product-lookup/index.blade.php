@@ -12,7 +12,7 @@
 
             <!-- Selected item displayed above (chip-style) -->
             <div class="mb-2" v-if="selectedItem && selectedItem.id">
-                <div class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-neutral-bg px-3 py-1.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                     <span>@{{ displayLabel }}</span>
                     <i
                         class="icon-cross-large cursor-pointer text-lg text-gray-600 dark:text-gray-300"
@@ -40,7 +40,7 @@
             <!-- Popup -->
             <div
                 v-if="showPopup"
-                class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
+                class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
             >
                 <!-- Search bar -->
                 <div class="relative flex items-center">

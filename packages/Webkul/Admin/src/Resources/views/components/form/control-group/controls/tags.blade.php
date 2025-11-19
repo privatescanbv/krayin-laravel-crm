@@ -9,7 +9,7 @@
         type="text/x-template"
         id="v-control-tags-template"
     >
-        <div 
+        <div
             class="flex min-h-[38px] w-full items-center rounded border border-gray-200 px-2.5 py-1.5 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-white dark:hover:border-gray-400"
             :class="[errors[`temp-${name}`] ? 'border !border-red-600 hover:border-red-600' : '']"
         >
@@ -20,7 +20,7 @@
                 <li
                     v-for="(tag, index) in tags"
                     :key="index"
-                    class="flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-950 ltr:pl-2 rtl:pr-2"
+                    class="flex items-center gap-1 rounded-md bg-neutral-bg dark:bg-gray-950 ltr:pl-2 rtl:pr-2"
                 >
                     <x-admin::form.control-group.control
                         type="hidden"
@@ -81,7 +81,7 @@
             v-slot="{ message }"
         >
             <p
-                class="mt-1 text-xs italic text-red-600"
+                class="mt-1 text-xs italic text-error"
                 v-text="message"
             >
             </p>

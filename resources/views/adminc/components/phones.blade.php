@@ -35,7 +35,7 @@
                                 placeholder="Voer telefoonnummer in"
                                 :readonly="readonly"
                             />
-                            <div v-if="getPhoneError(index)" class="mt-1 text-sm text-red-600">
+                            <div v-if="getPhoneError(index)" class="mt-1 text-sm text-error">
                                 {{ getPhoneError(index) }}
                             </div>
                         </div>
@@ -240,7 +240,7 @@
                     const hasError = this.getPhoneError(index);
 
                     if (hasError) {
-                        return baseClass + ' border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-600';
+                        return baseClass + ' border-red-300 focus:border-error focus:ring-red-500 dark:border-red-600';
                     } else {
                         return baseClass + ' border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600';
                     }

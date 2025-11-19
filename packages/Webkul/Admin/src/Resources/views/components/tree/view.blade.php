@@ -218,7 +218,7 @@
                                     this.generateToggleIconComponent({
                                         class: [
                                             hasChildren ? 'icon-down-arrow' : '',
-                                            'text-xl rounded-md cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-950'
+                                            'text-xl rounded-md cursor-pointer transition-all hover:bg-neutral-bg dark:hover:bg-gray-950'
                                         ],
                                     }),
 

@@ -1,4 +1,4 @@
-<div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+<div class="box-shadow flex flex-col gap-4 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
     <!-- tabs -->
     <div class="flex gap-2 border-b border-gray-200 dark:border-gray-800">
         <div class="shimmer mx-3 my-2.5 h-[21px] w-[120px]"></div>

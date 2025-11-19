@@ -8,10 +8,10 @@
     {!! view_render_event('admin.components.activities.actions.note.create_btn.before') !!}
 
     <button
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-orange-200 font-medium text-orange-800 transition-all hover:border-orange-400"
+        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-note-bg font-medium text-activity-note-text transition-all hover:border-activity-note-border"
         @click="$refs.noteActionComponent.openModal('mail')"
     >
-        <span class="icon-note text-2xl dark:!text-orange-800"></span>
+        <span class="icon-note text-2xl dark:!text-activity-note-text"></span>
 
         @lang('admin::app.components.activities.actions.note.btn')
     </button>
@@ -43,7 +43,7 @@
                 <form @submit="handleSubmit($event, save)">
                     {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.before') !!}
 
-                    <x-admin::modal 
+                    <x-admin::modal
                         ref="noteActivityModal"
                         position="bottom-right"
                     >
@@ -66,7 +66,7 @@
                                 name="type"
                                 value="note"
                             />
-                            
+
                             <!-- Id -->
                             <x-admin::form.control-group.control
                                 type="hidden"

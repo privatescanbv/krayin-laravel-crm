@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+
+@layer base {
+    html, body {
+        @apply text-neutral-text bg-neutral-bg;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        @apply text-neutral-heading;
+    }
+}
+
 /* Global buttons */
 .primary-button {
 	@apply inline-flex items-center gap-2 rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed;

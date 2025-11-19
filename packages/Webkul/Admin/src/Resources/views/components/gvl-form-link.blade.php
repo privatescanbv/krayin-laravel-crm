@@ -288,7 +288,7 @@
                     'step1': { text: 'Stap 1 voltooid', color: 'text-yellow-600' },
                     'step2': { text: 'Stap 2 voltooid', color: 'text-blue-600' },
                     'step3': { text: 'Stap 3 voltooid', color: 'text-green-500' },
-                    'completed': { text: 'Voltooid', color: 'text-green-600' },
+                    'completed': { text: 'Voltooid', color: 'text-succes' },
                 };
 
                 const statusInfo = statusMap[statusLower] || { text: 'Onbekend', color: 'text-gray-400' };

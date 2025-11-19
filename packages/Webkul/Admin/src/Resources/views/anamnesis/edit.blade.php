@@ -12,7 +12,7 @@
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
             <div
-                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-x-2.5">
                         <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-blue-600 hover:underline">
@@ -68,7 +68,7 @@
                 <!-- Left Panel -->
                 <div class="flex flex-1 flex-col gap-4 max-lg:flex-auto">
                     <!-- Basic Information -->
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Algemene informatie</h2>
 
                         <div class="mb-4">
@@ -132,7 +132,7 @@
                     </div>
 
                     <!-- Physical Information -->
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Fysieke informatie</h2>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -180,7 +180,7 @@
                     </div>
 
                     <!-- Contra-indicaties -->
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Contra-indicaties</h2>
 
                         <div class="space-y-6">
@@ -196,20 +196,20 @@
                                             <input type="radio" name="metals" value="1"
                                                    {{ $anamnesis->metals == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metals', this.checked)"
-                                                   class="mr-2 {{ $errors->has('metals') ? 'border-red-500' : '' }}">
+                                                   class="mr-2 {{ $errors->has('metals') ? 'border-error' : '' }}">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="metals" value="0"
                                                    {{ $anamnesis->metals == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metals', false)"
-                                                   class="mr-2 {{ $errors->has('metals') ? 'border-red-500' : '' }}">
+                                                   class="mr-2 {{ $errors->has('metals') ? 'border-error' : '' }}">
                                             Nee
                                         </label>
                                     </div>
 
                                     @error('metals')
-                                        <p class="mt-1 text-xs italic text-red-600">{{ $message }}</p>
+                                        <p class="mt-1 text-xs italic text-error">{{ $message }}</p>
                                     @enderror
                                 </x-admin::form.control-group>
 
@@ -592,7 +592,7 @@
                 <!-- Right Panel -->
                 <div class="flex flex-1 flex-col gap-4 max-lg:flex-auto">
                     <!-- Gezondheid & Erfelijkheden -->
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Gezondheid & Erfelijkheden</h2>
 
                         <div class="space-y-6">
@@ -816,7 +816,7 @@
 
 
                     <!-- Final Notes -->
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Opmerkingen en advies</h2>
 
                         <div class="space-y-4">
@@ -890,7 +890,7 @@
                     category = 'Normaal gewicht';
                     bgColor = 'bg-green-50';
                     textColor = 'text-green-700';
-                    barColor = 'bg-green-500';
+                    barColor = 'bg-succes';
                 } else if (bmi < 30) {
                     category = 'Overgewicht';
                     bgColor = 'bg-yellow-50';
@@ -908,7 +908,7 @@
 
                 // Update the BMI display
                 bmiDisplay.innerHTML = `
-                    <div class="mt-4 p-3 ${bgColor} rounded-lg border dark:border-gray-600 dark:bg-opacity-20">
+                    <div class="mt-4 p-3 ${bgColor} rounded-lg border bg-white dark:border-gray-600 dark:bg-opacity-20">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-bold ${textColor} dark:text-white">${bmi} - ${category}</span>
                         </div>

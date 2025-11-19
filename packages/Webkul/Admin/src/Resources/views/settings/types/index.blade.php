@@ -5,7 +5,7 @@
 
     <div class="flex flex-col gap-4">
         <!-- Header Section -->
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 <!-- Breadcrumbs -->
                 <x-admin::breadcrumbs name="settings.types" />
@@ -17,7 +17,7 @@
 
             <div class="flex items-center gap-x-2.5">
                 {!! view_render_event('admin.settings.types.index.create_button.before') !!}
-                
+
                 <!-- Create button for Types -->
                 <div class="flex items-center gap-x-2.5">
                     @if (bouncer()->hasPermission('settings.lead.types.create'))
@@ -40,14 +40,14 @@
             <x-admin::shimmer.datagrid />
         </v-types-settings>
     </div>
-    
+
     @pushOnce('scripts')
         <script
             type="text/x-template"
             id="types-settings-template"
         >
             {!! view_render_event('admin.settings.types.index.datagrid.before') !!}
-        
+
             <!-- Datagrid -->
             <x-admin::datagrid
                 :src="route('admin.settings.types.index')"
@@ -64,7 +64,7 @@
                     <template v-if="isLoading">
                         <x-admin::shimmer.datagrid.table.body />
                     </template>
-        
+
                     <template v-else>
                         <div
                             v-for="record in available.records"
@@ -73,7 +73,7 @@
                         >
                             <!-- Type ID -->
                             <p>@{{ record.id }}</p>
-        
+
                             <!-- Type Name -->
                             <p>@{{ record.name }}</p>
 
@@ -86,7 +86,7 @@
                                     >
                                     </span>
                                 </a>
-    
+
                                 <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                     <span
                                         :class="record.actions.find(action => action.index === 'delete')?.icon"
@@ -115,7 +115,7 @@
                                                 class="peer hidden"
                                                 v-model="applied.massActions.indices"
                                             >
-    
+
                                             <span class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
                                             </span>
                                         </label>
@@ -133,7 +133,7 @@
                                             >
                                             </span>
                                         </a>
-            
+
                                         <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'delete')?.icon"
@@ -160,7 +160,7 @@
             </x-admin::datagrid>
 
             {!! view_render_event('admin.settings.types.index.datagrid.after') !!}
-            
+
             <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
@@ -173,9 +173,9 @@
                         <!-- Modal Header -->
                         <x-slot:header>
                             <p class="text-lg font-bold text-gray-800 dark:text-white">
-                                @{{ 
+                                @{{
                                     selectedType
-                                    ? "@lang('admin::app.settings.types.index.edit.title')" 
+                                    ? "@lang('admin::app.settings.types.index.edit.title')"
                                     : "@lang('admin::app.settings.types.index.create.title')"
                                 }}
                             </p>
@@ -236,7 +236,7 @@
         <script type="module">
             app.component('v-types-settings', {
                 template: '#types-settings-template',
-        
+
                 data() {
                     return {
                         isProcessing: false,
@@ -244,7 +244,7 @@
                         selectedType: false,
                     };
                 },
-        
+
                 computed: {
                     gridsCount() {
                         let count = this.$refs.datagrid.available.columns.length;
@@ -264,10 +264,10 @@
                 methods: {
                     openModal() {
                         this.selectedType=false;
-                        
+
                         this.$refs.typeUpdateAndCreateModal.toggle();
                     },
-                    
+
                     updateOrCreate(params, {resetForm, setErrors}) {
                         this.isProcessing = true;
 
@@ -294,12 +294,12 @@
                             }
                         });
                     },
-                    
+
                     editModal(url) {
                         this.$axios.get(url)
                             .then(response => {
                                 this.$refs.modalForm.setValues(response.data.data);
-                                
+
                                 this.$refs.typeUpdateAndCreateModal.toggle();
                             })
                             .catch(error => {});

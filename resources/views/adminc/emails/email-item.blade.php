@@ -76,7 +76,7 @@
                         <div class="flex select-none items-center">
                             <x-admin::dropdown position="bottom-right">
                                 <x-slot:toggle>
-                                    <button class="icon-more flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl transition-all hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"></button>
+                                    <button class="icon-more flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl transition-all hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"></button>
                                 </x-slot>
 
                                 <!-- Admin Dropdown -->
@@ -149,7 +149,7 @@
                     v-if="email.attachments.length"
                 >
                     <div
-                        class="group relative flex items-center gap-2 rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 dark:border-gray-800 dark:bg-gray-900"
+                        class="group relative flex items-center gap-2 rounded-md border border-gray-300 bg-neutral-bg px-2 py-1.5 dark:border-gray-800 dark:bg-gray-900"
                         target="_blank"
                         v-for="attachment in email.attachments"
                     >
@@ -323,7 +323,7 @@
                                     <div class="box-shadow w-full max-w-[500px] rounded-lg bg-white dark:bg-gray-900">
                                         <div class="flex items-center justify-between gap-2.5 border-b px-4 py-3 text-lg font-bold text-gray-800 dark:border-gray-800 dark:text-white">
                                             Verplaats e-mail
-                                            <span class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950" onclick="closeFolderModal()"></span>
+                                            <span class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950" onclick="closeFolderModal()"></span>
                                         </div>
 
                                         <div class="px-4 py-4">

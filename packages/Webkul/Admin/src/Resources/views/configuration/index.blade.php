@@ -57,11 +57,11 @@
                     <!-- Menus cards -->
                     @foreach ($item->getChildren() as $key => $child)
                         <a 
-                            class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                            class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                             href="{{ route('admin.configuration.index', ($item->getKey() . '/' . $key)) }}"
                         >
                             @if ($icon = $child->getIcon())
-                                <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                                <div class="rounded-lg bg-neutral-bg p-3 dark:bg-gray-800">
                                     <i class="{{ $child->getIcon() }} text-3xl "></i>
                                 </div>
                             @endif
@@ -111,7 +111,7 @@
                         <div class="grid max-h-[400px] overflow-y-auto">
                             <a
                                 :href="category.url"
-                                class="cursor-pointer border-b p-4 text-sm font-semibold text-gray-600 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                                class="cursor-pointer border-b p-4 text-sm font-semibold text-gray-600 last:border-b-0 hover:bg-neutral-bg dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
                                 v-for="category in searchedResults.data"
                             >
                                 @{{ category.title }}

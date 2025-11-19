@@ -9,7 +9,7 @@
                 <div class="flex flex-col gap-4 w-full">
                     <div class="flex gap-4 w-full items-center justify-between">
                         <div class="flex gap-4">
-                            <div class="shimmer flex h-9 w-9 items-center justify-center rounded-full bg-green-200 text-xs font-medium"></div>
+                            <div class="shimmer flex h-9 w-9 items-center justify-center rounded-full bg-activity-email-bg text-xs font-medium"></div>
 
                             <div class="flex flex-col gap-1">
                                 <div class="shimmer h-4 w-32"></div>
@@ -35,7 +35,7 @@
                         </div>
                     </div>
                 </div>
-            </div>    
+            </div>
         @endfor
     </div>
 
@@ -47,7 +47,7 @@
                         <div class="shimmer h-4 w-20"></div>
 
                         <div class="flex gap-4">
-                            <div class="shimmer flex h-9 w-9 items-center justify-center rounded-full bg-green-200 text-xs font-medium"></div>
+                            <div class="shimmer flex h-9 w-9 items-center justify-center rounded-full bg-activity-email-bg text-xs font-medium"></div>
 
                             <div class="flex flex-col gap-1">
                                 <div class="shimmer h-4 w-32"></div>

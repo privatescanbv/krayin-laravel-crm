@@ -36,7 +36,7 @@
                                 placeholder="Voer email-adres in"
                                 :readonly="readonly"
                             />
-                            <div v-if="getEmailError(index)" class="mt-1 text-sm text-red-600">
+                            <div v-if="getEmailError(index)" class="mt-1 text-sm text-error">
                                 {{ getEmailError(index) }}
                             </div>
                         </div>
@@ -241,7 +241,7 @@
                     const hasError = this.getEmailError(index);
 
                     if (hasError) {
-                        return baseClass + ' border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-600';
+                        return baseClass + ' border-red-300 focus:border-error focus:ring-red-500 dark:border-red-600';
                     } else {
                         return baseClass + ' border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600';
                     }

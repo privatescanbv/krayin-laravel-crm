@@ -23,7 +23,7 @@
             <div
                 v-if="! isEditing"
                 class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                :class="allowEdit ? 'hover:bg-neutral-bg dark:hover:bg-gray-800' : ''"
             >
                 <x-admin::form.control-group.control
                     type="hidden"
@@ -96,10 +96,10 @@
                 <div class="absolute top-[6px] flex gap-0.5 ltr:right-2 rtl:left-2">
                     <button
                         type="button"
-                        class="flex items-center justify-center bg-green-100 p-1 hover:bg-green-200 ltr:rounded-l-md rtl:rounded-r-md"
+                        class="flex items-center justify-center bg-green-100 p-1 hover:bg-activity-email-bg ltr:rounded-l-md rtl:rounded-r-md"
                         @click="save"
                     >
-                        <i class="icon-tick text-md cursor-pointer font-bold text-green-600 dark:!text-green-600" />
+                        <i class="icon-tick text-md cursor-pointer font-bold text-succes dark:!text-succes" />
                     </button>
 
                     <button
@@ -107,7 +107,7 @@
                         class="flex items-center justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md"
                         @click="cancel"
                     >
-                        <i class="icon-cross-large text-md cursor-pointer font-bold text-red-600 dark:!text-red-600" />
+                        <i class="icon-cross-large text-md cursor-pointer font-bold text-error dark:!text-error" />
                     </button>
                 </div>
 

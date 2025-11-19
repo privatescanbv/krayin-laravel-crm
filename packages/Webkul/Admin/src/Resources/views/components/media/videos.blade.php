@@ -29,7 +29,7 @@
 
                 <label
                     class="grid h-[120px] max-h-[120px] w-full max-w-[210px] cursor-pointer items-center justify-items-center rounded border border-dashed transition-all hover:border-gray-400 dark:border-gray-800 dark:mix-blend-exclusion dark:invert"
-                    :class="[errors['videos.files[0]'] ? 'border border-red-500' : 'border-gray-300']"
+                    :class="[errors['videos.files[0]'] ? 'border border-error' : 'border-gray-300']"
                     :for="$.uid + '_videoInput'"
                     v-if="allowMultiple || videos.length == 0"
                 >
@@ -38,7 +38,7 @@
 
                         <p class="grid text-center text-sm font-semibold text-gray-600 dark:text-gray-300">
                             @lang('admin::app.components.media.videos.add-video-btn')
-                            
+
                             <span class="text-xs">
                                 @lang('admin::app.components.media.videos.allowed-types')
                             </span>
@@ -145,7 +145,7 @@
 
             props: {
                 name: {
-                    type: String, 
+                    type: String,
                     default: 'videos',
                 },
 

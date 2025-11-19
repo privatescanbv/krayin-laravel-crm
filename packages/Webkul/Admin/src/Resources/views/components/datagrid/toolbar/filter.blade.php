@@ -72,7 +72,7 @@
                         <!-- Save Filter Title -->
                         <div v-else class="flex items-center gap-x-1">
                             <i
-                                class="icon-left-arrow rtl:icon-right-arrow mt-0.5 cursor-pointer text-[26px] !font-bold hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                                class="icon-left-arrow rtl:icon-right-arrow mt-0.5 cursor-pointer text-[26px] !font-bold hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                                 @click="backToFilters"
                             >
                             </i>
@@ -1612,7 +1612,7 @@
                                     v-else
                                 >
                                     <p
-                                        class="cursor-pointer p-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                        class="cursor-pointer p-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                                         v-text="option.label"
                                         @click="selectOption(option)"
                                     >

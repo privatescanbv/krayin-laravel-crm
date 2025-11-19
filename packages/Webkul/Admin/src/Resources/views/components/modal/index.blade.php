@@ -23,7 +23,7 @@
 
                 <div class="flex items-center gap-2">
                     <span
-                        class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                        class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                         @click="toggle"
                     >
                     </span>

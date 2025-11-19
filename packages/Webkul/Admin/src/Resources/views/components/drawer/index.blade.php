@@ -23,7 +23,7 @@
 
                 <div class="w-full flex-1 ltr:right-3 ltr:text-right rtl:left-3 rtl:text-left">
                     <span
-                        class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                        class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                         @click="close"
                     >
                     </span>

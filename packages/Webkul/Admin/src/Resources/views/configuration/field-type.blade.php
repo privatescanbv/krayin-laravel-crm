@@ -32,7 +32,7 @@
     >
         <x-admin::form.control-group class="last:!mb-0">
             <!-- Title of the input field -->
-            <div    
+            <div
                 v-if="field.is_visible"
                 class="flex justify-between"
             >
@@ -41,20 +41,20 @@
 
                     <span
                         v-if="field['channel_based'] && channelCount"
-                        class="rounded border border-gray-200 bg-gray-100 px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
+                        class="rounded border border-gray-200 bg-neutral-bg px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
                         v-text="JSON.parse(currentChannel).name"
                     >
                     </span>
-        
+
                     <span
                         v-if="field['locale_based']"
-                        class="rounded border border-gray-200 bg-gray-100 px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
+                        class="rounded border border-gray-200 bg-neutral-bg px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
                         v-text="JSON.parse(currentLocale).name"
                     >
                     </span>
                 </x-admin::form.control-group.label>
             </div>
-        
+
             <!-- Text input -->
             <template v-if="field.type == 'text' && field.is_visible">
                 <x-admin::form.control-group.control
@@ -66,7 +66,7 @@
                     ::label="label"
                 />
             </template>
-        
+
             <!-- Password input -->
             <template v-if="field.type == 'password' && field.is_visible">
                 <x-admin::form.control-group.control
@@ -78,7 +78,7 @@
                     ::label="label"
                 />
             </template>
-        
+
             <!-- Number input -->
             <template v-if="field.type == 'number' && field.is_visible">
                 <x-admin::form.control-group.control
@@ -105,7 +105,7 @@
                     <input
                         type="color"
                         v-bind="field"
-                        :class="[errors.length ? 'border border-red-500' : '']"
+                        :class="[errors.length ? 'border border-error' : '']"
                         class="w-full appearance-none rounded-md border text-sm text-gray-600 transition-all hover:border-gray-400 dark:text-gray-300 dark:hover:border-gray-400"
                     />
                 </v-field>
@@ -137,7 +137,7 @@
                     tinymce="true"
                 />
             </template>
-        
+
             <!-- Select input -->
             <template v-if="field.type == 'select' && field.is_visible">
                 <v-field
@@ -152,7 +152,7 @@
                         :id="name"
                         :name="name"
                         v-bind="data.field"
-                        :class="[data.errors.length ? 'border border-red-500' : '']"
+                        :class="[data.errors.length ? 'border border-error' : '']"
                         class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                     >
                         <option
@@ -179,7 +179,7 @@
                     <select
                         :name="`${name}[]`"
                         v-bind="data.field"
-                        :class="[data.errors.length ? 'border border-red-500' : '']"
+                        :class="[data.errors.length ? 'border border-error' : '']"
                         class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                         multiple
                     >
@@ -192,7 +192,7 @@
                     </select>
                 </v-field>
             </template>
-           
+
             <!-- Boolean/Switch input -->
             <template v-if="field.type == 'boolean' && field.is_visible">
                 <input
@@ -200,9 +200,9 @@
                     :name="name"
                     :value="0"
                 />
-        
+
                 <label class="relative inline-flex cursor-pointer items-center">
-                    <input  
+                    <input
                         type="checkbox"
                         :name="name"
                         :value="1"
@@ -217,7 +217,7 @@
                     ></label>
                 </label>
             </template>
-        
+
             <template v-if="field.type == 'image' && field.is_visible">
                 <div class="flex items-center justify-center">
                     <a
@@ -231,7 +231,7 @@
                             class="top-15 rounded-3 border-3 relative h-[33px] w-[33px] border-gray-500 ltr:mr-5 rtl:ml-5"
                         />
                     </a>
-                    
+
                     <x-admin::form.control-group.control
                         type="file"
                         ::name="name"
@@ -240,7 +240,7 @@
                         ::label="label"
                     />
                 </div>
-        
+
                 <template v-if="value">
                     <x-admin::form.control-group class="mt-1.5 flex w-max cursor-pointer select-none items-center gap-1.5">
                         <x-admin::form.control-group.control
@@ -250,7 +250,7 @@
                             value="1"
                             ::for="`${name}[delete]`"
                         />
-        
+
                         <label
                             :for="`${name}[delete]`"
                             class="cursor-pointer !text-sm !font-semibold !text-gray-600 dark:!text-gray-300"
@@ -270,7 +270,7 @@
                         <i class="icon-stats-down text-2xl"></i>
                     </div>
                 </a>
-        
+
                 <x-admin::form.control-group.control
                     type="file"
                     ::id="name"
@@ -278,7 +278,7 @@
                     ::rules="validations"
                     ::label="label"
                 />
-        
+
                 <template v-if="value">
                     <div class="flex cursor-pointer gap-2.5">
                         <x-admin::form.control-group.control
@@ -287,7 +287,7 @@
                             ::name="`${name}[delete]`"
                             value="1"
                         />
-        
+
                         <label
                             class="cursor-pointer"
                             ::for="`${name}[delete]`"
@@ -314,7 +314,7 @@
                                 <option value="">
                                     @lang('admin::app.configuration.index.select-country')
                                 </option>
-        
+
                                 @foreach (core()->countries() as $country)
                                     <option value="{{ $country->code }}">
                                         {{ $country->name }}
@@ -325,7 +325,7 @@
                     </template>
                 </v-country>
             </template>
-        
+
             <!-- State select Vue component -->
             <template v-if="field.type == 'state' && field.is_visible">
                 <v-state>
@@ -344,11 +344,11 @@
                                         <option value="">
                                             @lang('admin::app.configuration.index.select-state')
                                         </option>
-                                        
+
                                         <option value="*">
                                             *
                                         </option>
-                                        
+
                                         <option
                                             v-for='(state, index) in countryStates[country]'
                                             :value="state.code"
@@ -358,7 +358,7 @@
                                     </x-admin::form.control-group.control>
                                 </x-admin::form.control-group>
                             </template>
-        
+
                             <template v-else>
                                 <x-admin::form.control-group class="flex">
                                     <x-admin::form.control-group.control
@@ -375,21 +375,21 @@
                     </template>
                 </v-state>
             </template>
-        
+
             <p
                 v-if="field.info && field.is_visible"
                 class="mt-1 block text-xs italic leading-5 text-gray-600 dark:text-gray-300"
                 v-text="info"
             >
             </p>
-     
+
             <!-- validaiton message -->
             <v-error-message
                 :name="name"
                 v-slot="{ message }"
             >
                 <p
-                    class="mt-1 text-xs italic text-red-600"
+                    class="mt-1 text-xs italic text-error"
                     v-text="message"
                 >
                 </p>
@@ -456,8 +456,8 @@
                 }
 
                 dependElement.addEventListener('change', (event) => {
-                    this.field['is_visible'] = 
-                        event.target.type === 'checkbox' 
+                    this.field['is_visible'] =
+                        event.target.type === 'checkbox'
                         ? event.target.checked
                         : this.validations.split(',').slice(1).includes(event.target.value);
                 });

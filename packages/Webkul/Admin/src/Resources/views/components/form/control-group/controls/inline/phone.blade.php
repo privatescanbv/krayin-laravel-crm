@@ -23,7 +23,7 @@
             <!-- Non-editing view -->
             <div
                 class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                :class="allowEdit ? 'hover:bg-neutral-bg dark:hover:bg-gray-800' : ''"
             >
                 <div 
                     class="group relative !w-full pl-2.5"
@@ -98,7 +98,7 @@
 
                                         <i
                                             v-if="contactNumbers.length > 1"
-                                            class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                            class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                                             @click="remove(contactNumber)"
                                         ></i>
                                     </div>

@@ -29,7 +29,7 @@
                     v-for="person in suggestions"
                     :key="person.id"
                     @click="$emit('select', person)"
-                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
+                    class="px-3 py-2 cursor-pointer hover:bg-neutral-bg border-b last:border-b-0"
                 >
                     <v-person-suggestion :person="person" />
                 </li>
@@ -41,7 +41,7 @@
                     <div class="text-sm text-blue-700 mb-2">Geen bestaande personen gevonden voor "{{ search }}"</div>
                     <button
                         @click="$emit('create-new')"
-                        class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded text-sm"
+                        class="text-blue-600 hover:text-activity-task-text bg-blue-100 hover:bg-activity-task-bg px-3 py-1 rounded text-sm"
                     >
                         Nieuwe persoon aanmaken: "{{ search }}"
                     </button>
@@ -58,7 +58,7 @@
                 methods: {
                     getScoreColorClass(score) {
                         if (score >= 80) {
-                            return 'bg-green-500';
+                            return 'bg-succes';
                         } else if (score >= 60) {
                             return 'bg-yellow-500';
                         } else if (score >= 40) {

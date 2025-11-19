@@ -186,7 +186,7 @@ class ActivityDataGrid extends DataGrid
          * Uses entity selector filter method from base class.
          */
         $this->applyEntitySelectorFilter($queryBuilder, $filters, 'assigned_user_id', 'users.id');
-        
+
         // Update request with cleaned filters
         $originalFilters = request()->input('filters');
         if (!empty($filters)) {
@@ -416,7 +416,7 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => false,
             'closure'    => function ($row) {
                 if ((int)($row->is_done ?? 0) === 1) {
-                    return "<span class='icon-tick text-green-600 text-xl' title='Afgerond'></span>";
+                    return "<span class='icon-tick text-succes text-xl' title='Afgerond'></span>";
                 }
                 return '';
             },

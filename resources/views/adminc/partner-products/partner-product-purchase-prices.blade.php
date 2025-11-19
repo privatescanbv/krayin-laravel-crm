@@ -2,7 +2,7 @@
     'partnerProduct' => null,
 ])
 
-<div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+<div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white">
         @lang('admin::app.partner_products.index.create.purchase_prices')
     </h3>
@@ -90,7 +90,7 @@
         </x-admin::form.control-group>
     </div>
 
-    <div class="mt-4 rounded-lg border border-gray-300 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+    <div class="mt-4 rounded-lg border bg-neutral-100 p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="flex items-center justify-between">
             <span class="font-semibold text-gray-800 dark:text-white">
                 @lang('admin::app.partner_products.index.create.purchase_price_total')

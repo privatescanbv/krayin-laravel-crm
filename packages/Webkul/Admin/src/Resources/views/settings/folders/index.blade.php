@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 <!-- breadcrumbs -->
                 <x-admin::breadcrumbs
@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             @if ($folders->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -75,7 +75,7 @@
                                             @if (bouncer()->hasPermission('settings.folders.edit'))
                                                 <a
                                                     href="{{ route('admin.settings.folders.edit', $folder->id) }}"
-                                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                                    class="text-blue-600 hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
                                                     title="@lang('admin::app.settings.folders.index.edit')"
                                                 >
                                                     <i class="icon-edit text-xl"></i>
@@ -85,7 +85,7 @@
                                             @if (bouncer()->hasPermission('settings.folders.delete') && $folder->is_deletable)
                                                 <button
                                                     type="button"
-                                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                    class="text-error hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                                     title="@lang('admin::app.settings.folders.index.delete')"
                                                     @click="confirmDelete('{{ route('admin.settings.folders.delete', $folder->id) }}')"
                                                 >

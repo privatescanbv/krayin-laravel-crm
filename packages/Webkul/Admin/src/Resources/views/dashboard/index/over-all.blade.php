@@ -23,7 +23,7 @@
             <!-- Stats Cards -->
             <div class="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1">
                 <!-- Total Leads Card -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         @lang('admin::app.dashboard.index.over-all.total-leads')
                     </p>
@@ -50,13 +50,13 @@
                 </div>
 
                 <!-- Won Leads Card -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         Gewonnen Leads
                     </p>
 
                     <div class="flex gap-2">
-                        <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                        <p class="text-xl font-bold text-succes dark:text-green-400">
                             @{{ report.statistics.won_leads.current }}
                         </p>
 
@@ -77,13 +77,13 @@
                 </div>
 
                 <!-- Lost Leads Card -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         Verloren Leads
                     </p>
 
                     <div class="flex gap-2">
-                        <p class="text-xl font-bold text-red-600 dark:text-red-400">
+                        <p class="text-xl font-bold text-error dark:text-red-400">
                             @{{ report.statistics.lost_leads.current }}
                         </p>
 
@@ -104,7 +104,7 @@
                 </div>
 
                 <!-- Average Lead Per Day -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         @lang('admin::app.dashboard.index.over-all.average-leads-per-day')
                     </p>
@@ -131,7 +131,7 @@
                 </div>
 
                 <!-- Total Quotes -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         @lang('admin::app.dashboard.index.over-all.total-quotations')
                     </p>
@@ -158,7 +158,7 @@
                 </div>
 
                 <!-- Total Persons -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         @lang('admin::app.dashboard.index.over-all.total-persons')
                     </p>
@@ -185,7 +185,7 @@
                 </div>
 
                 <!-- Total Organizations -->
-                <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-col gap-2 rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-xs font-medium text-gray-600 dark:text-gray-300">
                         @lang('admin::app.dashboard.index.over-all.total-organizations')
                     </p>
@@ -234,20 +234,20 @@
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Totaal</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                <div class="text-2xl font-bold text-succes dark:text-green-400">
                                     @{{ report.statistics.department_stats.herniapoli.won }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Gewonnen</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+                                <div class="text-2xl font-bold text-error dark:text-red-400">
                                     @{{ report.statistics.department_stats.herniapoli.lost }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Verloren</div>
                             </div>
                         </div>
 
-                        <div class="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
+                        <div class="mt-4 bg-neutral-bg dark:bg-gray-800 rounded-lg p-3">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">Conversie ratio:</span>
                                 <span class="font-semibold text-gray-900 dark:text-gray-100">
@@ -273,20 +273,20 @@
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Totaal</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                <div class="text-2xl font-bold text-succes dark:text-green-400">
                                     @{{ report.statistics.department_stats.privatescan.won }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Gewonnen</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+                                <div class="text-2xl font-bold text-error dark:text-red-400">
                                     @{{ report.statistics.department_stats.privatescan.lost }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Verloren</div>
                             </div>
                         </div>
 
-                        <div class="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
+                        <div class="mt-4 bg-neutral-bg dark:bg-gray-800 rounded-lg p-3">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">Conversie ratio:</span>
                                 <span class="font-semibold text-gray-900 dark:text-gray-100">

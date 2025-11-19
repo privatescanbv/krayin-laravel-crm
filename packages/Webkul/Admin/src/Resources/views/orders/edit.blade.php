@@ -19,7 +19,7 @@ use App\Models\SalesLead;
         <div class="flex flex-col gap-4">
             <!-- Titel panel met order status -->
             <div
-                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <x-admin::breadcrumbs name="orders.edit" :entity="$orders"/>
 
@@ -81,7 +81,7 @@ use App\Models\SalesLead;
 
 
             <!-- Apart panel met velden en tabs -->
-            <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                 <v-order-tabs>
                     <template #details>
                         <div class="space-y-6">
@@ -216,7 +216,7 @@ use App\Models\SalesLead;
                             @endif
 
                             @if(isset($personsWithAnamnesis) && !empty($personsWithAnamnesis))
-                                <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                                <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                                     <h2 class="mb-4 text-lg font-semibold dark:text-white">GVL Formulier(en)</h2>
                                     <div class="space-y-4">
                                         @foreach($personsWithAnamnesis as $personId => $data)
@@ -862,7 +862,7 @@ use App\Models\SalesLead;
                         <button type="button"
                                 @click="removeCheck(check, index)"
                                 v-if="check.removable !== false"
-                                class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                                class="text-error hover:text-red-800 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
                                 title="Check verwijderen">
                             <i class="icon-delete text-lg"></i>
                         </button>
@@ -1014,7 +1014,7 @@ use App\Models\SalesLead;
                         // Simple notification - you can replace this with your preferred notification system
                         const notification = document.createElement('div');
                         notification.className = `fixed top-4 right-4 px-4 py-2 rounded-md text-white z-50 ${
-                            type === 'success' ? 'bg-green-500' :
+                            type === 'success' ? 'bg-succes' :
                                 type === 'error' ? 'bg-red-500' : 'bg-blue-500'
                         }`;
                         notification.textContent = message;

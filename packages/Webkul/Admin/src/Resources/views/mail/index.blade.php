@@ -30,7 +30,7 @@
                                     <!-- Parent Folder -->
                                     <a href="{{ route('admin.mail.index', ['route' => $folder['name']]) }}"
                                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                                              {{ $currentRoute === $folder['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                                              {{ $currentRoute === $folder['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-700' }}">
                                         <i class="icon-folder text-lg"></i>
                                         {{ $folder['name'] }}
                                         <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
@@ -45,7 +45,7 @@
                                                 @if(isset($child['name']))
                                                     <a href="{{ route('admin.mail.index', ['route' => $child['name']]) }}"
                                                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                                                              {{ $currentRoute === $child['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700' }}">
+                                                              {{ $currentRoute === $child['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-600 hover:bg-neutral-bg dark:text-gray-400 dark:hover:bg-gray-700' }}">
                                                         <i class="icon-folder text-sm opacity-75"></i>
                                                         <span class="text-sm">{{ $child['name'] }}</span>
                                                         <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
@@ -72,7 +72,7 @@
 
 
     <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.mail.create.breadcrumbs.before') !!}
 
@@ -426,7 +426,7 @@
                                 </h3>
                                 <button
                                     type="button"
-                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
+                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
                                     @click="toggleFullscreen"
                                     :title="isFullscreen ? 'Verkleinen' : 'Volledig scherm'"
                                 >
@@ -727,10 +727,10 @@
                             .then(response => {
                                 const templateContent = response.data.data.content || '';
                                 const signature = @json(auth()->guard('user')->user()->signature ?? '');
-                                
+
                                 // Combine template content with signature
                                 const fullContent = templateContent + (signature ? '<br><br>' + signature : '');
-                                
+
                                 // Set content in TinyMCE or textarea
                                 this.$nextTick(() => {
                                     setTimeout(() => {
@@ -778,7 +778,7 @@
                         @endif
 
                         this.$refs.toggleComposeModal.toggle();
-                        
+
                         // Wait for TinyMCE to initialize, then set the signature
                         this.$nextTick(() => {
                             setTimeout(() => {

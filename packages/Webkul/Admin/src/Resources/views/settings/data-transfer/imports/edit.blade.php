@@ -15,12 +15,12 @@
         {!! view_render_event('admin.settings.data_transfer.imports.edit.edit_form_controls.before', ['import' => $import]) !!}
 
         <!-- Page Header -->
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.settings.data_transfers.edit.breadcrumbs.before') !!}
 
                 <!-- Breadcrumbs -->
-                <x-admin::breadcrumbs 
+                <x-admin::breadcrumbs
                     name="settings.data_transfers.edit"
                     :entity="$import"
                 />

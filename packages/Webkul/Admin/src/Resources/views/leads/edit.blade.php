@@ -21,7 +21,7 @@
         @endif
         <div class="flex flex-col gap-4">
             <div
-                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                class="flex items-center border bg-white p-2 border-radius-sm justify-between text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 backdrop-blur-md sticky top-16 z-10">
                 <div class="flex flex-col gap-2">
                     <x-admin::breadcrumbs
                         name="leads.edit"
@@ -73,7 +73,7 @@
             id="v-lead-edit-template"
         >
             <div
-                class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                class="box-shadow flex flex-col gap-4 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex gap-2 border-b border-gray-200 dark:border-gray-800">
                     <!-- Tabs -->
                     <template v-for="tab in tabs" :key="tab.id">

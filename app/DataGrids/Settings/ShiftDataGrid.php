@@ -47,8 +47,8 @@ class ShiftDataGrid extends DataGrid
                 $isAvailable = (bool) ($row->available ?? false);
 
                 return $isAvailable
-                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.shifts.fields.available'))."'></span>"
-                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.shifts.fields.available'))."'></span>";
+                    ? "<span class='icon-tick text-succes text-lg' title='".e(trans('admin::app.settings.shifts.fields.available'))."'></span>"
+                    : "<span class='icon-cross-large text-error text-lg' title='".e(trans('admin::app.settings.shifts.fields.available'))."'></span>";
             },
             'escape'     => false,
         ]);

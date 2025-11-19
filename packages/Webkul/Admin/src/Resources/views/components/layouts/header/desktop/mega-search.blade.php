@@ -35,7 +35,7 @@
                 <!-- Search Tabs -->
                 <div class="flex border-b text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
                     <div
-                        class="cursor-pointer p-4 hover:bg-gray-100 dark:hover:bg-gray-950"
+                        class="cursor-pointer p-4 hover:bg-neutral-bg dark:hover:bg-gray-950"
                         :class="{ 'border-b-2 border-brandColor': activeTab == tab.key }"
                         v-for="tab in tabs"
                         @click="activeTab = tab.key; updateSearchParams();"
@@ -55,7 +55,7 @@
                             <template v-for="sale in searchedResults.sales">
                                 <a
                                     :href="'{{ route('admin.sales-leads.view', ':id') }}'.replace(':id', sale.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
+                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-neutral-bg dark:border-gray-800 dark:hover:bg-gray-950"
                                 >
                                     <!-- Left Information -->
                                     <div class="flex gap-2.5">
@@ -106,7 +106,7 @@
                             <template v-for="lead in searchedResults.leads">
                                 <a
                                     :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', lead.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
+                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-neutral-bg dark:border-gray-800 dark:hover:bg-gray-950"
                                 >
                                     <!-- Left Information -->
                                     <div class="flex gap-2.5">
@@ -121,7 +121,7 @@
                                                     @{{ lead.updated_at }}
                                                 </p>
                                                 <template v-if="lead.stage && lead.stage.name">
-                                                    <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                                    <span class="text-xs px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                                                         @{{ lead.stage.name }}
                                                     </span>
                                                 </template>
@@ -176,7 +176,7 @@
                             <template v-for="person in searchedResults.persons">
                                 <a
                                     :href="'{{ route('admin.contacts.persons.view', ':id') }}'.replace(':id', person.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
+                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-neutral-bg dark:border-gray-800 dark:hover:bg-gray-950"
                                 >
                                     <!-- Left Information -->
                                     <div class="flex gap-2.5">

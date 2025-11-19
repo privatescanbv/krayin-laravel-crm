@@ -7,7 +7,7 @@
     <x-admin::form :action="route('admin.settings.web_forms.store')">
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.settings.webform.create.breadcrumbs.before') !!}
 
@@ -52,7 +52,7 @@
 
                 <!-- Left Sub Component -->
                 <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="mb-4 flex items-center justify-between gap-4">
                             <div class="flex flex-col gap-1">
                                 <p class="text-base font-semibold text-gray-800 dark:text-white">
@@ -288,7 +288,7 @@
 
                                         <span
                                             v-for="attribute in groupedAttributes.leads"
-                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                                             @click="addAttribute(attribute)"
                                         >
                                             <div class="items flex items-center gap-1.5">
@@ -302,7 +302,7 @@
 
                                         <span
                                             v-for="attribute in groupedAttributes.persons"
-                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                                             @click="addAttribute(attribute)"
                                         >
                                             <div class="items flex items-center gap-1.5">
@@ -326,7 +326,7 @@
                                     <x-admin::table.thead.tr class="hover:bg-gray-50 dark:hover:bg-gray-950">
                                         <!-- Draggable Icon -->
                                         <x-admin::table.td class="text-center">
-                                            <i class="icon-move cursor-grab rounded-md text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"></i>
+                                            <i class="icon-move cursor-grab rounded-md text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"></i>
 
                                             <input
                                                 type="hidden"

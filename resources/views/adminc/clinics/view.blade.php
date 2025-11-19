@@ -6,7 +6,7 @@
     <!-- Content -->
     <div class="flex gap-4 max-lg:flex-wrap">
         <!-- Left Panel -->
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Clinic Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumbs and Actions -->
@@ -102,7 +102,7 @@
 
         <!-- Right Panel with Tabs -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
-            <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                 <v-clinic-tabs>
                     <!-- Tab Navigation will be rendered by Vue -->
 

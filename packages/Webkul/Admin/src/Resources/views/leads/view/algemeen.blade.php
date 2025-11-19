@@ -4,7 +4,7 @@
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
     <!-- Stages Navigation -->
-    @include ('admin::leads.view.stages')
+    <!-- @ include ('admin::leads.view.stages') -->
 
 
 
@@ -13,7 +13,7 @@
         - Wat als persoon meerdere telefoonnummers of e-mailadressen heeft? zo laten en alleen defaults tonen?
     </div>
 
-    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between gap-4">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Algemene informatie Lead</h3>
 

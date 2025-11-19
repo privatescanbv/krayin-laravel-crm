@@ -25,7 +25,7 @@
             <div
                 v-if="! isEditing"
                 class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                :class="allowEdit ? 'hover:bg-neutral-bg dark:hover:bg-gray-800' : ''"
             >
                 <x-admin::form.control-group.control
                     type="hidden"
@@ -41,7 +41,7 @@
                     <span class="cursor-pointer truncate rounded">
                         @{{ valueLabel ? valueLabel : selectedValue?.length > 20 ? selectedValue.substring(0, 20) + '...' : selectedValue }}
                     </span>
-                    
+
                     <!-- Tooltip -->
                     <div
                         class="absolute bottom-0 mb-5 hidden flex-col group-hover:flex"
@@ -84,7 +84,7 @@
                             :name="name"
                             :value="option"
                         />
-                
+
                         <div
                             class="relative h-[18px] pl-2.5"
                             :style="{ 'text-align': position }"
@@ -93,7 +93,7 @@
                             <div class="group">
                                 <!-- Truncated text -->
                                 <p class="max-w-[110px] cursor-pointer truncate">@{{ option.name }}</p>
-                
+
                                 <!-- Tooltip that shows on hover over the truncated text -->
                                 <div
                                     class="absolute bottom-0 mb-5 hidden flex-col group-hover:flex"
@@ -104,12 +104,12 @@
                                     >
                                         @{{ option.name }}
                                     </span>
-                
+
                                     <div class="-mt-2 ml-4 h-3 w-3 rotate-45 bg-black dark:bg-white"></div>
                                 </div>
                             </div>
                         </div>
-                
+
                         <!-- Cross icon for removing option -->
                         <span
                             class="icon-cross-large cursor-pointer p-0.5 text-xl"
@@ -127,8 +127,8 @@
             >
                 <!-- Results List -->
                 <ul class="max-h-40 divide-gray-100 overflow-y-auto p-0.5">
-                    <li 
-                        v-for="option in options" 
+                    <li
+                        v-for="option in options"
                         :key="option.id"
                         class="cursor-pointer rounded px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-950 ltr:pr-16 rtl:pl-16"
                         @click="addOption(option)"
@@ -137,23 +137,23 @@
                     </li>
                 </ul>
             </div>
-                
+
             <!-- Action Buttons -->
             <div class="absolute top-1/2 flex -translate-y-1/2 transform gap-0.5 ltr:right-2 rtl:left-2">
                 <button
                     type="button"
-                    class="flex items-center justify-center bg-green-100 p-1 hover:bg-green-200 ltr:rounded-l-md rtl:rounded-r-md"
+                    class="flex items-center justify-center bg-green-100 p-1 hover:bg-activity-email-bg ltr:rounded-l-md rtl:rounded-r-md"
                     @click="save"
                 >
-                    <i class="icon-tick text-md cursor-pointer font-bold text-green-600 dark:!text-green-600" />
+                    <i class="icon-tick text-md cursor-pointer font-bold text-succes dark:!text-succes" />
                 </button>
-            
+
                 <button
                     type="button"
                     class="flex items-center justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md"
                     @click="cancel"
                 >
-                    <i class="icon-cross-large text-md cursor-pointer font-bold text-red-600 dark:!text-red-600" />
+                    <i class="icon-cross-large text-md cursor-pointer font-bold text-error dark:!text-error" />
                 </button>
             </div>
         </div>
@@ -251,10 +251,10 @@
             computed: {
                 /**
                  * Get the selected value.
-                 * 
+                 *
                  * @return {Object}
                  */
-                selectedValue() {                    
+                selectedValue() {
                     if (this.tempOptions.length === 0) {
                         return null;
                     }
@@ -266,7 +266,7 @@
             methods: {
                 /**
                  * Toggle the input.
-                 * 
+                 *
                  * @return {void}
                  */
                 toggle() {
@@ -281,7 +281,7 @@
 
                 /**
                  * Save the input value.
-                 * 
+                 *
                  * @return {void}
                  */
                 save() {
@@ -302,7 +302,7 @@
                                 this.inputValue = this.value;
 
                                 this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                            });                        
+                            });
                     }
 
                     this.$emit('options-updated', {
@@ -313,7 +313,7 @@
 
                 /**
                  * Cancel the input value.
-                 * 
+                 *
                  * @return {void}
                  */
                 cancel() {
@@ -348,7 +348,7 @@
                         const dropdownContainer = this.$refs.dropdownContainer;
 
                         if (! dropdownContainer) {
-                            return;     
+                            return;
                         }
 
                         const dropdownRect = dropdownContainer.getBoundingClientRect();

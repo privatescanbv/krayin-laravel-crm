@@ -229,10 +229,10 @@
                 },
                 getStatusClass(status) {
                     const classes = {
-                        'new': 'bg-gray-100 text-gray-800',
+                        'new': 'bg-neutral-bg text-gray-800',
                         'planned': 'bg-green-100 text-green-800'
                     };
-                    return classes[status] || 'bg-gray-100 text-gray-800';
+                    return classes[status] || 'bg-neutral-bg text-gray-800';
                 },
             },
         });

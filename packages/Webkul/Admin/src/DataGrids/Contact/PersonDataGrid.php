@@ -149,7 +149,7 @@ class PersonDataGrid extends DataGrid
                 $duplicateIds = $this->duplicateCacheService->getCachedDuplicates($row->id);
                 $duplicateCount = $duplicateIds->count();
                 if ($duplicateCount > 0) {
-                    return '<a href="' . route('admin.contacts.persons.duplicates.index', $row->id) . '" class="text-orange-600 hover:text-orange-800" title="' . $duplicateCount . ' duplicaten gevonden">'
+                    return '<a href="' . route('admin.contacts.persons.duplicates.index', $row->id) . '" class="text-orange-600 hover:text-activity-note-text" title="' . $duplicateCount . ' duplicaten gevonden">'
                          . '<span class="icon-warning text-lg"></span>'
                          . '</a>';
                 }

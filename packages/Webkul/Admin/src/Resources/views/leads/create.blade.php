@@ -103,7 +103,7 @@ $salutationToGenderMapping = [
                                 v-if="person.id"
                                 :href="`/admin/contacts/persons/view/${person.id}`"
                                 target="_blank"
-                                class="text-blue-600 hover:text-blue-800 p-1"
+                                class="text-blue-600 hover:text-activity-task-text p-1"
                                 title="Bekijk persoon"
                             >
                                 <i class="icon-eye text-sm"></i>
@@ -113,7 +113,7 @@ $salutationToGenderMapping = [
                             <button
                                 v-on:click="removePerson(index)"
                                 type="button"
-                                class="text-red-600 hover:text-red-800 p-1"
+                                class="text-error hover:text-red-800 p-1"
                                 title="Verwijder persoon"
                             >
                                 <i class="icon-trash text-sm"></i>
@@ -150,7 +150,7 @@ $salutationToGenderMapping = [
             <div class="flex flex-col gap-4" v-cloak>
                 <!-- Header -->
                 <div
-                    class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                    class="flex items-center border bg-white p-2 border-radius-sm justify-between text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 backdrop-blur-md sticky top-16 z-10">
                     <div class="flex flex-col gap-2">
                         <x-admin::breadcrumbs name="leads.create"/>
                         <div class="text-xl font-bold dark:text-white">
@@ -183,7 +183,7 @@ $salutationToGenderMapping = [
                         <div class="flex gap-6 max-md:flex-col">
                             <div class="w-2/3 max-md:w-full">
                                 <div
-                                    class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
+                                    class="box-shadow flex flex-col gap-4 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
                             <div class="flex flex-col gap-1">
                                 <p class="text-xl font-semibold dark:text-white">
                                     Lead gegevens
@@ -193,7 +193,7 @@ $salutationToGenderMapping = [
                                 <div v-if="hasSelectedPersons"
                                      class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                                     <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
+                                        <svg class="w-5 h-5 text-succes" fill="none" stroke="currentColor"
                                              viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M5 13l4 4L19 7"></path>
@@ -1184,7 +1184,7 @@ $salutationToGenderMapping = [
 
                     getScoreBarClass(percentage) {
                         if (percentage >= 80) {
-                            return 'bg-green-500';
+                            return 'bg-succes';
                         } else if (percentage >= 60) {
                             return 'bg-yellow-500';
                         } else if (percentage >= 40) {

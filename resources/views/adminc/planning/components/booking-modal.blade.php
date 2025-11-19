@@ -58,7 +58,7 @@
                 <!-- Show booking details for selected item -->
                 <div v-if="selectedOrderItem && selectedOrderItem.bookings && selectedOrderItem.bookings.length > 0"
                      class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-                    <div class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                    <div class="text-sm font-medium text-activity-task-text dark:text-blue-200 mb-2">
                         Huidige planning voor dit orderitem:
                     </div>
                     <div v-for="(booking, index) in selectedOrderItem.bookings" :key="booking.id"

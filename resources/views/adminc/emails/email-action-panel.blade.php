@@ -21,7 +21,7 @@
                 <label class="font-semibold text-gray-800 dark:text-gray-300">
                     Gekoppeld aan
                 </label>
-                <div class="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                <div class="flex items-center justify-between rounded-md border p-3 dark:border-gray-700 dark:bg-gray-800">
                     <a
                         v-if="currentLink?.url"
                         :href="currentLink.url"

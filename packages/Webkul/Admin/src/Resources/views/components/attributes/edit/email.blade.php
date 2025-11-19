@@ -62,7 +62,7 @@
 
                 <i
                     v-if="emails.length > 1"
-                    class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                     @click="remove(email)"
                 ></i>
             </div>

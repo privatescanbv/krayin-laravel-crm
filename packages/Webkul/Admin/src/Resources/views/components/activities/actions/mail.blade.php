@@ -20,10 +20,10 @@
     @if ($showButton)
         <button
             type="button"
-            class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-green-200 font-medium text-green-900 transition-all hover:border-green-400"
+            class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent  bg-activity-email-bg font-medium text-activity-email-text transition-all hover:border-activity-email-border"
             @click="$refs.mailActionComponent.openModal('mail')"
         >
-            <span class="icon-mail text-2xl dark:!text-green-900"></span>
+            <span class="icon-mail text-2xl dark:!text-activity-email-text"></span>
 
             @lang('admin::app.components.activities.actions.mail.btn')
         </button>
@@ -79,7 +79,7 @@
 
                                 <button
                                     type="button"
-                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
+                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
                                     @click="toggleFullscreen"
                                     :title="isFullscreen ? 'Verkleinen' : 'Volledig scherm'"
                                 >
@@ -282,7 +282,7 @@
 
                             <div class="flex w-full items-center justify-between">
                                 <label
-                                    class="icon-attachment cursor-pointer p-1 text-2xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                                    class="icon-attachment cursor-pointer p-1 text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                                     for="file-upload"
                                 ></label>
 
@@ -371,14 +371,14 @@
                         selectedTemplate: '',
 
                         emailTemplates: [],
-                        
+
                         // Store person_id and lead_id for info mail context
                         infoMailPersonId: null,
                         infoMailLeadId: null,
-                        
+
                         // Store entity type override (e.g., for order mails)
                         entityTypeOverride: null,
-                        
+
                         // Email template type enum values
                         templateTypes: {
                             LEAD: @json(EmailTemplateType::LEAD->value),
@@ -396,7 +396,7 @@
               mounted() {
                   this.__mailDialogListener = async (event) => {
                       const detail = event?.detail || {};
-                      
+
                       // Store person_id and lead_id from payload for info mail context
                       if (detail.person_id) {
                           this.infoMailPersonId = detail.person_id;
@@ -404,22 +404,22 @@
                       if (detail.lead_id) {
                           this.infoMailLeadId = detail.lead_id;
                       }
-                      
+
                       // Store entity_type if provided (e.g., for orders, gvl)
                       if (detail.entity_type) {
                           this.entityTypeOverride = detail.entity_type;
                       }
-                      
+
                       // Store default_template if provided (e.g., for order confirmation, gvl info mail)
                       if (detail.default_template) {
                           this.currentDefaultTemplate = detail.default_template;
                       }
-                      
+
                       // Reload templates if entity_type changed (to get correct filtered templates)
                       if (detail.entity_type) {
                           await this.loadTemplates();
                       }
-                      
+
                       await this.openModalWithPayload(detail);
                   };
 
@@ -476,13 +476,13 @@
                           }
                           return;
                       }
-                      
+
                       // Determine entity type based on entityControlName or entity type
                       const controlName = (this.entityControlName || '').toString().toLowerCase();
                       const entityTypeStr = (this.entity?.entity_type || this.entity?.type || '').toString().toLowerCase();
-                      
+
                       let entityType = this.templateTypes.LEAD; // Default to LEAD for leads (which includes ALGEMEEN)
-                      
+
                       // Check for orders (sales_lead_id from order context)
                       if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
                           entityType = this.templateTypes.ORDER;
@@ -500,7 +500,7 @@
                       else {
                           entityType = this.templateTypes.LEAD;
                       }
-                      
+
                       try {
                           const response = await this.$axios.get('{{ route('admin.mail.templates') }}', {
                               params: {
@@ -571,8 +571,8 @@
                       if (this.entity?.id) {
                           const controlName = (this.entityControlName || '').toString().toLowerCase();
                           const entityType = (this.entity.entity_type || this.entity.type || '').toString().toLowerCase();
-                          
-                          
+
+
                           // Prioritize entityControlName over entity type
                           if (controlName === 'person_id') {
                               addEntity('person', this.entity.id);
@@ -599,7 +599,7 @@
                           const formLeadId = form.querySelector('[name="lead_id"]')?.value || form.dataset.leadId;
                           const formPersonId = form.querySelector('[name="person_id"]')?.value || form.dataset.personId;
                           const formOrderId = form.querySelector('[name="order_id"]')?.value || form.dataset.orderId;
-                          
+
                           if (formLeadId && !entities.lead) {
                               addEntity('lead', formLeadId);
                           }
@@ -610,7 +610,7 @@
                               addEntity('order', formOrderId);
                           }
                       }
-                      
+
                       // PRIORITY 4.5: Check orderId prop (from order edit page)
                       if (this.orderId && !entities.order) {
                           addEntity('order', this.orderId);
@@ -794,14 +794,14 @@
                           // Wait for the modal and attachments component to be fully rendered
                           // Try multiple times to find the component
                           let fileInput = null;
-                          
+
                           for (let attempt = 0; attempt < 10; attempt++) {
                               await this.$nextTick();
                               await new Promise(resolve => setTimeout(resolve, 200));
-                              
+
                               // Try to find via ref first
                               const attachmentsComponent = this.$refs.attachmentsComponent;
-                              
+
                               if (attachmentsComponent) {
                                   // Found component via ref, now get file input
                                   const componentUid = attachmentsComponent.$.uid;
@@ -810,7 +810,7 @@
                                       break;
                                   }
                               }
-                              
+
                               // If not found via ref, try to find via DOM
                               if (!fileInput) {
                                   const formEl = this.$refs.mailActionForm;
@@ -841,26 +841,26 @@
                           }
 
                           const blob = await response.blob();
-                          
+
                           // Convert blob to File object
                           const file = new File([blob], filename, { type: 'application/pdf' });
 
                           // Create DataTransfer object
                           const dataTransfer = new DataTransfer();
-                          
+
                           // Add existing files if any
                           if (fileInput.files && fileInput.files.length > 0) {
                               for (let i = 0; i < fileInput.files.length; i++) {
                                   dataTransfer.items.add(fileInput.files[i]);
                               }
                           }
-                          
+
                           // Add the new PDF file
                           dataTransfer.items.add(file);
-                          
+
                           // Set the files on the input
                           fileInput.files = dataTransfer.files;
-                          
+
                           // Trigger change event to add the attachment
                           // This will trigger the add() method in the attachments component
                           fileInput.dispatchEvent(new Event('change', { bubbles: true }));

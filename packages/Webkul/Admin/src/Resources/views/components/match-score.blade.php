@@ -37,11 +37,11 @@ app.component('v-match-score', {
     computed: {
         barClass() {
             const p = this.percentage || 0;
-            return p >= 80 ? 'bg-green-500' : (p >= 50 ? 'bg-yellow-500' : 'bg-red-500');
+            return p >= 80 ? 'bg-succes' : (p >= 50 ? 'bg-yellow-500' : 'bg-red-500');
         },
         textClass() {
             const p = this.percentage || 0;
-            return p >= 80 ? 'text-green-600' : (p >= 50 ? 'text-yellow-600' : 'text-red-600');
+            return p >= 80 ? 'text-succes' : (p >= 50 ? 'text-yellow-600' : 'text-error');
         },
     },
     mounted() {

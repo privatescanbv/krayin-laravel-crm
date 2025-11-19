@@ -33,7 +33,7 @@
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="icon-plus rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-blue-600 hover:text-blue-700"
+                                class="icon-plus rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-blue-600 hover:text-blue-700"
                                 title="Persoon toevoegen"
                                 onclick="openAddPersonModal()"
                             ></button>
@@ -99,7 +99,7 @@
                                         <button
                                             type="button"
                                             id="info-mail-{{ $person->id }}-{{ $entityId }}"
-                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 {{ $hasGvlLink ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
+                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $hasGvlLink ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
                                             title="{{ $hasGvlLink ? 'Stuur informatieve mail met GVL link' : 'GVL formulier link ontbreekt. Koppel eerst een GVL formulier aan de anamnesis.' }}"
                                             @if (!$hasGvlLink) disabled @endif
                                             data-person-id="{{ $person->id }}"
@@ -110,20 +110,20 @@
                                     @if (bouncer()->hasPermission('contacts.persons.edit'))
                                         <a
                                             href="{{ route('admin.contacts.persons.edit', $person->id) }}"
-                                            class="icon-edit rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                            class="icon-edit rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                                             title="Wijzig persoon"
                                         ></a>
                                     @endif
                                     <a
                                         href="{{ route('admin.contacts.persons.view', $person->id) }}"
-                                        class="icon-eye rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                        class="icon-eye rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                                         title="Bekijk persoon"
                                     ></a>
                                     @if ($showSyncLink && $isLead)
                                         <!-- Sync lead to person link (replaces edit-with-lead) -->
                                         <a
                                             href="{{ route('admin.leads.sync-lead-to-person', ['leadId' => $entityId, 'personId' => $person->id]) }}"
-                                            class="rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-green-600 hover:text-green-700"
+                                            class="rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-succes hover:text-green-700"
                                             title="Gegevens overnemen (lead → person)"
                                         >
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@
                                     @if ($detachRoute)
                                         <button
                                             type="button"
-                                            class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-red-600 hover:text-red-700"
+                                            class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-error hover:text-red-700"
                                             title="Persoon ontkoppelen"
                                             onclick="detachPerson({{ $person->id }})"
                                         ></button>
@@ -157,7 +157,7 @@
                                         @if ($defaultEmail)
                                             <div>
                                                 <a href="mailto:{{ $defaultEmail['value'] }}"
-                                                   class="text-blue-600 hover:text-blue-800">
+                                                   class="text-blue-600 hover:text-activity-task-text">
                                                     {{ $defaultEmail['value'] }}
                                                 </a>
                                             </div>

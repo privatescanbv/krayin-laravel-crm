@@ -6,10 +6,10 @@
     <!-- Header -->
     {!! view_render_event('admin.leads.index.header.before') !!}
 
-    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+    <div class="flex items-center justify-between text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 backdrop-blur-md pt-4 sticky top-16 z-10">
         {!! view_render_event('admin.leads.index.header.left.before') !!}
 
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col">
             <!-- Breadcrumb's -->
             <x-admin::breadcrumbs name="leads" />
 
@@ -32,6 +32,12 @@
                 <!-- Export Modal -->
                 <x-admin::datagrid.export :src="route('admin.leads.index')" />
             @endif
+    {!! view_render_event('admin.leads.index.kanban.toolbar.switcher.before') !!}
+
+            <!-- View Switcher -->
+    @include('admin::leads.index.view-switcher')
+
+    {!! view_render_event('admin.leads.index.kanban.toolbar.switcher.after') !!}
 
             <!-- Create button for Leads -->
             <div class="flex items-center gap-x-2.5">

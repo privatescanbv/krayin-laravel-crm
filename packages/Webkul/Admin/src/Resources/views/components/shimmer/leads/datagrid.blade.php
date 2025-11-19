@@ -1,4 +1,4 @@
-<div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 max-xl:flex-wrap">
+<div class="box-shadow flex flex-col gap-4 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900 max-xl:flex-wrap">
     <!-- Tabs -->
     <div class="flex gap-2 border-b border-gray-200 py-2.5 dark:border-gray-800">
         <div class="shimmer mx-3 h-[21px] w-[50px]"></div>
@@ -36,19 +36,19 @@
                     <div class="w-full">
                         <div class="mb-4 w-full">
                             <div class="shimmer mb-1.5 h-5 w-16"></div>
-        
+
                             <div class="shimmer h-[42px] w-full"></div>
                         </div>
 
                         <div class="mb-4 w-full">
                             <div class="shimmer mb-1.5 h-5 w-16"></div>
-        
+
                             <div class="shimmer h-[42px] w-full"></div>
                         </div>
 
                         <div class="mb-4 w-full">
                             <div class="shimmer mb-1.5 h-4 w-16"></div>
-        
+
                             <div class="shimmer h-[42px] w-full"></div>
                         </div>
                     </div>
@@ -57,13 +57,13 @@
                     <div class="w-full">
                         <div class="mb-4 w-full">
                             <div class="shimmer mb-1.5 h-5 w-16"></div>
-        
+
                             <div class="shimmer h-[42px] w-full"></div>
                         </div>
 
                         <div class="mb-4 w-full">
                             <div class="shimmer mb-1.5 h-5 w-16"></div>
-        
+
                             <div class="shimmer h-[42px] w-full"></div>
                         </div>
                     </div>

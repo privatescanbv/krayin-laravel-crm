@@ -36,9 +36,9 @@
             </v-person-duplicates-manager>
         @else
             <!-- No Duplicates Found -->
-            <div class="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
+            <div class="rounded-lg border p-8 text-center dark:border-gray-800 dark:bg-gray-900">
                 <div class="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-                    <span class="icon-check text-2xl text-green-600"></span>
+                    <span class="icon-check text-2xl text-succes"></span>
                 </div>
                 <h3 class="mb-2 text-lg font-semibold">Geen duplicaten gevonden</h3>
                 <p class="text-gray-600">Er zijn geen potentiële dubbele personen gevonden voor deze persoon.</p>
@@ -58,14 +58,14 @@
         <script type="text/x-template" id="v-person-duplicates-manager-template">
             <div class="flex flex-col gap-4">
                 <!-- Duplicates Summary Block -->
-                <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
                         <div class="flex items-center gap-2 mb-2">
                             <h3 class="text-lg font-semibold text-orange-600">
                                 Mogelijke duplicaten (@{{ duplicates.length }})
                             </h3>
                             <div class="relative group">
-                                <span class="icon-info rounded-full bg-blue-200 text-blue-600 dark:!text-blue-600 cursor-help text-sm"></span>
+                                <span class="icon-info rounded-full bg-activity-task-bg text-blue-600 dark:!text-blue-600 cursor-help text-sm"></span>
                                 <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-lg">
                                     <div class="font-medium mb-1">Hoe worden duplicaten gevonden?</div>
                                     <div class="">
@@ -128,7 +128,7 @@
                 </div>
 
                 <!-- Field Differences Block -->
-                <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
                         <h3 class="text-lg font-semibold text-blue-700">Velden met verschillen</h3>
                         <p class="text-sm text-gray-600">Kies per veld welke waarde behouden moet blijven.</p>
@@ -141,7 +141,7 @@
                                 <thead>
                                     <tr class="border-b border-gray-200 dark:border-gray-700">
                                         <th class="w-32 p-3 text-left font-semibold">Veld</th>
-                                        <th class="p-3 text-center text-green-600 min-w-48">
+                                        <th class="p-3 text-center text-succes min-w-48">
                                             <div class="flex flex-col items-center">
                                                 <input
                                                     type="checkbox"
@@ -187,12 +187,12 @@
                                             </td>
                                         </tr>
                                     </template>
-                                    
+
                                     <template v-for="fieldConfig in fieldsWithDifferences" :key="'diff-' + fieldConfig.field">
                                         <tr class="border-b border-gray-100 dark:border-gray-800">
                                             <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">
                                                 @{{ fieldConfig.label }}
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-activity-note-text">
                                                     Verschil
                                                 </span>
                                             </td>
@@ -247,18 +247,18 @@
                                         <tr class="bg-green-50 dark:bg-green-900/20">
                                             <td :colspan="2 + duplicates.length" class="p-4 text-center">
                                                 <div class="flex items-center justify-center gap-2">
-                                                    <span class="icon-check text-green-600 text-lg"></span>
+                                                    <span class="icon-check text-succes text-lg"></span>
                                                     <h4 class="text-sm font-semibold text-green-700 dark:text-green-400">
                                                         Velden zonder verschillen (@{{ fieldsWithoutDifferences.length }})
                                                     </h4>
                                                     <button
                                                         @click="showIdenticalFields = !showIdenticalFields"
-                                                        class="ml-2 text-xs text-green-600 hover:text-green-800 underline"
+                                                        class="ml-2 text-xs text-succes hover:text-green-800 underline"
                                                     >
                                                         @{{ showIdenticalFields ? 'Verbergen' : 'Tonen voor controle' }}
                                                     </button>
                                                 </div>
-                                                <p class="text-xs text-green-600 mt-1">Deze velden hebben dezelfde waarde in alle personen - geen actie vereist</p>
+                                                <p class="text-xs text-succes mt-1">Deze velden hebben dezelfde waarde in alle personen - geen actie vereist</p>
                                             </td>
                                         </tr>
                                     </template>
@@ -268,7 +268,7 @@
                                         <tr class="border-b border-gray-100 dark:border-gray-800 bg-green-50/30 dark:bg-green-900/10">
                                             <td class="p-3 font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                                                 @{{ fieldConfig.label }}
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-200 text-green-800">
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-activity-email-bg text-green-800">
                                                     Identiek
                                                 </span>
                                             </td>

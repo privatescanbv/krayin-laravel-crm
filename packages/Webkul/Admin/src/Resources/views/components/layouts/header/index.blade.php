@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-[10001] flex items-center justify-between gap-1 border-b border-gray-200 bg-white px-4 py-2.5 transition-all dark:border-gray-800 dark:bg-gray-900">
+<header class="sticky top-0 z-[10001] flex items-center justify-between gap-1 border-b bg-white px-4 py-2.5 transition-all dark:border-gray-800 dark:bg-gray-900">
     <!-- logo -->
     <div class="flex items-center gap-1.5">
         <!-- Sidebar Menu -->
@@ -47,7 +47,7 @@
         <v-dark>
             <div class="flex">
                 <span
-                    class="{{ request()->cookie('dark_mode') ? 'icon-light' : 'icon-dark' }} p-1.5 rounded-md text-2xl cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    class="{{ request()->cookie('dark_mode') ? 'icon-light' : 'icon-dark' }} p-1.5 rounded-md text-2xl cursor-pointer transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                 ></span>
             </div>
         </v-dark>
@@ -93,7 +93,7 @@
 
                 <div class="grid gap-1 pb-2.5">
                     <a
-                        class="cursor-pointer px-5 py-2 text-base text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950"
+                        class="cursor-pointer px-5 py-2 text-base text-gray-800 hover:bg-neutral-bg dark:text-white dark:hover:bg-gray-950"
                         href="{{ route('admin.user.account.edit') }}"
                     >
                         @lang('admin::app.layouts.my-account')
@@ -108,7 +108,7 @@
                     </x-admin::form>
 
                     <a
-                        class="cursor-pointer px-5 py-2 text-base text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950"
+                        class="cursor-pointer px-5 py-2 text-base text-gray-800 hover:bg-neutral-bg dark:text-white dark:hover:bg-gray-950"
                         href="{{ route('admin.session.destroy') }}"
                         onclick="event.preventDefault(); document.getElementById('adminLogout').submit();"
                     >
@@ -127,7 +127,7 @@
     >
         <div class="flex">
             <span
-                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                 :class="[isDarkMode ? 'icon-light' : 'icon-dark']"
                 @click="toggle"
             ></span>

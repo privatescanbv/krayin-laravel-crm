@@ -10,7 +10,7 @@
         {!! view_render_event('admin.contact.persons.view.left.before', ['person' => $person]) !!}
 
         <div
-            class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Person Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumbs and Edit Button -->
@@ -30,7 +30,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="icon-warning text-orange-600"></span>
-                                <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                                <span class="text-sm font-medium text-activity-note-text dark:text-orange-200">
                                     Potentiële duplicaten gevonden ({{ $duplicateCount }} similar persons{{ $duplicateCount > 1 ? 's' : '' }})
                                 </span>
                             </div>

@@ -3,10 +3,10 @@
 @if ($anamnesis)
     <div class="p-2 bg-blue-50 border border-blue-200 rounded dark:bg-blue-900/20 dark:border-blue-800">
         <div class="flex items-center justify-between mb-1">
-            <h6 class="text-xs font-semibold text-blue-800 dark:text-blue-200">Anamnese</h6>
+            <h6 class="text-xs font-semibold text-activity-task-text dark:text-blue-200">Anamnese</h6>
             <a
                 href="{{ route('admin.anamnesis.edit', $anamnesis->id) }}"
-                class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                class="text-xs text-blue-600 hover:text-activity-task-text dark:text-blue-400"
                 title="Anamnese bewerken"
             >
                 <i class="icon-edit"></i>

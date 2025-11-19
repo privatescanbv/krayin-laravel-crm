@@ -16,15 +16,15 @@
             {!! view_render_event('admin.settings.attributes.edit.form_controls.before', ['attribute' => $attribute]) !!}
 
             <!-- actions buttons -->
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.settings.attributes.edit.breadcrumbs.before', ['attribute' => $attribute]) !!}
 
-                    <x-admin::breadcrumbs 
-                        name="settings.attributes.edit" 
+                    <x-admin::breadcrumbs
+                        name="settings.attributes.edit"
                         :entity="$attribute"
                     />
-                   
+
                     {!! view_render_event('admin.settings.attributes.edit.breadcrumbs.after', ['attribute' => $attribute]) !!}
 
                     <div class="text-xl font-bold dark:text-white">
@@ -76,9 +76,9 @@
             <div class="flex gap-2.5 max-xl:flex-wrap">
                 <!-- Left sub Component -->
                 {!! view_render_event('admin.catalog.attributes.edit.card.label.before', ['attribute' => $attribute]) !!}
-                
+
                 <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
                             @lang('admin::app.settings.attributes.edit.labels')
                         </p>
@@ -138,7 +138,7 @@
                                         <x-admin::form.control-group.label>
                                             @lang('admin::app.settings.attributes.create.option-type')
                                         </x-admin::form.control-group.label>
-                                
+
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="optionType"
@@ -155,7 +155,7 @@
                                                 @lang('admin::app.settings.attributes.create.options')
                                             </option>
                                         </x-admin::form.control-group.control>
-                                
+
                                         <x-admin::form.control-group.error
                                             class="mt-3"
                                             control-name="admin"
@@ -165,13 +165,13 @@
                                     {!! view_render_event('admin.settings.attributes.edit.form_controls.option_type.after', ['attribute' => $attribute]) !!}
 
                                     {!! view_render_event('admin.settings.attributes.edit.form_controls.lookup_type.before', ['attribute' => $attribute]) !!}
-                                
+
                                     <!-- Input Lookup Type -->
                                     <x-admin::form.control-group v-if="attributeType == 'lookup' || (optionType == 'lookup')" class="mb-2.5 w-1/2">
                                         <x-admin::form.control-group.label>
                                             @lang('admin::app.settings.attributes.create.lookup-type')
                                         </x-admin::form.control-group.label>
-                                
+
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="lookup_type"
@@ -186,7 +186,7 @@
                                                 v-for="(entityType, index) in lookupEntityTypes"
                                             ></option>
                                         </x-admin::form.control-group.control>
-                                
+
                                         <x-admin::form.control-group.error
                                             class="mt-3"
                                             control-name="admin"
@@ -195,7 +195,7 @@
 
                                     {!! view_render_event('admin.settings.attributes.edit.form_controls.lookup_type.after', ['attribute' => $attribute]) !!}
                                 </div>
-                                    
+
                                 <template v-if="optionsData?.length">
                                     @if (
                                         $attribute->type == 'select'
@@ -280,7 +280,7 @@
                                                             </span>
 
                                                             <span
-                                                                class="icon-delete cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                                                class="icon-delete cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-800 max-sm:place-self-center"
                                                                 @click="removeOption(element.id)"
                                                             >
                                                             </span>
@@ -297,7 +297,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 {!! view_render_event('admin.catalog.attributes.edit.card.label.after', ['attribute' => $attribute]) !!}
 
                 <!-- Right sub-component -->
@@ -414,14 +414,14 @@
                                         <option value="{{ $key }}">{{ trans($entityType['name']) }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
-                                    
+
                                 <x-admin::form.control-group.error control-name="entity_type" />
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.entity_type.after', ['attribute' => $attribute]) !!}
                         </x-slot>
                     </x-admin::accordion>
-                    
+
                     {!! view_render_event('admin.settings.attributes.edit.accordian.general.after', ['attribute' => $attribute]) !!}
 
                     {!! view_render_event('admin.settings.attributes.edit.accordian.validations.before', ['attribute' => $attribute]) !!}
@@ -515,7 +515,7 @@
                                     for="is_unique"
                                 >
                                     @lang('admin::app.settings.attributes.edit.is-unique')
-                                </label>    
+                                </label>
 
                                 <x-admin::form.control-group.control
                                     type="hidden"

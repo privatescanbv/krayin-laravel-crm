@@ -6,7 +6,7 @@
 
     <div class="flex flex-col gap-4">
         <!-- Header Section -->
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.settings.tags.index.breadcrumbs.before') !!}
 
@@ -22,7 +22,7 @@
 
             <div class="flex items-center gap-x-2.5">
                 {!! view_render_event('admin.settings.tags.index.create_button.before') !!}
-                
+
                 <!-- Create button for Tags -->
                 @if (bouncer()->hasPermission('settings.other_settings.tags.create'))
                     <div class="flex items-center gap-x-2.5">
@@ -39,7 +39,7 @@
                 {!! view_render_event('admin.settings.tags.index.create_button.after') !!}
             </div>
         </div>
-        
+
         <v-tag-settings ref="tagSettings">
             <!-- DataGrid Shimmer -->
             <x-admin::shimmer.datagrid />
@@ -52,7 +52,7 @@
             id="tag-settings-template"
         >
             {!! view_render_event('admin.settings.tags.index.datagrid.before') !!}
-        
+
             <!-- Datagrid -->
             <x-admin::datagrid
                 :src="route('admin.settings.tags.index')"
@@ -69,7 +69,7 @@
                     <template v-if="isLoading">
                         <x-admin::shimmer.datagrid.table.body />
                     </template>
-        
+
                     <template v-else>
                         <div
                             v-for="record in available.records"
@@ -92,13 +92,13 @@
                                     :for="`mass_action_select_record_${record.id}`"
                                 ></label>
                             </div>
-                            
+
                             <!-- ID -->
                             <p>@{{ record.id }}</p>
-        
+
                             <!-- Name and Color -->
                             <p class="flex items-center gap-2">
-                                <span 
+                                <span
                                     class="block h-6 w-6 cursor-pointer rounded-full shadow-md transition duration-200 ease-in-out peer-checked:border-4 peer-checked:border-solid peer-checked:border-white"
                                     :style="`background-color: ${record.color}`"
                                 ></span>
@@ -121,7 +121,7 @@
                                     >
                                     </span>
                                 </a>
-    
+
                                 <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                     <span
                                         :class="record.actions.find(action => action.index === 'delete')?.icon"
@@ -150,7 +150,7 @@
                                                 class="peer hidden"
                                                 v-model="applied.massActions.indices"
                                             >
-    
+
                                             <span class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
                                             </span>
                                         </label>
@@ -168,7 +168,7 @@
                                             >
                                             </span>
                                         </a>
-            
+
                                         <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'delete')?.icon"
@@ -193,9 +193,9 @@
                     </template>
                 </template>
             </x-admin::datagrid>
-            
+
             {!! view_render_event('admin.settings.tags.index.datagrid.after') !!}
-            
+
             <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
@@ -210,9 +210,9 @@
                             {!! view_render_event('admin.settings.tags.index.form_controls.modal.title.before') !!}
 
                             <p class="text-lg font-bold text-gray-800 dark:text-white">
-                                @{{ 
+                                @{{
                                     selectedTag
-                                    ? "@lang('admin::app.settings.tags.index.edit.title')" 
+                                    ? "@lang('admin::app.settings.tags.index.edit.title')"
                                     : "@lang('admin::app.settings.tags.index.create.title')"
                                 }}
                             </p>
@@ -251,20 +251,20 @@
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.settings.tags.index.create.color')
                             </x-admin::form.control-group.label>
-                            
+
                             <div class="flex gap-3">
                                 <template v-for="(color, index) in colors">
                                     <span class="relative inline-block">
                                         <x-admin::form.control-group.control
-                                            type="radio" 
-                                            ::id="index" 
-                                            name="color" 
-                                            ::value="color.background" 
+                                            type="radio"
+                                            ::id="index"
+                                            name="color"
+                                            ::value="color.background"
                                             class="peer absolute left-0 right-3 top-5 z-10 h-full w-full cursor-pointer opacity-0"
                                         />
-    
-                                        <label 
-                                            :for="index" 
+
+                                        <label
+                                            :for="index"
                                             class="block h-6 w-6 cursor-pointer rounded-full shadow-md transition duration-200 ease-in-out peer-checked:border-2 peer-checked:border-solid peer-checked:border-brandColor"
                                             :style="`background-color: ${color.background}`"
                                         >
@@ -301,11 +301,11 @@
         <script type="module">
             app.component('v-tag-settings', {
                 template: '#tag-settings-template',
-        
+
                 data() {
                     return {
                         isProcessing: false,
-                        
+
                         selectedTag: false,
 
                         colors: [
@@ -325,7 +325,7 @@
                         ],
                     };
                 },
-        
+
                 computed: {
                     gridsCount() {
                         let count = this.$refs.datagrid.available.columns.length;
@@ -345,10 +345,10 @@
                 methods: {
                     openModal() {
                         this.selectedTag=false;
-                        
+
                         this.$refs.tagsUpdateAndCreateModal.toggle();
                     },
-                    
+
                     updateOrCreate(params, {resetForm, setErrors}) {
                         this.isProcessing = true;
 
@@ -375,12 +375,12 @@
                             }
                         });
                     },
-                    
+
                     editModal(url) {
                         this.$axios.get(url)
                             .then(response => {
                                 this.$refs.modalForm.setValues(response.data.data);
-                                
+
                                 this.$refs.tagsUpdateAndCreateModal.toggle();
                             })
                             .catch(error => {});

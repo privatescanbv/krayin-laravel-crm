@@ -8,10 +8,10 @@
     {!! view_render_event('admin.components.activities.actions.file.create_btn.before') !!}
 
     <button
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-cyan-200 font-medium text-cyan-900 transition-all hover:border-cyan-400"
+        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-file-bg font-medium text-activity-file-text transition-all hover:border-activity-file-border"
         @click="$refs.fileActionComponent.openModal('mail')"
     >
-        <span class="icon-file text-2xl dark:!text-cyan-900"></span>
+        <span class="icon-file text-2xl dark:!text-activity-file-text"></span>
 
         @lang('admin::app.components.activities.actions.file.btn')
     </button>
@@ -66,7 +66,7 @@
                                 name="type"
                                 value="file"
                             />
-                            
+
                             <!-- Id -->
                             <x-admin::form.control-group.control
                                 type="hidden"
@@ -79,7 +79,7 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.title-control')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="title"
@@ -91,13 +91,13 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.description')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="comment"
                                 />
                             </x-admin::form.control-group>
-                            
+
                             <!-- File Name -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
@@ -115,7 +115,7 @@
                                 <x-admin::form.control-group.label class="required">
                                     @lang('admin::app.components.activities.actions.file.file')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="file"
                                     id="file"

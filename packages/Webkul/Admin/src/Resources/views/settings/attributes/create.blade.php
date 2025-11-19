@@ -15,14 +15,14 @@
             {!! view_render_event('admin.settings.attributes.create.form_controls.before') !!}
 
             <!-- actions buttons -->
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.settings.attributes.create.breadcrumbs.before') !!}
 
                     <x-admin::breadcrumbs name="settings.attributes.create" />
 
                     {!! view_render_event('admin.settings.attributes.create.breadcrumbs.after') !!}
-                    
+
                     <div class="text-xl font-bold dark:text-white">
                         {!! view_render_event('admin.settings.attributes.create.title.before') !!}
 
@@ -50,7 +50,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Create Attributes Vue Components -->
             <v-create-attributes>
                 <!-- Shimmer Effect -->
@@ -70,11 +70,11 @@
         >
             <!-- body content -->
             {!! view_render_event('admin.settings.attributes.create.card.label.before') !!}
-            
+
             <div class="flex gap-2.5 max-xl:flex-wrap">
                 <!-- Left sub Component -->
                 <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
                             @lang('admin::app.settings.attributes.create.labels')
                         </p>
@@ -136,7 +136,7 @@
                                         <x-admin::form.control-group.label>
                                             @lang('admin::app.settings.attributes.create.option-type')
                                         </x-admin::form.control-group.label>
-                                
+
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="optionType"
@@ -152,13 +152,13 @@
                                                 @lang('admin::app.settings.attributes.create.options')
                                             </option>
                                         </x-admin::form.control-group.control>
-                                
+
                                         <x-admin::form.control-group.error
                                             class="mt-3"
                                             control-name="admin"
                                         />
                                     </x-admin::form.control-group>
-                                
+
                                     {!! view_render_event('admin.settings.attributes.create.form_controls.option_type.after') !!}
 
                                     {!! view_render_event('admin.settings.attributes.create.form_controls.lookup_type.before') !!}
@@ -168,7 +168,7 @@
                                         <x-admin::form.control-group.label>
                                             @lang('admin::app.settings.attributes.create.lookup-type')
                                         </x-admin::form.control-group.label>
-                                
+
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="lookup_type"
@@ -183,7 +183,7 @@
                                                 v-for="(entityType, index) in lookupEntityTypes"
                                             ></option>
                                         </x-admin::form.control-group.control>
-                                
+
                                         <x-admin::form.control-group.error
                                             class="mt-3"
                                             control-name="admin"
@@ -371,14 +371,14 @@
                                         <option value="{{ $key }}">{{ trans($entityType['name']) }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
-                                    
+
                                 <x-admin::form.control-group.error control-name="entity_type" />
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.create.form_controls.entity_type.after') !!}
                         </x-slot>
                     </x-admin::accordion>
-                    
+
                     {!! view_render_event('admin.settings.attributes.create.accordion.general.after') !!}
 
                     {!! view_render_event('admin.settings.attributes.create.accordion.validation.before') !!}
@@ -473,7 +473,7 @@
                     {!! view_render_event('admin.settings.attributes.create.accordion.validation.after') !!}
                 </div>
             </div>
-            
+
             {!! view_render_event('admin.settings.attributes.create.card.general.after') !!}
 
             {!! view_render_event('admin.settings.attributes.create.modal.before') !!}

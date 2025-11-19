@@ -25,7 +25,7 @@
             <x-slot:toggle>
                 {!! view_render_event('admin.leads.index.kanban.filter.drawer.toggle_button.before') !!}
 
-                <div class="relative flex cursor-pointer items-center rounded-md bg-sky-100 px-4 py-[9px] font-semibold text-sky-600 dark:bg-brandColor dark:text-white">
+                <div class="secondary-button whitespace-nowrap">
                     @lang('admin::app.leads.index.kanban.toolbar.filters.filter')
 
                     <span
@@ -1022,7 +1022,7 @@
                                     v-else
                                 >
                                     <p
-                                        class="cursor-pointer p-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                        class="cursor-pointer p-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                                         v-text="option.label"
                                         @click="selectOption(option)"
                                     >

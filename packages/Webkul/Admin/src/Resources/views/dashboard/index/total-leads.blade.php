@@ -20,7 +20,7 @@
 
         <!-- Total Sales Section -->
         <template v-else>
-            <div class="grid gap-4 rounded-lg border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
+            <div class="grid gap-4 rounded-lg border bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex flex-col justify-between gap-1">
                     <p class="text-base font-semibold dark:text-gray-300">
                         @lang('admin::app.dashboard.index.total-leads.title')
@@ -37,23 +37,23 @@
                     <div class="flex justify-center gap-5">
                         <div class="flex items-center gap-2">
                             <span class="h-3.5 w-3.5 rounded-sm bg-[#8979FF]"></span>
-                            
+
                             <p class="text-xs dark:text-gray-300">
                                 @lang('admin::app.dashboard.index.total-leads.total')
                             </p>
                         </div>
-                        
+
                         <div class="flex items-center gap-2">
                             <span class="h-3.5 w-3.5 rounded-sm bg-[#63CFE5]"></span>
-                            
+
                             <p class="text-xs dark:text-gray-300">
                                 @lang('admin::app.dashboard.index.total-leads.won')
                             </p>
                         </div>
-                        
+
                         <div class="flex items-center gap-2">
                             <span class="h-3.5 w-3.5 rounded-sm bg-[#FFA8A1]"></span>
-                            
+
                             <p class="text-xs dark:text-gray-300">
                                 @lang('admin::app.dashboard.index.total-leads.lost')
                             </p>

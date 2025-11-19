@@ -20,7 +20,7 @@
 
         <!-- Total Sales Section -->
         <template v-else>
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex gap-4 max-md:flex-wrap">
                     <!-- Total Revenue -->
                     <div class="flex gap-2 max-md:flex-wrap md:flex-col">
@@ -31,7 +31,7 @@
                             </p>
 
                             <div class="flex gap-2">
-                                <p class="text-xl font-bold text-green-600">
+                                <p class="text-xl font-bold text-succes">
                                     @{{ report?.statistics?.total_won_revenue?.formatted_total || '0' }}
                                 </p>
 
@@ -88,7 +88,7 @@
 
                         <div class="flex justify-center gap-5">
                             <div class="flex items-center gap-2">
-                                <span class="h-3.5 w-3.5 rounded-sm bg-green-500 opacity-80"></span>
+                                <span class="h-3.5 w-3.5 rounded-sm bg-succes opacity-80"></span>
 
                                 <p class="text-xs dark:text-gray-300">
                                     @lang('admin::app.dashboard.index.revenue.won-revenue')
@@ -164,7 +164,7 @@
                     }
 
                     // Check if current values exist
-                    if (typeof this.report.statistics.total_won_revenue.current === 'undefined' || 
+                    if (typeof this.report.statistics.total_won_revenue.current === 'undefined' ||
                         typeof this.report.statistics.total_lost_revenue.current === 'undefined') {
                         return;
                     }

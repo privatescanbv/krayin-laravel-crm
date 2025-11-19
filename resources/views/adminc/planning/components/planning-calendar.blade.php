@@ -53,7 +53,7 @@
                         :href="`${'{{ route('admin.settings.resources.show', ['id' => 'REPLACE']) }}'.replace('REPLACE', r.id)}`"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-blue-600 hover:text-blue-800"
+                        class="text-blue-600 hover:text-activity-task-text"
                         :title="r.notes || ''"
                     >@{{ r.name }}</a>
                     <span v-if="r.clinic">(@{{ r.clinic }})</span>

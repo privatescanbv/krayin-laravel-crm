@@ -3,7 +3,7 @@
 <div class="flex gap-2.5 overflow-x-auto">
     <!-- Stages -->
     @for ($i = 1; $i <= 6; $i++)
-        <div class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Stage Header -->
             <div class="flex flex-col px-2 py-3">
                 <div class="flex items-center justify-between">

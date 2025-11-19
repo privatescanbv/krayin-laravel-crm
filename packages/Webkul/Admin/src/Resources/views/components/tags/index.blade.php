@@ -75,7 +75,7 @@
                                 >
                                     <ul class="p-2">
                                         <li
-                                            class="cursor-pointer break-all rounded-sm px-5 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950"
+                                            class="cursor-pointer break-all rounded-sm px-5 py-2 text-sm text-gray-800 hover:bg-neutral-bg dark:text-white dark:hover:bg-gray-950"
                                             v-for="tag in searchedTags"
                                             @click="attachToEntity(tag)"
                                         >
@@ -85,7 +85,7 @@
                                         @if (bouncer()->hasPermission('settings.other_settings.tags.create'))
                                             <template v-if="! searchedTags.length && ! isSearching">
                                                 <li
-                                                    class="cursor-pointer rounded-sm bg-gray-100 px-5 py-2 text-sm text-gray-800 dark:bg-gray-950 dark:text-white"
+                                                    class="cursor-pointer rounded-sm bg-neutral-bg px-5 py-2 text-sm text-gray-800 dark:bg-gray-950 dark:text-white"
                                                     @click="create"
                                                 >
                                                     @{{ `@lang('admin::app.components.tags.index.add-tag', ['term' => 'replaceTerm'])`.replace('replaceTerm', searchTerm) }}
@@ -143,7 +143,7 @@
                                                     <x-slot:menu class="!top-7 !p-0">
                                                         <x-admin::dropdown.menu.item
                                                             class="top-5 flex gap-2"
-                                                            ::class="{ 'bg-gray-100 dark:bg-gray-950': tag.color === color.background }"
+                                                            ::class="{ 'bg-neutral-bg dark:bg-gray-950': tag.color === color.background }"
                                                             v-for="color in backgroundColors"
                                                             @click="update(tag, color)"
                                                         >

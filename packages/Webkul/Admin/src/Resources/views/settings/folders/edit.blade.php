@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 <!-- breadcrumbs -->
                 <x-admin::breadcrumbs
@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <form
                 method="POST"
                 action="{{ route('admin.settings.folders.update', $folder->id) }}"

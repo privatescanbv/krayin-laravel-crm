@@ -5,7 +5,7 @@
             <div class="flex-1">
                 <div class="flex items-center">
                     <div class="font-medium">{{ salesLead.name || 'Sales Lead #' + salesLead.id }}</div>
-                    <span class="ml-2 text-green-600 text-xs">+ Toevoegen</span>
+                    <span class="ml-2 text-succes text-xs">+ Toevoegen</span>
                 </div>
                 <div class="text-sm text-gray-600">
                     <span v-if="salesLead.pipeline_stage">{{ salesLead.pipeline_stage.name }}</span>

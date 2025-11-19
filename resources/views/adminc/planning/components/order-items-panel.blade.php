@@ -19,7 +19,7 @@
                 <div class="flex justify-between items-start mb-2">
                     <h4 class="font-medium text-sm">{{ $item->product->fullName ?? 'Onbekend product' }}</h4>
                     <span
-                        class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'planned' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                        class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'planned' ? 'bg-green-100 text-green-800' : 'bg-neutral-bg text-gray-800' }}">
                         {{ $statusLabel }}
                     </span>
                 </div>

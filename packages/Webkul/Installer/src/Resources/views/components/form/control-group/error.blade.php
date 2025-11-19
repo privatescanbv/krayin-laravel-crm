@@ -6,7 +6,7 @@
         {{ $attributes }}
         v-slot="{ message }"
     >
-        <p {{ $attributes->merge(['class' => 'mt-1 text-red-600 text-xs italic']) }}>
+        <p {{ $attributes->merge(['class' => 'mt-1 text-error text-xs italic']) }}>
             @{{ message }}
         </p>
     </v-error-message>

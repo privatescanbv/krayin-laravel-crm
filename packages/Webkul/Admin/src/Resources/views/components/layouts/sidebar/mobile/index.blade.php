@@ -1,5 +1,5 @@
 <v-sidebar-drawer>
-    <i class="icon-menu lg:hidden cursor-pointer rounded-md p-1.5 text-2xl hover:bg-gray-100 dark:hover:bg-gray-950 max-lg:block"></i>
+    <i class="icon-menu lg:hidden cursor-pointer rounded-md p-1.5 text-2xl hover:bg-neutral-bg dark:hover:bg-gray-950 max-lg:block"></i>
 </v-sidebar-drawer>
 
 @pushOnce('scripts')
@@ -13,7 +13,7 @@
             class="lg:hidden [&>:nth-child(3)]:!m-0 [&>:nth-child(3)]:!rounded-l-none [&>:nth-child(3)]:max-sm:!w-[80%]"
         >
             <x-slot:toggle>
-                <i class="icon-menu lg:hidden cursor-pointer rounded-md p-1.5 text-2xl hover:bg-gray-100 dark:hover:bg-gray-950 max-lg:block"></i>
+                <i class="icon-menu lg:hidden cursor-pointer rounded-md p-1.5 text-2xl hover:bg-neutral-bg dark:hover:bg-gray-950 max-lg:block"></i>
             </x-slot>
 
             <x-slot:header>
@@ -55,7 +55,7 @@
                                     @if ($menuItem->haveChildren() && !in_array($menuKey, ['settings', 'configuration']))
                                         @click.prevent="toggleMenu('{{ $menuKey }}')"
                                     @endif
-                                    :class="{ 'bg-brandColor text-white': activeMenu === '{{ $menuKey }}' || {{ $isMenuActive ? 'true' : 'false' }}, 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-950': !(activeMenu === '{{ $menuKey }}' || {{ $isMenuActive ? 'true' : 'false' }}) }"
+                                    :class="{ 'bg-brandColor text-white': activeMenu === '{{ $menuKey }}' || {{ $isMenuActive ? 'true' : 'false' }}, 'text-gray-700 dark:text-gray-300 hover:bg-neutral-bg dark:hover:bg-gray-950': !(activeMenu === '{{ $menuKey }}' || {{ $isMenuActive ? 'true' : 'false' }}) }"
                                 >
                                     <div class="flex items-center gap-3">
                                         <span class="{{ $menuItem->getIcon() }} text-2xl"></span>
@@ -80,7 +80,7 @@
                                             <a
                                                 href="{{ $subMenuItem->getUrl() }}"
                                                 class="submenu-link block whitespace-nowrap p-2 pl-10 text-sm transition-colors duration-200"
-                                                :class="{ 'text-brandColor font-medium bg-gray-100 dark:bg-gray-800': '{{ $subMenuItem->isActive() }}' === '1', 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800': '{{ $subMenuItem->isActive() }}' !== '1' }">
+                                                :class="{ 'text-brandColor font-medium bg-neutral-bg dark:bg-gray-800': '{{ $subMenuItem->isActive() }}' === '1', 'text-gray-600 dark:text-gray-400 hover:bg-neutral-bg dark:hover:bg-gray-800': '{{ $subMenuItem->isActive() }}' !== '1' }">
                                                 {{ $subMenuItem->getName() }}
                                             </a>
                                         @endforeach

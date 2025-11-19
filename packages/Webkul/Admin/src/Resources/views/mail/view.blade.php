@@ -21,7 +21,7 @@
     </x-slot>
 
     <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.mail.view.form.before', ['email' => $email]) !!}
 
@@ -29,7 +29,7 @@
                 <div class="flex items-center gap-3">
                     <!-- Back Button -->
                     <a href="{{ route('admin.mail.index', ['route' => request('route')]) }}"
-                       class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
+                       class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-neutral-bg rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
                         <i class="icon-arrow-left text-lg"></i>
                         @lang('admin::app.mail.view.back-to-folder')
                     </a>
@@ -148,7 +148,7 @@
 
                 {!! view_render_event('admin.mail.view.form.before', ['email' => $email]) !!}
 
-                <div class="w-[926px] gap-2 rounded border p-4 dark:border-gray-800">
+                <div class="w-[926px] gap-2 rounded border bg-white p-4 dark:border-gray-800">
                     <x-admin::form
                         v-slot="{ meta, errors, handleSubmit }"
                         enctype="multipart/form-data"
@@ -355,7 +355,7 @@
                             <template v-if="! unlinking.contact">
                                 <button
                                     type="button"
-                                    class="icon-delete flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                                    class="icon-delete flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                                     @click="unlinkContact"
                                 ></button>
                             </template>
@@ -367,7 +367,7 @@
                             <a
                                 :href="'{{ route('admin.contacts.persons.edit', ':id') }}'.replace(':id', email.person_id)"
                                 target="_blank"
-                                class="icon-right-arrow flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                                class="icon-right-arrow flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                             ></a>
                         </div>
                     </div>
@@ -406,7 +406,7 @@
                         <!-- Popup Box -->
                         <div
                             v-if="showPopup"
-                            class="transcontact_lookup absolute top-full z-10 mt-1 flex w-full origin-top flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
+                            class="transcontact_lookup absolute top-full z-10 mt-1 flex w-full origin-top flex-col gap-2 rounded-lg border p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
                         >
                             <!-- Search Bar -->
                             <div class="relative">
@@ -535,7 +535,7 @@
                                     <template v-if="! unlinking.lead">
                                         <button
                                             type="button"
-                                            class="icon-delete flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                                            class="icon-delete flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                                             @click="unlinkLead"
                                         ></button>
                                     </template>
@@ -547,7 +547,7 @@
                                     <a
                                         :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', email.lead_id)"
                                         target="_blank"
-                                        class="icon-right-arrow flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                                        class="icon-right-arrow flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
                                     ></a>
                                 </div>
                             </div>
@@ -634,7 +634,7 @@
                             <!-- Popup Box -->
                             <div
                                 v-if="showPopup"
-                                class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
+                                class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
                             >
                                 <!-- Search Bar -->
                                 <div class="relative">
@@ -733,7 +733,7 @@
                         </div>
                     </span>
 
-                    <div v-if="showPopup" class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800">
+                    <div v-if="showPopup" class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800">
                         <div class="relative">
                             <input
                                 type="text"
@@ -1113,7 +1113,7 @@
                         if (this.getActionType == 'reply-all') {
                             const ccEmails = (this.action.email?.cc || []).map(extractEmail).filter(Boolean);
                             const bccEmails = (this.action.email?.bcc || []).map(extractEmail).filter(Boolean);
-                            
+
                             return [
                                 fromEmail,
                                 ...ccEmails,
@@ -1147,7 +1147,7 @@
                             // The original email content should be included in the reply
                             return '';
                         }
-                        
+
                         if (this.getActionType == 'forward') {
                             return this.action.email.reply;
                         }
@@ -1174,7 +1174,7 @@
                             });
                         }
                     },
-                    
+
                     'action.email.reply'(newVal) {
                         // When the original email reply content changes (e.g., when switching emails), update TinyMCE
                         if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
@@ -1196,7 +1196,7 @@
                     } else if (this.reply && this.reply.trim()) {
                         contentToSet = this.reply;
                     }
-                    
+
                     if (contentToSet) {
                         this.$nextTick(() => {
                             setTimeout(() => {
@@ -1217,7 +1217,7 @@
                                 if (editor && !editor.removed && editor.initialized) {
                                     // Editor exists, is not removed, and is initialized - set content
                                     editor.setContent(html);
-                                    
+
                                     // Also update the underlying textarea value to keep it in sync
                                     const textarea = document.getElementById('reply');
                                     if (textarea) {

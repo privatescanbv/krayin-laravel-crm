@@ -2,7 +2,7 @@
     'allowEdit' => true,
 ])
 
-<v-inline-datetime-edit 
+<v-inline-datetime-edit
     {{ $attributes }}
     :allow-edit="{{ $allowEdit ? 'true' : 'false' }}"
 >
@@ -23,7 +23,7 @@
             <div
                 v-if="! isEditing"
                 class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                :class="allowEdit ? 'hover:bg-neutral-bg dark:hover:bg-gray-800' : ''"
             >
                 <x-admin::form.control-group.control
                     type="hidden"
@@ -60,7 +60,7 @@
                     ></i>
                 </template>
             </div>
-        
+
             <!-- Editing view -->
             <div
                 class="relative flex w-full flex-col ltr:[&>span>i]:right-14 rtl:[&>span>i]:left-14"
@@ -79,23 +79,23 @@
                     ref="input"
                     readonly
                 />
-                    
+
                 <!-- Action Buttons -->
                 <div class="absolute top-1/2 flex -translate-y-1/2 transform gap-0.5 bg-white ltr:right-2 rtl:left-2">
                     <button
                         type="button"
-                        class="flex items-center justify-center bg-green-100 p-1 hover:bg-green-200 ltr:rounded-l-md rtl:rounded-r-md"
+                        class="flex items-center justify-center bg-green-100 p-1 hover:bg-activity-email-bg ltr:rounded-l-md rtl:rounded-r-md"
                         @click="save"
                     >
-                        <i class="icon-tick text-md cursor-pointer font-bold text-green-600" />
+                        <i class="icon-tick text-md cursor-pointer font-bold text-succes" />
                     </button>
-                
+
                     <button
                         type="button"
                         class="flex items-center justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md"
                         @click="cancel"
                     >
-                        <i class="icon-cross-large text-md cursor-pointer font-bold text-red-600" />
+                        <i class="icon-cross-large text-md cursor-pointer font-bold text-error" />
                     </button>
                 </div>
 
@@ -174,8 +174,8 @@
             watch: {
                 /**
                  * Watch the value prop.
-                 * 
-                 * @param {String} newValue 
+                 *
+                 * @param {String} newValue
                  */
                 value(newValue) {
                     this.inputValue = newValue;
@@ -185,7 +185,7 @@
             methods: {
                 /**
                  * Toggle the input.
-                 * 
+                 *
                  * @return {void}
                  */
                 toggle() {
@@ -194,7 +194,7 @@
 
                 /**
                  * Save the input value.
-                 * 
+                 *
                  * @return {void}
                  */
                 save() {
@@ -215,7 +215,7 @@
                                 this.inputValue = this.value;
 
                                 this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                            });                        
+                            });
                     }
 
                     this.$emit('on-change', {
@@ -226,7 +226,7 @@
 
                 /**
                  * Cancel the input value.
-                 * 
+                 *
                  * @return {void}
                  */
                 cancel() {

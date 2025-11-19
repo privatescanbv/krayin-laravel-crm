@@ -9,7 +9,7 @@
     <v-activities>
         <div class="flex flex-col gap-4">
             <div
-                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <x-admin::breadcrumbs name="activities"/>
 
@@ -19,9 +19,9 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <i class="icon-list cursor-pointer rounded p-2 text-2xl"></i>
+                    <i class="icon-list cursor-pointer rounded p-1.5 text-2xl"></i>
 
-                    <i class="icon-calendar cursor-pointe rounded p-2 text-2xl"></i>
+                    <i class="icon-calendar cursor-pointe rounded p-1.5 text-2xl"></i>
                 </div>
             </div>
 
@@ -44,7 +44,7 @@
         >
             <div class="flex flex-col gap-4">
                 <div
-                    class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                    class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                     <div class="flex flex-col gap-2">
                         <x-admin::breadcrumbs name="activities"/>
 
@@ -72,13 +72,13 @@
                         <!-- View Toggle Buttons -->
                         <div class="flex">
                             <i
-                                class="icon-list cursor-pointer rounded-md p-2 text-2xl"
+                                class="icon-list cursor-pointer rounded-md p-1.5 text-2xl"
                                 :class="{'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white': viewType == 'table'}"
                                 @click="toggleView('table')"
                             ></i>
 
                             <i
-                                class="icon-calendar cursor-pointer rounded-md p-2 text-2xl"
+                                class="icon-calendar cursor-pointer rounded-md p-1.5 text-2xl"
                                 :class="{'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white': viewType == 'calendar'}"
                                 @click="toggleView('calendar')"
                             ></i>
@@ -433,9 +433,9 @@
                         availableViews: {},
                         canTakeover: (function() {
                             const user = {{ auth()->guard('user')->user()->id }};
-                            const canTakeover = {{ (function() { 
-                                $user = auth()->guard('user')->user(); 
-                                return $user && $user->hasPermission('activities.takeover') ? 'true' : 'false'; 
+                            const canTakeover = {{ (function() {
+                                $user = auth()->guard('user')->user();
+                                return $user && $user->hasPermission('activities.takeover') ? 'true' : 'false';
                             })() }};
                             console.log('Takeover debug - User ID:', user, 'Can takeover:', canTakeover);
                             return canTakeover;

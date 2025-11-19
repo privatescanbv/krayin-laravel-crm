@@ -3,8 +3,8 @@
         @lang('admin::app.settings.data-transfer.imports.index.title')
     </x-slot>
 
-    <div class="flex flex-col gap-4"> 
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+    <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.settings.data_transfers.index.breadcrumbs.before') !!}
 
@@ -24,8 +24,8 @@
                     {!! view_render_event('admin.settings.data_transfers.index.create_button.before') !!}
 
                     @if (bouncer()->hasPermission('settings.data_transfer.imports.create'))
-                        <a 
-                            href="{{ route('admin.settings.data_transfer.imports.create') }}" 
+                        <a
+                            href="{{ route('admin.settings.data_transfer.imports.create') }}"
                             class="primary-button"
                         >
                             @lang('admin::app.settings.data-transfer.imports.index.button-title')

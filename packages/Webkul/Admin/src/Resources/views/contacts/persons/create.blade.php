@@ -14,7 +14,7 @@
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
             <!-- Header -->
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.persons.create.breadcrumbs.before') !!}
 
@@ -46,7 +46,7 @@
             </div>
 
             <!-- Personal Fields Section -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-4">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                         Persoonsgegevens
@@ -57,7 +57,7 @@
             </div>
 
             <!-- Emails Section -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-4">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                         @lang('admin::app.leads.common.emails.title')
@@ -68,7 +68,7 @@
             </div>
 
             <!-- Phones Section -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-4">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                         Telefoonnummers
@@ -78,7 +78,7 @@
             </div>
 
             <!-- Address Section -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-4">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                         @lang('admin::app.contacts.persons.create.address')

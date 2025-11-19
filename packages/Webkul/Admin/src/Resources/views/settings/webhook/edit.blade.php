@@ -14,7 +14,7 @@
     >
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.settings.webhook.edit.breadcrumbs.before', ['webhook' => $webhook]) !!}
 
@@ -25,12 +25,12 @@
                     />
 
                     {!! view_render_event('admin.settings.webhook.edit.breadcrumbs.after', ['webhook' => $webhook]) !!}
-        
+
                     <div class="text-xl font-bold dark:text-white">
                         @lang('admin::app.settings.webhooks.edit.title')
                     </div>
                 </div>
-        
+
                 <div class="flex items-center gap-x-2.5">
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.settings.webhook.edit.save_button.before', ['webhook' => $webhook]) !!}
@@ -64,7 +64,7 @@
 
                 <!-- Left sub-component -->
                 <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="mb-4 flex items-center justify-between gap-4">
                             <div class="flex flex-col gap-1">
                                 <p class="text-base font-semibold text-gray-800 dark:text-white">
@@ -123,9 +123,9 @@
                                     :fields="parameters"
                                     :placeholders="placeholders"
                                 ></v-key-and-value>
-                                
+
                                 <!-- URL Preview -->
-                                <div class="flex w-full items-center justify-between rounded-sm border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                <div class="flex w-full items-center justify-between rounded-sm border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                                     <div class="my-2 flex gap-3">
                                         <div class="font-sm text-xs dark:text-gray-300">
                                             @lang('admin::app.settings.webhooks.edit.url-preview')
@@ -161,7 +161,7 @@
                                             v-model="contentType"
                                             value="default"
                                             name="payload_type"
-                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                                         >
                                         <label
                                             for="default"
@@ -170,7 +170,7 @@
                                             @lang('admin::app.settings.webhooks.edit.default')
                                         </label>
                                     </div>
-                                    
+
                                     <div class="flex cursor-pointer items-center justify-center">
                                         <input
                                             id="x-www-form-urlencoded"
@@ -178,7 +178,7 @@
                                             v-model="contentType"
                                             value="x-www-form-urlencoded"
                                             name="payload_type"
-                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                                         >
                                         <label
                                             for="x-www-form-urlencoded"
@@ -196,7 +196,7 @@
                                                 v-model="contentType"
                                                 value="raw"
                                                 name="payload_type"
-                                                class="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                                                class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                                                 @click="contentType = 'raw'"
                                             >
 
@@ -218,7 +218,7 @@
                                                         <i class="icon-down-arrow -mt-px text-xs text-brandColor"></i>
                                                     </div>
                                                 </x-slot>
-                            
+
                                                 <x-slot:menu class="!p-0 dark:border-gray-800">
                                                     <input
                                                         type="hidden"
@@ -227,8 +227,8 @@
                                                     >
 
                                                     <span
-                                                        class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
-                                                        :class="{'bg-gray-100 dark:bg-gray-950': rawType === 'json'}"
+                                                        class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
+                                                        :class="{'bg-neutral-bg dark:bg-gray-950': rawType === 'json'}"
                                                         @click="rawType = 'json'"
                                                     >
                                                         <div class="items flex items-center gap-1.5">
@@ -237,8 +237,8 @@
                                                     </span>
 
                                                     <span
-                                                        class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
-                                                        :class="{'bg-gray-100 dark:bg-gray-950': rawType === 'text'}"
+                                                        class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
+                                                        :class="{'bg-neutral-bg dark:bg-gray-950': rawType === 'text'}"
                                                         @click="rawType = 'text'"
                                                     >
                                                         <div class="items flex items-center gap-1.5">
@@ -250,7 +250,7 @@
                                         </template>
                                     </div>
                                 </div>
-                            
+
                                 <template v-if="showEditor">
                                     <textarea
                                         ref="payload"
@@ -289,7 +289,7 @@
                                 </p>
                             </div>
                         </x-slot>
-    
+
                         <x-slot:content>
                             <!-- Name -->
                             <x-admin::form.control-group>
@@ -369,9 +369,9 @@
                 <x-admin::form.control-group.label class="required">
                     @{{ title }}
                 </x-admin::form.control-group.label>
-            
+
                 <div class="flex flex-col">
-                    <div 
+                    <div
                         class="group my-2 flex items-center justify-between gap-3"
                         v-for="(field, index) in fields"
                         :key="index"
@@ -402,8 +402,8 @@
                             <x-admin::form.control-group.error ::name="`${name}[${index}][value]`" />
                         </div>
 
-                        <i 
-                            class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                        <i
+                            class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
                             @click="remove(index)"
                             v-if="fields.length > 1"
                         ></i>
@@ -417,7 +417,7 @@
                                         @lang('admin::app.settings.webhooks.edit.insert-placeholder')
                                     </span>
                                 </x-slot>
-            
+
                                 <x-slot:menu class="max-h-80 overflow-y-auto !p-0 dark:border-gray-800">
                                     <div
                                         v-for="entity in placeholders"
@@ -429,7 +429,7 @@
                                         <span
                                             v-for="placeholder in entity.menu"
                                             :key="placeholder.value"
-                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                                             @click="insertPlaceholder(index, placeholder.value)"
                                         >
                                             <div class="items flex items-center gap-1.5">
@@ -441,12 +441,12 @@
                             </x-admin::dropdown>
                         </div>
                     </div>
-            
+
                     <div class="inline-block">
                         <button
                             type="button"
                             class="flex max-w-max items-center gap-2 text-brandColor"
-                            @click="add(index)" 
+                            @click="add(index)"
                         >
                             <i class="icon-add text-md !text-brandColor"></i>
 
@@ -466,11 +466,11 @@
                 data() {
                     return {
                         baseUrl: '{{ $webhook->end_point ?? '' }}',
-                        
+
                         codeMirrorInstance: null,
-                        
+
                         tempPayload: [],
-                        
+
                         payload: @json($webhook->payload),
 
                         parameters: @json($webhook->query_params),
@@ -498,7 +498,7 @@
                 watch: {
                     /**
                      * Watch the raw type and update the tempPayload.
-                     * 
+                     *
                      * @return {void}
                      */
                     rawType(newValue, oldValue) {
@@ -507,7 +507,7 @@
 
                     /**
                      * Watch the content type and update the tempPayload.
-                     * 
+                     *
                      * @return {void}
                      */
                     contentType(newValue, oldValue) {
@@ -522,7 +522,7 @@
                 computed: {
                     /**
                      * Check if the editor should be displayed.
-                     * 
+                     *
                      * @returns {boolean}
                      */
                     showEditor() {
@@ -536,7 +536,7 @@
                 methods: {
                     /**
                      * Handle editor display.
-                     * 
+                     *
                      * @returns {void}
                      */
                     handleEditorDisplay() {
@@ -553,9 +553,9 @@
 
                     /**
                      * Initiate Editor.
-                     * 
+                     *
                      * @param {string} rawType
-                     * 
+                     *
                      * @return {void}
                      */
                     initiateEditor() {
@@ -582,7 +582,7 @@
 
                     /**
                      * Get the URL endpoint with the parameters
-                     * 
+                     *
                      * @returns {string}
                      */
                     urlEndPoint() {
@@ -600,7 +600,7 @@
 
                             this.parameters.forEach(param => {
                                 if (
-                                    param.key 
+                                    param.key
                                     && param.value
                                 ) {
                                     url.searchParams.append(param.key, param.value);
@@ -631,7 +631,7 @@
                 methods: {
                     /**
                      * Add a new fields.
-                     * 
+                     *
                      * @returns {void}
                      */
                     add() {
@@ -640,7 +640,7 @@
 
                     /**
                      * Remove a fields.
-                     * 
+                     *
                      * @returns {void}
                      */
                     remove(index) {
@@ -649,7 +649,7 @@
 
                     /**
                      * Save the cursor position when the input is focused.
-                     * 
+                     *
                      * @param {Event} event
                      * @returns {void}
                      */
@@ -659,7 +659,7 @@
 
                     /**
                      * Insert the selected placeholder into the subject.
-                     * 
+                     *
                      * @returns {void}
                      */
                     insertPlaceholder(index, value) {
@@ -687,8 +687,8 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.30.0/codemirror.js"
         ></script>
 
-        <!-- 
-            Html mixed and xml cnd both are dependent 
+        <!--
+            Html mixed and xml cnd both are dependent
             Used for html and css theme
         -->
         <script
@@ -699,7 +699,7 @@
 
     @pushOnce('styles')
         <!-- Code mirror style cdn -->
-        <link 
+        <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.13.4/codemirror.css"
         ></link>

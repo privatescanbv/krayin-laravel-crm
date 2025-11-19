@@ -1,5 +1,5 @@
 <div class="p-4">
-    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h4 class="mb-4 text-lg font-semibold dark:text-white">
             @lang('admin::app.settings.clinics.view.audit-trail.title')
         </h4>
@@ -71,7 +71,7 @@
                     <div class="flex items-start gap-2">
                         <i class="icon-information mt-1 text-blue-600 dark:text-blue-400"></i>
                         <div class="text-sm">
-                            <p class="font-medium text-blue-800 dark:text-blue-300">
+                            <p class="font-medium text-activity-task-text dark:text-blue-300">
                                 @lang('admin::app.settings.clinics.view.audit-trail.change-summary')
                             </p>
                             <p class="mt-1 text-blue-700 dark:text-blue-400">
@@ -84,7 +84,7 @@
             @endif
 
             <!-- Additional Info -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <h5 class="mb-3 font-semibold dark:text-white">
                     @lang('admin::app.settings.clinics.view.audit-trail.additional-info')
                 </h5>

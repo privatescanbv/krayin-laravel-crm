@@ -37,7 +37,7 @@
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.before') !!}
 
                                                 <!-- Stage Header -->
-                        <div class="flex flex-col px-2 py-3 rounded-t-lg" style="background-color: var(--brand-blue);">
+                        <div class="flex flex-col px-2 py-3 rounded-t-lg" style="background-color: var(--brand-privatescan);">
                             <!-- Stage Title and Action -->
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-medium text-white">
@@ -45,7 +45,7 @@
                                 </span>
 
                                 <div class="flex items-center gap-1">
-                                    <span class="inline-flex items-center justify-center rounded-full bg-white text-[10px] leading-none min-w-[18px] h-[18px] px-1" style="color: var(--brand-blue);">
+                                    <span class="inline-flex items-center justify-center rounded-full bg-white text-[10px] leading-none min-w-[18px] h-[18px] px-1" style="color: var(--brand-privatescan);">
                                         @{{ stage.leads.meta.total }}
                                     </span>
 
@@ -234,7 +234,7 @@
                                                     )
                                                 )"
                                             >
-                                                <span class="icon-warning cursor-default text-xs text-red-600"></span>
+                                                <span class="icon-warning cursor-default text-xs text-error"></span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                         Geen open activiteiten
@@ -254,7 +254,7 @@
                                             </span>
                                             <span
                                                 v-else-if="element.days_until_due_date > 0"
-                                                class="text-green-600"
+                                                class="text-succes"
                                             >
                                                 @{{ element.days_until_due_date }}d
                                             </span>
@@ -266,7 +266,7 @@
                                             </span>
                                             <span
                                                 v-else
-                                                class="text-red-600 font-medium"
+                                                class="text-error font-medium"
                                             >
                                                 @{{ Math.abs(element.days_until_due_date) }}d over
                                             </span>

@@ -4,7 +4,7 @@
     @php
         $heightInMeters = $height / 100;
         $bmi = round($weight / ($heightInMeters * $heightInMeters), 1);
-        
+
         // BMI categories and colors
         if ($bmi < 18.5) {
             $bmiCategory = 'Ondergewicht';
@@ -13,7 +13,7 @@
             $bmiBgColor = 'bg-blue-50';
         } elseif ($bmi < 25) {
             $bmiCategory = 'Normaal gewicht';
-            $bmiColor = 'bg-green-500';
+            $bmiColor = 'bg-succes';
             $bmiTextColor = 'text-green-700';
             $bmiBgColor = 'bg-green-50';
         } elseif ($bmi < 30) {
@@ -27,19 +27,19 @@
             $bmiTextColor = 'text-red-700';
             $bmiBgColor = 'bg-red-50';
         }
-        
+
         // Calculate position for BMI indicator (BMI scale from 15 to 40)
         $bmiPosition = min(max(($bmi - 15) / 25 * 100, 0), 100);
     @endphp
-    
-    <div class="mt-4 p-3 {{ $bmiBgColor }} rounded-lg border dark:border-gray-600 dark:bg-opacity-20">
+
+    <div class="mt-4 p-3 {{ $bmiBgColor }} rounded-lg border bg-white dark:border-gray-600 dark:bg-opacity-20">
         <div class="flex justify-between items-center mb-2">
             @if($showLabel)
                 <span class="text-gray-600 dark:text-gray-400">BMI:</span>
             @endif
             <span class="font-bold {{ $bmiTextColor }} dark:text-white">{{ $bmi }} - {{ $bmiCategory }}</span>
         </div>
-        
+
         <!-- BMI Visual Bar -->
         <div class="relative">
             <div class="w-full h-6 bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700">
@@ -51,13 +51,13 @@
                     <div class="bg-red-300 flex-1 dark:bg-red-600"></div>      <!-- Obese -->
                 </div>
             </div>
-            
+
             <!-- BMI indicator -->
-            <div class="absolute top-0 h-6 w-1 {{ $bmiColor }} rounded-full transform -translate-x-1/2" 
+            <div class="absolute top-0 h-6 w-1 {{ $bmiColor }} rounded-full transform -translate-x-1/2"
                  style="left: {{ $bmiPosition }}%;">
             </div>
         </div>
-        
+
         <!-- BMI scale labels -->
         <div class="flex justify-between text-xs text-gray-500 mt-1 dark:text-gray-400">
             <span>15</span>

@@ -7,7 +7,7 @@
 
     <!-- Header Bar (like edit activity) -->
     <div
-        class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
         <div class="flex flex-col gap-2">
             <!-- Breadcrumbs -->
             <x-admin::breadcrumbs
@@ -74,13 +74,13 @@
     <div class="relative flex gap-4 max-lg:flex-wrap mt-4">
         <!-- Left Panel (sticky, like lead view) -->
         <div
-            class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Actions (same as lead, except file add) executed on related lead via popup -->
             <div class="p-4 border-b border-gray-200 dark:border-gray-800">
                 <div id="activity-view-actions" class="flex flex-wrap gap-2">
                     @if ($activity->lead && bouncer()->hasPermission('mail.compose'))
-                        <x-admin::activities.actions.mail 
-                            :entity="$activity->lead" 
+                        <x-admin::activities.actions.mail
+                            :entity="$activity->lead"
                             entity-control-name="lead_id"
                             :activity-id="$activity->id"
                         />
@@ -98,7 +98,7 @@
                     <div class="flex flex-wrap gap-2 mt-2">
                         @if($activity->lead)
                             <a href="{{ route('admin.leads.view', $activity->lead->id) }}"
-                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800">
+                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-blue-100 text-activity-task-text hover:bg-activity-task-bg dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800">
                                 <span class="icon-lead mr-1"></span>
                                 {{ $activity->lead->name }}
                             </a>
@@ -106,7 +106,7 @@
 
                         @if($activity->salesLead)
                             <a href="{{ route('admin.sales-leads.view', $activity->salesLead->id) }}"
-                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
+                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-activity-email-bg dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
                                 <span class="icon-sales-lead mr-1"></span>
                                 {{ $activity->salesLead->name }}
                             </a>
@@ -215,7 +215,7 @@
                 <div class="flex gap-2.5 max-lg:flex-wrap-reverse">
                     <!-- Main content -->
                     <div
-                        class="box-shadow flex-1 min-w-0 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
+                        class="box-shadow flex-1 min-w-0 gap-2 rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
 
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Gekoppelde
                             E-mails</h3>

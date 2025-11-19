@@ -40,7 +40,7 @@
                         'pipeline_id' => $tempPipeline->id,
                         'view_type'   => request('view_type')
                     ]) }}"
-                    class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-gray-100 dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-gray-100 dark:bg-gray-950' : '' }}"
+                    class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-neutral-bg dark:bg-gray-950' : '' }}"
                     onclick="setPipelineCookie({{ $tempPipeline->id }})"
                 >
                     {{ $tempPipeline->name }}
@@ -66,7 +66,7 @@
         </x-slot>
     </x-admin::dropdown>
 
-    <div class="flex items-center gap-0.5">
+    <div class="flex items-center border rounded-md bg-white gap-0.5">
         {!! view_render_event('admin.leads.index.view_switcher.pipeline.view_type.before') !!}
 
         @if (request('view_type'))
@@ -74,18 +74,18 @@
                 class="flex"
                 href="{{ route('admin.leads.index', request('pipeline_id') ? ['pipeline_id' => request('pipeline_id')] : []) }}"
             >
-                <span class="icon-kanban p-2 text-2xl"></span>
+                <span class="icon-kanban p-1.5 text-2xl"></span>
             </a>
 
-            <span class="icon-list rounded-md bg-gray-100 p-2 text-2xl dark:bg-gray-950"></span>
+            <span class="icon-list rounded-r-md bg-brandColor text-white p-1.5 text-2xl dark:bg-gray-950"></span>
         @else
-            <span class="icon-kanban rounded-md bg-white p-2 text-2xl dark:bg-gray-900"></span>
+            <span class="icon-kanban rounded-l-md bg-brandColor text-white  p-1.5 text-2xl dark:bg-gray-900"></span>
 
             <a
                 href="{{ route('admin.leads.index', array_merge(['view_type' => 'table'], request('pipeline_id') ? ['pipeline_id' => request('pipeline_id')] : [])) }}"
                 class="flex"
             >
-                <span class="icon-list p-2 text-2xl"></span>
+                <span class="icon-list p-1.5 text-2xl"></span>
             </a>
         @endif
 

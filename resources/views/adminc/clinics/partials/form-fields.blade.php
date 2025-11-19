@@ -3,7 +3,7 @@
 ])
 
 <!-- Basic Information Section -->
-<div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+<div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>
             @lang('admin::app.settings.clinics.index.create.is_active')
@@ -104,7 +104,7 @@
 </div>
 
 <!-- Address Section -->
-<div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+<div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <div class="mb-4">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">
             @lang('admin::app.contacts.organizations.create.address')

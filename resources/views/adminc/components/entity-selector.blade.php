@@ -22,7 +22,7 @@
                                 </div>
                                 <button
                                         type="button"
-                                        class="text-red-600 hover:text-red-800 p-1"
+                                        class="text-error hover:text-red-800 p-1"
                                         @click="removeItem(idx)"
                                         :title="'Verwijder'"
                                 >
@@ -62,12 +62,12 @@
                                     v-for="s in suggestions"
                                     :key="s.id ?? s.value ?? s"
                                     @click="selectSuggestion(s)"
-                                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
+                                    class="px-3 py-2 cursor-pointer hover:bg-neutral-bg border-b last:border-b-0"
                             >
                                 <slot name="suggestion" :item="s">
                                     <div class="flex items-center justify-between">
                                         <div class="font-medium">{{ s.name_with_path ?? s.name ?? s.label ?? s.text ?? s }}</div>
-                                        <span class="ml-2 text-green-600 text-xs">+ Toevoegen</span>
+                                        <span class="ml-2 text-succes text-xs">+ Toevoegen</span>
                                     </div>
                                 </slot>
                             </li>

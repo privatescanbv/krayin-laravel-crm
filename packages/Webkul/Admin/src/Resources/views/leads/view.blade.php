@@ -8,7 +8,7 @@
         <!-- Left Panel -->
         {!! view_render_event('admin.leads.view.left.before', ['lead' => $lead]) !!}
 
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <div class="flex flex-1 flex-col">
                 <!-- Lead Information -->
                 <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
@@ -52,7 +52,7 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <span class="icon-warning text-orange-600"></span>
-                                    <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                                    <span class="text-sm font-medium text-activity-note-text dark:text-orange-200">
                                         Potentiële duplicaten gevonden ({{ $lead->getPotentialDuplicatesCount() }} leads{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
                                     </span>
                                 </div>
@@ -73,7 +73,7 @@
                     @if(($lead->open_activities_count ?? $lead->openActivitiesCount ?? $lead->open_activities_count) === 0 && ! $isWonOrLost)
                         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                             <div class="flex items-center gap-2">
-                                <span class="icon-warning text-red-600"></span>
+                                <span class="icon-warning text-error"></span>
                                 <span class="text-sm font-medium text-red-800 dark:text-red-200">
                                     Geen open activiteiten voor deze lead
                                 </span>
@@ -159,7 +159,7 @@
                         class="rounded-md px-3 py-2 text-left transition"
                         :class="leadDetailSection === 'algemeen'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'"
+                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                         @click="leadDetailSection = 'algemeen'"
                     >
                         Algemeen
@@ -170,7 +170,7 @@
                         class="rounded-md px-3 py-2 text-left transition"
                         :class="leadDetailSection === 'activiteiten'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'"
+                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                         @click="leadDetailSection = 'activiteiten'"
                     >
                         Activiteiten
@@ -181,7 +181,7 @@
                         class="rounded-md px-3 py-2 text-left transition"
                         :class="leadDetailSection === 'anamnese'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'"
+                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                         @click="leadDetailSection = 'anamnese'"
                     >
                         Anamnese
@@ -192,7 +192,7 @@
                         class="rounded-md px-3 py-2 text-left transition"
                         :class="leadDetailSection === 'marketing'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'"
+                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                         @click="leadDetailSection = 'marketing'"
                     >
                         Marketing
@@ -252,13 +252,13 @@
         <div class="relative overflow-visible">
             <!-- Right Panel -->
             <div
-                class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 transition-all duration-300 ease-in-out"
+                class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 transition-all duration-300 ease-in-out"
                 :class="isRightColumnCollapsed ? 'lg:translate-x-[280px] lg:opacity-0 lg:pointer-events-none' : 'lg:translate-x-0 lg:opacity-100'"
             >
                 <!-- Toggle Button - Floating, always visible, positioned on panel but stays visible -->
                 <button
                     type="button"
-                    class="absolute left-0 top-0 z-30 flex h-8 w-8 -translate-x-4 items-center justify-center rounded-r-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-300 ease-in-out hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    class="absolute left-0 top-0 z-30 flex h-8 w-8 -translate-x-4 items-center justify-center rounded-r-lg border text-gray-600 shadow-sm transition-all duration-300 ease-in-out hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                     :class="isRightColumnCollapsed ? 'lg:opacity-100 lg:pointer-events-auto' : ''"
                     @click="isRightColumnCollapsed = !isRightColumnCollapsed"
                     title="Toggle rechterkolom"
@@ -280,7 +280,7 @@
     <script type="text/x-template" id="v-lead-delete-template">
         <button
             type="button"
-            class="secondary-button border border-red-500 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+            class="secondary-button border border-error text-error hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
             :class="{ 'opacity-50 pointer-events-none': isDeleting }"
             :disabled="isDeleting"
             @click="confirmDelete"

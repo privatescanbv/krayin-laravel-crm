@@ -231,7 +231,7 @@
 
                 <p
                     id="{{ $fieldName }}[]-error"
-                    class="error-message mt-1 text-xs italic text-red-600"
+                    class="error-message mt-1 text-xs italic text-error"
                 ></p>
 
                 @break

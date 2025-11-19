@@ -3,7 +3,7 @@
 <x-admin::layouts>
     <x-slot:title>Entity Selector Demo</x-slot>
     <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="text-xl font-bold dark:text-gray-300">Entity Selector Demo</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">
                 Test alle functionaliteiten van de entity selector component
@@ -13,7 +13,7 @@
         <!-- Entity Selector Tests -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Partner Products Selector -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+            <div class="box-shadow rounded-lg border bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Partner Products</h3>
 
                 <v-entity-selector
@@ -27,7 +27,7 @@
             </div>
 
             <!-- Contacts/Persons Selector -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+            <div class="box-shadow rounded-lg border bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Contacts/Persons</h3>
 
                 @include('adminc.components.contact-person-selector')
@@ -43,7 +43,7 @@
             </div>
 
             <!-- Products Selector -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+            <div class="box-shadow rounded-lg border bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Products</h3>
 
                 <v-entity-selector
@@ -57,7 +57,7 @@
             </div>
 
             <!-- Leads Selector -->
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+            <div class="box-shadow rounded-lg border bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Leads</h3>
 
                 <v-entity-selector
@@ -72,7 +72,7 @@
         </div>
 
         <!-- Single Selection Test -->
-        <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+        <div class="box-shadow rounded-lg border bg-white p-4">
             <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Single Selection Test</h3>
 
             <v-entity-selector
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Form Components Demo -->
-        <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+        <div class="box-shadow rounded-lg border bg-white p-4">
             <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Form Components Demo</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,7 +181,7 @@
         </div>
 
         <!-- Advanced Components Demo -->
-        <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+        <div class="box-shadow rounded-lg border bg-white p-4">
             <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Advanced Components Demo</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -239,23 +239,23 @@
         </div>
 
         <!-- Component Status -->
-        <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
+        <div class="box-shadow rounded-lg border bg-white p-4">
             <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Component Status</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-succes rounded-full"></div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">Entity Selectors</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-succes rounded-full"></div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">Form Components</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-succes rounded-full"></div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">Date Picker</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-succes rounded-full"></div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">Advanced Inputs</span>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -263,7 +263,7 @@
                     <span class="text-sm text-gray-700 dark:text-gray-300">Interactive Elements</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-succes rounded-full"></div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">All Components Ready</span>
                 </div>
             </div>

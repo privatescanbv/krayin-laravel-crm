@@ -32,7 +32,7 @@
                 <div
                     class="stage relative flex h-7 cursor-pointer items-center justify-center bg-white pl-7 pr-4 dark:bg-gray-900 ltr:first:rounded-l-lg rtl:first:rounded-r-lg"
                     :class="{
-                        '!bg-green-500 text-white dark:text-gray-900 ltr:after:bg-green-500 rtl:before:bg-green-500': currentStage.sort_order >= stage.sort_order,
+                        '!bg-succes text-white dark:text-gray-900 ltr:after:bg-succes rtl:before:bg-succes': currentStage.sort_order >= stage.sort_order,
                         '!bg-red-500 text-white dark:text-gray-900 ltr:after:bg-red-500 rtl:before:bg-red-500': currentStage?.code && String(currentStage.code).toLowerCase().startsWith('lost'),
                     }"
                     v-if="!(stage?.code && ['won','lost'].some(k => String(stage.code).toLowerCase().startsWith(k)))"
@@ -56,7 +56,7 @@
                     <div
                         class="relative flex h-7 min-w-24 cursor-pointer items-center justify-center rounded-r-lg bg-white pl-7 pr-4 dark:bg-gray-900"
                         :class="{
-                            '!bg-green-500 text-white dark:text-gray-900 after:bg-green-500': (currentStage?.code && String(currentStage.code).toLowerCase().startsWith('won')),
+                            '!bg-succes text-white dark:text-gray-900 after:bg-succes': (currentStage?.code && String(currentStage.code).toLowerCase().startsWith('won')),
                             '!bg-red-500 text-white dark:text-gray-900 after:bg-red-500': (currentStage?.code && String(currentStage.code).toLowerCase().startsWith('lost')),
                         }"
                         @click="stageToggler = ! stageToggler"

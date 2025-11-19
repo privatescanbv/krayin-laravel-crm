@@ -25,7 +25,7 @@
             <div
                 v-if="! isEditing"
                 class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                :class="allowEdit ? 'hover:bg-neutral-bg dark:hover:bg-gray-800' : ''"
             >
                 <x-admin::form.control-group.control
                     type="hidden"
@@ -104,7 +104,7 @@
                 <!-- Popup Box -->
                 <div
                     v-if="showPopup"
-                    class="absolute z-10 mt-1 w-full origin-top transform rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-800 dark:bg-gray-800"
+                    class="absolute z-10 mt-1 w-full origin-top transform rounded-lg border p-2 shadow-lg transition-transform dark:border-gray-800 dark:bg-gray-800"
                     :class="dropdownPosition === 'bottom' ? 'top-full mt-1' : 'bottom-full mb-1'"
                 >
                     <!-- Search Bar -->
@@ -138,10 +138,10 @@
                 <div class="absolute top-1/2 flex -translate-y-1/2 transform gap-0.5 bg-white dark:bg-gray-900 ltr:right-2 rtl:left-2">
                     <button
                         type="button"
-                        class="flex items-center justify-center bg-green-100 p-1 hover:bg-green-200 ltr:rounded-l-md rtl:rounded-r-md"
+                        class="flex items-center justify-center bg-green-100 p-1 hover:bg-activity-email-bg ltr:rounded-l-md rtl:rounded-r-md"
                         @click="save"
                     >
-                        <i class="icon-tick text-md cursor-pointer font-bold text-green-600 dark:!text-green-600" />
+                        <i class="icon-tick text-md cursor-pointer font-bold text-succes dark:!text-succes" />
                     </button>
 
                     <button
@@ -149,7 +149,7 @@
                         class="item-center flex justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md"
                         @click="cancel"
                     >
-                        <i class="icon-cross-large text-md cursor-pointer font-bold text-red-600 dark:!text-red-600" />
+                        <i class="icon-cross-large text-md cursor-pointer font-bold text-error dark:!text-error" />
                     </button>
                 </div>
 

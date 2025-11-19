@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="flex gap-4 max-lg:flex-wrap">
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <div class="flex items-center justify-between">
                     <x-admin::breadcrumbs name="partner_products.view" :entity="$partner_product" />
@@ -71,7 +71,7 @@
                         <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.partner_products.index.create.reporting')</div>
                         <div class="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             @foreach ($reportingLabels as $label)
-                                <span class="inline-block rounded bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $label }}</span>
+                                <span class="inline-block rounded bg-blue-100 px-2 py-1 text-xs text-activity-task-text dark:bg-blue-900 dark:text-blue-200">{{ $label }}</span>
                             @endforeach
                         </div>
                     </div>

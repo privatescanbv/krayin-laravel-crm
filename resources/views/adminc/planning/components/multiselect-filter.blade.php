@@ -37,7 +37,7 @@
                         v-for="option in options"
                         :key="option.value"
                         @click="toggleValue(option.value)"
-                        class="flex cursor-pointer items-center justify-between gap-2.5 rounded-md p-1.5 text-base text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950"
+                        class="flex cursor-pointer items-center justify-between gap-2.5 rounded-md p-1.5 text-base text-gray-800 hover:bg-neutral-bg dark:text-white dark:hover:bg-gray-950"
                     >
                         <div class="flex items-center gap-2">
                             <input

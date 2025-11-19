@@ -147,8 +147,8 @@ class PartnerProductDataGrid extends DataGrid
                 $active = $row->active ?? false;
 
                 return $active
-                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
-                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
+                    ? "<span class='icon-tick text-succes text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-error text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
             },
         ]);
     }

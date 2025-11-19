@@ -1,6 +1,6 @@
 <div class="p-4">
     <div class="flex flex-col gap-4 dark:text-white">
-        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <h4 class="mb-4 text-lg font-semibold dark:text-white">
                 @lang('admin::app.settings.clinics.view.overview.general-info')
             </h4>
@@ -48,14 +48,14 @@
                                 @endphp
                                 @if (!empty($value))
                                     <div class="flex items-center gap-2 dark:text-white">
-                                        <a href="mailto:{{ $value }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                        <a href="mailto:{{ $value }}" class="text-blue-600 hover:text-activity-task-text dark:text-blue-400">
                                             {{ $value }}
                                         </a>
                                         @if (!empty($fieldLabel))
                                             <span class="text-xs text-gray-500 dark:text-gray-400">({{ $fieldLabel }})</span>
                                         @endif
                                         @if ($isDefault)
-                                            <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-activity-task-text dark:bg-blue-900 dark:text-blue-200">
                                                 standaard
                                             </span>
                                         @endif
@@ -92,14 +92,14 @@
                                 @endphp
                                 @if (!empty($value))
                                     <div class="flex items-center gap-2 dark:text-white">
-                                        <a href="tel:{{ $value }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                        <a href="tel:{{ $value }}" class="text-blue-600 hover:text-activity-task-text dark:text-blue-400">
                                             {{ $value }}
                                         </a>
                                         @if (!empty($fieldLabel))
                                             <span class="text-xs text-gray-500 dark:text-gray-400">({{ $fieldLabel }})</span>
                                         @endif
                                         @if ($isDefault)
-                                            <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-activity-task-text dark:bg-blue-900 dark:text-blue-200">
                                                 standaard
                                             </span>
                                         @endif
@@ -147,7 +147,7 @@
         <!-- Statistics -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Partner Products Count -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -164,7 +164,7 @@
             </div>
 
             <!-- Resources Count -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -175,7 +175,7 @@
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                        <i class="icon-setting text-2xl text-green-600 dark:text-green-400"></i>
+                        <i class="icon-setting text-2xl text-succes dark:text-green-400"></i>
                     </div>
                 </div>
             </div>

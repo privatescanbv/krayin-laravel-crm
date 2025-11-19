@@ -5,7 +5,7 @@
 
     <div class="flex gap-4 max-lg:flex-wrap">
         <!-- Left Panel -->
-        <div class="max-lg:min-w-full max-lg:max-w-full lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div class="max-lg:min-w-full max-lg:max-w-full lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <div class="flex items-center justify-between">
                     <div class="flex justify-start max-lg:hidden">
@@ -36,9 +36,9 @@
                 <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-2">Details</h4>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>
-                    <span class="text-sm font-semibold 
-                        @if($importRun->status === 'completed') text-green-600 dark:text-green-400
-                        @elseif($importRun->status === 'failed') text-red-600 dark:text-red-400
+                    <span class="text-sm font-semibold
+                        @if($importRun->status === 'completed') text-succes dark:text-green-400
+                        @elseif($importRun->status === 'failed') text-error dark:text-red-400
                         @else text-yellow-600 dark:text-yellow-400
                         @endif">
                         {{ ucfirst($importRun->status) }}
@@ -71,7 +71,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Imported:</span>
-                    <span class="text-sm text-green-600 dark:text-green-400">{{ $importRun->records_imported }}</span>
+                    <span class="text-sm text-succes dark:text-green-400">{{ $importRun->records_imported }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Skipped:</span>
@@ -79,7 +79,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Errors:</span>
-                    <span class="text-sm text-red-600 dark:text-red-400">{{ $importRun->records_errored }}</span>
+                    <span class="text-sm text-error dark:text-red-400">{{ $importRun->records_errored }}</span>
                 </div>
             </div>
 
@@ -99,7 +99,7 @@
         </div>
 
         <!-- Right Panel - Import Logs -->
-        <div class="flex w-full flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex w-full flex-col gap-4 rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold dark:text-white">Import Logs</h3>
                 @if(!$importRun->importLogs->isEmpty())
@@ -110,13 +110,13 @@
                         <span class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded">
                             {{ $importRun->importLogs->where('level', 'warning')->count() }} warnings
                         </span>
-                        <span class="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded">
+                        <span class="px-2 py-1 bg-blue-100 text-activity-task-text dark:bg-blue-900/30 dark:text-blue-300 rounded">
                             {{ $importRun->importLogs->where('level', 'info')->count() }} info
                         </span>
                     </div>
                 @endif
             </div>
-            
+
             @if($importRun->importLogs->isEmpty())
                 <div class="text-center py-8">
                     <p class="text-sm text-gray-600 dark:text-gray-400">✓ Geen logs gevonden - import succesvol zonder errors of warnings</p>
@@ -167,7 +167,7 @@
                                     <summary class="text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
                                         📋 View Context
                                     </summary>
-                                    <pre class="text-xs mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded overflow-x-auto">{{ json_encode($log->context, JSON_PRETTY_PRINT) }}</pre>
+                                    <pre class="text-xs mt-2 p-2 bg-neutral-bg dark:bg-gray-800 rounded overflow-x-auto">{{ json_encode($log->context, JSON_PRETTY_PRINT) }}</pre>
                                 </details>
                             @endif
                         </div>
@@ -183,7 +183,7 @@
                 function filterLogs(level) {
                     const entries = document.querySelectorAll('.log-entry');
                     const buttons = document.querySelectorAll('.filter-btn');
-                    
+
                     // Update button styles
                     buttons.forEach(btn => {
                         if (btn.dataset.filter === level) {
@@ -194,7 +194,7 @@
                             btn.classList.add('bg-transparent', 'text-gray-600', 'dark:text-gray-400');
                         }
                     });
-                    
+
                     // Filter entries
                     entries.forEach(entry => {
                         if (level === 'all' || entry.dataset.level === level) {

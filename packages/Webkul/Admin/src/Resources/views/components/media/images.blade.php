@@ -32,7 +32,7 @@
                     <!-- Upload Image Button -->
                     <label
                         class="grid h-[120px] max-h-[120px] min-h-[110px] w-full min-w-[110px] max-w-[120px] cursor-pointer items-center justify-items-center rounded border border-dashed border-gray-300 transition-all hover:border-gray-400 dark:border-gray-800 dark:mix-blend-exclusion dark:invert"
-                        :class="[(errors?.['images.files[0]'] ?? false) ? 'border border-red-500' : 'border-gray-300']"
+                        :class="[(errors?.['images.files[0]'] ?? false) ? 'border border-error' : 'border-gray-300']"
                         :style="{'max-width': this.width, 'max-height': this.height}"
                         :for="$.uid + '_imageInput'"
                     >
@@ -41,7 +41,7 @@
 
                             <p class="grid text-center text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 @lang('admin::app.components.media.images.add-image-btn')
-                                
+
                                 <span class="text-xs">
                                     @lang('admin::app.components.media.images.allowed-types')
                                 </span>
@@ -96,7 +96,7 @@
                     </div>
                 </template>
             </div>
-        </div>  
+        </div>
     </script>
 
     <script type="text/x-template" id="v-media-image-item-template">
@@ -149,7 +149,7 @@
 
             props: {
                 name: {
-                    type: String, 
+                    type: String,
                     default: 'images',
                 },
 
@@ -255,8 +255,8 @@
                 getBase64ToFile(base64, filename) {
                     var arr = base64.split(','),
                         mime = arr[0].match(/:(.*?);/)[1],
-                        bstr = atob(arr[arr.length - 1]), 
-                        n = bstr.length, 
+                        bstr = atob(arr[arr.length - 1]),
+                        n = bstr.length,
                         u8arr = new Uint8Array(n);
 
                     while (n--) {

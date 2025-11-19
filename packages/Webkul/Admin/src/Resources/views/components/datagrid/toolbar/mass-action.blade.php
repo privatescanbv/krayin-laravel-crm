@@ -37,18 +37,18 @@
                                     <span class="text-sm font-normal">
                                         @{{ massAction.title }}
                                     </span>
-        
+
                                     <span
                                         class="text-2xl"
                                         :class="showPopup ? 'icon-up-arrow' : 'icon-down-arrow'"
                                     ></span>
                                 </button>
                             </x-slot>
-        
+
                             <x-slot:menu class="!bottom-12 !top-auto !p-0 shadow-[0_5px_20px_rgba(0,0,0,0.15)] dark:border-gray-800">
                                 <li v-for="option in massAction?.options">
                                     <a
-                                        class="whitespace-no-wrap block rounded-t px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                        class="whitespace-no-wrap block rounded-t px-4 py-2 text-sm text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                                         href="javascript:void(0);"
                                         @click="performMassAction(massAction, option)"
                                     >
@@ -56,20 +56,20 @@
                                     </a>
                                 </li>
                             </x-slot>
-                        </x-admin::dropdown>    
+                        </x-admin::dropdown>
                     </template>
                 </template>
-                
+
                 <button
                     type="button"
-                    class="primary-button border-red-500 !bg-red-500"
+                    class="primary-button border-error !bg-red-500"
                     @click="performMassAction(available.massActions.find(action => action.icon === 'icon-delete'))"
                 >
                     @{{ available.massActions.find(action => action.icon === 'icon-delete')?.title }}
                 </button>
 
-                <i 
-                    class="icon-cross-large cursor-pointer rounded-md p-1 text-2xl text-gray-600 transition-all hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                <i
+                    class="icon-cross-large cursor-pointer rounded-md p-1 text-2xl text-gray-600 transition-all hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950"
                     @click="massActions.indices = []"
                 ></i>
             </div>

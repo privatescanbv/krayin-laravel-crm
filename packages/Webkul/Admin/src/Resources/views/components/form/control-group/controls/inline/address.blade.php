@@ -23,7 +23,7 @@
             <!-- Non-editing view -->
             <div
                 class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                :class="allowEdit ? 'hover:bg-neutral-bg dark:hover:bg-gray-800' : ''"
             >
                 <div 
                     class="group relative !w-full pl-2.5"

@@ -7,6 +7,7 @@ read -p "Enter your choice (1 or 2): " choice
 
 ./vendor/bin/sail artisan migrate:fresh --seed &&
 ./vendor/bin/sail artisan import:users &&
+./vendor/bin/sail artisan keycloak:sync-users &&
 
 if [ "$choice" = "1" ]; then
     echo "Importing single lead setup..."

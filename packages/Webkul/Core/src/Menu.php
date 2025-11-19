@@ -58,9 +58,12 @@ class Menu
         }
 
         $configMenu = collect(config("menu.$area"))->map(function ($item) {
+            // Support external URLs by checking if 'url' is already set
+            $url = $item['url'] ?? route($item['route'], $item['params'] ?? []);
+            
             return Arr::except([
                 ...$item,
-                'url' => route($item['route'], $item['params'] ?? []),
+                'url' => $url,
             ], ['params']);
         });
 
@@ -108,7 +111,8 @@ class Menu
         $menuWithDotNotation = [];
 
         foreach ($this->configMenu as $item) {
-            if (strpos(request()->url(), route($item['route'])) !== false) {
+            // Check if item has a route before checking active state
+            if (isset($item['route']) && strpos(request()->url(), route($item['route'])) !== false) {
                 $this->currentKey = $item['key'];
             }
 
@@ -121,7 +125,7 @@ class Menu
             $this->addItem(new MenuItem(
                 key: $menuItemKey,
                 name: trans($menuItem['name']),
-                route: $menuItem['route'],
+                route: $menuItem['route'] ?? '',
                 url: $menuItem['url'],
                 sort: $menuItem['sort'],
                 icon: $menuItem['icon-class'],
@@ -145,7 +149,7 @@ class Menu
                 return new MenuItem(
                     key: $subMenuItem['key'],
                     name: trans($subMenuItem['name']),
-                    route: $subMenuItem['route'],
+                    route: $subMenuItem['route'] ?? '',
                     url: $subMenuItem['url'],
                     sort: $subMenuItem['sort'],
                     icon: $subMenuItem['icon-class'],

@@ -13,6 +13,35 @@ use Webkul\User\Models\UserDefaultValue;
 class UserSeeder extends Seeder
 {
     /**
+     * Get user passwords - defined once, used everywhere.
+     *
+     * @return array<string, string>
+     */
+    protected static function getUserPasswords(): array
+    {
+        return [
+            'mark.bulthuis@privatescan.nl' => '8AAZ5jc%e&AF',
+            'mark.klaucke@privatescan.nl' => '8AAZ5jc%e&Ad',
+            'linda@privatescan.nl' => '8AAZ5jc%e&3d',
+            'petra@privatescan.nl' => '8BBZ5jc%e&Ad',
+            'wout@privatescan.nl' => '8EEZ5jc%e&Ad',
+            'lars@privatescan.nl' => '8A4Z5jc%d3Ad',
+            'frank@privatescan.nl' => '8A115dc@d3Ad',
+        ];
+    }
+
+    /**
+     * Get password for a user by email from the seeder data.
+     *
+     * @param  string  $email
+     * @return string|null
+     */
+    public static function getPasswordForEmail(string $email): ?string
+    {
+        return static::getUserPasswords()[$email] ?? null;
+    }
+
+    /**
      * Seed the application's database.
      *
      * @param array $parameters
@@ -56,13 +85,16 @@ class UserSeeder extends Seeder
             );
         }
 
+        // Get passwords from central location
+        $passwords = static::getUserPasswords();
+
         // Define users with their group assignments
         $users = [
             [
                 'first_name' => 'Mark',
                 'last_name' => 'Bulthuis',
                 'email' => 'mark.bulthuis@privatescan.nl',
-                'password' => '8AAZ5jc%e&AF',
+                'password' => $passwords['mark.bulthuis@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 1,
                 'view_permission' => 'global',
@@ -73,7 +105,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Mark',
                 'last_name' => 'Klaucke',
                 'email' => 'mark.klaucke@privatescan.nl',
-                'password' => '8AAZ5jc%e&Ad',
+                'password' => $passwords['mark.klaucke@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 1,
                 'view_permission' => 'global',
@@ -84,7 +116,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Linda',
                 'last_name' => 'Meijer',
                 'email' => 'linda@privatescan.nl',
-                'password' => '8AAZ5jc%e&3d',
+                'password' => $passwords['linda@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 1,
                 'view_permission' => 'global',
@@ -95,7 +127,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Petra',
                 'last_name' => 'Nijhof',
                 'email' => 'petra@privatescan.nl',
-                'password' => '8BBZ5jc%e&Ad',
+                'password' => $passwords['petra@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 1,
                 'view_permission' => 'global',
@@ -106,7 +138,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Wout',
                 'last_name' => 'Lansink',
                 'email' => 'wout@privatescan.nl',
-                'password' => '8EEZ5jc%e&Ad',
+                'password' => $passwords['wout@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 1,
                 'view_permission' => 'global',
@@ -117,7 +149,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Lars',
                 'last_name' => 'Kamphuis',
                 'email' => 'lars@privatescan.nl',
-                'password' => '8A4Z5jc%d3Ad',
+                'password' => $passwords['lars@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 2, // Medewerker Afdeling role
                 'view_permission' => 'group', // Restricted to group view
@@ -128,7 +160,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Frank',
                 'last_name' => 'Hefti',
                 'email' => 'frank@privatescan.nl',
-                'password' => '8A115dc@d3Ad',
+                'password' => $passwords['frank@privatescan.nl'],
                 'status' => 1,
                 'role_id' => 1,
                 'view_permission' => 'global',

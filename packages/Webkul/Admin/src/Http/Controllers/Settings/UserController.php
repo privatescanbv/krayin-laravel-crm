@@ -75,9 +75,11 @@ class UserController extends Controller
         // Normalize composite name field expected by backend
         $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
-        if (isset($data['password']) && $data['password']) {
-            $data['password'] = bcrypt($data['password']);
-        }
+        // Don't hash password here - let the User model's mutator handle it
+        // This allows UserObserver to capture the plaintext password
+        // if (isset($data['password']) && $data['password']) {
+        //     $data['password'] = bcrypt($data['password']);
+        // }
 
         $data['status'] = array_key_exists('status', $data) ? $data['status'] : 0;
 
@@ -171,11 +173,14 @@ class UserController extends Controller
         // Normalize composite name field expected by backend
         $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
+        // Don't hash password here - let the User model's mutator handle it
+        // This allows UserObserver to capture the plaintext password
         if (!array_key_exists('password', $data)) {
             unset($data['password'], $data['confirm_password']);
-        } else {
-            $data['password'] = bcrypt($data['password']);
         }
+        // else {
+        //     $data['password'] = bcrypt($data['password']);
+        // }
 
         if (auth()->guard('user')->user()->id != $id) {
             $data['status'] = $data['status'] ? 1 : 0;

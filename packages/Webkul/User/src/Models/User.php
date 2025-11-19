@@ -29,6 +29,7 @@ class User extends Authenticatable implements UserContract
         'role_id',
         'status',
         'external_id',
+        'keycloak_user_id',
         'view_permission',
         'signature',
     ];
@@ -43,6 +44,39 @@ class User extends Authenticatable implements UserContract
         'api_token',
         'remember_token',
     ];
+
+
+    /**
+     * Perform a model update operation.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return bool
+     */
+    protected function performUpdate($query)
+    {
+        // Remove temporary attributes that shouldn't be saved to database
+        if (isset($this->attributes['_plaintext_password'])) {
+            unset($this->attributes['_plaintext_password']);
+        }
+
+        return parent::performUpdate($query);
+    }
+
+    /**
+     * Perform a model insert operation.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return bool
+     */
+    protected function performInsert($query)
+    {
+        // Remove temporary attributes that shouldn't be saved to database
+        if (isset($this->attributes['_plaintext_password'])) {
+            unset($this->attributes['_plaintext_password']);
+        }
+
+        return parent::performInsert($query);
+    }
 
     /**
      * The accessors to append to the model's array form.
@@ -83,6 +117,32 @@ class User extends Authenticatable implements UserContract
         $array['image_url'] = $this->image_url;
 
         return $array;
+    }
+
+    /**
+     * Set the password attribute - hash it automatically.
+     * The plaintext password is stored temporarily for UserObserver.
+     */
+    public function setPasswordAttribute($value): void
+    {
+        // Store plaintext password temporarily if it's not already hashed
+        if (! empty($value) && ! str_starts_with($value, '$2y$') && ! str_starts_with($value, '$2a$') && ! str_starts_with($value, '$2b$')) {
+            // Store in a temporary attribute that UserObserver can access
+            $this->attributes['_plaintext_password'] = $value;
+            // Hash the password for storage
+            $this->attributes['password'] = bcrypt($value);
+        } else {
+            // Already hashed or empty, store as-is
+            $this->attributes['password'] = $value;
+        }
+    }
+
+    /**
+     * Get the plaintext password if available (for UserObserver).
+     */
+    public function getPlaintextPassword(): ?string
+    {
+        return $this->attributes['_plaintext_password'] ?? null;
     }
 
     /**

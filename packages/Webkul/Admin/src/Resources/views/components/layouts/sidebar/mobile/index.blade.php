@@ -77,8 +77,12 @@
                                         :class="{ 'max-h-[500px] py-2 border-l-brandColor bg-gray-50 dark:bg-gray-900': activeMenu === '{{ $menuKey }}' || {{ $hasActiveChild ? 'true' : 'false' }}, 'max-h-0 py-0 border-transparent bg-transparent': activeMenu !== '{{ $menuKey }}' && !{{ $hasActiveChild ? 'true' : 'false' }} }"
                                     >
                                         @foreach ($menuItem->getChildren() as $subMenuItem)
+                                            @php
+                                                $isExternal = !empty($subMenuItem->getUrl()) && (str_starts_with($subMenuItem->getUrl(), 'http://') || str_starts_with($subMenuItem->getUrl(), 'https://'));
+                                            @endphp
                                             <a
                                                 href="{{ $subMenuItem->getUrl() }}"
+                                                @if($isExternal) target="_blank" rel="noopener noreferrer" @endif
                                                 class="submenu-link block whitespace-nowrap p-2 pl-10 text-sm transition-colors duration-200"
                                                 :class="{ 'text-brandColor font-medium bg-neutral-bg dark:bg-gray-800': '{{ $subMenuItem->isActive() }}' === '1', 'text-gray-600 dark:text-gray-400 hover:bg-neutral-bg dark:hover:bg-gray-800': '{{ $subMenuItem->isActive() }}' !== '1' }">
                                                 {{ $subMenuItem->getName() }}

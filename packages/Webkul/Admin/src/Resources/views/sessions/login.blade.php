@@ -98,6 +98,25 @@
                     </div>
                 </x-admin::form>
 
+                @if(config('services.keycloak.client_id'))
+                    <div class="border-t p-4 dark:border-gray-800">
+                        <div class="mb-3 flex items-center">
+                            <div class="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
+                            <span class="px-3 text-xs text-gray-500 dark:text-gray-400">of</span>
+                            <div class="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
+                        </div>
+                        <a
+                            href="{{ route('admin.keycloak.redirect') }}"
+                            class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                        >
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2.4c5.302 0 9.6 4.298 9.6 9.6S17.302 21.6 12 21.6 2.4 17.302 2.4 12 6.698 2.4 12 2.4zm0 1.2c-4.64 0-8.4 3.76-8.4 8.4S7.36 20.4 12 20.4s8.4-3.76 8.4-8.4S16.64 3.6 12 3.6zm0 1.8c3.717 0 6.6 2.883 6.6 6.6S15.717 18.6 12 18.6 5.4 15.717 5.4 12 8.283 5.4 12 5.4zm0 1.2c-2.98 0-5.4 2.42-5.4 5.4S9.02 17.4 12 17.4s5.4-2.42 5.4-5.4-2.42-5.4-5.4-5.4z"/>
+                            </svg>
+                            Inloggen met SSO
+                        </a>
+                    </div>
+                @endif
+
                 {!! view_render_event('admin.sessions.login.form_controls.after') !!}
             </div>
         </div>
@@ -121,5 +140,11 @@
                 visibilityIcon.classList.toggle("icon-eye");
             }
         </script>
+        
+        {{-- 
+            Keycloak logout is now handled via direct redirect in SessionController@destroy
+            Backchannel logout endpoint handles server-side logout if configured in Keycloak
+            No need for iframe logout anymore (CSP blocks it anyway)
+        --}}
     @endpush
 </x-admin::layouts.anonymous>

@@ -45,4 +45,16 @@ return [
         'api_token'    => env('FORMS_API_KEY', null),
     ],
 
+    'keycloak' => [
+        'client_id'         => env('KEYCLOAK_CLIENT_ID'),
+        'client_secret'     => env('KEYCLOAK_CLIENT_SECRET'),
+        'redirect'          => env('KEYCLOAK_REDIRECT_URI', '/admin/auth/keycloak/callback'),
+        'base_url'          => env('KEYCLOAK_BASE_URL', 'http://localhost:8085'),
+        'base_url_internal' => env('KEYCLOAK_BASE_URL_INTERNAL', 'http://host.docker.internal:8085'),
+        'realm'             => env('KEYCLOAK_REALM', 'master'),
+        'default_role_id'   => env('KEYCLOAK_DEFAULT_ROLE_ID', 1),
+        'admin_username'    => env('KEYCLOAK_ADMIN', 'admin'),
+        'admin_password'    => env('KEYCLOAK_ADMIN_PASSWORD', 'c8f4b3a8e69'),
+    ],
+
 ];

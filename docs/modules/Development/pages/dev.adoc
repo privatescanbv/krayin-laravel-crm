@@ -278,3 +278,9 @@ protected function gate()
 
 7. sail artisan telescope:publish
 
+
+
+include::keycloak-setup.adoc[]
+
+include::logging-setup.adoc[]
+

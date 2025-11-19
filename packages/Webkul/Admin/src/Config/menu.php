@@ -316,6 +316,12 @@ return [
         'route'      => 'admin.configuration.index',
         'sort'       => 14,
         'icon-class' => 'icon-configuration',
+    ], [
+        'key'        => 'form',
+        'name'       => 'Forms',
+        'url'        => config('services.forms.frontend_url', 'http://localhost:8001'),
+        'sort'       => 15,
+        'icon-class' => 'icon-file',
     ],
 
     /**
@@ -325,7 +331,7 @@ return [
         'key'        => 'documentation',
         'name'       => 'Documentation',
         'route'      => 'admin.docs.index',
-        'sort'       => 15,
+        'sort'       => 16,
         'icon-class' => 'icon-file',
     ],
 ];

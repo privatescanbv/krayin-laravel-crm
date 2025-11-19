@@ -328,6 +328,74 @@ services:
     depends_on:
       - loki
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    restart: unless-stopped
+    env_file:
+      - .env.keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      # KC_DB_USERNAME en KC_DB_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME en KEYCLOAK_DB_PASSWORD via entrypoint
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KC_PROXY: edge
+    entrypoint: ["/bin/sh", "-c", "export KC_DB_USERNAME=$${KEYCLOAK_DB_USERNAME:-keycloak} && export KC_DB_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && exec /opt/keycloak/bin/kc.sh start-dev"]
+    ports:
+      - "8085:8080"
+      - "8443:8443"
+    networks:
+      - sail
+      - mb_traefik
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak.rule=Host(`sso.dev.privatescan.nl`)
+      - traefik.http.routers.keycloak.entrypoints=https
+      - traefik.http.routers.keycloak.tls=true
+      - traefik.http.routers.keycloak.tls.certresolver=myresolver
+      - traefik.http.routers.keycloak.service=keycloak-svc
+      - traefik.http.routers.keycloak.middlewares=keycloak-forward-headers
+      - traefik.http.services.keycloak-svc.loadbalancer.server.port=8080
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.dev.privatescan.nl
+      - traefik.docker.network=mb_traefik
+      - logging=promtail
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  keycloak-db:
+    image: postgres:15-alpine
+    container_name: keycloak-db
+    restart: unless-stopped
+    env_file:
+      - .env.keycloak
+    environment:
+      POSTGRES_DB: keycloak
+      # POSTGRES_USER en POSTGRES_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME en KEYCLOAK_DB_PASSWORD via entrypoint
+    entrypoint: ["/bin/sh", "-c", "export POSTGRES_USER=$${KEYCLOAK_DB_USERNAME:-keycloak} && export POSTGRES_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && exec docker-entrypoint.sh postgres"]
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - sail
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USERNAME:-keycloak}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   sail:
     driver: bridge
@@ -342,4 +410,6 @@ volumes:
   loki-data:
     driver: local
   grafana-data:
+    driver: local
+  keycloak-db-data:
     driver: local

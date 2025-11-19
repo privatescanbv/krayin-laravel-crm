@@ -31,7 +31,8 @@ class AccountController extends Controller
         $user = auth()->guard('user')->user();
 
         $this->validate(request(), [
-            'name'             => 'required',
+            'first_name'       => 'required',
+            'last_name'        => 'required',
             'email'            => 'email|unique:users,email,'.$user->id,
             'password'         => 'nullable|min:6|confirmed',
             'current_password' => 'required|min:6',
@@ -39,13 +40,17 @@ class AccountController extends Controller
         ]);
 
         $data = request()->only([
-            'name',
+            'first_name',
+            'last_name',
             'email',
             'password',
             'password_confirmation',
             'current_password',
             'image',
         ]);
+
+        // Normalize composite name field expected by backend
+        $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
         if (! Hash::check($data['current_password'], $user->password)) {
             session()->flash('warning', trans('admin::app.account.edit.invalid-password'));
@@ -66,7 +71,9 @@ class AccountController extends Controller
         } else {
             $isPasswordChanged = true;
 
-            $data['password'] = bcrypt($data['password']);
+            // Don't hash password here - let the User model's mutator handle it
+            // This allows UserObserver to capture the plaintext password
+            // $data['password'] = bcrypt($data['password']);
         }
 
         if (request()->hasFile('image')) {
@@ -82,6 +89,9 @@ class AccountController extends Controller
                 $data['image'] = $user->image;
             }
         }
+
+        // Remove fields that shouldn't be saved to database
+        unset($data['current_password'], $data['password_confirmation']);
 
         $user->update($data);
 

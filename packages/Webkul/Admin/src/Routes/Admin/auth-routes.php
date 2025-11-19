@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Controllers\User\ForgotPasswordController;
+use Webkul\Admin\Http\Controllers\User\KeycloakController;
 use Webkul\Admin\Http\Controllers\User\ResetPasswordController;
 use Webkul\Admin\Http\Controllers\User\SessionController;
 
@@ -43,5 +44,21 @@ Route::withoutMiddleware(['user'])->group(function () {
         Route::get('{token}', 'create')->name('admin.reset_password.create');
 
         Route::post('', 'store')->name('admin.reset_password.store');
+    });
+
+    /**
+     * Keycloak SSO routes.
+     */
+    Route::controller(KeycloakController::class)->prefix('auth/keycloak')->group(function () {
+        Route::get('redirect', 'redirect')->name('admin.keycloak.redirect');
+
+        Route::get('callback', 'callback')->name('admin.keycloak.callback');
+
+        Route::get('logout', 'logout')->name('admin.keycloak.logout');
+        
+        Route::get('logout-callback', 'logoutCallback')->name('admin.keycloak.logout-callback');
+        
+        // Backchannel logout endpoint (called by Keycloak server-side)
+        Route::post('backchannel-logout', 'backchannelLogout')->name('admin.keycloak.backchannel-logout');
     });
 });

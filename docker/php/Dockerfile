@@ -142,6 +142,7 @@ COPY --from=vite /build/.docker/mysql/init-forms.sql /docker/mysql/init-forms.sq
 COPY --from=vite /build/docker-compose-prod.yml /docker/docker-compose.yml
 # TODO security wise, red flag. Change this CI implmementation later to a vault.
 COPY --from=vite /build/.env.prod /docker/.env.prod
+COPY --from=vite /build/.env.keycloak.prod /docker/.env.keycloak.prod
 
 RUN mkdir -p ./storage && touch ./storage/installed
 

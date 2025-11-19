@@ -12,6 +12,7 @@ use App\Observers\OrderObserver;
 use App\Observers\PersonObserver;
 use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
+use App\Observers\UserObserver;
 use App\Services\OrderCheckService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
@@ -41,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         Order::observe(OrderObserver::class);
         OrderItem::observe(OrderItemObserver::class);
         ResourceOrderItem::observe(ResourceOrderItemObserver::class);
+        User::observe(UserObserver::class);
 
         // Register custom validation rules
         Validator::extend('active_user', function ($attribute, $value, $parameters, $validator) {

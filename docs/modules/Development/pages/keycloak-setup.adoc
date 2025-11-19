@@ -1,0 +1,237 @@
+=== Keycloak SSO Setup
+
+TODO: ziet hier screen shots van de config toevoegen!!!
+
+Deze guide beschrijft hoe je Keycloak SSO configureert voor de CRM applicatie en Forms.
+
+==== Vereisten
+
+- Docker en Docker Compose
+- Toegang tot de applicatie configuratie
+
+==== Stap 1: Keycloak Starten
+
+Deze zal starten met docker compose, zie ./start-dev.sh script.
+
+[source,bash]
+----
+docker-compose logs -f keycloak
+----
+
+Keycloak is beschikbaar op: `http://localhost:8085`
+
+==== Stap 2: Keycloak Admin Console Configureren
+
+1. Ga naar `http://localhost:8085`
+2. Klik op "Administration Console"
+3. Log in met:
+   - Username: `admin`
+   - Password: [zie de waarde uit `.env.keycloak` / `.env.keycloak.prod`]
+
+==== Stap 3: Automatische Configuratie Synchronisatie
+
+De applicatie synchroniseert automatisch de Keycloak configuratie tijdens boot. Dit betekent dat de Realm en Client automatisch worden aangemaakt als ze nog niet bestaan.
+
+**Automatische synchronisatie:**
+- Draait tijdens web requests (niet tijdens console commands)
+- Controleert of Realm bestaat → maakt aan indien nodig
+- Controleert of Client bestaat → maakt aan indien nodig
+- Update client configuratie (redirect URIs, base URL) indien nodig
+- Logs zijn zichtbaar in `storage/logs/laravel.log`
+
+**Handmatige synchronisatie:**
+
+Je kunt ook handmatig de configuratie synchroniseren met:
+
+[source,bash]
+----
+docker-compose exec crm php artisan keycloak:sync-config
+----
+
+Dit commando is idempotent: je kunt het meerdere keren draaien zonder problemen.
+
+**Wat wordt automatisch geconfigureerd:**
+
+*Realm:*
+- Naam: uit config (`KEYCLOAK_REALM`)
+- Frontend URL: uit config (`KEYCLOAK_BASE_URL`)
+- Enabled: true
+
+*Client:*
+- Client ID: uit config (`KEYCLOAK_CLIENT_ID`)
+- Redirect URIs: `{app.url}/admin/auth/keycloak/callback`, `{app.url}/admin/auth/keycloak/logout-callback`
+- Post Logout Redirect URIs: `{app.url}/admin/login`, `{app.url}/admin/auth/keycloak/logout-callback`
+- Backchannel Logout URL: `{app.url}/admin/auth/keycloak/backchannel-logout`
+- Standard Flow Enabled: true
+- Direct Access Grants Enabled: true
+- Public Client: false (confidential)
+
+**Belangrijk:** Na het aanmaken van de client wordt een client secret gegenereerd. Dit secret wordt gelogd en moet worden toegevoegd aan je `.env` bestand.
+
+==== Stap 4: Environment Variabelen Configureren
+
+Voeg de volgende variabelen toe aan je `.env` bestand:
+
+[source,env]
+----
+# Keycloak Configuration
+KEYCLOAK_BASE_URL=http://localhost:8085
+KEYCLOAK_BASE_URL_INTERNAL=http://host.docker.internal:8085
+KEYCLOAK_REALM=crm
+KEYCLOAK_CLIENT_ID=crm-app
+KEYCLOAK_CLIENT_SECRET=<het secret dat is gegenereerd na sync-config>
+KEYCLOAK_REDIRECT_URI=/admin/auth/keycloak/callback
+KEYCLOAK_DEFAULT_ROLE_ID=1
+----
+
+**Belangrijk**:
+- Vervang `<het secret dat is gegenereerd na sync-config>` met het client secret uit de logs of Keycloak Admin Console
+- `KEYCLOAK_BASE_URL_INTERNAL` wordt gebruikt voor server-to-server communicatie vanuit de container
+- Na het aanmaken van de client via `keycloak:sync-config`, wordt het secret gelogd - gebruik dit om `KEYCLOAK_CLIENT_SECRET` in te stellen
+
+==== Stap 5: Database Credentials Configureren
+
+Configureer de Keycloak database credentials in `.env.keycloak`:
+
+[source,env]
+----
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=c8f4b3a8e69
+KEYCLOAK_DB_USERNAME=keycloak_user
+KEYCLOAK_DB_PASSWORD=c8f4b3a8323369
+----
+
+**Belangrijk**: Deze waarden worden automatisch gebruikt voor zowel de database als Keycloak configuratie. Je hoeft ze maar één keer op te geven.
+
+==== Stap 6: Applicatie Herstarten
+
+Herstart de applicatie containers:
+
+[source,bash]
+----
+docker-compose restart crm
+----
+
+Tijdens de eerste boot worden automatisch de Realm en Client aangemaakt.
+
+==== Stap 7: Testen
+
+===== SSO Login Testen
+
+1. Ga naar de login pagina: `http://localhost:8000/admin/login`
+2. Je zou nu een "Inloggen met SSO" knop moeten zien
+3. Klik op de knop en log in met een Keycloak gebruiker
+4. Je zou automatisch moeten worden ingelogd in de CRM en doorgestuurd naar de dashboard
+
+===== Logout Testen
+
+1. Log in via SSO
+2. Klik op je avatar rechtsboven in de header
+3. Klik op "Sign Out" (of "Uitloggen")
+4. Je wordt doorgestuurd naar Keycloak logout en daarna terug naar de login pagina
+5. Probeer opnieuw in te loggen - je zou opnieuw moeten inloggen (geen automatische login)
+
+==== Stap 8: Bestaande CRM Gebruikers Synchroniseren (Optioneel)
+
+Als je bestaande CRM gebruikers hebt die je wilt synchroniseren met Keycloak:
+
+[source,bash]
+----
+docker-compose exec crm php artisan keycloak:sync-users
+----
+
+Dit commando maakt Keycloak gebruikers aan voor alle bestaande CRM gebruikers. Let op: gebruikers moeten daarna hun wachtwoord instellen in Keycloak.
+
+**Automatische synchronisatie:**
+
+De applicatie synchroniseert automatisch gebruikers met Keycloak via een `UserObserver`:
+- Bij aanmaken van een gebruiker → user wordt aangemaakt in Keycloak
+- Bij wijzigen van username, e-mail of wachtwoord → user wordt geüpdatet in Keycloak
+- Bij verwijderen van een gebruiker → user wordt verwijderd uit Keycloak
+- Bij activeren van een gebruiker → user wordt toegevoegd aan Keycloak
+- Bij deactiveren van een gebruiker → user wordt verwijderd uit Keycloak
+
+==== Forms Applicatie Configuratie
+
+Voor de Forms applicatie moet je een vergelijkbare configuratie toevoegen. Omdat Forms een aparte container is, moet je:
+
+1. Dezelfde Keycloak client gebruiken (of een aparte client aanmaken)
+2. De Forms applicatie configureren met Keycloak OAuth2 integratie
+3. De Forms applicatie moet een vergelijkbare SSO implementatie hebben
+
+==== Productie Setup
+
+Voor productie:
+
+1. **Keycloak HTTPS**: Gebruik HTTPS voor Keycloak
+2. **Environment Variabelen**: Wijzig `KEYCLOAK_BASE_URL` naar je productie Keycloak URL
+3. **Redirect URIs**: Zorg dat alle redirect URIs correct zijn geconfigureerd met je productie domain
+4. **Client Secrets**: Gebruik sterke client secrets
+5. **Keycloak Admin**: Gebruik sterke wachtwoorden voor Keycloak admin
+6. **Keycloak Mode**: Overweeg Keycloak in productie mode te draaien (niet `start-dev`)
+7. **Reverse Proxy**: Configureer een reverse proxy (Traefik) voor Keycloak met SSL
+8. **Backchannel Logout URL**: Update de backchannel logout URL naar je productie domain
+
+==== Troubleshooting
+
+===== Keycloak is niet bereikbaar
+- Controleer of de containers draaien: `docker-compose ps`
+- Controleer de logs: `docker-compose logs keycloak`
+- Controleer of poort 8085 beschikbaar is (niet 8080!)
+
+===== SSO login werkt niet
+- Controleer of de redirect URI exact overeenkomt met wat in Keycloak is geconfigureerd
+- Controleer of het client secret correct is in de `.env`
+- Controleer de Laravel logs: `docker-compose logs crm`
+- Controleer of de realm naam correct is
+- Controleer of de Frontend URL correct is ingesteld in Realm Settings
+- Draai `php artisan keycloak:sync-config` om de configuratie te synchroniseren
+
+===== "Invalid parameter: redirect_uri" tijdens logout
+- Zorg dat `http://localhost:8000/admin/login` exact staat in "Valid Post Logout Redirect URIs"
+- Zorg dat de poort (`:8000`) correct is
+- Controleer of er geen trailing slash is
+- Draai `php artisan keycloak:sync-config` om de configuratie te updaten
+
+===== Keycloak sessie blijft actief na logout
+- Controleer of de backchannel logout URL correct is geconfigureerd
+- Controleer of de backchannel logout endpoint bereikbaar is
+- Controleer de Laravel logs voor backchannel logout calls
+
+===== Gebruiker wordt niet aangemaakt
+- Controleer of de email van de Keycloak gebruiker overeenkomt met een bestaande gebruiker in de CRM
+- Controleer of de default role ID bestaat in de database
+- Controleer de database logs voor errors
+
+===== Token errors (401 Unauthorized)
+- Controleer of de Frontend URL correct is ingesteld in Realm Settings (`http://localhost:8085`)
+- Controleer of `KEYCLOAK_BASE_URL_INTERNAL` correct is ingesteld
+- Controleer of de issuer URL in tokens overeenkomt met de verwachte URL
+- Draai `php artisan keycloak:sync-config` om de realm frontend URL te updaten
+
+===== Configuratie synchronisatie faalt
+- Controleer of Keycloak admin credentials correct zijn in `.env.keycloak`
+- Controleer of Keycloak bereikbaar is vanuit de CRM container
+- Controleer de Laravel logs voor specifieke errors
+- Controleer of de database credentials correct zijn in `.env.keycloak`
+
+==== Veiligheid
+
+- **HTTPS**: Gebruik altijd HTTPS in productie
+- **Client Secrets**: Bewaar client secrets veilig (gebruik environment variabelen, niet in code)
+- **Updates**: Regelmatig Keycloak updates installeren
+- **Security Settings**: Configureer Keycloak security settings volgens je organisatie beleid
+- **MFA**: Overweeg MFA (Multi-Factor Authentication) in te schakelen in Keycloak
+- **Session Timeout**: Configureer sessie timeouts volgens je security beleid
+
+==== Belangrijke Notities
+
+- **Automatische Configuratie**: Realm en Client worden automatisch aangemaakt tijdens boot
+- **Idempotent**: De sync-config commando kan meerdere keren worden gedraaid zonder problemen
+- **Front Channel Logout**: Moet UIT staan om conflicten te voorkomen (wordt automatisch geconfigureerd)
+- **Backchannel Logout**: Is de aanbevolen methode voor logout (wordt automatisch geconfigureerd)
+- **Redirect URIs**: Worden automatisch geconfigureerd op basis van `app.url`
+- **Port Numbers**: Keycloak draait op poort 8085, niet 8080
+- **Frontend URL**: Wordt automatisch ingesteld in Realm Settings voor consistente token issuer URLs
+- **Database Credentials**: Worden automatisch gebruikt voor zowel database als Keycloak (één keer opgeven in `.env.keycloak`)
+

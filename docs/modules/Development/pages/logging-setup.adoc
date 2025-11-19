@@ -1,0 +1,68 @@
+=== Logging Setup met Loki, Promtail en Grafana
+
+De applicatie gebruikt Loki voor log aggregatie, Promtail voor log collection en Grafana voor visualisatie.
+
+==== Vereisten
+
+- Docker en Docker Compose
+- Grafana draait op `http://localhost:3000`
+- Loki draait op `http://loki:3100` (intern Docker network)
+
+==== Stap 1: Loki Datasource Toevoegen in Grafana
+
+1. Ga naar Grafana: `http://localhost:3000`
+2. Log in met:
+   - Username: `admin`
+   - Password: `admin` (of de waarde uit `.env` of zie je docker-compose bij service grafana)
+3. Ga naar **Configuration** → **Data sources**
+4. Klik op **Add data source**
+5. Selecteer **Loki**
+6. Configureer:
+   - **URL**: `http://loki:3100`
+   - Klik **Save & test**
+   - Je zou "Data source connected and labels found" moeten zien
+
+==== Stap 2: Dashboard Importeren
+
+1. Ga naar **Dashboards** → **Import**
+2. Klik op **Upload JSON file**
+3. Upload het bestand: `.docker/grafana/dashboard.json`
+4. Of kopieer de JSON uit `.docker/grafana/dashboard.json` en plak deze in het tekstveld
+5. Selecteer de Loki datasource die je net hebt toegevoegd
+6. Klik **Import**
+
+Het dashboard bevat:
+- Error count per service (hourly)
+- Error distribution by service
+- Total logs per service
+- CRM php-fpm logs
+- N8N logs
+- Forms logs
+- CRM scheduler logs
+- SuiteCRM logs
+
+==== Logs Bekijken
+
+Na het importeren van het dashboard kun je:
+- Real-time logs bekijken per service
+- Error trends analyseren
+- Logs filteren op niveau (ERROR, WARNING, INFO)
+- Logs zoeken op specifieke termen
+
+==== Troubleshooting
+
+===== Loki is niet bereikbaar
+- Controleer of de containers draaien: `docker-compose ps loki grafana`
+- Controleer de logs: `docker-compose logs loki`
+- Controleer of Loki draait op poort 3100
+
+===== Geen logs zichtbaar
+- Controleer of Promtail draait: `docker-compose ps promtail`
+- Controleer Promtail logs: `docker-compose logs promtail`
+- Controleer of de service labels correct zijn geconfigureerd
+
+===== Grafana dashboard laadt niet
+- Controleer of de Loki datasource correct is geconfigureerd
+- Controleer of de datasource URL correct is (`http://loki:3100`)
+- Refresh de pagina en probeer opnieuw
+

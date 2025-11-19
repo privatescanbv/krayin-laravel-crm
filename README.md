@@ -1,3 +1,13 @@
+TODO
+
+sail artisan keycloak:sync-users
+sail artisan keycloak:set-password mark.bulthuis@privatescan.nl "8AAZ5jc%e&AF"
+
+sync met user changes naar keycloak
+
+
+
+
 <p align="center">
 <a href="http://krayincrm.com"><img src="https://bagisto.com/wp-content/uploads/2021/06/bagisto-logo.png" alt="Total Downloads"></a>
 </p>

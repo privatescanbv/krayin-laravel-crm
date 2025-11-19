@@ -10,10 +10,19 @@ class KeycloakHttpHelpers
     /**
      * Create HTTP fake for admin token.
      */
-    public static function fakeAdminToken(?string $token = 'test-access-token', int $status = 200): void
+    public static function fakeAdminToken(?string $token = null, int $status = 200): void
     {
+        // Use provided token, or default test token
+        $token = $token ?? 'test-access-token';
+
+        // Get Docker service URL from config
+        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
+
+        // Remove http:// prefix if present for URL matching
+        $urlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
+
         Http::fake([
-            'host.docker.internal:8085/realms/master/protocol/openid-connect/token' => Http::response(
+            $urlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
                 $status === 200 ? ['access_token' => $token] : ['error' => 'invalid_grant'],
                 $status
             ),
@@ -41,10 +50,17 @@ class KeycloakHttpHelpers
         $deleteSuccess = $config['delete_success'] ?? true;
         $passwordResetSuccess = $config['password_reset_success'] ?? true;
 
-        static $createCount = 0;
+        // Reset create count for each test
+        $createCount = 0;
+
+        // Get Docker service URL from config
+        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
+
+        // Remove http:// prefix if present for URL matching
+        $urlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
 
         Http::fake([
-            'host.docker.internal:8085/admin/realms/crm/users*' => function ($request) use (
+            $urlPattern.'/admin/realms/crm/users*' => function ($request) use (
                 $emailChecks,
                 $userById,
                 $createResponses,
@@ -93,15 +109,21 @@ class KeycloakHttpHelpers
                         $userId = $createResponses[$createCount] ?? $createResponses[0];
                         $createCount++;
 
+                        // Get Docker service URL from config for Location header
+                        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
+
                         return Http::response('', 201, [
-                            'Location' => "http://host.docker.internal:8085/admin/realms/crm/users/{$userId}",
+                            'Location' => "{$dockerServiceUrl}/admin/realms/crm/users/{$userId}",
                         ]);
                     }
                     // Default: return generic ID
                     $createCount++;
 
+                    // Get Docker service URL from config for Location header
+                    $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
+
                     return Http::response('', 201, [
-                        'Location' => "http://host.docker.internal:8085/admin/realms/crm/users/new-user-{$createCount}",
+                        'Location' => "{$dockerServiceUrl}/admin/realms/crm/users/new-user-{$createCount}",
                     ]);
                 }
 
@@ -123,9 +145,11 @@ class KeycloakHttpHelpers
     public static function setupConfig(array $overrides = []): void
     {
         Config::set('services.keycloak.base_url', $overrides['base_url'] ?? 'http://localhost:8085');
-        Config::set('services.keycloak.base_url_internal', $overrides['base_url_internal'] ?? 'http://host.docker.internal:8085');
+        Config::set('services.keycloak.docker_service_url', $overrides['docker_service_url'] ?? 'http://keycloak:8080');
         Config::set('services.keycloak.realm', $overrides['realm'] ?? 'crm');
         Config::set('services.keycloak.client_id', $overrides['client_id'] ?? 'crm-app');
+        Config::set('services.keycloak.admin_username', $overrides['admin_username'] ?? 'admin');
+        Config::set('services.keycloak.admin_password', $overrides['admin_password'] ?? 'test-password');
 
         if (isset($overrides['client_secret'])) {
             Config::set('services.keycloak.client_secret', $overrides['client_secret']);

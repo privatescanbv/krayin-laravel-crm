@@ -25,11 +25,11 @@ class KeycloakService
     }
 
     /**
-     * Get the internal base URL for server-to-server calls.
+     * Get the Docker service URL for server-to-server calls.
      */
-    public function getInternalBaseUrl(): string
+    public function getDockerServiceUrl(): string
     {
-        return config('services.keycloak.base_url_internal', 'http://host.docker.internal:8085');
+        return config('services.keycloak.docker_service_url', 'http://keycloak:8080');
     }
 
     /**
@@ -53,7 +53,7 @@ class KeycloakService
      */
     public function getAdminToken(): ?string
     {
-        $baseUrl = $this->getInternalBaseUrl();
+        $baseUrl = $this->getDockerServiceUrl();
         $tokenUrl = $baseUrl.'/realms/master/protocol/openid-connect/token';
 
         $adminUsername = config('services.keycloak.admin_username', 'admin');
@@ -72,14 +72,38 @@ class KeycloakService
             }
 
             Log::error('Failed to get Keycloak admin token', [
-                'status' => $response->status(),
-                'body'   => $response->body(),
+                'status'         => $response->status(),
+                'body'           => $response->body(),
+                'token_url'      => $tokenUrl,
+                'admin_username' => $adminUsername,
+                'possible_cause' => $response->status() === 401
+                    ? 'Invalid admin credentials - check KEYCLOAK_ADMIN and KEYCLOAK_ADMIN_PASSWORD'
+                    : 'Keycloak admin endpoint error',
+            ]);
+
+            return null;
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null;
+            $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
+
+            Log::error('Keycloak admin authentication failed', [
+                'error'          => $e->getMessage(),
+                'token_url'      => $tokenUrl,
+                'admin_username' => $adminUsername,
+                'status_code'    => $statusCode,
+                'response_body'  => $responseBody,
+                'possible_cause' => $statusCode === 401
+                    ? 'Invalid admin credentials - check KEYCLOAK_ADMIN and KEYCLOAK_ADMIN_PASSWORD in .env'
+                    : ($statusCode === 404 ? 'Keycloak admin endpoint not found - check KEYCLOAK_DOCKER_SERVICE_URL' : 'Connection or configuration error'),
             ]);
 
             return null;
         } catch (Exception $e) {
-            Log::error('Exception getting Keycloak admin token', [
-                'error' => $e->getMessage(),
+            Log::error('Keycloak admin authentication error', [
+                'error'          => $e->getMessage(),
+                'token_url'      => $tokenUrl,
+                'error_class'    => get_class($e),
+                'possible_cause' => 'Network error or Keycloak service unavailable - check if Keycloak is running',
             ]);
 
             return null;
@@ -91,7 +115,7 @@ class KeycloakService
      */
     public function getRealmAdminUrl(): string
     {
-        return $this->getInternalBaseUrl().'/admin/realms/'.$this->getRealm();
+        return $this->getDockerServiceUrl().'/admin/realms/'.$this->getRealm();
     }
 
     /**
@@ -99,7 +123,7 @@ class KeycloakService
      */
     public function getRealmsAdminUrl(): string
     {
-        return $this->getInternalBaseUrl().'/admin/realms';
+        return $this->getDockerServiceUrl().'/admin/realms';
     }
 
     /**
@@ -113,7 +137,7 @@ class KeycloakService
             return false;
         }
 
-        $url = $this->getInternalBaseUrl().'/admin/realms/'.$realmName;
+        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName;
 
         try {
             $response = Http::withToken($accessToken)->get($url);
@@ -192,7 +216,7 @@ class KeycloakService
             return null;
         }
 
-        $url = $this->getInternalBaseUrl().'/admin/realms/'.$realmName.'/clients?clientId='.urlencode($clientId);
+        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName.'/clients?clientId='.urlencode($clientId);
 
         try {
             $response = Http::withToken($accessToken)->get($url);
@@ -226,7 +250,7 @@ class KeycloakService
             return false;
         }
 
-        $url = $this->getInternalBaseUrl().'/admin/realms/'.$realmName.'/clients';
+        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName.'/clients';
 
         try {
             $response = Http::withToken($accessToken)->post($url, $clientData);
@@ -276,7 +300,7 @@ class KeycloakService
             return false;
         }
 
-        $url = $this->getInternalBaseUrl().'/admin/realms/'.$realmName.'/clients/'.$client['id'];
+        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName.'/clients/'.$client['id'];
 
         try {
             $response = Http::withToken($accessToken)->put($url, $clientData);
@@ -421,11 +445,11 @@ class KeycloakService
     {
         $baseUrl = $this->getBaseUrl();
         $realm = $this->getRealm();
-        $internalBaseUrl = $this->getInternalBaseUrl();
+        $dockerServiceUrl = $this->getDockerServiceUrl();
 
         return Socialite::driver('keycloak')
             ->setBaseUrl($baseUrl)
-            ->setInternalBaseUrl($internalBaseUrl)
+            ->setInternalBaseUrl($dockerServiceUrl)
             ->setRealm($realm)
             ->user();
     }

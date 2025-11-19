@@ -69,7 +69,7 @@ class KeycloakConfigService
 
             if ($this->keycloakService->createRealm($realmName, $realmData, $accessToken)) {
                 // Set frontend URL to base URL (localhost) so tokens use localhost as issuer
-                $realmUrl = $this->keycloakService->getInternalBaseUrl().'/admin/realms/'.$realmName;
+                $realmUrl = $this->keycloakService->getDockerServiceUrl().'/admin/realms/'.$realmName;
                 try {
                     Http::asJson()
                         ->withToken($accessToken)
@@ -201,7 +201,7 @@ class KeycloakConfigService
 
                 if ($createdClient) {
                     // Get client secret
-                    $clientSecretUrl = $this->keycloakService->getInternalBaseUrl()
+                    $clientSecretUrl = $this->keycloakService->getDockerServiceUrl()
                         .'/admin/realms/'.$realmName
                         .'/clients/'.$createdClient['id'].'/client-secret';
 

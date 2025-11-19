@@ -1,9 +1,13 @@
 #!/bin/bash
 # This script runs on the DEV and PROD machines to update the Krayin CRM Docker image and run it.
-docker pull ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
-docker pull ghcr.io/privatescanbv/krayin-laravel-crm/crmsyncn8n:latest
-docker pull ghcr.io/privatescanbv/privatecrm/suitecrm:1.0
-docker pull ghcr.io/privatescanbv/privateforms/forms:latest
+docker pull ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest &
+docker pull ghcr.io/privatescanbv/krayin-laravel-crm/crmsyncn8n:latest &
+docker pull ghcr.io/privatescanbv/privatecrm/suitecrm:1.0 &
+docker pull ghcr.io/privatescanbv/privateforms/forms:latest &
+
+wait
+echo "Alle pulls zijn klaar!"
+
 
 docker-compose down
 

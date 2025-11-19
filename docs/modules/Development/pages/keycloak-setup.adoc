@@ -76,17 +76,25 @@ Voeg de volgende variabelen toe aan je `.env` bestand:
 ----
 # Keycloak Configuration
 KEYCLOAK_BASE_URL=http://localhost:8085
-KEYCLOAK_BASE_URL_INTERNAL=http://host.docker.internal:8085
+KEYCLOAK_DOCKER_SERVICE_URL=http://keycloak:8080
 KEYCLOAK_REALM=crm
 KEYCLOAK_CLIENT_ID=crm-app
 KEYCLOAK_CLIENT_SECRET=<het secret dat is gegenereerd na sync-config>
 KEYCLOAK_REDIRECT_URI=/admin/auth/keycloak/callback
 KEYCLOAK_DEFAULT_ROLE_ID=1
+
+# Keycloak Admin Credentials (voor automatische configuratie synchronisatie)
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=<wachtwoord uit .env.keycloak>
 ----
 
 **Belangrijk**:
 - Vervang `<het secret dat is gegenereerd na sync-config>` met het client secret uit de logs of Keycloak Admin Console
-- `KEYCLOAK_BASE_URL_INTERNAL` wordt gebruikt voor server-to-server communicatie vanuit de container
+- Vervang `<wachtwoord uit .env.keycloak>` met hetzelfde wachtwoord als `KEYCLOAK_ADMIN_PASSWORD` in `.env.keycloak`
+- `KEYCLOAK_DOCKER_SERVICE_URL` wordt gebruikt voor server-to-server communicatie vanuit de container
+  - Lokaal: `http://keycloak:8080` (Keycloak draait intern op poort 8080)
+  - Productie: `http://keycloak:8080` (binnen Docker netwerk)
+- `KEYCLOAK_ADMIN` en `KEYCLOAK_ADMIN_PASSWORD` zijn nodig voor automatische configuratie synchronisatie tijdens boot
 - Na het aanmaken van de client via `keycloak:sync-config`, wordt het secret gelogd - gebruik dit om `KEYCLOAK_CLIENT_SECRET` in te stellen
 
 ==== Stap 5: Database Credentials Configureren
@@ -163,14 +171,18 @@ Voor de Forms applicatie moet je een vergelijkbare configuratie toevoegen. Omdat
 
 Voor productie:
 
-1. **Keycloak HTTPS**: Gebruik HTTPS voor Keycloak
-2. **Environment Variabelen**: Wijzig `KEYCLOAK_BASE_URL` naar je productie Keycloak URL
-3. **Redirect URIs**: Zorg dat alle redirect URIs correct zijn geconfigureerd met je productie domain
+**Configuratie:**
+
+1. **Keycloak HTTPS**: Keycloak is beschikbaar via `https://sso.dev.privatescan.nl` (via Traefik)
+2. **Environment Variabelen**: 
+   - `KEYCLOAK_BASE_URL=https://sso.dev.privatescan.nl`
+   - `KEYCLOAK_DOCKER_SERVICE_URL=http://keycloak:8080` (voor server-to-server communicatie binnen Docker netwerk)
+3. **Redirect URIs**: Worden automatisch geconfigureerd op basis van `app.url` (moet `https://newcrm.dev.privatescan.nl` zijn)
 4. **Client Secrets**: Gebruik sterke client secrets
-5. **Keycloak Admin**: Gebruik sterke wachtwoorden voor Keycloak admin
-6. **Keycloak Mode**: Overweeg Keycloak in productie mode te draaien (niet `start-dev`)
-7. **Reverse Proxy**: Configureer een reverse proxy (Traefik) voor Keycloak met SSL
-8. **Backchannel Logout URL**: Update de backchannel logout URL naar je productie domain
+5. **Keycloak Admin**: Gebruik sterke wachtwoorden voor Keycloak admin (in `.env` en `.env.keycloak`)
+6. **Keycloak Mode**: Keycloak draait in productie mode (`start` in plaats van `start-dev`)
+7. **Reverse Proxy**: Traefik is geconfigureerd voor Keycloak met SSL certificaten (Let's Encrypt)
+8. **Backchannel Logout URL**: Wordt automatisch geconfigureerd als `https://newcrm.dev.privatescan.nl/admin/auth/keycloak/backchannel-logout`
 
 ==== Troubleshooting
 
@@ -205,7 +217,7 @@ Voor productie:
 
 ===== Token errors (401 Unauthorized)
 - Controleer of de Frontend URL correct is ingesteld in Realm Settings (`http://localhost:8085`)
-- Controleer of `KEYCLOAK_BASE_URL_INTERNAL` correct is ingesteld
+- Controleer of `KEYCLOAK_DOCKER_SERVICE_URL` correct is ingesteld
 - Controleer of de issuer URL in tokens overeenkomt met de verwachte URL
 - Draai `php artisan keycloak:sync-config` om de realm frontend URL te updaten
 

@@ -71,16 +71,6 @@ class KeycloakController extends Controller
                 return redirect()->route('admin.session.create');
             }
 
-            Log::debug('Keycloak callback', [
-                'base_url' => $this->keycloakService->getBaseUrl(),
-                'internal_base_url' => $this->keycloakService->getInternalBaseUrl(),
-                'realm' => $this->keycloakService->getRealm(),
-                'client_id' => $this->keycloakService->getClientId(),
-                'has_code' => request()->has('code'),
-                'has_state' => request()->has('state'),
-                'session_id' => session()->getId(),
-            ]);
-
             try {
                 // Get Keycloak user via Socialite
                 $keycloakUser = $this->keycloakService->getUserViaSocialite();
@@ -93,33 +83,41 @@ class KeycloakController extends Controller
                 session()->flash('error', 'SSO authenticatie mislukt: Ongeldige sessie. Probeer opnieuw.');
                 return redirect()->route('admin.session.create');
             } catch (ClientException $e) {
-                // Handle 401 Unauthorized - token expired or invalid
-                if ($e->getResponse() && $e->getResponse()->getStatusCode() === 401) {
-                    $responseBody = $e->getResponse()->getBody()->getContents();
-                    $requestUrl = $e->getRequest() ? $e->getRequest()->getUri() : 'unknown';
+                $response = $e->getResponse();
+                $statusCode = $response ? $response->getStatusCode() : null;
+                $responseBody = $response ? $response->getBody()->getContents() : null;
+                $requestUrl = $e->getRequest() ? (string) $e->getRequest()->getUri() : 'unknown';
 
-                    Log::error('Keycloak token expired or invalid', [
+                // Handle 401 Unauthorized - token expired or invalid
+                if ($statusCode === 401) {
+                    $isUserinfoCall = strpos($requestUrl, 'userinfo') !== false;
+                    $isTokenCall = strpos($requestUrl, '/token') !== false;
+                    
+                    Log::error('Keycloak authentication failed', [
                         'error' => $e->getMessage(),
-                        'status_code' => $e->getResponse()->getStatusCode(),
+                        'status_code' => $statusCode,
+                        'request_url' => $requestUrl,
                         'response_body' => $responseBody,
-                        'url' => $requestUrl,
-                        'request_method' => $e->getRequest() ? $e->getRequest()->getMethod() : 'unknown',
-                        'has_code' => request()->has('code'),
-                        'code_length' => request()->has('code') ? strlen(request('code')) : 0,
+                        'call_type' => $isUserinfoCall ? 'userinfo' : ($isTokenCall ? 'token_exchange' : 'unknown'),
+                        'possible_cause' => $isUserinfoCall 
+                            ? 'Token validation failed - issuer mismatch or token expired. Check KEYCLOAK_DOCKER_SERVICE_URL and realm frontend URL.'
+                            : ($isTokenCall 
+                                ? 'Invalid client credentials or redirect URI mismatch. Check KEYCLOAK_CLIENT_SECRET and Valid Redirect URIs in Keycloak.'
+                                : 'Authentication error'),
                     ]);
 
-                    // Check if this is a userinfo call failure
-                    if (strpos($requestUrl, 'userinfo') !== false) {
-                        Log::error('Keycloak userinfo call failed - possible issuer mismatch or token validation issue', [
-                            'userinfo_url' => $requestUrl,
-                            'response_body' => $responseBody,
-                        ]);
-                    }
-
-                    // Don't redirect to redirect again (would cause loop), go to login page instead
                     session()->flash('error', 'SSO authenticatie mislukt: Token verlopen. Probeer opnieuw.');
                     return redirect()->route('admin.session.create');
                 }
+                
+                // Other client errors
+                Log::error('Keycloak SSO error', [
+                    'error' => $e->getMessage(),
+                    'status_code' => $statusCode,
+                    'request_url' => $requestUrl,
+                    'response_body' => $responseBody,
+                ]);
+                
                 throw $e;
             }
 

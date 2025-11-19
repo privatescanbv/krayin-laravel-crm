@@ -6,6 +6,18 @@
 * n8ncrm.dev.privatescan.nl -> 178.251.28.76
 * suitecrm.dev.privatescan.nl -> 178.251.28.76
 
+=== Service URLs
+
+De volgende services zijn beschikbaar op de development omgeving:
+
+* CRM: `https://newcrm.dev.privatescan.nl`
+* Keycloak SSO: `https://sso.dev.privatescan.nl`
+* Forms: `https://forms.dev.privatescan.nl`
+* Grafana Logs: `https://logs.dev.privatescan.nl`
+* n8n: `https://n8ncrm.dev.privatescan.nl`
+* phpMyAdmin: `https://phpmyadmin.dev.privatescan.nl`
+* SuiteCRM: `https://suitecrm.dev.privatescan.nl`
+
 
 === Manual
 

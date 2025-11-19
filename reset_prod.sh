@@ -15,6 +15,7 @@ fi
 
 php artisan migrate:fresh --seed &&
 php artisan import:users &&
+php artisan keycloak:sync-users &&
 php artisan import:persons ${PERSON_LIMIT_ARG} &&
 php artisan import:leads ${LEAD_LIMIT_ARG} &&
 php artisan import:email-attachment-files &&

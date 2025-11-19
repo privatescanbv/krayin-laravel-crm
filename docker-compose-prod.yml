@@ -1,5 +1,31 @@
 services:
 
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=mb_traefik
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --certificatesresolvers.myresolver.acme.httpchallenge=true
+      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=http
+      - --certificatesresolvers.myresolver.acme.email=mark.bulthuis@mbsoftware.nl
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+      - --entrypoints.http.http.redirections.entryPoint.to=https
+      - --entrypoints.http.http.redirections.entryPoint.scheme=https
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - mb_traefik
+
   crm:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
     container_name: crm
@@ -12,12 +38,12 @@ services:
       - .env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.crm.rule=Host(`newcrm.dev.privatescan.nl`)
+      - traefik.http.routers.crm.rule=Host("newcrm.dev.privatescan.nl")
       - traefik.http.routers.crm.entrypoints=https
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.certresolver=myresolver
-      - traefik.http.routers.crm.service=forms-svc
-      - traefik.http.services.forms-svc.loadbalancer.server.port=80
+      - traefik.http.routers.crm.service=crm-svc
+      - traefik.http.services.crm-svc.loadbalancer.server.port=80
       # Middleware: expliciete headers doorgeven
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
@@ -81,7 +107,7 @@ services:
       N8N_RUNNERS_ENABLED: 'true'
     labels:
       - traefik.enable=true
-      - traefik.http.routers.n8n.rule=Host(`n8ncrm.dev.privatescan.nl`)
+      - traefik.http.routers.n8n.rule=Host("n8ncrm.dev.privatescan.nl")
       - traefik.http.routers.n8n.entrypoints=https
       - traefik.http.routers.n8n.tls=true
       - traefik.http.routers.n8n.tls.certresolver=myresolver
@@ -126,7 +152,7 @@ services:
       UPLOAD_LIMIT: 300M
     labels:
       - traefik.enable=true
-      - traefik.http.routers.pma.rule=Host(`phpmyadmin.dev.privatescan.nl`)
+      - traefik.http.routers.pma.rule=Host("phpmyadmin.dev.privatescan.nl")
       - traefik.http.routers.pma.entrypoints=https
       - traefik.http.routers.pma.tls=true
       - traefik.http.routers.pma.tls.certresolver=myresolver
@@ -141,29 +167,6 @@ services:
     depends_on:
       - mysql
 
-  traefik:
-    image: traefik:v2.11
-    container_name: traefik
-    command:
-      - --api.dashboard=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.http.address=:80
-      - --entrypoints.https.address=:443
-      - --certificatesresolvers.myresolver.acme.httpchallenge=true
-      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=http
-      - --certificatesresolvers.myresolver.acme.email=mark.bulthuis@mbsoftware.nl
-      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
-    networks:
-      - mb_traefik
-
   suitecrm:
     image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.0
     container_name: suitecrm
@@ -174,7 +177,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=mb_traefik
-      - traefik.http.routers.suitecrm.rule=Host(`suitecrm.dev.privatescan.nl`)
+      - traefik.http.routers.suitecrm.rule=Host("suitecrm.dev.privatescan.nl")
       - traefik.http.routers.suitecrm.entrypoints=https
       - traefik.http.routers.suitecrm.tls=true
       - traefik.http.routers.suitecrm.tls.certresolver=myresolver
@@ -246,7 +249,7 @@ services:
     labels:
       - 'dev.orbstack.domains=${TRAEFIK_FROMS_URL}'
       - traefik.enable=true
-      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`forms.dev.privatescan.nl`)
+      - traefik.http.routers.laravel-template-api-rtr.rule=Host("forms.dev.privatescan.nl")
       - traefik.http.routers.laravel-template-api-rtr.tls=true
       - traefik.http.routers.laravel-template-api-rtr.tls.certresolver=myresolver
       - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
@@ -311,7 +314,7 @@ services:
       - mb_traefik
     labels:
       - traefik.enable=true
-      - traefik.http.routers.grafana.rule=Host(`logs.dev.privatescan.nl`)
+      - traefik.http.routers.grafana.rule=Host("logs.dev.privatescan.nl")
       - traefik.http.routers.grafana.entrypoints=https
       - traefik.http.routers.grafana.tls=true
       - traefik.http.routers.grafana.tls.certresolver=myresolver
@@ -328,22 +331,18 @@ services:
     env_file:
       - .env.keycloak
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
-      # KC_DB_USERNAME en KC_DB_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME en KEYCLOAK_DB_PASSWORD via entrypoint
+      # KC_DB_USERNAME, KC_DB_PASSWORD, KC_BOOTSTRAP_ADMIN_USERNAME en KC_BOOTSTRAP_ADMIN_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME, KEYCLOAK_DB_PASSWORD, KEYCLOAK_ADMIN en KEYCLOAK_ADMIN_PASSWORD via entrypoint
       KC_HOSTNAME: sso.dev.privatescan.nl
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HTTP_ENABLED: true
-      KC_HEALTH_ENABLED: true
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_PROXY_ADDRESS_FORWARDING: "true"
       KC_PROXY: edge
-    entrypoint: ["/bin/sh", "-c", "export KC_DB_USERNAME=$${KEYCLOAK_DB_USERNAME:-keycloak} && export KC_DB_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && exec /opt/keycloak/bin/kc.sh start-dev"]
-    ports:
-      - "8085:8080"
-      - "8443:8443"
+    entrypoint: ["/bin/sh", "-c", "export KC_DB_USERNAME=$${KEYCLOAK_DB_USERNAME:-keycloak} && export KC_DB_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && export KC_BOOTSTRAP_ADMIN_USERNAME=$${KEYCLOAK_ADMIN} && export KC_BOOTSTRAP_ADMIN_PASSWORD=$${KEYCLOAK_ADMIN_PASSWORD} && exec /opt/keycloak/bin/kc.sh start"]
     networks:
       - sail
       - mb_traefik
@@ -352,23 +351,23 @@ services:
         condition: service_healthy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.keycloak.rule=Host(`sso.dev.privatescan.nl`)
+      - traefik.http.routers.keycloak.rule=Host("sso.dev.privatescan.nl")
       - traefik.http.routers.keycloak.entrypoints=https
       - traefik.http.routers.keycloak.tls=true
       - traefik.http.routers.keycloak.tls.certresolver=myresolver
       - traefik.http.routers.keycloak.service=keycloak-svc
-      - traefik.http.routers.keycloak.middlewares=keycloak-forward-headers
+      - traefik.http.routers.keycloak.middlewares=keycloak-forward-headers@docker
       - traefik.http.services.keycloak-svc.loadbalancer.server.port=8080
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.dev.privatescan.nl
       - traefik.docker.network=mb_traefik
       - logging=promtail
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
 
   keycloak-db:
     image: postgres:15-alpine
@@ -389,6 +388,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
 
 networks:
   sail:

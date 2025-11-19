@@ -17,10 +17,10 @@ it('can get base URL', function () {
     expect($service->getBaseUrl())->toBe('http://localhost:8085');
 });
 
-it('can get internal base URL', function () {
+it('can get Docker service URL', function () {
     $service = app(KeycloakService::class);
 
-    expect($service->getInternalBaseUrl())->toBe('http://host.docker.internal:8085');
+    expect($service->getDockerServiceUrl())->toBe('http://keycloak:8080');
 });
 
 it('can get realm', function () {

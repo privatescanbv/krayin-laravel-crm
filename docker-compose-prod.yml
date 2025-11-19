@@ -278,13 +278,6 @@ services:
     networks:
       - sail
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.loki.rule=Host(`loki.dev.privatescan.nl`)
-      - traefik.http.routers.loki.entrypoints=https
-      - traefik.http.routers.loki.tls=true
-      - traefik.http.routers.loki.tls.certresolver=myresolver
-      - traefik.http.services.loki.loadbalancer.server.port=3100
-      - traefik.docker.network=mb_traefik
       - logging=promtail
 
   promtail:
@@ -341,6 +334,7 @@ services:
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
       # KC_DB_USERNAME en KC_DB_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME en KEYCLOAK_DB_PASSWORD via entrypoint
+      KC_HOSTNAME: sso.dev.privatescan.nl
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_HTTP_ENABLED: true

@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
+use App\Services\KeycloakService;
+use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -35,7 +37,8 @@ class UserObserver
     public function __construct(
         protected AddKeycloakUserAction $addKeycloakUserAction,
         protected UpdateKeycloakUserAction $updateKeycloakUserAction,
-        protected DeleteKeycloakUserAction $deleteKeycloakUserAction
+        protected DeleteKeycloakUserAction $deleteKeycloakUserAction,
+        protected KeycloakService $keycloakService
     ) {}
 
     /**
@@ -229,6 +232,9 @@ class UserObserver
                 // Update keycloak_user_id in CRM
                 $user->update(['keycloak_user_id' => $result['keycloak_user_id']]);
 
+                // Assign default role "medewerker" to user
+                $this->assignDefaultRole($result['keycloak_user_id']);
+
                 Log::info('User synced to Keycloak via observer', [
                     'user_id'     => $user->id,
                     'email'       => $user->email,
@@ -243,7 +249,7 @@ class UserObserver
                     'message' => $result['message'] ?? 'Unknown error',
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exception while syncing user to Keycloak via observer', [
                 'user_id' => $user->id,
                 'email'   => $user->email,
@@ -379,5 +385,38 @@ class UserObserver
 
         // Generate a temporary random password
         return Str::random(16);
+    }
+
+    /**
+     * Assign default role "medewerker" to a Keycloak user.
+     */
+    protected function assignDefaultRole(string $keycloakUserId): void
+    {
+        try {
+            $accessToken = $this->keycloakService->getAdminToken();
+
+            if (! $accessToken) {
+                Log::warning('Failed to assign role to user - could not get admin token', [
+                    'keycloak_user_id' => $keycloakUserId,
+                ]);
+
+                return;
+            }
+
+            $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, 'medewerker', $accessToken);
+
+            if (! $roleAssigned) {
+                Log::warning('Failed to assign role to user in Keycloak via observer', [
+                    'keycloak_user_id' => $keycloakUserId,
+                    'role'             => 'medewerker',
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception while assigning role to user in Keycloak via observer', [
+                'keycloak_user_id' => $keycloakUserId,
+                'role'             => 'medewerker',
+                'error'            => $e->getMessage(),
+            ]);
+        }
     }
 }

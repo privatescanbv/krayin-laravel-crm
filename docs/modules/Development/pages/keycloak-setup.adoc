@@ -57,6 +57,13 @@ Dit commando is idempotent: je kunt het meerdere keren draaien zonder problemen.
 - Frontend URL: uit config (`KEYCLOAK_BASE_URL`)
 - Enabled: true
 
+*Realm Roles:*
+- `medewerker` - Medewerker rol voor CRM gebruikers
+- `patient` - Patient rol
+- **Belangrijk**: Deze rollen worden aangemaakt op **realm-niveau**, niet op client-niveau
+- Je vindt ze in Keycloak Admin Console onder: **Realm → Roles** (niet onder Clients → [client] → Roles)
+- Alle nieuwe gebruikers krijgen automatisch de rol "medewerker" toegewezen
+
 *Client:*
 - Client ID: uit config (`KEYCLOAK_CLIENT_ID`)
 - Redirect URIs: `{app.url}/admin/auth/keycloak/callback`, `{app.url}/admin/auth/keycloak/logout-callback`
@@ -153,11 +160,18 @@ Dit commando maakt Keycloak gebruikers aan voor alle bestaande CRM gebruikers. L
 **Automatische synchronisatie:**
 
 De applicatie synchroniseert automatisch gebruikers met Keycloak via een `UserObserver`:
-- Bij aanmaken van een gebruiker → user wordt aangemaakt in Keycloak
+- Bij aanmaken van een gebruiker → user wordt aangemaakt in Keycloak + krijgt automatisch de rol "medewerker"
 - Bij wijzigen van username, e-mail of wachtwoord → user wordt geüpdatet in Keycloak
 - Bij verwijderen van een gebruiker → user wordt verwijderd uit Keycloak
-- Bij activeren van een gebruiker → user wordt toegevoegd aan Keycloak
+- Bij activeren van een gebruiker → user wordt toegevoegd aan Keycloak + krijgt automatisch de rol "medewerker"
 - Bij deactiveren van een gebruiker → user wordt verwijderd uit Keycloak
+
+**Rollen:**
+- Rollen worden automatisch aangemaakt tijdens configuratie synchronisatie
+- Rollen zijn **realm roles** (niet client roles)
+- Je vindt ze in Keycloak Admin Console onder: **Realm → Roles**
+- Alle nieuwe gebruikers krijgen automatisch de rol "medewerker" toegewezen
+- Bestaande gebruikers krijgen de rol "medewerker" toegewezen tijdens `keycloak:sync-users`
 
 ==== Forms Applicatie Configuratie
 
@@ -217,9 +231,16 @@ Voor productie:
 
 ===== Token errors (401 Unauthorized)
 - Controleer of de Frontend URL correct is ingesteld in Realm Settings (`http://localhost:8085`)
-- Controleer of `KEYCLOAK_DOCKER_SERVICE_URL` correct is ingesteld
+- Controleer of `KEYCLOAK_DOCKER_SERVICE_URL` correct is ingesteld (`http://keycloak:8080` - NIET `host.docker.internal:8085`)
 - Controleer of de issuer URL in tokens overeenkomt met de verwachte URL
 - Draai `php artisan keycloak:sync-config` om de realm frontend URL te updaten
+
+===== "Failed to connect to host.docker.internal port 8085" (Productie)
+- **Probleem**: `host.docker.internal` werkt alleen op Docker Desktop (Mac/Windows), niet op Linux servers
+- **Oplossing**: Zorg dat `KEYCLOAK_DOCKER_SERVICE_URL=http://keycloak:8080` in productie (NIET `host.docker.internal:8085`)
+- Controleer de `.env` file op de productie server
+- Draai `php artisan config:clear` en `php artisan cache:clear` na het aanpassen van de configuratie
+- Herstart de container na configuratie wijzigingen
 
 ===== Configuratie synchronisatie faalt
 - Controleer of Keycloak admin credentials correct zijn in `.env.keycloak`

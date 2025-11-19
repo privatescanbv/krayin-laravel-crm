@@ -15,11 +15,6 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
      */
     protected string $baseUrl;
 
-    /**
-     * The internal base URL (for server-to-server calls).
-     */
-    protected ?string $internalBaseUrl;
-
     protected string $realm;
 
     /**
@@ -42,19 +37,6 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
     public function setBaseUrl($baseUrl): static
     {
         $this->baseUrl = $baseUrl;
-
-        return $this;
-    }
-
-    /**
-     * Set the internal base URL.
-     *
-     * @param  string  $internalBaseUrl
-     * @return $this
-     */
-    public function setInternalBaseUrl($internalBaseUrl): static
-    {
-        $this->internalBaseUrl = $internalBaseUrl;
 
         return $this;
     }
@@ -151,10 +133,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
      */
     protected function getTokenUrl(): string
     {
-        // Use Docker service URL for server-to-server token exchange
-        $dockerServiceUrl = config('services.keycloak.docker_service_url', 'http://keycloak:8080');
-
-        return $dockerServiceUrl.'/realms/'.$this->getRealm().'/protocol/openid-connect/token';
+        return $this->getDockerServiceUrl().'/realms/'.$this->getRealm().'/protocol/openid-connect/token';
     }
 
     /**
@@ -167,7 +146,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
         $issuerUrl = null;
         $tokenRealm = null;
         $issuerBaseUrl = null;
-        $dockerServiceUrl = config('services.keycloak.docker_service_url', 'http://keycloak:8080');
+        $dockerServiceUrl = $this->getDockerServiceUrl();
         $baseUrl = $this->getBaseUrl();
         $hostHeader = null;
 
@@ -286,10 +265,15 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
 
     /**
      * Get the Docker service URL (for server-to-server calls).
+     * Ensures host.docker.internal is not used (doesn't work on Linux).
+     * Uses KeycloakService to centralize the logic.
      */
     protected function getDockerServiceUrl(): string
     {
-        return config('services.keycloak.docker_service_url', 'http://keycloak:8080');
+        // Use KeycloakService to get Docker service URL (centralized logic)
+        $keycloakService = app(\App\Services\KeycloakService::class);
+
+        return $keycloakService->getDockerServiceUrl();
     }
 
     /**

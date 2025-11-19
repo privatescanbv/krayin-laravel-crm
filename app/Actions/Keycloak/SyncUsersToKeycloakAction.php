@@ -65,6 +65,12 @@ class SyncUsersToKeycloakAction
                         ]);
                     }
                 }
+
+                // Assign default role "medewerker" to existing user
+                if (! $dryRun) {
+                    $this->assignDefaultRole($keycloakUser['id'], $accessToken);
+                }
+
                 $synced++;
 
                 continue;
@@ -119,6 +125,10 @@ class SyncUsersToKeycloakAction
             // Update keycloak_user_id in CRM
             $this->userRepository->update(['keycloak_user_id' => $result['keycloak_user_id']], $user->id);
 
+            // Assign default role "medewerker" to new user
+            // Note: AddKeycloakUserAction already assigns the role, but we ensure it here too
+            $this->assignDefaultRole($result['keycloak_user_id'], $accessToken);
+
             Log::info('User synced to Keycloak', [
                 'user_id'     => $user->id,
                 'email'       => $user->email,
@@ -142,5 +152,28 @@ class SyncUsersToKeycloakAction
     protected function getPasswordFromSeeder(string $email): ?string
     {
         return UserSeeder::getPasswordForEmail($email);
+    }
+
+    /**
+     * Assign default role "medewerker" to a Keycloak user.
+     */
+    protected function assignDefaultRole(string $keycloakUserId, ?string $accessToken = null): void
+    {
+        try {
+            $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, 'medewerker', $accessToken);
+
+            if (! $roleAssigned) {
+                Log::warning('Failed to assign role to user in Keycloak during sync', [
+                    'keycloak_user_id' => $keycloakUserId,
+                    'role'             => 'medewerker',
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception while assigning role to user in Keycloak during sync', [
+                'keycloak_user_id' => $keycloakUserId,
+                'role'             => 'medewerker',
+                'error'            => $e->getMessage(),
+            ]);
+        }
     }
 }

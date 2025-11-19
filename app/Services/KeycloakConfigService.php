@@ -28,6 +28,7 @@ class KeycloakConfigService
             'client_exists'  => false,
             'client_updated' => false,
             'client_secret'  => null,
+            'roles_created'  => [],
             'errors'         => [],
         ];
 
@@ -233,6 +234,57 @@ class KeycloakConfigService
                 $error = "Kon client {$clientId} niet aanmaken.";
                 $results['errors'][] = $error;
                 Log::error('Keycloak config sync failed', ['error' => $error]);
+            }
+        }
+
+        // Sync roles
+        $rolesResult = $this->syncRoles($accessToken);
+        $results['roles_created'] = $rolesResult['created'];
+        if (! empty($rolesResult['errors'])) {
+            $results['errors'] = array_merge($results['errors'], $rolesResult['errors']);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Sync Keycloak realm roles.
+     * Creates roles if they don't exist.
+     */
+    protected function syncRoles(?string $accessToken = null): array
+    {
+        $results = [
+            'created' => [],
+            'errors'  => [],
+        ];
+
+        $roles = [
+            [
+                'name'        => 'medewerker',
+                'description' => 'Medewerker rol voor CRM gebruikers',
+            ],
+            [
+                'name'        => 'patient',
+                'description' => 'Patient rol',
+            ],
+        ];
+
+        foreach ($roles as $roleData) {
+            $roleName = $roleData['name'];
+
+            // Check if role exists
+            $existingRole = $this->keycloakService->getRoleByName($roleName, $accessToken);
+
+            if (! $existingRole) {
+                // Create role
+                if ($this->keycloakService->createRole($roleName, $roleData, $accessToken)) {
+                    $results['created'][] = $roleName;
+                    Log::info('Keycloak role created', ['role' => $roleName]);
+                } else {
+                    $error = "Kon rol {$roleName} niet aanmaken.";
+                    $results['errors'][] = $error;
+                    Log::error('Keycloak role creation failed', ['role' => $roleName, 'error' => $error]);
+                }
             }
         }
 

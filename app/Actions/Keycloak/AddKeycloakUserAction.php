@@ -72,9 +72,22 @@ class AddKeycloakUserAction
             // User is created but password failed - still return success but log warning
         }
 
+        // Assign default role "medewerker" to all users
+        $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, 'medewerker', $accessToken);
+
+        if (! $roleAssigned) {
+            Log::warning('Failed to assign role to newly created Keycloak user', [
+                'keycloak_user_id' => $keycloakUserId,
+                'email'            => $userData['email'] ?? null,
+                'role'             => 'medewerker',
+            ]);
+            // User is created but role assignment failed - still return success but log warning
+        }
+
         Log::info('User added to Keycloak', [
             'keycloak_user_id' => $keycloakUserId,
             'email'            => $userData['email'] ?? null,
+            'role_assigned'    => $roleAssigned,
         ]);
 
         return [

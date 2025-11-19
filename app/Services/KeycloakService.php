@@ -29,7 +29,19 @@ class KeycloakService
      */
     public function getDockerServiceUrl(): string
     {
-        return config('services.keycloak.docker_service_url', 'http://keycloak:8080');
+        $dockerServiceUrl = config('services.keycloak.docker_service_url', 'http://keycloak:8080');
+
+        // Ensure docker_service_url doesn't contain host.docker.internal (doesn't work on Linux)
+        if (strpos($dockerServiceUrl, 'host.docker.internal') !== false) {
+            Log::error('KEYCLOAK_DOCKER_SERVICE_URL contains host.docker.internal - this does not work on Linux servers', [
+                'current_value' => $dockerServiceUrl,
+                'should_be'     => 'http://keycloak:8080',
+            ]);
+            // Fallback to Docker service name
+            $dockerServiceUrl = 'http://keycloak:8080';
+        }
+
+        return $dockerServiceUrl;
     }
 
     /**
@@ -445,11 +457,9 @@ class KeycloakService
     {
         $baseUrl = $this->getBaseUrl();
         $realm = $this->getRealm();
-        $dockerServiceUrl = $this->getDockerServiceUrl();
 
         return Socialite::driver('keycloak')
             ->setBaseUrl($baseUrl)
-            ->setInternalBaseUrl($dockerServiceUrl)
             ->setRealm($realm)
             ->user();
     }
@@ -612,6 +622,163 @@ class KeycloakService
             ]);
 
             return null;
+        }
+    }
+
+    /**
+     * Get a realm role by name.
+     */
+    public function getRoleByName(string $roleName, ?string $accessToken = null): ?array
+    {
+        $accessToken = $accessToken ?? $this->getAdminToken();
+
+        if (! $accessToken) {
+            Log::error('Kon geen admin token verkrijgen om rol te zoeken.');
+
+            return null;
+        }
+
+        $url = $this->getRealmAdminUrl().'/roles/'.urlencode($roleName);
+
+        try {
+            $response = Http::withToken($accessToken)->get($url);
+
+            if ($response->successful()) {
+                return $response->json();
+            } else {
+                Log::warning('Failed to get role by name from Keycloak', [
+                    'role_name' => $roleName,
+                    'status'    => $response->status(),
+                    'body'      => $response->body(),
+                ]);
+            }
+
+            return null;
+        } catch (Exception $e) {
+            Log::error('Exception getting role by name from Keycloak', [
+                'role_name' => $roleName,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Create a realm role.
+     */
+    public function createRole(string $roleName, array $roleData = [], ?string $accessToken = null): bool
+    {
+        $accessToken = $accessToken ?? $this->getAdminToken();
+
+        if (! $accessToken) {
+            Log::error('Kon geen admin token verkrijgen om rol aan te maken.');
+
+            return false;
+        }
+
+        $url = $this->getRealmAdminUrl().'/roles';
+
+        $defaultRoleData = [
+            'name'        => $roleName,
+            'description' => $roleData['description'] ?? '',
+        ];
+
+        $roleData = array_merge($defaultRoleData, $roleData);
+
+        try {
+            $response = Http::asJson()
+                ->withToken($accessToken)
+                ->post($url, $roleData);
+
+            if ($response->successful()) {
+                Log::info('Role created in Keycloak', [
+                    'role_name' => $roleName,
+                ]);
+
+                return true;
+            } else {
+                Log::error('Failed to create role in Keycloak', [
+                    'role_name' => $roleName,
+                    'status'    => $response->status(),
+                    'body'      => $response->body(),
+                ]);
+            }
+
+            return false;
+        } catch (Exception $e) {
+            Log::error('Exception creating role in Keycloak', [
+                'role_name' => $roleName,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Assign a realm role to a user.
+     */
+    public function assignRoleToUser(string $userId, string $roleName, ?string $accessToken = null): bool
+    {
+        $accessToken = $accessToken ?? $this->getAdminToken();
+
+        if (! $accessToken) {
+            Log::error('Kon geen admin token verkrijgen om rol toe te wijzen.');
+
+            return false;
+        }
+
+        // Get the role first
+        $role = $this->getRoleByName($roleName, $accessToken);
+
+        if (! $role) {
+            Log::error('Role not found in Keycloak', [
+                'role_name' => $roleName,
+                'user_id'   => $userId,
+            ]);
+
+            return false;
+        }
+
+        // Prepare role representation for assignment (only id and name are required)
+        $roleRepresentation = [
+            'id'   => $role['id'] ?? null,
+            'name' => $role['name'] ?? $roleName,
+        ];
+
+        $url = $this->getRealmAdminUrl().'/users/'.$userId.'/role-mappings/realm';
+
+        try {
+            $response = Http::asJson()
+                ->withToken($accessToken)
+                ->post($url, [$roleRepresentation]);
+
+            if ($response->successful()) {
+                Log::info('Role assigned to user in Keycloak', [
+                    'role_name' => $roleName,
+                    'user_id'   => $userId,
+                ]);
+
+                return true;
+            } else {
+                Log::error('Failed to assign role to user in Keycloak', [
+                    'role_name' => $roleName,
+                    'user_id'   => $userId,
+                    'status'    => $response->status(),
+                    'body'      => $response->body(),
+                ]);
+            }
+
+            return false;
+        } catch (Exception $e) {
+            Log::error('Exception assigning role to user in Keycloak', [
+                'role_name' => $roleName,
+                'user_id'   => $userId,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return false;
         }
     }
 }

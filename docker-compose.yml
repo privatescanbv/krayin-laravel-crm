@@ -26,10 +26,10 @@ services:
     env_file:
       - .env
     labels:
-      - 'dev.orbstack.domains=${TRAEFIK_URL}'
+      - 'dev.orbstack.domains=crm.local'
       - traefik.enable=true
       - logging=promtail
-      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`$TRAEFIK_URL`)
+      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`crm.local`)
       - traefik.http.routers.laravel-template-api-rtr.tls=true
       - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
       - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-api-svc
@@ -158,6 +158,8 @@ services:
     container_name: forms
     stdin_open: true
     tty: true
+    env_file:
+      - .env
     environment:
       WWWUSER: '${WWWUSER}'
       WWWGROUP: '${WWWGROUP}'
@@ -166,8 +168,8 @@ services:
       APP_KEY: 'base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg='
       API_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
       APP_DEBUG: 'false'
-      APP_URL: 'http://localhost:8011'
-      ASSET_URL: 'http://localhost:8011'
+      APP_URL: 'http://forms.local'
+      ASSET_URL: 'http://forms.local'
       POSTMARK_TOKEN: '3ea2bc92-4dd0-4bc5-af86-fb764e5d7af9'
       MAIL_FROM_ADDRESS: 'no-reply@privatescan.nl'
       MAIL_FROM_NAME: 'PrivateScan'
@@ -194,10 +196,11 @@ services:
       QUEUE_CONNECTION: 'database'
       CACHE_STORE: 'database'
       MEMCACHED_HOST: '127.0.0.1'
-      TRAEFIK_URL: 'localhost:8011'
       FORWARD_REDIS_PORT: 6379
       VITE_APP_NAME: 'PrivateForms'
       EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
+      KEYCLOAK_BASE_URL: 'http://keycloak:8080'
+      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_CLIENT_ID: 'forms-app'
       KEYCLOAK_LOAD_USER_FROM_DATABASE: false
       KEYCLOAK_APPEND_DECODED_TOKEN: true
@@ -207,9 +210,9 @@ services:
     ports:
       - '8011:80'
     labels:
-      - 'dev.orbstack.domains=${TRAEFIK_FROMS_URL}'
+      - 'dev.orbstack.domains=forms.local'
       - traefik.enable=true
-      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`$TRAEFIK_FROMS_URL`)
+      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`forms.local`)
       - traefik.http.routers.laravel-template-api-rtr.tls=true
       - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
       - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-forms-api-svc
@@ -281,6 +284,7 @@ services:
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
       # KC_DB_USERNAME, KC_DB_PASSWORD, KC_BOOTSTRAP_ADMIN_USERNAME en KC_BOOTSTRAP_ADMIN_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME, KEYCLOAK_DB_PASSWORD, KEYCLOAK_ADMIN en KEYCLOAK_ADMIN_PASSWORD via entrypoint
+      KC_HOSTNAME: keycloak.local
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
@@ -291,12 +295,21 @@ services:
       - "8085:8080"
       - "8443:8443"
     networks:
-      - sail
-      - mb_traefik
+      sail:
+        aliases:
+          - keycloak.local
+      mb_traefik:
     depends_on:
       keycloak-db:
         condition: service_healthy
     labels:
+      - 'dev.orbstack.domains=keycloak.local'
+      - traefik.enable=true
+      - traefik.http.routers.keycloak-local.rule=Host(`keycloak.local`)
+      - traefik.http.routers.keycloak-local.entrypoints=http
+      - traefik.http.routers.keycloak-local.service=keycloak-local-svc
+      - traefik.http.services.keycloak-local-svc.loadbalancer.server.port=8080
+      - traefik.docker.network=mb_traefik
       - logging=promtail
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]

@@ -43,7 +43,7 @@ it('redirects SSO user to Keycloak logout on logout', function () {
 
     $response->assertStatus(302);
     $location = $response->headers->get('Location');
-    expect($location)->toContain('localhost:8085')
+    expect($location)->toContain('test-keycloak.local:9999')
         ->and($location)->toContain('/protocol/openid-connect/logout')
         ->and($location)->toContain('client_id=crm-app')
         ->and(auth()->guard('user')->user())->toBeNull();

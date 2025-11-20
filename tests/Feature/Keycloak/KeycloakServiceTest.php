@@ -14,13 +14,7 @@ beforeEach(function () {
 it('can get base URL', function () {
     $service = app(KeycloakService::class);
 
-    expect($service->getBaseUrl())->toBe('http://localhost:8085');
-});
-
-it('can get Docker service URL', function () {
-    $service = app(KeycloakService::class);
-
-    expect($service->getDockerServiceUrl())->toBe('http://keycloak:8080');
+    expect($service->getBaseUrl())->toBe('http://test-keycloak.local:9999');
 });
 
 it('can get realm', function () {
@@ -162,7 +156,7 @@ it('can decode logout token', function () {
     $header = base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
     $payload = base64_encode(json_encode([
         'sid' => 'session-123',
-        'iss' => 'http://localhost:8085/realms/crm',
+        'iss' => 'http://test-keycloak.local:9999/realms/crm',
         'sub' => 'user-123',
     ]));
     $signature = 'signature';
@@ -173,7 +167,7 @@ it('can decode logout token', function () {
 
     expect($decoded)->not->toBeNull();
     expect($decoded['session_id'])->toBe('session-123');
-    expect($decoded['issuer'])->toBe('http://localhost:8085/realms/crm');
+    expect($decoded['issuer'])->toBe('http://test-keycloak.local:9999/realms/crm');
     expect($decoded['subject'])->toBe('user-123');
 });
 
@@ -181,5 +175,5 @@ it('can get logout URL', function () {
     $service = app(KeycloakService::class);
     $logoutUrl = $service->getLogoutUrl();
 
-    expect($logoutUrl)->toBe('http://localhost:8085/realms/crm/protocol/openid-connect/logout');
+    expect($logoutUrl)->toBe('http://test-keycloak.local:9999/realms/crm/protocol/openid-connect/logout');
 });

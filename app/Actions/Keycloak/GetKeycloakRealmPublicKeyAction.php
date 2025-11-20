@@ -29,7 +29,7 @@ class GetKeycloakRealmPublicKeyAction
             ];
         }
 
-        $realmUrl = rtrim($this->keycloakService->getDockerServiceUrl(), '/').'/realms/'.$realm;
+        $realmUrl = rtrim($this->keycloakService->getBaseUrl(), '/').'/realms/'.$realm;
 
         try {
             $response = Http::get($realmUrl);

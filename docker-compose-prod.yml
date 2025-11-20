@@ -209,8 +209,8 @@ services:
       APP_KEY: 'base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg='
       API_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
       APP_DEBUG: 'false'
-      APP_URL: 'https://forms.dev.privatescan.nl'
-      ASSET_URL: 'https://forms.dev.privatescan.nl'
+      APP_URL: "$FORMS_FRONTEND_URL"
+      ASSET_URL: "$FORMS_FRONTEND_URL"
       POSTMARK_TOKEN: '3ea2bc92-4dd0-4bc5-af86-fb764e5d7af9'
       MAIL_FROM_ADDRESS: 'no-reply@privatescan.nl'
       MAIL_FROM_NAME: 'PrivateScan'
@@ -233,27 +233,26 @@ services:
       SESSION_LIFETIME: 120
       SESSION_DOMAIN: ''
       SESSION_SECURE: 'false'
-      SESSION_SAME_SITE: 'lax'
       SESSION_PATH: '/'
       BROADCAST_CONNECTION: 'log'
       FILESYSTEM_DISK: 'local'
       QUEUE_CONNECTION: 'database'
       CACHE_STORE: 'database'
       MEMCACHED_HOST: '127.0.0.1'
-      TRAEFIK_FROMS_URL: 'forms.dev.privatescan.nl'
       FORWARD_REDIS_PORT: 6379
-      VITE_APP_NAME: "${APP_NAME}"
       EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
+      KEYCLOAK_BASE_URL: 'https://sso.dev.privatescan.nl'
+      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_CLIENT_ID: 'forms-app'
-      KEYCLOAK_LOAD_USER_FROM_DATABASE: false
-      KEYCLOAK_APPEND_DECODED_TOKEN: true
+      KEYCLOAK_LOAD_USER_FROM_DATABASE: 'false'
+      KEYCLOAK_APPEND_DECODED_TOKEN: 'true'
       KEYCLOAK_ALLOWED_RESOURCES: 'forms-app'
       KEYCLOAK_LEEWAY: 60
       KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
     ports:
       - '8001:80'
     labels:
-      - 'dev.orbstack.domains=${TRAEFIK_FROMS_URL}'
+      - 'dev.orbstack.domains=forms.dev.privatescan.nl'
       - traefik.enable=true
       - traefik.http.routers.laravel-template-api-rtr.rule=Host("forms.dev.privatescan.nl")
       - traefik.http.routers.laravel-template-api-rtr.tls=true

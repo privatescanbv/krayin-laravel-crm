@@ -15,14 +15,21 @@ class KeycloakHttpHelpers
         // Use provided token, or default test token
         $token = $token ?? 'test-access-token';
 
-        // Get Docker service URL from config
-        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
+        // Get both base_url and docker_service_url from config
+        $baseUrl = Config::get('services.keycloak.base_url', 'http://test-keycloak.local:9999');
+        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://test-keycloak-docker.local:9999');
 
         // Remove http:// prefix if present for URL matching
-        $urlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
+        $baseUrlPattern = str_replace(['http://', 'https://'], '', $baseUrl);
+        $dockerUrlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
 
+        // Mock both URLs since KeycloakService uses base_url, but docker_service_url might also be used
         Http::fake([
-            $urlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
+            $baseUrlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
+                $status === 200 ? ['access_token' => $token] : ['error' => 'invalid_grant'],
+                $status
+            ),
+            $dockerUrlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
                 $status === 200 ? ['access_token' => $token] : ['error' => 'invalid_grant'],
                 $status
             ),
@@ -53,20 +60,23 @@ class KeycloakHttpHelpers
         // Reset create count for each test
         $createCount = 0;
 
-        // Get Docker service URL from config
-        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
+        // Get both base_url and docker_service_url from config
+        $baseUrl = Config::get('services.keycloak.base_url', 'http://test-keycloak.local:9999');
+        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://test-keycloak-docker.local:9999');
 
         // Remove http:// prefix if present for URL matching
-        $urlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
+        $baseUrlPattern = str_replace(['http://', 'https://'], '', $baseUrl);
+        $dockerUrlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
 
-        Http::fake([
-            $urlPattern.'/admin/realms/crm/users*' => function ($request) use (
+        // Create a callback function for handling user operations
+        $userOperationsCallback = function ($request) use (
                 $emailChecks,
                 $userById,
                 $createResponses,
                 $updateSuccess,
                 $deleteSuccess,
                 $passwordResetSuccess,
+                $baseUrl,
                 &$createCount
             ) {
                 $url = $request->url();
@@ -109,21 +119,15 @@ class KeycloakHttpHelpers
                         $userId = $createResponses[$createCount] ?? $createResponses[0];
                         $createCount++;
 
-                        // Get Docker service URL from config for Location header
-                        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
-
                         return Http::response('', 201, [
-                            'Location' => "{$dockerServiceUrl}/admin/realms/crm/users/{$userId}",
+                            'Location' => "{$baseUrl}/admin/realms/crm/users/{$userId}",
                         ]);
                     }
                     // Default: return generic ID
                     $createCount++;
 
-                    // Get Docker service URL from config for Location header
-                    $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://keycloak:8080');
-
                     return Http::response('', 201, [
-                        'Location' => "{$dockerServiceUrl}/admin/realms/crm/users/new-user-{$createCount}",
+                        'Location' => "{$baseUrl}/admin/realms/crm/users/new-user-{$createCount}",
                     ]);
                 }
 
@@ -133,19 +137,26 @@ class KeycloakHttpHelpers
                 }
 
                 return Http::response('', 404);
-            },
+            };
+
+        // Mock both URLs since KeycloakService uses base_url for admin operations
+        Http::fake([
+            $baseUrlPattern.'/admin/realms/crm/users*' => $userOperationsCallback,
+            $dockerUrlPattern.'/admin/realms/crm/users*' => $userOperationsCallback,
         ]);
     }
 
     /**
      * Setup Keycloak config for tests.
+     * Uses non-existent test URLs to prevent accidental real HTTP requests if mocks fail.
      *
      * @param  array  $overrides  Optional config overrides
      */
     public static function setupConfig(array $overrides = []): void
     {
-        Config::set('services.keycloak.base_url', $overrides['base_url'] ?? 'http://localhost:8085');
-        Config::set('services.keycloak.docker_service_url', $overrides['docker_service_url'] ?? 'http://keycloak:8080');
+        // Use non-existent test URLs to prevent accidental real HTTP requests
+        Config::set('services.keycloak.base_url', $overrides['base_url'] ?? 'http://test-keycloak.local:9999');
+        Config::set('services.keycloak.docker_service_url', $overrides['docker_service_url'] ?? 'http://test-keycloak-docker.local:9999');
         Config::set('services.keycloak.realm', $overrides['realm'] ?? 'crm');
         Config::set('services.keycloak.client_id', $overrides['client_id'] ?? 'crm-app');
         Config::set('services.keycloak.admin_username', $overrides['admin_username'] ?? 'admin');

@@ -52,7 +52,7 @@ class GetKeycloakClientSecretAction
         }
 
         // Get client secret
-        $clientSecretUrl = $this->keycloakService->getDockerServiceUrl()
+        $clientSecretUrl = $this->keycloakService->getBaseUrl()
             .'/admin/realms/'.$realmName
             .'/clients/'.$client['id'].'/client-secret';
 

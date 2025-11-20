@@ -3,6 +3,7 @@
 namespace App\Socialite;
 
 use Exception;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\ProviderInterface;
@@ -24,7 +25,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
     {
         parent::__construct($request, $clientId, $clientSecret, $redirectUrl, $guzzle);
 
-        $this->baseUrl = config('services.keycloak.base_url', 'http://localhost:8085');
+        $this->baseUrl = config('services.keycloak.base_url', 'http://no_keycloak_url_provided');
         $this->realm = config('services.keycloak.realm', 'crm');
     }
 
@@ -66,7 +67,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
             $response = parent::getAccessTokenResponse($code);
 
             return $response;
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null;
             $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
@@ -133,7 +134,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
      */
     protected function getTokenUrl(): string
     {
-        return $this->getDockerServiceUrl().'/realms/'.$this->getRealm().'/protocol/openid-connect/token';
+        return $this->getBaseUrl().'/realms/'.$this->getRealm().'/protocol/openid-connect/token';
     }
 
     /**
@@ -146,7 +147,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
         $issuerUrl = null;
         $tokenRealm = null;
         $issuerBaseUrl = null;
-        $dockerServiceUrl = $this->getDockerServiceUrl();
+        $dockerServiceUrl = $this->getBaseUrl();
         $baseUrl = $this->getBaseUrl();
         $hostHeader = null;
 
@@ -173,6 +174,19 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
             $issuerHost = parse_url($issuerBaseUrl, PHP_URL_HOST);
             $issuerPort = parse_url($issuerBaseUrl, PHP_URL_PORT);
 
+            // If issuer URL has no port, add port from configured base_url to avoid defaulting to port 80
+            if (! $issuerPort) {
+                $baseUrlParts = parse_url($baseUrl);
+                $baseUrlPort = $baseUrlParts['port'] ?? null;
+
+                // Only add port if base_url has a port and issuer host matches base_url host
+                if ($baseUrlPort && isset($baseUrlParts['host']) && $issuerHost === $baseUrlParts['host']) {
+                    $issuerPort = $baseUrlPort;
+                    // Rebuild issuerBaseUrl with port
+                    $issuerBaseUrl = $issuerScheme.'://'.$issuerHost.':'.$issuerPort;
+                }
+            }
+
             // If issuer is HTTPS and we're in Docker, we need to call via internal Docker service
             // but Keycloak will validate based on the issuer URL, so we need to ensure the call
             // goes to the same host as the issuer. However, from within Docker, we can't call
@@ -193,7 +207,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
                     // Set Host header to match issuer for token validation
                     $hostHeader = $issuerHost.($issuerPort ? ':'.$issuerPort : '');
                 } else {
-                    // Direct call (no Docker networking), use issuer URL directly
+                    // Direct call (no Docker networking), use issuer URL directly (now with port if needed)
                     $userinfoUrl = $issuerBaseUrl.'/realms/'.$tokenRealm.'/protocol/openid-connect/userinfo';
                     $hostHeader = null;
                 }
@@ -220,7 +234,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
             );
 
             return json_decode($response->getBody(), true);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null;
             $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
@@ -273,19 +287,6 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
     protected function getRealm(): string
     {
         return $this->realm;
-    }
-
-    /**
-     * Get the Docker service URL (for server-to-server calls).
-     * Ensures host.docker.internal is not used (doesn't work on Linux).
-     * Uses KeycloakService to centralize the logic.
-     */
-    protected function getDockerServiceUrl(): string
-    {
-        // Use KeycloakService to get Docker service URL (centralized logic)
-        $keycloakService = app(\App\Services\KeycloakService::class);
-
-        return $keycloakService->getDockerServiceUrl();
     }
 
     /**

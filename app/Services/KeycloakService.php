@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User;
 
 class KeycloakService
 {
@@ -14,34 +15,7 @@ class KeycloakService
      */
     public function getBaseUrl(): string
     {
-        $baseUrl = config('services.keycloak.base_url', 'http://localhost:8085');
-
-        // Ensure we're using external URL (not internal)
-        if (strpos($baseUrl, 'keycloak:') !== false) {
-            $baseUrl = str_replace('keycloak:', 'localhost:', $baseUrl);
-        }
-
-        return $baseUrl;
-    }
-
-    /**
-     * Get the Docker service URL for server-to-server calls.
-     */
-    public function getDockerServiceUrl(): string
-    {
-        $dockerServiceUrl = config('services.keycloak.docker_service_url', 'http://keycloak:8080');
-
-        // Ensure docker_service_url doesn't contain host.docker.internal (doesn't work on Linux)
-        if (strpos($dockerServiceUrl, 'host.docker.internal') !== false) {
-            Log::error('KEYCLOAK_DOCKER_SERVICE_URL contains host.docker.internal - this does not work on Linux servers', [
-                'current_value' => $dockerServiceUrl,
-                'should_be'     => 'http://keycloak:8080',
-            ]);
-            // Fallback to Docker service name
-            $dockerServiceUrl = 'http://keycloak:8080';
-        }
-
-        return $dockerServiceUrl;
+        return config('services.keycloak.base_url', 'http://keycloak.local:8080');
     }
 
     /**
@@ -65,7 +39,7 @@ class KeycloakService
      */
     public function getAdminToken(): ?string
     {
-        $baseUrl = $this->getDockerServiceUrl();
+        $baseUrl = $this->getBaseUrl();
         $tokenUrl = $baseUrl.'/realms/master/protocol/openid-connect/token';
 
         $adminUsername = config('services.keycloak.admin_username', 'admin');
@@ -127,7 +101,7 @@ class KeycloakService
      */
     public function getRealmAdminUrl(): string
     {
-        return $this->getDockerServiceUrl().'/admin/realms/'.$this->getRealm();
+        return $this->getBaseUrl().'/admin/realms/'.$this->getRealm();
     }
 
     /**
@@ -135,7 +109,7 @@ class KeycloakService
      */
     public function getRealmsAdminUrl(): string
     {
-        return $this->getDockerServiceUrl().'/admin/realms';
+        return $this->getBaseUrl().'/admin/realms';
     }
 
     /**
@@ -149,7 +123,7 @@ class KeycloakService
             return false;
         }
 
-        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName;
+        $url = $this->getBaseUrl().'/admin/realms/'.$realmName;
 
         try {
             $response = Http::withToken($accessToken)->get($url);
@@ -228,7 +202,7 @@ class KeycloakService
             return null;
         }
 
-        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName.'/clients?clientId='.urlencode($clientId);
+        $url = $this->getBaseUrl().'/admin/realms/'.$realmName.'/clients?clientId='.urlencode($clientId);
 
         try {
             $response = Http::withToken($accessToken)->get($url);
@@ -262,7 +236,7 @@ class KeycloakService
             return false;
         }
 
-        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName.'/clients';
+        $url = $this->getBaseUrl().'/admin/realms/'.$realmName.'/clients';
 
         try {
             $response = Http::withToken($accessToken)->post($url, $clientData);
@@ -312,7 +286,7 @@ class KeycloakService
             return false;
         }
 
-        $url = $this->getDockerServiceUrl().'/admin/realms/'.$realmName.'/clients/'.$client['id'];
+        $url = $this->getBaseUrl().'/admin/realms/'.$realmName.'/clients/'.$client['id'];
 
         try {
             $response = Http::withToken($accessToken)->put($url, $clientData);
@@ -453,7 +427,7 @@ class KeycloakService
     /**
      * Get Keycloak user via Socialite.
      */
-    public function getUserViaSocialite(): \Laravel\Socialite\Two\User
+    public function getUserViaSocialite(): User
     {
         $baseUrl = $this->getBaseUrl();
         $realm = $this->getRealm();

@@ -34,15 +34,15 @@ it('redirects to dashboard if already authenticated', function () {
 
 it('redirects to Keycloak login when not authenticated', function () {
     Http::fake([
-        'localhost:8085/realms/crm/protocol/openid-connect/auth*' => Http::response('', 302, [
-            'Location' => 'http://localhost:8085/realms/crm/protocol/openid-connect/auth?client_id=crm-app&redirect_uri=...',
+        'test-keycloak.local:9999/realms/crm/protocol/openid-connect/auth*' => Http::response('', 302, [
+            'Location' => 'http://test-keycloak.local:9999/realms/crm/protocol/openid-connect/auth?client_id=crm-app&redirect_uri=...',
         ]),
     ]);
 
     $response = $this->get(route('admin.keycloak.redirect'));
 
     $response->assertStatus(302);
-    expect($response->headers->get('Location'))->toContain('localhost:8085');
+    expect($response->headers->get('Location'))->toContain('test-keycloak.local:9999');
 });
 
 it('redirects to dashboard if already authenticated on callback', function () {
@@ -154,7 +154,7 @@ it('handles backchannel logout', function () {
     $header = base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
     $payload = base64_encode(json_encode([
         'sid' => 'session-789',
-        'iss' => 'http://localhost:8085/realms/crm',
+        'iss' => 'http://test-keycloak.local:9999/realms/crm',
         'sub' => 'keycloak-user-789',
     ]));
     $signature = 'signature';

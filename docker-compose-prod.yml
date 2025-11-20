@@ -244,6 +244,12 @@ services:
       FORWARD_REDIS_PORT: 6379
       VITE_APP_NAME: "${APP_NAME}"
       EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
+      KEYCLOAK_CLIENT_ID: 'forms-app'
+      KEYCLOAK_LOAD_USER_FROM_DATABASE: false
+      KEYCLOAK_APPEND_DECODED_TOKEN: true
+      KEYCLOAK_ALLOWED_RESOURCES: 'forms-app'
+      KEYCLOAK_LEEWAY: 60
+      KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
     ports:
       - '8001:80'
     labels:

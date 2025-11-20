@@ -197,7 +197,6 @@ return [
         App\Providers\AuditTrailServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         App\Providers\KeycloakServiceProvider::class,
-        App\Providers\KeycloakConfigServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,

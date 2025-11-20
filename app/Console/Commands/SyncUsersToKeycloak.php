@@ -3,8 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Actions\Keycloak\SyncUsersToKeycloakAction;
+use App\Services\KeycloakConfigService;
 use Illuminate\Console\Command;
 
+/**
+ * Potiential candidate to remove, because this is auto done even when users user seeder or person seeder.
+ */
 class SyncUsersToKeycloak extends Command
 {
     /**
@@ -25,9 +29,23 @@ class SyncUsersToKeycloak extends Command
     /**
      * Execute the console command.
      */
-    public function handle(SyncUsersToKeycloakAction $action): int
-    {
+    public function handle(
+        SyncUsersToKeycloakAction $action,
+        KeycloakConfigService $configService
+    ): int {
         $dryRun = $this->option('dry-run');
+
+        $this->info('Keycloak configuratie synchroniseren...');
+
+        $configResults = $configService->syncConfig();
+
+        if (! empty($configResults['errors'])) {
+            foreach ($configResults['errors'] as $error) {
+                $this->error($error);
+            }
+
+            return Command::FAILURE;
+        }
 
         $this->info('Authenticeren met Keycloak admin...');
 

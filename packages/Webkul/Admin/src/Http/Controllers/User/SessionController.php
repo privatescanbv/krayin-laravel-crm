@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\User;
 
 use App\Services\KeycloakService;
+use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class SessionController extends Controller
@@ -29,7 +30,7 @@ class SessionController extends Controller
             // Set intended URL, but exclude logout and other auth routes
             $previousUrl = url()->previous();
             $excludedRoutes = ['logout', 'login', 'auth/keycloak'];
-            
+
             if (strpos($previousUrl, 'admin') !== false) {
                 // Check if previous URL is not a logout or auth route
                 $isExcluded = false;
@@ -39,7 +40,7 @@ class SessionController extends Controller
                         break;
                     }
                 }
-                
+
                 if (!$isExcluded) {
                     $intendedUrl = $previousUrl;
                 } else {
@@ -107,25 +108,25 @@ class SessionController extends Controller
     {
         $user = auth()->guard('user')->user();
         $isSSOUser = $user && !empty($user->keycloak_user_id) && config('services.keycloak.client_id');
-        
+
         // Logout from Laravel first
         auth()->guard('user')->logout();
-        
+
         // If SSO user, trigger Keycloak logout via redirect
         // Keycloak will handle logout and call backchannel logout endpoint if configured
         if ($isSSOUser) {
             $logoutUrl = $this->keycloakService->getLogoutUrl();
             $clientId = $this->keycloakService->getClientId();
-            
+
             // Try logout with only client_id first (simpler, redirects to client base URL)
             $fullLogoutUrl = $logoutUrl . '?client_id=' . urlencode($clientId);
-            
-            \Log::info('Redirecting to Keycloak logout', [
+
+            Log::debug('Redirecting to Keycloak logout', [
                 'logout_url' => $fullLogoutUrl,
                 'client_id' => $clientId,
                 'note' => 'Using logout with client_id only - Keycloak will redirect to client base URL',
             ]);
-            
+
             return redirect($fullLogoutUrl);
         }
 

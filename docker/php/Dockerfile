@@ -155,6 +155,7 @@ COPY --from=vite /build/./docker/config /docker/config
 #COPY --from=vite /build.docker/update-flows-n8n.sh /usr/local/bin/update-flows-n8n.sh
 COPY --from=vite /build/.docker/config/loki/loki-config.yml /docker/loki/loki-config.yml
 COPY --from=vite /build/.docker/config/promtail/promtail-config.yml /docker/promtail/promtail-config.yml
+COPY --from=vite /build/reset_base.sh ./reset_base.sh
 COPY --from=vite /build/reset_prod.sh ./reset_prod.sh
 
 

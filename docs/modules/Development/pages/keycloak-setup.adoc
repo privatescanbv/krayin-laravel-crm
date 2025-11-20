@@ -150,12 +150,14 @@ Tijdens de eerste boot worden automatisch de Realm en Client aangemaakt.
 
 Als je bestaande CRM gebruikers hebt die je wilt synchroniseren met Keycloak:
 
+Dit commando zorgt er **altijd eerst** voor dat de volledige Keycloak configuratie (realm, clients, redirects, rollen) gesynchroniseerd is met de waarden uit je `.env` en `config/services.php`. Je hoeft dus niet meer handmatig `keycloak:sync-config` uit te voeren voordat je gebruikers synchroniseert; het maakt automatisch de `CRM`-realm en de benodigde clients aan als ze ontbreken.
+
 [source,bash]
 ----
 docker-compose exec crm php artisan keycloak:sync-users
 ----
 
-Dit commando maakt Keycloak gebruikers aan voor alle bestaande CRM gebruikers. Let op: gebruikers moeten daarna hun wachtwoord instellen in Keycloak.
+Het commando maakt Keycloak gebruikers aan voor alle bestaande CRM gebruikers zodra de configuratie is bijgewerkt. Let op: gebruikers moeten daarna hun wachtwoord instellen in Keycloak.
 
 **Automatische synchronisatie:**
 

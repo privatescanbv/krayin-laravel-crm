@@ -150,18 +150,18 @@ class KeycloakConfigService
         $configs['forms-app'] = [
             'base_url'                  => $formsUrl,
             'redirect_uris'             => [
-                $formsUrl.'/auth/keycloak/callback',
-                $formsUrl.'/auth/keycloak/logout-callback',
+                $formsUrl.'/*',
             ],
             'post_logout_redirect_uris' => [
-                $formsUrl.'/login',
-                $formsUrl.'/auth/keycloak/logout-callback',
+                $formsUrl.'/*',
             ],
-            'backchannel_logout_url'    => $formsUrl.'/auth/keycloak/backchannel-logout',
+            'backchannel_logout_url'    => '',
             'home_url'                  => $formsUrl,
             'secret_env_key'            => 'FORMS_KEYCLOAK_CLIENT_SECRET',
             'secret_log_message'        => 'Keycloak Forms client secret generated. Please update FORMS_KEYCLOAK_CLIENT_SECRET in Forms .env',
         ];
+        // Note: backchannel_logout_url ->je Laravel app moet een endpoint hebben dat dit verwerkt.
+        // De Vizir package levert dat NIET automatisch → je zou dit zelf moeten implementeren.
 
         return $configs;
     }

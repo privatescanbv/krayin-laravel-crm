@@ -12,10 +12,8 @@ else
     PERSON_LIMIT_ARG="--limit=${IMPORT_LIMIT}"
     LEAD_LIMIT_ARG="--limit=${IMPORT_LIMIT}"
 fi
+./reset_base.sh prod &&
 
-php artisan migrate:fresh --seed &&
-php artisan import:users &&
-php artisan keycloak:sync-users &&
 php artisan import:persons ${PERSON_LIMIT_ARG} &&
 php artisan import:leads ${LEAD_LIMIT_ARG} &&
 php artisan import:email-attachment-files &&

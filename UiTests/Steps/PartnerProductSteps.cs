@@ -349,7 +349,7 @@ namespace UiTests.Steps
             }
 
             // If there are validation errors, surface them immediately
-            var errors = _driver.Page.Locator(".control-error, .text-error, .alert-error");
+            var errors = _driver.Page.Locator(".control-error, .text-status-expired-text, .alert-error");
             var errorCount = await errors.CountAsync();
             if (errorCount > 0)
             {
@@ -382,7 +382,7 @@ namespace UiTests.Steps
                 {
                     // Gather feedback: current URL, visible validation errors, and body excerpt
                     var currentUrl = _driver.Page.Url;
-                    var errors = _driver.Page.Locator(".control-error, .text-error, .alert-error");
+                    var errors = _driver.Page.Locator(".control-error, .text-status-expired-text, .alert-error");
                     var errorCount = await errors.CountAsync();
 
                     string allErrors = errorCount > 0 ? "" : "(geen zichtbare validatiefouten gevonden)";
@@ -489,7 +489,7 @@ namespace UiTests.Steps
                 Console.WriteLine($"[Diagnostics] Body excerpt: {bodyText?.Substring(0, Math.Min(2000, bodyText.Length))}");
 
                 // Log visible validation errors if any
-                var errors = _driver.Page.Locator(".control-error, .text-error, .alert-error");
+                var errors = _driver.Page.Locator(".control-error, .text-status-expired-text, .alert-error");
                 var count = await errors.CountAsync();
                 for (var i = 0; i < count; i++)
                 {

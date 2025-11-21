@@ -8,19 +8,19 @@
         // BMI categories and colors
         if ($bmi < 18.5) {
             $bmiCategory = 'Ondergewicht';
-            $bmiColor = 'bg-blue-500';
+            $bmiColor = 'bg-brand-herniapoli-main';
             $bmiTextColor = 'text-blue-700';
-            $bmiBgColor = 'bg-blue-50';
+            $bmiBgColor = 'bg-activity-note-bg';
         } elseif ($bmi < 25) {
             $bmiCategory = 'Normaal gewicht';
             $bmiColor = 'bg-succes';
             $bmiTextColor = 'text-green-700';
-            $bmiBgColor = 'bg-green-50';
+            $bmiBgColor = 'bg-status-active-bg';
         } elseif ($bmi < 30) {
             $bmiCategory = 'Overgewicht';
-            $bmiColor = 'bg-yellow-500';
+            $bmiColor = 'bg-status-on_hold-text';
             $bmiTextColor = 'text-yellow-700';
-            $bmiBgColor = 'bg-yellow-50';
+            $bmiBgColor = 'bg-status-on_hold-bg';
         } else {
             $bmiCategory = 'Obesitas';
             $bmiColor = 'bg-red-500';
@@ -45,7 +45,7 @@
             <div class="w-full h-6 bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700">
                 <!-- BMI scale background -->
                 <div class="h-full flex">
-                    <div class="bg-blue-300 flex-1 dark:bg-blue-600"></div>      <!-- Underweight -->
+                    <div class="bg-blue-300 flex-1 dark:text-activity-note-text"></div>      <!-- Underweight -->
                     <div class="bg-green-300 flex-1 dark:bg-green-600"></div>    <!-- Normal -->
                     <div class="bg-yellow-300 flex-1 dark:bg-yellow-600"></div>   <!-- Overweight -->
                     <div class="bg-red-300 flex-1 dark:bg-red-600"></div>      <!-- Obese -->

@@ -99,17 +99,17 @@
 
                     <!-- Images Directory Path -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.settings.data-transfer.imports.edit.file')
-                        </x-admin::form.control-group.label>
-
                         <x-admin::form.control-group.control
                             type="file"
                             name="file"
                             :label="trans('admin::app.settings.data-transfer.imports.edit.file')"
                         />
 
-                        <x-admin::form.control-group.error control-name="file" />
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.data-transfer.imports.edit.file')
+                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="file" />
+
+
                     </x-admin::form.control-group>
                 </div>
 
@@ -211,10 +211,6 @@
 
                         <!-- Process In Queue -->
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.settings.data-transfer.imports.edit.process-in-queue')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="switch"
                                 name="process_in_queue"
@@ -223,6 +219,10 @@
                             />
 
                             <x-admin::form.control-group.error control-name="process_in_queue" />
+
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.settings.data-transfer.imports.edit.process-in-queue')
+                            </x-admin::form.control-group.label>
                         </x-admin::form.control-group>
                     </x-slot>
                 </x-admin::accordion>

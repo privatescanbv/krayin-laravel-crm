@@ -25,9 +25,9 @@
                 >
                     <div class="flex h-8 w-8 items-center justify-center rounded-full"
                          :class="{
-                             'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300': suggestion.type === 'lead',
+                             'bg-blue-100 text-activity-note-text dark:bg-blue-900 dark:text-blue-300': suggestion.type === 'lead',
                              'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300': suggestion.type === 'sales_lead',
-                             'bg-green-100 text-succes dark:bg-green-900 dark:text-green-300': suggestion.type === 'person'
+                             'bg-green-100 text-status-active-text dark:bg-green-900 dark:text-green-300': suggestion.type === 'person'
                          }"
                     >
                         <span class="text-xs font-semibold">

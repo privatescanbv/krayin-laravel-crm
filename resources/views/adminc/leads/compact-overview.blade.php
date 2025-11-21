@@ -38,137 +38,137 @@
             </div>
 
             <!-- Aanhef -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-contact text-sm"></span>
-                    <span>Aanhef</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $salutationLabel }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Aanhef</span>
+                </label>
             </div>
 
             <!-- Voornaam -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-contact text-sm"></span>
-                    <span>Voornaam</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->first_name ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Voornaam</span>
+                </label>
             </div>
 
             <!-- Tussenvoegels -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-contact text-sm"></span>
-                    <span>Tussenvoegels</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->lastname_prefix ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Tussenvoegels</span>
+                </label>
             </div>
 
             <!-- Achternaam -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-contact text-sm"></span>
-                    <span>Achternaam</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->last_name ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Achternaam</span>
+                </label>
             </div>
 
             <!-- Geboortedatum -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-contact text-sm"></span>
-                    <span>Geboortedatum</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $dateOfBirth }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Geboortedatum</span>
+                </label>
             </div>
         </div>
 
         <!-- Column 2: ADRESGEGEVENS -->
         <div class="flex flex-col gap-4">
             <div class="flex items-center gap-2 mb-2">
-                <span class="icon-location text-xl text-green-500"></span>
+                <span class="icon-location text-xl text-status-active-text"></span>
                 <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">ADRESGEGEVENS</h4>
             </div>
 
             <!-- Straat en huisnummer -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-location text-sm"></span>
-                    <span>Straat en huisnummer</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->address ? ($lead->address->street . ' ' . $lead->address->house_number . ($lead->address->house_number_suffix ? '-' . $lead->address->house_number_suffix : '')) : '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Straat en huisnummer</span>
+                </label>
             </div>
 
             <!-- Postcode -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-location text-sm"></span>
-                    <span>Postcode</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->address->postal_code ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Postcode</span>
+                </label>
             </div>
 
             <!-- Woonplaats -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-location text-sm"></span>
-                    <span>Woonplaats</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->address->city ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Woonplaats</span>
+                </label>
             </div>
 
             <!-- Land -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-location text-sm"></span>
-                    <span>Land</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $lead->address->country ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Land</span>
+                </label>
             </div>
         </div>
 
@@ -180,46 +180,46 @@
             </div>
 
             <!-- Telefoonnummer -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-call text-sm"></span>
-                    <span>Telefoonnummer</span>
-                </label>
+            <div class="relative">
                 <input
                     type="tel"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $defaultPhone ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Telefoonnummer</span>
+                </label>
             </div>
 
             <!-- E-mailadres -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-mail text-sm"></span>
-                    <span>E-mailadres</span>
-                </label>
+            <div class="relative">
                 <input
                     type="email"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value="{{ $defaultEmail ?? '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>E-mailadres</span>
+                </label>
             </div>
 
             <!-- Burgerservicenummer (BSN) -->
-            <div>
-                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    <span class="icon-contact text-sm"></span>
-                    <span>Burgerservicenummer (BSN)</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     value=""
                     placeholder="BSN nummer"
                     readonly
                 />
+                <label class="">
+
+                    <span>Burgerservicenummer (BSN)</span>
+                </label>
             </div>
         </div>
     </div>

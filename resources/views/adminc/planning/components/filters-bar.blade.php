@@ -40,7 +40,7 @@
                     <input
                         type="checkbox"
                         v-model="filters.show_available_only"
-                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        class="h-4 w-4 text-activity-note-text border-gray-300 rounded focus:ring-blue-500"
                     />
                     <span class="text-sm text-gray-700 dark:text-gray-300">Toon alleen beschikbaar</span>
                 </label>
@@ -54,13 +54,13 @@
                 <div class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
                     <button
                         @click="setViewType('week')"
-                        :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
+                        :class="['px-3 py-1 text-sm', viewType === 'week' ? 'text-activity-note-text text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
                     >
                         Week
                     </button>
                     <button
                         @click="setViewType('month')"
-                        :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
+                        :class="['px-3 py-1 text-sm', viewType === 'month' ? 'text-activity-note-text text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
                     >
                         Maand
                     </button>

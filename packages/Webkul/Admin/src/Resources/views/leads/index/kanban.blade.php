@@ -234,7 +234,7 @@
                                                     )
                                                 )"
                                             >
-                                                <span class="icon-warning cursor-default text-xs text-error"></span>
+                                                <span class="icon-warning cursor-default text-xs text-status-expired-text"></span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                         Geen open activiteiten
@@ -254,7 +254,7 @@
                                             </span>
                                             <span
                                                 v-else-if="element.days_until_due_date > 0"
-                                                class="text-succes"
+                                                class="text-status-active-text"
                                             >
                                                 @{{ element.days_until_due_date }}d
                                             </span>
@@ -266,7 +266,7 @@
                                             </span>
                                             <span
                                                 v-else
-                                                class="text-error font-medium"
+                                                class="text-status-expired-text font-medium"
                                             >
                                                 @{{ Math.abs(element.days_until_due_date) }}d over
                                             </span>
@@ -325,6 +325,14 @@
 
                         <!-- Lost Reason -->
                         <x-admin::form.control-group>
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="closed_at"
+                                v-model="currentStageUpdate.closed_at"
+                                placeholder="dd-mm-yyyy"
+                                required
+                            />
+
                             <x-admin::form.control-group.label>
                                 Reden van verlies
                             </x-admin::form.control-group.label>
@@ -347,14 +355,6 @@
                             <x-admin::form.control-group.label>
                                 Gesloten op
                             </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="closed_at"
-                                v-model="currentStageUpdate.closed_at"
-                                placeholder="dd-mm-yyyy"
-                                required
-                            />
                         </x-admin::form.control-group>
                     </div>
                     <div v-else>

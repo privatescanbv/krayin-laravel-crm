@@ -146,35 +146,35 @@
                     <div class="flex gap-4 px-4">
                         <button
                             @click="activeTab = 'activities'"
-                            :class="activeTab === 'activities' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            :class="activeTab === 'activities' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
                             class="py-3 text-sm font-medium transition"
                         >
                             @lang('admin::app.settings.clinics.view.tabs.activities')
                         </button>
                         <button
                             @click="activeTab = 'overview'"
-                            :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
                             class="py-3 text-sm font-medium transition"
                         >
                             @lang('admin::app.settings.clinics.view.tabs.overview')
                         </button>
                         <button
                             @click="activeTab = 'partner-products'"
-                            :class="activeTab === 'partner-products' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            :class="activeTab === 'partner-products' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
                             class="py-3 text-sm font-medium transition"
                         >
                             @lang('admin::app.settings.clinics.view.tabs.partner-products')
                         </button>
                         <button
                             @click="activeTab = 'resources'"
-                            :class="activeTab === 'resources' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            :class="activeTab === 'resources' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
                             class="py-3 text-sm font-medium transition"
                         >
                             @lang('admin::app.settings.clinics.view.tabs.resources')
                         </button>
                         <button
                             @click="activeTab = 'audit-trail'"
-                            :class="activeTab === 'audit-trail' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            :class="activeTab === 'audit-trail' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
                             class="py-3 text-sm font-medium transition"
                         >
                             @lang('admin::app.settings.clinics.view.tabs.audit-trail')

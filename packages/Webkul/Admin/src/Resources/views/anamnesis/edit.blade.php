@@ -15,7 +15,7 @@
                 class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-x-2.5">
-                        <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-blue-600 hover:underline">
+                        <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-activity-note-text hover:underline">
                             ← Terug naar Lead
                         </a>
                     </div>
@@ -73,25 +73,21 @@
 
                         <div class="mb-4">
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    Naam
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="name"
                                     :value="$anamnesis->name"
                                     placeholder="Anamnesis naam"
                                 />
+
+                                <x-admin::form.control-group.label>
+                                    Naam
+                                </x-admin::form.control-group.label>
                             </x-admin::form.control-group>
                         </div>
 
                         <div class="mb-4">
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    Beschrijving
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="description"
@@ -99,6 +95,10 @@
                                     placeholder="Beschrijving"
                                     rows="3"
                                 />
+
+                                <x-admin::form.control-group.label>
+                                    Beschrijving
+                                </x-admin::form.control-group.label>
                             </x-admin::form.control-group>
                         </div>
 
@@ -116,10 +116,6 @@
 
                         <div class="mb-4">
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    Kliniek opmerkingen
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="comment_clinic"
@@ -127,6 +123,10 @@
                                     placeholder="Kliniek opmerkingen"
                                     rows="3"
                                 />
+
+                                <x-admin::form.control-group.label>
+                                    Kliniek opmerkingen
+                                </x-admin::form.control-group.label>
                             </x-admin::form.control-group>
                         </div>
                     </div>
@@ -138,10 +138,6 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        Lengte (cm)
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="number"
                                         name="height"
@@ -149,15 +145,15 @@
                                         placeholder="180"
                                         onchange="updateBMI()"
                                     />
+
+                                    <x-admin::form.control-group.label>
+                                        Lengte (cm)
+                                    </x-admin::form.control-group.label>
                                 </x-admin::form.control-group>
                             </div>
 
                             <div>
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        Gewicht (kg)
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="number"
                                         name="weight"
@@ -165,6 +161,10 @@
                                         placeholder="70"
                                         onchange="updateBMI()"
                                     />
+
+                                    <x-admin::form.control-group.label>
+                                        Gewicht (kg)
+                                    </x-admin::form.control-group.label>
                                 </x-admin::form.control-group>
                             </div>
                         </div>
@@ -209,7 +209,7 @@
                                     </div>
 
                                     @error('metals')
-                                        <p class="mt-1 text-xs italic text-error">{{ $message }}</p>
+                                        <p class="mt-1 text-xs italic text-status-expired-text">{{ $message }}</p>
                                     @enderror
                                 </x-admin::form.control-group>
 
@@ -798,16 +798,16 @@
                             <!-- Risico hartinfarct -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        Risico hartinfarct
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="heart_attack_risk"
                                         :value="$anamnesis->heart_attack_risk"
                                         placeholder="Risico hartinfarct"
                                     />
+
+                                    <x-admin::form.control-group.label>
+                                        Risico hartinfarct
+                                    </x-admin::form.control-group.label>
                                 </x-admin::form.control-group>
                             </div>
                         </div>
@@ -822,25 +822,21 @@
                         <div class="space-y-4">
                             <div>
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        Opmerking
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="remarks"
                                         :value="$anamnesis->remarks"
                                         placeholder="Algemene opmerking"
                                     />
+
+                                    <x-admin::form.control-group.label>
+                                        Opmerking
+                                    </x-admin::form.control-group.label>
                                 </x-admin::form.control-group>
                             </div>
 
                             <div>
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        Advies
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="textarea"
                                         name="advice_notes"
@@ -848,6 +844,10 @@
                                         placeholder="Advies voor patiënt"
                                         rows="3"
                                     />
+
+                                    <x-admin::form.control-group.label>
+                                        Advies
+                                    </x-admin::form.control-group.label>
                                 </x-admin::form.control-group>
                             </div>
                         </div>
@@ -883,19 +883,19 @@
                 let category, bgColor, textColor, barColor;
                 if (bmi < 18.5) {
                     category = 'Ondergewicht';
-                    bgColor = 'bg-blue-50';
+                    bgColor = 'bg-activity-note-bg';
                     textColor = 'text-blue-700';
-                    barColor = 'bg-blue-500';
+                    barColor = 'bg-brand-herniapoli-main';
                 } else if (bmi < 25) {
                     category = 'Normaal gewicht';
-                    bgColor = 'bg-green-50';
+                    bgColor = 'bg-status-active-bg';
                     textColor = 'text-green-700';
                     barColor = 'bg-succes';
                 } else if (bmi < 30) {
                     category = 'Overgewicht';
-                    bgColor = 'bg-yellow-50';
+                    bgColor = 'bg-status-on_hold-bg';
                     textColor = 'text-yellow-700';
-                    barColor = 'bg-yellow-500';
+                    barColor = 'bg-status-on_hold-text';
                 } else {
                     category = 'Obesitas';
                     bgColor = 'bg-red-50';
@@ -918,7 +918,7 @@
                             <div class="w-full h-6 bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700">
                                 <!-- BMI scale background -->
                                 <div class="h-full flex">
-                                    <div class="bg-blue-300 flex-1 dark:bg-blue-600"></div>
+                                    <div class="bg-blue-300 flex-1 dark:text-activity-note-text"></div>
                                     <div class="bg-green-300 flex-1 dark:bg-green-600"></div>
                                     <div class="bg-yellow-300 flex-1 dark:bg-yellow-600"></div>
                                     <div class="bg-red-300 flex-1 dark:bg-red-600"></div>

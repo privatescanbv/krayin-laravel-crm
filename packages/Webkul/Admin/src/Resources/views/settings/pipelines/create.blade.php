@@ -257,7 +257,7 @@
                                 {!! view_render_event('admin.settings.pipelines.create.form.stages.delete_button.before') !!}
 
                                 <div
-                                    class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-error dark:border-gray-800"
+                                    class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-status-expired-text dark:border-gray-800"
                                     @click="removeStage(element)"
                                     v-if="isDragable(element)"
                                 >

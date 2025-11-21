@@ -485,10 +485,6 @@
                             <template v-if="showCC">
                                 <!-- Cc -->
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.mail.index.mail.cc')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.controls.tags
                                         name="cc"
                                         class="w-[calc(100%-62px)]"
@@ -498,17 +494,17 @@
                                         :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
                                     />
 
-                                    <x-admin::form.control-group.error control-name="cc" />
+                                    <x-admin::form.control-group.label>
+                                        @lang('admin::app.mail.index.mail.cc')
+                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="cc" />
+
+
                                 </x-admin::form.control-group>
                             </template>
 
                             <template v-if="showBCC">
                                 <!-- Cc -->
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.mail.index.mail.bcc')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.controls.tags
                                         name="bcc"
                                         class="w-[calc(100%-62px)]"
@@ -518,16 +514,16 @@
                                         :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
                                     />
 
-                                    <x-admin::form.control-group.error control-name="bcc" />
+                                    <x-admin::form.control-group.label>
+                                        @lang('admin::app.mail.index.mail.bcc')
+                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="bcc" />
+
+
                                 </x-admin::form.control-group>
                             </template>
 
                             <!-- Template Selector -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    Template
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     id="email_template"
@@ -565,7 +561,11 @@
                                     :placeholder="trans('admin::app.mail.index.mail.subject')"
                                 />
 
-                                <x-admin::form.control-group.error control-name="subject" />
+                                <x-admin::form.control-group.label>
+                                    Template
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="subject" />
+
+
                             </x-admin::form.control-group>
 
                             <!-- Content -->

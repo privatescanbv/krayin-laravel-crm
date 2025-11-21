@@ -37,8 +37,8 @@
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>
                     <span class="text-sm font-semibold
-                        @if($importRun->status === 'completed') text-succes dark:text-green-400
-                        @elseif($importRun->status === 'failed') text-error dark:text-red-400
+                        @if($importRun->status === 'completed') text-status-active-text dark:text-green-400
+                        @elseif($importRun->status === 'failed') text-status-expired-text dark:text-red-400
                         @else text-yellow-600 dark:text-yellow-400
                         @endif">
                         {{ ucfirst($importRun->status) }}
@@ -71,7 +71,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Imported:</span>
-                    <span class="text-sm text-succes dark:text-green-400">{{ $importRun->records_imported }}</span>
+                    <span class="text-sm text-status-active-text dark:text-green-400">{{ $importRun->records_imported }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Skipped:</span>
@@ -79,7 +79,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Errors:</span>
-                    <span class="text-sm text-error dark:text-red-400">{{ $importRun->records_errored }}</span>
+                    <span class="text-sm text-status-expired-text dark:text-red-400">{{ $importRun->records_errored }}</span>
                 </div>
             </div>
 
@@ -107,7 +107,7 @@
                         <span class="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded">
                             {{ $importRun->importLogs->where('level', 'error')->count() }} errors
                         </span>
-                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded">
+                        <span class="px-2 py-1 bg-yellow-100 text-status-on_hold-text dark:bg-yellow-900/30 dark:text-yellow-300 rounded">
                             {{ $importRun->importLogs->where('level', 'warning')->count() }} warnings
                         </span>
                         <span class="px-2 py-1 bg-blue-100 text-activity-task-text dark:bg-blue-900/30 dark:text-blue-300 rounded">
@@ -142,15 +142,15 @@
                     @foreach($importRun->importLogs as $log)
                         <div class="log-entry border border-gray-200 rounded-lg p-3 dark:border-gray-700
                             @if($log->level === 'error') bg-red-50 dark:bg-red-900/20
-                            @elseif($log->level === 'warning') bg-yellow-50 dark:bg-yellow-900/20
-                            @else bg-blue-50 dark:bg-blue-900/20
+                            @elseif($log->level === 'warning') bg-status-on_hold-bg dark:bg-yellow-900/20
+                            @else bg-activity-note-bg dark:bg-blue-900/20
                             @endif"
                             data-level="{{ $log->level }}">
                             <div class="flex items-start justify-between mb-2">
                                 <span class="text-xs font-semibold px-2 py-1 rounded
                                     @if($log->level === 'error') bg-red-600 text-white
                                     @elseif($log->level === 'warning') bg-yellow-600 text-white
-                                    @else bg-blue-600 text-white
+                                    @else text-activity-note-text text-white
                                     @endif">
                                     {{ strtoupper($log->level) }}
                                 </span>
@@ -164,7 +164,7 @@
                             @endif
                             @if($log->context)
                                 <details class="mt-2">
-                                    <summary class="text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
+                                    <summary class="text-xs text-activity-note-text dark:text-blue-400 cursor-pointer hover:underline">
                                         📋 View Context
                                     </summary>
                                     <pre class="text-xs mt-2 p-2 bg-neutral-bg dark:bg-gray-800 rounded overflow-x-auto">{{ json_encode($log->context, JSON_PRETTY_PRINT) }}</pre>

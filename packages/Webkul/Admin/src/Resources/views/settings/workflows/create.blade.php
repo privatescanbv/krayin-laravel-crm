@@ -113,10 +113,6 @@
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.workflows.create.description')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="description"
@@ -127,7 +123,11 @@
                                     :placeholder="trans('admin::app.settings.workflows.create.description')"
                                 />
 
-                                <x-admin::form.control-group.error control-name="description" />
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.workflows.create.description')
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="description" />
+
+
                             </x-admin::form.control-group>
                         </div>
                     </div>
@@ -214,10 +214,6 @@
                         <div class="flex w-1/2 flex-col gap-2 max-md:w-full">
                             <!-- Condition Type -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.workflows.create.condition-type')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     class="ltr:pr-10 rtl:pl-10"
@@ -238,6 +234,10 @@
                                 </x-admin::form.control-group.control>
 
                                 <x-admin::form.control-group.error control-name="condition_type" />
+
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.workflows.create.condition-type')
+                                </x-admin::form.control-group.label>
                             </x-admin::form.control-group>
 
                             <!-- Workflow Condition Vue Component. -->

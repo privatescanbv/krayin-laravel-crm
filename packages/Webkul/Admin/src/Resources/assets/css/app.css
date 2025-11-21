@@ -3,21 +3,21 @@
 @tailwind utilities;
 
 @layer base {
-      :root {
-    /* brand */
-    --brand-color: theme('colors.brand.DEFAULT');
-    --brand-soft: theme('colors.brand.soft');
-    --brand-medium: theme('colors.brand.medium');
-    --brand-strong: theme('colors.brand.strong');
+    :root {
+        /* brand */
+        --brand-color: theme("colors.brand.DEFAULT");
+        --brand-soft: theme("colors.brand.soft");
+        --brand-medium: theme("colors.brand.medium");
+        --brand-strong: theme("colors.brand.strong");
 
-    /* Privatescan */
-    --privatescan-main: theme('colors.brand.privatescan.main');
-    --privatescan-accent: theme('colors.brand.privatescan.accent');
+        /* Privatescan */
+        --privatescan-main: theme("colors.brand.privatescan.main");
+        --privatescan-accent: theme("colors.brand.privatescan.accent");
 
-    /* Herniapoli */
-    --herniapoli-main: theme('colors.brand.herniapoli.main');
-    --herniapoli-accent: theme('colors.brand.herniapoli.accent');
-  }
+        /* Herniapoli */
+        --herniapoli-main: theme("colors.brand.herniapoli.main");
+        --herniapoli-accent: theme("colors.brand.herniapoli.accent");
+    }
 
     html {
         @apply font-inter text-neutral-text bg-neutral-bg antialiased;
@@ -75,12 +75,41 @@
         @apply text-brand-privatescan-accent;
     }
 
+    /* label {
+        @apply absolute top-[-1em] left-1 flex z-10 px-2 py-[.125rem] bg-gradient-to-t from-neutral-bg to-white rounded-lg items-center gap-2 mb-1.5 text-xs font-medium text-neutral-muted dark:text-neutral-text;
+    } */
+
+    input[readonly] + label,
+    textarea[readonly] + label,
+    select[readonly] + label {
+        @apply absolute top-[-1em] left-1 flex z-10 px-2 py-[.125rem] bg-none bg-white rounded-lg items-center gap-2 mb-1.5 text-xs font-medium text-neutral-muted dark:text-neutral-text;
+    }
     /* Form elements */
     input,
     textarea,
     select,
-    [type='text'], input:where(:not([type])), [type='email'], [type='url'], [type='password'], [type='number'], [type='date'], [type='datetime-local'], [type='month'], [type='search'], [type='tel'], [type='time'], [type='week'], [multiple], textarea {
-        @apply text-neutral-text text-sm border-neutral-200 bg-neutral-bg;
+    [type="text"],
+    input:where(:not([type])),
+    [type="email"],
+    [type="url"],
+    [type="password"],
+    [type="number"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="search"],
+    [type="tel"],
+    [type="time"],
+    [type="week"],
+    [multiple],
+    textarea {
+        @apply bg-neutral-bg border border-neutral-border text-heading text-sm rounded-base focus:ring-neutral-bg focus:border-neutral-muted block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500;
+    }
+
+    input[readonly],
+    textarea[readonly],
+    select[readonly] {
+        @apply bg-white border-neutral-border text-neutral-text shadow-none pointer-events-none;
     }
 
     /* Code, tags, and subtle pills */
@@ -91,7 +120,6 @@
     }
 }
 
-
 /* -------------------------------- CSS Variables -------------------------------- */
 :root {
     --brand-privatescan: var(--privatescan-main);
@@ -100,16 +128,17 @@
 /* -------------------------------- new css -------------------------------- */
 
 @font-face {
-    font-family: 'icomoon';
-    src: url('../fonts/icomoon.woff?w2trdd') format('woff');
+    font-family: "icomoon";
+    src: url("../fonts/icomoon.woff?w2trdd") format("woff");
     font-weight: normal;
     font-style: normal;
     font-display: block;
-  }
+}
 
-  [class^="icon-"], [class*=" icon-"] {
+[class^="icon-"],
+[class*=" icon-"] {
     /* use !important to prevent issues with browser extensions that change fonts */
-    font-family: 'icomoon' !important;
+    font-family: "icomoon" !important;
     speak: never;
     font-style: normal;
     font-weight: normal;
@@ -120,7 +149,7 @@
     /* Better Font Rendering =========== */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
+}
 
 @layer components {
     .icon-image:before {
@@ -492,11 +521,11 @@
     }
 
     .dark .sidebar-rounded::after {
-        @apply bg-[url("../images/dark-corner-clip.svg")]
+        @apply bg-[url("../images/dark-corner-clip.svg")];
     }
 
     .dark .sidebar-rounded::before {
-        @apply bg-[url("../images/dark-corner-clip.svg")]
+        @apply bg-[url("../images/dark-corner-clip.svg")];
     }
 
     .tox.tox-silver-sink.tox-tinymce-aux {
@@ -504,7 +533,7 @@
     }
 
     .stage::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 50%;
         right: -10px;
@@ -518,7 +547,7 @@
     }
 
     .dark .stage::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 50%;
         right: -10px;
@@ -532,7 +561,7 @@
     }
 
     [dir="rtl"] .stage::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 50%;
         left: -10px;
@@ -550,7 +579,7 @@
     }
 
     .dark\:bg-gray-400:is(.dark *) {
-       --tw-bg-opacity: 1 !important;
+        --tw-bg-opacity: 1 !important;
         background-color: #1f2937 !important;
         border: #111827 solid !important;
         color: #e5e7eb !important;
@@ -631,7 +660,7 @@
     }
 
     ::selection {
-        background-color: rgba(0, 68, 242, .2);
+        background-color: rgba(0, 68, 242, 0.2);
     }
 
     body {
@@ -652,7 +681,7 @@
     }
 
     html.dark [class^="icon-"],
-    html.dark [class*=" icon-"]{
+    html.dark [class*=" icon-"] {
         color: #d1d5db;
     }
 
@@ -697,7 +726,7 @@
         background-position-y: 50%;
     }
 
-    .dark .custom-select{
+    .dark .custom-select {
         background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
     }
 
@@ -727,7 +756,7 @@
 .tox .tox-toolbar__group:last-child button {
     padding: 6px 8px;
     background: #eff6ff;
-    color: #2563EB;
+    color: #2563eb;
 }
 
 .tox .tox-toolbar__group:last-child button:hover {
@@ -749,8 +778,6 @@
 .tox.tox-silver-sink.tox-tinymce-aux {
     z-index: 99999;
 }
-
-
 
 @keyframes fadeInUp {
     from {

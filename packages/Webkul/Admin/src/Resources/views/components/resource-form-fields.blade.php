@@ -79,10 +79,6 @@
 
 <!-- Is Active -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        Actief
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="switch"
         name="is_active"
@@ -92,14 +88,14 @@
     />
 
     <x-admin::form.control-group.error control-name="is_active" />
+
+    <x-admin::form.control-group.label>
+        Actief
+    </x-admin::form.control-group.label>
 </x-admin::form.control-group>
 
 <!-- Notes -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.settings.resources.index.create.notes')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="textarea"
         name="notes"
@@ -110,4 +106,8 @@
     />
 
     <x-admin::form.control-group.error control-name="notes" />
+
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.resources.index.create.notes')
+    </x-admin::form.control-group.label>
 </x-admin::form.control-group>

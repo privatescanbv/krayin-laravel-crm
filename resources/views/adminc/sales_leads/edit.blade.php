@@ -26,9 +26,6 @@
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <!-- Name -->
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Name <span class="text-red-500">*</span>
-                        </label>
                         <input
                             type="text"
                             name="name"
@@ -38,7 +35,7 @@
                             required
                         >
                         @error('name')
-                            <p class="mt-1 text-sm text-error">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-status-expired-text">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -62,7 +59,7 @@
                             class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                         >{{ old('description', $salesLead->description) }}</textarea>
                         @error('description')
-                            <p class="mt-1 text-sm text-error">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-status-expired-text">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -88,6 +85,9 @@
                                 :current-label='@json($salesLead->contactPerson ? $salesLead->contactPerson->name : null)'
                                 :can-add-new="true"
                             />
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Name <span class="text-red-500">*</span>
+                        </label>
                         </div>
                     </div>
                 </div>
@@ -115,7 +115,7 @@
                 <div class="mt-6 flex justify-end">
                     <button
                         type="submit"
-                        class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        class="rounded-md text-activity-note-text px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                         Update Sales
                     </button>

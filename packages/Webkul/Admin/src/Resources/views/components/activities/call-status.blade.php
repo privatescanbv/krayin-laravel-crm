@@ -49,13 +49,13 @@
 
             <div>
                 <label class="flex items-center">
-                    <input type="checkbox" name="send_email" value="1" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800">
+                    <input type="checkbox" name="send_email" value="1" class="rounded border-gray-300 text-activity-note-text shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800">
                     <span class="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300">E-Mail versturen?</span>
                 </label>
                 <p class="text-[11px] text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
             </div>
 
-            <button type="button" id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <button type="button" id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="w-full text-activity-note-text hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <i class="icon-plus mr-2"></i>Toevoegen
             </button>
         </form>

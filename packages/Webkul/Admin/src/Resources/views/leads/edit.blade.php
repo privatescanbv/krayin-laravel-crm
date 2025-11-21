@@ -180,7 +180,7 @@
                         </div>
 
                         <!-- Auto-suggest panel: only when no persons linked -->
-                        <div v-if="!hasPersons && suggestions.length > 0" class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900 p-4">
+                        <div v-if="!hasPersons && suggestions.length > 0" class="rounded-lg border border-activity-note-border bg-activity-note-bg dark:border-blue-800 dark:bg-blue-900 p-4">
                             <x-adminc::components.person-suggestions-panel :button-handler="'linkSuggestion'" :button-text="'Koppelen'" />
                         </div>
 
@@ -215,9 +215,6 @@
                     <!-- Lead Details Description -->
                     <div class="mb-0.5">
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.leads.edit.description')
-                            </x-admin::form.control-group.label>
                             <x-admin::form.control-group.control
                                 type="textarea"
                                 name="description"
@@ -227,6 +224,9 @@
                                 class="min-h-[80px]"
                             />
                             <x-admin::form.control-group.error control-name="description"/>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.leads.edit.description')
+                            </x-admin::form.control-group.label>
                         </x-admin::form.control-group>
                     </div>
 

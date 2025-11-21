@@ -217,10 +217,6 @@
                             class="w-1/5"
                         >
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.webforms.create.form-submit-btn-color')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="form_submit_button_color"
@@ -229,7 +225,11 @@
                                     :placeholder="trans('admin::app.settings.webforms.create.form-submit-btn-color')"
                                 />
 
-                                <x-admin::form.control-group.error control-name="form_submit_button_color"/>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.webforms.create.form-submit-btn-color')
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="form_submit_button_color"/>
+
+
                             </x-admin::form.control-group>
                         </v-color-picker>
 

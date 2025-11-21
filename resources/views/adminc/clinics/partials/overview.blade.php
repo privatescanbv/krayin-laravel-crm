@@ -48,7 +48,7 @@
                                 @endphp
                                 @if (!empty($value))
                                     <div class="flex items-center gap-2 dark:text-white">
-                                        <a href="mailto:{{ $value }}" class="text-blue-600 hover:text-activity-task-text dark:text-blue-400">
+                                        <a href="mailto:{{ $value }}" class="text-activity-note-text hover:text-activity-task-text dark:text-blue-400">
                                             {{ $value }}
                                         </a>
                                         @if (!empty($fieldLabel))
@@ -92,7 +92,7 @@
                                 @endphp
                                 @if (!empty($value))
                                     <div class="flex items-center gap-2 dark:text-white">
-                                        <a href="tel:{{ $value }}" class="text-blue-600 hover:text-activity-task-text dark:text-blue-400">
+                                        <a href="tel:{{ $value }}" class="text-activity-note-text hover:text-activity-task-text dark:text-blue-400">
                                             {{ $value }}
                                         </a>
                                         @if (!empty($fieldLabel))
@@ -158,7 +158,7 @@
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                        <i class="icon-product text-2xl text-blue-600 dark:text-blue-400"></i>
+                        <i class="icon-product text-2xl text-activity-note-text dark:text-blue-400"></i>
                     </div>
                 </div>
             </div>
@@ -175,7 +175,7 @@
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                        <i class="icon-setting text-2xl text-succes dark:text-green-400"></i>
+                        <i class="icon-setting text-2xl text-status-active-text dark:text-green-400"></i>
                     </div>
                 </div>
             </div>

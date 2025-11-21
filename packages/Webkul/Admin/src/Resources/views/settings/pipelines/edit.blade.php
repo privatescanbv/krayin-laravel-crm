@@ -250,7 +250,7 @@
 
                                 <!-- Remove Stage -->
                                 <div
-                                    class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-error dark:border-gray-800"
+                                    class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-status-expired-text dark:border-gray-800"
                                     @click="remove(element)"
                                 >
                                     <i class="icon-delete text-2xl"></i>

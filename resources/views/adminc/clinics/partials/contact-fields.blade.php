@@ -34,11 +34,11 @@
                 @if (!empty($value))
                     <div class="flex items-center gap-2">
                         @if ($type === 'email')
-                            <a href="mailto:{{ $value }}" class="text-blue-600 hover:text-activity-task-text dark:text-blue-400">
+                            <a href="mailto:{{ $value }}" class="text-activity-note-text hover:text-activity-task-text dark:text-blue-400">
                                 {{ $value }}
                             </a>
                         @elseif ($type === 'phone')
-                            <a href="tel:{{ $value }}" class="text-blue-600 hover:text-activity-task-text dark:text-blue-400">
+                            <a href="tel:{{ $value }}" class="text-activity-note-text hover:text-activity-task-text dark:text-blue-400">
                                 {{ $value }}
                             </a>
                         @else

@@ -20,7 +20,7 @@ const iconMap = {
 }
 
 const colorMap = {
-    spoken: 'text-green-500',
+    spoken: 'text-status-active-text',
     not_reachable: 'text-red-500',
     voicemail_left: 'text-blue-500',
 }

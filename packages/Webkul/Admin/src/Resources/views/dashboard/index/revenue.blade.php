@@ -31,19 +31,19 @@
                             </p>
 
                             <div class="flex gap-2">
-                                <p class="text-xl font-bold text-succes">
+                                <p class="text-xl font-bold text-status-active-text">
                                     @{{ report?.statistics?.total_won_revenue?.formatted_total || '0' }}
                                 </p>
 
                                 <div class="flex items-center gap-0.5">
                                     <span
-                                        class="text-base !font-semibold text-green-500"
-                                        :class="[report?.statistics?.total_won_revenue?.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                        class="text-base !font-semibold text-status-active-text"
+                                        :class="[report?.statistics?.total_won_revenue?.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                                     ></span>
 
                                     <p
-                                        class="text-xs font-semibold text-green-500"
-                                        :class="[report?.statistics?.total_won_revenue?.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                        class="text-xs font-semibold text-status-active-text"
+                                        :class="[report?.statistics?.total_won_revenue?.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                                     >
                                         @{{ Math.abs((report?.statistics?.total_won_revenue?.progress || 0).toFixed(2)) }}%
                                     </p>
@@ -64,13 +64,13 @@
 
                                 <div class="flex items-center gap-0.5">
                                     <span
-                                        class="text-base !font-semibold text-green-500"
-                                        :class="[report?.statistics?.total_lost_revenue?.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                        class="text-base !font-semibold text-status-active-text"
+                                        :class="[report?.statistics?.total_lost_revenue?.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                                     ></span>
 
                                     <p
-                                        class="text-xs font-semibold text-green-500"
-                                        :class="[report.statistics.total_lost_revenue.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                        class="text-xs font-semibold text-status-active-text"
+                                        :class="[report.statistics.total_lost_revenue.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                                     >
                                         @{{ Math.abs((report?.statistics?.total_lost_revenue?.progress || 0).toFixed(2)) }}%
                                     </p>

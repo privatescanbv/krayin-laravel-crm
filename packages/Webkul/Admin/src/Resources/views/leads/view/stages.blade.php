@@ -127,9 +127,18 @@
                             <!-- Lost Reason -->
                             <template v-else>
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                    type="date"
+                                    name="closed_at"
+                                    v-model="nextStage.closed_at"
+                                    :label="trans('admin::app.leads.view.stages.closed-at')"
+                                />
+
+                                <x-admin::form.control-group.label>
                                         @lang('admin::app.leads.view.stages.lost-reason')
-                                    </x-admin::form.control-group.label>
+                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="closed_at"/>
+
+
 
                                     <select
                                         name="lost_reason"
@@ -149,15 +158,6 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.leads.view.stages.closed-at')
                                 </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="date"
-                                    name="closed_at"
-                                    v-model="nextStage.closed_at"
-                                    :label="trans('admin::app.leads.view.stages.closed-at')"
-                                />
-
-                                <x-admin::form.control-group.error control-name="closed_at"/>
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.after', ['lead' => $lead]) !!}

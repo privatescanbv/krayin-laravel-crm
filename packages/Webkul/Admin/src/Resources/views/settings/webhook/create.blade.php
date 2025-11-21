@@ -156,7 +156,7 @@
                                             v-model="contentType"
                                             value="default"
                                             name="payload_type"
-                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-activity-note-text dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                                         >
                                         <label
                                             for="default"
@@ -173,7 +173,7 @@
                                             v-model="contentType"
                                             value="x-www-form-urlencoded"
                                             name="payload_type"
-                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                                            class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-activity-note-text dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                                         >
                                         <label
                                             for="x-www-form-urlencoded"
@@ -191,7 +191,7 @@
                                                 v-model="contentType"
                                                 value="raw"
                                                 name="payload_type"
-                                                class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                                                class="h-4 w-4 cursor-pointer border-gray-300 bg-neutral-bg text-activity-note-text dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                                                 @click="contentType = 'raw'"
                                             >
 

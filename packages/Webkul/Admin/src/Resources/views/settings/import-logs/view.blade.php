@@ -33,9 +33,9 @@
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Level:</span>
                     <span class="text-sm font-semibold
-                        @if($importLog->level === 'error') text-error dark:text-red-400
+                        @if($importLog->level === 'error') text-status-expired-text dark:text-red-400
                         @elseif($importLog->level === 'warning') text-yellow-600 dark:text-yellow-400
-                        @else text-blue-600 dark:text-blue-400
+                        @else text-activity-note-text dark:text-blue-400
                         @endif">
                         {{ strtoupper($importLog->level) }}
                     </span>
@@ -43,7 +43,7 @@
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Import Run:</span>
                     <a href="{{ route('admin.settings.import-runs.view', $importLog->import_run_id) }}"
-                       class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                       class="text-sm text-activity-note-text hover:underline dark:text-blue-400">
                         #{{ $importLog->import_run_id }}
                     </a>
                 </div>

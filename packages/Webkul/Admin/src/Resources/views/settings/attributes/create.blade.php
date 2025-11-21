@@ -133,10 +133,6 @@
 
                                     <!-- Input Option Type -->
                                     <x-admin::form.control-group v-if="attributeType != 'lookup'" class="mb-2.5 w-1/2">
-                                        <x-admin::form.control-group.label>
-                                            @lang('admin::app.settings.attributes.create.option-type')
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="optionType"
@@ -309,7 +305,11 @@
                                     :placeholder="trans('admin::app.settings.attributes.create.code')"
                                 />
 
-                                <x-admin::form.control-group.error control-name="code" />
+                                <x-admin::form.control-group.label>
+                                            @lang('admin::app.settings.attributes.create.option-type')
+                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="code" />
+
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.create.form_controls.code.after') !!}
@@ -396,10 +396,6 @@
 
                             <!-- Input Validation -->
                             <x-admin::form.control-group v-if="swatchAttribute && (attributeType == 'text')">
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.attributes.create.input-validation')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     class="cursor-pointer"
@@ -524,7 +520,11 @@
                                     :placeholder="trans('admin::app.settings.attributes.create.option-name')"
                                 />
 
-                                <x-admin::form.control-group.error control-name="name" />
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.attributes.create.input-validation')
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="name" />
+
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.create.form_controls.name.after') !!}

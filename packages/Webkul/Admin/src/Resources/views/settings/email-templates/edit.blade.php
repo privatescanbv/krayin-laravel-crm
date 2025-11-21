@@ -184,10 +184,6 @@
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label>
-                                    Code
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="code"
@@ -197,6 +193,10 @@
                                     :placeholder="'Bijv: reply, activity-created'"
                                 />
                                 <x-admin::form.control-group.error control-name="code" />
+
+                                <x-admin::form.control-group.label>
+                                    Code
+                                </x-admin::form.control-group.label>
                             </x-admin::form.control-group>
 
                             @php

@@ -138,12 +138,6 @@
 
                         <!-- Create Leads -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label
-                                class="required"
-                                for="create_lead"
-                            >
-                                @lang('admin::app.settings.webforms.edit.create-lead')
-                            </x-admin::form.control-group.label>
 
                             <input
                                 type="hidden"
@@ -158,6 +152,13 @@
                                 :label="trans('admin::app.settings.webforms.edit.create-lead')"
                                 v-model="createLead"
                             />
+                                                        <x-admin::form.control-group.label
+                                class="required"
+                                for="create_lead"
+                            >
+                                @lang('admin::app.settings.webforms.edit.create-lead')
+                            </x-admin::form.control-group.label>
+
                         </x-admin::form.control-group>
 
                         <!-- Customize webform -->

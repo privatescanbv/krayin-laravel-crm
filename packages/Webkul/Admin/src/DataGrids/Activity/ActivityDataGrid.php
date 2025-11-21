@@ -416,7 +416,7 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => false,
             'closure'    => function ($row) {
                 if ((int)($row->is_done ?? 0) === 1) {
-                    return "<span class='icon-tick text-succes text-xl' title='Afgerond'></span>";
+                    return "<span class='icon-tick text-status-active-text text-xl' title='Afgerond'></span>";
                 }
                 return '';
             },

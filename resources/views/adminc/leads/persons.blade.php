@@ -33,7 +33,7 @@
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="icon-plus rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-blue-600 hover:text-blue-700"
+                                class="icon-plus rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-activity-note-text hover:text-blue-700"
                                 title="Persoon toevoegen"
                                 onclick="openAddPersonModal()"
                             ></button>
@@ -50,7 +50,7 @@
                             <div class="flex items-center justify-between p-3">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                        class="w-10 h-10 text-activity-note-text rounded-full flex items-center justify-center text-white font-semibold">
                                         {{ strtoupper(substr($person->name, 0, 1)) }}
                                     </div>
                                     <div>
@@ -99,7 +99,7 @@
                                         <button
                                             type="button"
                                             id="info-mail-{{ $person->id }}-{{ $entityId }}"
-                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $hasGvlLink ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
+                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $hasGvlLink ? 'text-activity-note-text hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
                                             title="{{ $hasGvlLink ? 'Stuur informatieve mail met GVL link' : 'GVL formulier link ontbreekt. Koppel eerst een GVL formulier aan de anamnesis.' }}"
                                             @if (!$hasGvlLink) disabled @endif
                                             data-person-id="{{ $person->id }}"
@@ -123,7 +123,7 @@
                                         <!-- Sync lead to person link (replaces edit-with-lead) -->
                                         <a
                                             href="{{ route('admin.leads.sync-lead-to-person', ['leadId' => $entityId, 'personId' => $person->id]) }}"
-                                            class="rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-succes hover:text-green-700"
+                                            class="rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-status-active-text hover:text-green-700"
                                             title="Gegevens overnemen (lead → person)"
                                         >
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@
                                     @if ($detachRoute)
                                         <button
                                             type="button"
-                                            class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-error hover:text-red-700"
+                                            class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-status-expired-text hover:text-red-700"
                                             title="Persoon ontkoppelen"
                                             onclick="detachPerson({{ $person->id }})"
                                         ></button>
@@ -157,7 +157,7 @@
                                         @if ($defaultEmail)
                                             <div>
                                                 <a href="mailto:{{ $defaultEmail['value'] }}"
-                                                   class="text-blue-600 hover:text-activity-task-text">
+                                                   class="text-activity-note-text hover:text-activity-task-text">
                                                     {{ $defaultEmail['value'] }}
                                                 </a>
                                             </div>

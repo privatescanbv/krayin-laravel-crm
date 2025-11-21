@@ -73,7 +73,7 @@
                     @if(($lead->open_activities_count ?? $lead->openActivitiesCount ?? $lead->open_activities_count) === 0 && ! $isWonOrLost)
                         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                             <div class="flex items-center gap-2">
-                                <span class="icon-warning text-error"></span>
+                                <span class="icon-warning text-status-expired-text"></span>
                                 <span class="text-sm font-medium text-red-800 dark:text-red-200">
                                     Geen open activiteiten voor deze lead
                                 </span>
@@ -280,7 +280,7 @@
     <script type="text/x-template" id="v-lead-delete-template">
         <button
             type="button"
-            class="secondary-button border border-error text-error hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+            class="secondary-button border border-error text-status-expired-text hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
             :class="{ 'opacity-50 pointer-events-none': isDeleting }"
             :disabled="isDeleting"
             @click="confirmDelete"

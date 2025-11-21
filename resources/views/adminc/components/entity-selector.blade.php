@@ -15,14 +15,14 @@
                             <div
                                     v-for="(item, idx) in selectedItems"
                                     :key="item.id ?? idx"
-                                    class="p-2 border rounded bg-green-50 border-green-200 flex items-center justify-between"
+                                    class="p-2 border rounded bg-status-active-bg border-status-active-border flex items-center justify-between"
                             >
                                 <div class="text-sm font-medium truncate">
                                     {{ item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}
                                 </div>
                                 <button
                                         type="button"
-                                        class="text-error hover:text-red-800 p-1"
+                                        class="text-status-expired-text hover:text-red-800 p-1"
                                         @click="removeItem(idx)"
                                         :title="'Verwijder'"
                                 >
@@ -67,13 +67,13 @@
                                 <slot name="suggestion" :item="s">
                                     <div class="flex items-center justify-between">
                                         <div class="font-medium">{{ s.name_with_path ?? s.name ?? s.label ?? s.text ?? s }}</div>
-                                        <span class="ml-2 text-succes text-xs">+ Toevoegen</span>
+                                        <span class="ml-2 text-status-active-text text-xs">+ Toevoegen</span>
                                     </div>
                                 </slot>
                             </li>
                         </ul>
 
-                        <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-blue-50 border-blue-200" v-show="canAddNew">
+                        <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-activity-note-bg border-activity-note-border" v-show="canAddNew">
                             <div class="text-center">
                                 <div class="text-sm text-blue-700 mb-2">Geen resultaten voor "{{ search }}"</div>
                             </div>

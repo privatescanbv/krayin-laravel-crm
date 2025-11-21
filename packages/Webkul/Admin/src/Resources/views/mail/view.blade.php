@@ -206,10 +206,6 @@
                                     <template v-if="showCC">
                                         <!-- Cc -->
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.mail.view.cc')
-                                            </x-admin::form.control-group.label>
-
                                             <x-admin::form.control-group.control
                                                 type="tags"
                                                 name="cc"
@@ -218,17 +214,17 @@
                                                 :placeholder="trans('admin::app.mail.view.enter-mails')"
                                             />
 
-                                            <x-admin::form.control-group.error control-name="cc" />
+                                            <x-admin::form.control-group.label>
+                                                @lang('admin::app.mail.view.cc')
+                                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="cc" />
+
+
                                         </x-admin::form.control-group>
                                     </template>
 
                                     <template v-if="showBCC">
                                         <!-- Cc -->
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.mail.view.bcc')
-                                            </x-admin::form.control-group.label>
-
                                             <x-admin::form.control-group.control
                                                 type="tags"
                                                 name="bcc"
@@ -237,7 +233,11 @@
                                                 :placeholder="trans('admin::app.mail.view.enter-mails')"
                                             />
 
-                                            <x-admin::form.control-group.error control-name="bcc" />
+                                            <x-admin::form.control-group.label>
+                                                @lang('admin::app.mail.view.bcc')
+                                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="bcc" />
+
+
                                         </x-admin::form.control-group>
                                     </template>
 

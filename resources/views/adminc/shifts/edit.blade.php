@@ -61,10 +61,6 @@
                 <x-adminc::shifts.partials.time-blocks :weekdayBlocks="$weekdayBlocks"/>
 
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.shifts.fields.notes')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="textarea"
                         name="notes"
@@ -73,6 +69,10 @@
                     />
 
                     <x-admin::form.control-group.error control-name="notes" />
+
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.shifts.fields.notes')
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>

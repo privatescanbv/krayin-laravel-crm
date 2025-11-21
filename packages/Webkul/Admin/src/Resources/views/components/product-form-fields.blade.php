@@ -32,10 +32,6 @@
 
 <!-- Omschrijving -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.products.create.description')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="textarea"
         name="description"
@@ -45,6 +41,10 @@
     />
 
     <x-admin::form.control-group.error control-name="description"/>
+
+    <x-admin::form.control-group.label>
+        @lang('admin::app.products.create.description')
+    </x-admin::form.control-group.label>
 </x-admin::form.control-group>
 
 <!-- Grid met 3 kolommen: Valuta, Kosten, Verkoopprijs -->
@@ -71,10 +71,6 @@
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.products.create.costs')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="price"
             name="costs"
@@ -84,6 +80,10 @@
         />
 
         <x-admin::form.control-group.error control-name="costs"/>
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.products.create.costs')
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -106,31 +106,7 @@
 
 <!-- Active checkbox -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.active')
-    </x-admin::form.control-group.label>
-
-    <input type="hidden" name="active" value="0"/>
     <x-admin::form.control-group.control
-        type="checkbox"
-        name="active"
-        value="1"
-        :label="trans('admin::app.partner_products.index.create.active')"
-        :checked="old('active', $product->active ?? 1)"
-    />
-
-    <x-admin::form.control-group.error control-name="active"/>
-</x-admin::form.control-group>
-
-<!-- Grid met 2 kolommen voor types en groep -->
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-
-    <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.products.create.product_type')
-        </x-admin::form.control-group.label>
-
-        <x-admin::form.control-group.control
             type="select"
             name="product_type_id"
             value="{{ old('product_type_id', $product->product_type_id ?? '') }}"
@@ -218,5 +194,29 @@
         :items='@json($selectedPartnerProducts ?? [])'
     />
     <x-admin::form.control-group.error control-name="partner_products"/>
+
+        <x-admin::form.control-group.label>
+        @lang('admin::app.partner_products.index.create.active')
+    </x-admin::form.control-group.label>
+
+    <input type="hidden" name="active" value="0"/>
+    <x-admin::form.control-group.control
+        type="checkbox"
+        name="active"
+        value="1"
+        :label="trans('admin::app.partner_products.index.create.active')"
+        :checked="old('active', $product->active ?? 1)"
+    />
+
+    <x-admin::form.control-group.error control-name="active"/>
+</x-admin::form.control-group>
+
+<!-- Grid met 2 kolommen voor types en groep -->
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            @lang('admin::app.products.create.product_type')
+        </x-admin::form.control-group.label>
 </x-admin::form.control-group>
 

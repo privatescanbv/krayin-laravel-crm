@@ -34,7 +34,7 @@
                     <button
                         type="button"
                         id="add-organization-btn"
-                        class="flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        class="flex items-center px-4 py-2 text-activity-note-text text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         @click="showOrganizationForm = !showOrganizationForm"
                     >
                         <i class="icon-plus text-xs mr-1"></i>Nieuwe organisatie toevoegen
@@ -46,10 +46,6 @@
                     <div class="grid grid-cols-1 gap-4">
                         <!-- Organization Name -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.contacts.organizations.create.name')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="new_organization_name"
@@ -57,7 +53,11 @@
                                 rules="required"
                                 :placeholder="trans('admin::app.contacts.organizations.create.name')"
                             />
-                            <x-admin::form.control-group.error control-name="new_organization_name" />
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.contacts.organizations.create.name')
+                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="new_organization_name" />
+
+
                         </x-admin::form.control-group>
 
                         <!-- Address Component -->

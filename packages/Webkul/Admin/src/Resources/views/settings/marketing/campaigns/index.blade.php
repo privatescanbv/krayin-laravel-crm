@@ -236,12 +236,6 @@
 
                                     <!-- Name -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="name"
-                                        >
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.name')
-                                        </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.control
                                             type="hidden"
@@ -257,18 +251,18 @@
                                             ::value="campaign.name"
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.name')"
                                         />
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="name"
+                                        >
+                                            @lang('admin::app.settings.marketing.campaigns.index.create.name')
+                                        </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.error control-name="name" />
                                     </x-admin::form.control-group>
 
                                     <!-- Subject -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="subject"
-                                        >
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.subject')
-                                        </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.control
                                             type="text"
@@ -279,18 +273,19 @@
                                             ::value="campaign.subject"
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.subject')"
                                         />
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="subject"
+                                        >
+                                            @lang('admin::app.settings.marketing.campaigns.index.create.subject')
+                                        </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.error control-name="subject" />
                                     </x-admin::form.control-group>
 
                                     <!-- Event -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="marketing_event_id"
-                                        >
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.event')
-                                        </x-admin::form.control-group.label>
+
 
                                         <x-admin::form.control-group.control
                                             type="select"
@@ -307,18 +302,18 @@
                                                 :value="event.id"
                                             ></option>
                                         </x-admin::form.control-group.control>
-
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="marketing_event_id"
+                                        >
+                                            @lang('admin::app.settings.marketing.campaigns.index.create.event')
+                                        </x-admin::form.control-group.label>
                                         <x-admin::form.control-group.error control-name="marketing_event_id" />
                                     </x-admin::form.control-group>
 
                                     <!-- Email Template -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="marketing_template_id"
-                                        >
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.email-template')
-                                        </x-admin::form.control-group.label>
+
 
                                         <x-admin::form.control-group.control
                                             type="select"
@@ -335,15 +330,18 @@
                                                 :value="template.id"
                                             ></option>
                                         </x-admin::form.control-group.control>
-
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="marketing_template_id"
+                                        >
+                                            @lang('admin::app.settings.marketing.campaigns.index.create.email-template')
+                                        </x-admin::form.control-group.label>
                                         <x-admin::form.control-group.error control-name="marketing_template_id" />
                                     </x-admin::form.control-group>
 
                                     <!-- Status -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label for="status">
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.status')
-                                        </x-admin::form.control-group.label>
+
 
                                         <input
                                             type="hidden"
@@ -358,6 +356,9 @@
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.status')"
                                             ::checked="parseInt(campaign.status || 0)"
                                         />
+                                                                                <x-admin::form.control-group.label for="status">
+                                            @lang('admin::app.settings.marketing.campaigns.index.create.status')
+                                        </x-admin::form.control-group.label>
                                     </x-admin::form.control-group>
 
                                     {!! view_render_event('admin.settings.marketing.campaigns.index.form_controls.modal.content.controls.after') !!}

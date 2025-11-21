@@ -19,7 +19,7 @@
                 name="{{ $name }}"
                 v-bind="field"
                 :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'peer placeholder:text-transparent']) }}
             />
         </v-field>
 
@@ -97,7 +97,7 @@
         >
             @php
                 $defaultAttributes = [
-                    'class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500'
+                    'class' => ''
                 ];
 
                 if ($attributes->get('tinymce', false) || $attributes->get(':tinymce', false)) {
@@ -139,7 +139,7 @@
                     name="{{ $name }}"
                     v-bind="field"
                     :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
                     autocomplete="off"
                     placeholder="dd-mm-yyyy"
                 />
@@ -159,7 +159,7 @@
                     name="{{ $name }}"
                     v-bind="field"
                     :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
                     autocomplete="off"
                 >
             </x-admin::flat-picker.datetime>
@@ -176,7 +176,7 @@
                 name="{{ $name }}"
                 v-bind="field"
                 :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'custom-select bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300']) }}
+                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'custom-select']) }}
             >
                 {{ $slot }}
             </select>

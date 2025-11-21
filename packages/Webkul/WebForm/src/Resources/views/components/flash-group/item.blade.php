@@ -56,9 +56,9 @@
                         cx="12"
                         cy="12"
                     />
-                    
+
                     <circle
-                        class="text-blue-600 transition-all duration-100 ease-out"
+                        class="text-activity-note-text transition-all duration-100 ease-out"
                         stroke-width="1.5"
                         :stroke-dasharray="circumference"
                         :stroke-dashoffset="strokeDashoffset"
@@ -139,13 +139,13 @@
                     duration: 5000,
 
                     progress: 0,
-                    
+
                     circumference: 2 * Math.PI * 10,
 
                     timer: null,
 
                     isPaused: false,
-                    
+
                     remainingTime: 5000,
                 };
             },
@@ -171,7 +171,7 @@
 
                 startTimer() {
                     const interval = 100;
-                    
+
                     const step = (100 / (this.duration / interval));
 
                     this.timer = setInterval(() => {

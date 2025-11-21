@@ -67,9 +67,9 @@
 
             <!-- Change Summary -->
             @if ($clinic->created_at->diffInSeconds($clinic->updated_at) > 0)
-                <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                <div class="rounded-lg border border-activity-note-border bg-activity-note-bg p-4 dark:border-blue-800 dark:bg-blue-900/20">
                     <div class="flex items-start gap-2">
-                        <i class="icon-information mt-1 text-blue-600 dark:text-blue-400"></i>
+                        <i class="icon-information mt-1 text-activity-note-text dark:text-blue-400"></i>
                         <div class="text-sm">
                             <p class="font-medium text-activity-task-text dark:text-blue-300">
                                 @lang('admin::app.settings.clinics.view.audit-trail.change-summary')

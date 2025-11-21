@@ -225,7 +225,7 @@
                                     class="flex items-start gap-3 p-3 rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                                     <div class="flex-shrink-0">
                                         <div
-                                            class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                            class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-activity-note-text dark:bg-blue-900 dark:text-blue-300">
                                             <span class="icon-mail text-sm"></span>
                                         </div>
                                     </div>
@@ -389,6 +389,12 @@
             </div>
 
             <x-admin::form.control-group>
+                <x-admin::form.control-group.control
+                    type="date"
+                    name="closed_at"
+                    v-model="leadAfvoerenData.closed_at"
+                />
+
                 <x-admin::form.control-group.label>
                     Reden van verlies
                 </x-admin::form.control-group.label>
@@ -410,12 +416,6 @@
                 <x-admin::form.control-group.label>
                     Gesloten op
                 </x-admin::form.control-group.label>
-
-                <x-admin::form.control-group.control
-                    type="date"
-                    name="closed_at"
-                    v-model="leadAfvoerenData.closed_at"
-                />
             </x-admin::form.control-group>
         </x-slot>
 

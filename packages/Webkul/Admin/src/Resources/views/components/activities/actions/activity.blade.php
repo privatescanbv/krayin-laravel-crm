@@ -113,27 +113,23 @@
 
                             <!-- Description -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.description')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="comment"
                                     rules="max:500"
                                 />
 
-                                <x-admin::form.control-group.error control-name="comment" />
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.components.activities.actions.activity.description')
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="comment" />
+
+
                             </x-admin::form.control-group>
 
 
 
                             <!-- User Assignment -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.activities.assign-to')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="user_id"
@@ -153,10 +149,6 @@
 
                             <!-- Group -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.activities.group')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="group_id"
@@ -184,7 +176,15 @@
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
                                     />
 
-                                    <x-admin::form.control-group.error control-name="schedule_from" />
+                                    <x-admin::form.control-group.label>
+                                    @lang('admin::app.activities.assign-to')
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="schedule_from" />
+
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.activities.group')
+                                </x-admin::form.control-group.label>
+
+
                                 </x-admin::form.control-group>
 
                                 <!-- Started To -->

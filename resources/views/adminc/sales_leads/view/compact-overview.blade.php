@@ -74,10 +74,10 @@
                             <a
                                 href="https://maps.google.com/?q={{ urlencode($salesLead->address->full_address) }}"
                                 target="_blank"
-                                class="ml-2 text-blue-600 hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
+                                class="ml-2 text-activity-note-text hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
                                 title="Bekijk op Google Maps"
                             >
-                                <span class="icon-location text-sm"></span>
+
                             </a>
                         @else
                             <span class="text-gray-500 dark:text-gray-400 italic">-</span>

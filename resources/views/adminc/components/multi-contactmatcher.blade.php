@@ -1,6 +1,6 @@
 {!! view_render_event('admin.leads.multi_contactmatcher.before') !!}
 
-<div class="panel bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+<div class="panel bg-activity-note-bg border border-activity-note-border rounded-lg p-4 mb-4">
     <div class="panel-header mb-3">
         <div class="mt-2 text-xs text-blue-500">
             <div class="flex items-center gap-1">
@@ -48,7 +48,7 @@
                         <button
                             @click="clearAllPersons"
                             v-if="selectedPersons.length > 0"
-                            class="text-error hover:text-red-800 text-xs"
+                            class="text-status-expired-text hover:text-red-800 text-xs"
                         >
                             Alles verwijderen
                         </button>
@@ -58,19 +58,19 @@
                         <div
                             v-for="(person, index) in selectedPersons"
                             :key="person.id"
-                            class="p-2 border rounded bg-green-50 border-green-200"
+                            class="p-2 border rounded bg-status-active-bg border-status-active-border"
                         >
                             <div class="flex items-center justify-between">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">
                                         <a :href="'/admin/contacts/persons/view/' + person.id"
-                                           class="text-blue-600 hover:text-activity-task-text underline font-medium"
+                                           class="text-activity-note-text hover:text-activity-task-text underline font-medium"
                                            target="_blank">
                                             {{ person.name }}
                                         </a>
 
                                         <a :href="'/admin/leads/sync-lead-to-person/' + lead.id + '/' + person.id"
-                                           class="text-succes hover:text-green-800"
+                                           class="text-status-active-text hover:text-green-800"
                                            target="_blank"
                                            title="Gegevens overnemen (lead → person)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +90,7 @@
                                                         class="h-full rounded-full transition-all duration-300"
                                                         :class="{
                                                             'bg-red-500': person.match_score_percentage < 50,
-                                                            'bg-yellow-500': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
+                                                            'bg-status-on_hold-text': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
                                                             'bg-succes': person.match_score_percentage >= 80
                                                         }"
                                                         :style="{ width: (person.match_score_percentage || 0) + '%' }"
@@ -98,9 +98,9 @@
                                                 </div>
                                                 <span class="text-xs font-medium"
                                                       :class="{
-                                                          'text-error': person.match_score_percentage < 50,
+                                                          'text-status-expired-text': person.match_score_percentage < 50,
                                                           'text-yellow-600': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
-                                                          'text-succes': person.match_score_percentage >= 80
+                                                          'text-status-active-text': person.match_score_percentage >= 80
                                                       }">
                                                     {{ Math.round(person.match_score_percentage || 0) }}%
                                                 </span>
@@ -110,7 +110,7 @@
                                 </div>
                                 <button
                                     @click="removePerson(index)"
-                                    class="text-error hover:text-red-800 p-1"
+                                    class="text-status-expired-text hover:text-red-800 p-1"
                                     title="Verwijder persoon"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,10 +125,10 @@
                         Geen personen gekoppeld
                     </div>
 
-                    <div v-if="lead && lead.id && (lead.first_name || lead.last_name || lead.emails || lead.phones) && selectedPersons.length === 0" class="mt-4 p-3 border rounded bg-yellow-50 border-yellow-200">
+                    <div v-if="lead && lead.id && (lead.first_name || lead.last_name || lead.emails || lead.phones) && selectedPersons.length === 0" class="mt-4 p-3 border rounded bg-status-on_hold-bg border-status-on_hold-border">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="font-semibold text-sm text-yellow-800">Contact aanmaken van lead gegevens</div>
+                                <div class="font-semibold text-sm text-status-on_hold-text">Contact aanmaken van lead gegevens</div>
                                 <div class="text-sm text-yellow-700">
                                     <span v-if="lead.first_name || lead.last_name">
                                         {{ (lead.first_name || '') + ' ' + (lead.last_name || '') }}
@@ -140,7 +140,7 @@
                             <button
                                 @click="createPersonFromLead"
                                 :disabled="isCreatingPerson"
-                                class="text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
+                                class="text-yellow-600 hover:text-status-on_hold-text bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
                                 :class="{ 'opacity-50 cursor-not-allowed': isCreatingPerson }"
                             >
                                 {{ isCreatingPerson ? 'Aanmaken...' : 'Contact aanmaken' }}
@@ -481,7 +481,7 @@
                     if (score >= 80) {
                         return 'bg-succes';
                     } else if (score >= 60) {
-                        return 'bg-yellow-500';
+                        return 'bg-status-on_hold-text';
                     } else if (score >= 40) {
                         return 'bg-orange-500';
                     } else {

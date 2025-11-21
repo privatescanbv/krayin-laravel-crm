@@ -72,7 +72,7 @@
                     <div
                         class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                         <div class="flex items-center gap-2">
-                            <span class="icon-warning text-error"></span>
+                            <span class="icon-warning text-status-expired-text"></span>
                             <span class="text-sm font-medium text-red-800 dark:text-red-200">
                                 Geen open activiteiten voor deze sales
                             </span>
@@ -209,7 +209,7 @@
                                                 € {{ number_format((float) $order->total_price, 2, ',', '.') }}</td>
                                             <td class="py-2 pr-4">
                                                 <a href="{{ route('admin.orders.edit', $order->id) }}"
-                                                   class="text-blue-600 hover:underline">Bewerken</a>
+                                                   class="text-activity-note-text hover:underline">Bewerken</a>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -305,6 +305,12 @@
             </div>
 
             <x-admin::form.control-group>
+                <x-admin::form.control-group.control
+                    type="date"
+                    name="closed_at"
+                    v-model="salesLeadAfvoerenData.closed_at"
+                />
+
                 <x-admin::form.control-group.label>
                     Reden van verlies
                 </x-admin::form.control-group.label>
@@ -326,12 +332,6 @@
                 <x-admin::form.control-group.label>
                     Gesloten op
                 </x-admin::form.control-group.label>
-
-                <x-admin::form.control-group.control
-                    type="date"
-                    name="closed_at"
-                    v-model="salesLeadAfvoerenData.closed_at"
-                />
             </x-admin::form.control-group>
         </x-slot>
 

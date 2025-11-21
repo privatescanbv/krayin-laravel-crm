@@ -100,7 +100,7 @@
                                                     class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
                                                     :class="{
                                                         'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                        'text-error dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from)
+                                                        'text-status-expired-text dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from)
                                                     }"
                                                     :href="
                                                         activity.type == 'email'
@@ -109,23 +109,23 @@
                                                     "
                                                 >
                                                     @{{ activity.title }}
-                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-1 icon-tick text-succes text-base" title="Afgerond"></span>
+                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-1 icon-tick text-status-active-text text-base" title="Afgerond"></span>
                                                     <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
                                                         <span class="icon-activity text-[10px]"></span>
                                                     </span>
                                                     <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'person'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-2 00" title="E-mail gekoppeld aan persoon">
                                                         <span class="icon-contact text-[10px]"></span>
                                                     </span>
-                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
-                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan sales"></span>
-                                                    <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan onbekend"></span>
+                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'" class="icon-activity text-xs text-activity-note-text ml-1" title="E-mail gekoppeld aan activiteit"></span>
+                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'" class="icon-activity text-xs text-activity-note-text ml-1" title="E-mail gekoppeld aan sales"></span>
+                                                    <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-activity-note-text ml-1" title="E-mail gekoppeld aan onbekend"></span>
 
 
                                                     <!-- Status chip hidden per requirement -->
                                                 </a>
                                                 <div v-if="activity.schedule_from" class="text-sm" :class="{
                                                     'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                    'text-error dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from ),
+                                                    'text-status-expired-text dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from ),
                                                     'text-gray-600 dark:text-gray-300': !(isToday(activity.schedule_from) || isPast(activity.schedule_from))
                                                 }">
                                                     Ingepland vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
@@ -152,7 +152,7 @@
                                                 </p>
 
                                                 <p class="mt-1" v-if="activity.additional?.link">
-                                                    <a :href="activity.additional.link" class="text-blue-600 hover:underline" target="_blank">
+                                                    <a :href="activity.additional.link" class="text-activity-note-text hover:underline" target="_blank">
                                                         @{{ activity.additional.link_label || 'Bekijk' }}
                                                     </a>
                                                 </p>
@@ -184,7 +184,7 @@
                                                     <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
                                                     <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>
                                                     <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Gesproken: @{{ activity.call_status_summary.spoken }}</span>
-                                                    <button type="button" class="text-blue-600 hover:underline" @click="activity.__showCallDetails = !activity.__showCallDetails">@{{ activity.__showCallDetails ? 'Verberg' : 'Details' }}</button>
+                                                    <button type="button" class="text-activity-note-text hover:underline" @click="activity.__showCallDetails = !activity.__showCallDetails">@{{ activity.__showCallDetails ? 'Verberg' : 'Details' }}</button>
                                                 </div>
                                                 <div v-if="activity.__showCallDetails && activity.call_statuses?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
                                                     <div v-for="cs in activity.call_statuses" :key="cs.created_at" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
@@ -210,13 +210,13 @@
                                                         <span class="icon-mail text-xs mr-1"></span>
                                                         @{{ activity.emails.length }} @{{ activity.emails.length === 1 ? 'e-mail' : 'e-mails' }}
                                                     </span>
-                                                    <button type="button" class="text-blue-600 hover:underline" @click="activity.__showEmailDetails = !activity.__showEmailDetails">@{{ activity.__showEmailDetails ? 'Verberg' : 'Details' }}</button>
+                                                    <button type="button" class="text-activity-note-text hover:underline" @click="activity.__showEmailDetails = !activity.__showEmailDetails">@{{ activity.__showEmailDetails ? 'Verberg' : 'Details' }}</button>
                                                 </div>
                                                 <div v-if="activity.__showEmailDetails && activity.emails?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
                                                     <div v-for="email in activity.emails" :key="email.id" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
                                                         <div class="flex justify-between items-center">
                                                             <div class="flex items-center gap-2">
-                                                                <span class="icon-mail text-blue-600 text-xs"></span>
+                                                                <span class="icon-mail text-activity-note-text text-xs"></span>
                                                                 <template v-if="email.lead_id || (email.additional && email.additional.__source === 'lead')">
                                                                     <span class="ml-0.5 inline-flex items-center gap-1 text-[10px] px-1 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="Lead">
                                                                         <span class="icon-activity text-[10px]"></span>
@@ -230,7 +230,7 @@
                                                                     </span>
                                                                 </template>
                                                                 <template v-else>
-                                                                    <span class="icon-activity text-[10px] text-blue-600" title="Activiteit"></span>
+                                                                    <span class="icon-activity text-[10px] text-activity-note-text" title="Activiteit"></span>
                                                                 </template>
                                                                 <span class="font-medium truncate max-w-[200px]" :title="email.subject || 'Geen onderwerp'">
                                                                     @{{ email.subject || 'Geen onderwerp' }}
@@ -242,7 +242,7 @@
                                                         <div class="flex items-center gap-2 mt-1">
                                                             <a
                                                                 :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
-                                                                class="text-blue-600 hover:underline text-xs"
+                                                                class="text-activity-note-text hover:underline text-xs"
                                                                 target="_blank"
                                                             >
                                                                 E-mail bekijken
@@ -290,10 +290,10 @@
                                                 v-for="email in activity.emails"
                                                 :key="email.id"
                                             >
-                                                <span class="icon-mail text-succes"></span>
+                                                <span class="icon-mail text-status-active-text"></span>
                                                 <a
                                                     :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
-                                                    class="text-sm text-succes hover:underline"
+                                                    class="text-sm text-status-active-text hover:underline"
                                                     target="_blank"
                                                 >
                                                     @{{ email.subject || 'E-Mail bekijken' }}
@@ -534,10 +534,10 @@
                     typeClasses: {
                         email: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
                         note: 'icon-note bg-activity-note-bg text-activity-note-text dark:!text-activity-note-text',
-                        call: 'icon-call bg-activity-file-bg text-cyan-800 dark:!text-cyan-800',
+                        call: 'icon-call bg-activity-call-bg text-activity-call-text dark:!text-cyan-800',
                         meeting: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
                         task: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
-                        file: 'icon-file bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
+                        file: 'icon-file bg-activity-file-bg text-activity-file-text dark:!text-activity-email-text',
                         system: 'icon-system-generate bg-yellow-200 text-yellow-900 dark:!text-yellow-900',
                         default: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
                     },

@@ -92,45 +92,42 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Text Input -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Text Input
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
                         name="text_demo"
                         placeholder="Enter text..."
                     />
+                    <x-admin::form.control-group.label>
+                        Text Input
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- Email Input -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Email Input
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="email"
                         name="email_demo"
                         placeholder="Enter email..."
                     />
+                    <x-admin::form.control-group.label>
+                        Email Input
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- Date Picker -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Date Picker
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="date"
                         name="date_demo"
                         placeholder="dd-mm-yyyy"
                     />
+                    <x-admin::form.control-group.label>
+                        Date Picker
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- Select Dropdown -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Select Dropdown
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="select"
                         name="select_demo"
@@ -152,30 +149,33 @@
                         name="textarea_demo"
                         placeholder="Enter description..."
                     />
+                    <x-admin::form.control-group.label>
+                        Select Dropdown
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- Number Input -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Number Input
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="number"
                         name="number_demo"
                         placeholder="Enter number..."
                     />
+                    <x-admin::form.control-group.label>
+                        Number Input
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- Password Input -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Password Input
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="password"
                         name="password_demo"
                         placeholder="Enter password..."
                     />
+                    <x-admin::form.control-group.label>
+                        Password Input
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
             </div>
         </div>
@@ -187,9 +187,6 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Multi-select -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Multi-select
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="multiselect"
                         name="multiselect_demo"
@@ -211,29 +208,32 @@
                         name="url_demo"
                         placeholder="https://example.com"
                     />
+                    <x-admin::form.control-group.label>
+                        Multi-select
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- File Upload -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        File Upload
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="file"
                         name="file_demo"
                     />
+                    <x-admin::form.control-group.label>
+                        File Upload
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <!-- Search Input -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Search Input
-                    </x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="search"
                         name="search_demo"
                         placeholder="Search..."
                     />
+                    <x-admin::form.control-group.label>
+                        Search Input
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
             </div>
         </div>
@@ -259,7 +259,7 @@
                     <span class="text-sm text-gray-700 dark:text-gray-300">Advanced Inputs</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-brand-herniapoli-main rounded-full"></div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">Interactive Elements</span>
                 </div>
                 <div class="flex items-center space-x-2">

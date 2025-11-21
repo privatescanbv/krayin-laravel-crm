@@ -211,7 +211,7 @@
                                         <!-- Assign to Me Button -->
                                         <button
                                             v-if="!record.user_id"
-                                            class="ml-2 px-2 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
+                                            class="ml-2 px-2 py-1 rounded bg-brand-herniapoli-main text-white text-xs hover:text-activity-note-text transition-colors"
                                             @click="assignToMe(record)"
                                             title="Aan mij toekennen"
                                         >
@@ -281,7 +281,7 @@
 
                                                 <button
                                                     v-if="!record.user_id"
-                                                    class="px-2 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
+                                                    class="px-2 py-1 rounded bg-brand-herniapoli-main text-white text-xs hover:text-activity-note-text transition-colors"
                                                     @click="assignToMe(record)"
                                                 >
                                                     Toekennen

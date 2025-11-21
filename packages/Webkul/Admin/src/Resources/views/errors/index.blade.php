@@ -9,10 +9,10 @@
         <div class="flex max-w-[745px] items-center gap-5">
             <div class="flex w-full flex-col gap-6">
                 <img
-                    src="{{ 
-                        request()->cookie('dark_mode') 
-                        ? vite()->asset('images/dark-logo.svg') 
-                        : vite()->asset('images/logo.svg') 
+                    src="{{
+                        request()->cookie('dark_mode')
+                        ? vite()->asset('images/dark-logo.svg')
+                        : vite()->asset('images/logo.svg')
                     }}"
                     class="w-40 ltr:pr-16 rtl:pl-16"
                 >
@@ -28,7 +28,7 @@
                 <div class="flex items-center gap-2.5">
                     <a
                         href="{{ url()->previous() }}"
-                        class="cursor-pointer text-sm font-semibold text-blue-600 transition-all hover:underline"
+                        class="cursor-pointer text-sm font-semibold text-activity-note-text transition-all hover:underline"
                     >
                         @lang('admin::app.errors.go-back')
                     </a>
@@ -41,7 +41,7 @@
 
                     <a
                         href="{{ route('admin.dashboard.index') }}"
-                        class="hover:underlsine text-sm font-semibold text-blue-600 transition-all"
+                        class="hover:underlsine text-sm font-semibold text-activity-note-text transition-all"
                     >
                         @lang('admin::app.errors.dashboard')
                     </a>
@@ -51,7 +51,7 @@
                     @lang('admin::app.errors.support', [
                         'link'  => 'mailto:support@example.com',
                         'email' => 'support@example.com',
-                        'class' => 'font-semibold text-blue-600 transition-all hover:underline',
+                        'class' => 'font-semibold text-activity-note-text transition-all hover:underline',
                     ])
                 </p>
             </div>

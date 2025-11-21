@@ -61,7 +61,7 @@ export default {
                     border: "#dde3e9",
                     text: "#4a5565", // main body text
                     heading: "#1f2933", // neutral heading
-                    muted: "#6b7785",
+                    muted: "#7a8795",
 
                     // existing token from your config
                     "secondary-medium": "#f3f4f6",
@@ -138,8 +138,8 @@ export default {
                     default: {
                         // Neutral gray fallback
                         bg: "rgba(107, 119, 133, 0.15)",
-                        text: "#6b7785",
-                        border: "#6b7785",
+                        text: "#7a8795",
+                        border: "#7a8795",
                     },
                 },
 
@@ -164,8 +164,8 @@ export default {
                     },
                     on_hold: {
                         bg: "rgba(241, 196, 15, 0.20)", // yellow
-                        text: "#b68900",
-                        border: "#f1c40f",
+                        text: "#ca8a04",
+                        border: "#ca8a04",
                         ring: "rgba(241, 196, 15, 0.35)",
                     },
                     expired: {
@@ -176,8 +176,8 @@ export default {
                     },
                     done: {
                         bg: "rgba(107, 119, 133, 0.15)", // gray
-                        text: "#6b7785",
-                        border: "#6b7785",
+                        text: "#7a8795",
+                        border: "#7a8795",
                         ring: "rgba(107, 119, 133, 0.35)",
                     },
                 },

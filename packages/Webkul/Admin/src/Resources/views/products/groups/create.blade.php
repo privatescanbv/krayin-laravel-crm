@@ -28,10 +28,6 @@
 
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.productgroups.create.name')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="text"
                         name="name"
@@ -40,13 +36,13 @@
                         :label="trans('admin::app.productgroups.create.name')"
                         :placeholder="trans('admin::app.productgroups.create.name')"
                     />
+
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.productgroups.create.name')
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.productgroups.create.description')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="textarea"
                         name="description"
@@ -54,6 +50,10 @@
                         :label="trans('admin::app.productgroups.create.description')"
                         :placeholder="trans('admin::app.productgroups.create.description')"
                     />
+
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.productgroups.create.description')
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>

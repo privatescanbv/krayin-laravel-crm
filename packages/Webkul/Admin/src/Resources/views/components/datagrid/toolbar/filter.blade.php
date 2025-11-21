@@ -591,20 +591,20 @@
                                                             v-text="column.label"
                                                         >
                                                         </p>
-                                    
+
                                                         <div
                                                             class="flex items-center gap-x-1.5"
                                                             @click="removeAppliedColumnAllValues(column.index)"
                                                         >
                                                             <p
-                                                                class="cursor-pointer text-xs font-medium leading-6 text-blue-600"
+                                                                class="cursor-pointer text-xs font-medium leading-6 text-activity-note-text"
                                                                 v-if="hasAnyAppliedColumnValues(column.index)"
                                                             >
                                                                 @lang('admin::app.components.datagrid.filters.custom-filters.clear-all')
                                                             </p>
                                                         </div>
                                                     </div>
-                                    
+
                                                     <div class="mb-2 mt-1.5">
                                                         <v-datagrid-searchable-dropdown
                                                             :datagrid-id="available.id"
@@ -613,14 +613,14 @@
                                                         >
                                                         </v-datagrid-searchable-dropdown>
                                                     </div>
-                                    
+
                                                     <div class="mb-4 flex flex-wrap gap-2">
                                                         <p
                                                             class="flex items-center rounded bg-gray-600 px-2 py-1 font-semibold text-white"
                                                             v-for="appliedColumnValue in getAppliedColumnValues(column.index)"
                                                         >
                                                             <span v-text="appliedColumnValue"></span>
-                                    
+
                                                             <span
                                                                 class="icon-cross-large cursor-pointer text-lg text-white ltr:ml-1.5 rtl:mr-1.5"
                                                                 @click="removeAppliedColumnValue(column.index, appliedColumnValue)"
@@ -638,20 +638,20 @@
                                                             v-text="column.label"
                                                         >
                                                         </p>
-                                    
+
                                                         <div
                                                             class="flex items-center gap-x-1.5"
                                                             @click="removeAppliedColumnAllValues(column.index)"
                                                         >
                                                             <p
-                                                                class="cursor-pointer text-xs font-medium leading-6 text-blue-600"
+                                                                class="cursor-pointer text-xs font-medium leading-6 text-activity-note-text"
                                                                 v-if="hasAnyAppliedColumnValues(column.index)"
                                                             >
                                                                 @lang('admin::app.components.datagrid.filters.custom-filters.clear-all')
                                                             </p>
                                                         </div>
                                                     </div>
-                                    
+
                                                     <div class="mb-2 mt-1.5">
                                                         <v-entity-selector
                                                             :search-route="column.filterable_options?.search_route"
@@ -661,14 +661,14 @@
                                                             placeholder="Zoek gebruiker..."
                                                         />
                                                     </div>
-                                    
+
                                                     <div class="mb-4 flex flex-wrap gap-2">
                                                         <p
                                                             class="flex items-center rounded bg-gray-600 px-2 py-1 font-semibold text-white"
                                                             v-for="appliedColumnValue in getAppliedColumnValues(column.index)"
                                                         >
                                                             <span v-text="getEntitySelectorLabel(column.index, appliedColumnValue)"></span>
-                                    
+
                                                             <span
                                                                 class="icon-cross-large cursor-pointer text-lg text-white ltr:ml-1.5 rtl:mr-1.5"
                                                                 @click="removeAppliedColumnValue(column.index, appliedColumnValue)"
@@ -920,7 +920,7 @@
                             >
                                 @{{ applied.savedFilterId ? '@lang('admin::app.components.datagrid.toolbar.filter.update-filter')' : '@lang('admin::app.components.datagrid.toolbar.filter.save-filter')' }}
                             </button>
-                            
+
                             <!-- Apply Filter Button -->
                             <button
                                 type="button"
@@ -1461,10 +1461,10 @@
                 onEntitySelectorUpdate(items, column) {
                     // Extract IDs from selected items
                     const values = items.map(item => String(item.id || item.value)).filter(v => v);
-                    
+
                     // Find or create applied column
                     let appliedColumn = this.findAppliedColumn(column.index);
-                    
+
                     if (!appliedColumn) {
                         appliedColumn = {
                             index: column.index,
@@ -1476,11 +1476,11 @@
                         };
                         this.filters.columns.push(appliedColumn);
                     }
-                    
+
                     // Update values
                     appliedColumn.value = values;
                     appliedColumn.allow_multiple_values = true; // Always allow multiple for entity selector
-                    
+
                     // Store full item data for label display
                     if (!appliedColumn.entityData) {
                         appliedColumn.entityData = {};
@@ -1491,7 +1491,7 @@
                             appliedColumn.entityData[id] = item;
                         }
                     });
-                    
+
                     this.isFilterDirty = true;
                 },
 
@@ -1557,7 +1557,7 @@
         });
     </script>
 
-    <script 
+    <script
         type="text/x-template"
         id="v-datagrid-searchable-dropdown-template"
     >
@@ -1569,7 +1569,7 @@
                     class="inline-flex h-[38px] w-full cursor-pointer appearance-none items-center justify-between gap-x-2 rounded-md border bg-white px-2.5 py-1.5 text-center leading-6 text-gray-600 transition-all marker:shadow hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                 >
                     <span
-                        class="text-sm text-gray-400 dark:text-gray-400" 
+                        class="text-sm text-gray-400 dark:text-gray-400"
                         v-text="'@lang('admin::app.components.datagrid.filters.select')'"
                     >
                     </span>

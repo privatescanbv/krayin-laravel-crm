@@ -51,7 +51,7 @@
     @if($gvlFormLink)
         <div class="mt-1 flex items-center gap-2">
             <p class="text-xs text-gray-600 dark:text-gray-400">
-                <a href="{{ $gvlFormLink }}" target="_blank" class="text-blue-600 hover:underline">
+                <a href="{{ $gvlFormLink }}" target="_blank" class="text-activity-note-text hover:underline">
                     Open formulier
                 </a>
             </p>
@@ -286,9 +286,9 @@
                 const statusMap = {
                     'new': { text: 'Nieuw', color: 'text-gray-600' },
                     'step1': { text: 'Stap 1 voltooid', color: 'text-yellow-600' },
-                    'step2': { text: 'Stap 2 voltooid', color: 'text-blue-600' },
-                    'step3': { text: 'Stap 3 voltooid', color: 'text-green-500' },
-                    'completed': { text: 'Voltooid', color: 'text-succes' },
+                    'step2': { text: 'Stap 2 voltooid', color: 'text-activity-note-text' },
+                    'step3': { text: 'Stap 3 voltooid', color: 'text-status-active-text' },
+                    'completed': { text: 'Voltooid', color: 'text-status-active-text' },
                 };
 
                 const statusInfo = statusMap[statusLower] || { text: 'Onbekend', color: 'text-gray-400' };

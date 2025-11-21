@@ -15,16 +15,16 @@
             <div class="text-xl font-bold dark:text-white">
                 Person bijwerken met Lead gegevens
             </div>
-            
+
             <p class="text-gray-600 dark:text-gray-300">
-                Vergelijk en synchroniseer gegevens tussen 
+                Vergelijk en synchroniseer gegevens tussen
                 <strong>{{ $person->name }}</strong> en Lead <strong>{{ $lead->name }}</strong>
             </p>
         </div>
 
         <div class="flex items-center gap-x-2.5">
-            <a 
-                href="{{ route('admin.contacts.persons.view', $person->id) }}" 
+            <a
+                href="{{ route('admin.contacts.persons.view', $person->id) }}"
                 class="secondary-button"
             >
                 @lang('admin::app.account.edit.back-btn')
@@ -40,7 +40,7 @@
         <div class="mt-3.5">
             @if(empty($fieldDifferences))
                 <div class="flex flex-col items-center justify-center py-16">
-                    <div class="text-6xl text-green-500 mb-4">
+                    <div class="text-6xl text-status-active-text mb-4">
                         <i class="icon-check-circle"></i>
                     </div>
                     <h3 class="text-xl font-semibold mb-2 dark:text-white">Geen verschillen gevonden</h3>
@@ -79,12 +79,12 @@
                                 @foreach($fieldDifferences as $field => $difference)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                         <td class="px-4 py-4">
-                                            <input 
-                                                type="checkbox" 
-                                                name="person_updates[{{ $field }}]" 
+                                            <input
+                                                type="checkbox"
+                                                name="person_updates[{{ $field }}]"
                                                 value="1"
                                                 id="update_{{ $field }}"
-                                                class="w-4 h-4 text-blue-600 bg-neutral-bg border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                class="w-4 h-4 text-activity-note-text bg-neutral-bg border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                             >
                                         </td>
                                         <td class="px-4 py-4">
@@ -120,12 +120,12 @@
                                         </td>
                                         <td class="px-4 py-4">
                                             @if($difference['type'] === 'array')
-                                                <div class="text-sm text-blue-600 dark:text-blue-400">
+                                                <div class="text-sm text-activity-note-text dark:text-blue-400">
                                                     {{ $difference['lead_value'] ?: 'Geen waarde' }}
                                                 </div>
                                                 <input type="hidden" name="lead_updates[{{ $field }}]" value="{{ $difference['lead_value'] }}">
                                             @elseif($difference['type'] === 'address')
-                                                <div class="text-sm text-blue-600 dark:text-blue-400">
+                                                <div class="text-sm text-activity-note-text dark:text-blue-400">
                                                     @if($lead->address)
                                                         <div class="text-xs">
                                                             @if($lead->address->full_address)
@@ -148,16 +148,16 @@
                                                 <input type="hidden" name="lead_updates[{{ $field }}]" value="{{ $difference['lead_value'] }}">
                                             @else
                                                 @if($field === 'description')
-                                                    <textarea 
-                                                        name="lead_updates[{{ $field }}]" 
+                                                    <textarea
+                                                        name="lead_updates[{{ $field }}]"
                                                         rows="3"
                                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                                         placeholder="Geen waarde"
                                                     >{{ $difference['lead_value'] }}</textarea>
                                                 @else
-                                                    <input 
-                                                        type="text" 
-                                                        name="lead_updates[{{ $field }}]" 
+                                                    <input
+                                                        type="text"
+                                                        name="lead_updates[{{ $field }}]"
                                                         value="{{ $difference['lead_value'] }}"
                                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                                         placeholder="Geen waarde"
@@ -182,7 +182,7 @@
                                 Niets selecteren
                             </button>
                         </div>
-                        
+
                         <div>
                             <button type="submit" class="primary-button">
                                 @lang('admin::app.account.edit.save-btn')
@@ -265,7 +265,7 @@
                         .catch(error => {
                             console.error('Error:', error);
                             alert('Er is een fout opgetreden bij het opslaan: ' + error.message);
-                            
+
                             // Restore button state on error
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalText;

@@ -135,10 +135,6 @@
                                         v-if="attributeType != 'lookup'"
                                         class="mb-2.5 w-1/2"
                                     >
-                                        <x-admin::form.control-group.label>
-                                            @lang('admin::app.settings.attributes.create.option-type')
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="optionType"
@@ -343,7 +339,11 @@
                                     :value="$selectedOption"
                                 />
 
-                                <x-admin::form.control-group.error control-name="code" />
+                                <x-admin::form.control-group.label>
+                                            @lang('admin::app.settings.attributes.create.option-type')
+                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="code" />
+
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.code.after', ['attribute' => $attribute]) !!}
@@ -440,10 +440,6 @@
                                 {!! view_render_event('admin.settings.attributes.edit.form_controls.select.before', ['attribute' => $attribute]) !!}
 
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.settings.attributes.edit.input-validation')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="select"
                                         class="cursor-not-allowed"
@@ -585,7 +581,11 @@
                                     ref="inputAdmin"
                                 />
 
-                                <x-admin::form.control-group.error control-name="name" />
+                                <x-admin::form.control-group.label>
+                                        @lang('admin::app.settings.attributes.edit.input-validation')
+                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="name" />
+
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.name.after', ['attribute' => $attribute]) !!}

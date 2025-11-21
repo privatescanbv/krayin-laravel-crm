@@ -73,7 +73,7 @@
                         class="flex items-center justify-center bg-green-100 p-1 hover:bg-activity-email-bg ltr:rounded-l-md rtl:rounded-r-md"
                         @click="save"
                     >
-                        <i class="icon-tick text-md cursor-pointer font-bold text-succes dark:!text-succes" />
+                        <i class="icon-tick text-md cursor-pointer font-bold text-status-active-text dark:!text-status-active-text" />
                     </button>
 
                     <button
@@ -81,7 +81,7 @@
                         class="flex items-center justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md"
                         @click="cancel"
                     >
-                        <i class="icon-cross-large text-md cursor-pointer font-bold text-error dark:!text-error" />
+                        <i class="icon-cross-large text-md cursor-pointer font-bold text-status-expired-text dark:!text-status-expired-text" />
                     </button>
                 </div>
 

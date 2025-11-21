@@ -35,13 +35,13 @@
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.total_leads.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.total_leads.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.total_leads.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.total_leads.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.total_leads.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -56,19 +56,19 @@
                     </p>
 
                     <div class="flex gap-2">
-                        <p class="text-xl font-bold text-succes dark:text-green-400">
+                        <p class="text-xl font-bold text-status-active-text dark:text-green-400">
                             @{{ report.statistics.won_leads.current }}
                         </p>
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.won_leads.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.won_leads.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.won_leads.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.won_leads.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.won_leads.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -83,19 +83,19 @@
                     </p>
 
                     <div class="flex gap-2">
-                        <p class="text-xl font-bold text-error dark:text-red-400">
+                        <p class="text-xl font-bold text-status-expired-text dark:text-red-400">
                             @{{ report.statistics.lost_leads.current }}
                         </p>
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.lost_leads.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.lost_leads.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.lost_leads.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.lost_leads.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.lost_leads.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -116,13 +116,13 @@
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.average_leads_per_day.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.average_leads_per_day.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.average_leads_per_day.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.average_leads_per_day.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.average_leads_per_day.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -143,13 +143,13 @@
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.total_quotations.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.total_quotations.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.total_quotations.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.total_quotations.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.total_quotations.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -170,13 +170,13 @@
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.total_persons.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.total_persons.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.total_persons.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.total_persons.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.total_persons.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -197,13 +197,13 @@
 
                         <div class="flex items-center gap-0.5">
                             <span
-                                class="text-base !font-semibold text-green-500"
-                                :class="[report.statistics.total_organizations.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                class="text-base !font-semibold text-status-active-text"
+                                :class="[report.statistics.total_organizations.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-status-active-text dark:!text-status-active-text']"
                             ></span>
 
                             <p
-                                class="text-xs font-semibold text-green-500"
-                                :class="[report.statistics.total_organizations.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                class="text-xs font-semibold text-status-active-text"
+                                :class="[report.statistics.total_organizations.progress < 0 ?  'text-red-500' : 'text-status-active-text']"
                             >
                                 @{{ Math.abs(Number(report.statistics.total_organizations.progress ?? 0).toFixed(2)) }}%
                             </p>
@@ -222,7 +222,7 @@
                     <!-- Herniapoli Department -->
                     <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                         <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
-                            <span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                            <span class="inline-block w-3 h-3 bg-brand-herniapoli-main rounded-full mr-2"></span>
                             Herniapoli
                         </h4>
 
@@ -234,13 +234,13 @@
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Totaal</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-succes dark:text-green-400">
+                                <div class="text-2xl font-bold text-status-active-text dark:text-green-400">
                                     @{{ report.statistics.department_stats.herniapoli.won }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Gewonnen</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-error dark:text-red-400">
+                                <div class="text-2xl font-bold text-status-expired-text dark:text-red-400">
                                     @{{ report.statistics.department_stats.herniapoli.lost }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Verloren</div>
@@ -261,7 +261,7 @@
                     <!-- Privatescan Department -->
                     <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                         <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
-                            <span class="inline-block w-3 h-3 bg-purple-500 rounded-full mr-2"></span>
+                            <span class="inline-block w-3 h-3 bg-brand-privatescan-main rounded-full mr-2"></span>
                             Privatescan
                         </h4>
 
@@ -273,13 +273,13 @@
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Totaal</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-succes dark:text-green-400">
+                                <div class="text-2xl font-bold text-status-active-text dark:text-green-400">
                                     @{{ report.statistics.department_stats.privatescan.won }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Gewonnen</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-error dark:text-red-400">
+                                <div class="text-2xl font-bold text-status-expired-text dark:text-red-400">
                                     @{{ report.statistics.department_stats.privatescan.lost }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Verloren</div>

@@ -19,7 +19,7 @@
                 name="{{ $name }}"
                 v-bind="field"
                 :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
             />
         </v-field>
 
@@ -100,12 +100,12 @@
                 name="{{ $name }}"
                 v-bind="field"
                 :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
             >
             </textarea>
 
             @if ($attributes->get('tinymce', false) || $attributes->get(':tinymce', false))
-                <x-admin::tinymce 
+                <x-admin::tinymce
                     :selector="'textarea#' . $attributes->get('id')"
                     ::field="field"
                 />
@@ -125,7 +125,7 @@
                     name="{{ $name }}"
                     v-bind="field"
                     :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
                     autocomplete="off"
                 />
             </x-admin::flat-picker.date>
@@ -144,7 +144,7 @@
                     name="{{ $name }}"
                     v-bind="field"
                     :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300 dark:placeholder:text-gray-500']) }}
+                    {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
                     autocomplete="off"
                 >
             </x-admin::flat-picker.datetime>
@@ -161,7 +161,7 @@
                 name="{{ $name }}"
                 v-bind="field"
                 :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'custom-select bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300']) }}
+                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'custom-select']) }}
             >
                 {{ $slot }}
             </select>
@@ -207,10 +207,10 @@
         </v-field>
 
         <label
-             {{ 
+             {{
                 $attributes
                     ->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key'])
-                    ->merge(['class' => 'text-gray-500 icon-checkbox-outline peer-checked:icon-checkbox-select text-2xl peer-checked:text-blue-600'])
+                    ->merge(['class' => 'text-gray-500 icon-checkbox-outline peer-checked:icon-checkbox-select text-2xl peer-checked:text-activity-note-text'])
                     ->merge(['class' => $attributes->get('disabled') ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'])
             }}
         >
@@ -232,7 +232,7 @@
                 v-bind="field"
                 {{ $attributes->except(['rules', 'label', ':label', 'key', ':key'])->merge(['class' => 'peer sr-only']) }}
             />
-                
+
             <v-checked-handler
                 class="hidden"
                 :field="field"
@@ -242,7 +242,7 @@
         </v-field>
 
         <label
-            {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key'])->merge(['class' => 'icon-radio-normal peer-checked:icon-radio-selected cursor-pointer text-2xl peer-checked:text-blue-600']) }}
+            {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key'])->merge(['class' => 'icon-radio-normal peer-checked:icon-radio-selected cursor-pointer text-2xl peer-checked:text-activity-note-text']) }}
         >
         </label>
 
@@ -265,7 +265,7 @@
                     v-bind="field"
                     {{ $attributes->except(['v-model', 'rules', ':rules', 'label', ':label', 'key', ':key']) }}
                 />
-                
+
                 <v-checked-handler
                     class="hidden"
                     :field="field"
@@ -275,7 +275,7 @@
             </v-field>
 
             <label
-                class="peer h-5 w-9 cursor-pointer rounded-full bg-gray-200 after:absolute after:top-0.5 after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-blue-300 after:ltr:left-0.5 peer-checked:after:ltr:translate-x-full after:rtl:right-0.5 peer-checked:after:rtl:-translate-x-full dark:bg-gray-800 dark:after:border-white dark:after:bg-white dark:peer-checked:bg-gray-950"
+                class="peer h-5 w-9 cursor-pointer rounded-full bg-gray-200 after:absolute after:top-0.5 after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:text-activity-note-text peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-blue-300 after:ltr:left-0.5 peer-checked:after:ltr:translate-x-full after:rtl:right-0.5 peer-checked:after:rtl:-translate-x-full dark:bg-gray-800 dark:after:border-white dark:after:bg-white dark:peer-checked:bg-gray-950"
                 for="{{ $name }}"
             ></label>
         </label>
@@ -290,7 +290,7 @@
         />
 
         @break
-    
+
     @case('inline')
         <x-admin::form.control-group.controls.inline.text {{ $attributes }}/>
 

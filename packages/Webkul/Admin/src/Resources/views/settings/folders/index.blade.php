@@ -75,7 +75,7 @@
                                             @if (bouncer()->hasPermission('settings.folders.edit'))
                                                 <a
                                                     href="{{ route('admin.settings.folders.edit', $folder->id) }}"
-                                                    class="text-blue-600 hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
+                                                    class="text-activity-note-text hover:text-activity-task-text dark:text-blue-400 dark:hover:text-blue-300"
                                                     title="@lang('admin::app.settings.folders.index.edit')"
                                                 >
                                                     <i class="icon-edit text-xl"></i>
@@ -85,7 +85,7 @@
                                             @if (bouncer()->hasPermission('settings.folders.delete') && $folder->is_deletable)
                                                 <button
                                                     type="button"
-                                                    class="text-error hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                    class="text-status-expired-text hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                                     title="@lang('admin::app.settings.folders.index.delete')"
                                                     @click="confirmDelete('{{ route('admin.settings.folders.delete', $folder->id) }}')"
                                                 >

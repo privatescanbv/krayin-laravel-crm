@@ -43,10 +43,6 @@
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.duration')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="number"
             name="duration"
@@ -56,13 +52,27 @@
         />
 
         <x-admin::form.control-group.error control-name="duration"/>
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.duration')
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 </div>
 
 <!-- Associated Product (Readonly) -->
 @if ($partnerProduct && $partnerProduct->product)
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
+    <x-admin::form.control-group.control
+            type="textarea"
+            name="description"
+            value="{{ old('description', $partnerProduct->description ?? '') }}"
+            :label="trans('admin::app.partner_products.index.create.description')"
+            :placeholder="trans('admin::app.partner_products.index.create.description')"
+        />
+
+        <x-admin::form.control-group.error control-name="description"/>
+
+        <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.associated_product')
     </x-admin::form.control-group.label>
 
@@ -76,45 +86,6 @@
 <!-- Omschrijving en Omschrijving kliniek -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.description')
-        </x-admin::form.control-group.label>
-
-        <x-admin::form.control-group.control
-            type="textarea"
-            name="description"
-            value="{{ old('description', $partnerProduct->description ?? '') }}"
-            :label="trans('admin::app.partner_products.index.create.description')"
-            :placeholder="trans('admin::app.partner_products.index.create.description')"
-        />
-
-        <x-admin::form.control-group.error control-name="description"/>
-    </x-admin::form.control-group>
-
-    <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.clinic_description')
-        </x-admin::form.control-group.label>
-
-        <x-admin::form.control-group.control
-            type="textarea"
-            name="clinic_description"
-            value="{{ old('clinic_description', $partnerProduct->clinic_description ?? '') }}"
-            :label="trans('admin::app.partner_products.index.create.clinic_description')"
-            :placeholder="trans('admin::app.partner_products.index.create.clinic_description')"
-        />
-
-        <x-admin::form.control-group.error control-name="clinic_description"/>
-    </x-admin::form.control-group>
-</div>
-
-<!-- Valuta en Verkoopprijs -->
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-    <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.partner_products.index.create.currency')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="select"
             name="currency"
@@ -129,6 +100,35 @@
         </x-admin::form.control-group.control>
 
         <x-admin::form.control-group.error control-name="currency"/>
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.description')
+        </x-admin::form.control-group.label>
+    </x-admin::form.control-group>
+
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.control
+            type="textarea"
+            name="clinic_description"
+            value="{{ old('clinic_description', $partnerProduct->clinic_description ?? '') }}"
+            :label="trans('admin::app.partner_products.index.create.clinic_description')"
+            :placeholder="trans('admin::app.partner_products.index.create.clinic_description')"
+        />
+
+        <x-admin::form.control-group.error control-name="clinic_description"/>
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.clinic_description')
+        </x-admin::form.control-group.label>
+    </x-admin::form.control-group>
+</div>
+
+<!-- Valuta en Verkoopprijs -->
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.partner_products.index.create.currency')
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -152,10 +152,6 @@
 <!-- Gerelateerde verkoopprijs -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.related_sales_price')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="price"
             name="related_sales_price"
@@ -165,14 +161,14 @@
         />
 
         <x-admin::form.control-group.error control-name="related_sales_price"/>
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.related_sales_price')
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <!-- Kortingsinformatie -->
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.discount_info')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="textarea"
             name="discount_info"
@@ -182,15 +178,15 @@
         />
 
         <x-admin::form.control-group.error control-name="discount_info"/>
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.discount_info')
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 </div>
 
 <!-- Active checkbox -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.active')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="switch"
         name="active"
@@ -200,14 +196,14 @@
     />
 
     <x-admin::form.control-group.error control-name="active"/>
+
+    <x-admin::form.control-group.label>
+        @lang('admin::app.partner_products.index.create.active')
+    </x-admin::form.control-group.label>
 </x-admin::form.control-group>
 
 <!-- Resource Type -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.resource_type')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="select"
         name="resource_type_id"
@@ -271,6 +267,10 @@
         :items='@json($relatedProductsForSelector)'
     />
     <x-admin::form.control-group.error control-name="related_products"/>
+
+    <x-admin::form.control-group.label>
+        @lang('admin::app.partner_products.index.create.resource_type')
+    </x-admin::form.control-group.label>
 </x-admin::form.control-group>
 
 <!-- Reporting (moved below Related Products) -->

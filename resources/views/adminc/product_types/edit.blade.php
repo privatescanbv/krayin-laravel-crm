@@ -42,16 +42,16 @@
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.product_types.edit.description')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="textarea"
                         name="description"
                         :value="old('description', $product_type->description)"
                     />
                     <x-admin::form.control-group.error control-name="description" />
+
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.product_types.edit.description')
+                    </x-admin::form.control-group.label>
                 </x-admin::form.control-group>
             </div>
         </div>

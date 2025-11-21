@@ -5,10 +5,6 @@
 <!-- Basic Information Section -->
 <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            @lang('admin::app.settings.clinics.index.create.is_active')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="switch"
             name="is_active"
@@ -18,6 +14,10 @@
         />
 
         <x-admin::form.control-group.error control-name="is_active" />
+
+        <x-admin::form.control-group.label>
+            @lang('admin::app.settings.clinics.index.create.is_active')
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -38,10 +38,6 @@
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            AFB naam kliniek
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="text"
             name="registration_form_clinic_name"
@@ -52,13 +48,13 @@
         />
 
         <x-admin::form.control-group.error control-name="registration_form_clinic_name" />
+
+        <x-admin::form.control-group.label>
+            AFB naam kliniek
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            Website
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="text"
             name="website_url"
@@ -69,13 +65,13 @@
         />
 
         <x-admin::form.control-group.error control-name="website_url" />
+
+        <x-admin::form.control-group.label>
+            Website
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            Opmerking orderbevestiging
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="textarea"
             name="order_confirmation_note"
@@ -86,6 +82,10 @@
         />
 
         <x-admin::form.control-group.error control-name="order_confirmation_note" />
+
+        <x-admin::form.control-group.label>
+            Opmerking orderbevestiging
+        </x-admin::form.control-group.label>
     </x-admin::form.control-group>
 
     <!-- Emails -->

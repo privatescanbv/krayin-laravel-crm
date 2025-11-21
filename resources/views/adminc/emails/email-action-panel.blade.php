@@ -71,7 +71,7 @@
                         @click="createLeadFromEmail"
                         class="primary-button mt-1"
                     >
-                        <span class="icon-plus text-lg"></span>
+
                         Maak Lead
                     </button>
                 @endif

@@ -51,10 +51,6 @@
 
                         <!-- Parent Folder -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.settings.folders.edit.parent')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="select"
                                 name="parent_id"
@@ -69,6 +65,10 @@
                             </x-admin::form.control-group.control>
 
                             <x-admin::form.control-group.error control-name="parent_id" />
+
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.settings.folders.edit.parent')
+                            </x-admin::form.control-group.label>
                         </x-admin::form.control-group>
 
                     </div>

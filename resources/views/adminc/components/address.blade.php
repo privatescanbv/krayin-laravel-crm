@@ -15,12 +15,12 @@
     @endif
 
     @if (isset($readonly) && $readonly)
-        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div class="mb-4 p-3 bg-status-on_hold-bg border border-status-on_hold-border rounded-lg">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                 </svg>
-                <span class="text-sm text-yellow-800 font-medium">
+                <span class="text-sm text-status-on_hold-text font-medium">
                     Adresgegevens zijn alleen-lezen omdat er contactpersonen gekoppeld zijn aan deze lead.
                 </span>
             </div>
@@ -33,7 +33,6 @@
             <!-- Postal Code -->
             <div class="flex-1 min-w-[150px]">
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
                         name="{{ $namePrefix ?? 'address' }}[postal_code]"
@@ -43,13 +42,13 @@
                         :readonly="isset($readonly) && $readonly"
                     />
                     <x-admin::form.control-group.error control-name="address.postal_code"/>
+                    <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
                 </x-admin::form.control-group>
             </div>
 
             <!-- House Number -->
             <div class="flex-1 min-w-[150px]">
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
                         name="{{ $namePrefix ?? 'address' }}[house_number]"
@@ -60,6 +59,7 @@
                         :readonly="isset($readonly) && $readonly"
                     />
                     <x-admin::form.control-group.error control-name="address.house_number"/>
+                    <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
                 </x-admin::form.control-group>
             </div>
 
@@ -68,7 +68,7 @@
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
                 <button type="button" id="{{ $addressId }}-lookup-btn"
-                        class="address-lookup-button px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
+                        class="address-lookup-button px-4 py-2 text-activity-note-text text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
                     Adres opzoeken
                 </button>
                 </div>
@@ -82,10 +82,6 @@
     <div class="grid grid-cols-2 gap-4">
         <!-- Street -->
         <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                Straat
-            </x-admin::form.control-group.label>
-
             <x-admin::form.control-group.control
                 type="text"
                 name="{{ $namePrefix ?? 'address' }}[street]"
@@ -96,14 +92,14 @@
             />
 
             <x-admin::form.control-group.error control-name="address.street"/>
+
+            <x-admin::form.control-group.label>
+                Straat
+            </x-admin::form.control-group.label>
         </x-admin::form.control-group>
 
         <!-- House Number Suffix -->
         <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                Toevoeging
-            </x-admin::form.control-group.label>
-
             <x-admin::form.control-group.control
                 type="text"
                 name="{{ $namePrefix ?? 'address' }}[house_number_suffix]"
@@ -114,14 +110,14 @@
             />
 
             <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
+
+            <x-admin::form.control-group.label>
+                Toevoeging
+            </x-admin::form.control-group.label>
         </x-admin::form.control-group>
 
         <!-- City -->
         <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                Stad
-            </x-admin::form.control-group.label>
-
             <x-admin::form.control-group.control
                 type="text"
                 name="{{ $namePrefix ?? 'address' }}[city]"
@@ -132,14 +128,14 @@
             />
 
             <x-admin::form.control-group.error control-name="address.city"/>
+
+            <x-admin::form.control-group.label>
+                Stad
+            </x-admin::form.control-group.label>
         </x-admin::form.control-group>
 
         <!-- State -->
         <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                Provincie
-            </x-admin::form.control-group.label>
-
             <x-admin::form.control-group.control
                 type="text"
                 name="{{ $namePrefix ?? 'address' }}[state]"
@@ -150,14 +146,14 @@
             />
 
             <x-admin::form.control-group.error control-name="address.state"/>
+
+            <x-admin::form.control-group.label>
+                Provincie
+            </x-admin::form.control-group.label>
         </x-admin::form.control-group>
 
         <!-- Country -->
         <x-admin::form.control-group class="col-span-2">
-            <x-admin::form.control-group.label>
-                Land
-            </x-admin::form.control-group.label>
-
             <x-admin::form.control-group.control
                 type="text"
                 name="{{ $namePrefix ?? 'address' }}[country]"
@@ -168,6 +164,10 @@
             />
 
             <x-admin::form.control-group.error control-name="address.country"/>
+
+            <x-admin::form.control-group.label>
+                Land
+            </x-admin::form.control-group.label>
         </x-admin::form.control-group>
     </div>
 

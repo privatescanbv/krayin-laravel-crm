@@ -120,8 +120,8 @@ class ResourceDataGrid extends DataGrid
                 $active = $row->is_active ?? false;
 
                 return $active
-                    ? "<span class='icon-tick text-succes text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
-                    : "<span class='icon-cross-large text-error text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
+                    ? "<span class='icon-tick text-status-active-text text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-status-expired-text text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
             },
         ]);
 

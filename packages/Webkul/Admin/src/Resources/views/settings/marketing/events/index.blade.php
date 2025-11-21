@@ -228,12 +228,7 @@
 
                                     <!-- Name -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="name"
-                                        >
-                                            @lang('admin::app.settings.marketing.events.index.create.name')
-                                        </x-admin::form.control-group.label>
+
 
                                         <x-admin::form.control-group.control
                                             type="hidden"
@@ -247,18 +242,18 @@
                                             rules="required|max:60"
                                             :label="trans('admin::app.settings.marketing.events.index.create.name')"
                                         />
-
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="name"
+                                        >
+                                            @lang('admin::app.settings.marketing.events.index.create.name')
+                                        </x-admin::form.control-group.label>
                                         <x-admin::form.control-group.error control-name="name" />
                                     </x-admin::form.control-group>
 
                                     <!-- Description -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="description"
-                                        >
-                                            @lang('admin::app.settings.marketing.events.index.create.description')
-                                        </x-admin::form.control-group.label>
+
 
                                         <x-admin::form.control-group.control
                                             type="textarea"
@@ -268,18 +263,18 @@
                                             rows="4"
                                             :label="trans('admin::app.settings.marketing.events.index.create.description')"
                                         />
-
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="description"
+                                        >
+                                            @lang('admin::app.settings.marketing.events.index.create.description')
+                                        </x-admin::form.control-group.label>
                                         <x-admin::form.control-group.error control-name="description" />
                                     </x-admin::form.control-group>
 
                                     <!-- Date -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="date"
-                                        >
-                                            @lang('admin::app.settings.marketing.events.index.create.date')
-                                        </x-admin::form.control-group.label>
+
 
                                         <x-admin::form.control-group.control
                                             type="date"
@@ -288,7 +283,12 @@
                                             rules="required"
                                             :label="trans('admin::app.settings.marketing.events.index.create.date')"
                                         />
-
+                                        <x-admin::form.control-group.label
+                                            class="required"
+                                            for="date"
+                                        >
+                                            @lang('admin::app.settings.marketing.events.index.create.date')
+                                        </x-admin::form.control-group.label>
                                         <x-admin::form.control-group.error control-name="date" />
                                     </x-admin::form.control-group>
 

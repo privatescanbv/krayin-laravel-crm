@@ -35,7 +35,7 @@
                                 placeholder="Voer telefoonnummer in"
                                 :readonly="readonly"
                             />
-                            <div v-if="getPhoneError(index)" class="mt-1 text-sm text-error">
+                            <div v-if="getPhoneError(index)" class="mt-1 text-sm text-status-expired-text">
                                 {{ getPhoneError(index) }}
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                         <select
                             :name="name + '[' + index + '][label]'"
                             v-model="phone.label"
-                            class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            class=""
                             :disabled="readonly"
                         >
                             <option
@@ -68,7 +68,7 @@
                                 :id="'phone_default_' + index"
                                 :checked="phone.is_default === true || phone.is_default === 'on'"
                                 @change="handleDefaultChange(index, $event)"
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                class="h-4 w-4 text-activity-note-text focus:ring-blue-500 border-gray-300 rounded"
                                 :disabled="readonly"
                             />
                             <label :for="'phone_default_' + index" class="text-sm text-gray-700 dark:text-gray-300">

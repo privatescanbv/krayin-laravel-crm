@@ -15,7 +15,7 @@
                 $canPlan = $item->product && $item->product->partnerProducts()->exists();
             @endphp
             <div
-                class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $canPlan ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
+                class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $canPlan ? 'bg-activity-note-bg dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
                 <div class="flex justify-between items-start mb-2">
                     <h4 class="font-medium text-sm">{{ $item->product->fullName ?? 'Onbekend product' }}</h4>
                     <span

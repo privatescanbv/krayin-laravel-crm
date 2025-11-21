@@ -231,7 +231,7 @@
 
                 <p
                     id="{{ $fieldName }}[]-error"
-                    class="error-message mt-1 text-xs italic text-error"
+                    class="error-message mt-1 text-xs italic text-status-expired-text"
                 ></p>
 
                 @break

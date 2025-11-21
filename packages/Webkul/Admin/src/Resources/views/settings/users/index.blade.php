@@ -243,9 +243,7 @@
                             <div class="flex gap-4">
                                 <!-- First Name -->
                                 <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.first-name')
-                                    </x-admin::form.control-group.label>
+
 
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -256,15 +254,15 @@
                                         :label="trans('admin::app.settings.users.index.create.first-name')"
                                         :placeholder="trans('admin::app.settings.users.index.create.first-name')"
                                     />
-
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.users.index.create.first-name')
+                                    </x-admin::form.control-group.label>
                                     <x-admin::form.control-group.error control-name="first_name" />
                                 </x-admin::form.control-group>
 
                                 <!-- Last Name -->
                                 <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.last-name')
-                                    </x-admin::form.control-group.label>
+
 
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -275,7 +273,9 @@
                                         :label="trans('admin::app.settings.users.index.create.last-name')"
                                         :placeholder="trans('admin::app.settings.users.index.create.last-name')"
                                     />
-
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.users.index.create.last-name')
+                                    </x-admin::form.control-group.label>
                                     <x-admin::form.control-group.error control-name="last_name" />
                                 </x-admin::form.control-group>
                             </div>
@@ -286,9 +286,7 @@
 
                             <!-- Email -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.users.index.create.email')
-                                </x-admin::form.control-group.label>
+
 
                                 <x-admin::form.control-group.control
                                     type="email"
@@ -299,7 +297,9 @@
                                     :label="trans('admin::app.settings.users.index.create.email')"
                                     :placeholder="trans('admin::app.settings.users.index.create.email')"
                                 />
-
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.users.index.create.email')
+                                </x-admin::form.control-group.label>
                                 <x-admin::form.control-group.error control-name="email" />
                             </x-admin::form.control-group>
 
@@ -310,9 +310,7 @@
                             <div class="flex gap-4">
                                 <!-- Password -->
                                 <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.label ::class="user.id ? '' : 'required'">
-                                        @lang('admin::app.settings.users.index.create.password')
-                                    </x-admin::form.control-group.label>
+
 
                                     <x-admin::form.control-group.control
                                         type="password"
@@ -323,16 +321,14 @@
                                         :placeholder="trans('admin::app.settings.users.index.create.password')"
                                         ref="password"
                                     />
-
+                                    <x-admin::form.control-group.label ::class="user.id ? '' : 'required'">
+                                        @lang('admin::app.settings.users.index.create.password')
+                                    </x-admin::form.control-group.label>
                                     <x-admin::form.control-group.error control-name="password" />
                                 </x-admin::form.control-group>
 
                                 <!-- Confirm Password -->
                                 <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.settings.users.index.create.confirm-password')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="password"
                                         id="confirm_password"
@@ -342,7 +338,11 @@
                                         :placeholder="trans('admin::app.settings.users.index.create.confirm-password')"
                                     />
 
-                                    <x-admin::form.control-group.error control-name="confirm_password" />
+                                    <x-admin::form.control-group.label>
+                                        @lang('admin::app.settings.users.index.create.confirm-password')
+                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="confirm_password" />
+
+
                                 </x-admin::form.control-group>
                             </div>
 
@@ -353,9 +353,6 @@
                             <div class="flex gap-4">
                                 <!-- Role -->
                                 <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.role')
-                                    </x-admin::form.control-group.label>
 
                                     <x-admin::form.control-group.control
                                         type="select"
@@ -372,15 +369,16 @@
                                             @{{ role.name }}
                                         </option>
                                     </x-admin::form.control-group.control>
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.users.index.create.role')
+                                    </x-admin::form.control-group.label>
 
                                     <x-admin::form.control-group.error control-name="role_id" />
                                 </x-admin::form.control-group>
 
                                 <!-- Permission -->
                                 <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.view-permission')
-                                    </x-admin::form.control-group.label>
+
 
                                     <x-admin::form.control-group.control
                                         type="select"
@@ -402,7 +400,9 @@
                                             @lang('admin::app.settings.users.index.create.individual')
                                         </option>
                                     </x-admin::form.control-group.control>
-
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.users.index.create.view-permission')
+                                    </x-admin::form.control-group.label>
                                     <x-admin::form.control-group.error control-name="view_permission" />
                                 </x-admin::form.control-group>
                             </div>
@@ -413,9 +413,22 @@
 
                             <!-- Group -->
                             <x-admin::form.control-group>
+                                <x-admin::form.control-group.control
+                                    type="textarea"
+                                    id="signature"
+                                    name="signature"
+                                    v-model="user.signature"
+                                    :label="trans('admin::app.settings.users.index.create.signature')"
+                                    :placeholder="trans('admin::app.settings.users.index.create.signature')"
+                                    :tinymce="true"
+                                    rows="4"
+                                />
+
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.settings.users.index.create.group')
-                                </x-admin::form.control-group.label>
+                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="signature" />
+
+
 
                                 <v-field
                                     name="groups[]"
@@ -448,9 +461,7 @@
 
                             <!-- Status -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label for="status">
-                                    @lang('admin::app.settings.users.index.create.status')
-                                </x-admin::form.control-group.label>
+
 
                                 <input
                                     type="hidden"
@@ -465,6 +476,9 @@
                                     :label="trans('admin::app.settings.users.index.create.status')"
                                     ::checked="parseInt(user.status || 0)"
                                 />
+                                                                <x-admin::form.control-group.label for="status">
+                                    @lang('admin::app.settings.users.index.create.status')
+                                </x-admin::form.control-group.label>
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.users.index.form.status.after') !!}
@@ -476,19 +490,6 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.settings.users.index.create.signature')
                                 </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    id="signature"
-                                    name="signature"
-                                    v-model="user.signature"
-                                    :label="trans('admin::app.settings.users.index.create.signature')"
-                                    :placeholder="trans('admin::app.settings.users.index.create.signature')"
-                                    :tinymce="true"
-                                    rows="4"
-                                />
-
-                                <x-admin::form.control-group.error control-name="signature" />
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.users.index.form.signature.after') !!}
@@ -499,10 +500,6 @@
 
                                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Lead afdeling
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="text"
                                             name="user_default_values[lead.department_id]"
@@ -510,14 +507,14 @@
                                             :label="'lead.department_id'"
                                             :placeholder="'2'"
                                         />
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.department_id" />
+                                        <x-admin::form.control-group.label>
+                                            Lead afdeling
+                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="user_default_values.lead.department_id" />
+
+
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Lead kanaal
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="text"
                                             name="user_default_values[lead.lead_channel_id]"
@@ -525,14 +522,14 @@
                                             :label="'lead.lead_channel_id'"
                                             :placeholder="'1'"
                                         />
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.lead_channel_id" />
+                                        <x-admin::form.control-group.label>
+                                            Lead kanaal
+                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="user_default_values.lead.lead_channel_id" />
+
+
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Lead bron
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="text"
                                             name="user_default_values[lead.lead_source_id]"
@@ -540,14 +537,14 @@
                                             :label="'lead.lead_source_id'"
                                             :placeholder="'6'"
                                         />
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.lead_source_id" />
+                                        <x-admin::form.control-group.label>
+                                            Lead bron
+                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="user_default_values.lead.lead_source_id" />
+
+
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Lead type
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="text"
                                             name="user_default_values[lead.type_id]"
@@ -555,7 +552,11 @@
                                             :label="'lead.type_id'"
                                             :placeholder="'2'"
                                         />
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.type_id" />
+                                        <x-admin::form.control-group.label>
+                                            Lead type
+                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="user_default_values.lead.type_id" />
+
+
                                     </x-admin::form.control-group>
                                 </div>
                             </div>

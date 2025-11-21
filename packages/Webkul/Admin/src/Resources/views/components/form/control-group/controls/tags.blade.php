@@ -81,7 +81,7 @@
             v-slot="{ message }"
         >
             <p
-                class="mt-1 text-xs italic text-error"
+                class="mt-1 text-xs italic text-status-expired-text"
                 v-text="message"
             >
             </p>

@@ -24,12 +24,12 @@
 {{--                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-bg hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors"--}}
 {{--                @click="$refs.contactPersonModal?.open()"--}}
 {{--            >--}}
-{{--                <span class="icon-add text-lg"></span>--}}
+{{--                --}}
 {{--                <span class="text-sm font-medium">Nieuwe contactpersoon</span>--}}
 {{--            </button>--}}
 
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+
                 <span>
                     {{ $person->name }} gekoppeld
                 </span>
@@ -44,65 +44,61 @@
         <!-- Input Fields -->
         <div class="space-y-4">
             <!-- Naam contactpersoon -->
-            <div>
-                <label class="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <span class="icon-contact text-lg"></span>
-                    <span>Naam contactpersoon</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brandColor focus:border-transparent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     placeholder="Volledige naam"
                     value="{{ $person ? $person->name : '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Naam contactpersoon</span>
+                </label>
             </div>
 
             <!-- Relatie tot patiënt -->
-            <div>
-                <label class="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <div class="relative">
-                        <span class="icon-contact text-lg"></span>
-                        <span class="icon-contact text-lg absolute -bottom-1 -right-1 text-xs opacity-75"></span>
-                    </div>
-                    <span>Relatie tot patiënt</span>
-                </label>
+            <div class="relative">
                 <input
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brandColor focus:border-transparent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     placeholder="Bijv. partner, ouder, kind"
                     value=""
                 />
+                <label class="">
+                    <span>Relatie tot patiënt</span>
+                </label>
             </div>
 
             <!-- Telefoonnummer -->
-            <div>
-                <label class="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <span class="icon-call text-lg"></span>
-                    <span>Telefoonnummer</span>
-                </label>
+            <div class="relative">
                 <input
                     type="tel"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brandColor focus:border-transparent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     placeholder="06-12345678"
                     value="{{ $person && $person->phones ? (is_array($person->phones) && count($person->phones) > 0 ? $person->phones[0]['value'] ?? '' : '') : '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>Telefoonnummer</span>
+                </label>
             </div>
 
             <!-- E-mailadres -->
-            <div>
-                <label class="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <span class="icon-mail text-lg"></span>
-                    <span>E-mailadres</span>
-                </label>
+            <div class="relative">
                 <input
                     type="email"
-                    class="w-full px-3 py-2 rounded-lg border bg-neutral-100 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brandColor focus:border-transparent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full"
                     placeholder="email@voorbeeld.nl"
                     value="{{ $person && $person->emails ? (is_array($person->emails) && count($person->emails) > 0 ? $person->emails[0]['value'] ?? '' : '') : '' }}"
                     readonly
                 />
+                <label class="">
+
+                    <span>E-mailadres</span>
+                </label>
             </div>
         </div>
     </div>

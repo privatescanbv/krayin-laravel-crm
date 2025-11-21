@@ -6,7 +6,15 @@
     <x-slot:content>
         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
             <!-- Order item selection -->
-            <div>
+            <div class="relative">
+                <input
+                    type="datetime-local"
+                    v-model="form.from"
+                    @change="calculateEndTime"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
+                    style="pointer-events: auto; z-index: 10; position: relative;"
+                    @click.stop
+                />
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Orderitem
                     <span class="text-xs text-gray-500 font-normal ml-2">
@@ -57,7 +65,7 @@
                 </select>
                 <!-- Show booking details for selected item -->
                 <div v-if="selectedOrderItem && selectedOrderItem.bookings && selectedOrderItem.bookings.length > 0"
-                     class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                     class="mt-3 p-3 bg-activity-note-bg dark:bg-blue-900/20 border border-activity-note-border dark:border-blue-800 rounded-md">
                     <div class="text-sm font-medium text-activity-task-text dark:text-blue-200 mb-2">
                         Huidige planning voor dit orderitem:
                     </div>
@@ -83,22 +91,8 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van</label>
-                <input
-                    type="datetime-local"
-                    v-model="form.from"
-                    @change="calculateEndTime"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                    style="pointer-events: auto; z-index: 10; position: relative;"
-                    @click.stop
-                />
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tot
-                    <span v-if="selectedOrderItem && selectedOrderItem.duration" class="text-xs text-gray-500">
-                        (@{{ selectedOrderItem.duration }} min)
-                    </span>
-                </label>
+            <div class="relative">
                 <input
                     type="datetime-local"
                     v-model="form.to"
@@ -106,10 +100,16 @@
                     style="pointer-events: auto; z-index: 10; position: relative;"
                     @click.stop
                 />
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tot
+                    <span v-if="selectedOrderItem && selectedOrderItem.duration" class="text-xs text-gray-500">
+                        (@{{ selectedOrderItem.duration }} min)
+                    </span>
+                </label>
             </div>
             <div class="flex items-center gap-2">
                 <input id="replace_existing" type="checkbox" v-model="form.replace_existing"
-                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
+                       class="h-4 w-4 text-activity-note-text border-gray-300 rounded focus:ring-blue-500"/>
                 <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang
                     bestaande afspraak (verwijdert eerdere boekingen voor deze
                     orderitem)</label>
@@ -123,7 +123,7 @@
                 @click="$refs.bookModal.toggle()">Annuleren
             </button>
             <button
-                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="px-4 py-2 text-sm font-medium text-white text-activity-note-text border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 @click="submitBooking">Opslaan
             </button>
         </div>

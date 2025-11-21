@@ -38,7 +38,7 @@
                             Website
                         </div>
                         <div class="font-medium dark:text-white">
-                            <a href="{{ $clinic->website_url }}" target="_blank" class="text-blue-600 hover:underline dark:text-blue-400">
+                            <a href="{{ $clinic->website_url }}" target="_blank" class="text-activity-note-text hover:underline dark:text-blue-400">
                                 {{ $clinic->website_url }}
                             </a>
                         </div>

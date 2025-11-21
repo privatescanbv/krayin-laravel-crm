@@ -527,7 +527,7 @@
                                             @click="removeAppliedColumnAllValues(column.index)"
                                         >
                                             <p
-                                                class="cursor-pointer text-xs font-medium leading-6 text-blue-600"
+                                                class="cursor-pointer text-xs font-medium leading-6 text-activity-note-text"
                                                 v-if="hasAnyAppliedColumnValues(column.index)"
                                             >
                                                 @lang('admin::app.components.datagrid.filters.custom-filters.clear-all')

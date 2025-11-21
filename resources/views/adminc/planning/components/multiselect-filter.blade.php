@@ -43,7 +43,7 @@
                             <input
                                 type="checkbox"
                                 :checked="selectedValues.includes(option.value)"
-                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                class="h-4 w-4 text-activity-note-text border-gray-300 rounded focus:ring-blue-500"
                                 @click.stop
                                 @change="toggleValue(option.value)"
                             />

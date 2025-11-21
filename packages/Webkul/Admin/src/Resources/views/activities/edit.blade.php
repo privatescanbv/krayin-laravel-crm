@@ -158,10 +158,6 @@
 
                     <!-- Description -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.components.activities.actions.activity.description')
-                        </x-admin::form.control-group.label>
-
                         <x-admin::form.control-group.control
                             type="textarea"
                             name="comment"
@@ -172,6 +168,10 @@
                         />
 
                         <x-admin::form.control-group.error control-name="comment" />
+
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.components.activities.actions.activity.description')
+                        </x-admin::form.control-group.label>
                     </x-admin::form.control-group>
 
                     <!-- Toegewezen aan -->
@@ -248,19 +248,19 @@
                                 </span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">
                                     @if($relatedEntityName === 'Lead')
-                                        <a href="{{ route('admin.leads.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.leads.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? $relatedEntity->title ?? 'Onbekende lead' }}
                                         </a>
                                     @elseif($relatedEntityName === 'Person')
-                                        <a href="{{ route('admin.contacts.persons.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.contacts.persons.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? 'Onbekende persoon' }}
                                         </a>
                                     @elseif($relatedEntityName === 'Product')
-                                        <a href="{{ route('admin.products.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.products.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? 'Onbekend product' }}
                                         </a>
                                     @elseif($relatedEntityName === 'Warehouse')
-                                        <a href="{{ route('admin.warehouses.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.warehouses.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? 'Onbekende warehouse' }}
                                         </a>
                                     @endif
@@ -392,7 +392,7 @@
                 const map = {
                     in_progress: 'bg-blue-100 text-activity-task-text border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800',
                     active: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-800',
-                    on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
+                    on_hold: 'bg-yellow-100 text-status-on_hold-text border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
                     expired: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-800',
                     done: 'bg-gray-200 text-gray-800 border-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600',
                 };

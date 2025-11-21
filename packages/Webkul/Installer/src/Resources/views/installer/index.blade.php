@@ -155,7 +155,7 @@
                                     </template>
 
                                     <template v-else>
-                                        <span class="icon-tick text-green-500"></span>
+                                        <span class="icon-tick text-status-active-text"></span>
                                     </template>
 
                                     <p>@lang('installer::app.installer.index.start.main')</p>
@@ -175,7 +175,7 @@
                                     </template>
 
                                     <template v-else>
-                                        <span class="icon-tick text-green-500"></span>
+                                        <span class="icon-tick text-status-active-text"></span>
                                     </template>
 
                                     <p>@lang('installer::app.installer.index.server-requirements.title')</p>
@@ -192,7 +192,7 @@
                                     </template>
 
                                     <template v-else>
-                                        <span class="icon-tick text-green-500"></span>
+                                        <span class="icon-tick text-status-active-text"></span>
                                     </template>
 
                                     <p>
@@ -211,7 +211,7 @@
                                     </template>
 
                                     <template v-else>
-                                        <span class="icon-tick text-green-500"></span>
+                                        <span class="icon-tick text-status-active-text"></span>
                                     </template>
 
                                     <p>@lang('installer::app.installer.index.ready-for-installation.title')</p>
@@ -228,7 +228,7 @@
                                     </template>
 
                                     <template v-else>
-                                        <span class="icon-tick text-green-500"></span>
+                                        <span class="icon-tick text-status-active-text"></span>
                                     </template>
 
                                     <p>@lang('installer::app.installer.index.create-administrator.title')</p>
@@ -245,7 +245,7 @@
                                     </template>
 
                                     <template v-else>
-                                        <span class="icon-tick text-green-500"></span>
+                                        <span class="icon-tick text-status-active-text"></span>
                                     </template>
 
                                     <p>@lang('installer::app.installer.index.installation-completed.title')</p>
@@ -367,7 +367,7 @@
 
                     <div class="flex h-[486px] flex-col gap-4 overflow-y-auto border-b border-gray-300 px-7 py-4">
                         <div class="flex items-center gap-1">
-                            <span class="{{ $phpVersion['supported'] ? 'icon-tick text-xl text-green-500' : '' }}"></span>
+                            <span class="{{ $phpVersion['supported'] ? 'icon-tick text-xl text-status-active-text' : '' }}"></span>
 
                             <p class="text-sm font-semibold text-gray-600">
                                 @lang('installer::app.installer.index.server-requirements.php') <span class="font-normal">(@lang('installer::app.installer.index.server-requirements.php-version'))</span>
@@ -377,7 +377,7 @@
                         @foreach ($requirements['requirements'] as $requirement)
                             @foreach ($requirement as $key => $item)
                                 <div class="flex items-center gap-1">
-                                    <span class="{{ $item ? 'icon-tick text-green-500' : 'icon-cross-large text-red-500' }} text-xl"></span>
+                                    <span class="{{ $item ? 'icon-tick text-status-active-text' : 'icon-cross-large text-red-500' }} text-xl"></span>
 
                                     <p class="text-sm font-semibold text-gray-600">
                                         @lang('installer::app.installer.index.server-requirements.' . $key)
@@ -993,7 +993,7 @@
                     <div class="flex h-[484px] flex-col justify-center gap-4 overflow-y-auto border-b border-gray-300 px-7 py-4">
                         <div class="flex flex-col gap-4">
                             <div class="flex h-8 w-8 items-center justify-center rounded-full border border-green-500">
-                                <span class="icon-tick text-xl font-semibold text-green-500"></span>
+                                <span class="icon-tick text-xl font-semibold text-status-active-text"></span>
                             </div>
 
                             <div class="grid gap-2.5">

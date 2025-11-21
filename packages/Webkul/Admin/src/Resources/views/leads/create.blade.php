@@ -103,7 +103,7 @@ $salutationToGenderMapping = [
                                 v-if="person.id"
                                 :href="`/admin/contacts/persons/view/${person.id}`"
                                 target="_blank"
-                                class="text-blue-600 hover:text-activity-task-text p-1"
+                                class="text-activity-note-text hover:text-activity-task-text p-1"
                                 title="Bekijk persoon"
                             >
                                 <i class="icon-eye text-sm"></i>
@@ -113,7 +113,7 @@ $salutationToGenderMapping = [
                             <button
                                 v-on:click="removePerson(index)"
                                 type="button"
-                                class="text-error hover:text-red-800 p-1"
+                                class="text-status-expired-text hover:text-red-800 p-1"
                                 title="Verwijder persoon"
                             >
                                 <i class="icon-trash text-sm"></i>
@@ -191,9 +191,9 @@ $salutationToGenderMapping = [
 
                                 <!-- Show selected persons info if available -->
                                 <div v-if="hasSelectedPersons"
-                                     class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                     class="mt-2 p-3 bg-status-active-bg border border-status-active-border rounded-lg">
                                     <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-succes" fill="none" stroke="currentColor"
+                                        <svg class="w-5 h-5 text-status-active-text" fill="none" stroke="currentColor"
                                              viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M5 13l4 4L19 7"></path>
@@ -298,9 +298,18 @@ $salutationToGenderMapping = [
                                         <!-- Heeft u metalen? -->
                                         <div class="mt-3">
                                             <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                        type="number"
+                                                        name="height"
+                                                        placeholder="Bijv. 175"
+                                                        min="100"
+                                                        max="250"
+                                                        step="1"
+                                                    />
+                                                    <x-admin::form.control-group.label>
                                                     Heeft u metalen?
-                                                </x-admin::form.control-group.label>
+                                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="height"/>
+
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
                                                         <input type="radio" name="metals" value="1" required
@@ -377,22 +386,10 @@ $salutationToGenderMapping = [
                                                     <x-admin::form.control-group.label>
                                                         Lengte (cm)
                                                     </x-admin::form.control-group.label>
-                                                    <x-admin::form.control-group.control
-                                                        type="number"
-                                                        name="height"
-                                                        placeholder="Bijv. 175"
-                                                        min="100"
-                                                        max="250"
-                                                        step="1"
-                                                    />
-                                                    <x-admin::form.control-group.error control-name="height"/>
                                                 </x-admin::form.control-group>
                                             </div>
                                             <div class="w-1/2">
                                                 <x-admin::form.control-group>
-                                                    <x-admin::form.control-group.label>
-                                                        Gewicht (kg)
-                                                    </x-admin::form.control-group.label>
                                                     <x-admin::form.control-group.control
                                                         type="number"
                                                         name="weight"
@@ -401,7 +398,10 @@ $salutationToGenderMapping = [
                                                         max="300"
                                                         step="1"
                                                     />
-                                                    <x-admin::form.control-group.error control-name="weight"/>
+                                                    <x-admin::form.control-group.label>
+                                                        Gewicht (kg)
+                                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="weight"/>
+
                                                 </x-admin::form.control-group>
                                             </div>
                                         </div>
@@ -422,9 +422,6 @@ $salutationToGenderMapping = [
                                     <!-- Description -->
                                     <div class="mb-4">
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.leads.create.description')
-                                            </x-admin::form.control-group.label>
                                             <x-admin::form.control-group.control
                                                 type="textarea"
                                                 name="description"
@@ -433,7 +430,10 @@ $salutationToGenderMapping = [
                                                 placeholder="Beschrijving"
                                                 class="min-h-[80px]"
                                             />
-                                            <x-admin::form.control-group.error control-name="description"/>
+                                            <x-admin::form.control-group.label>
+                                                @lang('admin::app.leads.create.description')
+                                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="description"/>
+
                                         </x-admin::form.control-group>
                                     </div>
 
@@ -472,7 +472,7 @@ $salutationToGenderMapping = [
                             <!-- Right: Suggestions as separate panel (outside white card) -->
                             <div class="w-1/3 max-md:w-full">
                                 <div class="sticky top-4">
-                                    <div class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900 p-4" v-if="suggestions.length > 0">
+                                    <div class="rounded-lg border border-activity-note-border bg-activity-note-bg dark:border-blue-800 dark:bg-blue-900 p-4" v-if="suggestions.length > 0">
                                         <x-adminc::components.person-suggestions-panel :button-handler="'selectSuggestion'" :button-text="'Koppelen'" />
                                     </div>
                                 </div>
@@ -1152,13 +1152,13 @@ $salutationToGenderMapping = [
 
                     getPersonCardClass(person) {
                         if (!person.id) {
-                            return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900';
+                            return 'border-activity-note-border bg-activity-note-bg dark:border-blue-800 dark:bg-blue-900';
                         }
 
                         if (person.match_percentage >= 90) {
-                            return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900';
+                            return 'border-status-active-border bg-status-active-bg dark:border-green-800 dark:bg-green-900';
                         } else if (person.match_percentage >= 70) {
-                            return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900';
+                            return 'border-status-on_hold-border bg-status-on_hold-bg dark:border-yellow-800 dark:bg-yellow-900';
                         } else if (person.match_percentage >= 50) {
                             return 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900';
                         } else {
@@ -1168,7 +1168,7 @@ $salutationToGenderMapping = [
 
                     getAvatarClass(person) {
                         if (!person.id) {
-                            return 'bg-blue-600';
+                            return 'text-activity-note-text';
                         }
 
                         if (person.match_percentage >= 90) {
@@ -1186,7 +1186,7 @@ $salutationToGenderMapping = [
                         if (percentage >= 80) {
                             return 'bg-succes';
                         } else if (percentage >= 60) {
-                            return 'bg-yellow-500';
+                            return 'bg-status-on_hold-text';
                         } else if (percentage >= 40) {
                             return 'bg-orange-500';
                         } else {

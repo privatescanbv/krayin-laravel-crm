@@ -36,12 +36,12 @@
             </ul>
 
             <!-- Geen resultaten - optie om nieuwe persoon aan te maken -->
-            <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-blue-50 border-blue-200">
+            <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-activity-note-bg border-activity-note-border">
                 <div class="text-center">
                     <div class="text-sm text-blue-700 mb-2">Geen bestaande personen gevonden voor "{{ search }}"</div>
                     <button
                         @click="$emit('create-new')"
-                        class="text-blue-600 hover:text-activity-task-text bg-blue-100 hover:bg-activity-task-bg px-3 py-1 rounded text-sm"
+                        class="text-activity-note-text hover:text-activity-task-text bg-blue-100 hover:bg-activity-task-bg px-3 py-1 rounded text-sm"
                     >
                         Nieuwe persoon aanmaken: "{{ search }}"
                     </button>
@@ -60,7 +60,7 @@
                         if (score >= 80) {
                             return 'bg-succes';
                         } else if (score >= 60) {
-                            return 'bg-yellow-500';
+                            return 'bg-status-on_hold-text';
                         } else if (score >= 40) {
                             return 'bg-orange-500';
                         } else {

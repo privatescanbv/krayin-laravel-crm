@@ -5,7 +5,7 @@
             <div class="flex-1">
                 <div class="flex items-center">
                     <div class="font-medium">{{ lead.name || (lead.first_name && lead.last_name ? `${lead.first_name} ${lead.last_name}` : 'Lead #' + lead.id) }}</div>
-                    <span class="ml-2 text-succes text-xs">+ Toevoegen</span>
+                    <span class="ml-2 text-status-active-text text-xs">+ Toevoegen</span>
                 </div>
                 <div class="text-sm text-gray-600">
                     <span v-if="lead.emails && lead.emails.length">{{ lead.emails[0].value }}</span>
@@ -39,7 +39,7 @@
                         if (score >= 80) {
                             return 'bg-succes';
                         } else if (score >= 60) {
-                            return 'bg-yellow-500';
+                            return 'bg-status-on_hold-text';
                         } else if (score >= 40) {
                             return 'bg-orange-500';
                         } else {

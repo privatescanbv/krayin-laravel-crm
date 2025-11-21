@@ -48,10 +48,10 @@
                 <div class="p-4">
                     <div class="flex items-center gap-4">
                         <div class="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-300 {{ $matchBreakdown['percentage'] >= 80 ? 'bg-succes' : ($matchBreakdown['percentage'] >= 50 ? 'bg-yellow-500' : 'bg-red-500') }}"
+                            <div class="h-full rounded-full transition-all duration-300 {{ $matchBreakdown['percentage'] >= 80 ? 'bg-succes' : ($matchBreakdown['percentage'] >= 50 ? 'bg-status-on_hold-text' : 'bg-red-500') }}"
                                  style="width: {{ $matchBreakdown['percentage'] }}%"></div>
                         </div>
-                        <span class="text-lg font-medium {{ $matchBreakdown['percentage'] >= 80 ? 'text-succes' : ($matchBreakdown['percentage'] >= 50 ? 'text-yellow-600' : 'text-error') }}">
+                        <span class="text-lg font-medium {{ $matchBreakdown['percentage'] >= 80 ? 'text-status-active-text' : ($matchBreakdown['percentage'] >= 50 ? 'text-yellow-600' : 'text-status-expired-text') }}">
                             {{ $matchBreakdown['percentage'] }}%
                         </span>
                     </div>
@@ -60,7 +60,7 @@
 
             @if(empty($matchBreakdown['field_differences']))
                 <div class="flex flex-col items-center justify-center py-16">
-                    <div class="text-6xl text-green-500 mb-4">
+                    <div class="text-6xl text-status-active-text mb-4">
                         <i class="icon-check-circle"></i>
                     </div>
                     <h3 class="text-xl font-semibold mb-2 dark:text-white">Alle gegevens komen overeen</h3>
@@ -105,7 +105,7 @@
                                                         type="radio"
                                                         name="choice[{{ $field }}]"
                                                         value="lead"
-                                                        class="text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                        class="text-activity-note-text border-gray-300 focus:ring-blue-500"
                                                         checked
                                                     >
                                                     <span class="text-xs text-gray-600 dark:text-gray-300">Gebruik lead</span>
@@ -115,7 +115,7 @@
                                                         type="radio"
                                                         name="choice[{{ $field }}]"
                                                         value="person"
-                                                        class="text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                        class="text-activity-note-text border-gray-300 focus:ring-blue-500"
                                                     >
                                                     <span class="text-xs text-gray-600 dark:text-gray-300">Gebruik person</span>
                                                 </label>
@@ -127,7 +127,7 @@
                                             </label>
                                         </td>
                                         <td class="px-4 py-4">
-                                            <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                                            <div class="text-sm text-activity-note-text dark:text-blue-400 font-medium">
                                                 {{ $difference['lead_value'] }}
                                             </div>
                                         </td>

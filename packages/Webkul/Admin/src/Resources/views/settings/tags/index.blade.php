@@ -232,10 +232,6 @@
                             {!! view_render_event('admin.settings.tags.index.form_controls.before') !!}
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.tags.index.create.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="name"
@@ -244,8 +240,12 @@
                                     :label="trans('admin::app.settings.tags.index.create.name')"
                                     :placeholder="trans('admin::app.settings.tags.index.create.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.tags.index.create.name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group.label>

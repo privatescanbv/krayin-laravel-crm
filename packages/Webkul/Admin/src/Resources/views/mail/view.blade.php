@@ -169,10 +169,6 @@
 
                                     <!-- To -->
                                     <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label class="required">
-                                            @lang('admin::app.mail.view.to')
-                                        </x-admin::form.control-group.label>
-
                                         <div class="relative">
                                             <x-admin::form.control-group.controls.tags
                                                 name="reply_to"
@@ -199,8 +195,12 @@
                                                 </span>
                                             </div>
                                         </div>
+                                        <x-admin::form.control-group.label class="required">
+                                            @lang('admin::app.mail.view.to')
+                                        </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.error control-name="reply_to" />
+
                                     </x-admin::form.control-group>
 
                                     <template v-if="showCC">
@@ -213,11 +213,11 @@
                                                 :label="trans('admin::app.mail.view.cc')"
                                                 :placeholder="trans('admin::app.mail.view.enter-mails')"
                                             />
-
                                             <x-admin::form.control-group.label>
                                                 @lang('admin::app.mail.view.cc')
-                                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="cc" />
+                                            </x-admin::form.control-group.label>
 
+                                            <x-admin::form.control-group.error control-name="cc" />
 
                                         </x-admin::form.control-group>
                                     </template>
@@ -232,11 +232,11 @@
                                                 :label="trans('admin::app.mail.view.bcc')"
                                                 :placeholder="trans('admin::app.mail.view.enter-mails')"
                                             />
-
                                             <x-admin::form.control-group.label>
                                                 @lang('admin::app.mail.view.bcc')
-                                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="bcc" />
+                                            </x-admin::form.control-group.label>
 
+                                            <x-admin::form.control-group.error control-name="bcc" />
 
                                         </x-admin::form.control-group>
                                     </template>
@@ -252,8 +252,8 @@
                                             :tinymce="true"
                                             :label="trans('admin::app.mail.view.message')"
                                         />
-
                                         <x-admin::form.control-group.error control-name="reply" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Attachments -->

@@ -395,10 +395,6 @@
                     v-model="leadAfvoerenData.closed_at"
                 />
 
-                <x-admin::form.control-group.label>
-                    Reden van verlies
-                </x-admin::form.control-group.label>
-
                 <select
                     name="lost_reason"
                     class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
@@ -410,12 +406,17 @@
                         <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
                     @endforeach
                 </select>
+                <x-admin::form.control-group.label>
+                    Reden van verlies
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
 
             <x-admin::form.control-group>
                 <x-admin::form.control-group.label>
                     Gesloten op
                 </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </x-slot>
 

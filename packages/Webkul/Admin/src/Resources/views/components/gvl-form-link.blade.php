@@ -9,9 +9,7 @@
     'leadId' => null,
 ])
 
-<x-admin::form.control-group>
-    <x-admin::form.control-group.label>GVL Formulier Link</x-admin::form.control-group.label>
-    <div class="flex items-center gap-2">
+<x-admin::form.control-group>    <div class="flex items-center gap-2">
         <x-admin::form.control-group.control
             type="text"
             name="gvl_form_link"
@@ -46,9 +44,7 @@
                 Koppelen
             </button>
         @endif
-    </div>
-    <x-admin::form.control-group.error control-name="gvl_form_link" />
-    @if($gvlFormLink)
+    </div>    @if($gvlFormLink)
         <div class="mt-1 flex items-center gap-2">
             <p class="text-xs text-gray-600 dark:text-gray-400">
                 <a href="{{ $gvlFormLink }}" target="_blank" class="text-activity-note-text hover:underline">
@@ -62,6 +58,10 @@
             </div>
         </div>
     @endif
+    <x-admin::form.control-group.label>GVL Formulier Link</x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="gvl_form_link" />
+
 </x-admin::form.control-group>
 
 @pushOnce('scripts')

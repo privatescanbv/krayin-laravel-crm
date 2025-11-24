@@ -35,25 +35,7 @@
             <div
                 v-if="field.is_visible"
                 class="flex justify-between"
-            >
-                <x-admin::form.control-group.label ::for="name">
-                    @{{ label }} <span :class="isRequire"></span>
-
-                    <span
-                        v-if="field['channel_based'] && channelCount"
-                        class="rounded border border-gray-200 bg-neutral-bg px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
-                        v-text="JSON.parse(currentChannel).name"
-                    >
-                    </span>
-
-                    <span
-                        v-if="field['locale_based']"
-                        class="rounded border border-gray-200 bg-neutral-bg px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
-                        v-text="JSON.parse(currentLocale).name"
-                    >
-                    </span>
-                </x-admin::form.control-group.label>
-            </div>
+            >            </div>
 
             <!-- Text input -->
             <template v-if="field.type == 'text' && field.is_visible">
@@ -394,6 +376,24 @@
                 >
                 </p>
             </v-error-message>
+            <x-admin::form.control-group.label ::for="name">
+                    @{{ label }} <span :class="isRequire"></span>
+
+                    <span
+                        v-if="field['channel_based'] && channelCount"
+                        class="rounded border border-gray-200 bg-neutral-bg px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
+                        v-text="JSON.parse(currentChannel).name"
+                    >
+                    </span>
+
+                    <span
+                        v-if="field['locale_based']"
+                        class="rounded border border-gray-200 bg-neutral-bg px-1 py-0.5 text-[10px] font-semibold leading-normal text-gray-600"
+                        v-text="JSON.parse(currentLocale).name"
+                    >
+                    </span>
+                </x-admin::form.control-group.label>
+
         </x-admin::form.control-group>
     </script>
 

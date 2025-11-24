@@ -49,10 +49,6 @@
 
                 <!-- Name -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.name')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="text"
                         name="name"
@@ -62,8 +58,12 @@
                         :placeholder="trans('admin::app.settings.pipelines.create.name')"
                         value="{{ old('name') }}"
                     />
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.create.name')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="name" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.create.form.name.after') !!}
@@ -72,10 +72,6 @@
 
                 <!-- Rotten-Days -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.rotten-days')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="text"
                         name="rotten_days"
@@ -85,8 +81,12 @@
                         :placeholder="trans('admin::app.settings.pipelines.create.rotten-days')"
                         value="{{ old('rotten_days') ?? 30 }}"
                     />
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.create.rotten-days')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="rotten_days" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.create.form.rotten_days.after') !!}
@@ -95,10 +95,6 @@
 
                 <!-- Type -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.type')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="select"
                         name="type"
@@ -110,8 +106,12 @@
                         <option value="lead">Lead</option>
                         <option value="workflow">Workflow</option>
                     </x-admin::form.control-group.control>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.create.type')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="type" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.create.form.type.after') !!}
@@ -120,10 +120,6 @@
 
                 <!-- Mark as Default -->
                 <x-admin::form.control-group class="!mb-0 flex items-center gap-4">
-                    <x-admin::form.control-group.label class="!mb-0">
-                        @lang('admin::app.settings.pipelines.create.mark-as-default')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="switch"
                         class="cursor-pointer"
@@ -133,8 +129,12 @@
                         for="is_default"
                         :label="trans('admin::app.settings.pipelines.create.mark-as-default')"
                     />
+                    <x-admin::form.control-group.label class="!mb-0">
+                        @lang('admin::app.settings.pipelines.create.mark-as-default')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="is_default" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.create.form.is_default.after') !!}
@@ -207,10 +207,6 @@
 
                                         <!-- Name -->
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.settings.pipelines.create.name')
-                                            </x-admin::form.control-group.label>
-
                                             <x-admin::form.control-group.control
                                                 type="text"
                                                 ::name="'stages[' + element.id + '][name]'"
@@ -219,8 +215,12 @@
                                                 :label="trans('admin::app.settings.pipelines.create.name')"
                                                 ::readonly="! isDragable(element)"
                                             />
+                                            <x-admin::form.control-group.label class="required">
+                                                @lang('admin::app.settings.pipelines.create.name')
+                                            </x-admin::form.control-group.label>
 
                                             <x-admin::form.control-group.error ::name="'stages[' + element.id + '][name]'" />
+
                                         </x-admin::form.control-group>
 
                                         {!! view_render_event('admin.settings.pipelines.create.form.stages.name.before') !!}
@@ -235,10 +235,6 @@
 
                                         <!-- Probabilty -->
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.settings.pipelines.create.probability')
-                                            </x-admin::form.control-group.label>
-
                                             <x-admin::form.control-group.control
                                                 type="text"
                                                 ::name="'stages[' + element.id + '][probability]'"
@@ -247,7 +243,12 @@
                                                 ::readonly="element?.code != 'new' && ! isDragable(element)"
                                                 :label="trans('admin::app.settings.pipelines.create.probability')"
                                             />
+                                            <x-admin::form.control-group.label class="required">
+                                                @lang('admin::app.settings.pipelines.create.probability')
+                                            </x-admin::form.control-group.label>
+
                                             <x-admin::form.control-group.error ::name="'stages[' + element.id + '][probability]'" />
+
                                         </x-admin::form.control-group>
 
                                         {!! view_render_event('admin.settings.pipelines.create.form.stages.probability.after') !!}

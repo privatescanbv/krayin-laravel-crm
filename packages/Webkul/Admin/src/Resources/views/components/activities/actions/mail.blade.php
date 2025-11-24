@@ -110,10 +110,6 @@
 
                             <!-- To -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.mail.to')
-                                </x-admin::form.control-group.label>
-
                                 <div class="relative">
                                     <x-admin::form.control-group.control
                                         type="tags"
@@ -164,8 +160,12 @@
                                         </span>
                                     </div>
                                 </div>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.components.activities.actions.mail.to')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="reply_to" />
+
                             </x-admin::form.control-group>
 
                             <template v-if="showCC">
@@ -178,11 +178,11 @@
                                         :label="trans('admin::app.components.activities.actions.mail.cc')"
                                         :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         @lang('admin::app.components.activities.actions.mail.cc')
-                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="cc" />
+                                    </x-admin::form.control-group.label>
 
+                                    <x-admin::form.control-group.error control-name="cc" />
 
                                 </x-admin::form.control-group>
                             </template>
@@ -197,11 +197,11 @@
                                         :label="trans('admin::app.components.activities.actions.mail.bcc')"
                                         :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         @lang('admin::app.components.activities.actions.mail.bcc')
-                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="bcc" />
+                                    </x-admin::form.control-group.label>
 
+                                    <x-admin::form.control-group.error control-name="bcc" />
 
                                 </x-admin::form.control-group>
                             </template>
@@ -225,16 +225,12 @@
                                         @{{ template.label }}
                                     </option>
                                 </x-admin::form.control-group.control>
-
                                 <x-admin::form.control-group.error control-name="email_template" />
+
                             </x-admin::form.control-group>
 
                             <!-- Subject -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.mail.subject')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="subject"
@@ -243,11 +239,15 @@
                                     :label="trans('admin::app.components.activities.actions.mail.subject')"
                                     :placeholder="trans('admin::app.components.activities.actions.mail.subject')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.components.activities.actions.mail.subject')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.label>
                                     Template
-                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="subject" />
+                                </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="subject" />
 
                             </x-admin::form.control-group>
 
@@ -261,8 +261,8 @@
                                     :tinymce="true"
                                     :label="trans('admin::app.components.activities.actions.mail.message')"
                                 />
-
                                 <x-admin::form.control-group.error control-name="reply" />
+
                             </x-admin::form.control-group>
 
                             <!-- Attachments -->

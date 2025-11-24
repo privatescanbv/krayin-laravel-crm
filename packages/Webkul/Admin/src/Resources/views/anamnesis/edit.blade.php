@@ -79,10 +79,10 @@
                                     :value="$anamnesis->name"
                                     placeholder="Anamnesis naam"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     Naam
                                 </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
                         </div>
 
@@ -95,10 +95,10 @@
                                     placeholder="Beschrijving"
                                     rows="3"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     Beschrijving
                                 </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
                         </div>
 
@@ -123,10 +123,10 @@
                                     placeholder="Kliniek opmerkingen"
                                     rows="3"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     Kliniek opmerkingen
                                 </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
                         </div>
                     </div>
@@ -145,10 +145,10 @@
                                         placeholder="180"
                                         onchange="updateBMI()"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         Lengte (cm)
                                     </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
 
@@ -161,10 +161,10 @@
                                         placeholder="70"
                                         onchange="updateBMI()"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         Gewicht (kg)
                                     </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
                         </div>
@@ -187,10 +187,6 @@
                             <!-- Metalen -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u metaal in uw lichaam?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="metals" value="1"
@@ -211,6 +207,10 @@
                                     @error('metals')
                                         <p class="mt-1 text-xs italic text-status-expired-text">{{ $message }}</p>
                                     @enderror
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u metaal in uw lichaam?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="metals_comment" class="mt-2" style="display: {{ $anamnesis->metals == 1 ? 'block' : 'none' }}">
@@ -226,10 +226,6 @@
                             <!-- Medicijnen -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Gebruikt u Metformine?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="medications" value="1"
@@ -246,6 +242,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Gebruikt u Metformine?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="medications_comment" class="mt-2" style="display: {{ $anamnesis->medications == 1 ? 'block' : 'none' }}">
@@ -261,10 +261,6 @@
                             <!-- Glaucoom -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u glaucoom?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="glaucoma" value="1"
@@ -281,6 +277,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u glaucoom?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="glaucoma_comment" class="mt-2" style="display: {{ $anamnesis->glaucoma == 1 ? 'block' : 'none' }}">
@@ -296,10 +296,6 @@
                             <!-- Claustrofobie -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Bent u claustrofobisch?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="claustrophobia" value="1"
@@ -314,16 +310,16 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Bent u claustrofobisch?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
 
                             <!-- Dormicum -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Wenst u een rustgevend middel?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="dormicum" value="1"
@@ -338,16 +334,16 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Wenst u een rustgevend middel?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
 
                             <!-- Hart operatie -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u ooit een hartkatheterisatie gehad?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="heart_surgery" value="1"
@@ -364,6 +360,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u ooit een hartkatheterisatie gehad?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="heart_surgery_comment" class="mt-2" style="display: {{ $anamnesis->heart_surgery == 1 ? 'block' : 'none' }}">
@@ -379,10 +379,6 @@
                             <!-- Implantaat -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Draagt u een implantaat?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="implant" value="1"
@@ -399,6 +395,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Draagt u een implantaat?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="implant_comment" class="mt-2" style="display: {{ $anamnesis->implant == 1 ? 'block' : 'none' }}">
@@ -414,10 +414,6 @@
                             <!-- Operaties -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u in het verleden operaties gehad?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="surgeries" value="1"
@@ -434,6 +430,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u in het verleden operaties gehad?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="surgeries_comment" class="mt-2" style="display: {{ $anamnesis->surgeries == 1 ? 'block' : 'none' }}">
@@ -449,10 +449,6 @@
                             <!-- Hartproblemen -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u hartproblemen?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="heart_problems" value="1"
@@ -469,6 +465,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u hartproblemen?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="heart_problems_comment" class="mt-2" style="display: {{ $anamnesis->heart_problems == 1 ? 'block' : 'none' }}">
@@ -484,10 +484,6 @@
                             <!-- Rugklachten -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Kunt u langere tijd stil liggen op uw rug?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="back_problems" value="1"
@@ -504,6 +500,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Kunt u langere tijd stil liggen op uw rug?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="back_problems_comment" class="mt-2" style="display: {{ $anamnesis->back_problems == 1 ? 'block' : 'none' }}">
@@ -519,10 +519,6 @@
                             <!-- Allergie -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u allergieën?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="allergies" value="1"
@@ -539,6 +535,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u allergieën?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="allergies_comment" class="mt-2" style="display: {{ $anamnesis->allergies == 1 ? 'block' : 'none' }}">
@@ -554,10 +554,6 @@
                             <!-- Spijsverteringsklachten -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u spijsverteringsklachten
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="digestive_problems" value="1"
@@ -574,6 +570,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u spijsverteringsklachten
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="digestive_problems_comment" class="mt-2" style="display: {{ $anamnesis->digestive_problems == 1 ? 'block' : 'none' }}">
@@ -599,10 +599,6 @@
                             <!-- Hart erfelijk -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Hartafwijking?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="hereditary_heart" value="1"
@@ -619,6 +615,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Hartafwijking?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="hereditary_heart_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_heart == 1 ? 'block' : 'none' }}">
@@ -634,10 +634,6 @@
                             <!-- Vaat erfelijk -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Komt / kwam er in naaste familie hart- en/of vaatziekten voor?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="hereditary_vascular" value="1"
@@ -654,6 +650,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Komt / kwam er in naaste familie hart- en/of vaatziekten voor?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="hereditary_vascular_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_vascular == 1 ? 'block' : 'none' }}">
@@ -669,10 +669,6 @@
                             <!-- Tumoren erfelijk -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Komt / kwam er in de naaste familie kanker voor?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="hereditary_tumors" value="1"
@@ -689,6 +685,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Komt / kwam er in de naaste familie kanker voor?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="hereditary_tumors_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_tumors == 1 ? 'block' : 'none' }}">
@@ -704,10 +704,6 @@
                             <!-- Roken -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Rookt u?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="smoking" value="1"
@@ -724,6 +720,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Rookt u?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="smoking_comment" class="mt-2" style="display: {{ $anamnesis->smoking == 1 ? 'block' : 'none' }}">
@@ -739,10 +739,6 @@
                             <!-- Diabetes -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Heeft u diabetes?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="diabetes" value="1"
@@ -759,6 +755,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Heeft u diabetes?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
 
                                 <div id="diabetes_comment" class="mt-2" style="display: {{ $anamnesis->diabetes == 1 ? 'block' : 'none' }}">
@@ -774,10 +774,6 @@
                             <!-- Actief -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Beweegt u regelmatig?
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="active" value="1"
@@ -792,6 +788,10 @@
                                             Nee
                                         </label>
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        Beweegt u regelmatig?
+                                    </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
 
@@ -804,10 +804,10 @@
                                         :value="$anamnesis->heart_attack_risk"
                                         placeholder="Risico hartinfarct"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         Risico hartinfarct
                                     </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
                         </div>
@@ -828,10 +828,10 @@
                                         :value="$anamnesis->remarks"
                                         placeholder="Algemene opmerking"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         Opmerking
                                     </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
 
@@ -844,10 +844,10 @@
                                         placeholder="Advies voor patiënt"
                                         rows="3"
                                     />
-
                                     <x-admin::form.control-group.label>
                                         Advies
                                     </x-admin::form.control-group.label>
+
                                 </x-admin::form.control-group>
                             </div>
                         </div>

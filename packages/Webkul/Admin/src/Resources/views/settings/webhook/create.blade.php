@@ -76,10 +76,6 @@
                             <div>
                                 <!-- Method and URL endpoint -->
                                 <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.webhooks.create.url-and-parameters')
-                                    </x-admin::form.control-group.label>
-
                                     <div class="flex">
                                         <x-admin::form.control-group.control
                                             type="select"
@@ -107,7 +103,12 @@
                                             v-model.lazy="baseUrl"
                                         />
                                     </div>
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.webhooks.create.url-and-parameters')
+                                    </x-admin::form.control-group.label>
+
                                     <x-admin::form.control-group.error control-name="end_point"/>
+
                                 </x-admin::form.control-group>
 
                                 <!-- Parameters -->
@@ -144,10 +145,6 @@
 
                             <!-- Content -->
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.webhooks.create.body')
-                                </x-admin::form.control-group.label>
-
                                 <div class="mb-4 flex items-center gap-2">
                                     <div class="flex cursor-pointer items-center justify-center">
                                         <input
@@ -261,8 +258,12 @@
                                         :placeholders="placeholders"
                                     ></v-key-and-value>
                                 </template>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.webhooks.create.body')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="payload" />
+
                             </x-admin::form.control-group>
                         </div>
                     </div>
@@ -286,10 +287,6 @@
                         <x-slot:content>
                             <!-- Name -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.webhooks.create.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="name"
@@ -298,16 +295,16 @@
                                     :label="trans('admin::app.settings.webhooks.create.name')"
                                     :placeholder="trans('admin::app.settings.webhooks.create.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.webhooks.create.name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             <!-- Entity Type -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.webhooks.create.entity-type')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     id="entity_type"
@@ -322,16 +319,16 @@
                                         </option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.webhooks.create.entity-type')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="entity_type" />
+
                             </x-admin::form.control-group>
 
                             <!-- Description -->
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.webhooks.create.description')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     id="description"
@@ -340,8 +337,12 @@
                                     :label="trans('admin::app.settings.webhooks.create.description')"
                                     :placeholder="trans('admin::app.settings.webhooks.create.description')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.webhooks.create.description')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="description" />
+
                             </x-admin::form.control-group>
                         </x-slot>
                     </x-admin::accordion>
@@ -356,10 +357,6 @@
             id="v-key-and-value-template"
         >
             <x-admin::form.control-group class="my-2">
-                <x-admin::form.control-group.label class="required">
-                    @{{ title }}
-                </x-admin::form.control-group.label>
-
                 <div class="flex flex-col">
                     <div
                         class="group my-2 flex items-center justify-between gap-3"
@@ -375,9 +372,7 @@
                                 rules="required"
                                 :label="trans('Key')"
                                 :placeholder="trans('Key')"
-                            />
-                            <x-admin::form.control-group.error ::name="`${name}[${index}][key]`" />
-                        </div>
+                            />                        </div>
 
                         <div class="w-full">
                             <x-admin::form.control-group.control
@@ -388,9 +383,7 @@
                                 rules="required"
                                 :label="trans('Value')"
                                 :placeholder="trans('Value')"
-                            />
-                            <x-admin::form.control-group.error ::name="`${name}[${index}][value]`" />
-                        </div>
+                            />                        </div>
 
                         <i
                             class="icon-delete ml-1 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
@@ -444,6 +437,14 @@
                         </button>
                     </div>
                 </div>
+                <x-admin::form.control-group.label class="required">
+                    @{{ title }}
+                </x-admin::form.control-group.label>
+
+                <x-admin::form.control-group.error ::name="`${name}[${index}][key]`" />
+
+                <x-admin::form.control-group.error ::name="`${name}[${index}][value]`" />
+
             </x-admin::form.control-group>
         </script>
 

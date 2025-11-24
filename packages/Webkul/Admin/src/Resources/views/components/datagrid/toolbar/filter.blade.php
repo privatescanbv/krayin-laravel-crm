@@ -770,10 +770,6 @@
                                             <!-- Save Filter Name Input Field -->
                                             <div class="flex flex-col gap-2 border-b px-4 dark:border-gray-800">
                                                 <x-admin::form.control-group>
-                                                    <x-admin::form.control-group.label class="required">
-                                                        @lang('admin::app.components.datagrid.toolbar.filter.name')
-                                                    </x-admin::form.control-group.label>
-
                                                     <x-admin::form.control-group.control
                                                         type="hidden"
                                                         name="id"
@@ -790,14 +786,18 @@
                                                         :placeholder="trans('admin::app.components.datagrid.toolbar.filter.name')"
                                                     />
 
-                                                    <x-admin::form.control-group.error control-name="name" />
-
                                                     <button
                                                         type="submit"
                                                         class="hidden"
                                                         :disabled="savedFilters.params.filters.columns.every(column => column.value.length === 0)"
                                                         id="save-filter"
                                                     ></button>
+                                                    <x-admin::form.control-group.label class="required">
+                                                        @lang('admin::app.components.datagrid.toolbar.filter.name')
+                                                    </x-admin::form.control-group.label>
+
+                                                    <x-admin::form.control-group.error control-name="name" />
+
                                                 </x-admin::form.control-group>
                                             </div>
 

@@ -52,12 +52,12 @@
                     <option value="{{ $case->value }}">{{ $case->label() }}</option>
                 @endforeach
             </x-admin::form.control-group.control>
-
-
-            <x-admin::form.control-group.error control-name="salutation"/>
-                        <x-admin::form.control-group.label>
+            <x-admin::form.control-group.label>
                 Aanhef
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="salutation"/>
+
         </x-admin::form.control-group>
     </div>
 
@@ -73,11 +73,12 @@
                 placeholder="J.A."
                 :readonly="!$mayEditPersonFields"
             />
-
-            <x-admin::form.control-group.error control-name="initials"/>
             <x-admin::form.control-group.label>
                 Initialen
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="initials"/>
+
         </x-admin::form.control-group>
 
         <!-- First Name -->
@@ -96,7 +97,9 @@
             <x-admin::form.control-group.label class="required">
                 Voornaam
             </x-admin::form.control-group.label>
+
             <x-admin::form.control-group.error control-name="first_name"/>
+
         </x-admin::form.control-group>
     </div>
 
@@ -113,12 +116,12 @@
                 class="w-24"
                 :readonly="!$mayEditPersonFields"
             />
-
-            <x-admin::form.control-group.error control-name="lastname_prefix"/>
-
             <x-admin::form.control-group.label>
                 Tussenvoegsel
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="lastname_prefix"/>
+
         </x-admin::form.control-group>
 
         <!-- Last Name -->
@@ -137,7 +140,9 @@
             <x-admin::form.control-group.label class="required">
                 @lang('admin::app.leads.merge.field-last-name-birth')
             </x-admin::form.control-group.label>
+
             <x-admin::form.control-group.error control-name="last_name"/>
+
         </x-admin::form.control-group>
     </div>
 
@@ -155,12 +160,12 @@
                 class="w-24"
                 :readonly="!$mayEditPersonFields"
             />
-
-            <x-admin::form.control-group.error control-name="married_name_prefix"/>
-
             <x-admin::form.control-group.label>
                 Tussenvoegsel
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="married_name_prefix"/>
+
         </x-admin::form.control-group>
 
         <!-- Married Name -->
@@ -172,12 +177,12 @@
                 label="{{ __('Married name') }}"
                 :readonly="!$mayEditPersonFields"
             />
-
-            <x-admin::form.control-group.error control-name="married_name"/>
-
             <x-admin::form.control-group.label>
                 @lang('admin::app.leads.merge.field-last-name-married')
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="married_name"/>
+
         </x-admin::form.control-group>
     </div>
 
@@ -194,8 +199,8 @@
         <x-admin::form.control-group.label>
             Geboortedatum
         </x-admin::form.control-group.label>
-        <x-admin::form.control-group.error control-name="date_of_birth"/>
 
+        <x-admin::form.control-group.error control-name="date_of_birth"/>
 
     </x-admin::form.control-group>
 
@@ -226,7 +231,9 @@
         <x-admin::form.control-group.label>
             Geslacht
         </x-admin::form.control-group.label>
+
         <x-admin::form.control-group.error control-name="gender"/>
+
     </x-admin::form.control-group>
 </div>
 

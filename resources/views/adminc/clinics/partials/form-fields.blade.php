@@ -12,19 +12,15 @@
             :checked="(bool) old('is_active', $clinic->is_active ?? true)"
             label="Actief"
         />
-
-        <x-admin::form.control-group.error control-name="is_active" />
-
         <x-admin::form.control-group.label>
             @lang('admin::app.settings.clinics.index.create.is_active')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="is_active" />
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.settings.clinics.index.create.name')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="text"
             name="name"
@@ -33,8 +29,12 @@
             :label="trans('admin::app.settings.clinics.index.create.name')"
             :placeholder="trans('admin::app.settings.clinics.index.create.name')"
         />
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.settings.clinics.index.create.name')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="name" />
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -46,12 +46,12 @@
             label="AFB naam kliniek"
             placeholder="AFB naam kliniek"
         />
-
-        <x-admin::form.control-group.error control-name="registration_form_clinic_name" />
-
         <x-admin::form.control-group.label>
             AFB naam kliniek
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="registration_form_clinic_name" />
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -63,12 +63,12 @@
             label="Website URL"
             placeholder="https://www.voorbeeld.nl"
         />
-
-        <x-admin::form.control-group.error control-name="website_url" />
-
         <x-admin::form.control-group.label>
             Website
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="website_url" />
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -80,12 +80,12 @@
             label="Opmerking orderbevestiging"
             placeholder="Informatie waar patiënt zich kan melden"
         />
-
-        <x-admin::form.control-group.error control-name="order_confirmation_note" />
-
         <x-admin::form.control-group.label>
             Opmerking orderbevestiging
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="order_confirmation_note" />
+
     </x-admin::form.control-group>
 
     <!-- Emails -->

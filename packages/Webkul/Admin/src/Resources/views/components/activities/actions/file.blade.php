@@ -88,10 +88,10 @@
                                     type="textarea"
                                     name="comment"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.description')
                                 </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
 
                             <!-- File Name -->
@@ -100,18 +100,14 @@
                                     type="text"
                                     name="name"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.name')
                                 </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
 
                             <!-- File -->
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.file.file')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="file"
                                     id="file"
@@ -119,11 +115,15 @@
                                     rules="required"
                                     :label="trans('admin::app.components.activities.actions.file.file')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.components.activities.actions.file.file')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.title-control')
-                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="file" />
+                                </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="file" />
 
                             </x-admin::form.control-group>
 

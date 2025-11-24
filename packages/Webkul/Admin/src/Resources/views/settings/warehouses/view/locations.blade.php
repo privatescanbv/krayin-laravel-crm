@@ -86,10 +86,6 @@
                             />
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.warehouses.view.locations.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="name"
@@ -99,8 +95,12 @@
                                     :label="trans('admin::app.settings.warehouses.view.locations.name')"
                                     :placeholder="trans('admin::app.settings.warehouses.view.locations.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.warehouses.view.locations.name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
                         </x-slot>
 

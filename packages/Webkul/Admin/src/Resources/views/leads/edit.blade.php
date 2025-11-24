@@ -223,10 +223,12 @@
                                 :placeholder="trans('admin::app.leads.edit.description')"
                                 class="min-h-[80px]"
                             />
-                            <x-admin::form.control-group.error control-name="description"/>
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.leads.edit.description')
                             </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.error control-name="description"/>
+
                         </x-admin::form.control-group>
                     </div>
 
@@ -249,11 +251,7 @@
                             ->allActiveUsers();
                             $currentUserId = $lead->user_id;
                         @endphp
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Toegewezen gebruiker
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
+                        <x-admin::form.control-group>                            <x-admin::form.control-group.control
                                 type="select"
                                 name="user_id"
                                 value="{{ $currentUserId }}"
@@ -264,6 +262,10 @@
                                         value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
                                 @endforeach
                             </x-admin::form.control-group.control>
+                            <x-admin::form.control-group.label>
+                                Toegewezen gebruiker
+                            </x-admin::form.control-group.label>
+
                         </x-admin::form.control-group>
                     </div>
 

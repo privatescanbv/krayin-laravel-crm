@@ -87,10 +87,6 @@
 
                         <!-- Admin name -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.attributes.edit.name')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="name"
@@ -99,8 +95,12 @@
                                 :label="trans('admin::app.settings.attributes.edit.name')"
                                 :placeholder="trans('admin::app.settings.attributes.edit.name')"
                             />
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.attributes.edit.name')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="name" />
+
                         </x-admin::form.control-group>
 
                         {!! view_render_event('admin.settings.attributes.edit.form_controls.name.after', ['attribute' => $attribute]) !!}
@@ -151,11 +151,11 @@
                                                 @lang('admin::app.settings.attributes.create.options')
                                             </option>
                                         </x-admin::form.control-group.control>
-
                                         <x-admin::form.control-group.error
                                             class="mt-3"
                                             control-name="admin"
                                         />
+
                                     </x-admin::form.control-group>
 
                                     {!! view_render_event('admin.settings.attributes.edit.form_controls.option_type.after', ['attribute' => $attribute]) !!}
@@ -164,10 +164,6 @@
 
                                     <!-- Input Lookup Type -->
                                     <x-admin::form.control-group v-if="attributeType == 'lookup' || (optionType == 'lookup')" class="mb-2.5 w-1/2">
-                                        <x-admin::form.control-group.label>
-                                            @lang('admin::app.settings.attributes.create.lookup-type')
-                                        </x-admin::form.control-group.label>
-
                                         <x-admin::form.control-group.control
                                             type="select"
                                             id="lookup_type"
@@ -182,11 +178,15 @@
                                                 v-for="(entityType, index) in lookupEntityTypes"
                                             ></option>
                                         </x-admin::form.control-group.control>
+                                        <x-admin::form.control-group.label>
+                                            @lang('admin::app.settings.attributes.create.lookup-type')
+                                        </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.error
                                             class="mt-3"
                                             control-name="admin"
                                         />
+
                                     </x-admin::form.control-group>
 
                                     {!! view_render_event('admin.settings.attributes.edit.form_controls.lookup_type.after', ['attribute' => $attribute]) !!}
@@ -313,10 +313,6 @@
 
                             <!-- Attribute Code -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.attributes.edit.code')
-                                </x-admin::form.control-group.label>
-
                                 @php
                                     $selectedOption = old('type') ?: $attribute->code;
                                 @endphp
@@ -338,11 +334,15 @@
                                     name="code"
                                     :value="$selectedOption"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.attributes.edit.code')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.label>
                                             @lang('admin::app.settings.attributes.create.option-type')
-                                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="code" />
+                                        </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="code" />
 
                             </x-admin::form.control-group>
 
@@ -352,10 +352,6 @@
 
                             <!-- Attribute Type -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.attributes.edit.type')
-                                </x-admin::form.control-group.label>
-
                                 @php
                                     $selectedOption = old('type') ?: $attribute->type;
                                 @endphp
@@ -386,8 +382,12 @@
                                     name="type"
                                     :value="$attribute->type"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.attributes.edit.type')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="type" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.type.after', ['attribute' => $attribute]) !!}
@@ -396,10 +396,6 @@
 
                             <!-- Entity Type -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.attributes.create.entity-type')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     id="entity_type"
@@ -414,8 +410,12 @@
                                         <option value="{{ $key }}">{{ trans($entityType['name']) }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.attributes.create.entity-type')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="entity_type" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.entity_type.after', ['attribute' => $attribute]) !!}
@@ -568,10 +568,6 @@
 
                             <!-- Admin Input -->
                             <x-admin::form.control-group class="mb-2.5 w-full">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.attributes.edit.option-name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="name"
@@ -580,11 +576,15 @@
                                     :placeholder="trans('admin::app.settings.attributes.edit.option-name')"
                                     ref="inputAdmin"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.attributes.edit.option-name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.label>
                                         @lang('admin::app.settings.attributes.edit.input-validation')
-                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="name" />
+                                    </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="name" />
 
                             </x-admin::form.control-group>
 

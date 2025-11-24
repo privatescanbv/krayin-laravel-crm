@@ -53,10 +53,6 @@
 
                 <!-- Pipeline Name -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.name')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="text"
                         name="name"
@@ -66,8 +62,12 @@
                         :placeholder="trans('admin::app.settings.pipelines.edit.name')"
                         value="{{ old('name') ?: $pipeline->name }}"
                     />
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.edit.name')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="name" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.name.after', ['pipeline' => $pipeline]) !!}
@@ -76,10 +76,6 @@
 
                 <!-- Pipeline Rotten Days -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.rotten-days')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="text"
                         name="rotten_days"
@@ -89,8 +85,12 @@
                         :placeholder="trans('admin::app.settings.pipelines.edit.rotten-days')"
                         value="{{ old('rotten_days') ?: $pipeline->rotten_days }}"
                     />
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.edit.rotten-days')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="rotten_days" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.rotten_days.after', ['pipeline' => $pipeline]) !!}
@@ -99,10 +99,6 @@
 
                 <!-- Pipeline Type -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.type')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="select"
                         name="type"
@@ -114,8 +110,12 @@
                         <option value="lead" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'lead') ? 'selected' : '' }}>Lead</option>
                         <option value="workflow" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'workflow') ? 'selected' : '' }}>Workflow</option>
                     </x-admin::form.control-group.control>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.edit.type')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="type" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.type.after', ['pipeline' => $pipeline]) !!}
@@ -124,10 +124,6 @@
 
                 <!-- Pipeline Default Switcher -->
                 <x-admin::form.control-group class="mt-4 flex items-center gap-4">
-                    <x-admin::form.control-group.label class="mb-0">
-                        @lang('admin::app.settings.pipelines.edit.mark-as-default')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="switch"
                         class="cursor-pointer"
@@ -137,8 +133,12 @@
                         :checked="(boolean) $pipeline->is_default"
                         :label="trans('admin::app.settings.pipelines.edit.mark-as-default')"
                     />
+                    <x-admin::form.control-group.label class="mb-0">
+                        @lang('admin::app.settings.pipelines.edit.mark-as-default')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="is_default" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.is_default.after', ['pipeline' => $pipeline]) !!}
@@ -206,10 +206,6 @@
 
                                         <!-- Name -->
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.settings.pipelines.edit.name')
-                                            </x-admin::form.control-group.label>
-
                                             <x-admin::form.control-group.control
                                                 type="text"
                                                 ::name="'stages[' + element.id + '][name]'"
@@ -217,8 +213,12 @@
                                                 ::rules="{ required: true, unique_name: stages, min: 0, max: 100 }"
                                                 :label="trans('admin::app.settings.pipelines.edit.name')"
                                             />
+                                            <x-admin::form.control-group.label class="required">
+                                                @lang('admin::app.settings.pipelines.edit.name')
+                                            </x-admin::form.control-group.label>
 
                                             <x-admin::form.control-group.error ::name="'stages[' + element.id + '][name]'" />
+
                                         </x-admin::form.control-group>
 
                                         {!! view_render_event('admin.settings.pipelines.edit.form.stages.name.after', ['pipeline' => $pipeline]) !!}
@@ -227,10 +227,6 @@
 
                                         <!-- Probability -->
                                         <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.settings.pipelines.edit.probability')
-                                            </x-admin::form.control-group.label>
-
                                             <x-admin::form.control-group.control
                                                 type="text"
                                                 ::name="'stages[' + element.id + '][probability]'"
@@ -239,7 +235,12 @@
                                                 ::readonly="element?.code != 'new'"
                                                 :label="trans('admin::app.settings.pipelines.create.probability')"
                                             />
+                                            <x-admin::form.control-group.label class="required">
+                                                @lang('admin::app.settings.pipelines.edit.probability')
+                                            </x-admin::form.control-group.label>
+
                                             <x-admin::form.control-group.error ::name="'stages[' + element.id + '][probability]'" />
+
                                         </x-admin::form.control-group>
 
                                         {!! view_render_event('admin.settings.pipelines.edit.form.stages.probability.after', ['pipeline' => $pipeline]) !!}

@@ -25,9 +25,6 @@
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    Kanaal
-                </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_channel_id"
@@ -39,13 +36,14 @@
                             value="{{ $id }}" {{ ($val('lead_channel_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
                     @endforeach
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label>
+                    Kanaal
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </div>
         <div class="flex-1">
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    Bron
-                </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_source_id"
@@ -57,6 +55,10 @@
                             value="{{ $id }}" {{ ($val('lead_source_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
                     @endforeach
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label>
+                    Bron
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </div>
     </div>
@@ -65,9 +67,6 @@
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label class="required">
-                    Afdeling
-                </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
                     type="select"
                     name="department_id"
@@ -80,14 +79,14 @@
                             value="{{ $id }}" {{ ($val('department_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
                     @endforeach
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label class="required">
+                    Afdeling
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </div>
         <div class="flex-1">
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    Type
-                </x-admin::form.control-group.label>
-                <x-admin::form.control-group.control
+            <x-admin::form.control-group>                <x-admin::form.control-group.control
                     type="select"
                     name="lead_type_id"
                     value="{{ $val('lead_type_id', '') }}"
@@ -98,6 +97,10 @@
                             value="{{ $id }}" {{ ($val('lead_type_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
                     @endforeach
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label>
+                    Type
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </div>
     </div>
@@ -109,9 +112,6 @@
                 $currentMRI = $val('mri_status');
             @endphp
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    MRI Status
-                </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
                     type="select"
                     name="mri_status"
@@ -123,6 +123,10 @@
                             value="{{ $case->value }}" {{ ($currentMRI == $case->value) ? 'selected' : '' }}>{{ $case->label() }}</option>
                     @endforeach
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label>
+                    MRI Status
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </div>
         <div class="flex-1">
@@ -133,9 +137,6 @@
         <div class="flex-1">
             <!-- Diagnoseformulier aanwezig? -->
             <x-admin::form.control-group class="mt-2">
-                <x-admin::form.control-group.label>
-                    Diagnoseformulier aanwezig?
-                </x-admin::form.control-group.label>
                 <div class="flex items-center gap-2">
                     <input type="hidden" name="has_diagnosis_form" value="0"/>
                     <input
@@ -146,6 +147,10 @@
                     />
                     <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
                 </div>
+                <x-admin::form.control-group.label>
+                    Diagnoseformulier aanwezig?
+                </x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
         </div>
 

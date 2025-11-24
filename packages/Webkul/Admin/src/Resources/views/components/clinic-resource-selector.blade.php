@@ -6,10 +6,6 @@
 ])
 
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.clinics.index.title')
-    </x-admin::form.control-group.label>
-
     <select
         id="clinics-select"
         name="clinics[]"
@@ -23,15 +19,15 @@
             </option>
         @endforeach
     </select>
+    <x-admin::form.control-group.label class="required">
+        @lang('admin::app.settings.clinics.index.title')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="clinics" />
+
 </x-admin::form.control-group>
 
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.settings.resources.index.title')
-    </x-admin::form.control-group.label>
-
     @php
         $preselectedResources = collect();
         $initialResourceOptions = collect();
@@ -83,8 +79,12 @@
     <p id="resources-hint" class="mt-1 text-xs text-gray-600 dark:text-gray-400" style="display: none;">
         Gefilterd op gekozen kliniek(en)
     </p>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.resources.index.title')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="resources" />
+
 </x-admin::form.control-group>
 
 @pushOnce('scripts')

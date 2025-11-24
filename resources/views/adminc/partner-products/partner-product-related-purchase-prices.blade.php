@@ -16,12 +16,12 @@
                 :label="trans('admin::app.partner_products.index.create.rel_purchase_price_misc')"
                 :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_misc')"
             />
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_misc" />
-
             <x-admin::form.control-group.label>
                 @lang('admin::app.partner_products.index.create.rel_purchase_price_misc')
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="rel_purchase_price_misc" />
+
         </x-admin::form.control-group>
 
         <x-admin::form.control-group>
@@ -32,12 +32,12 @@
                 :label="trans('admin::app.partner_products.index.create.rel_purchase_price_doctor')"
                 :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_doctor')"
             />
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_doctor" />
-
             <x-admin::form.control-group.label>
                 @lang('admin::app.partner_products.index.create.rel_purchase_price_doctor')
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="rel_purchase_price_doctor" />
+
         </x-admin::form.control-group>
 
         <x-admin::form.control-group>
@@ -48,12 +48,12 @@
                 :label="trans('admin::app.partner_products.index.create.rel_purchase_price_cardiology')"
                 :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_cardiology')"
             />
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_cardiology" />
-
             <x-admin::form.control-group.label>
                 @lang('admin::app.partner_products.index.create.rel_purchase_price_cardiology')
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="rel_purchase_price_cardiology" />
+
         </x-admin::form.control-group>
 
         <x-admin::form.control-group>
@@ -64,12 +64,12 @@
                 :label="trans('admin::app.partner_products.index.create.rel_purchase_price_clinic')"
                 :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_clinic')"
             />
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_clinic" />
-
             <x-admin::form.control-group.label>
                 @lang('admin::app.partner_products.index.create.rel_purchase_price_clinic')
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="rel_purchase_price_clinic" />
+
         </x-admin::form.control-group>
 
         <x-admin::form.control-group>
@@ -80,12 +80,12 @@
                 :label="trans('admin::app.partner_products.index.create.rel_purchase_price_radiology')"
                 :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_radiology')"
             />
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_radiology" />
-
             <x-admin::form.control-group.label>
                 @lang('admin::app.partner_products.index.create.rel_purchase_price_radiology')
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="rel_purchase_price_radiology" />
+
         </x-admin::form.control-group>
     </div>
 

@@ -17,10 +17,6 @@
 
 <!-- Naam -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.resources.index.create.name')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="text"
         name="name"
@@ -29,16 +25,16 @@
         :label="trans('admin::app.settings.resources.index.create.name')"
         :placeholder="trans('admin::app.settings.resources.index.create.name')"
     />
+    <x-admin::form.control-group.label class="required">
+        @lang('admin::app.settings.resources.index.create.name')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="name" />
+
 </x-admin::form.control-group>
 
 <!-- Resource Type -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.resources.index.create.resource_type')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="select"
         name="resource_type_id"
@@ -51,16 +47,16 @@
             <option value="{{ $type->id }}" @selected(old('resource_type_id', $resource->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
         @endforeach
     </x-admin::form.control-group.control>
+    <x-admin::form.control-group.label class="required">
+        @lang('admin::app.settings.resources.index.create.resource_type')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="resource_type_id" />
+
 </x-admin::form.control-group>
 
 <!-- Clinic -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.resources.index.create.clinic')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="select"
         name="clinic_id"
@@ -73,8 +69,12 @@
             <option value="{{ $clinic->id }}" @selected($selectedClinicId == $clinic->id)>{{ $clinic->name }}</option>
         @endforeach
     </x-admin::form.control-group.control>
+    <x-admin::form.control-group.label class="required">
+        @lang('admin::app.settings.resources.index.create.clinic')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="clinic_id" />
+
 </x-admin::form.control-group>
 
 <!-- Is Active -->
@@ -86,12 +86,12 @@
         :checked="(bool) old('is_active', $resource->is_active ?? true)"
         label="Actief"
     />
-
-    <x-admin::form.control-group.error control-name="is_active" />
-
     <x-admin::form.control-group.label>
         Actief
     </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="is_active" />
+
 </x-admin::form.control-group>
 
 <!-- Notes -->
@@ -104,10 +104,10 @@
         :placeholder="trans('admin::app.settings.resources.index.create.notes')"
         rows="4"
     />
-
-    <x-admin::form.control-group.error control-name="notes" />
-
     <x-admin::form.control-group.label>
         @lang('admin::app.settings.resources.index.create.notes')
     </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="notes" />
+
 </x-admin::form.control-group>

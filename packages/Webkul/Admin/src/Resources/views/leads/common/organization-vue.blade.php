@@ -55,8 +55,9 @@
                             />
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.contacts.organizations.create.name')
-                            </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="new_organization_name" />
+                            </x-admin::form.control-group.label>
 
+                            <x-admin::form.control-group.error control-name="new_organization_name" />
 
                         </x-admin::form.control-group>
 

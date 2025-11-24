@@ -26,10 +26,6 @@
 <!-- Naam en Duur -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.partner_products.index.create.name')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="text"
             name="name"
@@ -38,8 +34,12 @@
             :label="trans('admin::app.partner_products.index.create.name')"
             :placeholder="trans('admin::app.partner_products.index.create.name')"
         />
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.partner_products.index.create.name')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="name"/>
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -50,12 +50,12 @@
             :label="trans('admin::app.partner_products.index.create.duration')"
             :placeholder="trans('admin::app.partner_products.index.create.duration')"
         />
-
-        <x-admin::form.control-group.error control-name="duration"/>
-
         <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.duration')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="duration"/>
+
     </x-admin::form.control-group>
 </div>
 
@@ -70,16 +70,16 @@
             :placeholder="trans('admin::app.partner_products.index.create.description')"
         />
 
-        <x-admin::form.control-group.error control-name="description"/>
-
-        <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.associated_product')
-    </x-admin::form.control-group.label>
-
         <div
             class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
         </div>
+    <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.associated_product')
+    </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="description"/>
+
 </x-admin::form.control-group>
 @endif
 
@@ -98,12 +98,12 @@
                     value="{{ $currency['code'] }}" @selected(old('currency', $partnerProduct->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
             @endforeach
         </x-admin::form.control-group.control>
-
-        <x-admin::form.control-group.error control-name="currency"/>
-
         <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.description')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="currency"/>
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -114,12 +114,12 @@
             :label="trans('admin::app.partner_products.index.create.clinic_description')"
             :placeholder="trans('admin::app.partner_products.index.create.clinic_description')"
         />
-
-        <x-admin::form.control-group.error control-name="clinic_description"/>
-
         <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.clinic_description')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="clinic_description"/>
+
     </x-admin::form.control-group>
 </div>
 
@@ -129,13 +129,10 @@
         <x-admin::form.control-group.label class="required">
             @lang('admin::app.partner_products.index.create.currency')
         </x-admin::form.control-group.label>
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.partner_products.index.create.sales_price')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="price"
             name="sales_price"
@@ -144,8 +141,12 @@
             :label="trans('admin::app.partner_products.index.create.sales_price')"
             :placeholder="trans('admin::app.partner_products.index.create.sales_price')"
         />
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.partner_products.index.create.sales_price')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="sales_price"/>
+
     </x-admin::form.control-group>
 </div>
 
@@ -159,12 +160,12 @@
             :label="trans('admin::app.partner_products.index.create.related_sales_price')"
             :placeholder="trans('admin::app.partner_products.index.create.related_sales_price')"
         />
-
-        <x-admin::form.control-group.error control-name="related_sales_price"/>
-
         <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.related_sales_price')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="related_sales_price"/>
+
     </x-admin::form.control-group>
 
     <!-- Kortingsinformatie -->
@@ -176,12 +177,12 @@
             :label="trans('admin::app.partner_products.index.create.discount_info')"
             :placeholder="trans('admin::app.partner_products.index.create.discount_info')"
         />
-
-        <x-admin::form.control-group.error control-name="discount_info"/>
-
         <x-admin::form.control-group.label>
             @lang('admin::app.partner_products.index.create.discount_info')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="discount_info"/>
+
     </x-admin::form.control-group>
 </div>
 
@@ -194,12 +195,12 @@
         :checked="(bool) old('is_active', $partnerProduct->active ?? true)"
         label="Actief"
     />
-
-    <x-admin::form.control-group.error control-name="active"/>
-
     <x-admin::form.control-group.label>
         @lang('admin::app.partner_products.index.create.active')
     </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="active"/>
+
 </x-admin::form.control-group>
 
 <!-- Resource Type -->
@@ -217,8 +218,8 @@
                 value="{{ $type->id }}" @selected(old('resource_type_id', $partnerProduct->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
         @endforeach
     </x-admin::form.control-group.control>
-
     <x-admin::form.control-group.error control-name="resource_type_id"/>
+
 </x-admin::form.control-group>
 
 <!-- Clinics and Resources -->
@@ -232,10 +233,6 @@
 
 
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-       @lang('admin::app.partner_products.index.create.related_products')
-    </x-admin::form.control-group.label>
-
     @include('adminc.components.product-selector')
 
     @php
@@ -266,19 +263,20 @@
         :multiple="true"
         :items='@json($relatedProductsForSelector)'
     />
-    <x-admin::form.control-group.error control-name="related_products"/>
+    <x-admin::form.control-group.label>
+       @lang('admin::app.partner_products.index.create.related_products')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.label>
         @lang('admin::app.partner_products.index.create.resource_type')
     </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="related_products"/>
+
 </x-admin::form.control-group>
 
 <!-- Reporting (moved below Related Products) -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.reporting')
-    </x-admin::form.control-group.label>
-
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @php
             $selectedReporting = PartnerProduct::normalizeReporting(old('reporting', $partnerProduct->reporting ?? []));
@@ -299,6 +297,10 @@
             </div>
         @endforeach
     </div>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.partner_products.index.create.reporting')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="reporting"/>
+
 </x-admin::form.control-group>

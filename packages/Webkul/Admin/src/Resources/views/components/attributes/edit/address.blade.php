@@ -26,10 +26,10 @@
                         :label="trans('admin::app.common.custom-attributes.address')"
                         ::rules="attribute.is_required ? 'required|' + validations : validations"
                     />
-
                     <x-admin::form.control-group.error ::name="attribute['code'] + '[address]'" />
 
                     <x-admin::form.control-group.error ::name="attribute['code'] + '.address'" />
+
                 </x-admin::form.control-group>
             </div>
 
@@ -49,10 +49,10 @@
                             <option value="{{ $country->code }}">{{ $country->name }}</option>
                         @endforeach
                     </x-admin::form.control-group.control>
-
                     <x-admin::form.control-group.error ::name="attribute['code'] + '[country]'" />
 
                     <x-admin::form.control-group.error ::name="attribute['code'] + '.country'" />
+
                 </x-admin::form.control-group>
 
                 <!-- State Field -->
@@ -74,10 +74,10 @@
                                 @{{ state.name }}
                             </option>
                         </x-admin::form.control-group.control>
-
                         <x-admin::form.control-group.error ::name="attribute['code'] + '[state]'" />
 
                         <x-admin::form.control-group.error ::name="attribute['code'] + '.state'" />
+
                     </x-admin::form.control-group>
                 </template>
 
@@ -92,10 +92,10 @@
                             v-model="state"
                         >
                         </x-admin::form.control-group.control>
-                        
                         <x-admin::form.control-group.error ::name="attribute['code'] + '[state]'" />
 
                         <x-admin::form.control-group.error ::name="attribute['code'] + '.state'" />
+
                     </x-admin::form.control-group>
                 </template>
 
@@ -109,10 +109,10 @@
                         :label="trans('admin::app.common.custom-attributes.city')"
                         ::rules="attribute.is_required ? 'required|' + validations : validations"
                     />
-
                     <x-admin::form.control-group.error ::name="attribute['code'] + '[city]'"/>
 
                     <x-admin::form.control-group.error ::name="attribute['code'] + '.city'" />
+
                 </x-admin::form.control-group>
 
                 <!-- Postcode Field -->
@@ -125,10 +125,10 @@
                         :label="trans('admin::app.common.custom-attributes.postcode')"
                         ::rules="attribute.is_required ? 'required|postcode' : 'postcode'"
                     />
-
                     <x-admin::form.control-group.error ::name="attribute['code'] + '[postcode]'" />
 
                     <x-admin::form.control-group.error ::name="attribute['code'] + '.postcode'" />
+
                 </x-admin::form.control-group>
             </div>
         </div>

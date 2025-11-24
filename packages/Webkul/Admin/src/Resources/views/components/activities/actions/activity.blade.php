@@ -97,18 +97,18 @@
 
                             <!-- Title -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.activity.title-control')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="title"
                                     rules="required|max:80"
                                     :label="trans('admin::app.components.activities.actions.activity.title-control')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.components.activities.actions.activity.title-control')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="title" />
+
                             </x-admin::form.control-group>
 
                             <!-- Description -->
@@ -118,11 +118,11 @@
                                     name="comment"
                                     rules="max:500"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.activity.description')
-                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="comment" />
+                                </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="comment" />
 
                             </x-admin::form.control-group>
 
@@ -165,55 +165,59 @@
                             <div class="flex gap-4">
                                 <!-- Started From -->
                                 <x-admin::form.control-group class="w-full">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.components.activities.actions.activity.schedule-from')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="datetime"
                                         name="schedule_from"
                                         rules="required"
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
                                     />
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.components.activities.actions.activity.schedule-from')
+                                    </x-admin::form.control-group.label>
 
                                     <x-admin::form.control-group.label>
                                     @lang('admin::app.activities.assign-to')
-                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="schedule_from" />
+                                </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.label>
                                     @lang('admin::app.activities.group')
                                 </x-admin::form.control-group.label>
 
+                                    <x-admin::form.control-group.error control-name="schedule_from" />
 
                                 </x-admin::form.control-group>
 
                                 <!-- Started To -->
                                 <x-admin::form.control-group class="w-full">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.components.activities.actions.activity.schedule-to')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::form.control-group.control
                                         type="datetime"
                                         name="schedule_to"
                                         rules="required"
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
                                     />
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.components.activities.actions.activity.schedule-to')
+                                    </x-admin::form.control-group.label>
 
                                     <x-admin::form.control-group.error control-name="schedule_to" />
+
                                 </x-admin::form.control-group>
                             </div>
 
 {{--                            <!-- Location -->--}}
 {{--                            <x-admin::form.control-group class="!mb-0">--}}
-{{--                                <x-admin::form.control-group.label>--}}
-{{--                                    @lang('admin::app.components.activities.actions.activity.location')--}}
-{{--                                </x-admin::form.control-group.label>--}}
+{{----}}
 
 {{--                                <x-admin::form.control-group.control--}}
 {{--                                    type="text"--}}
 {{--                                    name="location"--}}
 {{--                                />--}}
+{{--{{--
+{{--
+{{--                                <x-admin::form.control-group.label>--}}
+{{--                                    @lang('admin::app.components.activities.actions.activity.location')--}}
+{{--                                </x-admin::form.control-group.label>
+
 {{--                            </x-admin::form.control-group>--}}
 
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}

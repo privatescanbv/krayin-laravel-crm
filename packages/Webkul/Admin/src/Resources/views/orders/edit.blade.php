@@ -87,17 +87,14 @@ use App\Models\SalesLead;
                         <div class="space-y-6">
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <x-admin::form.control-group>
+                            <x-admin::form.control-group>                                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title"
+                                                                     rules="required"/>
                                 <x-admin::form.control-group.label class="required">Titel
                                 </x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title"
-                                                                     rules="required"/>
+
                             </x-admin::form.control-group>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Sales
-                                </x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control
+                            <x-admin::form.control-group>                                <x-admin::form.control-group.control
                                     type="select"
                                     name="sales_lead_id"
                                     value="{{ $orders->sales_lead_id ?? '' }}"
@@ -116,12 +113,12 @@ use App\Models\SalesLead;
                                     @endif
                                 </x-admin::form.control-group.control>
                                 <input type="hidden" name="sales_lead_id" value="{{ $orders->sales_lead_id }}">
+                                <x-admin::form.control-group.label class="required">Sales
+                                </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Status
-                                </x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control
+                            <x-admin::form.control-group>                                <x-admin::form.control-group.control
                                     type="select"
                                     name="status"
                                     value="{{ $orders->status->value ?? '' }}"
@@ -134,11 +131,12 @@ use App\Models\SalesLead;
                                         </option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label class="required">Status
+                                </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control
+                            <x-admin::form.control-group>                                <x-admin::form.control-group.control
                                     type="select"
                                     name="combine_order"
                                     value="{{ $orders->combine_order ? '1' : '0' }}"
@@ -146,6 +144,8 @@ use App\Models\SalesLead;
                                     <option value="1" {{ $orders->combine_order ? 'selected' : '' }}>Ja</option>
                                     <option value="0" {{ !$orders->combine_order ? 'selected' : '' }}>Nee</option>
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
 
                             </div>
@@ -1076,11 +1076,7 @@ use App\Models\SalesLead;
 
                     <!-- Content Editor -->
                     <div v-if="letterContent" class="space-y-4">
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Brief inhoud
-                            </x-admin::form.control-group.label>
-                            <v-field
+                        <x-admin::form.control-group>                            <v-field
                                 v-slot="{ field }"
                                 name="confirmation_letter_content"
                             >
@@ -1096,6 +1092,10 @@ use App\Models\SalesLead;
                                     ::field="field"
                                 />
                             </v-field>
+                            <x-admin::form.control-group.label>
+                                Brief inhoud
+                            </x-admin::form.control-group.label>
+
                         </x-admin::form.control-group>
 
                         <div class="flex items-center gap-2">

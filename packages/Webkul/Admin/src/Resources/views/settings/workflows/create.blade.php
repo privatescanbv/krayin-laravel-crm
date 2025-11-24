@@ -96,10 +96,6 @@
 
                         <div class="w-1/2 max-md:w-full">
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.workflows.create.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="name"
@@ -109,7 +105,12 @@
                                     :label="trans('admin::app.settings.workflows.create.name')"
                                     :placeholder="trans('admin::app.settings.workflows.create.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.workflows.create.name')
+                                </x-admin::form.control-group.label>
+
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
@@ -122,11 +123,11 @@
                                     :label="trans('admin::app.settings.workflows.create.description')"
                                     :placeholder="trans('admin::app.settings.workflows.create.description')"
                                 />
-
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.settings.workflows.create.description')
-                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="description" />
+                                </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="description" />
 
                             </x-admin::form.control-group>
                         </div>
@@ -161,10 +162,6 @@
                         <div class="w-1/2 max-md:w-full">
                             <!-- Event -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.workflows.create.event')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     id="event"
@@ -186,8 +183,12 @@
                                         ></option>
                                     </optgroup>
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.workflows.create.event')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="event" />
+
                             </x-admin::form.control-group>
                         </div>
                     </div>
@@ -232,12 +233,12 @@
                                         @lang('admin::app.settings.workflows.create.any-condition-are-true')
                                     </option>
                                 </x-admin::form.control-group.control>
-
-                                <x-admin::form.control-group.error control-name="condition_type" />
-
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.settings.workflows.create.condition-type')
                                 </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.error control-name="condition_type" />
+
                             </x-admin::form.control-group>
 
                             <!-- Workflow Condition Vue Component. -->

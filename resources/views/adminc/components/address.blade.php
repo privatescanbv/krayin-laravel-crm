@@ -41,8 +41,10 @@
                         id="{{ $addressId }}_postal_code"
                         :readonly="isset($readonly) && $readonly"
                     />
-                    <x-admin::form.control-group.error control-name="address.postal_code"/>
                     <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.error control-name="address.postal_code"/>
+
                 </x-admin::form.control-group>
             </div>
 
@@ -58,8 +60,10 @@
                         :disabled="isset($readonly) && $readonly"
                         :readonly="isset($readonly) && $readonly"
                     />
-                    <x-admin::form.control-group.error control-name="address.house_number"/>
                     <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.error control-name="address.house_number"/>
+
                 </x-admin::form.control-group>
             </div>
 
@@ -90,12 +94,12 @@
                 id="{{ $addressId }}_street"
                 :readonly="isset($readonly) && $readonly"
             />
-
-            <x-admin::form.control-group.error control-name="address.street"/>
-
             <x-admin::form.control-group.label>
                 Straat
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="address.street"/>
+
         </x-admin::form.control-group>
 
         <!-- House Number Suffix -->
@@ -108,12 +112,12 @@
                 id="{{ $addressId }}_house_number_suffix"
                 :readonly="isset($readonly) && $readonly"
             />
-
-            <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
-
             <x-admin::form.control-group.label>
                 Toevoeging
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
+
         </x-admin::form.control-group>
 
         <!-- City -->
@@ -126,12 +130,12 @@
                 id="{{ $addressId }}_city"
                 :readonly="isset($readonly) && $readonly"
             />
-
-            <x-admin::form.control-group.error control-name="address.city"/>
-
             <x-admin::form.control-group.label>
                 Stad
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="address.city"/>
+
         </x-admin::form.control-group>
 
         <!-- State -->
@@ -144,12 +148,12 @@
                 id="{{ $addressId }}_state"
                 :readonly="isset($readonly) && $readonly"
             />
-
-            <x-admin::form.control-group.error control-name="address.state"/>
-
             <x-admin::form.control-group.label>
                 Provincie
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="address.state"/>
+
         </x-admin::form.control-group>
 
         <!-- Country -->
@@ -162,12 +166,12 @@
                 id="{{ $addressId }}_country"
                 :readonly="isset($readonly) && $readonly"
             />
-
-            <x-admin::form.control-group.error control-name="address.country"/>
-
             <x-admin::form.control-group.label>
                 Land
             </x-admin::form.control-group.label>
+
+            <x-admin::form.control-group.error control-name="address.country"/>
+
         </x-admin::form.control-group>
     </div>
 

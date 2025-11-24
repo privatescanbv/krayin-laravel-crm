@@ -14,10 +14,6 @@
 
     <!-- Naam -->
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.products.create.name')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.control
         type="text"
         name="name"
@@ -26,8 +22,12 @@
         :label="trans('admin::app.products.create.name')"
         :placeholder="trans('admin::app.products.create.name')"
     />
+    <x-admin::form.control-group.label class="required">
+        @lang('admin::app.products.create.name')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="name"/>
+
 </x-admin::form.control-group>
 
 <!-- Omschrijving -->
@@ -39,21 +39,17 @@
         :label="trans('admin::app.products.create.description')"
         :placeholder="trans('admin::app.products.create.description')"
     />
-
-    <x-admin::form.control-group.error control-name="description"/>
-
     <x-admin::form.control-group.label>
         @lang('admin::app.products.create.description')
     </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="description"/>
+
 </x-admin::form.control-group>
 
 <!-- Grid met 3 kolommen: Valuta, Kosten, Verkoopprijs -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.partner_products.index.create.currency')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="select"
             name="currency"
@@ -66,8 +62,12 @@
                     value="{{ $currency['code'] }}" @selected(old('currency', $product->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
             @endforeach
         </x-admin::form.control-group.control>
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.partner_products.index.create.currency')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="currency"/>
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -78,19 +78,15 @@
             :label="trans('admin::app.products.create.costs')"
             :placeholder="trans('admin::app.products.create.costs')"
         />
-
-        <x-admin::form.control-group.error control-name="costs"/>
-
         <x-admin::form.control-group.label>
             @lang('admin::app.products.create.costs')
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error control-name="costs"/>
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.products.create.price')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="price"
             name="price"
@@ -99,8 +95,12 @@
             :label="trans('admin::app.products.create.price')"
             :placeholder="trans('admin::app.products.create.price')"
         />
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.products.create.price')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="price"/>
+
     </x-admin::form.control-group>
 </div>
 
@@ -118,15 +118,11 @@
                     value="{{ $type->id }}" @selected(old('product_type_id', $product->product_type_id ?? '') == $type->id)>{{ $type->name }}</option>
             @endforeach
         </x-admin::form.control-group.control>
+    <x-admin::form.control-group.error control-name="product_type_id"/>
 
-        <x-admin::form.control-group.error control-name="product_type_id"/>
-    </x-admin::form.control-group>
+</x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.products.create.resource_type')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="select"
             name="resource_type_id"
@@ -140,15 +136,15 @@
                     value="{{ $type->id }}" @selected(old('resource_type_id', $product->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
             @endforeach
         </x-admin::form.control-group.control>
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.products.create.resource_type')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="resource_type_id"/>
+
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label class="required">
-            @lang('admin::app.products.create.product_group')
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="select"
             name="product_group_id"
@@ -162,8 +158,12 @@
                     value="{{ $group->id }}" @selected(old('product_group_id', $product->product_group_id ?? '') == $group->id)>{{ $group->path }}</option>
             @endforeach
         </x-admin::form.control-group.control>
+        <x-admin::form.control-group.label class="required">
+            @lang('admin::app.products.create.product_group')
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="product_group_id"/>
+
     </x-admin::form.control-group>
 </div>
 
@@ -193,12 +193,6 @@
         :multiple="true"
         :items='@json($selectedPartnerProducts ?? [])'
     />
-    <x-admin::form.control-group.error control-name="partner_products"/>
-
-        <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.active')
-    </x-admin::form.control-group.label>
-
     <input type="hidden" name="active" value="0"/>
     <x-admin::form.control-group.control
         type="checkbox"
@@ -207,8 +201,14 @@
         :label="trans('admin::app.partner_products.index.create.active')"
         :checked="old('active', $product->active ?? 1)"
     />
+    <x-admin::form.control-group.label>
+        @lang('admin::app.partner_products.index.create.active')
+    </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.error control-name="partner_products"/>
 
     <x-admin::form.control-group.error control-name="active"/>
+
 </x-admin::form.control-group>
 
 <!-- Grid met 2 kolommen voor types en groep -->
@@ -218,5 +218,6 @@
         <x-admin::form.control-group.label>
             @lang('admin::app.products.create.product_type')
         </x-admin::form.control-group.label>
-</x-admin::form.control-group>
+
+    </x-admin::form.control-group>
 

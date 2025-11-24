@@ -32,10 +32,6 @@
                     <div class="grid gap-6">
                         <!-- Name -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.folders.edit.name')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="name"
@@ -45,8 +41,12 @@
                                 :label="trans('admin::app.settings.folders.edit.name')"
                                 :placeholder="trans('admin::app.settings.folders.edit.name')"
                             />
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.folders.edit.name')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="name" />
+
                         </x-admin::form.control-group>
 
                         <!-- Parent Folder -->
@@ -63,12 +63,12 @@
                                     <option value="{{ $parentFolder->id }}">{{ $parentFolder->name }}</option>
                                 @endforeach
                             </x-admin::form.control-group.control>
-
-                            <x-admin::form.control-group.error control-name="parent_id" />
-
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.settings.folders.edit.parent')
                             </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.error control-name="parent_id" />
+
                         </x-admin::form.control-group>
 
                     </div>

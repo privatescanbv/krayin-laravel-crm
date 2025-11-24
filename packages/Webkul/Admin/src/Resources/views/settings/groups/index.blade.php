@@ -207,10 +207,6 @@
 
                             <!-- Name -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.groups.index.create.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="name"
@@ -219,8 +215,12 @@
                                     :label="trans('admin::app.settings.groups.index.create.name')"
                                     :placeholder="trans('admin::app.settings.groups.index.create.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.groups.index.create.name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.groups.index.form.form_controls.name.after') !!}
@@ -229,10 +229,6 @@
 
                             <!-- Description -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.groups.index.create.description')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     id="description"
@@ -241,8 +237,12 @@
                                     :label="trans('admin::app.settings.groups.index.create.description')"
                                     :placeholder="trans('admin::app.settings.groups.index.create.description')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.groups.index.create.description')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="description" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.groups.index.form.form_controls.description.after') !!}

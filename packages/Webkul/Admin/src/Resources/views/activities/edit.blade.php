@@ -78,10 +78,6 @@
 
                     <!-- Title -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.activities.edit.title')
-                        </x-admin::form.control-group.label>
-
                         <x-admin::form.control-group.control
                             type="text"
                             name="title"
@@ -91,16 +87,16 @@
                             :label="trans('admin::app.activities.edit.title')"
                             :placeholder="trans('admin::app.activities.edit.title')"
                         />
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.activities.edit.title')
+                        </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.error control-name="title" />
+
                     </x-admin::form.control-group>
 
                     <!-- Type -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.activities.edit.type')
-                        </x-admin::form.control-group.label>
-
                         @php
                             $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
                             $currentTypeLabel = trans('admin::app.activities.edit.' . $currentTypeValue);
@@ -110,18 +106,18 @@
                             <span>{{ $currentTypeLabel }}</span>
                         </div>
                         <input type="hidden" name="type" value="{{ $currentTypeValue }}" />
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.activities.edit.type')
+                        </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.error control-name="type" />
+
                     </x-admin::form.control-group>
 
                     <!-- Schedule Date -->
                     <x-admin::form.control-group>
                         <div class="flex gap-2 max-sm:flex-wrap">
                             <div class="w-full">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.schedule_from')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
                                     <input
                                         name="schedule_from"
@@ -136,10 +132,6 @@
 
                             @if($activity->type !== \App\Enums\ActivityType::CALL)
                                 <div class="w-full">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.activities.edit.schedule_to')
-                                    </x-admin::form.control-group.label>
-
                                     <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
                                         <input
                                             name="schedule_to"
@@ -154,6 +146,14 @@
                                 <input type="hidden" name="schedule_to" id="schedule_to_hidden" value="{{ old('schedule_to') ?? $activity->schedule_to }}" />
                             @endif
                         </div>
+                        <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.activities.edit.schedule_from')
+                                </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.activities.edit.schedule_to')
+                                    </x-admin::form.control-group.label>
+
                     </x-admin::form.control-group>
 
                     <!-- Description -->
@@ -166,20 +166,16 @@
                             :label="trans('admin::app.components.activities.actions.activity.description')"
                             :placeholder="trans('admin::app.components.activities.actions.activity.description')"
                         />
-
-                        <x-admin::form.control-group.error control-name="comment" />
-
                         <x-admin::form.control-group.label>
                             @lang('admin::app.components.activities.actions.activity.description')
                         </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.error control-name="comment" />
+
                     </x-admin::form.control-group>
 
                     <!-- Toegewezen aan -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.assign-to')
-                        </x-admin::form.control-group.label>
-
                         <div class="flex items-center gap-2">
                             <x-admin::form.control-group.control
                                 type="select"
@@ -211,16 +207,16 @@
                                 </button>
                             @endif
                         </div>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.activities.assign-to')
+                        </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.error control-name="user_id" />
+
                     </x-admin::form.control-group>
 
                     <!-- Group -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            {{ __('admin::app.activities.group') }}
-                        </x-admin::form.control-group.label>
-
                         <x-admin::form.control-group.control
                             type="select"
                             name="group_id"
@@ -233,15 +229,15 @@
                                 </option>
                             @endforeach
                         </x-admin::form.control-group.control>
+                        <x-admin::form.control-group.label>
+                            {{ __('admin::app.activities.group') }}
+                        </x-admin::form.control-group.label>
+
                     </x-admin::form.control-group>
 
                     <!-- Related Entity Information -->
                     @if($relatedEntity && $relatedEntityName)
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>
-                                Gerelateerd aan
-                            </x-admin::form.control-group.label>
-
                             <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
                                     {{ $relatedEntityName }}:
@@ -266,6 +262,10 @@
                                     @endif
                                 </span>
                             </div>
+                            <x-admin::form.control-group.label>
+                                Gerelateerd aan
+                            </x-admin::form.control-group.label>
+
                         </x-admin::form.control-group>
                     @endif
 

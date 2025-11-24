@@ -134,11 +134,6 @@
                                     :label="trans('admin::app.leads.view.stages.closed-at')"
                                 />
 
-                                <x-admin::form.control-group.label>
-                                        @lang('admin::app.leads.view.stages.lost-reason')
-                                    </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="closed_at"/>
-
-
 
                                     <select
                                         name="lost_reason"
@@ -150,6 +145,12 @@
                                             <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
                                         @endforeach
                                     </select>
+                                    <x-admin::form.control-group.label>
+                                        @lang('admin::app.leads.view.stages.lost-reason')
+                                    </x-admin::form.control-group.label>
+
+                                    <x-admin::form.control-group.error control-name="closed_at"/>
+
                                 </x-admin::form.control-group>
                             </template>
 
@@ -158,6 +159,7 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.leads.view.stages.closed-at')
                                 </x-admin::form.control-group.label>
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.after', ['lead' => $lead]) !!}

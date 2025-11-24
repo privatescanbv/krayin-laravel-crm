@@ -75,10 +75,6 @@
                         {!! view_render_event('admin.settings.email_template.create.subject.before') !!}
 
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.email-template.create.subject')
-                            </x-admin::form.control-group.label>
-
                             <div class="flex">
                                 <x-admin::form.control-group.control
                                     type="text"
@@ -116,6 +112,10 @@
                                     </optgroup>
                                 </x-admin::form.control-group.control>
                             </div>
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.email-template.create.subject')
+                            </x-admin::form.control-group.label>
+
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group.error control-name="subject"/>
@@ -126,10 +126,6 @@
 
                         <!-- Event Name -->
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.email-template.create.content')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="textarea"
                                 id="content"
@@ -140,8 +136,12 @@
                                 :label="trans('admin::app.settings.email-template.create.content')"
                                 :placeholder="trans('admin::app.settings.email-template.create.content')"
                             />
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.email-template.create.content')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="content" />
+
                         </x-admin::form.control-group>
 
                         {!! view_render_event('admin.settings.email_template.create.content.after') !!}
@@ -163,10 +163,6 @@
 
                         <x-slot:content>
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.email-template.create.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="name"
@@ -176,7 +172,12 @@
                                     :label="trans('admin::app.settings.email-template.create.name')"
                                     :placeholder="trans('admin::app.settings.email-template.create.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.email-template.create.name')
+                                </x-admin::form.control-group.label>
+
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group class="!mb-0">
@@ -190,8 +191,9 @@
                                 />
                                 <x-admin::form.control-group.label>
                                     Code
-                                </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="code" />
+                                </x-admin::form.control-group.label>
 
+                                <x-admin::form.control-group.error control-name="code" />
 
                             </x-admin::form.control-group>
 
@@ -200,10 +202,6 @@
                                 $selectedLanguage = old('language', EmailTemplateLanguage::NEDERLANDS->value);
                             @endphp
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    Type
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="type"
@@ -218,14 +216,15 @@
                                         </option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label class="required">
+                                    Type
+                                </x-admin::form.control-group.label>
+
                                 <x-admin::form.control-group.error control-name="type" />
+
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    Taal
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="language"
@@ -240,14 +239,15 @@
                                         </option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.label class="required">
+                                    Taal
+                                </x-admin::form.control-group.label>
+
                                 <x-admin::form.control-group.error control-name="language" />
+
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    Afdelingen
-                                </x-admin::form.control-group.label>
-
                                 <v-entity-selector
                                     name="departments"
                                     label="Afdelingen"
@@ -256,7 +256,12 @@
                                     :multiple="true"
                                     rules="required"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    Afdelingen
+                                </x-admin::form.control-group.label>
+
                                 <x-admin::form.control-group.error control-name="departments" />
+
                             </x-admin::form.control-group>
                         </x-slot>
                     </x-admin::accordion>

@@ -22,14 +22,12 @@
                 </div>
             </div>
 
-            <x-admin::form.control-group>
+            <x-admin::form.control-group>                <x-admin::form.control-group.control type="text" name="title" rules="required" />
                 <x-admin::form.control-group.label class="required">Titel</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control type="text" name="title" rules="required" />
+
             </x-admin::form.control-group>
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label class="required">Sales</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control
+            <x-admin::form.control-group>                <x-admin::form.control-group.control
                     type="select"
                     name="sales_lead_id"
                     value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
@@ -44,11 +42,11 @@
                         @endforeach
                     @endif
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label class="required">Sales</x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control
+            <x-admin::form.control-group>                <x-admin::form.control-group.control
                     type="select"
                     name="combine_order"
                     value="{{ old('combine_order', '1') }}"
@@ -56,6 +54,8 @@
                     <option value="1" {{ old('combine_order', '1') === '1' ? 'selected' : '' }}>Ja</option>
                     <option value="0" {{ old('combine_order', '1') === '0' ? 'selected' : '' }}>Nee</option>
                 </x-admin::form.control-group.control>
+                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
+
             </x-admin::form.control-group>
 
 

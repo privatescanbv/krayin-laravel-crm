@@ -35,10 +35,6 @@
                     <div class="border-y p-4 dark:border-gray-800">
                         <!-- Registered Email -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.users.forget-password.create.email')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="email"
                                 class="w-[254px] max-w-full"
@@ -49,8 +45,12 @@
                                 :label="trans('admin::app.users.forget-password.create.email')"
                                 :placeholder="trans('admin::app.users.forget-password.create.email')"
                             />
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.users.forget-password.create.email')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="email" />
+
                         </x-admin::form.control-group>
                     </div>
 

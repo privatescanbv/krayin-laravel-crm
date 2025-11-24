@@ -259,6 +259,7 @@
                                         </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.error control-name="name" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Subject -->
@@ -281,6 +282,7 @@
                                         </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.error control-name="subject" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Event -->
@@ -308,7 +310,9 @@
                                         >
                                             @lang('admin::app.settings.marketing.campaigns.index.create.event')
                                         </x-admin::form.control-group.label>
+
                                         <x-admin::form.control-group.error control-name="marketing_event_id" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Email Template -->
@@ -336,7 +340,9 @@
                                         >
                                             @lang('admin::app.settings.marketing.campaigns.index.create.email-template')
                                         </x-admin::form.control-group.label>
+
                                         <x-admin::form.control-group.error control-name="marketing_template_id" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Status -->
@@ -356,9 +362,10 @@
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.status')"
                                             ::checked="parseInt(campaign.status || 0)"
                                         />
-                                                                                <x-admin::form.control-group.label for="status">
+                                        <x-admin::form.control-group.label for="status">
                                             @lang('admin::app.settings.marketing.campaigns.index.create.status')
                                         </x-admin::form.control-group.label>
+
                                     </x-admin::form.control-group>
 
                                     {!! view_render_event('admin.settings.marketing.campaigns.index.form_controls.modal.content.controls.after') !!}

@@ -89,10 +89,6 @@
 
                             <!-- Name -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.create.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="name"
@@ -102,8 +98,12 @@
                                     :label="trans('admin::app.settings.roles.create.name')"
                                     :placeholder="trans('admin::app.settings.roles.create.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.roles.create.name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.roles.create.form.name.after') !!}
@@ -112,10 +112,6 @@
 
                             <!-- Description -->
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.create.description')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     id="description"
@@ -125,8 +121,12 @@
                                     :label="trans('admin::app.settings.roles.create.description')"
                                     :placeholder="trans('admin::app.settings.roles.create.description')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.roles.create.description')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="description" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.roles.create.form.description.after') !!}
@@ -155,10 +155,6 @@
 
                 <!-- Permission Type -->
                 <x-admin::form.control-group class="!mb-0">
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.roles.create.permissions')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="select"
                         name="permission_type"
@@ -176,8 +172,12 @@
                             @lang('admin::app.settings.roles.create.all')
                         </option>
                     </x-admin::form.control-group.control>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.roles.create.permissions')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="permission_type" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.roles.create.form.permission_type.after') !!}

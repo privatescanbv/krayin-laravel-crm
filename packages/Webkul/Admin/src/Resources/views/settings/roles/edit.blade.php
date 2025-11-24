@@ -98,10 +98,6 @@
 
                             <!-- Name -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.edit.name')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="text"
                                     id="name"
@@ -111,8 +107,12 @@
                                     :label="trans('admin::app.settings.roles.edit.name')"
                                     :placeholder="trans('admin::app.settings.roles.edit.name')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.roles.edit.name')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="name" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.roles.edit.form.name.after', ['role' => $role]) !!}
@@ -121,10 +121,6 @@
 
                             <!-- Description -->
                             <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.edit.description')
-                                </x-admin::form.control-group.label>
-
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     id="description"
@@ -134,8 +130,12 @@
                                     :label="trans('admin::app.settings.roles.edit.description')"
                                     :placeholder="trans('admin::app.settings.roles.edit.description')"
                                 />
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.roles.edit.description')
+                                </x-admin::form.control-group.label>
 
                                 <x-admin::form.control-group.error control-name="description" />
+
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.roles.edit.form.description.after', ['role' => $role]) !!}
@@ -162,10 +162,6 @@
 
                 <!-- Permission Type -->
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.roles.edit.permissions')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="select"
                         id="permission_type"
@@ -182,8 +178,12 @@
                             @lang('admin::app.settings.roles.edit.all')
                         </option>
                     </x-admin::form.control-group.control>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.roles.edit.permissions')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="permission_type" />
+
                 </x-admin::form.control-group>
 
                 {!! view_render_event('admin.settings.roles.edit.form.permission_type.after', ['role' => $role]) !!}

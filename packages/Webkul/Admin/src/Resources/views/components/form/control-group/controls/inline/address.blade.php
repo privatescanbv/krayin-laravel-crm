@@ -80,8 +80,8 @@
                                                 rows="10"
                                                 ::value="inputValue?.address"
                                             />
-
                                             <x-admin::form.control-group.error ::name="name" />
+
                                         </x-admin::form.control-group>
                                     </div>
 
@@ -99,9 +99,8 @@
                                                     <option value="{{ $country->code }}">{{ $country->name }}</option>
                                                 @endforeach
                                             </x-admin::form.control-group.control>
-                        
                                             <x-admin::form.control-group.error name="country" />
-                        
+
                                         </x-admin::form.control-group>
                         
                                         <!-- State Field -->
@@ -118,8 +117,8 @@
                                                         @{{ state.name }}
                                                     </option>
                                                 </x-admin::form.control-group.control>
-                        
                                                 <x-admin::form.control-group.error name="country" />
+
                                             </x-admin::form.control-group>
                                         </template>
                         
@@ -130,8 +129,8 @@
                                                     ::name="`${name}.state`"
                                                     v-model="inputValue.state"
                                                 />
-                                                
                                                 <x-admin::form.control-group.error name="state" />
+
                                             </x-admin::form.control-group>
                                         </template>
                         
@@ -142,8 +141,8 @@
                                                 ::name="`${name}.city`"
                                                 ::value="inputValue?.city"
                                             />
-                        
                                             <x-admin::form.control-group.error name="city" />
+
                                         </x-admin::form.control-group>
                         
                                         <!-- Postcode Field -->
@@ -154,8 +153,8 @@
                                                 ::value="inputValue?.postcode"
                                                 :placeholder="trans('admin::app.common.custom-attributes.postcode')"
                                             />
-                        
                                             <x-admin::form.control-group.error name="postcode" />
+
                                         </x-admin::form.control-group>
                                     </div>
                                 </div>

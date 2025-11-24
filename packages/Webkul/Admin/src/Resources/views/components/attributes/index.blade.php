@@ -25,10 +25,8 @@
                 :value="isset($entity) ? $entity[$attribute->code] : null"
             />
         @endif
-
-        <x-admin::form.control-group.error :control-name="$attribute->code" />
-
-                <x-admin::form.control-group.label
+code" />
+        <x-admin::form.control-group.label
             for="{{ $attribute->code }}"
             :class="$attribute->is_required ? 'required' : ''"
         >
@@ -38,5 +36,8 @@
                 <span class="currency-code">({{ core()->currencySymbol(config('app.currency')) }})</span>
             @endif
         </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.error :control-name="$attribute->
+
     </x-admin::form.control-group>
 @endforeach

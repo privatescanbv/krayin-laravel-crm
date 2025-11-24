@@ -7,10 +7,6 @@
 @endphp
 
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.shifts.fields.time_blocks')
-    </x-admin::form.control-group.label>
-
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         @for ($day=1; $day<=7; $day++)
             @php
@@ -37,8 +33,12 @@
             </div>
         @endfor
     </div>
+    <x-admin::form.control-group.label class="required">
+        @lang('admin::app.settings.shifts.fields.time_blocks')
+    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="weekday_time_blocks" />
+
 </x-admin::form.control-group>
 
 @pushOnce('scripts')

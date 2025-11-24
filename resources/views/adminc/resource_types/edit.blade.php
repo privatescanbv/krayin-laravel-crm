@@ -25,10 +25,6 @@
 
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.resource_types.index.create.name')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="text"
                         name="name"
@@ -37,8 +33,12 @@
                         :label="trans('admin::app.settings.resource_types.index.create.name')"
                         :placeholder="trans('admin::app.settings.resource_types.index.create.name')"
                     />
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.resource_types.index.create.name')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="name" />
+
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
@@ -47,11 +47,12 @@
                         name="description"
                         :value="old('description', $resource_type->description)"
                     />
-                    <x-admin::form.control-group.error control-name="description" />
-
                     <x-admin::form.control-group.label>
                         @lang('admin::app.settings.resource_types.index.create.description')
                     </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.error control-name="description" />
+
                 </x-admin::form.control-group>
             </div>
         </div>

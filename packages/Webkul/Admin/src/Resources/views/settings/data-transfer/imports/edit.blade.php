@@ -66,10 +66,6 @@
 
                     <!-- Type -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.settings.data-transfer.imports.edit.type')
-                        </x-admin::form.control-group.label>
-
                         <x-admin::form.control-group.control
                             type="select"
                             name="type"
@@ -93,8 +89,12 @@
                         >
                             @lang('admin::app.settings.data-transfer.imports.edit.download-sample')
                         </a>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.settings.data-transfer.imports.edit.type')
+                        </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.error control-name="type" />
+
                     </x-admin::form.control-group>
 
                     <!-- Images Directory Path -->
@@ -104,11 +104,11 @@
                             name="file"
                             :label="trans('admin::app.settings.data-transfer.imports.edit.file')"
                         />
-
                         <x-admin::form.control-group.label>
                             @lang('admin::app.settings.data-transfer.imports.edit.file')
-                        </x-admin::form.control-group.label><x-admin::form.control-group.error control-name="file" />
+                        </x-admin::form.control-group.label>
 
+                        <x-admin::form.control-group.error control-name="file" />
 
                     </x-admin::form.control-group>
                 </div>
@@ -133,10 +133,6 @@
                     <x-slot:content>
                         <!-- Action -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.action')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="select"
                                 name="action"
@@ -148,16 +144,16 @@
                                 <option value="append">@lang('admin::app.settings.data-transfer.imports.edit.create-update')</option>
                                 <option value="delete">@lang('admin::app.settings.data-transfer.imports.edit.delete')</option>
                             </x-admin::form.control-group.control>
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.data-transfer.imports.edit.action')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="action" />
+
                         </x-admin::form.control-group>
 
                         <!-- Validation Strategy -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.validation-strategy')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="select"
                                 name="validation_strategy"
@@ -169,16 +165,16 @@
                                 <option value="stop-on-errors">@lang('admin::app.settings.data-transfer.imports.edit.stop-on-errors')</option>
                                 <option value="skip-erros">@lang('admin::app.settings.data-transfer.imports.edit.skip-errors')</option>
                             </x-admin::form.control-group.control>
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.data-transfer.imports.edit.validation-strategy')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="validation_strategy" />
+
                         </x-admin::form.control-group>
 
                         <!-- Allowed Errors -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.allowed-errors')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="allowed_errors"
@@ -187,16 +183,16 @@
                                 :label="trans('admin::app.settings.data-transfer.imports.edit.allowed-errors')"
                                 :placeholder="trans('admin::app.settings.data-transfer.imports.edit.allowed-errors')"
                             />
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.data-transfer.imports.edit.allowed-errors')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="allowed_errors" />
+
                         </x-admin::form.control-group>
 
                         <!-- CSV Field Separator -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.field-separator')
-                            </x-admin::form.control-group.label>
-
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="field_separator"
@@ -205,8 +201,12 @@
                                 :label="trans('admin::app.settings.data-transfer.imports.edit.field-separator')"
                                 :placeholder="trans('admin::app.settings.data-transfer.imports.edit.field-separator')"
                             />
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.data-transfer.imports.edit.field-separator')
+                            </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.error control-name="field_separator" />
+
                         </x-admin::form.control-group>
 
                         <!-- Process In Queue -->
@@ -217,12 +217,12 @@
                                 :value="1"
                                 :checked="(boolean) $import->process_in_queue"
                             />
-
-                            <x-admin::form.control-group.error control-name="process_in_queue" />
-
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.settings.data-transfer.imports.edit.process-in-queue')
                             </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.error control-name="process_in_queue" />
+
                         </x-admin::form.control-group>
                     </x-slot>
                 </x-admin::accordion>

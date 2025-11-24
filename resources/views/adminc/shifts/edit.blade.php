@@ -25,10 +25,6 @@
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 @include('adminc.components.validation-errors')
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.resources.index.create.title')
-                    </x-admin::form.control-group.label>
-
                     <x-admin::form.control-group.control
                         type="select"
                         name="resource_id"
@@ -40,8 +36,12 @@
                             <option value="{{ $res->id }}">{{ $res->name }}</option>
                         @endforeach
                     </x-admin::form.control-group.control>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.resources.index.create.title')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="resource_id" />
+
                 </x-admin::form.control-group>
                 <x-adminc::shifts.partials.period
                     :periodStart="old('period_start', optional($shift->period_start)->format('Y-m-d'))"
@@ -67,19 +67,15 @@
                         value="{{ old('notes', $shift->notes) }}"
                         :label="trans('admin::app.settings.shifts.fields.notes')"
                     />
-
-                    <x-admin::form.control-group.error control-name="notes" />
-
                     <x-admin::form.control-group.label>
                         @lang('admin::app.settings.shifts.fields.notes')
                     </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.error control-name="notes" />
+
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.shifts.fields.available')
-                    </x-admin::form.control-group.label>
-
                     <input type="hidden" name="available" value="0" />
                     <label class="inline-flex items-center gap-2 text-sm text-gray-800 dark:text-white">
                         <input
@@ -91,8 +87,12 @@
                         />
                         <span>@lang('admin::app.settings.shifts.fields.available')</span>
                     </label>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.shifts.fields.available')
+                    </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.error control-name="available" />
+
                 </x-admin::form.control-group>
             </div>
         </div>

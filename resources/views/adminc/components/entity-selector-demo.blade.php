@@ -100,6 +100,7 @@
                     <x-admin::form.control-group.label>
                         Text Input
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- Email Input -->
@@ -112,6 +113,7 @@
                     <x-admin::form.control-group.label>
                         Email Input
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- Date Picker -->
@@ -124,6 +126,7 @@
                     <x-admin::form.control-group.label>
                         Date Picker
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- Select Dropdown -->
@@ -140,18 +143,19 @@
                 </x-admin::form.control-group>
 
                 <!-- Textarea -->
-                <x-admin::form.control-group class="md:col-span-2">
-                    <x-admin::form.control-group.label>
-                        Textarea
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
+                <x-admin::form.control-group class="md:col-span-2">                    <x-admin::form.control-group.control
                         type="textarea"
                         name="textarea_demo"
                         placeholder="Enter description..."
                     />
                     <x-admin::form.control-group.label>
+                        Textarea
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.label>
                         Select Dropdown
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- Number Input -->
@@ -164,6 +168,7 @@
                     <x-admin::form.control-group.label>
                         Number Input
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- Password Input -->
@@ -176,6 +181,7 @@
                     <x-admin::form.control-group.label>
                         Password Input
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
             </div>
         </div>
@@ -199,18 +205,19 @@
                 </x-admin::form.control-group>
 
                 <!-- URL Input -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        URL Input
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
+                <x-admin::form.control-group>                    <x-admin::form.control-group.control
                         type="url"
                         name="url_demo"
                         placeholder="https://example.com"
                     />
                     <x-admin::form.control-group.label>
+                        URL Input
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.label>
                         Multi-select
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- File Upload -->
@@ -222,6 +229,7 @@
                     <x-admin::form.control-group.label>
                         File Upload
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
 
                 <!-- Search Input -->
@@ -234,6 +242,7 @@
                     <x-admin::form.control-group.label>
                         Search Input
                     </x-admin::form.control-group.label>
+
                 </x-admin::form.control-group>
             </div>
         </div>

@@ -248,7 +248,9 @@
                                         >
                                             @lang('admin::app.settings.marketing.events.index.create.name')
                                         </x-admin::form.control-group.label>
+
                                         <x-admin::form.control-group.error control-name="name" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Description -->
@@ -269,7 +271,9 @@
                                         >
                                             @lang('admin::app.settings.marketing.events.index.create.description')
                                         </x-admin::form.control-group.label>
+
                                         <x-admin::form.control-group.error control-name="description" />
+
                                     </x-admin::form.control-group>
 
                                     <!-- Date -->
@@ -289,7 +293,9 @@
                                         >
                                             @lang('admin::app.settings.marketing.events.index.create.date')
                                         </x-admin::form.control-group.label>
+
                                         <x-admin::form.control-group.error control-name="date" />
+
                                     </x-admin::form.control-group>
 
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.content.controls.after') !!}

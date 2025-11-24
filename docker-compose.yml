@@ -225,10 +225,22 @@ services:
       mysql:
         condition: service_healthy
 
+  loki-init:
+    image: alpine:latest
+    container_name: loki-init
+    user: root
+    volumes:
+      - loki-data:/loki
+    command: sh -c "if [ ! -d /loki/chunks ] || [ ! -w /loki/chunks ]; then echo 'Fixing Loki permissions...'; mkdir -p /loki/chunks /loki/rules; chown -R 10001:10001 /loki; chmod -R 755 /loki; echo 'Loki permissions fixed'; else echo 'Loki permissions already correct'; fi"
+    networks:
+      - sail
+    restart: "no"
+
   loki:
     image: grafana/loki:latest
     container_name: loki
     restart: unless-stopped
+    user: "10001:10001"
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
@@ -239,6 +251,9 @@ services:
       - sail
     labels:
       - logging=promtail
+    depends_on:
+      loki-init:
+        condition: service_completed_successfully
 
   promtail:
     image: grafana/promtail:3.5.8

@@ -231,7 +231,8 @@ services:
     user: root
     volumes:
       - loki-data:/loki
-    command: sh -c "if [ ! -d /loki/chunks ] || [ ! -w /loki/chunks ]; then echo 'Fixing Loki permissions...'; mkdir -p /loki/chunks /loki/rules; chown -R 10001:10001 /loki; chmod -R 755 /loki; echo 'Loki permissions fixed'; else echo 'Loki permissions already correct'; fi"
+      - ./docker/loki/init-loki.sh:/init-loki.sh:ro
+    command: sh /init-loki.sh
     networks:
       - sail
     restart: "no"

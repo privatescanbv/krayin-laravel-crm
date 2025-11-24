@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
@@ -47,11 +48,21 @@ class Person extends Model implements PersonContract
      * @var array
      */
     protected $casts = [
-        'emails'          => 'array',
-        'phones'          => 'array',
-        'date_of_birth'   => 'date',
-        'gender'          => PersonGender::class,
-        'salutation'      => PersonSalutation::class,
+        'emails'        => 'array',
+        'phones'        => 'array',
+        'date_of_birth' => 'date',
+        'gender'        => PersonGender::class,
+        'salutation'    => PersonSalutation::class,
+        'is_active'     => 'boolean',
+    ];
+
+    /**
+     * Attributes that should be hidden from array/json casts.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password',
     ];
 
     /**
@@ -78,6 +89,9 @@ class Person extends Model implements PersonContract
         'gender',
         'created_by',
         'updated_by',
+        'keycloak_user_id',
+        'is_active',
+        'password',
     ];
 
     /**
@@ -96,6 +110,55 @@ class Person extends Model implements PersonContract
         }
 
         $this->attributes['gender'] = $value;
+    }
+
+    /**
+     * Encrypt and store the portal password, keeping plaintext temporarily for observers.
+     */
+    public function setPasswordAttribute($value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['password'] = null;
+            unset($this->attributes['_plaintext_password']);
+
+            return;
+        }
+
+        $this->attributes['_plaintext_password'] = $value;
+        $this->attributes['password'] = Crypt::encryptString($value);
+    }
+
+    /**
+     * Provide the plaintext password to observers when available.
+     */
+    public function getPlaintextPassword(): ?string
+    {
+        if (isset($this->attributes['_plaintext_password'])) {
+            return $this->attributes['_plaintext_password'];
+        }
+
+        return $this->getDecryptedPassword();
+    }
+
+    /**
+     * Decrypt the stored portal password (if any).
+     */
+    public function getDecryptedPassword(): ?string
+    {
+        if (empty($this->attributes['password'])) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($this->attributes['password']);
+        } catch (Exception $e) {
+            Log::warning('Failed to decrypt person portal password', [
+                'person_id' => $this->id,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**
@@ -205,6 +268,30 @@ class Person extends Model implements PersonContract
     protected static function newFactory()
     {
         return PersonFactory::new();
+    }
+
+    /**
+     * Ensure temporary attributes are removed before update.
+     */
+    protected function performUpdate($query)
+    {
+        if (isset($this->attributes['_plaintext_password'])) {
+            unset($this->attributes['_plaintext_password']);
+        }
+
+        return parent::performUpdate($query);
+    }
+
+    /**
+     * Ensure temporary attributes are removed before insert.
+     */
+    protected function performInsert($query)
+    {
+        if (isset($this->attributes['_plaintext_password'])) {
+            unset($this->attributes['_plaintext_password']);
+        }
+
+        return parent::performInsert($query);
     }
 
     /**

@@ -70,78 +70,78 @@ class KeycloakHttpHelpers
 
         // Create a callback function for handling user operations
         $userOperationsCallback = function ($request) use (
-                $emailChecks,
-                $userById,
-                $createResponses,
-                $updateSuccess,
-                $deleteSuccess,
-                $passwordResetSuccess,
-                $baseUrl,
-                &$createCount
-            ) {
-                $url = $request->url();
-                $method = $request->method();
+            $emailChecks,
+            $userById,
+            $createResponses,
+            $updateSuccess,
+            $deleteSuccess,
+            $passwordResetSuccess,
+            $baseUrl,
+            &$createCount
+        ) {
+            $url = $request->url();
+            $method = $request->method();
 
-                // Email check request (GET with email query parameter)
-                if ($method === 'GET') {
-                    $parsedUrl = parse_url($url);
-                    if (isset($parsedUrl['query'])) {
-                        parse_str($parsedUrl['query'], $queryParams);
-                        if (isset($queryParams['email']) && isset($emailChecks[$queryParams['email']])) {
-                            $response = $emailChecks[$queryParams['email']];
-                            // Normalize response: if null, return empty array; if single item, wrap in array
-                            $normalizedResponse = $response === null ? [] : (is_array($response) && isset($response[0]) ? $response : [$response]);
+            // Email check request (GET with email query parameter)
+            if ($method === 'GET') {
+                $parsedUrl = parse_url($url);
+                if (isset($parsedUrl['query'])) {
+                    parse_str($parsedUrl['query'], $queryParams);
+                    if (isset($queryParams['email']) && isset($emailChecks[$queryParams['email']])) {
+                        $response = $emailChecks[$queryParams['email']];
+                        // Normalize response: if null, return empty array; if single item, wrap in array
+                        $normalizedResponse = $response === null ? [] : (is_array($response) && isset($response[0]) ? $response : [$response]);
 
-                            return Http::response($normalizedResponse, 200);
-                        }
-                    }
-                    // Get user by ID (GET without query parameters)
-                    foreach ($userById as $userId => $userData) {
-                        if (str_contains($url, "/users/{$userId}") && ! str_contains($url, '?')) {
-                            return Http::response($userData, 200);
-                        }
+                        return Http::response($normalizedResponse, 200);
                     }
                 }
-
-                // Password reset request (PUT with /reset-password)
-                if ($method === 'PUT' && str_contains($url, '/reset-password')) {
-                    return Http::response('', $passwordResetSuccess ? 204 : 400);
-                }
-
-                // Update user (PUT without /reset-password)
-                if ($method === 'PUT' && ! str_contains($url, '/reset-password')) {
-                    return Http::response('', $updateSuccess ? 204 : 400);
-                }
-
-                // Create user request (POST)
-                if ($method === 'POST') {
-                    if (! empty($createResponses)) {
-                        $userId = $createResponses[$createCount] ?? $createResponses[0];
-                        $createCount++;
-
-                        return Http::response('', 201, [
-                            'Location' => "{$baseUrl}/admin/realms/crm/users/{$userId}",
-                        ]);
+                // Get user by ID (GET without query parameters)
+                foreach ($userById as $userId => $userData) {
+                    if (str_contains($url, "/users/{$userId}") && ! str_contains($url, '?')) {
+                        return Http::response($userData, 200);
                     }
-                    // Default: return generic ID
+                }
+            }
+
+            // Password reset request (PUT with /reset-password)
+            if ($method === 'PUT' && str_contains($url, '/reset-password')) {
+                return Http::response('', $passwordResetSuccess ? 204 : 400);
+            }
+
+            // Update user (PUT without /reset-password)
+            if ($method === 'PUT' && ! str_contains($url, '/reset-password')) {
+                return Http::response('', $updateSuccess ? 204 : 400);
+            }
+
+            // Create user request (POST)
+            if ($method === 'POST') {
+                if (! empty($createResponses)) {
+                    $userId = $createResponses[$createCount] ?? $createResponses[0];
                     $createCount++;
 
                     return Http::response('', 201, [
-                        'Location' => "{$baseUrl}/admin/realms/crm/users/new-user-{$createCount}",
+                        'Location' => "{$baseUrl}/admin/realms/crm/users/{$userId}",
                     ]);
                 }
+                // Default: return generic ID
+                $createCount++;
 
-                // Delete user (DELETE)
-                if ($method === 'DELETE') {
-                    return Http::response('', $deleteSuccess ? 204 : 400);
-                }
+                return Http::response('', 201, [
+                    'Location' => "{$baseUrl}/admin/realms/crm/users/new-user-{$createCount}",
+                ]);
+            }
 
-                return Http::response('', 404);
-            };
+            // Delete user (DELETE)
+            if ($method === 'DELETE') {
+                return Http::response('', $deleteSuccess ? 204 : 400);
+            }
+
+            return Http::response('', 404);
+        };
 
         // Mock both URLs since KeycloakService uses base_url for admin operations
         Http::fake([
-            $baseUrlPattern.'/admin/realms/crm/users*' => $userOperationsCallback,
+            $baseUrlPattern.'/admin/realms/crm/users*'   => $userOperationsCallback,
             $dockerUrlPattern.'/admin/realms/crm/users*' => $userOperationsCallback,
         ]);
     }

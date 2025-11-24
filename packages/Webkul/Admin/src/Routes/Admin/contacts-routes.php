@@ -34,6 +34,9 @@ Route::prefix('contacts')->group(function () {
 
         Route::post('sync-lead-to-person/{leadId}/{personId}', 'syncLeadToPersonUpdate')->name('admin.contacts.persons.sync_lead_to_person_update');
 
+        Route::post('portal/{id}', 'createPortalAccount')->name('admin.contacts.persons.portal.create');
+        Route::delete('portal/{id}', 'deletePortalAccount')->name('admin.contacts.persons.portal.delete');
+
         // Match score breakdown endpoint for UI tooltips
         Route::get('match-breakdown/{personId}/{leadId}', 'matchScoreBreakdown')->name('admin.contacts.persons.match_breakdown');
 

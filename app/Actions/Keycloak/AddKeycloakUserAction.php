@@ -17,9 +17,10 @@ class AddKeycloakUserAction
      * @param  array  $userData  User data (email, firstName, lastName, etc.)
      * @param  string  $password  Password for the user (required)
      * @param  bool  $temporary  Whether password is temporary
+     * @param  string|null  $role  Optional realm role to assign (defaults to medewerker)
      * @return array{success: bool, keycloak_user_id?: string, message?: string}
      */
-    public function execute(array $userData, string $password, bool $temporary = false): array
+    public function execute(array $userData, string $password, bool $temporary = false, ?string $role = 'medewerker'): array
     {
         $accessToken = $this->keycloakService->getAdminToken();
 
@@ -72,16 +73,18 @@ class AddKeycloakUserAction
             // User is created but password failed - still return success but log warning
         }
 
-        // Assign default role "medewerker" to all users
-        $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, 'medewerker', $accessToken);
+        $roleAssigned = null;
+        if ($role) {
+            $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, $role, $accessToken);
 
-        if (! $roleAssigned) {
-            Log::warning('Failed to assign role to newly created Keycloak user', [
-                'keycloak_user_id' => $keycloakUserId,
-                'email'            => $userData['email'] ?? null,
-                'role'             => 'medewerker',
-            ]);
-            // User is created but role assignment failed - still return success but log warning
+            if (! $roleAssigned) {
+                Log::warning('Failed to assign role to newly created Keycloak user', [
+                    'keycloak_user_id' => $keycloakUserId,
+                    'email'            => $userData['email'] ?? null,
+                    'role'             => $role,
+                ]);
+                // User is created but role assignment failed - still return success but log warning
+            }
         }
 
         Log::info('User added to Keycloak', [

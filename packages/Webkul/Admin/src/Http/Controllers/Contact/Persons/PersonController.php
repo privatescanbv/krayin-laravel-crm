@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Actions\Persons\CreatePortalAccountAction;
+use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ContactLabel;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Address;
@@ -49,9 +51,55 @@ class PersonController extends Controller
     public function __construct(
         protected PersonRepository           $personRepository,
         private readonly LeadRepository      $leadRepository,
-        private readonly AttributeRepository $attributeRepository)
+        private readonly AttributeRepository $attributeRepository,
+        private readonly CreatePortalAccountAction $createPortalAccountAction,
+        private readonly DeletePortalAccountAction $deletePortalAccountAction,
+    )
     {
         request()->request->add(['entity_type' => 'persons']);
+    }
+
+    /**
+     * Handmatige actie: maak patiëntportaal account aan.
+     */
+    public function createPortalAccount(int $id): RedirectResponse|JsonResponse
+    {
+        $person = $this->personRepository->findOrFail($id);
+
+        $result = $this->createPortalAccountAction->execute($person);
+
+        return $this->portalResponse($result, $person);
+    }
+
+    /**
+     * Handmatige actie: verwijder patiëntportaal account.
+     */
+    public function deletePortalAccount(int $id): RedirectResponse|JsonResponse
+    {
+        $person = $this->personRepository->findOrFail($id);
+
+        $result = $this->deletePortalAccountAction->execute($person);
+
+        return $this->portalResponse($result, $person);
+    }
+
+    protected function portalResponse(array $result, Person $person): RedirectResponse|JsonResponse
+    {
+        $message = $result['message'] ?? ($result['success'] ? 'Actie succesvol uitgevoerd.' : 'Actie mislukt.');
+
+        if (request()->expectsJson()) {
+            $status = $result['success'] ? 200 : 422;
+
+            return response()->json([
+                'message' => $message,
+                'person'  => $person->fresh(),
+            ], $status);
+        }
+
+        $flashType = $result['success'] ? 'success' : 'error';
+        session()->flash($flashType, $message);
+
+        return redirect()->route('admin.contacts.persons.view', $person->id);
     }
 
     /**
@@ -309,10 +357,10 @@ class PersonController extends Controller
                 $personsWithScores = $persons->map(function ($personResource) use ($lead) {
                     // Get the underlying Person model from the resource
                     $person = $personResource->resource;
-                    
+
                     // Calculate match score using the Person model
                     $score = $this->calculateMatchScore($lead, $person);
-                    
+
                     // Add score to the resource (which will be included in toArray())
                     $personResource->match_score = $score;
                     $personResource->match_score_percentage = round($score, 1);

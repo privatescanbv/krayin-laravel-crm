@@ -92,6 +92,37 @@
                         </a>
                     @endif
 
+                    @if (bouncer()->hasPermission('contacts.persons.edit'))
+                        @if (empty($person->keycloak_user_id))
+                            <form
+                                class="inline-flex"
+                                method="POST"
+                                action="{{ route('admin.contacts.persons.portal.create', $person->id) }}"
+                                onsubmit="return confirm('Portal account aanmaken voor {{ $person->name }}?')"
+                            >
+                                @csrf
+                                <button type="submit" class="secondary-button">
+                                    <i class="icon-login text-xs"></i>
+                                    Maak patiëntportaal account aan
+                                </button>
+                            </form>
+                        @else
+                            <form
+                                class="inline-flex"
+                                method="POST"
+                                action="{{ route('admin.contacts.persons.portal.delete', $person->id) }}"
+                                onsubmit="return confirm('Portal account verwijderen voor {{ $person->name }}?')"
+                            >
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="secondary-button border border-error text-status-expired-text hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1">
+                                    <i class="icon-trash text-xs"></i>
+                                    Verwijder patiëntportaal account
+                                </button>
+                            </form>
+                        @endif
+                    @endif
+
                     {!! view_render_event('admin.contact.persons.view.actions.after', ['person' => $person]) !!}
                 </div>
             </div>

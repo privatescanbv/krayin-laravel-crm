@@ -270,6 +270,14 @@ class PersonRepository extends Repository
 
         $data['unique_id'] = implode('|', $uniqueIdParts);
 
+        // Normalize portal activation flag (checkbox/switch can submit as on/1/true)
+        $data['is_active'] = filter_var($data['is_active'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        // Drop empty password submissions to avoid overwriting existing hashes
+        if (array_key_exists('password', $data) && empty($data['password'])) {
+            unset($data['password']);
+        }
+
         if (isset($data['phones'])) {
             $data['phones'] = collect($data['phones'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
 

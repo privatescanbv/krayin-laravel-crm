@@ -38,6 +38,8 @@ class PersonResource extends JsonResource
             'date_of_birth'   => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
             'gender'          => $this->gender?->value,
             'salutation'      => $this->salutation?->value,
+            'is_active'       => (bool) $this->is_active,
+            'keycloak_user_id'=> $this->keycloak_user_id,
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

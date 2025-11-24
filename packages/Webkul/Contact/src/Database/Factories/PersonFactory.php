@@ -25,9 +25,12 @@ class PersonFactory extends Factory
     public function definition()
     {
         return [
-            'name'            => $this->faker->name(),
-            'emails'          => [['value' => $this->faker->unique()->safeEmail(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
-            'phones' => [], // Empty by default to avoid conflicts in tests
+            'name'             => $this->faker->name(),
+            'emails'           => [['value' => $this->faker->unique()->safeEmail(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+            'phones'           => [], // Empty by default to avoid conflicts in tests
+            'is_active'        => false,
+            'password'         => null,
+            'keycloak_user_id' => null,
         ];
     }
 

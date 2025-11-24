@@ -56,6 +56,10 @@ class PersonValidationService
             'address.state'               => 'nullable|string|max:255',
             'address.country'             => 'nullable|string|max:255',
 
+            // Portal/account management
+            'is_active' => 'sometimes|boolean',
+            'password'  => 'nullable|string|min:8|max:255',
+
             // System fields
             'entity_type' => 'nullable|string',
             'unique_id'   => 'nullable|string|max:255',

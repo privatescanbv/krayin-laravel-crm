@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Services\PersonDuplicateCacheService;
+use App\Services\PersonKeycloakService;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -15,7 +17,8 @@ class PersonObserver
      */
     public function __construct(
         protected ActivityRepository $activityRepository,
-        protected PersonDuplicateCacheService $duplicateCacheService
+        protected PersonDuplicateCacheService $duplicateCacheService,
+        protected PersonKeycloakService $personKeycloakService,
     ) {}
 
     /**
@@ -30,6 +33,8 @@ class PersonObserver
 
         // Invalidate duplicate cache for this person
         $this->duplicateCacheService->invalidatePersonCache($person->id);
+
+        $this->ensurePortalAccountOnCreate($person);
 
         Log::info('CREATE person', [
             'person_id' => $person->id,
@@ -55,6 +60,8 @@ class PersonObserver
 
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($person);
+
+        $this->handlePortalSyncOnUpdate($person);
     }
 
     /**
@@ -64,6 +71,165 @@ class PersonObserver
     {
         // Invalidate duplicate cache for this person
         $this->duplicateCacheService->invalidatePersonCache($person->id);
+
+        $this->deletePortalAccount($person, 'deleted');
+    }
+
+    protected function ensurePortalAccountOnCreate(Person $person): void
+    {
+        if (! $this->shouldManagePortal($person)) {
+            return;
+        }
+
+        if ($person->is_active && empty($person->keycloak_user_id)) {
+            $this->createPortalAccount($person, 'created');
+        }
+    }
+
+    protected function handlePortalSyncOnUpdate(Person $person): void
+    {
+        if (! $this->shouldManagePortal($person)) {
+            return;
+        }
+
+        $changedFields = array_keys($person->getChanges());
+
+        if (empty($changedFields)) {
+            return;
+        }
+
+        if ($person->wasChanged('is_active')) {
+            if ($person->is_active) {
+                if ($person->keycloak_user_id) {
+                    $this->updatePortalAccount($person, ['is_active']);
+                } else {
+                    $this->createPortalAccount($person, 'reactivated');
+                }
+            } else {
+                $this->deletePortalAccount($person, 'deactivated');
+            }
+
+            return;
+        }
+
+        if ($person->is_active && $person->keycloak_user_id) {
+            $relevantFields = [
+                'emails',
+                'first_name',
+                'last_name',
+                'lastname_prefix',
+                'married_name',
+                'married_name_prefix',
+                'password',
+            ];
+
+            $portalFields = array_values(array_intersect($relevantFields, $changedFields));
+
+            if (! empty($portalFields)) {
+                $this->updatePortalAccount($person, $portalFields);
+            }
+        }
+    }
+
+    protected function createPortalAccount(Person $person, string $reason): void
+    {
+        if (! $this->isKeycloakConfigured()) {
+            return;
+        }
+
+        $result = $this->personKeycloakService->create($person);
+
+        if (! $result['success']) {
+            Log::warning('Failed to create portal account for person', [
+                'person_id' => $person->id,
+                'reason'    => $reason,
+                'message'   => $result['message'] ?? null,
+            ]);
+
+            return;
+        }
+
+        if (! empty($result['keycloak_user_id'])) {
+            Person::withoutEvents(function () use ($person, $result) {
+                $person->forceFill([
+                    'keycloak_user_id' => $result['keycloak_user_id'],
+                    'is_active'        => true,
+                ])->save();
+            });
+        }
+
+        Log::info('Person portal account synced (create)', [
+            'person_id'        => $person->id,
+            'reason'           => $reason,
+            'keycloak_user_id' => $result['keycloak_user_id'] ?? null,
+        ]);
+    }
+
+    protected function updatePortalAccount(Person $person, array $changedFields): void
+    {
+        if (! $this->isKeycloakConfigured()) {
+            return;
+        }
+
+        $result = $this->personKeycloakService->update($person, $changedFields);
+
+        if (! $result['success']) {
+            Log::warning('Failed to update portal account for person', [
+                'person_id' => $person->id,
+                'fields'    => $changedFields,
+                'message'   => $result['message'] ?? null,
+            ]);
+        } else {
+            Log::info('Person portal account updated', [
+                'person_id' => $person->id,
+                'fields'    => $changedFields,
+            ]);
+        }
+    }
+
+    protected function deletePortalAccount(Person $person, string $reason): void
+    {
+        if (! $this->isKeycloakConfigured() || empty($person->keycloak_user_id)) {
+            return;
+        }
+
+        $result = $this->personKeycloakService->delete($person);
+
+        if (! $result['success']) {
+            Log::warning('Failed to delete portal account for person', [
+                'person_id' => $person->id,
+                'reason'    => $reason,
+                'message'   => $result['message'] ?? null,
+            ]);
+
+            return;
+        }
+
+        Person::withoutEvents(function () use ($person) {
+            $person->forceFill([
+                'keycloak_user_id' => null,
+                'is_active'        => false,
+            ])->save();
+        });
+
+        Log::info('Person portal account deleted', [
+            'person_id' => $person->id,
+            'reason'    => $reason,
+        ]);
+    }
+
+    protected function shouldManagePortal(Person $person): bool
+    {
+        if (! $this->isKeycloakConfigured()) {
+            return false;
+        }
+
+        return ! empty($person->findDefaultEmail());
+    }
+
+    protected function isKeycloakConfigured(): bool
+    {
+        return ! empty(Config::get('services.keycloak.client_id'));
     }
 
     /**

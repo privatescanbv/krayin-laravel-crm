@@ -231,6 +231,48 @@
         <x-admin::form.control-group.error control-name="gender"/>
 
     </x-admin::form.control-group>
+
+    <!-- Portal activation toggle -->
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            Patiëntportaal actief
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="switch"
+            name="is_active"
+            value="1"
+            :checked="(bool) old('is_active', $entity?->is_active ?? false)"
+            label="Actief"
+            :disabled="!$mayEditPersonFields"
+            :readonly="!$mayEditPersonFields"
+        />
+
+        <x-admin::form.control-group.error control-name="is_active"/>
+    </x-admin::form.control-group>
+
+    <!-- Portal password -->
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            Patiëntportaal wachtwoord
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="password"
+            name="password"
+            value=""
+            label="Wachtwoord"
+            placeholder="Laat leeg om niet te wijzigen"
+            autocomplete="new-password"
+            :readonly="!$mayEditPersonFields"
+        />
+
+        <x-admin::form.control-group.error control-name="password"/>
+
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Vul een nieuw wachtwoord in om het portaalaccount bij te werken. Laat leeg om het huidige wachtwoord te behouden.
+        </p>
+    </x-admin::form.control-group>
 </div>
 
 {{-- {!! view_render_event('admin.leads.create.personal_fields.form_controls.after') !!} --}}

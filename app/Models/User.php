@@ -25,6 +25,7 @@ class User extends Authenticatable
         'created_by',
         'updated_by',
         'signature',
+        'keycloak_user_id',
     ];
 
     /**

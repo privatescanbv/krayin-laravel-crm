@@ -155,6 +155,7 @@
                             <x-admin::form.control-group.label
                                 class="required"
                                 for="create_lead"
+                                switch
                             >
                                 @lang('admin::app.settings.webforms.edit.create-lead')
                             </x-admin::form.control-group.label>

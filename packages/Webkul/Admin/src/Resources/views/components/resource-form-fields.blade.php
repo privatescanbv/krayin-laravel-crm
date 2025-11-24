@@ -86,7 +86,7 @@
         :checked="(bool) old('is_active', $resource->is_active ?? true)"
         label="Actief"
     />
-    <x-admin::form.control-group.label>
+    <x-admin::form.control-group.label switch>
         Actief
     </x-admin::form.control-group.label>
 

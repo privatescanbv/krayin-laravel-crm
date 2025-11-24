@@ -519,6 +519,10 @@
                             <!-- Allergie -->
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label class="required" static>
+                                        Heeft u allergieën?
+                                    </x-admin::form.control-group.label>
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="allergies" value="1"

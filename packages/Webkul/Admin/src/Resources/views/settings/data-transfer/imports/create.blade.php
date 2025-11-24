@@ -214,7 +214,7 @@
                                 id="maintenance-mode-status"
                                 :checked="false"
                             />
-                            <x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label switch>
                                 @lang('admin::app.settings.data-transfer.imports.create.process-in-queue')
                             </x-admin::form.control-group.label>
 

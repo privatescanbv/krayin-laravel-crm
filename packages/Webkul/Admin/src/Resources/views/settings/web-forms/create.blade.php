@@ -119,7 +119,7 @@
                                 :label="trans('admin::app.settings.webforms.create.create-lead')"
                                 v-model="createLead"
                             />
-                            <x-admin::form.control-group.label for="create_lead">
+                            <x-admin::form.control-group.label for="create_lead" switch>
                                 @lang('admin::app.settings.webforms.create.create-lead')
                             </x-admin::form.control-group.label>
 

@@ -488,7 +488,7 @@
                                     :label="trans('admin::app.settings.users.index.create.status')"
                                     ::checked="parseInt(user.status || 0)"
                                 />
-                                <x-admin::form.control-group.label for="status">
+                                <x-admin::form.control-group.label for="status" switch>
                                     @lang('admin::app.settings.users.index.create.status')
                                 </x-admin::form.control-group.label>
 

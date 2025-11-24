@@ -82,7 +82,7 @@
     input[readonly] + label,
     textarea[readonly] + label,
     select[readonly] + label {
-        @apply absolute top-[-1em] left-1 flex z-10 px-2 py-[.125rem] bg-none bg-white rounded-lg items-center gap-2 mb-1.5 text-xs font-medium text-neutral-muted dark:text-neutral-text;
+        @apply flex z-10 px-2 py-[.125rem] bg-none bg-white rounded-lg items-center gap-2 mb-1.5 text-xs font-medium text-neutral-muted dark:text-neutral-text;
     }
     /* Form elements */
     input,

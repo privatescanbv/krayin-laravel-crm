@@ -63,7 +63,7 @@
                             />
 
                             <span
-                                class="icon-eye-hide absolute top-11 -translate-y-2/4 cursor-pointer text-2xl ltr:right-3 rtl:left-3"
+                                class="icon-eye-hide absolute top-3 cursor-pointer right-6 text-2xl ltr:right-6 rtl:left-6"
                                 onclick="switchVisibility()"
                                 id="visibilityIcon"
                                 role="presentation"

@@ -28,10 +28,6 @@
 
     <div class="flex gap-4">
         <x-admin::form.control-group class="w-40">
-
-
-
-
             @php
                 $current = old('salutation', $entity?->salutation?->value);
                 if ($current === null || $current === '') {
@@ -52,7 +48,7 @@
                     <option value="{{ $case->value }}">{{ $case->label() }}</option>
                 @endforeach
             </x-admin::form.control-group.control>
-            <x-admin::form.control-group.label>
+                        <x-admin::form.control-group.label>
                 Aanhef
             </x-admin::form.control-group.label>
 

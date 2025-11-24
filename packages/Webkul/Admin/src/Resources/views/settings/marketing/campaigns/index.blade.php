@@ -362,7 +362,7 @@
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.status')"
                                             ::checked="parseInt(campaign.status || 0)"
                                         />
-                                        <x-admin::form.control-group.label for="status">
+                                        <x-admin::form.control-group.label for="status" switch>
                                             @lang('admin::app.settings.marketing.campaigns.index.create.status')
                                         </x-admin::form.control-group.label>
 

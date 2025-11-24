@@ -67,7 +67,7 @@
                             <div class="mb-4">
                                 <div class="shimmer mb-1.5 h-4 w-24"></div>
 
-                                <div class="custom-select h-11 w-full rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"></div>
+                                <div class=" h-11 w-full rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"></div>
                             </div>
 
                             <!-- Roles Checkbox -->

@@ -10,7 +10,7 @@
         id="clinics-select"
         name="clinics[]"
         multiple
-        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+        class=" w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
         data-initial-clinics="{{ json_encode($selectedClinics) }}"
     >
         @foreach ($clinics as $clinic)
@@ -61,8 +61,8 @@
         id="resources-select"
         name="resources[]"
         multiple
-        
-        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+
+        class=" w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
         data-initial-resources="{{ json_encode($selectedResources) }}"
     >
         @if ($initialResourceOptions->isNotEmpty())
@@ -120,7 +120,7 @@
             }
 
             const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-            
+
             if (selectedClinics.length === 0) {
                 resourcesSelect.disabled = true;
                 resourcesSelect.innerHTML = '';
@@ -137,7 +137,7 @@
                 .then(data => {
                     resourcesSelect.innerHTML = '';
                     resourcesHint.style.display = 'block';
-                    
+
                     if (data.data && data.data.length > 0) {
                         data.data.forEach(resource => {
                             const option = document.createElement('option');

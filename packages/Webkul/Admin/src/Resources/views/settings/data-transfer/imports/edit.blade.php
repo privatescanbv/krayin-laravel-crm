@@ -217,7 +217,7 @@
                                 :value="1"
                                 :checked="(boolean) $import->process_in_queue"
                             />
-                            <x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label switch>
                                 @lang('admin::app.settings.data-transfer.imports.edit.process-in-queue')
                             </x-admin::form.control-group.label>
 

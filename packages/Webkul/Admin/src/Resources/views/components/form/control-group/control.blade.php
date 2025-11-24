@@ -176,7 +176,7 @@
                 name="{{ $name }}"
                 v-bind="field"
                 :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
-                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'custom-select']) }}
+                {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
             >
                 {{ $slot }}
             </select>

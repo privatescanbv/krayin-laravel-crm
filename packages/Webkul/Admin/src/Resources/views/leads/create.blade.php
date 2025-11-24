@@ -298,14 +298,9 @@ $salutationToGenderMapping = [
                                         <!-- Heeft u metalen? -->
                                         <div class="mt-3">
                                             <x-admin::form.control-group>
-                                                <x-admin::form.control-group.control
-                                                        type="number"
-                                                        name="height"
-                                                        placeholder="Bijv. 175"
-                                                        min="100"
-                                                        max="250"
-                                                        step="1"
-                                                    />
+                                                <x-admin::form.control-group.label static>
+                                                    Heeft u metalen?
+                                                </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
                                                         <input type="radio" name="metals" value="1" required
@@ -317,17 +312,18 @@ $salutationToGenderMapping = [
                                                                @change="() => {$refs.metals_notes_container.style.display='none'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.removeAttribute('required');}}"
                                                                class="mr-2"> Nee
                                                     </label>
-                                                </div>
-                                                <div ref="metals_notes_container" style="display: none" class="mt-2">
+                                                    <div ref="metals_notes_container" style="display: none" class="relative">
                                                     <x-admin::form.control-group.control
                                                         type="text"
                                                         name="metals_notes"
                                                         placeholder="Toelichting"
                                                     />
-                                                </div>
-                                                <x-admin::form.control-group.label>
-                                                    Heeft u metalen?
+                                                                                                    <x-admin::form.control-group.label>
+                                                    Toelichting
                                                 </x-admin::form.control-group.label>
+                                                </div>
+                                                </div>
+
 
                                                 <x-admin::form.control-group.error control-name="height"/>
 
@@ -336,7 +332,11 @@ $salutationToGenderMapping = [
 
                                         <!-- Claustrofobisch? -->
                                         <div class="mt-3">
-                                            <x-admin::form.control-group>                                                <div class="flex gap-4">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label static>
+                                                    Claustrofobisch?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
                                                     <label class="flex items-center">
                                                         <input type="radio" name="claustrophobia" value="1" required
                                                                class="mr-2"> Ja
@@ -346,16 +346,17 @@ $salutationToGenderMapping = [
                                                                class="mr-2"> Nee
                                                     </label>
                                                 </div>
-                                                <x-admin::form.control-group.label>
-                                                    Claustrofobisch?
-                                                </x-admin::form.control-group.label>
 
                                             </x-admin::form.control-group>
                                         </div>
 
                                         <!-- Allergieën? bij ja uitleg -->
                                         <div class="mt-3">
-                                            <x-admin::form.control-group>                                                <div class="flex gap-4">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label static>
+                                                    Allergieën?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
                                                     <label class="flex items-center">
                                                         <input type="radio" name="allergies" value="1" required
                                                                @change="() => {$refs.allergies_notes_container.style.display='block'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.setAttribute('required','required');}}"
@@ -366,17 +367,18 @@ $salutationToGenderMapping = [
                                                                @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}"
                                                                class="mr-2"> Nee
                                                     </label>
-                                                </div>
-                                                <div ref="allergies_notes_container" style="display: none" class="mt-2">
+                                                                                               <div ref="allergies_notes_container" style="display: none" class="relative">
                                                     <x-admin::form.control-group.control
                                                         type="text"
                                                         name="allergies_notes"
                                                         placeholder="Toelichting"
                                                     />
-                                                </div>
                                                 <x-admin::form.control-group.label>
-                                                    Allergieën?
+                                                    Toelichting
                                                 </x-admin::form.control-group.label>
+                                                </div>
+                                                </div>
+
 
                                             </x-admin::form.control-group>
                                         </div>
@@ -385,14 +387,24 @@ $salutationToGenderMapping = [
                                         <div class="mt-3 flex gap-4">
                                             <div class="w-1/2">
                                                 <x-admin::form.control-group>
-                                                    <x-admin::form.control-group.label>
+
+                                                    <x-admin::form.control-group.control
+                                                        type="number"
+                                                        name="height"
+                                                        placeholder="Bijv. 175"
+                                                        min="100"
+                                                        max="250"
+                                                        step="1"
+                                                    />
+                                                                                                        <x-admin::form.control-group.label>
                                                         Lengte (cm)
                                                     </x-admin::form.control-group.label>
-
+                                                    <x-admin::form.control-group.error control-name="height"/>
                                                 </x-admin::form.control-group>
                                             </div>
                                             <div class="w-1/2">
                                                 <x-admin::form.control-group>
+
                                                     <x-admin::form.control-group.control
                                                         type="number"
                                                         name="weight"
@@ -401,12 +413,10 @@ $salutationToGenderMapping = [
                                                         max="300"
                                                         step="1"
                                                     />
-                                                    <x-admin::form.control-group.label>
+                                                                                                        <x-admin::form.control-group.label>
                                                         Gewicht (kg)
                                                     </x-admin::form.control-group.label>
-
                                                     <x-admin::form.control-group.error control-name="weight"/>
-
                                                 </x-admin::form.control-group>
                                             </div>
                                         </div>

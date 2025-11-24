@@ -12,7 +12,7 @@
             :checked="(bool) old('is_active', $clinic->is_active ?? true)"
             label="Actief"
         />
-        <x-admin::form.control-group.label>
+        <x-admin::form.control-group.label switch>
             @lang('admin::app.settings.clinics.index.create.is_active')
         </x-admin::form.control-group.label>
 

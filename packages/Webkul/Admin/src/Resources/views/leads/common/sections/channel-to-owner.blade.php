@@ -137,6 +137,9 @@
         <div class="flex-1">
             <!-- Diagnoseformulier aanwezig? -->
             <x-admin::form.control-group class="mt-2">
+                <x-admin::form.control-group.label static>
+                    Diagnoseformulier aanwezig?
+                </x-admin::form.control-group.label>
                 <div class="flex items-center gap-2">
                     <input type="hidden" name="has_diagnosis_form" value="0"/>
                     <input
@@ -147,9 +150,6 @@
                     />
                     <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
                 </div>
-                <x-admin::form.control-group.label>
-                    Diagnoseformulier aanwezig?
-                </x-admin::form.control-group.label>
 
             </x-admin::form.control-group>
         </div>

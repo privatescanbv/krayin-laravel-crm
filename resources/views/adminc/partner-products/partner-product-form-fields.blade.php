@@ -195,7 +195,7 @@
         :checked="(bool) old('is_active', $partnerProduct->active ?? true)"
         label="Actief"
     />
-    <x-admin::form.control-group.label>
+    <x-admin::form.control-group.label switch>
         @lang('admin::app.partner_products.index.create.active')
     </x-admin::form.control-group.label>
 

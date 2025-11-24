@@ -129,7 +129,7 @@
                         for="is_default"
                         :label="trans('admin::app.settings.pipelines.create.mark-as-default')"
                     />
-                    <x-admin::form.control-group.label class="!mb-0">
+                    <x-admin::form.control-group.label class="!mb-0" switch>
                         @lang('admin::app.settings.pipelines.create.mark-as-default')
                     </x-admin::form.control-group.label>
 

@@ -175,12 +175,13 @@ class UserSeeder extends Seeder
             unset($userData['group_id']); // Remove group_id from user data
 
             // Use updateOrCreate to prevent duplicate key errors during parallel testing
+            // Pass plaintext password so User model mutator can capture it for Keycloak sync
             $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 [
                     'first_name' => $userData['first_name'],
                     'last_name' => $userData['last_name'],
-                    'password' => bcrypt($userData['password']),
+                    'password' => $userData['password'], // Plaintext - User model will hash it and store plaintext for observer
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                     'status' => $userData['status'],

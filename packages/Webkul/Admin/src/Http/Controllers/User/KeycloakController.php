@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\User;
 use App\Services\KeycloakService;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -27,7 +28,7 @@ class KeycloakController extends Controller
     /**
      * Redirect the user to the Keycloak authentication page.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function redirect()
     {
@@ -42,136 +43,29 @@ class KeycloakController extends Controller
     /**
      * Obtain the user information from Keycloak.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function callback()
     {
         try {
-            // Prevent redirect loops - if already authenticated, redirect to dashboard
             if (Auth::guard('user')->check()) {
                 return redirect()->route('admin.dashboard.index');
             }
 
-            // Check if we have the authorization code
             if (! request()->has('code')) {
-                if (request()->has('error')) {
-                    $error = request('error');
-                    $errorDescription = request('error_description', 'Unknown error');
-                    Log::error('Keycloak OAuth error', [
-                        'error' => $error,
-                        'error_description' => $errorDescription,
-                    ]);
-                    session()->flash('error', 'SSO authenticatie mislukt 4: ' . $errorDescription);
-                } else {
-                    Log::error('Keycloak callback missing code parameter', [
-                        'request_params' => request()->all(),
-                    ]);
-                    session()->flash('error', 'SSO authenticatie mislukt: Geen autorisatie code ontvangen van Keycloak.');
-                }
+                return $this->handleMissingCode();
+            }
 
+            $keycloakUser = $this->getKeycloakUser();
+
+            $user = $this->validateUser($keycloakUser);
+            if (! $user) {
                 return redirect()->route('admin.session.create');
             }
 
-            try {
-                // Get Keycloak user via Socialite
-                $keycloakUser = $this->keycloakService->getUserViaSocialite();
-            } catch (InvalidStateException $e) {
-                // Invalid state - likely expired or reused authorization code
-                // Don't redirect to redirect again (would cause loop), go to login page instead
-                Log::warning('Keycloak invalid state, redirecting to login page', [
-                    'error' => $e->getMessage(),
-                ]);
-                session()->flash('error', 'SSO authenticatie mislukt: Ongeldige sessie. Probeer opnieuw.');
-                return redirect()->route('admin.session.create');
-            } catch (ClientException $e) {
-                $response = $e->getResponse();
-                $statusCode = $response ? $response->getStatusCode() : null;
-                $responseBody = $response ? $response->getBody()->getContents() : null;
-                $requestUrl = $e->getRequest() ? (string) $e->getRequest()->getUri() : 'unknown';
-
-                // Handle 401 Unauthorized - token expired or invalid
-                if ($statusCode === 401) {
-                    $isUserinfoCall = strpos($requestUrl, 'userinfo') !== false;
-                    $isTokenCall = strpos($requestUrl, '/token') !== false;
-
-                    Log::error('Keycloak authentication failed', [
-                        'error' => $e->getMessage(),
-                        'status_code' => $statusCode,
-                        'request_url' => $requestUrl,
-                        'response_body' => $responseBody,
-                        'call_type' => $isUserinfoCall ? 'userinfo' : ($isTokenCall ? 'token_exchange' : 'unknown'),
-                        'possible_cause' => $isUserinfoCall
-                            ? 'Token validation failed - issuer mismatch or token expired. Check KEYCLOAK_DOCKER_SERVICE_URL and realm frontend URL.'
-                            : ($isTokenCall
-                                ? 'Invalid client credentials or redirect URI mismatch. Check KEYCLOAK_CLIENT_SECRET and Valid Redirect URIs in Keycloak.'
-                                : 'Authentication error'),
-                    ]);
-
-                    session()->flash('error', 'SSO authenticatie mislukt: Token verlopen. Probeer opnieuw.');
-                    return redirect()->route('admin.session.create');
-                }
-
-                // Other client errors
-                Log::error('Keycloak SSO2 error', [
-                    'error' => $e->getMessage(),
-                    'status_code' => $statusCode,
-                    'request_url' => $requestUrl,
-                    'response_body' => $responseBody,
-                ]);
-
-                throw $e;
-            }
-
-            // Find or create user
-            $user = $this->userRepository->findWhere(['email' => $keycloakUser->getEmail()])->first();
-
-            // Check if user is active
-            if ($user->status == 0) {
-                session()->flash('warning', trans('admin::app.users.activate-warning'));
-
-                return redirect()->route('admin.session.create');
-            }
-
-            // Clear logout flag if it exists
-            cache()->forget('keycloak_logout_' . $user->id);
-
-            // Login the user
-            Auth::guard('user')->login($user, true);
-
-            // Check permissions
-            if (! bouncer()->hasPermission('dashboard')) {
-                $availableNextMenu = menu()->getItems('admin')?->first();
-
-                if (is_null($availableNextMenu)) {
-                    session()->flash('error', trans('admin::app.users.not-permission'));
-
-                    Auth::guard('user')->logout();
-
-                    return redirect()->route('admin.session.create');
-                }
-
-                return redirect()->to($availableNextMenu->getUrl());
-            }
-
-            // Clear any intended URL that might point to logout or other incorrect routes
-            session()->forget('url.intended');
-
-            // Redirect directly to dashboard after successful SSO login
-            return redirect()->route('admin.dashboard.index');
+            return $this->loginUser($user);
         } catch (Exception $e) {
-            Log::error('Keycloak SSO 3 error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            $errorMessage = 'SSO authenticatie mislukt ..';
-            if (config('app.debug')) {
-                $errorMessage .= ': ' . $e->getMessage();
-            }
-
-            session()->flash('error', $errorMessage);
-            Auth::guard('user')->logout();
-            return redirect()->route('admin.session.create');
+            return $this->handleException($e);
         }
     }
 
@@ -184,7 +78,7 @@ class KeycloakController extends Controller
      *
      * This method redirects to the standard logout route for backwards compatibility.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function logout()
     {
@@ -196,7 +90,7 @@ class KeycloakController extends Controller
      * Handle Keycloak logout callback.
      * Keycloak redirects here after logout (to client baseUrl).
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function logoutCallback()
     {
@@ -250,6 +144,171 @@ class KeycloakController extends Controller
         }
 
         return response('', 200);
+    }
+
+    /**
+     * Handle missing authorization code.
+     */
+    protected function handleMissingCode(): RedirectResponse
+    {
+        if (request()->has('error')) {
+            $errorDescription = request('error_description', 'Unknown error');
+            Log::error('Keycloak OAuth error', [
+                'error' => request('error'),
+                'error_description' => $errorDescription,
+            ]);
+            session()->flash('error', 'SSO authenticatie mislukt: ' . $errorDescription);
+        } else {
+            Log::error('Keycloak callback missing code parameter', [
+                'request_params' => request()->all(),
+            ]);
+            session()->flash('error', 'SSO authenticatie mislukt: Geen autorisatie code ontvangen van Keycloak.');
+        }
+
+        return redirect()->route('admin.session.create');
+    }
+
+    /**
+     * Get Keycloak user via Socialite.
+     */
+    protected function getKeycloakUser()
+    {
+        try {
+            return $this->keycloakService->getUserViaSocialite();
+        } catch (InvalidStateException $e) {
+            Log::warning('Keycloak invalid state', ['error' => $e->getMessage()]);
+            session()->flash('error', 'SSO authenticatie mislukt: Ongeldige sessie. Probeer opnieuw.');
+            throw $e;
+        } catch (ClientException $e) {
+            $this->handleClientException($e);
+            throw $e;
+        }
+    }
+
+    /**
+     * Handle ClientException from Keycloak.
+     */
+    protected function handleClientException(ClientException $e): void
+    {
+        $response = $e->getResponse();
+        $statusCode = $response?->getStatusCode();
+        $responseBody = $response?->getBody()->getContents();
+        $requestUrl = (string) ($e->getRequest()?->getUri() ?? 'unknown');
+
+        if ($statusCode === 401) {
+            $isUserinfoCall = str_contains($requestUrl, 'userinfo');
+            $isTokenCall = str_contains($requestUrl, '/token');
+
+            Log::error('Keycloak authentication failed', [
+                'error' => $e->getMessage(),
+                'status_code' => $statusCode,
+                'request_url' => $requestUrl,
+                'response_body' => $responseBody,
+                'call_type' => $isUserinfoCall ? 'userinfo' : ($isTokenCall ? 'token_exchange' : 'unknown'),
+                'possible_cause' => $isUserinfoCall
+                    ? 'Token validation failed - issuer mismatch or token expired. Check KEYCLOAK_DOCKER_SERVICE_URL and realm frontend URL.'
+                    : ($isTokenCall
+                        ? 'Invalid client credentials or redirect URI mismatch. Check KEYCLOAK_CLIENT_SECRET and Valid Redirect URIs in Keycloak.'
+                        : 'Authentication error'),
+            ]);
+
+            session()->flash('error', 'SSO authenticatie mislukt: Token verlopen. Probeer opnieuw.');
+        } else {
+            Log::error('Keycloak SSO error', [
+                'error' => $e->getMessage(),
+                'status_code' => $statusCode,
+                'request_url' => $requestUrl,
+                'response_body' => $responseBody,
+            ]);
+        }
+    }
+
+    /**
+     * Validate user for SSO login.
+     *
+     * @return \Webkul\User\Models\User|null
+     */
+    protected function validateUser($keycloakUser)
+    {
+        $user = $this->userRepository->findWhere(['email' => $keycloakUser->getEmail()])->first();
+
+        if (! $user) {
+            Log::error('Keycloak SSO user not found in CRM', ['email' => $keycloakUser->getEmail()]);
+            session()->flash('error', 'Gebruiker niet gevonden in CRM. Neem contact op met de beheerder.');
+            return null;
+        }
+
+        if (empty($user->keycloak_user_id)) {
+            Log::warning('Keycloak SSO login attempted for user without keycloak_user_id', [
+                'email' => $keycloakUser->getEmail(),
+                'user_id' => $user->id,
+            ]);
+            session()->flash('error', 'Gebruiker is niet gekoppeld aan Keycloak. Neem contact op met de beheerder.');
+            return null;
+        }
+
+        if ($user->keycloak_user_id !== $keycloakUser->getId()) {
+            Log::error('Keycloak SSO login attempted with mismatched keycloak_user_id', [
+                'email' => $keycloakUser->getEmail(),
+                'user_id' => $user->id,
+                'expected_keycloak_id' => $user->keycloak_user_id,
+                'received_keycloak_id' => $keycloakUser->getId(),
+            ]);
+            session()->flash('error', 'Keycloak account komt niet overeen. Neem contact op met de beheerder.');
+            return null;
+        }
+
+        if ($user->status == 0) {
+            session()->flash('warning', trans('admin::app.users.activate-warning'));
+            return null;
+        }
+
+        return $user;
+    }
+
+    /**
+     * Login user and redirect.
+     */
+    protected function loginUser($user): RedirectResponse
+    {
+        cache()->forget('keycloak_logout_' . $user->id);
+        Auth::guard('user')->login($user, true);
+
+        if (! bouncer()->hasPermission('dashboard')) {
+            $availableNextMenu = menu()->getItems('admin')?->first();
+
+            if (is_null($availableNextMenu)) {
+                session()->flash('error', trans('admin::app.users.not-permission'));
+                Auth::guard('user')->logout();
+                return redirect()->route('admin.session.create');
+            }
+
+            return redirect()->to($availableNextMenu->getUrl());
+        }
+
+        session()->forget('url.intended');
+        return redirect()->route('admin.dashboard.index');
+    }
+
+    /**
+     * Handle general exceptions.
+     */
+    protected function handleException(Exception $e): RedirectResponse
+    {
+        Log::error('Keycloak SSO error', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        $errorMessage = 'SSO authenticatie mislukt.';
+        if (config('app.debug')) {
+            $errorMessage .= ' ' . $e->getMessage();
+        }
+
+        session()->flash('error', $errorMessage);
+        Auth::guard('user')->logout();
+
+        return redirect()->route('admin.session.create');
     }
 }
 

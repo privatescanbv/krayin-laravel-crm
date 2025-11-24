@@ -68,7 +68,16 @@ it('redirects to login on callback with error', function () {
     $response->assertSessionHas('error');
 });
 
-it('handles successful SSO callback and creates user', function () {
+it('handles successful SSO callback with existing user', function () {
+    // Create user first (users must exist in CRM before SSO login)
+    // User must have keycloak_user_id set to allow SSO login
+    $existingUser = User::factory()->create([
+        'email'            => 'newuser@example.com',
+        'keycloak_user_id' => 'keycloak-user-123',
+        'role_id'          => $this->role->id,
+        'status'           => 1,
+    ]);
+
     // Mock Socialite user
     $socialiteUser = Mockery::mock(\Laravel\Socialite\Two\User::class);
     $socialiteUser->shouldReceive('getId')->andReturn('keycloak-user-123');
@@ -96,17 +105,16 @@ it('handles successful SSO callback and creates user', function () {
 
     $response->assertRedirect(route('admin.dashboard.index'));
 
-    // Check user was created
-    $this->assertDatabaseHas('users', [
-        'email'            => 'newuser@example.com',
-        'keycloak_user_id' => 'keycloak-user-123',
-    ]);
+    // Check user still has the same keycloak_user_id (should not change)
+    $existingUser->refresh();
+    expect($existingUser->keycloak_user_id)->toBe('keycloak-user-123');
 });
 
-it('handles SSO callback and updates existing user', function () {
+it('handles SSO callback with existing user that has matching keycloak_user_id', function () {
+    // Create user with keycloak_user_id already set (users must have keycloak_user_id to login via SSO)
     $existingUser = User::factory()->create([
         'email'            => 'existing-controller@example.com',
-        'keycloak_user_id' => null,
+        'keycloak_user_id' => 'keycloak-user-456',
         'role_id'          => $this->role->id,
         'status'           => 1,
     ]);
@@ -138,9 +146,44 @@ it('handles SSO callback and updates existing user', function () {
 
     $response->assertRedirect(route('admin.dashboard.index'));
 
-    // Check user was updated
+    // Check user still has the same keycloak_user_id (should match for login to succeed)
     $existingUser->refresh();
     expect($existingUser->keycloak_user_id)->toBe('keycloak-user-456');
+});
+
+it('redirects to login when user does not exist in CRM', function () {
+    // Mock Socialite user for non-existent user
+    $socialiteUser = Mockery::mock(\Laravel\Socialite\Two\User::class);
+    $socialiteUser->shouldReceive('getId')->andReturn('keycloak-user-999');
+    $socialiteUser->shouldReceive('getEmail')->andReturn('nonexistent@example.com');
+    $socialiteUser->shouldReceive('getName')->andReturn('Non Existent User');
+    $socialiteUser->user = [
+        'given_name'  => 'Non',
+        'family_name' => 'Existent',
+    ];
+
+    $socialiteMock = Mockery::mock();
+    $socialiteMock->shouldReceive('setBaseUrl')->andReturnSelf();
+    $socialiteMock->shouldReceive('setInternalBaseUrl')->andReturnSelf();
+    $socialiteMock->shouldReceive('setRealm')->andReturnSelf();
+    $socialiteMock->shouldReceive('user')->andReturn($socialiteUser);
+
+    Socialite::shouldReceive('driver')
+        ->with('keycloak')
+        ->andReturn($socialiteMock);
+
+    $response = $this->get(route('admin.keycloak.callback', [
+        'code'  => 'test-code',
+        'state' => 'test-state',
+    ]));
+
+    $response->assertRedirect(route('admin.session.create'));
+    $response->assertSessionHas('error');
+
+    // Check user was NOT created
+    $this->assertDatabaseMissing('users', [
+        'email' => 'nonexistent@example.com',
+    ]);
 });
 
 it('handles backchannel logout', function () {

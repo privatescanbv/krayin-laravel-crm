@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Webkul\Installer\Database\Seeders\User\UserSeeder;
 use Webkul\User\Models\User;
 
 /**
@@ -52,28 +53,45 @@ class UserObserver
             return;
         }
 
+        if (! $user->isDirty('password')) {
+            return;
+        }
+
+        $key = $user->id ?? 'new';
+
         // Try to get plaintext password from the model's temporary attribute
         // This is set by the User model's setPasswordAttribute mutator
-        if ($user->isDirty('password') && method_exists($user, 'getPlaintextPassword')) {
+        if (method_exists($user, 'getPlaintextPassword')) {
             $plaintextPassword = $user->getPlaintextPassword();
             if (! empty($plaintextPassword)) {
                 // Store plaintext password temporarily
-                self::$plaintextPasswords[$user->id ?? 'new'] = $plaintextPassword;
+                self::$plaintextPasswords[$key] = $plaintextPassword;
+
+                return;
             }
         }
 
         // Fallback: Capture plaintext password if it's being set and not already hashed
         // This handles cases where the mutator might not be used
-        if ($user->isDirty('password') && ! empty($user->password)) {
+        if (! empty($user->password)) {
             $password = $user->password;
 
             // Check if password is already hashed (Laravel bcrypt hashes start with $2y$)
             if (! str_starts_with($password, '$2y$') && ! str_starts_with($password, '$2a$') && ! str_starts_with($password, '$2b$')) {
                 // Store plaintext password temporarily
-                $key = $user->id ?? 'new';
                 if (! isset(self::$plaintextPasswords[$key])) {
                     self::$plaintextPasswords[$key] = $password;
                 }
+
+                return;
+            }
+        }
+
+        // Last resort: Try to get password from UserSeeder (for seeded users)
+        if (! empty($user->email) && ! isset(self::$plaintextPasswords[$key])) {
+            $seederPassword = UserSeeder::getPasswordForEmail($user->email);
+            if (! empty($seederPassword)) {
+                self::$plaintextPasswords[$key] = $seederPassword;
             }
         }
     }
@@ -217,6 +235,12 @@ class UserObserver
             $passwordKey = $user->id ?? 'new';
             $password = self::$plaintextPasswords[$passwordKey] ?? null;
 
+            // If not found, try to get from UserSeeder (for seeded users)
+            if ($password === null && ! empty($user->email)) {
+                $password = UserSeeder::getPasswordForEmail($user->email);
+            }
+
+            // If still not found, try other methods
             if ($password === null) {
                 $password = $this->getPasswordForUser($user);
             } else {
@@ -291,7 +315,12 @@ class UserObserver
                 // Try to get plaintext password from temporary storage
                 $password = self::$plaintextPasswords[$user->id] ?? null;
 
-                // If not found, try other methods
+                // If not found, try to get from UserSeeder first (for seeded users)
+                if ($password === null && ! empty($user->email)) {
+                    $password = UserSeeder::getPasswordForEmail($user->email);
+                }
+
+                // If still not found, try other methods
                 if ($password === null) {
                     $password = $this->getPasswordForUser($user);
                 } else {
@@ -366,10 +395,18 @@ class UserObserver
 
     /**
      * Get password for user.
-     * Tries to get from user attributes, falls back to default or generates temporary password.
+     * Tries to get from user attributes, falls back to UserSeeder, default or generates temporary password.
      */
     protected function getPasswordForUser(User $user): string
     {
+        // Try to get password from UserSeeder (for seeded users)
+        if (! empty($user->email)) {
+            $seederPassword = UserSeeder::getPasswordForEmail($user->email);
+            if (! empty($seederPassword)) {
+                return $seederPassword;
+            }
+        }
+
         // Try to get password from user attributes (if available)
         if (! empty($user->getAttributes()['password'])) {
             // Password is hashed, but we need plain text for Keycloak
@@ -411,7 +448,7 @@ class UserObserver
                     'role'             => 'medewerker',
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exception while assigning role to user in Keycloak via observer', [
                 'keycloak_user_id' => $keycloakUserId,
                 'role'             => 'medewerker',

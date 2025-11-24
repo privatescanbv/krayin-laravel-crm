@@ -269,12 +269,30 @@ class KeycloakService
     public function createUser(array $userData, ?string $accessToken = null): ?string
     {
         $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users');
+
+        // Log user data being sent to Keycloak for debugging
+        Log::info('Creating user in Keycloak', [
+            'username'  => $userData['username'] ?? null,
+            'email'     => $userData['email'] ?? null,
+            'firstName' => $userData['firstName'] ?? null,
+            'lastName'  => $userData['lastName'] ?? null,
+        ]);
+
         $response = $this->makeRequest('POST', $url, $accessToken, $userData);
 
         if ($response?->successful()) {
             $location = $response->header('Location');
+            $userId = $location ? basename($location) : null;
 
-            return $location ? basename($location) : null;
+            if ($userId) {
+                Log::info('User created successfully in Keycloak', [
+                    'keycloak_user_id' => $userId,
+                    'username'         => $userData['username'] ?? null,
+                    'email'            => $userData['email'] ?? null,
+                ]);
+            }
+
+            return $userId;
         }
 
         if ($response) {

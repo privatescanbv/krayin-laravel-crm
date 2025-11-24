@@ -6,6 +6,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\Keycloak\Helpers\KeycloakHttpHelpers;
+use Webkul\Installer\Database\Seeders\User\UserSeeder;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -186,21 +187,106 @@ describe('UserObserver - Update', function () {
             'role_id'          => $this->role->id,
         ]);
 
+        $passwordCaptured = null;
+
         KeycloakHttpHelpers::fakeAdminToken();
-        KeycloakHttpHelpers::fakeUserOperations([
-            'user_by_id' => [
-                'keycloak-user-103' => [
+
+        // Setup fake with password capture
+        Http::fake(function ($request) use (&$passwordCaptured) {
+            $url = $request->url();
+            $method = $request->method();
+
+            // Capture password from reset-password requests
+            if ($method === 'PUT' && str_contains($url, '/reset-password')) {
+                $body = json_decode($request->body(), true);
+                $passwordCaptured = $body['value'] ?? null;
+
+                return Http::response('', 204);
+            }
+
+            // Handle other requests
+            if (str_contains($url, '/users/keycloak-user-103') && $method === 'GET' && ! str_contains($url, '?')) {
+                return Http::response([
                     'id'    => 'keycloak-user-103',
                     'email' => 'passwordupdate@example.com',
-                ],
-            ],
-        ]);
+                ], 200);
+            }
 
-        $user->update(['password' => 'new-password-123']);
+            if ($method === 'PUT' && ! str_contains($url, '/reset-password')) {
+                return Http::response('', 204);
+            }
+
+            return Http::response('', 404);
+        });
+
+        $newPassword = 'new-password-123';
+        $user->update(['password' => $newPassword]);
 
         // User should still have keycloak_user_id
         $user->refresh();
         expect($user->keycloak_user_id)->toBe('keycloak-user-103');
+
+        // Verify that the plaintext password was sent to Keycloak
+        expect($passwordCaptured)->toBe($newPassword);
+    });
+
+    it('uses password from UserSeeder when updating user with hashed password', function () {
+        // Create a user that matches a UserSeeder email
+        $seederEmail = 'mark.bulthuis@privatescan.nl';
+        $seederPassword = UserSeeder::getPasswordForEmail($seederEmail);
+
+        $user = User::factory()->create([
+            'email'            => $seederEmail,
+            'keycloak_user_id' => 'keycloak-user-seeder',
+            'status'           => 1,
+            'role_id'          => $this->role->id,
+            'password'         => bcrypt('some-old-password'), // Already hashed
+        ]);
+
+        $passwordCaptured = null;
+
+        KeycloakHttpHelpers::fakeAdminToken();
+
+        // Setup fake with password capture
+        Http::fake(function ($request) use (&$passwordCaptured, $seederEmail) {
+            $url = $request->url();
+            $method = $request->method();
+
+            // Capture password from reset-password requests
+            if ($method === 'PUT' && str_contains($url, '/reset-password')) {
+                $body = json_decode($request->body(), true);
+                $passwordCaptured = $body['value'] ?? null;
+
+                return Http::response('', 204);
+            }
+
+            // Handle other requests
+            if (str_contains($url, '/users/keycloak-user-seeder') && $method === 'GET' && ! str_contains($url, '?')) {
+                return Http::response([
+                    'id'    => 'keycloak-user-seeder',
+                    'email' => $seederEmail,
+                ], 200);
+            }
+
+            if ($method === 'PUT' && ! str_contains($url, '/reset-password')) {
+                return Http::response('', 204);
+            }
+
+            return Http::response('', 404);
+        });
+
+        // Update with a new hashed password (simulating updateOrCreate scenario)
+        $user->update(['password' => bcrypt('new-hashed-password')]);
+
+        // User should still have keycloak_user_id
+        $user->refresh();
+        expect($user->keycloak_user_id)->toBe('keycloak-user-seeder');
+
+        // Verify that the password from UserSeeder was used as fallback
+        // (since the plaintext wasn't captured, it should fall back to UserSeeder)
+        if ($seederPassword) {
+            expect($passwordCaptured)->toBe($seederPassword);
+        }
     });
 
     it('deletes user from Keycloak when status changes to inactive', function () {

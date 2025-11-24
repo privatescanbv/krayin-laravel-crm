@@ -76,7 +76,10 @@ it('can sync users to Keycloak', function () {
             'user1@example.com' => null,
             'user2@example.com' => null,
         ],
-        'create_responses' => ['keycloak-user-1', 'keycloak-user-2'],
+        'create_responses' => [
+            'user1@example.com' => 'keycloak-user-1',
+            'user2@example.com' => 'keycloak-user-2',
+        ],
     ]);
 
     $action = createTestAction([

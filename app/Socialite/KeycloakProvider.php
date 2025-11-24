@@ -12,7 +12,7 @@ use Laravel\Socialite\Two\User;
 class KeycloakProvider extends AbstractProvider implements ProviderInterface
 {
     /**
-     * The base URL (for browser redirects).
+     * The base URL (for browser redirects only).
      */
     protected string $baseUrl;
 
@@ -25,12 +25,12 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
     {
         parent::__construct($request, $clientId, $clientSecret, $redirectUrl, $guzzle);
 
-        $this->baseUrl = config('services.keycloak.base_url', 'http://no_keycloak_url_provided');
+        $this->baseUrl = config('services.keycloak.base_url_external', 'http://no_keycloak_url_provided');
         $this->realm = config('services.keycloak.realm', 'crm');
     }
 
     /**
-     * Set the base URL.
+     * Set the base URL (for browser redirects).
      *
      * @param  string  $baseUrl
      * @return $this
@@ -131,107 +131,28 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
 
     /**
      * {@inheritdoc}
+     * Token exchange happens server-side, so use internal URL.
      */
     protected function getTokenUrl(): string
     {
-        return $this->getBaseUrl().'/realms/'.$this->getRealm().'/protocol/openid-connect/token';
+        return $this->resolveInternalKeycloakUrl('/realms/'.$this->getRealm().'/protocol/openid-connect/token');
     }
 
     /**
      * {@inheritdoc}
+     * API call from server - always use internal URL.
      */
     protected function getUserByToken($token)
     {
-        // Decode token to get issuer URL and realm
-        $tokenParts = explode('.', $token);
-        $issuerUrl = null;
-        $tokenRealm = null;
-        $issuerBaseUrl = null;
-        $dockerServiceUrl = $this->getBaseUrl();
-        $baseUrl = $this->getBaseUrl();
-        $hostHeader = null;
-
-        if (count($tokenParts) === 3) {
-            $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $tokenParts[1])), true);
-            $issuerUrl = $payload['iss'] ?? null;
-
-            // Extract realm from issuer URL (e.g., http://localhost:8085/realms/crm -> crm)
-            if ($issuerUrl) {
-                if (preg_match('#/realms/([^/]+)#', $issuerUrl, $matches)) {
-                    $tokenRealm = $matches[1];
-                }
-            }
-        }
-
-        // Keycloak validates tokens by checking if the userinfo endpoint URL matches the issuer.
-        // We must use the issuer URL for the userinfo call to ensure token validation works.
-        if ($issuerUrl && $tokenRealm) {
-            // Extract base URL from issuer (e.g., https://sso.dev.privatescan.nl/realms/crm -> https://sso.dev.privatescan.nl)
-            $issuerBaseUrl = preg_replace('#/realms/.*#', '', $issuerUrl);
-
-            // Parse issuer URL to determine if we need to use internal Docker URL
-            $issuerScheme = parse_url($issuerBaseUrl, PHP_URL_SCHEME);
-            $issuerHost = parse_url($issuerBaseUrl, PHP_URL_HOST);
-            $issuerPort = parse_url($issuerBaseUrl, PHP_URL_PORT);
-
-            // If issuer URL has no port, add port from configured base_url to avoid defaulting to port 80
-            if (! $issuerPort) {
-                $baseUrlParts = parse_url($baseUrl);
-                $baseUrlPort = $baseUrlParts['port'] ?? null;
-
-                // Only add port if base_url has a port and issuer host matches base_url host
-                if ($baseUrlPort && isset($baseUrlParts['host']) && $issuerHost === $baseUrlParts['host']) {
-                    $issuerPort = $baseUrlPort;
-                    // Rebuild issuerBaseUrl with port
-                    $issuerBaseUrl = $issuerScheme.'://'.$issuerHost.':'.$issuerPort;
-                }
-            }
-
-            // If issuer is HTTPS and we're in Docker, we need to call via internal Docker service
-            // but Keycloak will validate based on the issuer URL, so we need to ensure the call
-            // goes to the same host as the issuer. However, from within Docker, we can't call
-            // the external HTTPS URL directly. We need to use the Docker service URL but ensure
-            // Keycloak accepts it by matching the issuer.
-
-            // For production: if issuer is HTTPS (external), we need to use the issuer URL directly
-            // This will go through Traefik/proxy to reach Keycloak
-            if ($issuerScheme === 'https' && $issuerHost !== 'localhost' && $issuerHost !== '127.0.0.1') {
-                // Use issuer URL directly - this will go through the reverse proxy
-                $userinfoUrl = $issuerBaseUrl.'/realms/'.$tokenRealm.'/protocol/openid-connect/userinfo';
-                $hostHeader = null;
-            } else {
-                // For local development: use Docker service URL or issuer URL directly
-                if ($dockerServiceUrl !== $baseUrl && $issuerScheme === 'http') {
-                    // Use Docker service URL for internal calls
-                    $userinfoUrl = $dockerServiceUrl.'/realms/'.$tokenRealm.'/protocol/openid-connect/userinfo';
-                    // Set Host header to match issuer for token validation
-                    $hostHeader = $issuerHost.($issuerPort ? ':'.$issuerPort : '');
-                } else {
-                    // Direct call (no Docker networking), use issuer URL directly (now with port if needed)
-                    $userinfoUrl = $issuerBaseUrl.'/realms/'.$tokenRealm.'/protocol/openid-connect/userinfo';
-                    $hostHeader = null;
-                }
-            }
-        } else {
-            $userinfoUrl = $dockerServiceUrl.'/realms/'.$this->getRealm().'/protocol/openid-connect/userinfo';
-            $hostHeader = null;
-        }
+        $userinfoUrl = $this->resolveInternalKeycloakUrl('/realms/'.$this->getRealm().'/protocol/openid-connect/userinfo');
 
         try {
-            $headers = [
-                'Authorization' => 'Bearer '.$token,
-                'Accept'        => 'application/json',
-            ];
-
-            // Add Host header to match issuer if needed
-            if ($hostHeader) {
-                $headers['Host'] = $hostHeader;
-            }
-
-            $response = $this->getHttpClient()->get(
-                $userinfoUrl,
-                ['headers' => $headers]
-            );
+            $response = $this->getHttpClient()->get($userinfoUrl, [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$token,
+                    'Accept'        => 'application/json',
+                ],
+            ]);
 
             return json_decode($response->getBody(), true);
         } catch (ClientException $e) {
@@ -241,22 +162,18 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
             Log::error('Keycloak userinfo call failed', [
                 'error'          => $e->getMessage(),
                 'userinfo_url'   => $userinfoUrl,
-                'issuer_url'     => $issuerUrl,
-                'token_realm'    => $tokenRealm,
-                'host_header'    => $hostHeader ?? null,
                 'status_code'    => $statusCode,
                 'response_body'  => $responseBody,
                 'possible_cause' => $statusCode === 401
-                    ? 'Token validation failed - issuer mismatch or token expired'
+                    ? 'Token validation failed - token expired or invalid'
                     : ($statusCode === 404 ? 'Userinfo endpoint not found' : 'Unknown error'),
             ]);
 
             throw $e;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Keycloak userinfo call error', [
                 'error'        => $e->getMessage(),
                 'userinfo_url' => $userinfoUrl,
-                'issuer_url'   => $issuerUrl,
                 'error_class'  => get_class($e),
             ]);
 
@@ -297,5 +214,17 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
         return array_merge(parent::getTokenFields($code), [
             'grant_type' => 'authorization_code',
         ]);
+    }
+
+    /**
+     * Resolve internal Keycloak URL for API calls.
+     */
+    private function resolveInternalKeycloakUrl(string $path): string
+    {
+        $internalUrl = config('services.keycloak.base_url_internal', 'http://keycloak.local:8080');
+        $baseUrl = rtrim($internalUrl, '/');
+        $path = ltrim($path, '/');
+
+        return $baseUrl.'/'.$path;
     }
 }

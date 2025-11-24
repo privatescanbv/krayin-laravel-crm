@@ -46,15 +46,15 @@ return [
     ],
 
     'keycloak' => [
-        'client_id'          => env('KEYCLOAK_CLIENT_ID'),
-        'client_secret'      => env('KEYCLOAK_CLIENT_SECRET'),
-        'redirect'           => env('KEYCLOAK_REDIRECT_URI', '/admin/auth/keycloak/callback'),
-        'base_url'           => env('KEYCLOAK_BASE_URL', 'http://localhost:8085'),
-        'docker_service_url' => env('KEYCLOAK_DOCKER_SERVICE_URL', 'http://keycloak:8080'), // Docker service name for server-to-server calls
-        'realm'              => env('KEYCLOAK_REALM', 'master'),
-        'default_role_id'    => env('KEYCLOAK_DEFAULT_ROLE_ID', 1),
-        'admin_username'     => env('KEYCLOAK_ADMIN', 'admin'),
-        'admin_password'     => env('KEYCLOAK_ADMIN_PASSWORD', 'changeme'),
+        'client_id'                   => env('KEYCLOAK_CLIENT_ID'),
+        'client_secret'               => env('KEYCLOAK_CLIENT_SECRET'),
+        'redirect'                    => env('KEYCLOAK_REDIRECT_URI', '/admin/auth/keycloak/callback'),
+        'base_url_external'           => env('KEYCLOAK_EXTERNAL_BASE_URL', 'http://keycloak.local'),
+        'base_url_internal'           => env('KEYCLOAK_INTERNAL_BASE_URL', 'http://keycloak.local:8080'),
+        'realm'                       => env('KEYCLOAK_REALM', 'master'),
+        'default_role_id'             => env('KEYCLOAK_DEFAULT_ROLE_ID', 1),
+        'admin_username'              => env('KEYCLOAK_ADMIN', 'admin'),
+        'admin_password'              => env('KEYCLOAK_ADMIN_PASSWORD', 'changeme'),
     ],
 
 ];

@@ -17,12 +17,14 @@ class GetKeycloakClientSecretAction
      * Execute the action to get the client secret for a Keycloak client.
      *
      * @param  string|null  $clientId  The client ID (default: from config)
+     * @param  string|null  $realmName  The realm name (default: from config)
+     * @param  string|null  $accessToken  Admin access token (default: will be fetched)
      * @return array{success: bool, secret?: string, env_key?: string, message?: string}
      */
-    public function execute(?string $clientId = null): array
+    public function execute(?string $clientId = null, ?string $realmName = null, ?string $accessToken = null): array
     {
         $clientId = $clientId ?? $this->keycloakService->getClientId();
-        $realmName = $this->keycloakService->getRealm();
+        $realmName = $realmName ?? $this->keycloakService->getRealm();
 
         if (empty($clientId)) {
             return [
@@ -31,8 +33,8 @@ class GetKeycloakClientSecretAction
             ];
         }
 
-        // Get admin token
-        $accessToken = $this->keycloakService->getAdminToken();
+        // Get admin token if not provided
+        $accessToken = $accessToken ?? $this->keycloakService->getAdminToken();
 
         if (! $accessToken) {
             return [
@@ -52,7 +54,7 @@ class GetKeycloakClientSecretAction
         }
 
         // Get client secret
-        $clientSecretUrl = $this->keycloakService->getBaseUrl()
+        $clientSecretUrl = $this->keycloakService->getInternalBaseUrl()
             .'/admin/realms/'.$realmName
             .'/clients/'.$client['id'].'/client-secret';
 

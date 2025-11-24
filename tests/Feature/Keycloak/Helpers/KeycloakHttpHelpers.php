@@ -15,21 +15,27 @@ class KeycloakHttpHelpers
         // Use provided token, or default test token
         $token = $token ?? 'test-access-token';
 
-        // Get both base_url and docker_service_url from config
-        $baseUrl = Config::get('services.keycloak.base_url', 'http://test-keycloak.local:9999');
-        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://test-keycloak-docker.local:9999');
+        // Get both external and internal base URLs from config
+        $baseUrl = Config::get('services.keycloak.base_url_external');
+        $internalBaseUrl = Config::get('services.keycloak.base_url_internal', 'http://test-keycloak-docker.local:9999');
 
         // Remove http:// prefix if present for URL matching
         $baseUrlPattern = str_replace(['http://', 'https://'], '', $baseUrl);
-        $dockerUrlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
+        $internalUrlPattern = str_replace(['http://', 'https://'], '', $internalBaseUrl);
 
-        // Mock both URLs since KeycloakService uses base_url, but docker_service_url might also be used
+        // Mock both URLs since KeycloakService uses internal URL for API calls
+        // Also use wildcard pattern to catch any keycloak URL that might be configured
         Http::fake([
             $baseUrlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
                 $status === 200 ? ['access_token' => $token] : ['error' => 'invalid_grant'],
                 $status
             ),
-            $dockerUrlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
+            $internalUrlPattern.'/realms/master/protocol/openid-connect/token' => Http::response(
+                $status === 200 ? ['access_token' => $token] : ['error' => 'invalid_grant'],
+                $status
+            ),
+            // Wildcard pattern to catch any keycloak URL (fallback)
+            '*keycloak*realms/master/protocol/openid-connect/token' => Http::response(
                 $status === 200 ? ['access_token' => $token] : ['error' => 'invalid_grant'],
                 $status
             ),
@@ -43,7 +49,7 @@ class KeycloakHttpHelpers
      * @param  array  $config  Configuration array:
      *                         - 'email_checks' => ['email@example.com' => response_data or null for empty]
      *                         - 'user_by_id' => ['user-id' => response_data]
-     *                         - 'create_responses' => ['user-id-1', 'user-id-2'] (sequence of user IDs)
+     *                         - 'create_responses' => ['user-id-1', 'user-id-2'] (sequential) or ['email@example.com' => 'user-id'] (associative by email)
      *                         - 'update_success' => true/false
      *                         - 'delete_success' => true/false
      *                         - 'password_reset_success' => true/false
@@ -60,13 +66,13 @@ class KeycloakHttpHelpers
         // Reset create count for each test
         $createCount = 0;
 
-        // Get both base_url and docker_service_url from config
-        $baseUrl = Config::get('services.keycloak.base_url', 'http://test-keycloak.local:9999');
-        $dockerServiceUrl = Config::get('services.keycloak.docker_service_url', 'http://test-keycloak-docker.local:9999');
+        // Get both external and internal base URLs from config
+        $baseUrl = Config::get('services.keycloak.base_url_external');
+        $internalBaseUrl = Config::get('services.keycloak.base_url_internal');
 
         // Remove http:// prefix if present for URL matching
         $baseUrlPattern = str_replace(['http://', 'https://'], '', $baseUrl);
-        $dockerUrlPattern = str_replace(['http://', 'https://'], '', $dockerServiceUrl);
+        $internalUrlPattern = str_replace(['http://', 'https://'], '', $internalBaseUrl);
 
         // Create a callback function for handling user operations
         $userOperationsCallback = function ($request) use (
@@ -116,12 +122,31 @@ class KeycloakHttpHelpers
             // Create user request (POST)
             if ($method === 'POST') {
                 if (! empty($createResponses)) {
-                    $userId = $createResponses[$createCount] ?? $createResponses[0];
-                    $createCount++;
+                    // Check if createResponses is associative (email => userId) or sequential (array of userIds)
+                    $isAssociative = ! array_is_list($createResponses);
 
-                    return Http::response('', 201, [
-                        'Location' => "{$baseUrl}/admin/realms/crm/users/{$userId}",
-                    ]);
+                    if ($isAssociative) {
+                        // Use email from request body to get the correct userId
+                        $body = $request->body();
+                        $bodyData = json_decode($body, true);
+                        $email = $bodyData['email'] ?? null;
+
+                        if ($email && isset($createResponses[$email])) {
+                            $userId = $createResponses[$email];
+
+                            return Http::response('', 201, [
+                                'Location' => "{$baseUrl}/admin/realms/crm/users/{$userId}",
+                            ]);
+                        }
+                    } else {
+                        // Sequential array - use by index
+                        $userId = $createResponses[$createCount] ?? $createResponses[0];
+                        $createCount++;
+
+                        return Http::response('', 201, [
+                            'Location' => "{$baseUrl}/admin/realms/crm/users/{$userId}",
+                        ]);
+                    }
                 }
                 // Default: return generic ID
                 $createCount++;
@@ -139,10 +164,13 @@ class KeycloakHttpHelpers
             return Http::response('', 404);
         };
 
-        // Mock both URLs since KeycloakService uses base_url for admin operations
+        // Mock both URLs since KeycloakService uses internal URL for admin operations
+        // Also use wildcard pattern to catch any keycloak URL that might be configured
         Http::fake([
-            $baseUrlPattern.'/admin/realms/crm/users*'   => $userOperationsCallback,
-            $dockerUrlPattern.'/admin/realms/crm/users*' => $userOperationsCallback,
+            $baseUrlPattern.'/admin/realms/crm/users*'     => $userOperationsCallback,
+            $internalUrlPattern.'/admin/realms/crm/users*' => $userOperationsCallback,
+            // Wildcard pattern to catch any keycloak URL (fallback)
+            '*keycloak*/admin/realms/crm/users*' => $userOperationsCallback,
         ]);
     }
 
@@ -155,8 +183,8 @@ class KeycloakHttpHelpers
     public static function setupConfig(array $overrides = []): void
     {
         // Use non-existent test URLs to prevent accidental real HTTP requests
-        Config::set('services.keycloak.base_url', $overrides['base_url'] ?? 'http://test-keycloak.local:9999');
-        Config::set('services.keycloak.docker_service_url', $overrides['docker_service_url'] ?? 'http://test-keycloak-docker.local:9999');
+        Config::set('services.keycloak.base_url_external', $overrides['base_url_external'] ?? 'http://test-keycloak.local:9999');
+        Config::set('services.keycloak.base_url_internal', $overrides['base_url_internal'] ?? 'http://test-keycloak-docker.local:9999');
         Config::set('services.keycloak.realm', $overrides['realm'] ?? 'crm');
         Config::set('services.keycloak.client_id', $overrides['client_id'] ?? 'crm-app');
         Config::set('services.keycloak.admin_username', $overrides['admin_username'] ?? 'admin');

@@ -74,7 +74,14 @@ class SessionController extends Controller
             return redirect()->back();
         }
 
-        if (auth()->guard('user')->user()->status == 0) {
+        $user = auth()->guard('user')->user();
+
+        // Clear logout flag if it exists
+        if ($user && !empty($user->keycloak_user_id)) {
+            cache()->forget('keycloak_logout_' . $user->id);
+        }
+
+        if ($user->status == 0) {
             session()->flash('warning', trans('admin::app.users.activate-warning'));
 
             auth()->guard('user')->logout();

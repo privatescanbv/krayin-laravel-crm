@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\User;
 
 use App\Services\KeycloakService;
+use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -60,7 +61,7 @@ class KeycloakController extends Controller
                         'error' => $error,
                         'error_description' => $errorDescription,
                     ]);
-                    session()->flash('error', 'SSO authenticatie mislukt: ' . $errorDescription);
+                    session()->flash('error', 'SSO authenticatie mislukt 4: ' . $errorDescription);
                 } else {
                     Log::error('Keycloak callback missing code parameter', [
                         'request_params' => request()->all(),
@@ -92,16 +93,16 @@ class KeycloakController extends Controller
                 if ($statusCode === 401) {
                     $isUserinfoCall = strpos($requestUrl, 'userinfo') !== false;
                     $isTokenCall = strpos($requestUrl, '/token') !== false;
-                    
+
                     Log::error('Keycloak authentication failed', [
                         'error' => $e->getMessage(),
                         'status_code' => $statusCode,
                         'request_url' => $requestUrl,
                         'response_body' => $responseBody,
                         'call_type' => $isUserinfoCall ? 'userinfo' : ($isTokenCall ? 'token_exchange' : 'unknown'),
-                        'possible_cause' => $isUserinfoCall 
+                        'possible_cause' => $isUserinfoCall
                             ? 'Token validation failed - issuer mismatch or token expired. Check KEYCLOAK_DOCKER_SERVICE_URL and realm frontend URL.'
-                            : ($isTokenCall 
+                            : ($isTokenCall
                                 ? 'Invalid client credentials or redirect URI mismatch. Check KEYCLOAK_CLIENT_SECRET and Valid Redirect URIs in Keycloak.'
                                 : 'Authentication error'),
                     ]);
@@ -109,52 +110,20 @@ class KeycloakController extends Controller
                     session()->flash('error', 'SSO authenticatie mislukt: Token verlopen. Probeer opnieuw.');
                     return redirect()->route('admin.session.create');
                 }
-                
+
                 // Other client errors
-                Log::error('Keycloak SSO error', [
+                Log::error('Keycloak SSO2 error', [
                     'error' => $e->getMessage(),
                     'status_code' => $statusCode,
                     'request_url' => $requestUrl,
                     'response_body' => $responseBody,
                 ]);
-                
+
                 throw $e;
             }
 
             // Find or create user
             $user = $this->userRepository->findWhere(['email' => $keycloakUser->getEmail()])->first();
-
-            if (! $user) {
-                // Create new user from Keycloak
-                $user = $this->userRepository->create([
-                    'email'      => $keycloakUser->getEmail(),
-                    'first_name' => $keycloakUser->user['given_name'] ?? $keycloakUser->getName(),
-                    'last_name'  => $keycloakUser->user['family_name'] ?? '',
-                    'status'     => 1,
-                    'keycloak_user_id' => $keycloakUser->getId(),
-                    // Set default role - you may want to configure this
-                    'role_id'    => config('services.keycloak.default_role_id', 1),
-                ]);
-            } else {
-                // Update existing user with Keycloak data
-                // Always update keycloak_user_id to ensure it's linked
-                $updateData = [
-                    'keycloak_user_id' => $keycloakUser->getId(),
-                ];
-
-                // Only update name if it's not already set or if Keycloak provides it
-                if (empty($user->first_name) || !empty($keycloakUser->user['given_name'])) {
-                    $updateData['first_name'] = $keycloakUser->user['given_name'] ?? $user->first_name;
-                }
-                if (empty($user->last_name) || !empty($keycloakUser->user['family_name'])) {
-                    $updateData['last_name'] = $keycloakUser->user['family_name'] ?? $user->last_name;
-                }
-
-                $this->userRepository->update($updateData, $user->id);
-
-                // Refresh user model to get updated data
-                $user->refresh();
-            }
 
             // Check if user is active
             if ($user->status == 0) {
@@ -162,6 +131,9 @@ class KeycloakController extends Controller
 
                 return redirect()->route('admin.session.create');
             }
+
+            // Clear logout flag if it exists
+            cache()->forget('keycloak_logout_' . $user->id);
 
             // Login the user
             Auth::guard('user')->login($user, true);
@@ -186,19 +158,19 @@ class KeycloakController extends Controller
 
             // Redirect directly to dashboard after successful SSO login
             return redirect()->route('admin.dashboard.index');
-        } catch (\Exception $e) {
-            Log::error('Keycloak SSO error', [
+        } catch (Exception $e) {
+            Log::error('Keycloak SSO 3 error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $errorMessage = 'SSO authenticatie mislukt';
+            $errorMessage = 'SSO authenticatie mislukt ..';
             if (config('app.debug')) {
                 $errorMessage .= ': ' . $e->getMessage();
             }
 
             session()->flash('error', $errorMessage);
-
+            Auth::guard('user')->logout();
             return redirect()->route('admin.session.create');
         }
     }
@@ -245,42 +217,38 @@ class KeycloakController extends Controller
      */
     public function backchannelLogout()
     {
-        Log::info('Keycloak backchannel logout', [
-            'request_params' => request()->all(),
-            'headers' => request()->headers->all(),
-        ]);
-
-        // Keycloak sends logout_token in the request
         $logoutToken = request()->input('logout_token');
 
-        if ($logoutToken) {
-            // Decode the logout token
-            $tokenData = $this->keycloakService->decodeLogoutToken($logoutToken);
-
-            if ($tokenData) {
-                Log::info('Keycloak backchannel logout token decoded', [
-                    'session_id' => $tokenData['session_id'],
-                    'issuer' => $tokenData['issuer'],
-                    'subject' => $tokenData['subject'],
-                ]);
-
-                // Find user by keycloak_user_id (Keycloak user ID)
-                if (isset($tokenData['subject'])) {
-                    $user = $this->userRepository->findWhere(['keycloak_user_id' => $tokenData['subject']])->first();
-
-                    if ($user && Auth::guard('user')->check() && Auth::guard('user')->id() === $user->id) {
-                        // Logout the user if they are currently logged in
-                        Auth::guard('user')->logout();
-                        Log::info('User logged out via Keycloak backchannel logout', [
-                            'user_id' => $user->id,
-                            'email' => $user->email,
-                        ]);
-                    }
-                }
-            }
+        if (! $logoutToken) {
+            Log::warning('Keycloak backchannel logout: missing logout_token');
+            return response('', 200);
         }
 
-        // Return 200 OK to Keycloak
+        $tokenData = $this->keycloakService->decodeLogoutToken($logoutToken);
+
+        if (! $tokenData || ! isset($tokenData['subject'])) {
+            Log::warning('Keycloak backchannel logout: invalid token or missing subject');
+            return response('', 200);
+        }
+
+        $user = $this->userRepository->findWhere(['keycloak_user_id' => $tokenData['subject']])->first();
+
+        if ($user) {
+            // Set cache flag to invalidate all sessions for this user
+            $cacheKey = 'keycloak_logout_' . $user->id;
+            cache()->put($cacheKey, true, now()->addHours(1));
+
+            // Logout the user if they are currently logged in
+            if (Auth::guard('user')->check() && Auth::guard('user')->id() === $user->id) {
+                Auth::guard('user')->logout();
+            }
+
+            Log::info('User logged out via Keycloak backchannel logout', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+        }
+
         return response('', 200);
     }
 }

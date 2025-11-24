@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Exception;
+use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
@@ -13,9 +15,17 @@ class KeycloakService
     /**
      * Get the base URL for browser redirects (external).
      */
-    public function getBaseUrl(): string
+    public function getExternalBaseUrl(): string
     {
-        return config('services.keycloak.base_url', 'http://keycloak.local:8080');
+        return config('services.keycloak.base_url_external');
+    }
+
+    /**
+     * Get the base URL for container to sync config (internal).
+     */
+    public function getInternalBaseUrl(): string
+    {
+        return config('services.keycloak.base_url_internal');
     }
 
     /**
@@ -39,8 +49,7 @@ class KeycloakService
      */
     public function getAdminToken(): ?string
     {
-        $baseUrl = $this->getBaseUrl();
-        $tokenUrl = $baseUrl.'/realms/master/protocol/openid-connect/token';
+        $tokenUrl = $this->resolveKeycloakUrl('/realms/master/protocol/openid-connect/token');
 
         $adminUsername = config('services.keycloak.admin_username', 'admin');
         $adminPassword = config('services.keycloak.admin_password', 'c8f4b3a8e69');
@@ -68,7 +77,7 @@ class KeycloakService
             ]);
 
             return null;
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null;
             $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
@@ -80,7 +89,7 @@ class KeycloakService
                 'response_body'  => $responseBody,
                 'possible_cause' => $statusCode === 401
                     ? 'Invalid admin credentials - check KEYCLOAK_ADMIN and KEYCLOAK_ADMIN_PASSWORD in .env'
-                    : ($statusCode === 404 ? 'Keycloak admin endpoint not found - check KEYCLOAK_DOCKER_SERVICE_URL' : 'Connection or configuration error'),
+                    : ($statusCode === 404 ? 'Keycloak admin endpoint not found - check KEYCLOAK_BASE_URL_INTERNAL' : 'Connection or configuration error'),
             ]);
 
             return null;
@@ -101,7 +110,7 @@ class KeycloakService
      */
     public function getRealmAdminUrl(): string
     {
-        return $this->getBaseUrl().'/admin/realms/'.$this->getRealm();
+        return $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm());
     }
 
     /**
@@ -109,7 +118,7 @@ class KeycloakService
      */
     public function getRealmsAdminUrl(): string
     {
-        return $this->getBaseUrl().'/admin/realms';
+        return $this->resolveKeycloakUrl('/admin/realms');
     }
 
     /**
@@ -117,26 +126,10 @@ class KeycloakService
      */
     public function realmExists(string $realmName, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$realmName);
+        $response = $this->makeRequest('GET', $url, $accessToken);
 
-        if (! $accessToken) {
-            return false;
-        }
-
-        $url = $this->getBaseUrl().'/admin/realms/'.$realmName;
-
-        try {
-            $response = Http::withToken($accessToken)->get($url);
-
-            return $response->successful();
-        } catch (Exception $e) {
-            Log::error('Failed to check if realm exists', [
-                'realm' => $realmName,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        return $response?->successful() ?? false;
     }
 
     /**
@@ -144,51 +137,31 @@ class KeycloakService
      */
     public function createRealm(string $realmName, array $realmData = [], ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
-
-        if (! $accessToken) {
-            return false;
-        }
-
         $url = $this->getRealmsAdminUrl();
-
-        $defaultRealmData = [
+        $realmData = array_merge([
             'realm'       => $realmName,
             'enabled'     => true,
             'displayName' => ucfirst($realmName),
-        ];
+        ], $realmData);
 
-        $realmData = array_merge($defaultRealmData, $realmData);
+        $response = $this->makeRequest('POST', $url, $accessToken, $realmData, true);
 
-        try {
-            $response = Http::asJson()
-                ->withToken($accessToken)
-                ->post($url, $realmData);
+        if ($response?->successful()) {
+            Log::info('Realm created in Keycloak', ['realm' => $realmName]);
 
-            if ($response->successful()) {
-                Log::info('Realm created in Keycloak', [
-                    'realm' => $realmName,
-                ]);
+            return true;
+        }
 
-                return true;
-            }
-
+        if ($response) {
             Log::error('Failed to create realm in Keycloak', [
                 'status'     => $response->status(),
                 'body'       => $response->body(),
                 'realm'      => $realmName,
                 'realm_data' => $realmData,
             ]);
-
-            return false;
-        } catch (Exception $e) {
-            Log::error('Exception creating realm in Keycloak', [
-                'error' => $e->getMessage(),
-                'realm' => $realmName,
-            ]);
-
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -196,33 +169,16 @@ class KeycloakService
      */
     public function getClientById(string $clientId, string $realmName, ?string $accessToken = null): ?array
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$realmName.'/clients?clientId='.urlencode($clientId));
+        $response = $this->makeRequest('GET', $url, $accessToken);
 
-        if (! $accessToken) {
-            return null;
+        if ($response?->successful()) {
+            $clients = $response->json();
+
+            return ! empty($clients) ? $clients[0] : null;
         }
 
-        $url = $this->getBaseUrl().'/admin/realms/'.$realmName.'/clients?clientId='.urlencode($clientId);
-
-        try {
-            $response = Http::withToken($accessToken)->get($url);
-
-            if ($response->successful()) {
-                $clients = $response->json();
-
-                return count($clients) > 0 ? $clients[0] : null;
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Failed to get client from Keycloak', [
-                'client_id' => $clientId,
-                'realm'     => $realmName,
-                'error'     => $e->getMessage(),
-            ]);
-
-            return null;
-        }
+        return null;
     }
 
     /**
@@ -230,42 +186,28 @@ class KeycloakService
      */
     public function createClient(string $realmName, array $clientData, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$realmName.'/clients');
+        $response = $this->makeRequest('POST', $url, $accessToken, $clientData);
 
-        if (! $accessToken) {
-            return false;
+        if ($response?->successful()) {
+            Log::info('Client created in Keycloak', [
+                'client_id' => $clientData['clientId'] ?? null,
+                'realm'     => $realmName,
+            ]);
+
+            return true;
         }
 
-        $url = $this->getBaseUrl().'/admin/realms/'.$realmName.'/clients';
-
-        try {
-            $response = Http::withToken($accessToken)->post($url, $clientData);
-
-            if ($response->successful()) {
-                Log::info('Client created in Keycloak', [
-                    'client_id' => $clientData['clientId'] ?? null,
-                    'realm'     => $realmName,
-                ]);
-
-                return true;
-            }
-
+        if ($response) {
             Log::error('Failed to create client in Keycloak', [
                 'status'      => $response->status(),
                 'body'        => $response->body(),
                 'realm'       => $realmName,
                 'client_data' => $clientData,
             ]);
-
-            return false;
-        } catch (Exception $e) {
-            Log::error('Exception creating client in Keycloak', [
-                'error' => $e->getMessage(),
-                'realm' => $realmName,
-            ]);
-
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -273,33 +215,25 @@ class KeycloakService
      */
     public function updateClient(string $realmName, string $clientId, array $clientData, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
-
-        if (! $accessToken) {
-            return false;
-        }
-
-        // First get the client UUID
         $client = $this->getClientById($clientId, $realmName, $accessToken);
 
         if (! $client) {
             return false;
         }
 
-        $url = $this->getBaseUrl().'/admin/realms/'.$realmName.'/clients/'.$client['id'];
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$realmName.'/clients/'.$client['id']);
+        $response = $this->makeRequest('PUT', $url, $accessToken, $clientData);
 
-        try {
-            $response = Http::withToken($accessToken)->put($url, $clientData);
+        if ($response?->successful()) {
+            Log::info('Client updated in Keycloak', [
+                'client_id' => $clientId,
+                'realm'     => $realmName,
+            ]);
 
-            if ($response->successful()) {
-                Log::info('Client updated in Keycloak', [
-                    'client_id' => $clientId,
-                    'realm'     => $realmName,
-                ]);
+            return true;
+        }
 
-                return true;
-            }
-
+        if ($response) {
             Log::error('Failed to update client in Keycloak', [
                 'status'      => $response->status(),
                 'body'        => $response->body(),
@@ -307,17 +241,9 @@ class KeycloakService
                 'client_id'   => $clientId,
                 'client_data' => $clientData,
             ]);
-
-            return false;
-        } catch (Exception $e) {
-            Log::error('Exception updating client in Keycloak', [
-                'error'     => $e->getMessage(),
-                'realm'     => $realmName,
-                'client_id' => $clientId,
-            ]);
-
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -325,32 +251,16 @@ class KeycloakService
      */
     public function getUserByEmail(string $email, ?string $accessToken = null): ?array
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users?email='.urlencode($email));
+        $response = $this->makeRequest('GET', $url, $accessToken);
 
-        if (! $accessToken) {
-            return null;
+        if ($response?->successful()) {
+            $users = $response->json();
+
+            return ! empty($users) ? $users[0] : null;
         }
 
-        $url = $this->getRealmAdminUrl().'/users?email='.urlencode($email);
-
-        try {
-            $response = Http::withToken($accessToken)->get($url);
-
-            if ($response->successful()) {
-                $users = $response->json();
-
-                return count($users) > 0 ? $users[0] : null;
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Failed to get user from Keycloak', [
-                'email' => $email,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
+        return null;
     }
 
     /**
@@ -358,39 +268,24 @@ class KeycloakService
      */
     public function createUser(array $userData, ?string $accessToken = null): ?string
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users');
+        $response = $this->makeRequest('POST', $url, $accessToken, $userData);
 
-        if (! $accessToken) {
-            return null;
+        if ($response?->successful()) {
+            $location = $response->header('Location');
+
+            return $location ? basename($location) : null;
         }
 
-        $url = $this->getRealmAdminUrl().'/users';
-
-        try {
-            $response = Http::withToken($accessToken)->post($url, $userData);
-
-            if ($response->successful()) {
-                // Get the created user ID from Location header
-                $location = $response->header('Location');
-
-                return $location ? basename($location) : null;
-            }
-
+        if ($response) {
             Log::error('Failed to create user in Keycloak', [
                 'status'    => $response->status(),
                 'body'      => $response->body(),
                 'user_data' => $userData,
             ]);
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Exception creating user in Keycloak', [
-                'error'     => $e->getMessage(),
-                'user_data' => $userData,
-            ]);
-
-            return null;
         }
+
+        return null;
     }
 
     /**
@@ -398,30 +293,14 @@ class KeycloakService
      */
     public function setUserPassword(string $userId, string $password, bool $temporary = false, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId.'/reset-password');
+        $response = $this->makeRequest('PUT', $url, $accessToken, [
+            'type'      => 'password',
+            'value'     => $password,
+            'temporary' => $temporary,
+        ]);
 
-        if (! $accessToken) {
-            return false;
-        }
-
-        $url = $this->getRealmAdminUrl().'/users/'.$userId.'/reset-password';
-
-        try {
-            $response = Http::withToken($accessToken)->put($url, [
-                'type'      => 'password',
-                'value'     => $password,
-                'temporary' => $temporary,
-            ]);
-
-            return $response->successful();
-        } catch (Exception $e) {
-            Log::error('Failed to set password for Keycloak user', [
-                'user_id' => $userId,
-                'error'   => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        return $response?->successful() ?? false;
     }
 
     /**
@@ -429,33 +308,22 @@ class KeycloakService
      */
     public function getUserViaSocialite(): User
     {
-        $baseUrl = $this->getBaseUrl();
-        $realm = $this->getRealm();
-
-        return Socialite::driver('keycloak')
-            ->setBaseUrl($baseUrl)
-            ->setRealm($realm)
-            ->user();
+        return $this->getSocialiteDriver()->user();
     }
 
     /**
      * Get redirect URL for Keycloak authentication.
      */
-    public function getRedirectUrl(): \Illuminate\Http\RedirectResponse
+    public function getRedirectUrl(): RedirectResponse
     {
-        $baseUrl = $this->getBaseUrl();
-        $realm = $this->getRealm();
-
         Log::info('Keycloak redirect', [
-            'base_url'        => $baseUrl,
-            'realm'           => $realm,
-            'config_base_url' => config('services.keycloak.base_url'),
-            'session_id'      => session()->getId(),
+            'base_url'                 => $this->getExternalBaseUrl(),
+            'realm'                    => $this->getRealm(),
+            'config_base_url_external' => config('services.keycloak.base_url_external'),
+            'session_id'               => session()->getId(),
         ]);
 
-        return Socialite::driver('keycloak')
-            ->setBaseUrl($baseUrl)
-            ->setRealm($realm)
+        return $this->getSocialiteDriver()
             ->scopes(['openid'])
             ->redirect();
     }
@@ -489,11 +357,14 @@ class KeycloakService
     }
 
     /**
-     * Get logout URL.
+     * Get logout URL (for browser redirects, uses external URL).
      */
     public function getLogoutUrl(): string
     {
-        return $this->getBaseUrl().'/realms/'.$this->getRealm().'/protocol/openid-connect/logout';
+        $baseUrl = rtrim($this->getExternalBaseUrl(), '/');
+        $path = '/realms/'.$this->getRealm().'/protocol/openid-connect/logout';
+
+        return $baseUrl.$path;
     }
 
     /**
@@ -501,36 +372,19 @@ class KeycloakService
      */
     public function updateUser(string $userId, array $userData, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId);
+        $response = $this->makeRequest('PUT', $url, $accessToken, $userData);
 
-        if (! $accessToken) {
-            return false;
-        }
-
-        $url = $this->getRealmAdminUrl().'/users/'.$userId;
-
-        try {
-            $response = Http::withToken($accessToken)->put($url, $userData);
-
-            if (! $response->successful()) {
-                Log::error('Failed to update user in Keycloak', [
-                    'status'    => $response->status(),
-                    'body'      => $response->body(),
-                    'user_id'   => $userId,
-                    'user_data' => $userData,
-                ]);
-            }
-
-            return $response->successful();
-        } catch (Exception $e) {
-            Log::error('Exception updating user in Keycloak', [
-                'error'     => $e->getMessage(),
+        if ($response && ! $response->successful()) {
+            Log::error('Failed to update user in Keycloak', [
+                'status'    => $response->status(),
+                'body'      => $response->body(),
                 'user_id'   => $userId,
                 'user_data' => $userData,
             ]);
-
-            return false;
         }
+
+        return $response?->successful() ?? false;
     }
 
     /**
@@ -538,34 +392,18 @@ class KeycloakService
      */
     public function deleteUser(string $userId, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId);
+        $response = $this->makeRequest('DELETE', $url, $accessToken);
 
-        if (! $accessToken) {
-            return false;
-        }
-
-        $url = $this->getRealmAdminUrl().'/users/'.$userId;
-
-        try {
-            $response = Http::withToken($accessToken)->delete($url);
-
-            if (! $response->successful()) {
-                Log::error('Failed to delete user from Keycloak', [
-                    'status'  => $response->status(),
-                    'body'    => $response->body(),
-                    'user_id' => $userId,
-                ]);
-            }
-
-            return $response->successful();
-        } catch (Exception $e) {
-            Log::error('Exception deleting user from Keycloak', [
-                'error'   => $e->getMessage(),
+        if ($response && ! $response->successful()) {
+            Log::error('Failed to delete user from Keycloak', [
+                'status'  => $response->status(),
+                'body'    => $response->body(),
                 'user_id' => $userId,
             ]);
-
-            return false;
         }
+
+        return $response?->successful() ?? false;
     }
 
     /**
@@ -573,30 +411,10 @@ class KeycloakService
      */
     public function getUserById(string $userId, ?string $accessToken = null): ?array
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId);
+        $response = $this->makeRequest('GET', $url, $accessToken);
 
-        if (! $accessToken) {
-            return null;
-        }
-
-        $url = $this->getRealmAdminUrl().'/users/'.$userId;
-
-        try {
-            $response = Http::withToken($accessToken)->get($url);
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Failed to get user by ID from Keycloak', [
-                'user_id' => $userId,
-                'error'   => $e->getMessage(),
-            ]);
-
-            return null;
-        }
+        return $response?->successful() ? $response->json() : null;
     }
 
     /**
@@ -604,38 +422,30 @@ class KeycloakService
      */
     public function getRoleByName(string $roleName, ?string $accessToken = null): ?array
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $token = $this->getOrResolveToken($accessToken);
 
-        if (! $accessToken) {
+        if (! $token) {
             Log::error('Kon geen admin token verkrijgen om rol te zoeken.');
 
             return null;
         }
 
-        $url = $this->getRealmAdminUrl().'/roles/'.urlencode($roleName);
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/roles/'.urlencode($roleName));
+        $response = $this->makeRequest('GET', $url, $token);
 
-        try {
-            $response = Http::withToken($accessToken)->get($url);
-
-            if ($response->successful()) {
-                return $response->json();
-            } else {
-                Log::warning('Failed to get role by name from Keycloak', [
-                    'role_name' => $roleName,
-                    'status'    => $response->status(),
-                    'body'      => $response->body(),
-                ]);
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Exception getting role by name from Keycloak', [
-                'role_name' => $roleName,
-                'error'     => $e->getMessage(),
-            ]);
-
-            return null;
+        if ($response?->successful()) {
+            return $response->json();
         }
+
+        if ($response) {
+            Log::warning('Failed to get role by name from Keycloak', [
+                'role_name' => $roleName,
+                'status'    => $response->status(),
+                'body'      => $response->body(),
+            ]);
+        }
+
+        return null;
     }
 
     /**
@@ -643,51 +453,37 @@ class KeycloakService
      */
     public function createRole(string $roleName, array $roleData = [], ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $token = $this->getOrResolveToken($accessToken);
 
-        if (! $accessToken) {
+        if (! $token) {
             Log::error('Kon geen admin token verkrijgen om rol aan te maken.');
 
             return false;
         }
 
-        $url = $this->getRealmAdminUrl().'/roles';
-
-        $defaultRoleData = [
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/roles');
+        $roleData = array_merge([
             'name'        => $roleName,
             'description' => $roleData['description'] ?? '',
-        ];
+        ], $roleData);
 
-        $roleData = array_merge($defaultRoleData, $roleData);
+        $response = $this->makeRequest('POST', $url, $token, $roleData, true);
 
-        try {
-            $response = Http::asJson()
-                ->withToken($accessToken)
-                ->post($url, $roleData);
+        if ($response?->successful()) {
+            Log::info('Role created in Keycloak', ['role_name' => $roleName]);
 
-            if ($response->successful()) {
-                Log::info('Role created in Keycloak', [
-                    'role_name' => $roleName,
-                ]);
-
-                return true;
-            } else {
-                Log::error('Failed to create role in Keycloak', [
-                    'role_name' => $roleName,
-                    'status'    => $response->status(),
-                    'body'      => $response->body(),
-                ]);
-            }
-
-            return false;
-        } catch (Exception $e) {
-            Log::error('Exception creating role in Keycloak', [
-                'role_name' => $roleName,
-                'error'     => $e->getMessage(),
-            ]);
-
-            return false;
+            return true;
         }
+
+        if ($response) {
+            Log::error('Failed to create role in Keycloak', [
+                'role_name' => $roleName,
+                'status'    => $response->status(),
+                'body'      => $response->body(),
+            ]);
+        }
+
+        return false;
     }
 
     /**
@@ -695,16 +491,15 @@ class KeycloakService
      */
     public function assignRoleToUser(string $userId, string $roleName, ?string $accessToken = null): bool
     {
-        $accessToken = $accessToken ?? $this->getAdminToken();
+        $token = $this->getOrResolveToken($accessToken);
 
-        if (! $accessToken) {
+        if (! $token) {
             Log::error('Kon geen admin token verkrijgen om rol toe te wijzen.');
 
             return false;
         }
 
-        // Get the role first
-        $role = $this->getRoleByName($roleName, $accessToken);
+        $role = $this->getRoleByName($roleName, $token);
 
         if (! $role) {
             Log::error('Role not found in Keycloak', [
@@ -715,44 +510,93 @@ class KeycloakService
             return false;
         }
 
-        // Prepare role representation for assignment (only id and name are required)
-        $roleRepresentation = [
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId.'/role-mappings/realm');
+        $response = $this->makeRequest('POST', $url, $token, [[
             'id'   => $role['id'] ?? null,
             'name' => $role['name'] ?? $roleName,
-        ];
+        ]], true);
 
-        $url = $this->getRealmAdminUrl().'/users/'.$userId.'/role-mappings/realm';
-
-        try {
-            $response = Http::asJson()
-                ->withToken($accessToken)
-                ->post($url, [$roleRepresentation]);
-
-            if ($response->successful()) {
-                Log::info('Role assigned to user in Keycloak', [
-                    'role_name' => $roleName,
-                    'user_id'   => $userId,
-                ]);
-
-                return true;
-            } else {
-                Log::error('Failed to assign role to user in Keycloak', [
-                    'role_name' => $roleName,
-                    'user_id'   => $userId,
-                    'status'    => $response->status(),
-                    'body'      => $response->body(),
-                ]);
-            }
-
-            return false;
-        } catch (Exception $e) {
-            Log::error('Exception assigning role to user in Keycloak', [
+        if ($response?->successful()) {
+            Log::info('Role assigned to user in Keycloak', [
                 'role_name' => $roleName,
                 'user_id'   => $userId,
-                'error'     => $e->getMessage(),
             ]);
 
-            return false;
+            return true;
         }
+
+        if ($response) {
+            Log::error('Failed to assign role to user in Keycloak', [
+                'role_name' => $roleName,
+                'user_id'   => $userId,
+                'status'    => $response->status(),
+                'body'      => $response->body(),
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve a Keycloak URL by appending a path to the internal base URL.
+     */
+    private function resolveKeycloakUrl(string $path): string
+    {
+        $baseUrl = rtrim($this->getInternalBaseUrl(), '/');
+        $path = ltrim($path, '/');
+
+        return $baseUrl.'/'.$path;
+    }
+
+    /**
+     * Get or resolve access token.
+     */
+    private function getOrResolveToken(?string $accessToken): ?string
+    {
+        return $accessToken ?? $this->getAdminToken();
+    }
+
+    /**
+     * Make an authenticated HTTP request to Keycloak.
+     */
+    private function makeRequest(string $method, string $url, ?string $accessToken, array $data = [], bool $asJson = false): ?\Illuminate\Http\Client\Response
+    {
+        $token = $this->getOrResolveToken($accessToken);
+
+        if (! $token) {
+            return null;
+        }
+
+        try {
+            $request = Http::withToken($token);
+
+            if ($asJson) {
+                $request = $request->asJson();
+            }
+
+            return match ($method) {
+                'GET'    => $request->get($url),
+                'POST'   => $request->post($url, $data),
+                'PUT'    => $request->put($url, $data),
+                'DELETE' => $request->delete($url),
+                default  => null,
+            };
+        } catch (Exception $e) {
+            Log::error("Keycloak {$method} request failed", [
+                'url'   => $url,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Setup Socialite driver.
+     * Constructor already sets baseUrl and realm from config.
+     */
+    private function getSocialiteDriver()
+    {
+        return Socialite::driver('keycloak');
     }
 }

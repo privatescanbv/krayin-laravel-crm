@@ -19,11 +19,31 @@ class Bouncer
             return redirect()->route('admin.session.create');
         }
 
+        $user = auth()->guard($guard)->user();
+
+        /**
+         * Check if user was logged out via Keycloak backchannel logout.
+         * This happens when user logs out from another service (e.g., forms).
+         */
+        if ($user && !empty($user->keycloak_user_id)) {
+            $cacheKey = 'keycloak_logout_' . $user->id;
+            if (cache()->has($cacheKey)) {
+                // Clear the cache flag
+                cache()->forget($cacheKey);
+                // Logout the user
+                auth()->guard($guard)->logout();
+
+                session()->flash('error', __('admin::app.errors.401'));
+
+                return redirect()->route('admin.session.create');
+            }
+        }
+
         /**
          * If user status is changed by admin. Then session should be
          * logged out.
          */
-        if (! (bool) auth()->guard($guard)->user()->status) {
+        if (! (bool) $user->status) {
             auth()->guard($guard)->logout();
 
             session()->flash('error', __('admin::app.errors.401'));

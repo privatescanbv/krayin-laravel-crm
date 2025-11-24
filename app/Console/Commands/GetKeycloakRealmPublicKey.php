@@ -38,7 +38,7 @@ class GetKeycloakRealmPublicKey extends Command
 
         $this->info("Ophalen van realm public key voor: {$realm}");
 
-        $realmUrl = rtrim($keycloakService->getBaseUrl(), '/').'/realms/'.$realm;
+        $realmUrl = rtrim($keycloakService->getInternalBaseUrl(), '/').'/realms/'.$realm;
 
         try {
             $response = Http::get($realmUrl);

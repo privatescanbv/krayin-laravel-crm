@@ -82,8 +82,8 @@ Voeg de volgende variabelen toe aan je `.env` bestand:
 [source,env]
 ----
 # Keycloak Configuration
-KEYCLOAK_BASE_URL=http://localhost:8085
-KEYCLOAK_DOCKER_SERVICE_URL=http://keycloak:8080
+KEYCLOAK_BASE_URL_EXTERNAL=http://localhost:8085
+KEYCLOAK_BASE_URL_INTERNAL=http://keycloak:8080
 KEYCLOAK_REALM=crm
 KEYCLOAK_CLIENT_ID=crm-app
 KEYCLOAK_CLIENT_SECRET=<het secret dat is gegenereerd na sync-config>
@@ -190,7 +190,7 @@ Voor productie:
 **Configuratie:**
 
 1. **Keycloak HTTPS**: Keycloak is beschikbaar via `https://sso.dev.privatescan.nl` (via Traefik)
-2. **Environment Variabelen**: 
+2. **Environment Variabelen**:
    - `KEYCLOAK_BASE_URL=https://sso.dev.privatescan.nl`
    - `KEYCLOAK_DOCKER_SERVICE_URL=http://keycloak:8080` (voor server-to-server communicatie binnen Docker netwerk)
 3. **Redirect URIs**: Worden automatisch geconfigureerd op basis van `app.url` (moet `https://newcrm.dev.privatescan.nl` zijn)

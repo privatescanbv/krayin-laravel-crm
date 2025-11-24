@@ -59,6 +59,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Internal Application URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for server-to-server communication from within Docker
+    | containers. For example, Keycloak backchannel logout calls.
+    | Defaults to Docker service name 'crm' on port 80.
+    |
+    */
+
+    'internal_url' => env('APP_INTERNAL_URL', 'http://crm:80'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Admin URL
     |--------------------------------------------------------------------------
     |

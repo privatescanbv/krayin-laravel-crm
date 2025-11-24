@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Actions\Keycloak\GetKeycloakClientSecretAction;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -12,7 +13,8 @@ class KeycloakConfigService
     private bool $extraLogging = false;
 
     public function __construct(
-        protected KeycloakService $keycloakService
+        protected KeycloakService $keycloakService,
+        protected GetKeycloakClientSecretAction $getClientSecretAction
     ) {}
 
     /**
@@ -37,7 +39,7 @@ class KeycloakConfigService
         }
 
         $realmName = $this->keycloakService->getRealm();
-        $baseUrl = $this->keycloakService->getBaseUrl();
+        $baseUrl = $this->keycloakService->getExternalBaseUrl();
 
         if (empty($realmName)) {
             Log::warning('Keycloak config sync skipped: realm not configured');
@@ -65,7 +67,7 @@ class KeycloakConfigService
 
             if ($this->keycloakService->createRealm($realmName, $realmData, $accessToken)) {
                 // Set frontend URL to base URL (localhost) so tokens use localhost as issuer
-                $realmUrl = $this->keycloakService->getBaseUrl().'/admin/realms/'.$realmName;
+                $realmUrl = $this->keycloakService->getInternalBaseUrl().'/admin/realms/'.$realmName;
                 try {
                     Http::asJson()
                         ->withToken($accessToken)
@@ -127,6 +129,12 @@ class KeycloakConfigService
         $crmClientId = $this->keycloakService->getClientId();
         if (! empty($crmClientId)) {
             $appUrl = $this->normalizeUrl(config('app.url', 'http://localhost:8000'), 8000);
+
+            // Backchannel logout URL must use internal Docker service name
+            // Keycloak calls this from inside the container, so it needs to reach the CRM container directly
+            $internalAppUrl = config('app.internal_url', 'http://crm:80');
+            $backchannelLogoutUrl = rtrim($internalAppUrl, '/').'/admin/auth/keycloak/backchannel-logout';
+
             $configs[$crmClientId] = [
                 'base_url'                  => $appUrl,
                 'redirect_uris'             => [
@@ -138,7 +146,7 @@ class KeycloakConfigService
                     $appUrl.'/admin/login',
                     $appUrl.'/admin/auth/keycloak/logout-callback',
                 ],
-                'backchannel_logout_url'    => $appUrl.'/admin/auth/keycloak/backchannel-logout',
+                'backchannel_logout_url'    => $backchannelLogoutUrl,
                 'home_url'                  => $appUrl,
                 'secret_env_key'            => 'KEYCLOAK_CLIENT_SECRET',
                 'secret_log_message'        => 'Keycloak client secret generated. Please update KEYCLOAK_CLIENT_SECRET in .env',
@@ -403,38 +411,13 @@ class KeycloakConfigService
      */
     protected function getClientSecret(string $clientId, string $realmName, string $accessToken): array
     {
-        $createdClient = $this->keycloakService->getClientById($clientId, $realmName, $accessToken);
+        $result = $this->getClientSecretAction->execute($clientId, $realmName, $accessToken);
 
-        if (! $createdClient) {
-            return ['secret' => null, 'error' => 'Client not found after creation'];
+        if ($result['success']) {
+            return ['secret' => $result['secret'], 'error' => null];
         }
 
-        $clientSecretUrl = $this->keycloakService->getBaseUrl()
-            .'/admin/realms/'.$realmName
-            .'/clients/'.$createdClient['id'].'/client-secret';
-
-        try {
-            $secretResponse = Http::withToken($accessToken)->get($clientSecretUrl);
-
-            if ($secretResponse->successful()) {
-                $secret = $secretResponse->json('value');
-                Log::info('Keycloak client secret retrieved', [
-                    'client_id' => $clientId,
-                    'realm'     => $realmName,
-                ]);
-
-                return ['secret' => $secret, 'error' => null];
-            }
-
-            return ['secret' => null, 'error' => 'Failed to retrieve secret: '.$secretResponse->status()];
-        } catch (Exception $e) {
-            Log::warning('Could not retrieve client secret', [
-                'error'     => $e->getMessage(),
-                'client_id' => $clientId,
-            ]);
-
-            return ['secret' => null, 'error' => $e->getMessage()];
-        }
+        return ['secret' => null, 'error' => $result['message'] ?? 'Failed to retrieve client secret'];
     }
 
     /**

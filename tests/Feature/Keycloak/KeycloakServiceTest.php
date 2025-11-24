@@ -14,7 +14,7 @@ beforeEach(function () {
 it('can get base URL', function () {
     $service = app(KeycloakService::class);
 
-    expect($service->getBaseUrl())->toBe('http://test-keycloak.local:9999');
+    expect($service->getExternalBaseUrl())->toBe('http://test-keycloak.local:9999');
 });
 
 it('can get realm', function () {

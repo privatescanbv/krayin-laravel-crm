@@ -51,7 +51,7 @@ class ConfigureKeycloakRealm extends Command
         }
 
         // Set frontend URL to base URL (for browser access)
-        $frontendUrl = $keycloakService->getBaseUrl();
+        $frontendUrl = $keycloakService->getExternalBaseUrl();
 
         $this->info("Instellen frontend URL naar: {$frontendUrl}");
 

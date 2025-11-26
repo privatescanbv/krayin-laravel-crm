@@ -9,7 +9,7 @@ services:
       - --providers.docker=true
       - --providers.file.filename=/traefik/tls.yml
       - --providers.docker.exposedbydefault=false
-      - --providers.docker.network=mb_traefik
+      - --providers.docker.network=public
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443/tcp
       - --entrypoints.http.http.redirections.entryPoint.to=https
@@ -65,7 +65,7 @@ services:
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Host=crm.local.privatescan.nl
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
     volumes:
       - '.:/usr/share/nginx/html'
@@ -216,7 +216,7 @@ services:
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=forms.local.privatescan.nl
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
 #    extra_hosts:
 #      - "sso.local.privatescan.nl:192.168.107.3"
@@ -342,7 +342,7 @@ services:
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.local.privatescan.nl
       - traefik.http.routers.keycloak.middlewares=keycloak-forward-headers
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
 #    healthcheck:
 #      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]

@@ -3,6 +3,7 @@
 namespace App\Services\Keycloak;
 
 use App\Actions\Keycloak\GetKeycloakClientSecretAction;
+use App\Enums\KeycloakRoles;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -165,6 +166,11 @@ class KeycloakConfigService
             'secret'  => null,
             'errors'  => [],
         ];
+        Log::info('SyncClient connecting to keycloak', [
+            'keycloak url'          => $this->keycloakService->getInternalBaseUrl(),
+            'realm'                 => $realmName,
+            'access_token'          => substr($accessToken, 0, 5).'...',
+        ]);
 
         $existingClient = $this->keycloakService->getClientById($clientId, $realmName, $accessToken);
 
@@ -441,15 +447,8 @@ class KeycloakConfigService
             ]);
         }
 
-        // Also ensure admin events include representations for richer payloads.
-        $this->keycloakService->updateAdminEventsConfig([
-            'enabled'               => true,
-            'includeRepresentation' => true,
-        ], $accessToken);
-
         return null;
     }
-
 
     /**
      * Sync Keycloak realm roles.
@@ -464,12 +463,16 @@ class KeycloakConfigService
 
         $roles = [
             [
-                'name'        => 'medewerker',
-                'description' => 'Medewerker rol voor CRM gebruikers',
+                'name'        => KeycloakRoles::Employee->value,
+                'description' => KeycloakRoles::Employee->label(),
             ],
             [
-                'name'        => 'patient',
-                'description' => 'Patient rol',
+                'name'        => KeycloakRoles::Patient->value,
+                'description' => KeycloakRoles::Patient->label(),
+            ],
+            [
+                'name'        => KeycloakRoles::Clinic->value,
+                'description' => KeycloakRoles::Clinic->label(),
             ],
         ];
 

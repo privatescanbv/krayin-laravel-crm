@@ -63,8 +63,7 @@ class Handler extends AppExceptionHandler
         if (! config('app.debug')) {
             return $this->renderCustomResponse($exception);
         }
-
-        return parent::render($request, $exception);
+            return parent::render($request, $exception);
     }
 
     /**

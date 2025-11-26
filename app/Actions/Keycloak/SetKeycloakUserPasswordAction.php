@@ -46,6 +46,11 @@ class SetKeycloakUserPasswordAction
         );
 
         if (! $passwordSet) {
+            Log::Error('Failed to set password for Keycloak user', [
+                'email'            => $email,
+                'keycloak_user_id' => $keycloakUser['id'],
+            ]);
+
             return [
                 'success'          => false,
                 'message'          => "Kon wachtwoord niet instellen voor gebruiker: {$email}",

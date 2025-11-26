@@ -26,4 +26,3 @@ it('accepteert een webhook met geldige API key wanneer er geen webhook secret is
         ->assertOk()
         ->assertJson(['status' => 'ok']);
 });
-

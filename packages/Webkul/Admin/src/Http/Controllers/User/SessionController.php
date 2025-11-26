@@ -5,9 +5,12 @@ namespace Webkul\Admin\Http\Controllers\User;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Middleware\Concerns\LoadsUserRoles;
 
 class SessionController extends Controller
 {
+    use LoadsUserRoles;
+
     /**
      * Create a new controller instance.
      *
@@ -77,8 +80,24 @@ class SessionController extends Controller
         $user = auth()->guard('user')->user();
 
         // Clear logout flag if it exists
-        if ($user && !empty($user->keycloak_user_id)) {
+        if ($user) {
             cache()->forget('keycloak_logout_' . $user->id);
+            
+            // Haal rollen op en zet in sessie (niet in database)
+            $roles = $this->loadUserRoles($user, $this->keycloakService);
+            
+            if (!empty($user->keycloak_user_id)) {
+                Log::info('Keycloak roles loaded for user (normal login)', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'roles' => $roles,
+                ]);
+            } else {
+                Log::debug('Auto-assigned employee role for non-Keycloak user', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ]);
+            }
         }
 
         if ($user->status == 0) {
@@ -115,9 +134,16 @@ class SessionController extends Controller
     {
         $user = auth()->guard('user')->user();
         $isSSOUser = $user && !empty($user->keycloak_user_id) && config('services.keycloak.client_id');
+        
+        $userId = $user?->id;
 
         // Logout from Laravel first
         auth()->guard('user')->logout();
+        
+        // Ruim Keycloak rollen op uit sessie
+        if ($userId) {
+            session()->forget('keycloak_roles_' . $userId);
+        }
 
         // If SSO user, trigger Keycloak logout via redirect
         // Keycloak will handle logout and call backchannel logout endpoint if configured

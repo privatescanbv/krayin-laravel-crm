@@ -1,5 +1,3 @@
-process.env.LARAVEL_VITE_DETECT_TLS = 'false';
-
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import laravel from "laravel-vite-plugin";

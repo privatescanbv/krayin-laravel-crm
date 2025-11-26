@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
+use App\Enums\KeycloakRoles;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 
@@ -50,7 +51,7 @@ class PersonKeycloakService
             $userData,
             $passwordToUse,
             $temporary || $generatedPassword,
-            'patient'
+            KeycloakRoles::Patient->value
         );
 
         if ($result['success']) {

@@ -57,4 +57,8 @@ return [
         'admin_password'              => env('KEYCLOAK_ADMIN_PASSWORD', 'changeme'),
     ],
 
+    'portal' => [
+        'base_url' => env('PORTAL_BASE_URL', env('FORMS_FRONTEND_URL', 'https://forms.local.privatescan.nl')),
+    ],
+
 ];

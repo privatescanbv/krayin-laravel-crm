@@ -25,6 +25,10 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
+        if (app()->runningInConsole()) {
+            // Tijdens composer install/update geen logging uitvoeren
+            return;
+        }
         $this->reportable(function (Throwable $e) {
             try {
                 // Log all exceptions that are reported

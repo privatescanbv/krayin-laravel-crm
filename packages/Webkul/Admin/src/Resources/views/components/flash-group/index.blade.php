@@ -35,7 +35,7 @@
             created() {
                 @foreach (['success', 'warning', 'error', 'info'] as $key)
                     @if (session()->has($key))
-                        this.flashes.push({'type': '{{ $key }}', 'message': "{{ session($key) }}", 'uid':  this.uid++});
+                        this.flashes.push({'type': '{{ $key }}', 'message': @json(session($key)), 'uid':  this.uid++});
                     @endif
                 @endforeach
 

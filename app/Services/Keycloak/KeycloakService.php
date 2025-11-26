@@ -127,6 +127,21 @@ class KeycloakService
         return $this->resolveKeycloakUrl('/admin/realms'.$realmPath);
     }
 
+    public function getRealmLoginUrl(string $redirectUrl): string
+    {
+        $baseUrl = rtrim($this->getExternalBaseUrl(), '/');
+
+        $realm = $this->getRealm();  // crm
+        $clientId = config('services.keycloak.client_id');   // crm-app
+
+        return $baseUrl.
+            "/realms/{$realm}/protocol/openid-connect/auth".
+            "?client_id={$clientId}".
+            '&response_type=code'.
+            "&redirect_uri={$redirectUrl}".
+            '&scope=openid%20profile%20email';
+    }
+
     /**
      * Check if a realm exists.
      */
@@ -286,36 +301,6 @@ class KeycloakService
     }
 
     /**
-     * Update realm admin events configuration.
-     */
-    public function updateAdminEventsConfig(array $config, ?string $accessToken = null): bool
-    {
-        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/admin-events/config');
-        $response = $this->makeRequest('PUT', $url, $accessToken, $config, true);
-
-        if ($response?->successful()) {
-            return true;
-        }
-
-        if ($response) {
-            if ($response->status() === 404) {
-                Log::info('Keycloak admin events config endpoint not found; skipping update', [
-                    'realm' => $this->getRealm(),
-                ]);
-
-                return true;
-            }
-
-            Log::error('Failed to update Keycloak admin events config', [
-                'status' => $response->status(),
-                'body'   => $response->body(),
-            ]);
-        }
-
-        return false;
-    }
-
-    /**
      * Get user by email from Keycloak.
      */
     public function getUserByEmail(string $email, ?string $accessToken = null): ?array
@@ -381,11 +366,16 @@ class KeycloakService
     public function setUserPassword(string $userId, string $password, bool $temporary = false, ?string $accessToken = null): bool
     {
         $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId.'/reset-password');
-        $response = $this->makeRequest('PUT', $url, $accessToken, [
-            'type'      => 'password',
-            'value'     => $password,
-            'temporary' => $temporary,
-        ]);
+        $response = Http::withToken($accessToken)
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+            ])
+            ->put($url, [
+                'type'      => 'password',
+                'value'     => $password,
+                'temporary' => $temporary,
+            ]);
+        Log::info('Setting temporary password to Keycloak, response', ['response_status'=>$response->status()]);
 
         return $response?->successful() ?? false;
     }
@@ -622,6 +612,42 @@ class KeycloakService
         }
 
         return false;
+    }
+
+    /**
+     * Get realm roles assigned to a user.
+     *
+     * @return array<int, string> Array of role names
+     */
+    public function getUserRoles(string $userId, ?string $accessToken = null): array
+    {
+        $token = $this->getOrResolveToken($accessToken);
+
+        if (! $token) {
+            Log::error('Kon geen admin token verkrijgen om user rollen op te halen.');
+
+            return [];
+        }
+
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId.'/role-mappings/realm');
+        $response = $this->makeRequest('GET', $url, $token);
+
+        if ($response?->successful()) {
+            $roles = $response->json() ?? [];
+            $roleNames = array_column($roles, 'name');
+
+            return $roleNames;
+        }
+
+        if ($response) {
+            Log::warning('Failed to get user roles from Keycloak', [
+                'user_id' => $userId,
+                'status'  => $response->status(),
+                'body'    => $response->body(),
+            ]);
+        }
+
+        return [];
     }
 
     /**

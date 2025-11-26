@@ -4,7 +4,6 @@ namespace Webkul\Core;
 
 use Illuminate\Support\Facades\Vite as BaseVite;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\HtmlString;
 use Webkul\Core\Exceptions\ViterNotFound;
 
 /**
@@ -82,7 +81,7 @@ class Vite
         $hotFile = $this->hotFilePath($cfg);
 
         $url = trim($filename, '/');
-        
+
         // For admin namespace, assets are relative to the Admin package directory
         // Vite runs from packages/Webkul/Admin, so we need paths relative to that directory
         if ($namespace === 'admin') {

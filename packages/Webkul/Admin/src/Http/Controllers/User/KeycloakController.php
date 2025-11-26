@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
+use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
@@ -10,10 +11,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Two\InvalidStateException;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Middleware\Concerns\LoadsUserRoles;
 use Webkul\User\Repositories\UserRepository;
 
 class KeycloakController extends Controller
 {
+    use LoadsUserRoles;
+
     /**
      * Create a new controller instance.
      *
@@ -272,6 +276,32 @@ class KeycloakController extends Controller
     protected function loginUser($user): RedirectResponse
     {
         cache()->forget('keycloak_logout_' . $user->id);
+        
+        // Haal rollen op en zet in sessie (niet in database)
+        $roles = $this->loadUserRoles($user, $this->keycloakService);
+        
+        Log::debug('Keycloak roles loaded for user', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'roles' => $roles,
+        ]);
+        
+        // Check of gebruiker patient rol heeft → geen toegang tot admin panel
+        if (!empty($user->keycloak_user_id)) {
+            $patientRole = KeycloakRoles::Patient->value;
+            if (in_array($patientRole, $roles, true)) {
+                Log::warning('Patient attempted to login via SSO to admin panel', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'keycloak_user_id' => $user->keycloak_user_id,
+                ]);
+                
+                session()->flash('error', 'U heeft geen toegang tot het admin panel. Alleen medewerkers hebben toegang.');
+                
+                return redirect()->route('admin.session.create');
+            }
+        }
+        
         Auth::guard('user')->login($user, true);
 
         if (! bouncer()->hasPermission('dashboard')) {

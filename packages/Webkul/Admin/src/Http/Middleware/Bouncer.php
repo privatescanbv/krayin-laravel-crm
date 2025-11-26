@@ -2,10 +2,20 @@
 
 namespace Webkul\Admin\Http\Middleware;
 
+use App\Enums\KeycloakRoles;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Log;
+use Webkul\Admin\Http\Middleware\Concerns\LoadsUserRoles;
 
 class Bouncer
 {
+    use LoadsUserRoles;
+
+    public function __construct(
+        protected KeycloakService $keycloakService
+    ) {}
+
     /**
      * Handle an incoming request.
      *
@@ -52,6 +62,27 @@ class Bouncer
         }
 
         /**
+         * Check if user has access to admin panel.
+         * Patiënten (met 'patient' rol in Keycloak) hebben geen toegang.
+         * Alle andere gebruikers (normale CRM gebruikers) hebben wel toegang.
+         */
+        if ($user) {
+            if (! $this->hasEmployeeRole($user)) {
+                Log::warning('Patient attempted to access admin panel', [
+                    'user_id' => $user->id,
+                    'email'   => $user->email,
+                    'keycloak_user_id' => $user->keycloak_user_id ?? null,
+                ]);
+
+                auth()->guard($guard)->logout();
+
+                session()->flash('error', 'U heeft geen toegang tot het admin panel. Alleen medewerkers hebben toegang.');
+
+                return redirect()->route('admin.session.create')->setStatusCode(401);
+            }
+        }
+
+        /**
          * If somehow the user deleted all permissions, then it should be
          * auto logged out and need to contact the administrator again.
          */
@@ -64,6 +95,38 @@ class Bouncer
         }
 
         return $next($request);
+    }
+
+
+    /**
+     * Check if user has the employee role (oftewel: is GEEN patiënt).
+     * Rollen worden opgehaald uit sessie (gezet bij login), niet uit database.
+     * 
+     * Logica:
+     * - Als gebruiker GEEN keycloak_user_id heeft → toegang (normale CRM gebruiker)
+     * - Als gebruiker WEL keycloak_user_id heeft maar GEEN 'patient' rol → toegang (normale CRM gebruiker)
+     * - Als gebruiker WEL keycloak_user_id heeft EN 'patient' rol → GEEN toegang (patiënt)
+     */
+    protected function hasEmployeeRole($user): bool
+    {
+        // Haal rollen op (uit sessie of via API)
+        $roles = $this->loadUserRoles($user, $this->keycloakService);
+
+        // Non-Keycloak users hebben altijd toegang
+        if (empty($user->keycloak_user_id)) {
+            return true;
+        }
+
+        // Check of gebruiker de 'patient' rol heeft → dan GEEN toegang
+        $patientRole = KeycloakRoles::Patient->value;
+        
+        // Als gebruiker patient rol heeft, blokkeren
+        if (in_array($patientRole, $roles, true)) {
+            return false;
+        }
+
+        // Anders: gebruiker heeft geen patient rol → toegang (normale CRM gebruiker)
+        return true;
     }
 
     /**

@@ -68,7 +68,7 @@ class GetKeycloakClientSecretAction
                     // Determine env key based on client ID
                     $envKey = $clientId === 'forms-app' ? 'FORMS_KEYCLOAK_CLIENT_SECRET' : 'KEYCLOAK_CLIENT_SECRET';
 
-                    Log::info('Keycloak client secret retrieved', [
+                    Log::info('Keycloak client secret retrieved..', [
                         'client_id' => $clientId,
                         'realm'     => $realmName,
                     ]);

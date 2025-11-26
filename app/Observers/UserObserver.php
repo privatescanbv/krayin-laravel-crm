@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
+use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
 use Exception;
 use Illuminate\Support\Facades\Config;
@@ -256,7 +257,7 @@ class UserObserver
                 // Update keycloak_user_id in CRM
                 $user->update(['keycloak_user_id' => $result['keycloak_user_id']]);
 
-                // Assign default role "medewerker" to user
+                // Assign default role "employee" to user
                 $this->assignDefaultRole($result['keycloak_user_id']);
 
                 Log::info('User synced to Keycloak via observer', [
@@ -425,7 +426,7 @@ class UserObserver
     }
 
     /**
-     * Assign default role "medewerker" to a Keycloak user.
+     * Assign default role "employee" to a Keycloak user.
      */
     protected function assignDefaultRole(string $keycloakUserId): void
     {
@@ -440,18 +441,24 @@ class UserObserver
                 return;
             }
 
-            $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, 'medewerker', $accessToken);
+            $roleName = KeycloakRoles::Employee->value;
+            $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, $roleName, $accessToken);
 
             if (! $roleAssigned) {
                 Log::warning('Failed to assign role to user in Keycloak via observer', [
                     'keycloak_user_id' => $keycloakUserId,
-                    'role'             => 'medewerker',
+                    'role'             => $roleName,
+                ]);
+            } else {
+                Log::info('Employee role assigned to user in Keycloak via observer', [
+                    'keycloak_user_id' => $keycloakUserId,
+                    'role'             => $roleName,
                 ]);
             }
         } catch (Exception $e) {
             Log::error('Exception while assigning role to user in Keycloak via observer', [
                 'keycloak_user_id' => $keycloakUserId,
-                'role'             => 'medewerker',
+                'role'             => KeycloakRoles::Employee->value,
                 'error'            => $e->getMessage(),
             ]);
         }

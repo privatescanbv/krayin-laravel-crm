@@ -10,7 +10,7 @@
         <span class="relative inline-block w-full">
             <slot></slot>
 
-            <i class="icon-calendar pointer-events-none absolute top-1/2 -translate-y-1/2 text-2xl text-gray-400 ltr:right-2 rtl:left-2"></i>
+            <i ref="calendarIcon" class="icon-calendar pointer-events-none absolute top-1/2 -translate-y-1/2 text-2xl text-gray-400 ltr:right-2 rtl:left-2"></i>
         </span>
     </script>
 
@@ -62,6 +62,8 @@
                         enableTime: true,
                         time_24hr: true,
                         weekNumbers: true,
+                        defaultDate: this.value || null,
+                        clickOpens: false,
 
                         onChange: function(selectedDates, dateStr, instance) {
                             self.$emit("onChange", dateStr);

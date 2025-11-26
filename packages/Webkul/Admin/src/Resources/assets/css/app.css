@@ -75,15 +75,6 @@
         @apply text-brand-privatescan-accent;
     }
 
-    /* label {
-        @apply absolute top-[-1em] left-1 flex z-10 px-2 py-[.125rem] bg-gradient-to-t from-neutral-bg to-white rounded-lg items-center gap-2 mb-1.5 text-xs font-medium text-neutral-muted dark:text-neutral-text;
-    } */
-
-    input[readonly] + label,
-    textarea[readonly] + label,
-    select[readonly] + label {
-        @apply flex z-10 px-2 py-[.125rem] bg-none bg-white rounded-lg items-center gap-2 mb-1.5 text-xs font-medium text-neutral-muted dark:text-neutral-text;
-    }
     /* Form elements */
     input,
     textarea,
@@ -109,7 +100,12 @@
     input[readonly],
     textarea[readonly],
     select[readonly] {
-        @apply bg-white border-neutral-border text-neutral-text shadow-none pointer-events-none;
+        @apply bg-none bg-white border-neutral-border text-neutral-text shadow-none pointer-events-none;
+    }
+    input[readonly] + label,
+    textarea[readonly] + label,
+    select[readonly] + label {
+        @apply bg-none bg-white;
     }
 
     /* Code, tags, and subtle pills */

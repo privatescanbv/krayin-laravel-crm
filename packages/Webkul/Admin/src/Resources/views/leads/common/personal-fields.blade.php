@@ -234,10 +234,6 @@
 
     <!-- Portal activation toggle -->
     <x-admin::form.control-group>
-        <x-admin::form.control-group.label>
-            Patiëntportaal actief
-        </x-admin::form.control-group.label>
-
         <x-admin::form.control-group.control
             type="switch"
             name="is_active"
@@ -247,6 +243,9 @@
             :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
         />
+        <x-admin::form.control-group.label switch>
+            Patiëntportaal actief
+        </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.error control-name="is_active"/>
     </x-admin::form.control-group>

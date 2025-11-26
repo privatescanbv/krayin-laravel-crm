@@ -1,16 +1,16 @@
 @php
-    // Get default email and phone
-    $defaultEmail = $lead->findDefaultEmail();
-    $defaultPhone = null;
-    if ($lead->phones && is_array($lead->phones) && count($lead->phones) > 0) {
-        $defaultPhone = $lead->phones[0]['value'] ?? null;
-    }
+// Get default email and phone
+$defaultEmail = $lead->findDefaultEmail();
+$defaultPhone = null;
+if ($lead->phones && is_array($lead->phones) && count($lead->phones) > 0) {
+$defaultPhone = $lead->phones[0]['value'] ?? null;
+}
 
-    // Format date of birth
-    $dateOfBirth = $lead->date_of_birth ? $lead->date_of_birth->format('d-m-Y') : '';
+// Format date of birth
+$dateOfBirth = $lead->date_of_birth ? $lead->date_of_birth->format('d-m-Y') : '';
 
-    // Get salutation label
-    $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
+// Get salutation label
+$salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
 @endphp
 
 {!! view_render_event('admin.leads.view.compact_overview.before', ['lead' => $lead]) !!}
@@ -38,74 +38,49 @@
             </div>
 
             <!-- Aanhef -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $salutationLabel }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Aanhef</span>
-                </label>
-            </div>
+
+                label="Aanhef"
+                value="{{ $salutationLabel }}"
+                readonly />
 
             <!-- Voornaam -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->first_name ?? '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Voornaam</span>
-                </label>
-            </div>
 
-            <!-- Tussenvoegels -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->lastname_prefix ?? '' }}"
-                    readonly
-                />
-                <label class="">
+                label="Voornaam"
+                value="{{ $lead->first_name ?? '' }}"
+                readonly />
 
-                    <span>Tussenvoegels</span>
-                </label>
-            </div>
 
-            <!-- Achternaam -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->last_name ?? '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Achternaam</span>
-                </label>
-            </div>
 
-            <!-- Geboortedatum -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $dateOfBirth }}"
-                    readonly
-                />
-                <label class="">
+                label="Tussenvoegsel"
+                value="{{ $lead->lastname_prefix ?? '' }}"
+                readonly />
 
-                    <span>Geboortedatum</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+
+
+                label="Achternaam"
+                value="{{ $lead->last_name ?? '' }}"
+                readonly />
+
+            <x-adminc::components.field
+
+
+                label="Geboortedatum"
+                value="{{ $dateOfBirth }}"
+                readonly />
+
+            <x-adminc::components.field
+
+
+                label="Geboortedatum"
+                value="{{ $dateOfBirth }}"
+                readonly />
         </div>
 
         <!-- Column 2: ADRESGEGEVENS -->
@@ -116,60 +91,36 @@
             </div>
 
             <!-- Straat en huisnummer -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->address ? ($lead->address->street . ' ' . $lead->address->house_number . ($lead->address->house_number_suffix ? '-' . $lead->address->house_number_suffix : '')) : '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Straat en huisnummer</span>
-                </label>
-            </div>
+
+                label="Straat en huisnummer"
+                value="{{ $lead->address ? ($lead->address->street . ' ' . $lead->address->house_number . ($lead->address->house_number_suffix ? '-' . $lead->address->house_number_suffix : '')) : '' }}"
+                readonly />
 
             <!-- Postcode -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->address->postal_code ?? '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Postcode</span>
-                </label>
-            </div>
+
+                label="Postcode"
+                value="{{ $lead->address->postal_code ?? '' }}"
+                readonly />
 
             <!-- Woonplaats -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->address->city ?? '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Woonplaats</span>
-                </label>
-            </div>
+
+                label="Woonplaats"
+                value="{{ $lead->address->city ?? '' }}"
+                readonly />
 
             <!-- Land -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value="{{ $lead->address->country ?? '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
 
-                    <span>Land</span>
-                </label>
-            </div>
+
+                label="Land"
+                value="{{ $lead->address->country ?? '' }}"
+                readonly />
         </div>
 
         <!-- Column 3: CONTACT & IDENTIFICATIE -->
@@ -180,47 +131,28 @@
             </div>
 
             <!-- Telefoonnummer -->
-            <div class="relative">
-                <input
-                    type="tel"
-                    class="w-full"
-                    value="{{ $defaultPhone ?? '' }}"
-                    readonly
-                />
-                <label class="">
-
-                    <span>Telefoonnummer</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+                type="tel"
+                label="Telefoonnummer"
+                value="{{ $defaultPhone ?? '' }}"
+                readonly />
 
             <!-- E-mailadres -->
-            <div class="relative">
-                <input
-                    type="email"
-                    class="w-full"
-                    value="{{ $defaultEmail ?? '' }}"
-                    readonly
-                />
-                <label class="">
+            <x-adminc::components.field
+                type="email"
 
-                    <span>E-mailadres</span>
-                </label>
-            </div>
+
+                label="E-mailadres"
+                value="{{ $defaultEmail ?? '' }}"
+                readonly />
 
             <!-- Burgerservicenummer (BSN) -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    value=""
-                    placeholder="BSN nummer"
-                    readonly
-                />
-                <label class="">
-
-                    <span>Burgerservicenummer (BSN)</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+                type="text"
+                label="Burgerservicenummer (BSN)"
+                value=""
+                placeholder="BSN nummer"
+                readonly />
         </div>
     </div>
 </div>

@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;

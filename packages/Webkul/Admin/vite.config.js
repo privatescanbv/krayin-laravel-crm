@@ -1,61 +1,108 @@
+process.env.LARAVEL_VITE_DETECT_TLS = 'false';
+
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import laravel from "laravel-vite-plugin";
 import path from "path";
+import fs from "fs";
+
+// ==== HTTPS Certs ====
+
+const certDir = "/certs";
+const keyFile = path.join(certDir, "local-key.pem");
+const certFile = path.join(certDir, "local.pem");
+
+const httpsConfig = fs.existsSync(keyFile) && fs.existsSync(certFile)
+    ? {
+        https: {
+            key: fs.readFileSync(keyFile),
+            cert: fs.readFileSync(certFile),
+        },
+    }
+    : {};
+
+// ==== CONFIG ====
 
 export default defineConfig(({ mode }) => {
-    const envDir = "../../../";
+    const envDir   = "../../../";
 
     Object.assign(process.env, loadEnv(mode, envDir));
 
-    return {
-        build: {
-            emptyOutDir: true,
-        },
+    process.env.LARAVEL_VITE_DETECT_TLS = "false";
 
+    const adminPort = Number(process.env.VITE_ADMIN_PORT) || 5174;
+    const host      = process.env.VITE_HMR_HOST || 'crm.local.privatescan.nl';
+    const origin    = `https://${host}:${adminPort}`;
+
+    return {
         envDir,
 
+        // Base path voor assets:
+        // - in dev: '/' (Vite dev server op :5174)
+        // - in build: '/admin/build/' zodat CSS-url(...) naar /admin/build/assets/... wijst
+        base: mode === 'production' ? '/admin/build/' : '/',
+
+        define: {
+            // Vue feature flags voor betere tree-shaking
+            __VUE_OPTIONS_API__: 'true',
+            __VUE_PROD_DEVTOOLS__: 'false',
+            __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
+        },
+
         server: {
-            // Listen on all interfaces inside the container
             host: "0.0.0.0",
-            // Use a dedicated dev port for the Admin package so the correct server serves Admin assets
-            port: process.env.VITE_ADMIN_PORT || 5174,
-            strictPort: true,
+            port: adminPort,
+            origin: origin, // Force correct origin for CSS URLs
+
+            ...httpsConfig,
+
+            // ❌ Geen HMR
+            // hmr: false,
+            // cors: true,
+            // ws: false,
+            injectClient: false,
+
+            // HMR AAN, met correcte host/port
+            hmr: {
+                protocol: "wss",
+                host: host,       // 'crm.local.privatescan.nl'
+                port: adminPort,  // 5174
+                overlay: false,   // geen error-overlay
+            },
+
             cors: true,
-            hmr: false,
             fs: {
-                // 👇 hiermee mag de devserver ook je packages-map uitlezen
                 allow: [
                     path.resolve(__dirname, 'src/Resources'),
                     path.resolve(__dirname, 'resources'),
                     path.resolve(__dirname, 'packages'),
+                    path.resolve(__dirname, 'node_modules'), // Allow node_modules for CSS imports
                     path.resolve(__dirname, '../../../'),
                 ],
             },
+        },
+
+        build: {
+            emptyOutDir: true,
         },
 
         plugins: [
             vue(),
 
             laravel({
-                // Separate hotfile so Laravel can distinguish this dev server from the root one
-                hotFile: "../../../public/admin-vite.hot",
                 publicDirectory: "../../../public",
                 buildDirectory: "admin/build",
+
+                hotFile: path.resolve(__dirname, '../../../storage/framework/admin-vite.hot'),
+
                 input: [
                     "src/Resources/assets/css/app.css",
                     "src/Resources/assets/js/app.js",
                     "src/Resources/assets/js/chart.js",
                 ],
-                refresh: true,
+
+                origin: origin, // Force correct origin
             }),
         ],
-        experimental: {
-            renderBuiltUrl(filename, { hostId, hostType, type }) {
-                if (hostType === "css") {
-                    return path.basename(filename);
-                }
-            },
-        },
     };
 });

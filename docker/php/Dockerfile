@@ -8,8 +8,11 @@ RUN rm -rf tests
 RUN rm -rf .git
 RUN rm -rf flows
 
+
 # Install dependencies and build assets
 # Pass APP_ENV to build.sh to determine if npm run build should be executed
+# required build time for vite, later we mount these in docker compose (dev only)
+RUN mv /build/certs /certs
 RUN ./build.sh ${APP_ENV}
 
 FROM docker.io/php:8.3-fpm-bullseye

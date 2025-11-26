@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Actions\Keycloak\SyncUsersToKeycloakAction;
-use App\Services\KeycloakConfigService;
+use App\Services\Keycloak\KeycloakConfigService;
 use Illuminate\Console\Command;
 
 /**

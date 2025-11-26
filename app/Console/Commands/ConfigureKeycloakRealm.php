@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 

@@ -7,7 +7,7 @@ services:
       - --api.dashboard=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --providers.docker.network=mb_traefik
+      - --providers.docker.network=public
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
       - --certificatesresolvers.myresolver.acme.httpchallenge=true
@@ -24,7 +24,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
     networks:
-      - mb_traefik
+      - public
 
   crm:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
@@ -48,13 +48,13 @@ services:
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.dev.privatescan.nl
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
     volumes:
       - '/home/mbulthuis/upload:/var/www/html/upload_sugarcrm'
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     depends_on:
       - mysql
       - n8n
@@ -79,8 +79,8 @@ services:
       - './docker/mysql/init-n8n.sql:/docker-entrypoint-initdb.d/20-init-n8n.sql'
       - './docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
 #    healthcheck:
 #      test: ["CMD", "mysqladmin", "ping", "-p$DB_PASSWORD"]
 #      retries: 3
@@ -113,11 +113,11 @@ services:
       - traefik.http.routers.n8n.tls.certresolver=myresolver
       - traefik.http.routers.n8n.service=n8n-svc
       - traefik.http.services.n8n-svc.loadbalancer.server.port=5678
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:
@@ -138,7 +138,7 @@ services:
     depends_on:
       - n8n
     networks:
-      - sail
+      - backend
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -159,11 +159,11 @@ services:
       - traefik.http.routers.pma.middlewares=pma-auth
       - traefik.http.middlewares.pma-auth.basicauth.users=admin:$$2y$$05$$13501WAPEwnZGYkGbsZ.duBZGb.C9wQYQiAqeIZM8SyAqTuAVd7Xe
       - traefik.http.services.pma.loadbalancer.server.port=80
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     depends_on:
       - mysql
 
@@ -176,7 +176,7 @@ services:
       SITE_URL: 'https://suitecrm.dev.privatescan.nl'
     labels:
       - traefik.enable=true
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - traefik.http.routers.suitecrm.rule=Host("suitecrm.dev.privatescan.nl")
       - traefik.http.routers.suitecrm.entrypoints=https
       - traefik.http.routers.suitecrm.tls=true
@@ -189,8 +189,8 @@ services:
       - traefik.http.routers.suitecrm.middlewares=suitecrm-forward@docker
       - logging=promtail
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     depends_on:
       - mysql
 
@@ -252,7 +252,6 @@ services:
     ports:
       - '8001:80'
     labels:
-      - 'dev.orbstack.domains=forms.dev.privatescan.nl'
       - traefik.enable=true
       - traefik.http.routers.laravel-template-api-rtr.rule=Host("forms.dev.privatescan.nl")
       - traefik.http.routers.laravel-template-api-rtr.tls=true
@@ -264,11 +263,11 @@ services:
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=forms.dev.privatescan.nl
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     depends_on:
       mysql:
         condition: service_healthy
@@ -284,7 +283,7 @@ services:
       - loki-data:/loki
       - ./docker/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
     networks:
-      - sail
+      - backend
     labels:
       - logging=promtail
 
@@ -298,7 +297,7 @@ services:
       - ./docker/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
-      - sail
+      - backend
     depends_on:
       - loki
 
@@ -315,8 +314,8 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     labels:
       - traefik.enable=true
       - traefik.http.routers.grafana.rule=Host("logs.dev.privatescan.nl")
@@ -324,7 +323,7 @@ services:
       - traefik.http.routers.grafana.tls=true
       - traefik.http.routers.grafana.tls.certresolver=myresolver
       - traefik.http.services.grafana.loadbalancer.server.port=3000
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
     depends_on:
       - loki
@@ -336,6 +335,7 @@ services:
     env_file:
       - .env.keycloak
     environment:
+      TZ: Europe/Amsterdam
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
@@ -345,12 +345,11 @@ services:
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
-      KC_PROXY_ADDRESS_FORWARDING: "true"
       KC_PROXY: edge
     entrypoint: ["/bin/sh", "-c", "export KC_DB_USERNAME=$${KEYCLOAK_DB_USERNAME:-keycloak} && export KC_DB_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && export KC_BOOTSTRAP_ADMIN_USERNAME=$${KEYCLOAK_ADMIN} && export KC_BOOTSTRAP_ADMIN_PASSWORD=$${KEYCLOAK_ADMIN_PASSWORD} && exec /opt/keycloak/bin/kc.sh start"]
     networks:
-      - sail
-      - mb_traefik
+      - backend
+      - public
     depends_on:
       keycloak-db:
         condition: service_healthy
@@ -366,7 +365,7 @@ services:
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.dev.privatescan.nl
-      - traefik.docker.network=mb_traefik
+      - traefik.docker.network=public
       - logging=promtail
 #    healthcheck:
 #      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
@@ -387,7 +386,7 @@ services:
     volumes:
       - keycloak-db-data:/var/lib/postgresql/data
     networks:
-      - sail
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USERNAME:-keycloak}"]
       interval: 10s
@@ -396,9 +395,9 @@ services:
 
 
 networks:
-  sail:
+  backend:
     driver: bridge
-  mb_traefik:
+  public:
     external: true
 
 volumes:

@@ -4,7 +4,7 @@ namespace Tests\Feature\Keycloak;
 
 use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\SyncUsersToKeycloakAction;
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\Keycloak\Helpers\KeycloakHttpHelpers;

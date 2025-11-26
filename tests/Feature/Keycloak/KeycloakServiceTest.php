@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Keycloak;
 
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\Keycloak\Helpers\KeycloakHttpHelpers;
 

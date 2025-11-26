@@ -1,76 +1,55 @@
 #!/bin/bash
-# Starts the local docker compose and starts the vite server for local development.
-# Note: alle css and js files should be loaded from localhost:5137, check the html if this works (hot deployment, vite)
+set -e
 
-# Start Docker Compose met Vite dev server
-echo "🚀 Starting Docker Compose with Vite dev server..."
+echo "🚀 Starting local development (Docker + Vite)…"
 
-# Set defaults to avoid docker-compose warnings
 export WWWUSER=${WWWUSER:-1000}
 export WWWGROUP=${WWWGROUP:-1000}
+export VITE_PORT=${VITE_PORT:-5173}
+export VITE_ADMIN_PORT=${VITE_ADMIN_PORT:-5174}
+export VITE_HMR_HOST=${VITE_HMR_HOST:-crm.local.privatescan.nl}
 
-# Check if Docker is running
-if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker first."
-    exit 1
-fi
+docker info >/dev/null 2>&1 || { echo "❌ Docker is not running"; exit 1; }
 
-# Start alle services
-echo "📦 Starting Docker containers..."
-./vendor/bin/sail down && ./vendor/bin/sail up -d
+echo "📦 Restarting containers..."
+./vendor/bin/sail restart
 
-# Wacht tot de containers draaien
-echo "⏳ Waiting for containers to start..."
+echo "⏳ Waiting for CRM container…"
 sleep 5
 
-# Check if CRM container is running
-if ! docker-compose ps crm | grep -q "Up"; then
-    echo "❌ CRM container failed to start. Check logs: docker-compose logs crm"
-    exit 1
+echo "🧹 Clearing hot files..."
+docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framework/admin-vite.hot || true"
+
+# Alleen Vite-devservers starten als we expliciet in 'dev' modus draaien
+if [ "$VITE_HMR_HOST" = "dev" ]; then
+    echo "🎨 Starting CRM Vite..."
+    docker-compose exec -d crm sh -lc "
+        cd /usr/share/nginx/html &&
+        yarn install --silent &&
+        VITE_HMR_HOST=$VITE_HMR_HOST yarn dev --host=0.0.0.0 --port=$VITE_PORT
+    "
+
+    echo "🎨 Starting Admin Vite..."
+    docker-compose exec -d crm sh -lc "
+        cd /usr/share/nginx/html/packages/Webkul/Admin &&
+        npm install --silent &&
+        VITE_HMR_HOST=$VITE_HMR_HOST npm run dev -- --host=0.0.0.0 --port=$VITE_ADMIN_PORT
+    "
+
+    echo "⏳ Checking Vite URLs…"
+    sleep 3
+
+    echo "🟢 CRM Hotfile:"
+    docker-compose exec crm cat storage/framework/vite.hot
+
+    echo "🟢 Admin Hotfile:"
+    docker-compose exec crm cat storage/framework/admin-vite.hot
+
+    echo "🎉 Ready! Visit:"
+    echo "   https://crm.local.privatescan.nl"
+    echo "   https://$VITE_HMR_HOST:$VITE_PORT  (CRM)"
+    echo "   https://$VITE_HMR_HOST:$VITE_ADMIN_PORT (Admin)"
+else
+    echo "🎉 Containers opnieuw gestart (geen lokale Vite-devservers gestart)."
 fi
 
-# Start Vite dev servers in de CRM container
-echo "🎨 Starting Vite dev server..."
-
-# Root app Vite (port 5173)
-docker-compose exec -d crm sh -lc "yarn install && yarn dev -- --host 0.0.0.0 --port 5173"
-
-# Webkul/Admin Vite (port 5174)
-docker-compose exec -d crm sh -lc "cd packages/Webkul/Admin && npm install && npm run dev -- --host 0.0.0.0 --port 5174"
-# Wait a bit for Vite to start
-sleep 3
-
-echo "✅ Development environment ready!"
-echo "🌐 Laravel: http://localhost:8000"
-echo "🎨 Vite: http://localhost:5173"
-echo ""
-echo "📝 To view logs: docker-compose logs -f crm"
-echo "🛑 To stop: docker-compose down"
-echo ""
-echo "🔧 To restart Vite: docker-compose exec crm npm run dev"
-
-# Robust HTTP checks for Vite servers (poll until ready)
-wait_for_http() {
-    url="$1"
-    allowed_codes="$2" # space-separated list, e.g. "200 404"
-    retries=${3:-60}
-    delay=${4:-1}
-
-    echo "⏳ Waiting for $url (allowed: $allowed_codes)"
-    for i in $(seq 1 "$retries"); do
-        code=$(curl -s -o /dev/null -w "%{http_code}" "$url" || echo "000")
-        for ac in $allowed_codes; do
-            if [ "$code" = "$ac" ]; then
-                echo "✅ $url responded with $code"
-                return 0
-            fi
-        done
-        sleep "$delay"
-    done
-    echo "❌ $url did not respond with one of [$allowed_codes] in time (last: $code)"
-    exit 1
-}
-
-# Vite dev server typically serves /@vite/client with 200 when ready
-wait_for_http "http://localhost:5173/@vite/client" "200"
-wait_for_http "http://localhost:5174/@vite/client" "200"

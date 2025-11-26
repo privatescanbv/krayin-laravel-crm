@@ -1,4 +1,25 @@
 TODO
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' traefik
+
+docker inspect traefik | grep -A5 privatescan_crm_public
+docker inspect -f '{{range .NetworkSettings.Networks}}{{println .NetworkID .IPAddress}}{{end}}' traefik
+
+
+testen met:
+docker exec crm curl -vk https://sso.local.privatescan.nl
+docker exec crm cat /etc/hosts
+
+docker clean build:
+docker compose down --remove-orphans
+docker network prune -f
+docker compose up -d --build
+
+
+
+
+
+todo refactor get token op 2 plekken -provider en service
+
 
 sail artisan keycloak:sync-users
 sail artisan keycloak:set-password mark.bulthuis@privatescan.nl "8AAZ5jc%e&AF"
@@ -120,6 +141,21 @@ php artisan serve
 email:admin@example.com
 password:admin123
 ```
+
+### Keycloak Webhook Integration
+
+The CRM automatically bootstraps the [p2-inc/keycloak-events](https://github.com/p2-inc/keycloak-events) `ext-event-webhook` listener when you run `php artisan keycloak:create-realm`. To let Keycloak push events to the application you need to:
+
+- Mount the `keycloak-events` provider JAR inside Keycloak (see [`keycloak-events` docs](https://github.com/p2-inc/keycloak-events)).
+- Set the webhook environment variables in `.env`:
+  - `KEYCLOAK_WEBHOOK_URL` (optional, overrides the auto-generated `APP_URL` + `/api/keycloak/webhooks`)
+  - `KEYCLOAK_WEBHOOK_SECRET` (required, used both for Keycloak and to validate the `X-Keycloak-Signature` header)
+  - `KEYCLOAK_WEBHOOK_EVENT_TYPES` (comma separated list or `*`)
+  - `KEYCLOAK_WEBHOOK_ALGORITHM` (`HmacSHA256` by default)
+- Ensure the CRM is reachable on `POST /api/keycloak/webhooks` so incoming events can be logged/processed.
+
+When those variables are present, the realm sync will enable the listener, register/update the webhook, and Keycloak will start POSTing events to the Laravel endpoint where they are logged for further processing.
+
 ### WhatsApp CRM Integration
 
 [Krayin CRM WhatsApp](https://krayincrm.com/extensions/krayin-crm-whatsapp-extension/) Extension enables the store administrator to generate leads via their WhatsApp number.

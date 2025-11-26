@@ -25,7 +25,7 @@ scrape_configs:
       - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
         target_label: 'project'
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
-        regex: '(crm|forms|n8n|mysql|traefik|suitecrm|phpmyadmin)'
+        regex: '(crm|forms|n8n|mysql|traefik|suitecrm|phpmyadmin|keycloak)'
         target_label: 'app'
       - action: keep
         source_labels: ['__meta_docker_container_name']

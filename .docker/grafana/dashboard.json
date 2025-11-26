@@ -266,7 +266,7 @@
                 {
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"crm\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{.context.template}} lead={{.context.lead_id}} vars={{.context.variables_keys}}\"\n",
+                    "expr": "{service=\"crm\"}\n| json\n| channel=~\"php-fpm|local|production\"",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -435,6 +435,46 @@
         {
             "datasource": {
                 "type": "loki",
+                "uid": "df57btovaq1hca"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 48
+            },
+            "id": 10,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\"}",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Keycloak",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
                 "uid": "af3xcqn2k6io0a"
             },
             "fieldConfig": {
@@ -519,5 +559,5 @@
     "timezone": "",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 5
+    "version": 3
 }

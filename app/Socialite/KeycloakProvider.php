@@ -2,6 +2,7 @@
 
 namespace App\Socialite;
 
+use App\Support\KeycloakConfig;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Log;
@@ -25,8 +26,10 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
     {
         parent::__construct($request, $clientId, $clientSecret, $redirectUrl, $guzzle);
 
-        $this->baseUrl = config('services.keycloak.base_url_external', 'http://no_keycloak_url_provided');
-        $this->realm = config('services.keycloak.realm', 'crm');
+        // Houd de properties aan voor backwards compatibility, maar lees waardes
+        // centraal via KeycloakConfig zodat configuratie op één plek staat.
+        $this->baseUrl = KeycloakConfig::externalBaseUrl();
+        $this->realm = KeycloakConfig::realm();
     }
 
     /**
@@ -221,10 +224,6 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
      */
     private function resolveInternalKeycloakUrl(string $path): string
     {
-        $internalUrl = config('services.keycloak.base_url_internal', 'http://keycloak.local:8080');
-        $baseUrl = rtrim($internalUrl, '/');
-        $path = ltrim($path, '/');
-
-        return $baseUrl.'/'.$path;
+        return KeycloakConfig::internalUrl($path);
     }
 }

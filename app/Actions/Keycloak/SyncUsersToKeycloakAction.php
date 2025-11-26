@@ -2,7 +2,7 @@
 
 namespace App\Actions\Keycloak;
 
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Support\Facades\Log;
 use Webkul\Installer\Database\Seeders\User\UserSeeder;
 use Webkul\User\Repositories\UserRepository;

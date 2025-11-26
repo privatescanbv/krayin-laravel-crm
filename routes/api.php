@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
 use Illuminate\Support\Facades\Route;
@@ -53,4 +54,7 @@ Route::middleware('api.key')->group(function () {
         Route::get('{id}/activities', [SalesLeadController::class, 'activities']);
         Route::post('{id}/activities', [SalesLeadController::class, 'storeActivity']);
     });
+
+    Route::post('keycloak/webhooks', KeycloakWebhookController::class)
+        ->name('api.keycloak.webhooks');
 });

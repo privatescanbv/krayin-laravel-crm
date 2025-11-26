@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Services\KeycloakConfigService;
+use App\Services\Keycloak\KeycloakConfigService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;

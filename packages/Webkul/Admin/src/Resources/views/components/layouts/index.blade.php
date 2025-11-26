@@ -92,6 +92,7 @@
 </head>
 
 <body class="h-full font-inter dark:bg-gray-950">
+
     {!! view_render_event('admin.layout.body.before') !!}
     <div
         id="app"

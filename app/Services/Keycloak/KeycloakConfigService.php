@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Keycloak;
 
 use App\Actions\Keycloak\GetKeycloakClientSecretAction;
 use Exception;
@@ -67,7 +67,7 @@ class KeycloakConfigService
 
             if ($this->keycloakService->createRealm($realmName, $realmData, $accessToken)) {
                 // Set frontend URL to base URL (localhost) so tokens use localhost as issuer
-                $realmUrl = $this->keycloakService->getInternalBaseUrl().'/admin/realms/'.$realmName;
+                $realmUrl = $this->keycloakService->getRealmAdminUrl();
                 try {
                     Http::asJson()
                         ->withToken($accessToken)
@@ -113,6 +113,11 @@ class KeycloakConfigService
             $results['errors'] = array_merge($results['errors'], $rolesResult['errors']);
         }
 
+        $webhookSyncError = $this->syncWebhookListener($accessToken);
+        if ($webhookSyncError) {
+            $results['errors'][] = $webhookSyncError;
+        }
+
         return $results;
     }
 
@@ -123,55 +128,16 @@ class KeycloakConfigService
      */
     protected function getClientConfigs(): array
     {
-        $configs = [];
-
-        // CRM client configuration
-        $crmClientId = $this->keycloakService->getClientId();
-        if (! empty($crmClientId)) {
-            $appUrl = $this->normalizeUrl(config('app.url', 'http://localhost:8000'), 8000);
-
-            // Backchannel logout URL must use internal Docker service name
-            // Keycloak calls this from inside the container, so it needs to reach the CRM container directly
-            $internalAppUrl = config('app.internal_url', 'http://crm:80');
-            $backchannelLogoutUrl = rtrim($internalAppUrl, '/').'/admin/auth/keycloak/backchannel-logout';
-
-            $configs[$crmClientId] = [
-                'base_url'                  => $appUrl,
-                'redirect_uris'             => [
-                    $appUrl.'/admin/auth/keycloak/callback',
-                    $appUrl.'/admin/auth/keycloak/logout-callback',
-                    '/admin/*', // Wildcard pattern
-                ],
-                'post_logout_redirect_uris' => [
-                    $appUrl.'/admin/login',
-                    $appUrl.'/admin/auth/keycloak/logout-callback',
-                ],
-                'backchannel_logout_url'    => $backchannelLogoutUrl,
-                'home_url'                  => $appUrl,
-                'secret_env_key'            => 'KEYCLOAK_CLIENT_SECRET',
-                'secret_log_message'        => 'Keycloak client secret generated. Please update KEYCLOAK_CLIENT_SECRET in .env',
-            ];
-        }
-
-        // Forms client configuration
+        $appUrl = $this->normalizeUrl(config('app.url', 'http://localhost:8000'), 8000);
+        $internalAppUrl = config('app.internal_url', 'http://crm:80');
         $formsUrl = $this->normalizeUrl(config('services.forms.frontend_url', 'http://localhost:8001'), 8001);
-        $configs['forms-app'] = [
-            'base_url'                  => $formsUrl,
-            'redirect_uris'             => [
-                $formsUrl.'/*',
-            ],
-            'post_logout_redirect_uris' => [
-                $formsUrl.'/*',
-            ],
-            'backchannel_logout_url'    => '',
-            'home_url'                  => $formsUrl,
-            'secret_env_key'            => 'FORMS_KEYCLOAK_CLIENT_SECRET',
-            'secret_log_message'        => 'Keycloak Forms client secret generated. Please update FORMS_KEYCLOAK_CLIENT_SECRET in Forms .env',
-        ];
-        // Note: backchannel_logout_url ->je Laravel app moet een endpoint hebben dat dit verwerkt.
-        // De Vizir package levert dat NIET automatisch → je zou dit zelf moeten implementeren.
 
-        return $configs;
+        return KeycloakRealmClientSeeder::getClientConfigs(
+            $appUrl,
+            $internalAppUrl,
+            $formsUrl,
+            $this->keycloakService->getClientId()
+        );
     }
 
     /**
@@ -244,13 +210,6 @@ class KeycloakConfigService
                         'env_key'            => $secretEnvKey,
                         'message'            => "Client secret in Keycloak does not match {$secretEnvKey} in .env/config. Update {$secretEnvKey} to match Keycloak or regenerate the secret in Keycloak.",
                     ]);
-                } else {
-                    $secretLogMessage = $config['secret_log_message'] ?? "Keycloak client secret retrieved. Update {$secretEnvKey} in .env if needed";
-
-                    // Log::info($secretLogMessage, [
-                    //     'client_id' => $clientId,
-                    //     'secret'    => $secretResult['secret'],
-                    // ]);
                 }
             }
         } else {
@@ -446,6 +405,51 @@ class KeycloakConfigService
 
         return $scheme.'://'.$host.($port ? ':'.$port : '');
     }
+
+    /**
+     * Configure ext-event-webhook listener and webhook endpoint.
+     */
+    protected function syncWebhookListener(string $accessToken): ?string
+    {
+        $eventsConfig = $this->keycloakService->getRealmEventsConfig($accessToken);
+        if (! is_array($eventsConfig)) {
+            Log::warning('Unable to fetch Keycloak events config; skipping webhook listener sync');
+
+            return 'Kon Keycloak events config niet ophalen om ext-event-webhook te activeren.';
+        }
+
+        $listeners = $eventsConfig['eventsListeners'] ?? [];
+        $eventListeners = ['http-events']; // ['ext-event-webhook'];
+        $updatedListeners = array_values(array_unique(array_merge((array) $listeners, $eventListeners)));
+        $needsEventsUpdate = ($eventsConfig['eventsEnabled'] ?? false) !== true
+            || $listeners !== $updatedListeners;
+
+        if ($needsEventsUpdate) {
+            $payload = [
+                'eventsEnabled'     => true,
+                'eventsExpiration'  => $eventsConfig['eventsExpiration'] ?? 0,
+                'eventsListeners'   => $updatedListeners,
+                'enabledEventTypes' => $eventsConfig['enabledEventTypes'] ?? [],
+            ];
+
+            if (! $this->keycloakService->updateRealmEventsConfig($payload, $accessToken)) {
+                return 'Kon Keycloak events listener configuratie niet bijwerken.';
+            }
+
+            Log::info('Enabled ext-event-webhook listener for realm', [
+                'listeners' => $updatedListeners,
+            ]);
+        }
+
+        // Also ensure admin events include representations for richer payloads.
+        $this->keycloakService->updateAdminEventsConfig([
+            'enabled'               => true,
+            'includeRepresentation' => true,
+        ], $accessToken);
+
+        return null;
+    }
+
 
     /**
      * Sync Keycloak realm roles.

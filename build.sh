@@ -13,7 +13,7 @@ BUILD_TYPE=${1:-production}
 #rm -rf node_modules .vite node_modules/.vite
 
 # clean up
-rm -rf node_modules yarn.lock package-lock.json .vite node_modules/.vite
+rm -rf node_modules .vite node_modules/.vite
 
 #install  --immutable
 yarn install

@@ -2,7 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
 

@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Actions\Keycloak\GetKeycloakClientSecretAction;
 use App\Actions\Keycloak\GetKeycloakRealmPublicKeyAction;
-use App\Services\KeycloakConfigService;
+use App\Services\Keycloak\KeycloakConfigService;
 use Illuminate\Console\Command;
 
 class CreateKeycloakRealm extends Command

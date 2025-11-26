@@ -2,28 +2,32 @@
 
 return [
     'viters' => [
+
+        // CRM root
         'root' => [
-            'hot_file'                 => public_path('vite.hot'),
+            'hot_file'                 => storage_path('framework/vite.hot'),
             'build_directory'          => 'build',
             'package_assets_directory' => 'resources',
         ],
-        'admin' => [
-            'hot_file'                 => public_path('admin-vite.hot'),
 
-            // Laat build outputs op hun eigen plek
+        // ADMIN (Webkul)
+        'admin' => [
+            // disable HMR volledig
+            'hot_file'                 => storage_path('framework/admin-vite.hot'),
             'build_directory'          => 'admin/build',
-            //            'package_assets_directory' => 'packages/Webkul/Admin/src/Resources/assets',
-            'package_assets_directory' => 'src/Resources/assets',
+
+            // BELANGRIJK — moet exact mappen naar Vite config
+            'package_assets_directory' => 'packages/Webkul/Admin/src/Resources/assets',
         ],
 
         'installer' => [
-            'hot_file'                 => public_path('vite.hot'),
+            'hot_file'                 => storage_path('framework/vite.hot'),
             'build_directory'          => 'installer/build',
             'package_assets_directory' => 'src/Resources/assets',
         ],
 
         'webform' => [
-            'hot_file'                 => public_path('vite.hot'),
+            'hot_file'                 => storage_path('framework/vite.hot'),
             'build_directory'          => 'webform/build',
             'package_assets_directory' => 'src/Resources/assets',
         ],

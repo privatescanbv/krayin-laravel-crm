@@ -2,7 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
-use App\Services\KeycloakService;
+use App\Services\Keycloak\KeycloakService;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\RedirectResponse;

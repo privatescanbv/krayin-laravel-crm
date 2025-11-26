@@ -19,10 +19,13 @@ Stappen voor de eerste keer:
 [source,bash]
 ----
 # Local development domains (added by setup-local-hosts.sh)
-127.0.0.1 crm.local
-127.0.0.1 keycloak.local
-127.0.0.1 forms.local
-127.0.0.1 formsdev.local
+127.0.0.1 sso.local.privatescan.nl
+127.0.0.1 crm.local.privatescan.nl
+127.0.0.1 forms.local.privatescan.nl
+127.0.0.1 logs.local.privatescan.nl
+127.0.0.1 phpmyadmin.local.privatescan.nl
+127.0.0.1 suitecrm.local.privatescan.nl
+127.0.0.1 n8n.local.privatescan.nl
 ----
 
  * Open in browser: http://crm.local:8000

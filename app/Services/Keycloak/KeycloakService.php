@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Keycloak;
 
+use App\Support\KeycloakConfig;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,7 @@ class KeycloakService
      */
     public function getExternalBaseUrl(): string
     {
-        return config('services.keycloak.base_url_external');
+        return KeycloakConfig::externalBaseUrl();
     }
 
     /**
@@ -25,7 +26,7 @@ class KeycloakService
      */
     public function getInternalBaseUrl(): string
     {
-        return config('services.keycloak.base_url_internal');
+        return KeycloakConfig::internalBaseUrl();
     }
 
     /**
@@ -33,7 +34,7 @@ class KeycloakService
      */
     public function getRealm(): string
     {
-        return config('services.keycloak.realm', 'master');
+        return KeycloakConfig::realm();
     }
 
     /**
@@ -110,15 +111,20 @@ class KeycloakService
      */
     public function getRealmAdminUrl(): string
     {
-        return $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm());
+        return $this->getRealmsAdminUrl($this->getRealm());
     }
 
     /**
      * Get realms admin API URL (for listing/creating realms).
      */
-    public function getRealmsAdminUrl(): string
+    public function getRealmsAdminUrl(?string $realmName = null): string
     {
-        return $this->resolveKeycloakUrl('/admin/realms');
+        $realmPath = '';
+        if (! empty($realmName)) {
+            $realmPath = '/'.$realmName;
+        }
+
+        return $this->resolveKeycloakUrl('/admin/realms'.$realmPath);
     }
 
     /**
@@ -240,6 +246,69 @@ class KeycloakService
                 'realm'       => $realmName,
                 'client_id'   => $clientId,
                 'client_data' => $clientData,
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * Get realm events configuration.
+     */
+    public function getRealmEventsConfig(?string $accessToken = null): ?array
+    {
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/events/config');
+        $response = $this->makeRequest('GET', $url, $accessToken);
+
+        return $response?->successful() ? $response->json() : null;
+    }
+
+    /**
+     * Update realm events configuration.
+     */
+    public function updateRealmEventsConfig(array $config, ?string $accessToken = null): bool
+    {
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/events/config');
+        $response = $this->makeRequest('PUT', $url, $accessToken, $config, true);
+
+        if ($response?->successful()) {
+            return true;
+        }
+
+        if ($response) {
+            Log::error('Failed to update Keycloak events config', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * Update realm admin events configuration.
+     */
+    public function updateAdminEventsConfig(array $config, ?string $accessToken = null): bool
+    {
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/admin-events/config');
+        $response = $this->makeRequest('PUT', $url, $accessToken, $config, true);
+
+        if ($response?->successful()) {
+            return true;
+        }
+
+        if ($response) {
+            if ($response->status() === 404) {
+                Log::info('Keycloak admin events config endpoint not found; skipping update', [
+                    'realm' => $this->getRealm(),
+                ]);
+
+                return true;
+            }
+
+            Log::error('Failed to update Keycloak admin events config', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
             ]);
         }
 
@@ -560,10 +629,7 @@ class KeycloakService
      */
     private function resolveKeycloakUrl(string $path): string
     {
-        $baseUrl = rtrim($this->getInternalBaseUrl(), '/');
-        $path = ltrim($path, '/');
-
-        return $baseUrl.'/'.$path;
+        return KeycloakConfig::internalUrl($path);
     }
 
     /**

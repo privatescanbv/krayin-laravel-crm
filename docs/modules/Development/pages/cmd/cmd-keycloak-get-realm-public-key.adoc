@@ -1,0 +1,75 @@
+=== Keycloak Realm Public Key Ophalen
+
+Dit commando haalt de public key van de Keycloak realm op. Deze key heb je nodig om JWT-tokens van Keycloak te verifiëren (bijv. in API-gateways of andere services) en wordt doorgaans opgeslagen in `.env` als `KEYCLOAK_REALM_PUBLIC_KEY`.
+
+==== Configuratie
+
+===== Vereiste .env variabelen
+
+Zorg dat minstens de volgende variabelen zijn ingesteld:
+
+[source,env]
+----
+KEYCLOAK_INTERNAL_BASE_URL=http://keycloak:8080
+KEYCLOAK_REALM=privatescan
+----
+
+Voor dit commando zijn admin-credentials niet nodig; de realm-gegevens worden via de publieke OpenID-config opgehaald.
+
+==== Gebruik
+
+===== Realm public key ophalen
+
+[source,bash]
+----
+sail artisan keycloak:get-realm-public-key
+----
+
+Het commando:
+
+- bouwt de URL `KEYCLOAK_INTERNAL_BASE_URL/realms/{KEYCLOAK_REALM}`;
+- haalt daar de JSON-configuratie van de realm op;
+- leest de `public_key` uit de response en toont deze.
+
+===== Voorbeeld output
+
+[source,text]
+----
+Ophalen van realm public key voor: privatescan
+✓ Realm public key voor privatescan:
+   MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQE...
+
+⚠ Voeg dit toe aan je .env file:
+   KEYCLOAK_REALM_PUBLIC_KEY=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQE...
+----
+
+==== Parameters
+
+Het commando `keycloak:get-realm-public-key` heeft geen argumenten of opties; de realm-naam en URL komen volledig uit `.env`.
+
+==== Troubleshooting
+
+===== KEYCLOAK_REALM niet ingesteld
+
+[source,text]
+----
+KEYCLOAK_REALM is niet geconfigureerd in .env.
+----
+
+*Oplossing:*
+
+1. Voeg `KEYCLOAK_REALM` toe aan `.env` met de juiste realm-naam.
+
+===== HTTP-fouten bij ophalen public key
+
+[source,text]
+----
+Kon realm public key niet ophalen: 404 - ...
+----
+
+*Oplossing:*
+
+1. Controleer of `KEYCLOAK_INTERNAL_BASE_URL` naar de juiste Keycloak instantie wijst.
+2. Controleer of de realm-naam bestaat in Keycloak (Admin Console).
+
+

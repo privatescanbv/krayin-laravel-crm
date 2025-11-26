@@ -1,0 +1,80 @@
+=== Keycloak Realm Frontend URL Configureren
+
+Dit commando past de Keycloak realm-configuratie aan zodat de `frontendUrl` overeenkomt met de externe URL van de CRM. Hierdoor worden tokens met de juiste issuer-URL uitgegeven en werkt browser-based SSO correct.
+
+==== Configuratie
+
+===== Vereiste .env variabelen
+
+Zorg dat de volgende variabelen in `.env` staan:
+
+[source,env]
+----
+APP_URL=https://crm.local.privatescan.nl
+
+KEYCLOAK_BASE_URL=https://keycloak.local.privatescan.nl
+KEYCLOAK_INTERNAL_BASE_URL=http://keycloak:8080
+KEYCLOAK_REALM=privatescan
+
+KEYCLOAK_ADMIN_USERNAME=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+----
+
+`APP_URL` wordt gebruikt om de externe frontend-URL te bepalen; `KEYCLOAK_*` variabelen bepalen op welke realm en instantie wordt ingelogd.
+
+==== Gebruik
+
+===== Frontend URL instellen
+
+[source,bash]
+----
+# Update de frontendUrl van de realm naar de huidige APP_URL
+sail artisan keycloak:configure-realm
+----
+
+Het commando:
+
+- logt in als Keycloak admin;
+- haalt de huidige realm-configuratie op;
+- zet `frontendUrl` naar de externe base-URL van de CRM (afgeleid van `APP_URL`);
+- slaat de aangepaste configuratie op via de Keycloak Admin API.
+
+===== Voorbeeld output
+
+[source,text]
+----
+Authenticeren met Keycloak admin...
+Ophalen huidige configuratie voor realm: privatescan...
+Instellen frontend URL naar: https://crm.local.privatescan.nl
+✓ Realm geconfigureerd met frontend URL: https://crm.local.privatescan.nl
+Tokens zullen nu altijd https://crm.local.privatescan.nl als issuer gebruiken.
+----
+
+==== Parameters
+
+Het commando `keycloak:configure-realm` heeft geen extra opties of argumenten; alle gegevens komen uit `.env`.
+
+==== Troubleshooting
+
+===== Kon realm configuratie niet ophalen
+
+[source,text]
+----
+Kon realm configuratie niet ophalen: 404 Not Found
+----
+
+*Oplossing:*
+
+1. Controleer of `KEYCLOAK_REALM` de juiste realm-naam bevat.
+2. Verifieer dat de realm bestaat (bijvoorbeeld nadat je `keycloak:create-realm` hebt gedraaid).
+
+===== Authenticatie fouten
+
+Bij foutieve admin-credentials krijg je meestal een 401/403 response.
+
+*Oplossing:*
+
+1. Controleer `KEYCLOAK_ADMIN_USERNAME` en `KEYCLOAK_ADMIN_PASSWORD`.
+2. Zorg dat de user in Keycloak de juiste admin-rollen heeft om realm-configuratie te wijzigen.
+
+

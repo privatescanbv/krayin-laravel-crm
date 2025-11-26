@@ -1,0 +1,85 @@
+=== Keycloak Configuratie Synchroniseren
+
+Dit commando synchroniseert de basisconfiguratie van Keycloak met de CRM-instellingen. Het maakt de realm en clients aan als ze nog niet bestaan en toont eventuele nieuwe client secrets die je in `.env` moet opnemen.
+
+==== Configuratie
+
+===== Vereiste .env variabelen
+
+Voeg (minstens) de volgende variabelen toe aan je `.env` bestand:
+
+[source,env]
+----
+# Keycloak basisconfiguratie
+KEYCLOAK_BASE_URL=https://keycloak.local.privatescan.nl
+KEYCLOAK_INTERNAL_BASE_URL=http://keycloak:8080
+KEYCLOAK_REALM=privatescan
+
+# Keycloak admin credentials
+KEYCLOAK_ADMIN_USERNAME=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+
+# CRM client configuratie
+KEYCLOAK_CLIENT_ID=crm-app
+KEYCLOAK_CLIENT_SECRET=your_client_secret
+----
+
+De precieze standaardwaarden hangen af van je omgeving (docker, productie, etc.), maar deze variabelen moeten allemaal gezet zijn zodat `keycloak:sync-config` met de Keycloak Admin API kan praten.
+
+==== Gebruik
+
+===== Basis synchronisatie
+
+[source,bash]
+----
+# Synchroniseer realm + clients met de huidige configuratie
+sail artisan keycloak:sync-config
+----
+
+Het commando:
+
+- controleert of de realm bestaat en maakt die indien nodig aan;
+- controleert of de gedefinieerde clients (bijv. CRM en Forms) bestaan;
+- maakt clients aan of werkt ze bij als de configuratie veranderd is;
+- toont eventuele gegenereerde client secrets met de juiste `ENV`-sleutel om in `.env` te zetten.
+
+===== Typische output
+
+[source,text]
+----
+Synchroniseren van Keycloak configuratie...
+✓ Realm aangemaakt: privatescan
+✓ Client aangemaakt: crm-app
+⚠ Client secret gegenereerd. Update KEYCLOAK_CLIENT_SECRET in .env met:
+   <secret-value>
+✓ Keycloak configuratie gesynchroniseerd
+----
+
+==== Parameters
+
+Het commando `keycloak:sync-config` heeft geen verplichte argumenten of opties; alle configuratie gebeurt via `.env`.
+
+==== Troubleshooting
+
+===== Authenticatie naar Keycloak faalt
+
+[source,text]
+----
+Kon realm configuratie niet ophalen: 401 Unauthorized
+----
+
+*Oplossing:*
+
+1. Controleer `KEYCLOAK_ADMIN_USERNAME` en `KEYCLOAK_ADMIN_PASSWORD`.
+2. Verifieer dat `KEYCLOAK_INTERNAL_BASE_URL` en `KEYCLOAK_BASE_URL` naar de juiste Keycloak instantie wijzen.
+
+===== Client secret wordt niet getoond
+
+In sommige gevallen wordt er geen secret teruggegeven (bijvoorbeeld bij bepaalde client types).
+
+*Oplossing:*
+
+1. Controleer in de Keycloak Admin Console of er een client secret is en kopieer deze handmatig.
+2. Voeg de waarde toe aan `.env` onder de sleutel die in de waarschuwing wordt genoemd (bijv. `KEYCLOAK_CLIENT_SECRET` of `FORMS_KEYCLOAK_CLIENT_SECRET`).
+
+

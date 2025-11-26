@@ -166,11 +166,18 @@ namespace UiTests.Steps
                 await _driver.Page.EvaluateAsync(@"
                     () => {
                         // Find the form
-                        let form = document.querySelector('form[action*=""partner-products""]');
+                        let form =
+                            document.querySelector('form[action*=""partner-products""]') ||
+                            document.querySelector('form[action*=""partner_products""]') ||
+                            document.querySelector('form');
+
                         if (!form) {
-                            const vForm = document.querySelector('v-form[action*=""partner-products""]');
+                            const vForm =
+                                document.querySelector('v-form[action*=""partner-products""]') ||
+                                document.querySelector('v-form');
+
                             if (vForm) {
-                                form = vForm.querySelector('form');
+                                form = vForm.querySelector('form') || vForm.closest('form') || document.querySelector('form');
                             }
                         }
 

@@ -9,6 +9,7 @@ Stappen voor de eerste keer:
  * Clone de repository
  * Kopieer .env.example naar .env en pas deze aan indien nodig
  * Zet TELESCOPE_ENABLED=false, of zie Telescope Monitoring
+ * Zet APP_ENV=dev, optimale ontwikkelingsomgeving (Dan ook Vite met HMR)
  * run composer install
  * run yarn install
  * run ./start-dev.sh
@@ -51,7 +52,7 @@ Lokaal ontwikkelen maken we gebruiken van link:https://vite.dev/[Vite] in combin
 ./start-dev.sh start deze vite servers op (2).
 vite
 
-De stack is een combinatie van Blade en Vue templates. Zo heeft Krayin zijn templates, en hebben we een eigen directory met templates:
+De stack is een combinatie van Blade, Vite en Vue templates. Zo heeft Krayin zijn templates, en hebben we een eigen directory met templates:
 
 * Kryain: packages/Webkul/Admin/src/Resources/views
 * custom: resources/views/adminc
@@ -88,6 +89,13 @@ Om de frontend te bouwen, volg deze stappen:
 note:
 Dit is al gedaan, hoef je niet opnieuw te doen. Was noodzakelijk voor de combi met dit project.
 yarn config set nodeLinker node-modules
+
+=== Bouwslag met Vite
+
+Indien je APP_ENV op dev hebt staan en je stack opstart met start-dev.sh, zal Vite met HMR (Hot Module Replacement) werken.
+Als je stack als productie wil testen. Zet je APP_ENV op production en bouw de assets met: ./build.sh. Start daarna je stack opnieuw met ./start-dev.sh.
+
+Je zult het verschil zien in de src link van css en js files in de html broncode.
 
 
 === Migratie script opschonen
@@ -144,6 +152,20 @@ include::cmd/cmd-create-leads.adoc[]
 
 include::cmd/cmd-lead-duplicate-cache.adoc[]
 
+include::cmd/cmd-keycloak-sync-config.adoc[]
+
+include::cmd/cmd-keycloak-create-realm.adoc[]
+
+include::cmd/cmd-keycloak-configure-realm.adoc[]
+
+include::cmd/cmd-keycloak-get-client-secret.adoc[]
+
+include::cmd/cmd-keycloak-get-realm-public-key.adoc[]
+
+include::cmd/cmd-keycloak-sync-users.adoc[]
+
+include::cmd/cmd-keycloak-set-password.adoc[]
+
 === Server installatie
 
 ==== Github docker login
@@ -151,6 +173,26 @@ Eerste keer docker login uitvoeren:
 sudo echo <token> | sudo docker login ghcr.io -u <username> --password-stdin
 
 Eerste keer een docker netwerk aanmaken
+
+==== Docker tips in ontwikkeling
+
+Volledige cleanup van docker resources:
+
+docker clean build:
+
+[source,bash]
+----
+docker compose down --remove-orphans
+docker network prune -f
+docker compose up -d --build
+----
+
+docker intern netwerk inspecteren:
+
+[source,bash]
+----
+docker exec crm curl -vk https://sso.local.privatescan.nl
+----
 
 ==== Firewall
 - Poort 80 dient open te staan voor traefik (aanmaken van self-signed certificaten)

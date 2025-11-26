@@ -1,0 +1,103 @@
+=== Keycloak Realm Aanmaken
+
+Dit commando maakt de Keycloak realm aan (als deze nog niet bestaat), configureert de benodigde clients, rollen en groepen en haalt direct de benodigde secrets en public key op om in `.env` te zetten.
+
+==== Configuratie
+
+===== Vereiste .env variabelen
+
+Zorg dat de basis Keycloak-configuratie correct is ingesteld:
+
+[source,env]
+----
+# Keycloak basisconfiguratie
+KEYCLOAK_BASE_URL=https://keycloak.local.privatescan.nl
+KEYCLOAK_INTERNAL_BASE_URL=http://keycloak:8080
+KEYCLOAK_REALM=privatescan
+
+# Keycloak admin credentials
+KEYCLOAK_ADMIN_USERNAME=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+
+# CRM client ID (wordt gebruikt bij client-aanmaak)
+KEYCLOAK_CLIENT_ID=crm-app
+----
+
+De daadwerkelijke waarden kunnen afwijken per omgeving, maar zonder deze variabelen kan de realm niet correct worden aangemaakt.
+
+==== Gebruik
+
+===== Realm + clients in één stap aanmaken
+
+[source,bash]
+----
+# Maak realm + clients aan en toon secrets + public key
+sail artisan keycloak:create-realm
+----
+
+Het commando voert de volgende acties uit:
+
+1. Synchroniseert de Keycloak-configuratie (vergelijkbaar met `keycloak:sync-config`).
+2. Haalt de client secrets op voor:
+   - de CRM client (verplicht);
+   - de Forms client (`forms-app`, indien aanwezig).
+3. Haalt de realm public key op.
+4. Schrijft alle relevante waarden zowel leesbaar als in parseerbare `key=value` vorm naar de console.
+
+===== Voorbeeld output
+
+[source,text]
+----
+Keycloak realm aanmaken...
+✓ Realm aangemaakt: privatescan
+Ophalen van client secret (CRM)...
+✓ Client secret voor crm-app:
+   <crm-secret>
+⚠ Voeg dit toe aan je .env file:
+   KEYCLOAK_CLIENT_SECRET=<crm-secret>
+
+Ophalen van client secret (Forms)...
+✓ Client secret voor forms-app:
+   <forms-secret>
+⚠ Voeg dit toe aan je .env file:
+   FORMS_KEYCLOAK_CLIENT_SECRET=<forms-secret>
+
+Ophalen van realm public key...
+---
+KEYCLOAK_CLIENT_SECRET=<crm-secret>
+FORMS_KEYCLOAK_CLIENT_SECRET=<forms-secret>
+KEYCLOAK_REALM_PUBLIC_KEY=<public-key>
+----
+
+==== Parameters
+
+Het commando `keycloak:create-realm` accepteert geen argumenten of opties; alles wordt bepaald door de `.env` configuratie.
+
+==== Gebruik in scripts
+
+Omdat het commando afsluit met parseerbare `KEY=VALUE` regels, kun je het goed gebruiken in shell-scripts (zoals `reset_base.sh`) om automatisch `.env` waarden te genereren of bij te werken.
+
+==== Troubleshooting
+
+===== Realm kan niet worden aangemaakt
+
+[source,text]
+----
+Failed to retrieve Keycloak client secret.
+----
+
+*Oplossing:*
+
+1. Controleer of Keycloak draait en dat `KEYCLOAK_INTERNAL_BASE_URL` bereikbaar is vanuit de CRM-container.
+2. Verifieer admin-credentials (`KEYCLOAK_ADMIN_USERNAME`, `KEYCLOAK_ADMIN_PASSWORD`).
+3. Controleer of de opgegeven `KEYCLOAK_CLIENT_ID` nog niet in een conflicterende staat bestaat.
+
+===== Realm public key wordt niet opgehaald
+
+*Oplossing:*
+
+1. Controleer of `KEYCLOAK_REALM` correct is.
+2. Verifieer dat de realm in Keycloak bestaat (bijvoorbeeld via de Admin Console).
+3. Check de volledige foutmelding in de console voor HTTP-status en body.
+
+

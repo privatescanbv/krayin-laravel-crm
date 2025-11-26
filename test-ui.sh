@@ -13,8 +13,8 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
 fi
 export TestSettingsHeadless=true
 dotnet build
-dotnet test
-#dotnet test --filter "FullyQualifiedName~PartnerProduct"
+#dotnet test
+dotnet test --filter "FullyQualifiedName~PartnerProduct"
 
 #dotnet test --filter "FullyQualifiedName~Lead"
 

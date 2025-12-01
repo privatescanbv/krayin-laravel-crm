@@ -78,7 +78,7 @@
     /* Form elements */
     input,
     textarea,
-    select,
+    select:not(.flatpickr-monthDropdown-months),
     [type="text"],
     input:where(:not([type])),
     [type="email"],

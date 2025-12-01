@@ -13,6 +13,7 @@ class KeycloakRealmClientSeeder
         string $crmExternalAppUrl,
         string $crmInternalAppUrl,
         string $formsUrl,
+        string $patientPortalUrl,
         string $realmClientId,
     ): array {
         $configs = [];
@@ -52,6 +53,21 @@ class KeycloakRealmClientSeeder
             'home_url'               => $formsUrl,
             'secret_env_key'         => 'FORMS_KEYCLOAK_CLIENT_SECRET',
             'secret_log_message'     => 'Keycloak Forms client secret generated. Please update FORMS_KEYCLOAK_CLIENT_SECRET in Forms .env',
+        ];
+        $configs['patient-app'] = [
+            'base_url'      => $patientPortalUrl,
+            'redirect_uris' => [
+                $patientPortalUrl.'/*',
+                $patientPortalUrl.'/auth/callback',
+                $patientPortalUrl.':444/auth/callback',
+            ],
+            'post_logout_redirect_uris' => [
+                $patientPortalUrl.'/*',
+            ],
+            'backchannel_logout_url' => '',
+            'home_url'               => $patientPortalUrl,
+//            'secret_env_key'         => 'FORMS_KEYCLOAK_CLIENT_SECRET',
+//            'secret_log_message'     => 'Keycloak Forms client secret generated. Please update FORMS_KEYCLOAK_CLIENT_SECRET in Forms .env',
         ];
 
         return $configs;

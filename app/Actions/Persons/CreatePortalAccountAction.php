@@ -2,12 +2,12 @@
 
 namespace App\Actions\Persons;
 
-use App\Mail\PortalWelcomeMail;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\Mail\PatientMailService;
 use App\Services\PersonKeycloakService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use Throwable;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -98,9 +98,18 @@ class CreatePortalAccountAction
      */
     protected function sendWelcomeMail(Person $person, string $temporaryPassword, ?Lead $lead = null): void
     {
+        // Render email HTML content
+        $htmlContent = View::make('adminc.emails.portal-welcome', [
+            'person'            => $person,
+            'temporaryPassword' => $temporaryPassword,
+            'loginUrl'          => config('services.portal.patient.web_url'),
+        ])->render();
+
+        // Send email
         $this->patientMailService->mailPatient(
             $person,
-            new PortalWelcomeMail($person, $temporaryPassword),
+            'Welkom bij het Privatescan patiëntportaal',
+            $htmlContent,
             $lead?->id
         );
     }

@@ -25,6 +25,13 @@ class AbstractEmailProcessorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Set required Graph Mail configuration for this test
+        // (TestCase sets these to null, but GraphMailService needs them)
+                                                    config(['mail.graph.client_id' => 'test-client-id']);
+        config(['mail.graph.client_secret' => 'test-client-secret']);
+        config(['mail.graph.tenant_id' => 'test-tenant-id']);
+        config(['mail.graph.mailbox' => 'test@example.com']);
+        config(['mail.graph.sender_domain' => 'example.com']);
 
         $this->emailRepository = $this->createMock(EmailRepository::class);
         $this->attachmentRepository = $this->createMock(AttachmentRepository::class);

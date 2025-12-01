@@ -2,21 +2,45 @@
 
 namespace Tests\Feature;
 
+use App\Services\FormService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Mockery;
+use Webkul\Contact\Models\Person;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
     config(['api.keys' => ['valid-api-key-123']]);
+    config(['mail.send_only_accept' => '*@example.com']);
+    Mail::fake();
 });
 
 test('webhooks event endpoint logs payload and returns ok', function () {
     Log::spy();
 
+    // Create a person for the email
+    $person = Person::factory()->create([
+        'emails' => [['value' => 'test@example.com', 'is_default' => true]],
+    ]);
+
+    // Mock FormService to return related entities
+    $mockFormService = Mockery::mock(FormService::class);
+    $mockFormService->shouldReceive('findRelatedEntityByFormId')
+        ->once()
+        ->with('https://example.test/leads/123')
+        ->andReturn([
+            'lead'      => null,
+            'sales'     => null,
+            'person_id' => $person->id,
+        ]);
+
+    app()->instance(FormService::class, $mockFormService);
+
     $payload = [
         'entity_type' => 'forms',
         'id'          => 123,
-        'action'      => 'created',
+        'action'      => 'STATUS_UPDATE',
         'status'      => 'completed',
         'url'         => 'https://example.test/leads/123',
     ];
@@ -24,13 +48,23 @@ test('webhooks event endpoint logs payload and returns ok', function () {
     $response = $this->withHeaders([
         'X-API-KEY' => 'valid-api-key-123',
         'Accept'    => 'application/json',
-    ])->putJson('/api/webhooks/event', $payload);
+    ])->putJson(route('api.webhooks.event'), $payload);
 
     $response->assertStatus(200)
         ->assertJson([
             'status' => 'ok',
         ]);
 
+    // Verify the specific log call from EventWebhookController
     Log::shouldHaveReceived('info')
+        ->with('Application webhook event received', Mockery::on(function ($context) {
+            return isset($context['entity_type'])
+                && $context['entity_type'] === 'forms'
+                && isset($context['entity_id'])
+                && $context['entity_id'] === 123
+                && isset($context['action'])
+                && $context['action'] === 'STATUS_UPDATE';
+        }))
+        ->atLeast()
         ->once();
 });

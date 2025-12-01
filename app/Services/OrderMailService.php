@@ -573,7 +573,9 @@ HTML;
         return preg_replace_callback('/\{\{\s*(.*?)\s*\}\}/', function ($matches) use ($variables) {
             $key = $matches[1];
 
-            return array_key_exists($key, $variables) ? (string) $variables[$key] : $matches[0];
+            return array_key_exists($key, $variables)
+                ? \App\Helpers\ValueNormalizer::toString($variables[$key])
+                : $matches[0];
         }, $template) ?? $template;
     }
 

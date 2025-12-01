@@ -326,6 +326,10 @@ class Person extends Model implements PersonContract
         return implode(' ', array_filter($parts));
     }
 
+    public function findDefaultEmailOrError(): string {
+        return $this->findDefaultEmail() ?? throw new Exception('No default email found for person ID ' . $this->id);
+    }
+
     /**
      * Find the default email address from the emails array
      */

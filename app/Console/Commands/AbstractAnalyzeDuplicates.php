@@ -351,13 +351,6 @@ abstract class AbstractAnalyzeDuplicates extends Command
      */
     protected function stringify($value): string
     {
-        if (is_string($value)) {
-            return $value;
-        }
-        if (is_array($value)) {
-            return json_encode($value);
-        }
-
-        return json_encode($value);
+        return \App\Helpers\ValueNormalizer::toString($value);
     }
 }

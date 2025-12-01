@@ -6,6 +6,7 @@ use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
+use App\Services\Mail\EmailRenderingService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -41,25 +42,28 @@ class EmailController extends Controller
      * @return void
      */
     public function __construct(
-        protected LeadRepository $leadRepository,
-        protected SalesLeadRepository $salesRepository,
-        protected EmailRepository $emailRepository,
-        protected AttachmentRepository $attachmentRepository,
-        protected FolderRepository $folderRepository,
-        protected PersonRepository $personRepository,
-        protected OrderRepository $orderRepository
-    ) {}
+        protected LeadRepository               $leadRepository,
+        protected SalesLeadRepository          $salesRepository,
+        protected EmailRepository              $emailRepository,
+        protected AttachmentRepository         $attachmentRepository,
+        protected FolderRepository             $folderRepository,
+        protected PersonRepository             $personRepository,
+        protected OrderRepository              $orderRepository,
+        readonly private EmailRenderingService $emailRenderingService,
+    )
+    {
+    }
 
     /**
      * Display a listing of the resource.
      */
     public function index(): View|JsonResponse|RedirectResponse
     {
-        if (! request('route')) {
+        if (!request('route')) {
             return redirect()->route('admin.mail.index', ['route' => 'inbox']);
         }
 
-        if (! bouncer()->hasPermission('mail.'.request('route'))) {
+        if (!bouncer()->hasPermission('mail.' . request('route'))) {
             abort(401, 'This action is unauthorized');
         }
 
@@ -127,9 +131,9 @@ class EmailController extends Controller
     public function store()
     {
         $this->validate(request(), [
-            'reply_to'   => 'required|array|min:1',
+            'reply_to' => 'required|array|min:1',
             'reply_to.*' => 'email',
-            'reply'      => 'required',
+            'reply' => 'required',
         ]);
 
         Event::dispatch('email.create.before');
@@ -144,7 +148,7 @@ class EmailController extends Controller
 
         $email = $this->emailRepository->create($data);
 
-        if (! request('is_draft')) {
+        if (!request('is_draft')) {
             try {
                 Mail::send(new Email($email));
 
@@ -163,7 +167,7 @@ class EmailController extends Controller
 
         if (request()->ajax()) {
             return response()->json([
-                'data'    => new EmailResource($email),
+                'data' => new EmailResource($email),
                 'message' => trans('admin::app.mail.create-success'),
             ]);
         }
@@ -176,13 +180,13 @@ class EmailController extends Controller
 
         session()->flash('success', trans('admin::app.mail.create-success'));
 
-        return redirect()->route('admin.mail.index', ['route'   => 'sent']);
+        return redirect()->route('admin.mail.index', ['route' => 'sent']);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update($id)
@@ -191,7 +195,7 @@ class EmailController extends Controller
 
         $data = request()->all();
 
-        if (! is_null(request('is_draft'))) {
+        if (!is_null(request('is_draft'))) {
             $folderName = request('is_draft') ? 'draft' : 'outbox';
             $folder = Folder::where('name', $folderName)->first();
             if ($folder) {
@@ -203,7 +207,7 @@ class EmailController extends Controller
 
         Event::dispatch('email.update.after', $email);
 
-        if (! is_null(request('is_draft')) && ! request('is_draft')) {
+        if (!is_null(request('is_draft')) && !request('is_draft')) {
             try {
                 Mail::send(new Email($email));
 
@@ -218,7 +222,7 @@ class EmailController extends Controller
             }
         }
 
-        if (! is_null(request('is_draft'))) {
+        if (!is_null(request('is_draft'))) {
             if (request('is_draft')) {
                 session()->flash('success', trans('admin::app.mail.saved-to-draft'));
 
@@ -232,7 +236,7 @@ class EmailController extends Controller
 
         if (request()->ajax()) {
             return response()->json([
-                'data'    => new EmailResource($email->refresh()),
+                'data' => new EmailResource($email->refresh()),
                 'message' => trans('admin::app.mail.update-success'),
             ]);
         }
@@ -257,7 +261,7 @@ class EmailController extends Controller
     /**
      * Download file from storage
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\View\View
      */
     public function download($id)
@@ -317,7 +321,7 @@ class EmailController extends Controller
         $email = $this->emailRepository->findOrFail($id);
 
         try {
-            Event::dispatch('email.'.request('type').'.before', $id);
+            Event::dispatch('email.' . request('type') . '.before', $id);
 
             $parentId = $email->parent_id;
 
@@ -332,7 +336,7 @@ class EmailController extends Controller
                 $this->emailRepository->delete($id);
             }
 
-            Event::dispatch('email.'.request('type').'.after', $id);
+            Event::dispatch('email.' . request('type') . '.after', $id);
 
             if (request()->ajax()) {
                 return response()->json([
@@ -404,7 +408,7 @@ class EmailController extends Controller
 
         try {
             foreach ($mails as $email) {
-                Event::dispatch('email.'.$massDestroyRequest->input('type').'.before', $email->id);
+                Event::dispatch('email.' . $massDestroyRequest->input('type') . '.before', $email->id);
 
                 if ($massDestroyRequest->input('type') == 'trash') {
                     $trashFolder = Folder::where('name', 'trash')->first();
@@ -415,7 +419,7 @@ class EmailController extends Controller
                     $this->emailRepository->delete($email->id);
                 }
 
-                Event::dispatch('email.'.$massDestroyRequest->input('type').'.after', $email->id);
+                Event::dispatch('email.' . $massDestroyRequest->input('type') . '.after', $email->id);
             }
 
             return response()->json([
@@ -435,7 +439,7 @@ class EmailController extends Controller
 
     /**
      * Get list of available email templates with filtering support.
-     * 
+     *
      * Query Parameters:
      * - `entity_type` (string): Filter by entity type (lead, order, algemeen, gvl)
      *   - 'lead': Returns both 'lead' and 'algemeen' templates
@@ -449,7 +453,7 @@ class EmailController extends Controller
      * - `language` (string|array): Filter by language (nl, de, en)
      * - `code` (string): Filter by template code
      * - `search` (string): Search in name and code fields
-     * 
+     *
      * @return JsonResponse
      */
     public function get(): JsonResponse
@@ -488,7 +492,7 @@ class EmailController extends Controller
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('code', 'like', "%{$search}%");
+                        ->orWhere('code', 'like', "%{$search}%");
                 });
             }
 
@@ -577,8 +581,8 @@ class EmailController extends Controller
             $query->where(function ($q) use ($departmentsArray) {
                 // Templates with no departments (available to all)
                 $q->whereNull('departments')
-                  ->orWhereJsonLength('departments', 0);
-                
+                    ->orWhereJsonLength('departments', 0);
+
                 // Templates that contain at least one of the requested departments
                 foreach ($departmentsArray as $dept) {
                     $q->orWhereJsonContains('departments', $dept);
@@ -606,7 +610,7 @@ class EmailController extends Controller
         $personId = request()->query('person_id');
         $salesLeadId = request()->query('sales_lead_id');
 
-        if(is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
+        if (is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
             return response()->json([
                 'error' => 'At least one of lead_id, person_id, or sales_lead_id is required',
             ], 400);
@@ -634,7 +638,7 @@ class EmailController extends Controller
             $variables = $this->resolveTemplateVariables($leadId, $personId, $salesLeadId);
 
             // Interpolate template content with variables and wrap in layout
-            $content = $this->renderTemplateWithLayout($template->content, $variables);
+            $content = $this->renderTemplateToHTML($template, $variables);
             $subject = $this->interpolateTemplate($template->subject, $variables);
 
             return response()->json([
@@ -695,7 +699,7 @@ class EmailController extends Controller
             }
 
             $variables = $this->resolveTemplateVariablesFromEntities($entities);
-            $content = $this->renderTemplateWithLayout($template->content, $variables);
+            $content = $this->renderTemplateToHTML($template, $variables);
 
             return response()->json([
                 'data' => [
@@ -790,10 +794,10 @@ class EmailController extends Controller
         // Resolve order variables (highest priority for order templates)
         if ($orderId) {
             $orderVariables = $this->orderRepository->resolveEmailVariablesForOrder($orderId);
-            
+
             if (!empty($orderVariables)) {
                 $variables = array_merge($variables, $orderVariables);
-                
+
                 // Render order items table (needs order object)
                 if (isset($variables['order'])) {
                     $variables['order_items_table'] = $this->renderOrderItemsTable($variables['order']);
@@ -907,11 +911,11 @@ class EmailController extends Controller
             }
 
             return $variables;
-        }else if ($salesLeadId) {
+        } else if ($salesLeadId) {
             $variables = $this->salesRepository->resolveEmailVariablesById($salesLeadId);
 
             // Try to get order and lead from sales lead for order mail templates
-            $salesLead = \App\Models\SalesLead::with(['lead', 'orders'])->find($salesLeadId);
+            $salesLead = SalesLead::with(['lead', 'orders'])->find($salesLeadId);
             if ($salesLead) {
                 if ($salesLead->lead) {
                     $variables['lead'] = $salesLead->lead;
@@ -924,42 +928,32 @@ class EmailController extends Controller
             }
 
             return $variables;
-        }
-        else {
+        } else {
             throw new Exception('No valid entity identifier provided for template variable resolution');
         }
     }
 
-    /**
-     * Render template content with layout wrapper.
-     * This wraps the template content in the base layout blade template.
-     */
-    public function renderTemplateWithLayout(string $templateContent, array $variables): string
+    public function renderTemplateToHTML(EmailTemplate $template, array $variables): string
     {
         // First interpolate variables in the template content
-        $interpolatedContent = $this->interpolateTemplate($templateContent, $variables);
+        $interpolatedContent = $this->interpolateTemplate($template->content, $variables);
         
-        // Read the CSS file
-        $cssPath = resource_path('css/email-templates.css');
-        $css = file_exists($cssPath) ? file_get_contents($cssPath) : '';
+        // Create a temporary template object with interpolated content for the Blade view
+        $templateWithInterpolatedContent = clone $template;
+        $templateWithInterpolatedContent->content = $interpolatedContent;
         
-        // Build the HTML structure with the content
-        $html = '<div class="email-container">' . "\n";
-        $html .= $interpolatedContent . "\n";
-        $html .= '</div>';
+        // Render the Blade view with the interpolated content (not escaped)
+        $htmlContent = \Illuminate\Support\Facades\View::make('adminc.emails.mail-template', [
+            'template' => $templateWithInterpolatedContent,
+        ])->render();
         
-        // Convert CSS to inline styles for email compatibility
-        // This is necessary because many email clients strip <style> tags
-        if (!empty($css)) {
-            $cssToInlineStyles = new CssToInlineStyles();
-            $html = $cssToInlineStyles->convert($html, $css);
-        }
-        
-        return $html;
+        // Apply CSS inlining
+        return $this->emailRenderingService->rendInlineCss($htmlContent);
     }
 
     /**
      * Convert a value to string, handling enums properly.
+     * Uses ValueNormalizer for general conversion, with special handling for enums.
      */
     private function convertValueToString($value): string
     {
@@ -985,13 +979,9 @@ class EmailController extends Controller
                 // Not an enum, continue to normal conversion
             }
         }
-        
-        // For strings, return as-is; for objects/arrays, convert to string
-        if (is_string($value)) {
-            return $value;
-        }
-        
-        return (string) $value;
+
+        // Use ValueNormalizer for general conversion
+        return \App\Helpers\ValueNormalizer::toString($value);
     }
 
     /**
@@ -1003,7 +993,7 @@ class EmailController extends Controller
     {
         // Store reference to this for use in closure
         $self = $this;
-        
+
         // Helper function to resolve nested property access
         $resolveValue = function ($key, $vars) use (&$resolveValue, $self) {
             // Check if key exists directly (highest priority)
@@ -1103,14 +1093,14 @@ class EmailController extends Controller
     private function resolveGvlFormLink(int $personId, ?int $leadId = null): ?string
     {
         $anamnesis = null;
-        
+
         // If both lead and person are present, try to find specific anamnesis
         if ($leadId) {
             $anamnesis = Anamnesis::where('lead_id', $leadId)
                 ->where('person_id', $personId)
                 ->first();
         }
-        
+
         // If not found, get the latest anamnesis for this person
         if (!$anamnesis) {
             $anamnesis = Anamnesis::where('person_id', $personId)

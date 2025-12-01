@@ -20,9 +20,15 @@ trait DuplicateReasonHelpers
         $values = [];
         foreach ($decoded as $item) {
             if (is_array($item) && ! empty($item['value'])) {
-                $values[] = (string) $item['value'];
+                $values[] = \App\Helpers\ValueNormalizer::toString($item['value']);
             } elseif (is_string($item)) {
                 $values[] = $item;
+            } else {
+                // Use ValueNormalizer for other types
+                $normalized = \App\Helpers\ValueNormalizer::toString($item);
+                if (! empty($normalized)) {
+                    $values[] = $normalized;
+                }
             }
         }
 

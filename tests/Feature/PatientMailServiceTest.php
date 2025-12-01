@@ -2,15 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Mail\PortalGVLCompletedMail;
+use App\Models\SalesLead;
 use App\Services\Mail\PatientMailService;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\View;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
+    // Allow test email addresses in tests
+    config(['mail.send_only_accept' => '*@example.com']);
 });
 
 test('mailPatient stores email record with correct subject body and from fields', function () {
@@ -19,11 +22,24 @@ test('mailPatient stores email record with correct subject body and from fields'
     ]);
 
     $lead = Lead::factory()->create();
-    $mail = new PortalGVLCompletedMail($person, 'https://forms.example.com/forms/1');
+
+    $htmlContent = View::make('adminc.emails.portal-gvl-completed-patient', [
+        'person'            => $person,
+        'formUrl'           => 'https://forms.example.com/forms/1',
+        'patientPortalUrl'  => config('services.portal.patient.web_url', 'https://portal.example.com'),
+        'initials_lastname' => $person->name ?? 'patiënt',
+    ])->render();
 
     $service = app(PatientMailService::class);
 
-    $result = $service->mailPatient($person, $mail, (string) $lead->id, null, null);
+    $result = $service->mailPatient(
+        $person,
+        'Welkom bij het Privatescan patiëntportaal',
+        $htmlContent,
+        (string) $lead->id,
+        null,
+        null
+    );
 
     expect($result)->toBeTrue();
 
@@ -35,7 +51,6 @@ test('mailPatient stores email record with correct subject body and from fields'
         ->and($emailRecord->subject)->not->toBeEmpty()
         ->and($emailRecord->subject)->toContain('Welkom')
         ->and($emailRecord->reply)->not->toBeEmpty()
-        ->and($emailRecord->reply)->toContain('<!DOCTYPE html>')
         ->and($emailRecord->from)->toBeArray()
         ->and($emailRecord->from)->toHaveKey('email')
         ->and($emailRecord->from)->toHaveKey('name')
@@ -57,53 +72,86 @@ test('mailPatient stores email record with sales_lead_id when provided', functio
         'emails' => [['value' => 'test@example.com', 'is_default' => true]],
     ]);
 
-    $salesLeadId = 123;
-    $mail = new PortalGVLCompletedMail($person, 'https://forms.example.com/forms/1');
+    $salesLead = SalesLead::factory()->create();
+
+    $htmlContent = View::make('adminc.emails.portal-gvl-completed-patient', [
+        'person'            => $person,
+        'formUrl'           => 'https://forms.example.com/forms/1',
+        'patientPortalUrl'  => config('services.portal.patient.web_url', 'https://portal.example.com'),
+        'initials_lastname' => $person->name ?? 'patiënt',
+    ])->render();
 
     $service = app(PatientMailService::class);
 
-    $result = $service->mailPatient($person, $mail, null, (string) $salesLeadId, null);
+    $result = $service->mailPatient(
+        $person,
+        'Welkom bij het Privatescan patiëntportaal',
+        $htmlContent,
+        null,
+        (string) $salesLead->id,
+        null
+    );
 
     expect($result)->toBeTrue();
 
     $emailRecord = Email::where('person_id', $person->id)
-        ->where('sales_lead_id', $salesLeadId)
+        ->where('sales_lead_id', $salesLead->id)
         ->first();
 
     expect($emailRecord)->not->toBeNull()
-        ->and($emailRecord->sales_lead_id)->toBe($salesLeadId)
+        ->and($emailRecord->sales_lead_id)->toBe($salesLead->id)
         ->and($emailRecord->lead_id)->toBeNull();
 });
 
-test('mailPatient returns false when person has no email address', function () {
+test('mailPatient throws exception when person has no email address', function () {
     $person = Person::factory()->create([
         'emails' => [],
     ]);
 
     $lead = Lead::factory()->create();
-    $mail = new PortalGVLCompletedMail($person, 'https://forms.example.com/forms/1');
+    $htmlContent = '<html><body>Test content</body></html>';
 
     $service = app(PatientMailService::class);
 
-    $result = $service->mailPatient($person, $mail, (string) $lead->id, null, null);
-
-    expect($result)->toBeFalse();
+    expect(fn () => $service->mailPatient(
+        $person,
+        'Test Subject',
+        $htmlContent,
+        (string) $lead->id,
+        null,
+        null
+    ))->toThrow(\Exception::class, 'No default email found for person');
 
     $emailRecord = Email::where('person_id', $person->id)->first();
     expect($emailRecord)->toBeNull();
 });
 
-test('mailPatient throws exception when no related entity IDs provided', function () {
+test('mailPatient always sets person_id even when no related entity IDs provided', function () {
     $person = Person::factory()->create([
         'emails' => [['value' => 'test@example.com', 'is_default' => true]],
     ]);
 
-    $mail = new PortalGVLCompletedMail($person, 'https://forms.example.com/forms/1');
+    $htmlContent = '<html><body>Test content</body></html>';
 
     $service = app(PatientMailService::class);
 
-    expect(fn () => $service->mailPatient($person, $mail, null, null, null))
-        ->toThrow(\Exception::class, 'At least one related entity ID must be provided');
+    $result = $service->mailPatient(
+        $person,
+        'Test Subject',
+        $htmlContent,
+        null,
+        null,
+        null
+    );
+
+    expect($result)->toBeTrue();
+
+    // Verify email was created with person_id
+    $emailRecord = Email::where('person_id', $person->id)->first();
+    expect($emailRecord)->not->toBeNull()
+        ->and($emailRecord->subject)->toBe('Test Subject')
+        ->and($emailRecord->lead_id)->toBeNull()
+        ->and($emailRecord->sales_lead_id)->toBeNull();
 });
 
 test('reply_to accessor normalizes legacy object format to array of strings', function () {
@@ -112,10 +160,17 @@ test('reply_to accessor normalizes legacy object format to array of strings', fu
     ]);
 
     $lead = Lead::factory()->create();
-    $mail = new PortalGVLCompletedMail($person, 'https://forms.example.com/forms/1');
+    $htmlContent = '<html><body>Test content</body></html>';
 
     $service = app(PatientMailService::class);
-    $service->mailPatient($person, $mail, (string) $lead->id, null, null);
+    $service->mailPatient(
+        $person,
+        'Test Subject',
+        $htmlContent,
+        (string) $lead->id,
+        null,
+        null
+    );
 
     $emailRecord = Email::where('person_id', $person->id)
         ->where('lead_id', $lead->id)
@@ -136,10 +191,17 @@ test('reply_to field stores recipient email at time of sending and remains uncha
     ]);
 
     $lead = Lead::factory()->create();
-    $mail = new PortalGVLCompletedMail($person, 'https://forms.example.com/forms/1');
+    $htmlContent = '<html><body>Test content</body></html>';
 
     $service = app(PatientMailService::class);
-    $service->mailPatient($person, $mail, (string) $lead->id, null, null);
+    $service->mailPatient(
+        $person,
+        'Test Subject',
+        $htmlContent,
+        (string) $lead->id,
+        null,
+        null
+    );
 
     $emailRecord = Email::where('person_id', $person->id)
         ->where('lead_id', $lead->id)

@@ -24,6 +24,13 @@ class FolderSeeder extends Seeder
             'is_deletable' => false,
         ]);
 
+        Folder::create([
+            'name'         => EmailFolderEnum::DRAFT->getFolderName(),
+            'parent_id'    => null,
+            'order'        => ++$c,
+            'is_deletable' => false,
+        ]);
+
         $imported = Folder::create([
             'name'         => EmailFolderEnum::PROCESSED->getFolderName(),
             'parent_id'    => null,

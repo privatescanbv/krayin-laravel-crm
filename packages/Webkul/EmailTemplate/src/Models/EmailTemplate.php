@@ -5,6 +5,7 @@ namespace Webkul\EmailTemplate\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\EmailTemplate\Contracts\EmailTemplate as EmailTemplateContract;
+use Webkul\EmailTemplate\Database\Factories\EmailTemplateFactory;
 
 class EmailTemplate extends Model implements EmailTemplateContract
 {
@@ -17,7 +18,7 @@ class EmailTemplate extends Model implements EmailTemplateContract
      */
     protected static function newFactory()
     {
-        return \Webkul\EmailTemplate\Database\Factories\EmailTemplateFactory::new();
+        return EmailTemplateFactory::new();
     }
 
     protected $fillable = [

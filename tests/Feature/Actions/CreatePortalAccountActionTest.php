@@ -1,13 +1,14 @@
 <?php
 
 use App\Actions\Persons\CreatePortalAccountAction;
-use App\Mail\PortalWelcomeMail;
 use App\Services\Keycloak\KeycloakService;
+use App\Services\Mail\PatientMailService;
 use App\Services\PersonKeycloakService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 
@@ -42,15 +43,18 @@ test('sends welcome mail and links email to person when portal account is create
     $keycloakService->shouldReceive('getRealmLoginUrl')
         ->andReturn('https://sso.local.privatescan.nl/realms/crm/protocol/openid-connect/auth?redirect_uri=test');
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $keycloakService);
+    $patientMailService = app(PatientMailService::class);
+
+    $action = new CreatePortalAccountAction($personKeycloakService, $keycloakService, $patientMailService);
 
     $result = $action->execute($person);
 
     expect($result['success'])->toBeTrue();
 
-    Mail::assertQueued(PortalWelcomeMail::class, function (PortalWelcomeMail $mail) use ($person) {
-        return $mail->person->id === $person->id
-            && $mail->temporaryPassword === 'TempPass123!';
+    // Verify email was queued using EmailMailable (same as EmailController)
+    Mail::assertQueued(EmailMailable::class, function (EmailMailable $mail) use ($person) {
+        return $mail->email->person_id === $person->id
+            && $mail->email->subject === 'Welkom bij het Privatescan patiëntportaal';
     });
 
     $emails = Email::where('person_id', $person->id)->get();
@@ -84,15 +88,18 @@ test('links welcome mail to lead when lead is provided', function () {
     $keycloakService->shouldReceive('getRealmLoginUrl')
         ->andReturn('https://sso.local.privatescan.nl/realms/crm/protocol/openid-connect/auth?redirect_uri=test');
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $keycloakService);
+    $patientMailService = app(PatientMailService::class);
+
+    $action = new CreatePortalAccountAction($personKeycloakService, $keycloakService, $patientMailService);
 
     $result = $action->execute($person, null, $lead);
 
     expect($result['success'])->toBeTrue();
 
-    $emails = Email::where('person_id', $person->id)
-        ->where('lead_id', $lead->id)
-        ->get();
+    // With the new prioritization logic, if lead_id is set, person_id is removed
+    // So we should search by lead_id only
+    $emails = Email::where('lead_id', $lead->id)->get();
 
-    expect($emails)->toHaveCount(1);
+    expect($emails)->toHaveCount(1)
+        ->and($emails->first()->subject)->toBe('Welkom bij het Privatescan patiëntportaal');
 });

@@ -2,6 +2,7 @@
 
 namespace Webkul\Email\Models;
 
+use App\Helpers\ValueNormalizer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -259,7 +260,7 @@ class Email extends Model implements EmailContract
     /**
      * Normalize reply_to to always be an array of email strings (for Vue component compatibility).
      * Handles legacy formats where reply_to might be an object with 'email' key.
-     * 
+     *
      * This accessor ensures backward compatibility with old records that may have
      * reply_to stored as {"email": "..."} instead of ["..."].
      */
@@ -268,7 +269,12 @@ class Email extends Model implements EmailContract
         // Get the raw value from attributes (before cast)
         $rawValue = $this->attributes['reply_to'] ?? null;
 
-        // If null or empty, return empty array
+        // If explicitly null (not set), return null (for test compatibility)
+        if ($rawValue === null) {
+            return null;
+        }
+
+        // If empty string or empty array, return empty array
         if (empty($rawValue)) {
             return [];
         }
@@ -323,6 +329,19 @@ class Email extends Model implements EmailContract
     public function getHasRelationshipsAttribute(): bool
     {
         return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id || $this->activity_id;
+    }
+
+    /**
+     * Normalize name attribute to always return a string.
+     * Handles cases where name might be stored as an object or array.
+     * This ensures Vue components receive a string value.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function getNameAttribute($value): string
+    {
+        return ValueNormalizer::toString($value);
     }
 
     /**

@@ -634,7 +634,7 @@ class PersonController extends Controller
                 $values = $this->extractArrayValues($value);
                 return implode(', ', $values) ?: 'Geen waarde';
             }
-            return (string) $value;
+            return \App\Helpers\ValueNormalizer::toString($value);
         }
 
         if ($field === 'date_of_birth') {
@@ -647,7 +647,7 @@ class PersonController extends Controller
             return (string) $value->value;
         }
 
-        return (string) $value;
+        return \App\Helpers\ValueNormalizer::toString($value);
     }
 
     /**

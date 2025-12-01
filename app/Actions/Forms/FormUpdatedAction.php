@@ -2,8 +2,8 @@
 
 namespace App\Actions\Forms;
 
-use App\Mail\PortalGVLCompletedMail;
 use App\Services\FormService;
+use App\Services\Mail\EmailRenderingService;
 use App\Services\Mail\PatientMailService;
 use RuntimeException;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -13,7 +13,8 @@ class FormUpdatedAction
     public function __construct(
         private readonly PatientMailService $emailService,
         private readonly FormService $formService,
-        private readonly PersonRepository $personRepository
+        private readonly PersonRepository $personRepository,
+        private readonly EmailRenderingService $emailRenderingService
     ) {}
 
     /**
@@ -34,7 +35,7 @@ class FormUpdatedAction
 
         return [
             'success' => true,
-            'message' => '3',
+            'message' => 'Mail has been send',
         ];
     }
 
@@ -56,10 +57,30 @@ class FormUpdatedAction
         $person = $this->personRepository->find($personId)
             ?? throw new RuntimeException("Persoon met ID {$personId} niet gevonden.");
 
+        // Render email HTML content using centralized rendering service
+        $initialsLastname = trim($person->name ?? '');
+        if ($initialsLastname === '') {
+            $initialsLastname = 'patiënt';
+        }
+
+        $htmlContent = $this->emailRenderingService->renderEmail(
+            'adminc.emails.portal-gvl-completed-patient',
+            [
+                'person'            => $person,
+                'formUrl'           => $showFromUrl,
+                'patientPortalUrl'  => config('services.portal.patient.web_url'),
+                'initials_lastname' => $initialsLastname,
+            ],
+            'GVL Formulier Bevestiging'
+        );
+
+        // Stuur mail naar patiënt.
         $this->emailService->mailPatient(
             $person,
-            new PortalGVLCompletedMail($person, $showFromUrl),
-            $leadId, $salesId, $personId
+            'Welkom bij het Privatescan patiëntportaal',
+            $htmlContent,
+            $leadId,
+            $salesId
         );
     }
 }

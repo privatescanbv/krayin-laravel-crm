@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
+use Webkul\Admin\Http\Controllers\Mail\EmailController;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Product\Models\Product;
@@ -40,7 +41,8 @@ class OrderController extends SimpleEntityController
         protected OrderMailService $orderMailService,
         protected OrderStatusService $orderStatusService,
         protected SalesLeadRepository $salesLeadRepository,
-        protected FormService $formService
+        protected FormService $formService,
+        private EmailController $emailController
     ) {
         parent::__construct($orderRepository);
 
@@ -453,7 +455,6 @@ class OrderController extends SimpleEntityController
 
         try {
             // Use EmailController to render template with order entity
-            $emailController = app(\Webkul\Admin\Http\Controllers\Mail\EmailController::class);
 
             // Build entities array with order
             $entities = [
@@ -461,7 +462,7 @@ class OrderController extends SimpleEntityController
             ];
 
             // Resolve variables from entities
-            $variables = $emailController->resolveTemplateVariablesFromEntities($entities);
+            $variables = $this->emailController->resolveTemplateVariablesFromEntities($entities);
 
             // Get template from database
             $template = EmailTemplate::where('code', $templateIdentifier)
@@ -476,7 +477,7 @@ class OrderController extends SimpleEntityController
             }
 
             // Render template with layout
-            $content = $emailController->renderTemplateWithLayout($template->content, $variables);
+            $content = $this->emailController->renderTemplateToHTML($template, $variables);
 
             return response()->json([
                 'data' => [

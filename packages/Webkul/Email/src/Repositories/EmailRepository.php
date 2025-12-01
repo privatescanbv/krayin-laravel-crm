@@ -5,6 +5,7 @@ namespace Webkul\Email\Repositories;
 use Illuminate\Container\Container;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Email\Contracts\Email;
+use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Email\Models\Folder;
 use Webkul\Email\Enums\EmailFolderEnum;
 
@@ -44,9 +45,39 @@ class EmailRepository extends Repository
             $referenceIds = $parent->reference_ids ?? [];
         }
 
+        // Normalize from field to array format if not already normalized
+        // Respect null if explicitly set (for test compatibility)
+        if (isset($data['from']) && $data['from'] === null) {
+            $normalizedFrom = null;
+        } elseif (isset($data['from']) && is_array($data['from'])) {
+            // Already normalized array, use as is
+            $normalizedFrom = $data['from'];
+        } else {
+            // Normalize string to array format
+            $fromAddress = $data['from'] ?? config('mail.from.address');
+            $fromName = config('mail.from.name', 'PrivateScan');
+            $normalizedFrom = EmailModel::normalizeFromField($fromAddress, $fromName);
+        }
+
+        // Prioritize entity linking: lead_id > sales_lead_id > person_id
+        // When lead_id or sales_lead_id is set, also keep person_id so email appears in both places
+        if (!empty($data['lead_id'])) {
+            // Lead has highest priority, remove sales_lead_id but keep person_id if set
+            // This allows the email to appear both in lead view and person view
+            unset($data['sales_lead_id']);
+            // person_id is kept if it was provided
+        } elseif (!empty($data['sales_lead_id'])) {
+            // Sales lead has second priority, but also keep person_id if set
+            // This allows the email to appear both in sales lead view and person view
+            // person_id is kept if it was provided
+        } elseif (empty($data['person_id'])) {
+            // No entity IDs provided - this is allowed for some email types
+            // (e.g., system emails that don't need to be linked to a specific entity)
+        }
+
         $data = $this->sanitizeEmails(array_merge([
             'source'        => 'web',
-            'from' => config('mail.from.address'),
+            'from'          => $normalizedFrom,
             'user_type'     => 'admin',
             'folder_id'     => $this->getFolderId($data['is_draft'] ?? false),
             'unique_id'     => $uniqueId,
@@ -112,7 +143,7 @@ class EmailRepository extends Repository
      * @param bool $isDraft
      * @return int|null
      */
-    protected function getFolderId($isDraft = false)
+    protected function getFolderId($isDraft = false): ?int
     {
         $folderEnum = $isDraft ? EmailFolderEnum::DRAFT : EmailFolderEnum::SENT;
         $folder = Folder::where('name', $folderEnum->getFolderName())->first();

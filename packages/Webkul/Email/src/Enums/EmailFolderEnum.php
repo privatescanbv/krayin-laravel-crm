@@ -11,6 +11,7 @@ enum EmailFolderEnum: string
     case NEWSLETTER = 'Nieuwsbrief reacties';
     case PROCESSED = 'Verwerkt';
     case SENT = 'Sent';
+    case DRAFT = 'Draft';
     case TRASH = 'Trash';
     case NO_FOLLOW_UP = 'Geen opvolging';
 

@@ -136,7 +136,16 @@
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
             <!-- Diagnoseformulier aanwezig? -->
-            <x-admin::form.control-group class="mt-2">
+
+            <x-adminc::components.field
+                type="switch"
+                name="has_diagnosis_form"
+                label="Diagnoseformulier aanwezig?"
+                value="{{ $has_diagnosis_form ?? '' }}"
+                 />
+
+
+            <!-- <x-admin::form.control-group class="mt-2">
                 <x-admin::form.control-group.label static>
                     Diagnoseformulier aanwezig?
                 </x-admin::form.control-group.label>
@@ -151,7 +160,7 @@
                     <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
                 </div>
 
-            </x-admin::form.control-group>
+            </x-admin::form.control-group> -->
         </div>
 
     </div>

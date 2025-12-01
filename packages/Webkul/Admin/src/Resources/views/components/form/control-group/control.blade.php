@@ -7,6 +7,7 @@
     @case('hidden')
     @case('text')
     @case('email')
+    @case('tel')
     @case('password')
     @case('number')
         <v-field

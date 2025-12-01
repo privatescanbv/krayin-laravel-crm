@@ -1,11 +1,6 @@
 {!! view_render_event('admin.leads.index.kanban.search.before') !!}
 
-<v-kanban-search
-    :is-loading="isLoading"
-    :available="available"
-    :applied="applied"
-    @search="search"
->
+<v-kanban-search :is-loading="isLoading" :available="available" :applied="applied" @search="search">
 </v-kanban-search>
 
 {!! view_render_event('admin.leads.index.kanban.search.after') !!}
@@ -62,7 +57,7 @@
 
                     let appliedColumn = this.filters.columns.find(column => column.index === 'all');
 
-                    if (! requestedValue) {
+                    if (!requestedValue) {
                         appliedColumn.value = [];
 
                         this.$emit('search', this.filters);

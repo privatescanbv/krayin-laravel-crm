@@ -10,7 +10,7 @@
         <span class="relative inline-block w-full">
             <slot></slot>
 
-            <i class="icon-calendar pointer-events-none absolute top-1/2 -translate-y-1/2 text-2xl text-gray-400 ltr:right-2 rtl:left-2"></i>
+            <i ref="calendarIcon" class="icon-calendar absolute top-1/2 -translate-y-1/2 text-2xl text-gray-400 ltr:right-2 rtl:left-2"></i>
         </span>
     </script>
 
@@ -48,6 +48,14 @@
 
                 // Set initial value if provided
                 this.$nextTick(() => {
+                    if (this.$refs.calendarIcon) {
+                        this.$refs.calendarIcon.addEventListener('click', () => {
+                            if (this.datepicker) {
+                                this.datepicker.open();
+                            }
+                        });
+                    }
+
                     if (this.value) {
                         this.setDate(this.value);
                     }
@@ -63,11 +71,12 @@
                         disable: this.disable ?? [],
                         minDate: this.minDate ?? '',
                         maxDate: this.maxDate ?? '',
+                        altInput: true,
                         altFormat: "d-m-Y",
                         dateFormat: "Y-m-d",
                         weekNumbers: true,
                         defaultDate: this.value || null,
-
+                        clickOpens: false,
                         onChange: function(selectedDates, dateStr, instance) {
                             self.$emit("onChange", dateStr);
                         }

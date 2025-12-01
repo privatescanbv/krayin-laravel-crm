@@ -24,7 +24,7 @@
                     <div
                         v-for="(phone, index) in phones"
                         :key="index"
-                        class="flex items-center space-x-2"
+                        class="flex items-center space-x-2 gap-x-4"
                     >
                         <div class="flex-1">
                             <input
@@ -43,7 +43,7 @@
                         <select
                             :name="name + '[' + index + '][label]'"
                             v-model="phone.label"
-                            class=""
+                            class="flex-1"
                             :disabled="readonly"
                         >
                             <option
@@ -61,7 +61,7 @@
                             :value="phone.label"
                         />
 
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-2 gap-x-1">
                             <input
                                 type="checkbox"
                                 :name="name + '[' + index + '][is_default]'"

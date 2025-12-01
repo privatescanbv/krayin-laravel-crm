@@ -1,9 +1,9 @@
 @php
-    // Contactpersoon block
-    // Use provided person or fallback to contact person or first person
-    $person = $person ?? ($lead->hasContactPerson() ? $lead->contactPerson : $lead->persons->first());
-    $isContactPerson = $isContactPerson ?? false;
-    $title = $isContactPerson ? 'Contactpersoon' : 'Persoon';
+// Contactpersoon block
+// Use provided person or fallback to contact person or first person
+$person = $person ?? ($lead->hasContactPerson() ? $lead->contactPerson : $lead->persons->first());
+$isContactPerson = $isContactPerson ?? false;
+$title = $isContactPerson ? 'Contactpersoon' : 'Persoon';
 @endphp
 
 <!-- Person Block -->
@@ -19,14 +19,14 @@
     <div class="p-4 space-y-4">
         <!-- Action Button and Status -->
         <div class="flex items-center justify-between gap-4">
-{{--            <button--}}
-{{--                type="button"--}}
-{{--                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-bg hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors"--}}
-{{--                @click="$refs.contactPersonModal?.open()"--}}
-{{--            >--}}
-{{--                --}}
-{{--                <span class="text-sm font-medium">Nieuwe contactpersoon</span>--}}
-{{--            </button>--}}
+            {{-- <button--}}
+            {{-- type="button"--}}
+            {{-- class="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-bg hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors"--}}
+            {{-- @click="$refs.contactPersonModal?.open()"--}}
+            {{-- >--}}
+            {{-- --}}
+            {{-- <span class="text-sm font-medium">Nieuwe contactpersoon</span>--}}
+            {{-- </button>--}}
 
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
 
@@ -44,99 +44,73 @@
         <!-- Input Fields -->
         <div class="space-y-4">
             <!-- Naam contactpersoon -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    placeholder="Volledige naam"
-                    value="{{ $person ? $person->name : '' }}"
-                    readonly
-                />
-                <label class="">
-
-                    <span>Naam contactpersoon</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+                type="text"
+                class="w-full"
+                placeholder="Volledige naam"
+                label="Naam contactpersoon"
+                value="{{ $person ? $person->name : '' }}"
+                readonly />
 
             <!-- Relatie tot patiënt -->
-            <div class="relative">
-                <input
-                    type="text"
-                    class="w-full"
-                    placeholder="Bijv. partner, ouder, kind"
-                    value=""
-                />
-                <label class="">
-                    <span>Relatie tot patiënt</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+                type="text"
+                class="w-full"
+                placeholder="Bijv. partner, ouder, kind"
+                label="Relatie tot patiënt"
+                value="" />
 
             <!-- Telefoonnummer -->
-            <div class="relative">
-                <input
-                    type="tel"
-                    class="w-full"
-                    placeholder="06-12345678"
-                    value="{{ $person && $person->phones ? (is_array($person->phones) && count($person->phones) > 0 ? $person->phones[0]['value'] ?? '' : '') : '' }}"
-                    readonly
-                />
-                <label class="">
-
-                    <span>Telefoonnummer</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+                type="tel"
+                class="w-full"
+                placeholder="06-12345678"
+                label="Telefoonnummer"
+                value="{{ $person && $person->phones ? (is_array($person->phones) && count($person->phones) > 0 ? $person->phones[0]['value'] ?? '' : '') : '' }}"
+                readonly />
 
             <!-- E-mailadres -->
-            <div class="relative">
-                <input
-                    type="email"
-                    class="w-full"
-                    placeholder="email@voorbeeld.nl"
-                    value="{{ $person && $person->emails ? (is_array($person->emails) && count($person->emails) > 0 ? $person->emails[0]['value'] ?? '' : '') : '' }}"
-                    readonly
-                />
-                <label class="">
-
-                    <span>E-mailadres</span>
-                </label>
-            </div>
+            <x-adminc::components.field
+                type="email"
+                class="w-full"
+                placeholder="email@voorbeeld.nl"
+                label="E-mailadres"
+                value="{{ $person && $person->emails ? (is_array($person->emails) && count($person->emails) > 0 ? $person->emails[0]['value'] ?? '' : '') : '' }}"
+                readonly />
         </div>
 
         <!-- Portal Account Actions -->
         @if ($person && bouncer()->hasPermission('contacts.persons.edit'))
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
-                @if (empty($person->keycloak_user_id))
-                    <form
-                        class="inline-flex"
-                        method="POST"
-                        action="{{ route('admin.contacts.persons.portal.create', $person->id) }}"
-                        onsubmit="return confirm('Portal account aanmaken voor {{ $person->name }}?')"
-                    >
-                        @csrf
-                        <button type="submit" class="secondary-button">
-                            <i class="icon-login text-xs"></i>
-                            Maak patiëntportaal account aan
-                        </button>
-                    </form>
-                @else
-                    <form
-                        class="inline-flex"
-                        method="POST"
-                        action="{{ route('admin.contacts.persons.portal.delete', $person->id) }}"
-                        onsubmit="return confirm('Portal account verwijderen voor {{ $person->name }}?')"
-                    >
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="secondary-button border border-error text-status-expired-text hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1">
-                            <i class="icon-trash text-xs"></i>
-                            Patiëntportaal account intrekken
-                        </button>
-                    </form>
-                @endif
-            </div>
+        <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
+            @if (empty($person->keycloak_user_id))
+            <form
+                class="inline-flex"
+                method="POST"
+                action="{{ route('admin.contacts.persons.portal.create', $person->id) }}"
+                onsubmit="return confirm('Portal account aanmaken voor {{ $person->name }}?')">
+                @csrf
+                <button type="submit" class="secondary-button">
+                    <i class="icon-login text-xs"></i>
+                    Maak patiëntportaal account aan
+                </button>
+            </form>
+            @else
+            <form
+                class="inline-flex"
+                method="POST"
+                action="{{ route('admin.contacts.persons.portal.delete', $person->id) }}"
+                onsubmit="return confirm('Portal account verwijderen voor {{ $person->name }}?')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="secondary-button border border-error text-status-expired-text hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1">
+                    <i class="icon-trash text-xs"></i>
+                    Patiëntportaal account intrekken
+                </button>
+            </form>
+            @endif
+        </div>
         @endif
     </div>
 </div>
 
 @include('admin::components.match-score')
-

@@ -58,7 +58,8 @@ return [
     ],
 
     'portal' => [
-        'base_url' => env('PORTAL_BASE_URL', env('FORMS_FRONTEND_URL', 'https://forms.local.privatescan.nl')),
+        'patient' => env('PATIENT_PORTAL_URL', 'https://patient.local.privatescan.nl'),
+        'clinic'  => env('CLINIC_PORTAL_URL', 'https://clinic.local.privatescan.nl'),
     ],
 
 ];

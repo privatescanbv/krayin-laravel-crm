@@ -8,6 +8,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 
 beforeEach(function () {
@@ -52,7 +53,7 @@ test('sends welcome mail and links email to person when portal account is create
             && $mail->temporaryPassword === 'TempPass123!';
     });
 
-    $emails = \Webkul\Email\Models\Email::where('person_id', $person->id)->get();
+    $emails = Email::where('person_id', $person->id)->get();
     expect($emails)->toHaveCount(1)
         ->and($emails->first()->subject)->toBe('Welkom bij het Privatescan patiëntportaal');
 });
@@ -89,7 +90,7 @@ test('links welcome mail to lead when lead is provided', function () {
 
     expect($result['success'])->toBeTrue();
 
-    $emails = \Webkul\Email\Models\Email::where('person_id', $person->id)
+    $emails = Email::where('person_id', $person->id)
         ->where('lead_id', $lead->id)
         ->get();
 

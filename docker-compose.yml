@@ -70,11 +70,14 @@ services:
     volumes:
       - '.:/usr/share/nginx/html'
       - './certs:/certs:ro'
-#    extra_hosts:
-#      - "sso.local.privatescan.nl:192.168.107.3"
+    extra_hosts:
+      - "clinicdev.local.privatescan.nl:host-gateway"
+      - "patientdev.local.privatescan.nl:host-gateway"
+      - "formsdev.local.privatescan.nl:host-gateway"
     networks:
       public:
       backend:
+      privateforms_form_traefik:
     depends_on:
       - mysql
 
@@ -417,6 +420,9 @@ networks:
     driver: bridge
   public:
     driver: bridge
+  privateforms_form_traefik:
+    external: ${USE_EXTERNAL_TRAEFIK_NETWORK:-false}
+    name: ${TRAEFIK_NETWORK_NAME:-privateforms_form_traefik}
 
 volumes:
   sail-mysql:

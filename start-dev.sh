@@ -15,9 +15,13 @@ export VITE_HMR_HOST=${VITE_HMR_HOST:-crm.local.privatescan.nl}
 export APP_ENV=${APP_ENV:-production}
 docker info >/dev/null 2>&1 || { echo "❌ Docker is not running"; exit 1; }
 
-echo "✅ APP_ENV = .   $APP_ENV"
-echo "📦 Restarting containers..."
-./vendor/bin/sail restart
+if docker-compose ps crm | grep -q 'Up'; then
+  echo "📦 Restarting containers..."
+  ./vendor/bin/sail restart
+else
+  echo "📦 Starting containers..."
+  ./vendor/bin/sail up -d
+fi
 
 echo "⏳ Waiting for CRM container…"
 sleep 5

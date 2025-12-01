@@ -3,15 +3,30 @@
 <div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
     <x-admin::accordion class="select-none !border-none">
         <x-slot:header class="!p-0">
-            <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
-                <h4>Gegevens</h4>
-
-                @if (bouncer()->hasPermission('persons.edit'))
-                    <a
-                        href="{{ route('admin.contacts.persons.edit', $person->id) }}"
-                        class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
-                    ></a>
+            <div class="flex w-full flex-col gap-1">
+                @if (! empty($person->keycloak_user_id))
+                    <div class="flex w-full items-center justify-between">
+                        <a
+                            href="{{ config('services.portal.patient') }}"
+                            target="_blank"
+                            class="text-sm font-medium text-brandColor hover:underline flex items-center gap-1"
+                        >
+                            Open patiëntportaal
+                            <span class="icon-external-link text-xs"></span>
+                        </a>
+                    </div>
                 @endif
+
+                <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
+                    <h4>Gegevens</h4>
+
+                    @if (bouncer()->hasPermission('persons.edit'))
+                        <a
+                            href="{{ route('admin.contacts.persons.edit', $person->id) }}"
+                            class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
+                        ></a>
+                    @endif
+                </div>
             </div>
         </x-slot>
         <x-slot:content class="mt-4 !px-0 !pb-0">

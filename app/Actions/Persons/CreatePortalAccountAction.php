@@ -106,7 +106,7 @@ class CreatePortalAccountAction
 
         // Stuur mail naar patiënt.
         Mail::to($emailAddress)->queue(new PortalWelcomeMail($person, $temporaryPassword));
-        $redirect = urlencode(config('services.portal.base_url'));
+        $redirect = urlencode(config('services.portal.patient'));
 
         // Sla een eenvoudige email‑record op voor de tijdlijn/koppelingen.
         $emailModel = new EmailModel;

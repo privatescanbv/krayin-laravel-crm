@@ -83,3 +83,5 @@ In sommige gevallen wordt er geen secret teruggegeven (bijvoorbeeld bij bepaalde
 2. Voeg de waarde toe aan `.env` onder de sleutel die in de waarschuwing wordt genoemd (bijv. `KEYCLOAK_CLIENT_SECRET` of `FORMS_KEYCLOAK_CLIENT_SECRET`).
 
 
+
+

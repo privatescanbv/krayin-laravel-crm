@@ -12,6 +12,7 @@ Stappen voor de eerste keer:
  * Zet APP_ENV=dev, optimale ontwikkelingsomgeving (Dan ook Vite met HMR)
  * run composer install
  * run yarn install
+* run : sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/local.pem
  * run ./start-dev.sh
  * run sail artisan key:generate (niet zeker, probeer eerst zonder. Als je dit doet, vergeet .env niet aan te passen (APP_KEY).
  * run sail artisan migrate --seed of met reset.sh (inclusief data import)

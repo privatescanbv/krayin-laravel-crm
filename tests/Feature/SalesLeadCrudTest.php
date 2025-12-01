@@ -365,5 +365,9 @@ test('gvl form stays linked to anamnesis when forms api responds with error', fu
         'gvl_form_link' => $originalLink,
     ]);
 
-    Http::assertSentCount(1);
+    Http::assertSent(function ($request) {
+        return $request->method() === 'DELETE'
+            && str_contains($request->url(), 'http://forms/api/forms/456')
+            && ($request->header('X-API-KEY')[0] ?? null) === 'test-token';
+    });
 });

@@ -129,7 +129,7 @@
                         @method('DELETE')
                         <button type="submit" class="secondary-button border border-error text-status-expired-text hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1">
                             <i class="icon-trash text-xs"></i>
-                            Verwijder patiëntportaal account
+                            Patiëntportaal account intrekken
                         </button>
                     </form>
                 @endif

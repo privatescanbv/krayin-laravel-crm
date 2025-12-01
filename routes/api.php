@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
@@ -55,6 +56,11 @@ Route::middleware('api.key')->group(function () {
         Route::post('{id}/activities', [SalesLeadController::class, 'storeActivity']);
     });
 
+    // Keycloak webhooks
     Route::post('keycloak/webhooks', KeycloakWebhookController::class)
         ->name('api.keycloak.webhooks');
+
+    // Keycloak mapping: get person id for a given Keycloak user id
+    Route::get('keycloak/persons/{keycloakUserId}', [KeycloakUserController::class, 'findPersonByKeycloakId'])
+        ->name('api.keycloak.persons.findByKeycloakId');
 });

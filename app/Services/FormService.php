@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Department;
 use App\Models\Order;
 use Exception;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
@@ -165,9 +167,9 @@ class FormService
             return null;
         }
 
-        $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
+        $frontendUrl = rtrim(config('services.portal.patient', 'http://localhost:8001'), '/');
 
-        return $frontendUrl.'/forms/download/'.$formId.'/false';
+        return $frontendUrl.'/patient/forms/download/'.$formId.'/false';
     }
 
     /**
@@ -290,7 +292,7 @@ class FormService
      *
      * @throws Exception
      */
-    protected function createHttpClient(): \Illuminate\Http\Client\PendingRequest
+    protected function createHttpClient(): PendingRequest
     {
         $token = $this->getApiToken();
 
@@ -351,7 +353,7 @@ class FormService
     protected function hasMriResearch(Order $order): bool
     {
         $items = $order->orderItems ?? collect();
-        if (! $items instanceof \Illuminate\Support\Collection) {
+        if (! $items instanceof Collection) {
             $items = collect($items);
         }
 
@@ -371,7 +373,7 @@ class FormService
     protected function hasCtScan(Order $order): bool
     {
         $items = $order->orderItems ?? collect();
-        if (! $items instanceof \Illuminate\Support\Collection) {
+        if (! $items instanceof Collection) {
             $items = collect($items);
         }
 

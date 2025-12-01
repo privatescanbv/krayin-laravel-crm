@@ -14,7 +14,8 @@ fi
 export TestSettingsHeadless=true
 dotnet build
 #dotnet test
-dotnet test --filter "FullyQualifiedName~PartnerProduct"
+dotnet test --filter "FullyQualifiedName!~PartnerProduct"
+#dotnet test --filter "FullyQualifiedName~PartnerProduct"
 
 #dotnet test --filter "FullyQualifiedName~Lead"
 

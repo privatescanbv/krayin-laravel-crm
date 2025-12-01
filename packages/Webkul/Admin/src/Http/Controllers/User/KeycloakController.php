@@ -234,10 +234,15 @@ class KeycloakController extends Controller
      */
     protected function validateUser($keycloakUser)
     {
+        logger()->debug('Validating Keycloak SSO user', [
+            'keycloak_id' => $keycloakUser->getId(),
+            'email' => $keycloakUser->getEmail(),
+        ]);
         $user = $this->userRepository->findWhere(['email' => $keycloakUser->getEmail()])->first();
 
         if (! $user) {
-            Log::error('Keycloak SSO user not found in CRM', ['email' => $keycloakUser->getEmail()]);
+            #Should never happen, technical issue if it does
+            Log::error('Database out of sync with CRM and Keycloak; Keycloak SSO user not found in CRM', ['email' => $keycloakUser->getEmail()]);
             session()->flash('error', 'Gebruiker niet gevonden in CRM. Neem contact op met de beheerder.');
             return null;
         }
@@ -276,16 +281,16 @@ class KeycloakController extends Controller
     protected function loginUser($user): RedirectResponse
     {
         cache()->forget('keycloak_logout_' . $user->id);
-        
+
         // Haal rollen op en zet in sessie (niet in database)
         $roles = $this->loadUserRoles($user, $this->keycloakService);
-        
+
         Log::debug('Keycloak roles loaded for user', [
             'user_id' => $user->id,
             'email' => $user->email,
             'roles' => $roles,
         ]);
-        
+
         // Check of gebruiker patient rol heeft → geen toegang tot admin panel
         if (!empty($user->keycloak_user_id)) {
             $patientRole = KeycloakRoles::Patient->value;
@@ -295,13 +300,13 @@ class KeycloakController extends Controller
                     'email' => $user->email,
                     'keycloak_user_id' => $user->keycloak_user_id,
                 ]);
-                
+
                 session()->flash('error', 'U heeft geen toegang tot het admin panel. Alleen medewerkers hebben toegang.');
-                
+
                 return redirect()->route('admin.session.create');
             }
         }
-        
+
         Auth::guard('user')->login($user, true);
 
         if (! bouncer()->hasPermission('dashboard')) {

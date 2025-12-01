@@ -94,7 +94,7 @@ services:
       MYSQL_PASSWORD: '${DB_PASSWORD}'
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
     volumes:
-      - 'sail-mysql:/var/lib/mysql'
+      - 'crm-mysql:/var/lib/mysql'
       # note: in prod, these are copies by update-and-run.sh
       - './.docker/mysql/init-n8n.sql:/docker-entrypoint-initdb.d/20-init-n8n.sql'
       - './.docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
@@ -425,7 +425,7 @@ networks:
     name: ${TRAEFIK_NETWORK_NAME:-privateforms_form_traefik}
 
 volumes:
-  sail-mysql:
+  crm-mysql:
     driver: local
   loki-data:
     driver: local

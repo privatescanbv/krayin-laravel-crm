@@ -82,10 +82,10 @@ class SessionController extends Controller
         // Clear logout flag if it exists
         if ($user) {
             cache()->forget('keycloak_logout_' . $user->id);
-            
+
             // Haal rollen op en zet in sessie (niet in database)
             $roles = $this->loadUserRoles($user, $this->keycloakService);
-            
+
             if (!empty($user->keycloak_user_id)) {
                 Log::info('Keycloak roles loaded for user (normal login)', [
                     'user_id' => $user->id,
@@ -132,18 +132,20 @@ class SessionController extends Controller
      */
     public function destroy()
     {
+        logger()->debug('User logout initiated', [
+            'user_id' => auth()->guard('user')->id(),
+            'email' => auth()->guard('user')->user()?->email,
+        ]);
         $user = auth()->guard('user')->user();
         $isSSOUser = $user && !empty($user->keycloak_user_id) && config('services.keycloak.client_id');
-        
+
         $userId = $user?->id;
 
         // Logout from Laravel first
         auth()->guard('user')->logout();
-        
+
         // Ruim Keycloak rollen op uit sessie
-        if ($userId) {
-            session()->forget('keycloak_roles_' . $userId);
-        }
+        session()->forget('keycloak_roles_' . $userId);
 
         // If SSO user, trigger Keycloak logout via redirect
         // Keycloak will handle logout and call backchannel logout endpoint if configured

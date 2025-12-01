@@ -45,13 +45,12 @@ class Department extends Model
     public static function mapGroupToDepartmentId(array $groupNames): int
     {
         if (empty($groupNames)) {
+            logger()->debug('No group names provided, defaulting to Privatescan department');
+
             return self::findPrivateScanId();
         }
-        // Convert group names to lowercase for case-insensitive comparison
-        $lowerGroupNames = array_map('strtolower', $groupNames);
-
         // Priority logic: if user has both hernia and privatescan, choose privatescan
-        if (in_array('privatescan', $lowerGroupNames)) {
+        if (in_array(Departments::PRIVATESCAN->value, $groupNames)) {
             try {
                 return self::findPrivateScanId();
             } catch (Exception $e) {
@@ -59,28 +58,20 @@ class Department extends Model
             }
         }
 
-        // Map other groups to departments
-        $groupToDepartmentMap = [
-            'hernia' => 'Hernia',
-            // Add more mappings as needed
-        ];
+        foreach ($groupNames as $groupName) {
+            try {
+                $department = Department::query()
+                    ->where('name', $groupName)
+                    ->first();
 
-        foreach ($lowerGroupNames as $groupName) {
-            if (isset($groupToDepartmentMap[$groupName])) {
-                try {
-                    $department = Department::query()
-                        ->where('name', $groupToDepartmentMap[$groupName])
-                        ->first();
-
-                    if ($department) {
-                        return $department->id;
-                    }
-                } catch (Exception $e) {
-                    throw new Exception('Error finding department for group '.$groupName.': '.$e->getMessage());
+                if ($department) {
+                    return $department->id;
                 }
+            } catch (Exception $e) {
+                throw new Exception('Error finding department for group '.$groupName.': '.$e->getMessage());
             }
         }
-        throw new Exception('Group not found');
+        throw new Exception('Group not found by name: '.implode(', ', $groupNames));
     }
 
     /**

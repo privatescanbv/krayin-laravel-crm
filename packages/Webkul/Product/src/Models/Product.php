@@ -38,6 +38,7 @@ class Product extends Model implements ProductContract
      */
     protected $fillable = [
         'name',
+        'external_id',
         'active',
         'currency',
         'description',
@@ -56,6 +57,7 @@ class Product extends Model implements ProductContract
         'product_group_id' => 'integer',
         'product_type_id'  => 'integer',
         'resource_type_id' => 'integer',
+        'external_id'      => 'string',
     ];
 
     /**

@@ -13,6 +13,7 @@ enum ProductType: string
     case LABORATORIUM = 'laboratorium';
     case VERTALING = 'vertaling';
     case DIENSTEN = 'diensten';
+    case OPERATIONS = 'operaties';
     case OVERIG = 'overig';
 
     public function label(): string
@@ -27,6 +28,7 @@ enum ProductType: string
             self::LABORATORIUM   => 'Laboratorium',
             self::VERTALING      => 'Vertaling',
             self::DIENSTEN       => 'Diensten',
+            self::OPERATIONS     => 'Operaties',
             self::OVERIG         => 'Overig',
         };
     }

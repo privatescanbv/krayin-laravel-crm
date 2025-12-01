@@ -11,21 +11,31 @@ class ProductTypeSeeder extends BaseSeeder
     {
         $this->truncateTables(['product_types']);
 
-        $defaults = [
-            ['external_id' => '01', 'name' => ProductTypeEnum::TOTAL_BODYSCAN->label()],
-            ['external_id' => '02', 'name' => ProductTypeEnum::MRI_SCAN->label()],
-            ['external_id' => '03', 'name' => ProductTypeEnum::CT_SCAN->label()],
-            ['external_id' => '04', 'name' => ProductTypeEnum::CARDIOLOGIE->label()],
-            ['external_id' => '05', 'name' => ProductTypeEnum::ENDOSCOPIE->label()],
-            ['external_id' => '06', 'name' => ProductTypeEnum::PETSCAN->label()],
-            ['external_id' => '07', 'name' => ProductTypeEnum::LABORATORIUM->label()],
-            ['external_id' => '09', 'name' => ProductTypeEnum::VERTALING->label()],
-            ['external_id' => '10', 'name' => ProductTypeEnum::DIENSTEN->label()],
-            ['external_id' => '11', 'name' => ProductTypeEnum::OVERIG->label()],
+        // Map enum cases to external IDs; iterate dynamically over the enum
+        $externalIdMap = [
+            ProductTypeEnum::TOTAL_BODYSCAN->value => '01',
+            ProductTypeEnum::MRI_SCAN->value       => '02',
+            ProductTypeEnum::CT_SCAN->value        => '03',
+            ProductTypeEnum::CARDIOLOGIE->value    => '04',
+            ProductTypeEnum::ENDOSCOPIE->value     => '05',
+            ProductTypeEnum::PETSCAN->value        => '06',
+            ProductTypeEnum::LABORATORIUM->value   => '07',
+            ProductTypeEnum::VERTALING->value      => '09',
+            ProductTypeEnum::DIENSTEN->value       => '10',
+            ProductTypeEnum::OVERIG->value         => '11',
+            ProductTypeEnum::OPERATIONS->value     => '12',
         ];
 
-        foreach ($defaults as $data) {
-            ProductType::create($data);
+        foreach (ProductTypeEnum::cases() as $case) {
+            // Only seed cases that have an external ID defined
+            if (! array_key_exists($case->value, $externalIdMap)) {
+                continue;
+            }
+
+            ProductType::create([
+                'external_id' => $externalIdMap[$case->value],
+                'name'        => $case->label(),
+            ]);
         }
     }
 }

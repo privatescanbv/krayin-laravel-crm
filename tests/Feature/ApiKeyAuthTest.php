@@ -16,21 +16,6 @@ beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
 });
 
-test('API request without API key returns 401', function () {
-    $response = $this->postJson('/api/leads', [
-        'title'      => 'Test Lead',
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'email'      => 'john@example.com',
-    ]);
-
-    $response->assertStatus(401)
-        ->assertJson([
-            'error'   => 'API key is required',
-            'message' => 'Please provide a valid API key in the X-API-KEY header',
-        ]);
-});
-
 test('API request with invalid API key returns 401', function () {
     $response = test()->withHeaders([
         'X-API-KEY' => 'invalid-key',

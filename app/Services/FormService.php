@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\Order;
 use Exception;
@@ -14,6 +15,10 @@ use Webkul\Contact\Models\Person;
 
 class FormService
 {
+    public function __construct(
+        readonly private LeadAndSalesService $leadAndSalesService
+    ) {}
+
     /**
      * Get form status from forms API.
      *
@@ -167,7 +172,7 @@ class FormService
             return null;
         }
 
-        $frontendUrl = rtrim(config('services.portal.patient', 'http://localhost:8001'), '/');
+        $frontendUrl = rtrim(config('services.portal.patient.web_url'), '/');
 
         return $frontendUrl.'/patient/forms/download/'.$formId.'/false';
     }
@@ -177,7 +182,7 @@ class FormService
      */
     public function buildApiUrl(string $path): string
     {
-        $apiUrl = rtrim(config('services.forms.api_url', 'http://forms'), '/');
+        $apiUrl = rtrim(config('services.portal.patient.api_url', 'http://forms'), '/');
 
         return $apiUrl.$path;
     }
@@ -197,6 +202,11 @@ class FormService
         $httpClient = $this->createHttpClient();
 
         try {
+            Log::info('FormService: make request with data', array_merge($context, [
+                'method' => strtoupper($method),
+                'url'    => $url,
+                'data'   => $data ?? 'N/A',
+            ]));
             if ($data !== null) {
                 return $httpClient->{$method}($url, $data);
             }
@@ -268,6 +278,21 @@ class FormService
         ];
     }
 
+    public function findRelatedEntityByFormId(string $showFormUrl): array
+    {
+        $person = Anamnesis::select('person_id')
+            ->where('gvl_form_link', $showFormUrl)
+            ->firstOrFail();
+
+        $result = $this->leadAndSalesService->findOpenByPerson($person->person_id);
+
+        return [
+            'lead'      => $result['lead'] ?? null,
+            'sales'     => $result['sales'] ?? null,
+            'person_id' => $person->person_id,
+        ];
+    }
+
     /**
      * Validate and get API token.
      *
@@ -277,7 +302,7 @@ class FormService
      */
     protected function getApiToken(array $context = []): string
     {
-        $token = config('services.forms.api_token');
+        $token = config('services.portal.patient.api_token');
 
         if (empty($token)) {
             Log::error('FormService: FORMS_API_TOKEN not configured', $context);

@@ -39,12 +39,6 @@ return [
         'base_url' => env('SUGARCRM_BASE_URL', 'http://localhost:81/'),
     ],
 
-    'forms' => [
-        'api_url'      => env('FORMS_API_URL', 'http://forms'),
-        'frontend_url' => env('FORMS_FRONTEND_URL', 'http://localhost:8001'),
-        'api_token'    => env('FORMS_API_KEY', null),
-    ],
-
     'keycloak' => [
         'client_id'                   => env('KEYCLOAK_CLIENT_ID'),
         'client_secret'               => env('KEYCLOAK_CLIENT_SECRET'),
@@ -58,8 +52,14 @@ return [
     ],
 
     'portal' => [
-        'patient' => env('PATIENT_PORTAL_URL', 'https://patient.local.privatescan.nl'),
-        'clinic'  => env('CLINIC_PORTAL_URL', 'https://clinic.local.privatescan.nl'),
+        'patient' => [
+            'web_url'   => env('PATIENT_PORTAL_URL', 'https://patient.local.privatescan.nl'),
+            'api_url'   => env('PATIENT_PORTAL_API_URL', env('PATIENT_PORTAL_URL', 'https://patient.local.privatescan.nl')),
+            'api_token' => env('FORMS_API_KEY', null),
+        ],
+        'clinic' => [
+            'web_url' => env('CLINIC_PORTAL_URL', 'https://clinic.local.privatescan.nl'),
+        ],
     ],
 
 ];

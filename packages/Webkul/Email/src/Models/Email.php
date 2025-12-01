@@ -257,6 +257,67 @@ class Email extends Model implements EmailContract
     }
 
     /**
+     * Normalize reply_to to always be an array of email strings (for Vue component compatibility).
+     * Handles legacy formats where reply_to might be an object with 'email' key.
+     * 
+     * This accessor ensures backward compatibility with old records that may have
+     * reply_to stored as {"email": "..."} instead of ["..."].
+     */
+    public function getReplyToAttribute($value)
+    {
+        // Get the raw value from attributes (before cast)
+        $rawValue = $this->attributes['reply_to'] ?? null;
+
+        // If null or empty, return empty array
+        if (empty($rawValue)) {
+            return [];
+        }
+
+        // Decode JSON if it's a string
+        if (is_string($rawValue)) {
+            $decoded = json_decode($rawValue, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $replyTo = $decoded;
+            } else {
+                return [$rawValue];
+            }
+        } else {
+            // Use the value passed (already cast by Laravel)
+            $replyTo = $value;
+        }
+
+        // If already an array of strings, return as is
+        if (is_array($replyTo) && array_is_list($replyTo) && !empty($replyTo) && is_string($replyTo[0] ?? null)) {
+            return array_values(array_filter($replyTo));
+        }
+
+        // If it's an object with 'email' key (legacy format from old PatientMailService)
+        if (is_array($replyTo) && !array_is_list($replyTo) && isset($replyTo['email']) && is_string($replyTo['email'])) {
+            return [$replyTo['email']];
+        }
+
+        // If it's an array of objects, extract email addresses
+        if (is_array($replyTo) && array_is_list($replyTo)) {
+            $emails = [];
+            foreach ($replyTo as $item) {
+                if (is_string($item)) {
+                    $emails[] = $item;
+                } elseif (is_array($item)) {
+                    if (isset($item['email'])) {
+                        $emails[] = $item['email'];
+                    } elseif (isset($item['address'])) {
+                        $emails[] = $item['address'];
+                    }
+                }
+            }
+            return array_values(array_filter($emails));
+        }
+
+        // Fallback: return empty array
+        return [];
+    }
+
+    /**
      * Whether this email is linked to any entity.
      */
     public function getHasRelationshipsAttribute(): bool

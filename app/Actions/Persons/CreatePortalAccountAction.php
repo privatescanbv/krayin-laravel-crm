@@ -4,20 +4,20 @@ namespace App\Actions\Persons;
 
 use App\Mail\PortalWelcomeMail;
 use App\Services\Keycloak\KeycloakService;
+use App\Services\Mail\PatientMailService;
 use App\Services\PersonKeycloakService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 use Webkul\Contact\Models\Person;
-use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Lead\Models\Lead;
 
 class CreatePortalAccountAction
 {
     public function __construct(
         protected PersonKeycloakService $personKeycloakService,
-        private KeycloakService $keycloakService
+        private readonly KeycloakService $keycloakService,
+        private readonly PatientMailService $patientMailService,
     ) {}
 
     /**
@@ -98,35 +98,10 @@ class CreatePortalAccountAction
      */
     protected function sendWelcomeMail(Person $person, string $temporaryPassword, ?Lead $lead = null): void
     {
-        $emailAddress = $person->findDefaultEmail();
-
-        if (! $emailAddress) {
-            return;
-        }
-
-        // Stuur mail naar patiënt.
-        Mail::to($emailAddress)->queue(new PortalWelcomeMail($person, $temporaryPassword));
-        $redirect = urlencode(config('services.portal.patient'));
-
-        // Sla een eenvoudige email‑record op voor de tijdlijn/koppelingen.
-        $emailModel = new EmailModel;
-        $emailModel->subject = 'Welkom bij het Privatescan patiëntportaal';
-        $emailModel->reply = view('adminc.emails.portal-welcome', [
-            'person'            => $person,
-            'temporaryPassword' => $temporaryPassword,
-            'loginUrl'          => $this->keycloakService->getRealmLoginUrl($redirect),
-        ])->render();
-        $emailModel->reply_to = [$emailAddress];
-
-        // Zorg dat de frontend (bijv. VAvatar) altijd een bruikbare naam heeft
-        $emailModel->name = $person->name ?: $emailAddress ?: 'Patiënt';
-
-        $emailModel->person_id = $person->id;
-
-        if ($lead) {
-            $emailModel->lead_id = $lead->id;
-        }
-
-        $emailModel->save();
+        $this->patientMailService->mailPatient(
+            $person,
+            new PortalWelcomeMail($person, $temporaryPassword),
+            $lead?->id
+        );
     }
 }

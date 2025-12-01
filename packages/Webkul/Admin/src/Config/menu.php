@@ -317,10 +317,16 @@ return [
         'sort'       => 14,
         'icon-class' => 'icon-configuration',
     ], [
-        'key'        => 'form',
-        'name'       => 'Forms',
-        'url'        => config('services.forms.frontend_url', 'http://localhost:8001'),
+        'key'        => 'Patient Portaal',
+        'name'       => 'patient',
+        'url'        => config('services.portal.patient.web_url'),
         'sort'       => 15,
+        'icon-class' => 'icon-file',
+    ], [
+        'key'        => 'Clinic Portaal',
+        'name'       => 'patient',
+        'url'        => config('services.portal.clinic.web_url'),
+        'sort'       => 16,
         'icon-class' => 'icon-file',
     ],
 

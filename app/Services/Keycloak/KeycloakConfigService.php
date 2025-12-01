@@ -131,13 +131,11 @@ class KeycloakConfigService
     {
         $appUrl = $this->normalizeUrl(config('app.url', 'http://localhost:8000'), 8000);
         $internalAppUrl = config('app.internal_url', 'http://crm:80');
-        $formsUrl = $this->normalizeUrl(config('services.forms.frontend_url', 'http://localhost:8001'), 8001);
-        $patientPortalUrl = config('services.portal.patient');
+        $patientPortalUrl = config('services.portal.patient.web_url');
 
         return KeycloakRealmClientSeeder::getClientConfigs(
             $appUrl,
             $internalAppUrl,
-            $formsUrl,
             $patientPortalUrl,
             $this->keycloakService->getClientId()
         );

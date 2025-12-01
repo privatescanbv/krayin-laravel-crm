@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\SalesLeadController;
@@ -20,8 +21,8 @@ use Webkul\Lead\Http\Controllers\Api\LeadController;
 |
 */
 
-// All API routes are protected with API key authentication
-Route::middleware('api.key')->group(function () {
+// Shared API route registration used by both API-key and Keycloak-authenticated clients
+$registerAuthenticatedApiRoutes = function () {
     // Lead routes
     Route::prefix('leads')->group(function () {
         // Removed index route - too heavy, use /admin/leads/get for kanban instead
@@ -56,6 +57,10 @@ Route::middleware('api.key')->group(function () {
         Route::post('{id}/activities', [SalesLeadController::class, 'storeActivity']);
     });
 
+    // Generic application webhooks
+    Route::put('webhooks/event', EventWebhookController::class)
+        ->name('api.webhooks.event');
+
     // Keycloak webhooks
     Route::post('keycloak/webhooks', KeycloakWebhookController::class)
         ->name('api.keycloak.webhooks');
@@ -63,4 +68,9 @@ Route::middleware('api.key')->group(function () {
     // Keycloak mapping: get person id for a given Keycloak user id
     Route::get('keycloak/persons/{keycloakUserId}', [KeycloakUserController::class, 'findPersonByKeycloakId'])
         ->name('api.keycloak.persons.findByKeycloakId');
-});
+};
+
+// All API routes are protected by ApiKeyAuth middleware, which supports:
+// - X-API-KEY header validation
+// - OR a valid Keycloak Bearer token in the Authorization header
+Route::middleware('api.key')->group($registerAuthenticatedApiRoutes);

@@ -433,10 +433,7 @@ class AnamnesisController extends Controller
             throw new Exception('Forms API response mist formulier ID');
         }
 
-        $formRequestId = $result['json']['data']['id'];
-        $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
-        $formLink = $result['json']['form_url'] ?? '';
-        $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
+        $formLink = $result['json']['form_url'] ?? throw new Exception('Missing form_url in API response');
 
         // Save the link to the anamnesis
         $anamnesis->update([

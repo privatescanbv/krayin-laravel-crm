@@ -7,7 +7,7 @@
                 @if (! empty($person->keycloak_user_id))
                     <div class="flex w-full items-center justify-between">
                         <a
-                            href="{{ config('services.portal.patient') }}"
+                            href="{{ config('services.portal.patient.web_url') }}"
                             target="_blank"
                             class="text-sm font-medium text-brandColor hover:underline flex items-center gap-1"
                         >

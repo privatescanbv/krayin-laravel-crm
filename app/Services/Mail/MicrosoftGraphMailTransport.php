@@ -252,7 +252,11 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
         // If MAIL_SEND_ONLY_ACCEPT is not set, allow everything
         if (empty($allowedPatterns)) {
-            return;
+            // Allow unrestricted sending only in production; block otherwise
+            if (config('app.env') == 'production') {
+                return;
+            }
+            throw new Exception('Email sending blocked: no allowed recipient patterns configured and APP_ENV is not production');
         }
 
         // Remove quotes if present (Laravel env() can return quoted strings)
@@ -263,7 +267,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
         $patterns = array_filter($patterns); // Remove empty patterns
 
         if (empty($patterns)) {
-            return; // No patterns means allow everything
+            throw new Exception('Unexpected error: No valid recipient patterns found in configuration');
         }
 
         // Collect all recipient email addresses

@@ -227,9 +227,9 @@ class OrderMailService
             }
 
             $formRequestId = $response['data']['id'];
-            $frontendUrl = rtrim(config('services.forms.frontend_url', 'http://localhost:8001'), '/');
-            $formLink = $response['form_url'] ?? '';
-            $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
+            //            $frontendUrl = rtrim(config('services.portal.patient'), '/');
+            $formLink = $response['form_url'] ?? throw new Exception('Missing form_url in API response');
+            //            $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
 
             // Save the link to the anamnesis (one-time save)
             if ($anamnesis) {

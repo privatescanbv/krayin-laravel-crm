@@ -298,8 +298,8 @@ test('cannot remove all person relationships from Sales', function () {
 
 test('can detach gvl form from anamnesis when forms api returns 200', function () {
     config([
-        'services.forms.api_url'   => 'http://forms',
-        'services.forms.api_token' => 'test-token',
+        'services.portal.patient.api_url'   => 'http://forms',
+        'services.portal.patient.api_token' => 'test-token',
     ]);
 
     $lead = Lead::factory()->create();
@@ -336,8 +336,8 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
 
 test('gvl form stays linked to anamnesis when forms api responds with error', function () {
     config([
-        'services.forms.api_url'   => 'http://forms',
-        'services.forms.api_token' => 'test-token',
+        'services.portal.patient.api_url'   => 'http://forms',
+        'services.portal.patient.api_token' => 'test-token',
     ]);
 
     $lead = Lead::factory()->create();

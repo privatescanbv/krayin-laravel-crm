@@ -31,6 +31,8 @@
         placeholder="{{ $placeholder }}"
         :readonly="$readonly"
         :rules="$rules"
+        {{-- Geef alle extra attributen (zoals v-model, autocomplete, etc.) door aan de onderliggende control --}}
+        {{ $attributes->except(['label', 'name', 'value', 'readonly', 'placeholder', 'type', 'class', 'rules', 'labelClass']) }}
     >
         {{-- Doorlaat slot zodat select/textarea/options gebruikt kunnen worden --}}
         {{ $slot }}

@@ -121,7 +121,7 @@ services:
 
   #  This n8N will service for production workflows. For data flows, we will set up a separate n8n instance and will run on our data server.
   n8n:
-    image: n8nio/n8n
+    image: n8nio/n8n:stable
     container_name: n8n
     restart: unless-stopped
     ports:

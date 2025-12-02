@@ -45,21 +45,14 @@
                 <div v-if="showOrganizationForm" id="new-organization-form" class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
                     <div class="grid grid-cols-1 gap-4">
                         <!-- Organization Name -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="new_organization_name"
-                                id="new_organization_name"
-                                rules="required"
-                                :placeholder="trans('admin::app.contacts.organizations.create.name')"
-                            />
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.contacts.organizations.create.name')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="new_organization_name" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            name="new_organization_name"
+                            id="new_organization_name"
+                            rules="required"
+                            :label="trans('admin::app.contacts.organizations.create.name')"
+                            :placeholder="trans('admin::app.contacts.organizations.create.name')"
+                        />
 
                         <!-- Address Component -->
                         <div class="mt-2">

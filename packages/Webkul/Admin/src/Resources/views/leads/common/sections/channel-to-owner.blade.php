@@ -24,84 +24,65 @@
     <!-- Channel & Source -->
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="lead_channel_id"
-                    value="{{ $val('lead_channel_id', '') }}"
-                >
-                    <option value="">-- Kies kanaal --</option>
-                    @foreach ($channelOptions as $id => $name)
-                        <option
-                            value="{{ $id }}" {{ ($val('lead_channel_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label>
-                    Kanaal
-                </x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="lead_channel_id"
+                :label="'Kanaal'"
+                value="{{ $val('lead_channel_id', '') }}"
+            >
+                <option value="">-- Kies kanaal --</option>
+                @foreach ($channelOptions as $id => $name)
+                    <option
+                        value="{{ $id }}" {{ ($val('lead_channel_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                @endforeach
+            </x-adminc::components.field>
         </div>
         <div class="flex-1">
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="lead_source_id"
-                    value="{{ $val('lead_source_id', '') }}"
-                >
-                    <option value="">-- Kies bron --</option>
-                    @foreach ($sourceOptions as $id => $name)
-                        <option
-                            value="{{ $id }}" {{ ($val('lead_source_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label>
-                    Bron
-                </x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="lead_source_id"
+                :label="'Bron'"
+                value="{{ $val('lead_source_id', '') }}"
+            >
+                <option value="">-- Kies bron --</option>
+                @foreach ($sourceOptions as $id => $name)
+                    <option
+                        value="{{ $id }}" {{ ($val('lead_source_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                @endforeach
+            </x-adminc::components.field>
         </div>
     </div>
 
     <!-- Department & Type -->
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="department_id"
-                    rules="required"
-                    value="{{ $val('department_id', '') }}"
-                >
-                    <option value="">-- Kies afdeling --</option>
-                    @foreach ($departmentOptions as $id => $name)
-                        <option
-                            value="{{ $id }}" {{ ($val('department_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label class="required">
-                    Afdeling
-                </x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="department_id"
+                rules="required"
+                :label="'Afdeling'"
+                value="{{ $val('department_id', '') }}"
+            >
+                <option value="">-- Kies afdeling --</option>
+                @foreach ($departmentOptions as $id => $name)
+                    <option
+                        value="{{ $id }}" {{ ($val('department_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                @endforeach
+            </x-adminc::components.field>
         </div>
         <div class="flex-1">
-            <x-admin::form.control-group>                <x-admin::form.control-group.control
-                    type="select"
-                    name="lead_type_id"
-                    value="{{ $val('lead_type_id', '') }}"
-                >
-                    <option value="">-- Kies type --</option>
-                    @foreach ($typeOptions as $id => $name)
-                        <option
-                            value="{{ $id }}" {{ ($val('lead_type_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label>
-                    Type
-                </x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="lead_type_id"
+                :label="'Type'"
+                value="{{ $val('lead_type_id', '') }}"
+            >
+                <option value="">-- Kies type --</option>
+                @foreach ($typeOptions as $id => $name)
+                    <option
+                        value="{{ $id }}" {{ ($val('lead_type_id', '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                @endforeach
+            </x-adminc::components.field>
         </div>
     </div>
 
@@ -111,23 +92,18 @@
             @php
                 $currentMRI = $val('mri_status');
             @endphp
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="mri_status"
-                    value="{{ $currentMRI }}"
-                >
-                    <option value="">-- Selecteer MRI status --</option>
-                    @foreach (App\Enums\MRIStatus::cases() as $case)
-                        <option
-                            value="{{ $case->value }}" {{ ($currentMRI == $case->value) ? 'selected' : '' }}>{{ $case->label() }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label>
-                    MRI Status
-                </x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="mri_status"
+                :label="'MRI Status'"
+                value="{{ $currentMRI }}"
+            >
+                <option value="">-- Selecteer MRI status --</option>
+                @foreach (App\Enums\MRIStatus::cases() as $case)
+                    <option
+                        value="{{ $case->value }}" {{ ($currentMRI == $case->value) ? 'selected' : '' }}>{{ $case->label() }}</option>
+                @endforeach
+            </x-adminc::components.field>
         </div>
         <div class="flex-1">
             <!-- Empty div to maintain layout -->

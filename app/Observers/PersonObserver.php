@@ -34,7 +34,8 @@ class PersonObserver
         // Invalidate duplicate cache for this person
         $this->duplicateCacheService->invalidatePersonCache($person->id);
 
-        $this->ensurePortalAccountOnCreate($person);
+        // Do not support for create person
+        //        $this->ensurePortalAccountOnCreate($person);
 
         Log::info('CREATE person', [
             'person_id' => $person->id,

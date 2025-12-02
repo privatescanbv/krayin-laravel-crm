@@ -27,7 +27,7 @@ class AbstractEmailProcessorTest extends TestCase
         parent::setUp();
         // Set required Graph Mail configuration for this test
         // (TestCase sets these to null, but GraphMailService needs them)
-                                                    config(['mail.graph.client_id' => 'test-client-id']);
+        config(['mail.graph.client_id' => 'test-client-id']);
         config(['mail.graph.client_secret' => 'test-client-secret']);
         config(['mail.graph.tenant_id' => 'test-tenant-id']);
         config(['mail.graph.mailbox' => 'test@example.com']);

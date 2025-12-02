@@ -94,14 +94,18 @@
                                         if ($personAnamnesis && !empty($personAnamnesis->gvl_form_link)) {
                                             $hasGvlLink = true;
                                         }
+
+                                        // Check if person has a patient portal account (Keycloak user)
+                                        $hasPortalAccount = !empty($person->keycloak_user_id);
+                                        $canSendInfoMail = $isLead && $defaultEmail && $hasPortalAccount;
                                     @endphp
                                     @if ($isLead && $defaultEmail)
                                         <button
                                             type="button"
                                             id="info-mail-{{ $person->id }}-{{ $entityId }}"
-                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $hasGvlLink ? 'text-activity-note-text hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
-                                            title="{{ $hasGvlLink ? 'Stuur informatieve mail met GVL link' : 'GVL formulier link ontbreekt. Koppel eerst een GVL formulier aan de anamnesis.' }}"
-                                            @if (!$hasGvlLink) disabled @endif
+                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $canSendInfoMail ? 'text-activity-note-text hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
+                                            title="{{ $hasPortalAccount ? 'Stuur informatieve mail met GVL link' : 'Persoon heeft geen patient portaal account. Maak eerst een portaalaccount aan.' }}"
+                                            @if (!$canSendInfoMail) disabled @endif
                                             data-person-id="{{ $person->id }}"
                                             data-lead-id="{{ $entityId }}"
                                             data-default-email="{{ $defaultEmail['value'] ?? '' }}"
@@ -195,6 +199,8 @@
     @pushOnce('scripts')
     <script type="module">
         (function() {
+            const createGvlFormUrl = "{{ route('admin.anamnesis.create-and-attach-gvl-form') }}";
+
             // Initialize info mail buttons
             const initInfoMailButtons = () => {
                 document.querySelectorAll('[id^="info-mail-"]').forEach(button => {
@@ -216,6 +222,22 @@
                         const defaultEmail = this.dataset.defaultEmail;
 
                         if (!personId || !leadId || !defaultEmail) {
+                            return;
+                        }
+
+                        // Zorg dat er een GVL-formulier bestaat voor deze lead/persoon (onder water).
+                        const ok = await window.privatescan.ensureGvlForm(
+                            createGvlFormUrl,
+                            {
+                                lead_id: parseInt(leadId),
+                                person_id: parseInt(personId),
+                            },
+                            {
+                                errorPrefix: 'GVL formulier aanmaken/koppelen is mislukt.',
+                            },
+                        );
+
+                        if (!ok) {
                             return;
                         }
 

@@ -33,7 +33,7 @@
 
     <p>
         <a href="{{ $loginUrl }}" style="color: #0e90d9;">
-            {{ $loginUrl }}
+            Client portaal inloggen
         </a>
     </p>
 

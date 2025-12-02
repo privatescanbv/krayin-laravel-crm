@@ -238,8 +238,8 @@ class EmailTemplateSeeder extends Seeder
 
     <p>
         <strong>GVL-formulier:</strong><br>
-        <a href="{{ $gvl_form_link }}" target="_blank" style="color: #2563eb; text-decoration: underline;">
-            {{ $gvl_form_link }}
+        Graag hier invullen <a href="{{ $gvl_form_link }}" target="_blank" style="color: #2563eb; text-decoration: underline;">
+            hier
         </a>
     </p>
 

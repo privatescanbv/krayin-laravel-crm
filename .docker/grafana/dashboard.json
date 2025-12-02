@@ -109,7 +109,7 @@
                 {
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "count_over_time({level_name=\"ERROR\"} [1h])",
+                    "expr": "sum by (container)(\n  count_over_time(\n    {container!=\"\"} \n    | json \n    | level_name=\"ERROR\" \n    [1m]\n  )\n)\n",
                     "legendFormat": "{{app}}",
                     "queryType": "range",
                     "refId": "A"
@@ -119,6 +119,10 @@
             "type": "timeseries"
         },
         {
+            "datasource": {
+                "type": "loki",
+                "uid": "bf3x3qa3mhgjkf"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -166,7 +170,10 @@
             "pluginVersion": "12.2.1",
             "targets": [
                 {
-                    "expr": "sum(count_over_time({level_name=\"ERROR\"}[6h])) by (app)",
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "sum by (service)(\n  count_over_time(\n    {service!=\"\"}\n    | json\n    | level_name=\"ERROR\"\n    [6h]\n  )\n)\n",
+                    "queryType": "range",
                     "refId": "A"
                 }
             ],
@@ -266,7 +273,7 @@
                 {
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"crm\"}\n| json\n| channel=~\"php-fpm|local|production\"",
+                    "expr": "{service=\"crm\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\" OR channel=\"production\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{ .context_template | default \\\"\\\" }} lead={{ .context_lead_id | default \\\"\\\" }} vars={{ .context_variables_keys | default \\\"\\\" }}\"\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -277,7 +284,7 @@
         {
             "datasource": {
                 "type": "loki",
-                "uid": "af3xcqn2k6io0a"
+                "uid": "bf3x3qa3mhgjkf"
             },
             "fieldConfig": {
                 "defaults": {},
@@ -317,7 +324,7 @@
         {
             "datasource": {
                 "type": "loki",
-                "uid": "bf4e4x8fruv40f"
+                "uid": "bf3x3qa3mhgjkf"
             },
             "fieldConfig": {
                 "defaults": {},
@@ -346,7 +353,7 @@
                 {
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"forms\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{.context.template}} lead={{.context.lead_id}} vars={{.context.variables_keys}}\"\n",
+                    "expr": "{service=\"forms\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\" OR channel=\"production\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{ .context_template | default \\\"\\\" }} lead={{ .context_lead_id | default \\\"\\\" }} vars={{ .context_variables_keys | default \\\"\\\" }}\"",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -435,46 +442,6 @@
         {
             "datasource": {
                 "type": "loki",
-                "uid": "df57btovaq1hca"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 48
-            },
-            "id": 10,
-            "options": {
-                "dedupStrategy": "none",
-                "enableInfiniteScrolling": false,
-                "enableLogDetails": true,
-                "prettifyLogMessage": false,
-                "showCommonLabels": false,
-                "showLabels": false,
-                "showTime": false,
-                "sortOrder": "Descending",
-                "wrapLogMessage": false
-            },
-            "pluginVersion": "12.2.1",
-            "targets": [
-                {
-                    "direction": "backward",
-                    "editorMode": "code",
-                    "expr": "{app=\"keycloak\"}",
-                    "queryType": "range",
-                    "refId": "A"
-                }
-            ],
-            "title": "Keycloak",
-            "type": "logs"
-        },
-        {
-            "datasource": {
-                "type": "loki",
                 "uid": "af3xcqn2k6io0a"
             },
             "fieldConfig": {
@@ -514,7 +481,7 @@
         }
     ],
     "preload": false,
-    "refresh": "30s",
+    "refresh": "",
     "schemaVersion": 42,
     "tags": [],
     "templating": {
@@ -552,12 +519,12 @@
         ]
     },
     "time": {
-        "from": "now-6h",
+        "from": "now-1h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 3
+    "version": 25
 }

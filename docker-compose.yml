@@ -27,7 +27,7 @@ services:
         aliases:
           - sso.local.privatescan.nl
           - crm.local.privatescan.nl
-          - forms.local.privatescan.nl
+          - patient.local.privatescan.nl
 
   crm:
     build:
@@ -199,14 +199,13 @@ services:
       EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
       KEYCLOAK_BASE_URL: 'https://sso.local.privatescan.nl'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
-      KEYCLOAK_CLIENT_ID: 'forms-app'
+      KEYCLOAK_CLIENT_ID: 'patient-app'
       KEYCLOAK_LOAD_USER_FROM_DATABASE: false
       KEYCLOAK_APPEND_DECODED_TOKEN: true
-      KEYCLOAK_ALLOWED_RESOURCES: 'forms-app'
+      KEYCLOAK_ALLOWED_RESOURCES: 'patient-app'
       KEYCLOAK_LEEWAY: 60
       KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
-    ports:
-      - '8011:80'
+      CRM_API_KEY: "${API_KEY_1}"
     labels:
       - traefik.enable=true
       - traefik.http.routers.laravel-template-api-rtr.rule=Host("forms.local.privatescan.nl")
@@ -221,12 +220,12 @@ services:
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=forms.local.privatescan.nl
       - traefik.docker.network=public
       - logging=promtail
-#    extra_hosts:
-#      - "sso.local.privatescan.nl:192.168.107.3"
     networks:
       public:
       backend:
     depends_on:
+      crm:
+        condition: service_started
       mysql:
         condition: service_healthy
 

@@ -209,8 +209,8 @@ services:
       APP_KEY: 'base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg='
       API_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
       APP_DEBUG: 'false'
-      APP_URL: "$FORMS_FRONTEND_URL"
-      ASSET_URL: "$FORMS_FRONTEND_URL"
+      APP_URL: "$PATIENT_PORTAL_URL"
+      ASSET_URL: "$PATIENT_PORTAL_URL"
       POSTMARK_TOKEN: '3ea2bc92-4dd0-4bc5-af86-fb764e5d7af9'
       MAIL_FROM_ADDRESS: 'no-reply@privatescan.nl'
       MAIL_FROM_NAME: 'PrivateScan'
@@ -243,17 +243,16 @@ services:
       EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
       KEYCLOAK_BASE_URL: 'https://sso.dev.privatescan.nl'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
-      KEYCLOAK_CLIENT_ID: 'forms-app'
+      KEYCLOAK_CLIENT_ID: 'patient-app'
       KEYCLOAK_LOAD_USER_FROM_DATABASE: 'false'
       KEYCLOAK_APPEND_DECODED_TOKEN: 'true'
-      KEYCLOAK_ALLOWED_RESOURCES: 'forms-app'
+      KEYCLOAK_ALLOWED_RESOURCES: 'patient-app'
       KEYCLOAK_LEEWAY: 60
       KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
-    ports:
-      - '8001:80'
+      CRM_API_KEY: "${API_KEY_1}"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.laravel-template-api-rtr.rule=Host("forms.dev.privatescan.nl")
+      - traefik.http.routers.laravel-template-api-rtr.rule=Host("patient.dev.privatescan.nl")
       - traefik.http.routers.laravel-template-api-rtr.tls=true
       - traefik.http.routers.laravel-template-api-rtr.tls.certresolver=myresolver
       - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
@@ -262,7 +261,7 @@ services:
       - traefik.http.services.laravel-template-api-svc.loadbalancer.server.port=80
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=forms.dev.privatescan.nl
+      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.dev.privatescan.nl
       - traefik.docker.network=public
       - logging=promtail
     networks:

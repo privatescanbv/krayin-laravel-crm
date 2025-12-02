@@ -24,7 +24,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
     networks:
-      - public
+      public:
+        aliases:
+          - sso.dev.privatescan.nl
+          - newcrm.dev.privatescan.nl
+          - patient.dev.privatescan.nl
 
   crm:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
@@ -250,24 +254,40 @@ services:
       KEYCLOAK_LEEWAY: 60
       KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
       CRM_API_KEY: "${API_KEY_1}"
+      CRM_API_URL: "https://newcrm.dev.privatescan.nl/api/"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.laravel-template-api-rtr.rule=Host("patient.dev.privatescan.nl")
-      - traefik.http.routers.laravel-template-api-rtr.tls=true
-      - traefik.http.routers.laravel-template-api-rtr.tls.certresolver=myresolver
-      - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
-      - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-api-svc
-      - traefik.http.routers.laravel-template-api-rtr.middlewares=forms-forward-headers
-      - traefik.http.services.laravel-template-api-svc.loadbalancer.server.port=80
-      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.dev.privatescan.nl
+      # Patient portal router
+      - traefik.http.routers.patient-rtr.rule=Host("patient.dev.privatescan.nl")
+      - traefik.http.routers.patient-rtr.tls=true
+      - traefik.http.routers.patient-rtr.tls.domains[0].main=patient.dev.privatescan.nl
+      - traefik.http.routers.patient-rtr.entrypoints=https
+      - traefik.http.routers.patient-rtr.service=formsdev-svc
+      - traefik.http.routers.patient-rtr.middlewares=patient-forward-headers
+      # Clinic portal router
+      - traefik.http.routers.clinic-rtr.rule=Host("clinic.dev.privatescan.nl")
+      - traefik.http.routers.clinic-rtr.tls=true
+      - traefik.http.routers.clinic-rtr.tls.domains[0].main=clinic,dev.privatescan.nl
+      - traefik.http.routers.clinic-rtr.entrypoints=https
+      - traefik.http.routers.clinic-rtr.service=formsdev-svc
+      - traefik.http.routers.clinic-rtr.middlewares=clinic-forward-headers
+      # Service
+      - traefik.http.services.formsdev-svc.loadbalancer.server.port=80
+      # Middlewares
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.dev.privatescan.nl
+      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Host=clinic.dev.privatescan.nl
       - traefik.docker.network=public
       - logging=promtail
     networks:
       - backend
       - public
     depends_on:
+      crm:
+        condition: service_started
       mysql:
         condition: service_healthy
 

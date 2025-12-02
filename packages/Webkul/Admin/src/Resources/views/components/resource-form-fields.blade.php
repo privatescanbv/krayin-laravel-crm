@@ -16,98 +16,58 @@
 @endphp
 
 <!-- Naam -->
-<x-admin::form.control-group>
-    <x-admin::form.control-group.control
-        type="text"
-        name="name"
-        value="{{ old('name', $resource->name ?? '') }}"
-        rules="required|min:1|max:100"
-        :label="trans('admin::app.settings.resources.index.create.name')"
-        :placeholder="trans('admin::app.settings.resources.index.create.name')"
-    />
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.resources.index.create.name')
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.error control-name="name" />
-
-</x-admin::form.control-group>
+<x-adminc::components.field
+    type="text"
+    name="name"
+    label="@lang('admin::app.settings.resources.index.create.name')"
+    value="{{ old('name', $resource->name ?? '') }}"
+    rules="required|min:1|max:100"
+    :placeholder="trans('admin::app.settings.resources.index.create.name')"
+/>
 
 <!-- Resource Type -->
-<x-admin::form.control-group>
-    <x-admin::form.control-group.control
-        type="select"
-        name="resource_type_id"
-        value="{{ old('resource_type_id', $resource->resource_type_id ?? '') }}"
-        rules="required|numeric"
-        :label="trans('admin::app.settings.resources.index.create.resource_type')"
-    >
-        <option value="">@lang('admin::app.select')</option>
-        @foreach ($resourceTypes as $type)
-            <option value="{{ $type->id }}" @selected(old('resource_type_id', $resource->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
-        @endforeach
-    </x-admin::form.control-group.control>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.resources.index.create.resource_type')
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.error control-name="resource_type_id" />
-
-</x-admin::form.control-group>
+<x-adminc::components.field
+    type="select"
+    name="resource_type_id"
+    label="@lang('admin::app.settings.resources.index.create.resource_type')"
+    value="{{ old('resource_type_id', $resource->resource_type_id ?? '') }}"
+    rules="required|numeric"
+>
+    <option value="">@lang('admin::app.select')</option>
+    @foreach ($resourceTypes as $type)
+        <option value="{{ $type->id }}" @selected(old('resource_type_id', $resource->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
+    @endforeach
+</x-adminc::components.field>
 
 <!-- Clinic -->
-<x-admin::form.control-group>
-    <x-admin::form.control-group.control
-        type="select"
-        name="clinic_id"
-        value="{{ $selectedClinicId }}"
-        rules="required|numeric"
-        :label="trans('admin::app.settings.resources.index.create.clinic')"
-    >
-        <option value="">@lang('admin::app.select')</option>
-        @foreach ($clinics as $clinic)
-            <option value="{{ $clinic->id }}" @selected($selectedClinicId == $clinic->id)>{{ $clinic->name }}</option>
-        @endforeach
-    </x-admin::form.control-group.control>
-    <x-admin::form.control-group.label class="required">
-        @lang('admin::app.settings.resources.index.create.clinic')
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.error control-name="clinic_id" />
-
-</x-admin::form.control-group>
+<x-adminc::components.field
+    type="select"
+    name="clinic_id"
+    label="@lang('admin::app.settings.resources.index.create.clinic')"
+    value="{{ $selectedClinicId }}"
+    rules="required|numeric"
+>
+    <option value="">@lang('admin::app.select')</option>
+    @foreach ($clinics as $clinic)
+        <option value="{{ $clinic->id }}" @selected($selectedClinicId == $clinic->id)>{{ $clinic->name }}</option>
+    @endforeach
+</x-adminc::components.field>
 
 <!-- Is Active -->
-<x-admin::form.control-group>
-    <x-admin::form.control-group.control
-        type="switch"
-        name="is_active"
-        value="1"
-        :checked="(bool) old('is_active', $resource->is_active ?? true)"
-        label="Actief"
-    />
-    <x-admin::form.control-group.label switch>
-        Actief
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.error control-name="is_active" />
-
-</x-admin::form.control-group>
+<x-adminc::components.field
+    type="switch"
+    name="is_active"
+    label="Actief"
+    value="1"
+    :checked="(bool) old('is_active', $resource->is_active ?? true)"
+/>
 
 <!-- Notes -->
-<x-admin::form.control-group>
-    <x-admin::form.control-group.control
-        type="textarea"
-        name="notes"
-        value="{{ old('notes', $resource->notes ?? '') }}"
-        :label="trans('admin::app.settings.resources.index.create.notes')"
-        :placeholder="trans('admin::app.settings.resources.index.create.notes')"
-        rows="4"
-    />
-    <x-admin::form.control-group.label>
-        @lang('admin::app.settings.resources.index.create.notes')
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.error control-name="notes" />
-
-</x-admin::form.control-group>
+<x-adminc::components.field
+    type="textarea"
+    name="notes"
+    label="@lang('admin::app.settings.resources.index.create.notes')"
+    value="{{ old('notes', $resource->notes ?? '') }}"
+    :placeholder="trans('admin::app.settings.resources.index.create.notes')"
+    rows="4"
+/>

@@ -97,46 +97,31 @@
                             {!! view_render_event('admin.settings.roles.edit.form.name.before', ['role' => $role]) !!}
 
                             <!-- Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    rules="required"
-                                    value="{{ old('name') ?: $role->name }}"
-                                    :label="trans('admin::app.settings.roles.edit.name')"
-                                    :placeholder="trans('admin::app.settings.roles.edit.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.edit.name')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="name"
+                                name="name"
+                                :label="trans('admin::app.settings.roles.edit.name')"
+                                value="{{ old('name') ?: $role->name }}"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.roles.edit.name')"
+                            />
 
                             {!! view_render_event('admin.settings.roles.edit.form.name.after', ['role' => $role]) !!}
 
                             {!! view_render_event('admin.settings.roles.edit.form.description.before', ['role' => $role]) !!}
 
                             <!-- Description -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    id="description"
-                                    name="description"
-                                    rules="required"
-                                    value="{{ old('description') ?: $role->description }}"
-                                    :label="trans('admin::app.settings.roles.edit.description')"
-                                    :placeholder="trans('admin::app.settings.roles.edit.description')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.edit.description')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="description" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                id="description"
+                                name="description"
+                                :label="trans('admin::app.settings.roles.edit.description')"
+                                value="{{ old('description') ?: $role->description }}"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.roles.edit.description')"
+                                class="!mb-0"
+                            />
 
                             {!! view_render_event('admin.settings.roles.edit.form.description.after', ['role' => $role]) !!}
                         </x-slot>

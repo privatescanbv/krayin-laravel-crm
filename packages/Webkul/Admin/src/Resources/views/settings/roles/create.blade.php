@@ -88,46 +88,31 @@
                             {!! view_render_event('admin.settings.roles.create.form.name.before') !!}
 
                             <!-- Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    rules="required"
-                                    value="{{ old('name') }}"
-                                    :label="trans('admin::app.settings.roles.create.name')"
-                                    :placeholder="trans('admin::app.settings.roles.create.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.create.name')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="name"
+                                name="name"
+                                :label="trans('admin::app.settings.roles.create.name')"
+                                value="{{ old('name') }}"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.roles.create.name')"
+                            />
 
                             {!! view_render_event('admin.settings.roles.create.form.name.after') !!}
 
                             {!! view_render_event('admin.settings.roles.create.form.description.before') !!}
 
                             <!-- Description -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    id="description"
-                                    name="description"
-                                    rules="required"
-                                    :value="old('description')"
-                                    :label="trans('admin::app.settings.roles.create.description')"
-                                    :placeholder="trans('admin::app.settings.roles.create.description')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.roles.create.description')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="description" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                id="description"
+                                name="description"
+                                :label="trans('admin::app.settings.roles.create.description')"
+                                value="{{ old('description') }}"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.roles.create.description')"
+                                class="!mb-0"
+                            />
 
                             {!! view_render_event('admin.settings.roles.create.form.description.after') !!}
                         </x-slot>

@@ -227,54 +227,28 @@
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.content.controls.before') !!}
 
                                     <!-- Name -->
-                                    <x-admin::form.control-group>
+                                    <x-admin::form.control-group.control
+                                        type="hidden"
+                                        name="id"
+                                    />
 
-
-                                        <x-admin::form.control-group.control
-                                            type="hidden"
-                                            name="id"
-                                        />
-
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="name"
-                                            id="name"
-                                            rules="required|max:60"
-                                            :label="trans('admin::app.settings.marketing.events.index.create.name')"
-                                        />
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="name"
-                                        >
-                                            @lang('admin::app.settings.marketing.events.index.create.name')
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="name" />
-
-                                    </x-admin::form.control-group>
+                                    <x-adminc::components.field
+                                        type="text"
+                                        name="name"
+                                        id="name"
+                                        :label="trans('admin::app.settings.marketing.events.index.create.name')"
+                                        rules="required|max:60"
+                                    />
 
                                     <!-- Description -->
-                                    <x-admin::form.control-group>
-
-
-                                        <x-admin::form.control-group.control
-                                            type="textarea"
-                                            name="description"
-                                            id="description"
-                                            rules="required"
-                                            rows="4"
-                                            :label="trans('admin::app.settings.marketing.events.index.create.description')"
-                                        />
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="description"
-                                        >
-                                            @lang('admin::app.settings.marketing.events.index.create.description')
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="description" />
-
-                                    </x-admin::form.control-group>
+                                    <x-adminc::components.field
+                                        type="textarea"
+                                        name="description"
+                                        id="description"
+                                        :label="trans('admin::app.settings.marketing.events.index.create.description')"
+                                        rules="required"
+                                        rows="4"
+                                    />
 
                                     <!-- Date -->
                                     <x-admin::form.control-group>

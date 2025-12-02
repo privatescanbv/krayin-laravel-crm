@@ -34,24 +34,16 @@
 
                     <div class="border-y p-4 dark:border-gray-800">
                         <!-- Registered Email -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="email"
-                                class="w-[254px] max-w-full"
-                                id="email"
-                                name="email"
-                                rules="required|email"
-                                :value="old('email')"
-                                :label="trans('admin::app.users.forget-password.create.email')"
-                                :placeholder="trans('admin::app.users.forget-password.create.email')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.users.forget-password.create.email')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="email" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="email"
+                            class="w-[254px] max-w-full"
+                            id="email"
+                            name="email"
+                            :label="trans('admin::app.users.forget-password.create.email')"
+                            value="{{ old('email') }}"
+                            rules="required|email"
+                            :placeholder="trans('admin::app.users.forget-password.create.email')"
+                        />
                     </div>
 
                     <div class="flex items-center justify-between p-4">
@@ -80,7 +72,7 @@
             @lang('admin::app.components.layouts.powered-by.description', [
                 'krayin' => '<a class="text-brandColor hover:underline " href="https://krayincrm.com/">Krayin</a>',
                 'webkul' => '<a class="text-brandColor hover:underline " href="https://webkul.com/">Webkul</a>',
-            ]) 
+            ])
         </div>
     </div>
 </x-admin::layouts.anonymous>

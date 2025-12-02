@@ -95,41 +95,25 @@
                         </div>
 
                         <div class="w-1/2 max-md:w-full">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    :value="old('name')"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.workflows.create.name')"
-                                    :placeholder="trans('admin::app.settings.workflows.create.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.workflows.create.name')
-                                </x-admin::form.control-group.label>
+                            <x-adminc::components.field
+                                type="text"
+                                name="name"
+                                id="name"
+                                :label="trans('admin::app.settings.workflows.create.name')"
+                                value="{{ old('name') }}"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.workflows.create.name')"
+                            />
 
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="description"
-                                    id="description"
-                                    rows="5"
-                                    :value="old('description')"
-                                    :label="trans('admin::app.settings.workflows.create.description')"
-                                    :placeholder="trans('admin::app.settings.workflows.create.description')"
-                                />
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.workflows.create.description')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="description" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="description"
+                                id="description"
+                                :label="trans('admin::app.settings.workflows.create.description')"
+                                value="{{ old('description') }}"
+                                rows="5"
+                                :placeholder="trans('admin::app.settings.workflows.create.description')"
+                            />
                         </div>
                     </div>
 
@@ -393,7 +377,7 @@
                             <v-field
                                 :name="`conditions[${index}][value]`"
                                 v-slot="{ field, errorMessage }"
-                                label="@lang('admin::app.settings.workflows.create.value')"
+                                :label="trans('admin::app.settings.workflows.create.value')"
                                 :id="`conditions[${index}][value]`"
                                 :rules="
                                     matchedAttribute.type == 'price' ? 'regex:^[0-9]+(\\.[0-9]+)?$' : ''

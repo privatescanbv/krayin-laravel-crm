@@ -98,19 +98,11 @@
                     </x-admin::form.control-group>
 
                     <!-- Images Directory Path -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.control
-                            type="file"
-                            name="file"
-                            :label="trans('admin::app.settings.data-transfer.imports.edit.file')"
-                        />
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.settings.data-transfer.imports.edit.file')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.error control-name="file" />
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="file"
+                        name="file"
+                        :label="trans('admin::app.settings.data-transfer.imports.edit.file')"
+                    />
                 </div>
 
                 {!! view_render_event('admin.settings.data_transfer.imports.edit.card.general.after', ['import' => $import]) !!}
@@ -132,82 +124,50 @@
 
                     <x-slot:content>
                         <!-- Action -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="action"
-                                id="action"
-                                :value="old('action') ?? $import->action"
-                                rules="required"
-                                :label="trans('admin::app.settings.data-transfer.imports.edit.action')"
-                            >
-                                <option value="append">@lang('admin::app.settings.data-transfer.imports.edit.create-update')</option>
-                                <option value="delete">@lang('admin::app.settings.data-transfer.imports.edit.delete')</option>
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.action')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="action" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="select"
+                            name="action"
+                            id="action"
+                            :label="trans('admin::app.settings.data-transfer.imports.edit.action')"
+                            value="{{ old('action') ?? $import->action }}"
+                            rules="required"
+                        >
+                            <option value="append">@lang('admin::app.settings.data-transfer.imports.edit.create-update')</option>
+                            <option value="delete">@lang('admin::app.settings.data-transfer.imports.edit.delete')</option>
+                        </x-adminc::components.field>
 
                         <!-- Validation Strategy -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="validation_strategy"
-                                id="validation_strategy"
-                                :value="old('validation_strategy') ?? $import->validation_strategy"
-                                rules="required"
-                                :label="trans('admin::app.settings.data-transfer.imports.edit.validation-strategy')"
-                            >
-                                <option value="stop-on-errors">@lang('admin::app.settings.data-transfer.imports.edit.stop-on-errors')</option>
-                                <option value="skip-erros">@lang('admin::app.settings.data-transfer.imports.edit.skip-errors')</option>
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.validation-strategy')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="validation_strategy" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="select"
+                            name="validation_strategy"
+                            id="validation_strategy"
+                            :label="trans('admin::app.settings.data-transfer.imports.edit.validation-strategy')"
+                            value="{{ old('validation_strategy') ?? $import->validation_strategy }}"
+                            rules="required"
+                        >
+                            <option value="stop-on-errors">@lang('admin::app.settings.data-transfer.imports.edit.stop-on-errors')</option>
+                            <option value="skip-erros">@lang('admin::app.settings.data-transfer.imports.edit.skip-errors')</option>
+                        </x-adminc::components.field>
 
                         <!-- Allowed Errors -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="allowed_errors"
-                                :value="old('allowed_errors') ?? $import->allowed_errors"
-                                rules="required"
-                                :label="trans('admin::app.settings.data-transfer.imports.edit.allowed-errors')"
-                                :placeholder="trans('admin::app.settings.data-transfer.imports.edit.allowed-errors')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.allowed-errors')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="allowed_errors" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            name="allowed_errors"
+                            :label="trans('admin::app.settings.data-transfer.imports.edit.allowed-errors')"
+                            value="{{ old('allowed_errors') ?? $import->allowed_errors }}"
+                            rules="required"
+                            :placeholder="trans('admin::app.settings.data-transfer.imports.edit.allowed-errors')"
+                        />
 
                         <!-- CSV Field Separator -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="field_separator"
-                                :value="old('field_separator') ?? $import->field_separator"
-                                rules="required"
-                                :label="trans('admin::app.settings.data-transfer.imports.edit.field-separator')"
-                                :placeholder="trans('admin::app.settings.data-transfer.imports.edit.field-separator')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.data-transfer.imports.edit.field-separator')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="field_separator" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            name="field_separator"
+                            :label="trans('admin::app.settings.data-transfer.imports.edit.field-separator')"
+                            value="{{ old('field_separator') ?? $import->field_separator }}"
+                            rules="required"
+                            :placeholder="trans('admin::app.settings.data-transfer.imports.edit.field-separator')"
+                        />
 
                         <!-- Process In Queue -->
                         <x-admin::form.control-group class="!mb-0">

@@ -191,22 +191,14 @@
                             />
 
                             <!-- Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.types.index.create.name')"
-                                    :placeholder="trans('admin::app.settings.types.index.create.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.types.index.create.name')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="name"
+                                name="name"
+                                label="Naam"
+                                rules="required"
+                                :placeholder="'Naam'"
+                            />
 
                             {!! view_render_event('admin.settings.types.index.content.after') !!}
                         </x-slot>

@@ -45,26 +45,18 @@
 
 <!-- Associated Product (Readonly) -->
 @if ($partnerProduct && $partnerProduct->product)
-<x-admin::form.control-group>
-    <x-admin::form.control-group.control
-            type="textarea"
-            name="description"
-            value="{{ old('description', $partnerProduct->description ?? '') }}"
-            :label="trans('admin::app.partner_products.index.create.description')"
-            :placeholder="trans('admin::app.partner_products.index.create.description')"
-        />
+<x-adminc::components.field
+    type="textarea"
+    name="description"
+    label="@lang('admin::app.partner_products.index.create.description')"
+    value="{{ old('description', $partnerProduct->description ?? '') }}"
+    :placeholder="trans('admin::app.partner_products.index.create.description')"
+/>
 
-        <div
-            class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
-        </div>
-    <x-admin::form.control-group.label>
-            @lang('admin::app.partner_products.index.create.associated_product')
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.error control-name="description"/>
-
-</x-admin::form.control-group>
+<div
+    class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+    {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
+</div>
 @endif
 
 <!-- Omschrijving en Omschrijving kliniek -->

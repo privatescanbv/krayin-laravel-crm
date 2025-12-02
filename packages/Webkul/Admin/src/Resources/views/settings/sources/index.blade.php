@@ -197,22 +197,14 @@
                             {!! view_render_event('admin.settings.sources.index.form.name.before') !!}
 
                             <!-- Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.sources.index.create.name')"
-                                    :placeholder="trans('admin::app.settings.sources.index.create.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.sources.index.create.name')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="name"
+                                name="name"
+                                :label="trans('admin::app.settings.sources.index.create.name')"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.sources.index.create.name')"
+                            />
 
                             {!! view_render_event('admin.settings.sources.index.form.name.after') !!}
                         </x-slot>

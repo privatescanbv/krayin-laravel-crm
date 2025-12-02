@@ -32,23 +32,15 @@
 
                     <div class="border-y p-4 dark:border-gray-800">
                         <!-- Email -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="email"
-                                class="w-[254px] max-w-full"
-                                id="email"
-                                name="email"
-                                rules="required|email"
-                                :label="trans('admin::app.users.login.email')"
-                                :placeholder="trans('admin::app.users.login.email')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.users.login.email')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="email" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="email"
+                            class="w-[254px] max-w-full"
+                            id="email"
+                            name="email"
+                            :label="trans('admin::app.users.login.email')"
+                            rules="required|email"
+                            :placeholder="trans('admin::app.users.login.email')"
+                        />
 
                         <!-- Password -->
                         <x-admin::form.control-group class="relative w-full">

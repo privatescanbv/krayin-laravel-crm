@@ -75,20 +75,13 @@
                             />
 
                             <!-- Comment -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="comment"
-                                    rules="required"
-                                    :label="trans('admin::app.components.activities.actions.note.comment')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.note.comment')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="comment" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="comment"
+                                :label="trans('admin::app.components.activities.actions.note.comment')"
+                                rules="required"
+                                class="!mb-0"
+                            />
 
                             {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.header.content.controls.after') !!}
                         </x-slot>

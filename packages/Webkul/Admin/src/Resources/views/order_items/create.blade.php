@@ -22,44 +22,45 @@
                 </div>
             </div>
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control type="number" name="order_id" rules="required|integer" />
-                <x-admin::form.control-group.label>Order ID</x-admin::form.control-group.label>
+            <x-adminc::components.field
+                type="number"
+                name="order_id"
+                label="Order ID"
+                rules="required|integer"
+            />
 
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="number"
+                name="product_id"
+                label="Product ID"
+                rules="required|integer"
+            />
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control type="number" name="product_id" rules="required|integer" />
-                <x-admin::form.control-group.label>Product ID</x-admin::form.control-group.label>
+            <x-adminc::components.field
+                type="select"
+                name="person_id"
+                label="Persoon"
+                rules="required|integer|exists:persons,id"
+            >
+                <option value="">Selecteer persoon</option>
+                @foreach ($persons as $personId => $personName)
+                    <option value="{{ $personId }}">{{ $personName }}</option>
+                @endforeach
+            </x-adminc::components.field>
 
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="number"
+                name="quantity"
+                label="Aantal"
+                rules="required|integer|min:1"
+            />
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="person_id"
-                    rules="required|integer|exists:persons,id"
-                    label="Persoon"
-                >
-                    <option value="">Selecteer persoon</option>
-                    @foreach ($persons as $personId => $personName)
-                        <option value="{{ $personId }}">{{ $personName }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-            </x-admin::form.control-group>
-
-            <x-admin::form.control-group>                <x-admin::form.control-group.control type="number" name="quantity" rules="required|integer|min:1" />
-                <x-admin::form.control-group.label>Aantal</x-admin::form.control-group.label>
-
-                <x-admin::form.control-group.label>Persoon</x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
-
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control type="number" step="0.01" name="total_price" />
-                <x-admin::form.control-group.label>Totale prijs</x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="number"
+                name="total_price"
+                label="Totale prijs"
+                step="0.01"
+            />
         </div>
     </x-admin::form>
 </x-admin::layouts>

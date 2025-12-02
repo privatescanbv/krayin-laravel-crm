@@ -22,41 +22,39 @@
                 </div>
             </div>
 
-            <x-admin::form.control-group>                <x-admin::form.control-group.control type="text" name="title" rules="required" />
-                <x-admin::form.control-group.label class="required">Titel</x-admin::form.control-group.label>
+            <x-adminc::components.field
+                type="text"
+                name="title"
+                label="Titel"
+                rules="required"
+            />
 
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="sales_lead_id"
+                label="Sales"
+                value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
+                rules="required|integer"
+            >
+                <option value="">Selecteer een sales</option>
+                @if(isset($salesLeads))
+                    @foreach($salesLeads as $id => $name)
+                        <option value="{{ $id }}" {{ ($salesLeadId ?? old('sales_lead_id')) == $id ? 'selected' : '' }}>
+                            {{ $name }}
+                        </option>
+                    @endforeach
+                @endif
+            </x-adminc::components.field>
 
-            <x-admin::form.control-group>                <x-admin::form.control-group.control
-                    type="select"
-                    name="sales_lead_id"
-                    value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
-                    rules="required|integer"
-                >
-                    <option value="">Selecteer een sales</option>
-                    @if(isset($salesLeads))
-                        @foreach($salesLeads as $id => $name)
-                            <option value="{{ $id }}" {{ ($salesLeadId ?? old('sales_lead_id')) == $id ? 'selected' : '' }}>
-                                {{ $name }}
-                            </option>
-                        @endforeach
-                    @endif
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label class="required">Sales</x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
-
-            <x-admin::form.control-group>                <x-admin::form.control-group.control
-                    type="select"
-                    name="combine_order"
-                    value="{{ old('combine_order', '1') }}"
-                >
-                    <option value="1" {{ old('combine_order', '1') === '1' ? 'selected' : '' }}>Ja</option>
-                    <option value="0" {{ old('combine_order', '1') === '0' ? 'selected' : '' }}>Nee</option>
-                </x-admin::form.control-group.control>
-                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
+            <x-adminc::components.field
+                type="select"
+                name="combine_order"
+                label="Orders combineren"
+                value="{{ old('combine_order', '1') }}"
+            >
+                <option value="1" {{ old('combine_order', '1') === '1' ? 'selected' : '' }}>Ja</option>
+                <option value="0" {{ old('combine_order', '1') === '0' ? 'selected' : '' }}>Nee</option>
+            </x-adminc::components.field>
 
 
 

@@ -52,94 +52,62 @@
                 {!! view_render_event('admin.settings.pipelines.edit.form.name.before', ['pipeline' => $pipeline]) !!}
 
                 <!-- Pipeline Name -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="name"
-                        id="name"
-                        rules="required"
-                        :label="trans('admin::app.settings.pipelines.edit.name')"
-                        :placeholder="trans('admin::app.settings.pipelines.edit.name')"
-                        value="{{ old('name') ?: $pipeline->name }}"
-                    />
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.name')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="name" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="name"
+                    id="name"
+                    :label="trans('admin::app.settings.pipelines.edit.name')"
+                    value="{{ old('name') ?: $pipeline->name }}"
+                    rules="required"
+                    :placeholder="trans('admin::app.settings.pipelines.edit.name')"
+                />
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.name.after', ['pipeline' => $pipeline]) !!}
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.rotten_days.before', ['pipeline' => $pipeline]) !!}
 
                 <!-- Pipeline Rotten Days -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="rotten_days"
-                        id="rotten_days"
-                        rules="required|numeric|min_value:1"
-                        :label="trans('admin::app.settings.pipelines.edit.rotten-days')"
-                        :placeholder="trans('admin::app.settings.pipelines.edit.rotten-days')"
-                        value="{{ old('rotten_days') ?: $pipeline->rotten_days }}"
-                    />
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.rotten-days')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="rotten_days" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="rotten_days"
+                    id="rotten_days"
+                    :label="trans('admin::app.settings.pipelines.edit.rotten-days')"
+                    value="{{ old('rotten_days') ?: $pipeline->rotten_days }}"
+                    rules="required|numeric|min_value:1"
+                    :placeholder="trans('admin::app.settings.pipelines.edit.rotten-days')"
+                />
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.rotten_days.after', ['pipeline' => $pipeline]) !!}
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.type.before', ['pipeline' => $pipeline]) !!}
 
                 <!-- Pipeline Type -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="select"
-                        name="type"
-                        id="type"
-                        rules="required"
-                        :label="trans('admin::app.settings.pipelines.edit.type')"
-                        value="{{ old('type', $pipeline->type?->value ?? 'lead') }}"
-                    >
-                        <option value="lead" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'lead') ? 'selected' : '' }}>Lead</option>
-                        <option value="workflow" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'workflow') ? 'selected' : '' }}>Workflow</option>
-                    </x-admin::form.control-group.control>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.type')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="type" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="select"
+                    name="type"
+                    id="type"
+                    :label="trans('admin::app.settings.pipelines.edit.type')"
+                    value="{{ old('type', $pipeline->type?->value ?? 'lead') }}"
+                    rules="required"
+                >
+                    <option value="lead" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'lead') ? 'selected' : '' }}>Lead</option>
+                    <option value="workflow" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'workflow') ? 'selected' : '' }}>Workflow</option>
+                </x-adminc::components.field>
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.type.after', ['pipeline' => $pipeline]) !!}
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.is_default.before', ['pipeline' => $pipeline]) !!}
 
                 <!-- Pipeline Default Switcher -->
-                <x-admin::form.control-group class="mt-4 flex items-center gap-4">
-                    <x-admin::form.control-group.control
-                        type="switch"
-                        class="cursor-pointer"
-                        name="is_default"
-                        id="is_default"
-                        value="1"
-                        :checked="(boolean) $pipeline->is_default"
-                        :label="trans('admin::app.settings.pipelines.edit.mark-as-default')"
-                    />
-                    <x-admin::form.control-group.label class="mb-0">
-                        @lang('admin::app.settings.pipelines.edit.mark-as-default')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="is_default" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="switch"
+                    name="is_default"
+                    id="is_default"
+                    :label="trans('admin::app.settings.pipelines.edit.mark-as-default')"
+                    value="1"
+                    :checked="(boolean) $pipeline->is_default"
+                    class="mt-4 flex items-center gap-4"
+                />
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.is_default.after', ['pipeline' => $pipeline]) !!}
             </div>

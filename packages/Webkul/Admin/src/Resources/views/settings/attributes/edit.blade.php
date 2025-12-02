@@ -86,22 +86,14 @@
                         {!! view_render_event('admin.settings.attributes.edit.form_controls.name.before', ['attribute' => $attribute]) !!}
 
                         <!-- Admin name -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="name"
-                                rules="required"
-                                :value="old('name') ?: $attribute->name"
-                                :label="trans('admin::app.settings.attributes.edit.name')"
-                                :placeholder="trans('admin::app.settings.attributes.edit.name')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.attributes.edit.name')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="name" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            name="name"
+                            :label="trans('admin::app.settings.attributes.edit.name')"
+                            value="{{ old('name') ?: $attribute->name }}"
+                            rules="required"
+                            :placeholder="trans('admin::app.settings.attributes.edit.name')"
+                        />
 
                         {!! view_render_event('admin.settings.attributes.edit.form_controls.name.after', ['attribute' => $attribute]) !!}
 
@@ -395,28 +387,18 @@
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.entity_type.before', ['attribute' => $attribute]) !!}
 
                             <!-- Entity Type -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    id="entity_type"
-                                    name="entity_type"
-                                    rules="required"
-                                    :value="$attribute->entity_type"
-                                    :label="trans('admin::app.settings.attributes.create.entity-type')"
-                                    :placeholder="trans('admin::app.settings.attributes.create.entity-type')"
-                                >
-
-                                    @foreach (config('attribute_entity_types') as $key => $entityType)
-                                        <option value="{{ $key }}">{{ trans($entityType['name']) }}</option>
-                                    @endforeach
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.attributes.create.entity-type')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="entity_type" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="select"
+                                id="entity_type"
+                                name="entity_type"
+                                :label="trans('admin::app.settings.attributes.create.entity-type')"
+                                value="{{ $attribute->entity_type }}"
+                                rules="required"
+                            >
+                                @foreach (config('attribute_entity_types') as $key => $entityType)
+                                    <option value="{{ $key }}">{{ trans($entityType['name']) }}</option>
+                                @endforeach
+                            </x-adminc::components.field>
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.entity_type.after', ['attribute' => $attribute]) !!}
                         </x-slot>
@@ -567,26 +549,15 @@
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.name.before', ['attribute' => $attribute]) !!}
 
                             <!-- Admin Input -->
-                            <x-admin::form.control-group class="mb-2.5 w-full">
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="name"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.attributes.edit.option-name')"
-                                    :placeholder="trans('admin::app.settings.attributes.edit.option-name')"
-                                    ref="inputAdmin"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.attributes.edit.option-name')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.label>
-                                        @lang('admin::app.settings.attributes.edit.input-validation')
-                                    </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="name"
+                                :label="trans('admin::app.settings.attributes.edit.option-name')"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.attributes.edit.option-name')"
+                                ref="inputAdmin"
+                                class="mb-2.5 w-full"
+                            />
 
                             {!! view_render_event('admin.settings.attributes.edit.form_controls.name.after', ['attribute' => $attribute]) !!}
                         </x-slot>

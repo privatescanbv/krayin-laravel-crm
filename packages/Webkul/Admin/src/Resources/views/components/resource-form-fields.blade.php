@@ -19,7 +19,7 @@
 <x-adminc::components.field
     type="text"
     name="name"
-    label="@lang('admin::app.settings.resources.index.create.name')"
+    :label="trans('admin::app.settings.resources.index.create.name')"
     value="{{ old('name', $resource->name ?? '') }}"
     rules="required|min:1|max:100"
     :placeholder="trans('admin::app.settings.resources.index.create.name')"
@@ -29,7 +29,7 @@
 <x-adminc::components.field
     type="select"
     name="resource_type_id"
-    label="@lang('admin::app.settings.resources.index.create.resource_type')"
+    :label="trans('admin::app.settings.resources.index.create.resource_type')"
     value="{{ old('resource_type_id', $resource->resource_type_id ?? '') }}"
     rules="required|numeric"
 >
@@ -43,7 +43,7 @@
 <x-adminc::components.field
     type="select"
     name="clinic_id"
-    label="@lang('admin::app.settings.resources.index.create.clinic')"
+    :label="trans('admin::app.settings.resources.index.create.clinic')"
     value="{{ $selectedClinicId }}"
     rules="required|numeric"
 >
@@ -66,7 +66,7 @@
 <x-adminc::components.field
     type="textarea"
     name="notes"
-    label="@lang('admin::app.settings.resources.index.create.notes')"
+    :label="trans('admin::app.settings.resources.index.create.notes')"
     value="{{ old('notes', $resource->notes ?? '') }}"
     :placeholder="trans('admin::app.settings.resources.index.create.notes')"
     rows="4"

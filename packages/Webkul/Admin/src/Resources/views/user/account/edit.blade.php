@@ -76,64 +76,35 @@
                     </p>
 
                     <!-- First Name -->
-                    <x-admin::form.control-group>
-
-
-                        <x-admin::form.control-group.control
-                            type="text"
-                            name="first_name"
-                            rules="required"
-                            :value="old('first_name') ?: $user->first_name"
-                            :label="trans('admin::app.account.edit.first-name')"
-                            :placeholder="trans('admin::app.account.edit.first-name')"
-                        />
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.account.edit.first-name')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.error control-name="first_name" />
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="text"
+                        name="first_name"
+                        :label="trans('admin::app.account.edit.first-name')"
+                        value="{{ old('first_name') ?: $user->first_name }}"
+                        rules="required"
+                        :placeholder="trans('admin::app.account.edit.first-name')"
+                    />
 
                     <!-- Last Name -->
-                    <x-admin::form.control-group>
-
-
-                        <x-admin::form.control-group.control
-                            type="text"
-                            name="last_name"
-                            rules="required"
-                            :value="old('last_name') ?: $user->last_name"
-                            :label="trans('admin::app.account.edit.last-name')"
-                            :placeholder="trans('admin::app.account.edit.last-name')"
-                        />
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.account.edit.last-name')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.error control-name="last_name" />
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="text"
+                        name="last_name"
+                        :label="trans('admin::app.account.edit.last-name')"
+                        value="{{ old('last_name') ?: $user->last_name }}"
+                        rules="required"
+                        :placeholder="trans('admin::app.account.edit.last-name')"
+                    />
 
                     <!-- Email -->
-                    <x-admin::form.control-group class="!mb-0">
-
-
-                        <x-admin::form.control-group.control
-                            type="email"
-                            name="email"
-                            id="email"
-                            rules="required"
-                            :value="old('email') ?: $user->email"
-                            :label="trans('admin::app.account.edit.email')"
-                        />
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.account.edit.email')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.error control-name="email" />
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="email"
+                        name="email"
+                        id="email"
+                        :label="trans('admin::app.account.edit.email')"
+                        value="{{ old('email') ?: $user->email }}"
+                        rules="required"
+                        class="!mb-0"
+                    />
                 </div>
             </div>
 
@@ -155,65 +126,41 @@
                         {!! view_render_event('admin.user.current_password.before', ['user' => $user]) !!}
 
                         <!-- Current Password -->
-                        <x-admin::form.control-group>
-
-
-                            <x-admin::form.control-group.control
-                                type="password"
-                                name="current_password"
-                                rules="required|min:6"
-                                :label="trans('admin::app.account.edit.current-password')"
-                                :placeholder="trans('admin::app.account.edit.current-password')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.account.edit.current-password')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="current_password" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="password"
+                            name="current_password"
+                            :label="trans('admin::app.account.edit.current-password')"
+                            rules="required|min:6"
+                            :placeholder="trans('admin::app.account.edit.current-password')"
+                        />
 
                         {!! view_render_event('admin.user.current_password.after', ['user' => $user]) !!}
 
                         {!! view_render_event('admin.user.password.before', ['user' => $user]) !!}
 
                         <!-- Password -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="password"
-                                name="password"
-                                rules="min:6"
-                                :placeholder="trans('admin::app.account.edit.password')"
-                                ref="password"
-                            />
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.account.edit.password')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="password" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="password"
+                            name="password"
+                            :label="trans('admin::app.account.edit.password')"
+                            rules="min:6"
+                            :placeholder="trans('admin::app.account.edit.password')"
+                            ref="password"
+                        />
 
                         {!! view_render_event('admin.user.password.after', ['user' => $user]) !!}
 
                         {!! view_render_event('admin.user.confirm-password.before', ['user' => $user]) !!}
 
                         <!-- Confirm Password -->
-                        <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.control
-                                type="password"
-                                name="password_confirmation"
-                                rules="confirmed:@password"
-                                :label="trans('admin::app.account.edit.confirm-password')"
-                                :placeholder="trans('admin::app.account.edit.confirm-password')"
-                            />
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.account.edit.confirm-password')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="password_confirmation" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="password"
+                            name="password_confirmation"
+                            :label="trans('admin::app.account.edit.confirm-password')"
+                            rules="confirmed:@password"
+                            :placeholder="trans('admin::app.account.edit.confirm-password')"
+                            class="!mb-0"
+                        />
 
                         {!! view_render_event('admin.user.confirm-password.after', ['user' => $user]) !!}
                     </x-slot>

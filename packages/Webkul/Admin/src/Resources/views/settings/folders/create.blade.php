@@ -29,43 +29,27 @@
                 <div class="p-6">
                     <div class="grid gap-6">
                         <!-- Name -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="name"
-                                id="name"
-                                rules="required"
-                                :label="trans('admin::app.settings.folders.create.name')"
-                                :placeholder="trans('admin::app.settings.folders.create.name')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.folders.create.name')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="name" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            name="name"
+                            id="name"
+                            :label="trans('admin::app.settings.folders.create.name')"
+                            rules="required"
+                            :placeholder="trans('admin::app.settings.folders.create.name')"
+                        />
 
                         <!-- Parent Folder -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="parent_id"
-                                id="parent_id"
-                                :label="trans('admin::app.settings.folders.create.parent')"
-                            >
-                                <option value="">@lang('admin::app.settings.folders.create.no-parent')</option>
-                                @foreach ($folders as $folder)
-                                    <option value="{{ $folder->id }}">{{ $folder->name }}</option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.settings.folders.create.parent')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="parent_id" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="select"
+                            name="parent_id"
+                            id="parent_id"
+                            :label="trans('admin::app.settings.folders.create.parent')"
+                        >
+                            <option value="">@lang('admin::app.settings.folders.create.no-parent')</option>
+                            @foreach ($folders as $folder)
+                                <option value="{{ $folder->id }}">{{ $folder->name }}</option>
+                            @endforeach
+                        </x-adminc::components.field>
 
                     </div>
                 </div>

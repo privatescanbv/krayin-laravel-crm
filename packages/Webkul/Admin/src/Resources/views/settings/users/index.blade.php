@@ -438,7 +438,7 @@
 
                                 <v-field
                                     name="groups[]"
-                                    label="@lang('admin::app.settings.users.index.create.group')"
+                                    :label="trans('admin::app.settings.users.index.create.group')"
                                     multiple
                                     v-model="user.groups"
                                 >

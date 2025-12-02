@@ -91,18 +91,11 @@ $hasActiveCampaign = $lead->channel !== null;
                 </div>
 
                 <!-- Soort aanvraag -->
-                <div class="relative mb-1">
-
-                        <input
-                            type="text"
-                            class="w-full pr-8"
-                            value="{{ $requestType }}"
-                            readonly />
-                    <label class="">
-
-                        <span>Soort aanvraag</span>
-                    </label>
-                </div>
+                <x-adminc::components.field
+                    class="mb-1"
+                    label="Soort aanvraag"
+                    value="{{ $requestType }}"
+                    readonly />
             </div>
 
             <!-- Column 2: LEAD HERKOMST -->
@@ -115,19 +108,11 @@ $hasActiveCampaign = $lead->channel !== null;
                 </div>
 
                 <!-- Bron voor lead -->
-                <div class="relative mb-1">
-
-                        <input
-                            type="text"
-                            class="w-full pr-8"
-                            value="{{ $leadSource }}"
-                            readonly />
-
-                                        <label class="">
-
-                        <span>Bron voor lead</span>
-                    </label>
-                </div>
+                <x-adminc::components.field
+                    class="mb-1"
+                    label="Bron voor lead"
+                    value="{{ $leadSource }}"
+                    readonly />
             </div>
 
             <!-- Column 3: MARKETING CAMPAGNE -->
@@ -140,18 +125,11 @@ $hasActiveCampaign = $lead->channel !== null;
                 </div>
 
                 <!-- Campagne -->
-                <div class="relative mb-1">
-
-                        <input
-                            type="text"
-                            class="w-full pr-8"
-                            value="{{ $campaign }}"
-                            readonly />
-                    <label class="">
-
-                        <span>Campagne</span>
-                    </label>
-                </div>
+                <x-adminc::components.field
+                    class="mb-1"
+                    label="Campagne"
+                    value="{{ $campaign }}"
+                    readonly />
             </div>
         </div>
     </div>

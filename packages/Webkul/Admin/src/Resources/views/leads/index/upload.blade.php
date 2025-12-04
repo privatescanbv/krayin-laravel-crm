@@ -41,29 +41,21 @@
 
                         <!-- Modal Content -->
                         <x-slot:content>
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="file"
-                                    id="files"
-                                    name="files"
-                                    rules="required|mimes:pdf,bmp,jpeg,jpg,png,webp"
-                                    :label="trans('admin::app.leads.index.upload.file')"
-                                    ::disabled="isLoading"
-                                    ref="file"
-                                    accept="application/pdf,image/*"
-                                    multiple
-                                />
+                            <x-adminc::components.field
+                                type="file"
+                                id="files"
+                                name="files"
+                                rules="required|mimes:pdf,bmp,jpeg,jpg,png,webp"
+                                :label="trans('admin::app.leads.index.upload.file')"
+                                ::disabled="isLoading"
+                                ref="file"
+                                accept="application/pdf,image/*"
+                                multiple
+                            />
 
-                                <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                                    @lang('admin::app.leads.index.upload.file-info')
-                                </p>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.leads.index.upload.file')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="files" />
-
-                            </x-admin::form.control-group>
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                @lang('admin::app.leads.index.upload.file-info')
+                            </p>
                         </x-slot>
 
                         <!-- Modal Footer -->

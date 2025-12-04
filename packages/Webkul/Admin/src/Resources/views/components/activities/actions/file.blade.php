@@ -83,49 +83,28 @@
                             </x-admin::form.control-group>
 
                             <!-- Description -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="comment"
-                                />
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.file.description')
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="comment"
+                                :label="trans('admin::app.components.activities.actions.file.description')"
+                            />
 
                             <!-- File Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="name"
-                                />
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.file.name')
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="name"
+                                :label="trans('admin::app.components.activities.actions.file.name')"
+                            />
 
                             <!-- File -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="file"
-                                    id="file"
-                                    name="file"
-                                    rules="required"
-                                    :label="trans('admin::app.components.activities.actions.file.file')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.file.file')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.file.title-control')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="file" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="file"
+                                id="file"
+                                name="file"
+                                :label="trans('admin::app.components.activities.actions.file.file')"
+                                rules="required"
+                                class="!mb-0"
+                            />
 
                             {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.content.controls.after') !!}
                         </x-slot>

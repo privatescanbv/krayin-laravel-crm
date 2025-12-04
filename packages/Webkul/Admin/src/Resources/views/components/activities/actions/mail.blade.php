@@ -230,26 +230,14 @@
                             </x-admin::form.control-group>
 
                             <!-- Subject -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="subject"
-                                    name="subject"
-                                    rules="required"
-                                    :label="trans('admin::app.components.activities.actions.mail.subject')"
-                                    :placeholder="trans('admin::app.components.activities.actions.mail.subject')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.mail.subject')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.label>
-                                    Template
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="subject" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="subject"
+                                name="subject"
+                                :label="trans('admin::app.components.activities.actions.mail.subject')"
+                                rules="required"
+                                :placeholder="trans('admin::app.components.activities.actions.mail.subject')"
+                            />
 
                             <!-- Content -->
                             <x-admin::form.control-group>

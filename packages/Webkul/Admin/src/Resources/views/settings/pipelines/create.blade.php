@@ -48,94 +48,61 @@
                 {!! view_render_event('admin.settings.pipelines.create.form.name.before') !!}
 
                 <!-- Name -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="name"
-                        id="name"
-                        rules="required"
-                        :label="trans('admin::app.settings.pipelines.create.name')"
-                        :placeholder="trans('admin::app.settings.pipelines.create.name')"
-                        value="{{ old('name') }}"
-                    />
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.name')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="name" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="name"
+                    id="name"
+                    :label="trans('admin::app.settings.pipelines.create.name')"
+                    value="{{ old('name') }}"
+                    rules="required"
+                    :placeholder="trans('admin::app.settings.pipelines.create.name')"
+                />
 
                 {!! view_render_event('admin.settings.pipelines.create.form.name.after') !!}
 
                 {!! view_render_event('admin.settings.pipelines.create.form.rotten_days.before') !!}
 
                 <!-- Rotten-Days -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="rotten_days"
-                        id="rotten_days"
-                        rules="required|numeric|min_value:1"
-                        :label="trans('admin::app.settings.pipelines.create.rotten-days')"
-                        :placeholder="trans('admin::app.settings.pipelines.create.rotten-days')"
-                        value="{{ old('rotten_days') ?? 30 }}"
-                    />
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.rotten-days')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="rotten_days" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="rotten_days"
+                    id="rotten_days"
+                    :label="trans('admin::app.settings.pipelines.create.rotten-days')"
+                    value="{{ old('rotten_days') ?? 30 }}"
+                    rules="required|numeric|min_value:1"
+                    :placeholder="trans('admin::app.settings.pipelines.create.rotten-days')"
+                />
 
                 {!! view_render_event('admin.settings.pipelines.create.form.rotten_days.after') !!}
 
                 {!! view_render_event('admin.settings.pipelines.create.form.type.before') !!}
 
                 <!-- Type -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="select"
-                        name="type"
-                        id="type"
-                        rules="required"
-                        :label="trans('admin::app.settings.pipelines.create.type')"
-                        value="{{ old('type', 'lead') }}"
-                    >
-                        <option value="lead">Lead</option>
-                        <option value="workflow">Workflow</option>
-                    </x-admin::form.control-group.control>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.type')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="type" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="select"
+                    name="type"
+                    id="type"
+                    :label="trans('admin::app.settings.pipelines.create.type')"
+                    value="{{ old('type', 'lead') }}"
+                    rules="required"
+                >
+                    <option value="lead">Lead</option>
+                    <option value="workflow">Workflow</option>
+                </x-adminc::components.field>
 
                 {!! view_render_event('admin.settings.pipelines.create.form.type.after') !!}
 
                 {!! view_render_event('admin.settings.pipelines.create.form.is_default.before') !!}
 
                 <!-- Mark as Default -->
-                <x-admin::form.control-group class="!mb-0 flex items-center gap-4">
-                    <x-admin::form.control-group.control
-                        type="switch"
-                        class="cursor-pointer"
-                        name="is_default"
-                        id="is_default"
-                        value="1"
-                        for="is_default"
-                        :label="trans('admin::app.settings.pipelines.create.mark-as-default')"
-                    />
-                    <x-admin::form.control-group.label class="!mb-0" switch>
-                        @lang('admin::app.settings.pipelines.create.mark-as-default')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="is_default" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="switch"
+                    name="is_default"
+                    id="is_default"
+                    :label="trans('admin::app.settings.pipelines.create.mark-as-default')"
+                    value="1"
+                    class="!mb-0 flex items-center gap-4"
+                />
 
                 {!! view_render_event('admin.settings.pipelines.create.form.is_default.after') !!}
             </div>

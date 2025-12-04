@@ -87,14 +87,16 @@ use App\Models\SalesLead;
                         <div class="space-y-6">
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <x-admin::form.control-group>                                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title"
-                                                                     rules="required"/>
-                                <x-admin::form.control-group.label class="required">Titel
-                                </x-admin::form.control-group.label>
+                            <x-adminc::components.field
+                                type="text"
+                                name="title"
+                                label="Titel"
+                                value="{{ $orders->title }}"
+                                rules="required"
+                            />
 
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group>                                <x-admin::form.control-group.control
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.control
                                     type="select"
                                     name="sales_lead_id"
                                     value="{{ $orders->sales_lead_id ?? '' }}"
@@ -118,35 +120,30 @@ use App\Models\SalesLead;
 
                             </x-admin::form.control-group>
 
-                            <x-admin::form.control-group>                                <x-admin::form.control-group.control
-                                    type="select"
-                                    name="status"
-                                    value="{{ $orders->status->value ?? '' }}"
-                                    rules="required"
-                                >
-                                    @foreach(OrderStatus::cases() as $status)
-                                        <option
-                                            value="{{ $status->value }}" {{ $orders->status === $status ? 'selected' : '' }}>
-                                            {{ $status->label() }}
-                                        </option>
-                                    @endforeach
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label class="required">Status
-                                </x-admin::form.control-group.label>
+                            <x-adminc::components.field
+                                type="select"
+                                name="status"
+                                label="Status"
+                                value="{{ $orders->status->value ?? '' }}"
+                                rules="required"
+                            >
+                                @foreach(OrderStatus::cases() as $status)
+                                    <option
+                                        value="{{ $status->value }}" {{ $orders->status === $status ? 'selected' : '' }}>
+                                        {{ $status->label() }}
+                                    </option>
+                                @endforeach
+                            </x-adminc::components.field>
 
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group>                                <x-admin::form.control-group.control
-                                    type="select"
-                                    name="combine_order"
-                                    value="{{ $orders->combine_order ? '1' : '0' }}"
-                                >
-                                    <option value="1" {{ $orders->combine_order ? 'selected' : '' }}>Ja</option>
-                                    <option value="0" {{ !$orders->combine_order ? 'selected' : '' }}>Nee</option>
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="select"
+                                name="combine_order"
+                                label="Orders combineren"
+                                value="{{ $orders->combine_order ? '1' : '0' }}"
+                            >
+                                <option value="1" {{ $orders->combine_order ? 'selected' : '' }}>Ja</option>
+                                <option value="0" {{ !$orders->combine_order ? 'selected' : '' }}>Nee</option>
+                            </x-adminc::components.field>
 
                             </div>
 

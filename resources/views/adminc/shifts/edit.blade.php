@@ -24,25 +24,17 @@
 
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 @include('adminc.components.validation-errors')
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="select"
-                        name="resource_id"
-                        rules="required|numeric"
-                        value="{{ old('resource_id', $resource->id) }}"
-                        :label="trans('admin::app.settings.resources.index.create.title')"
-                    >
-                        @foreach ($resources as $res)
-                            <option value="{{ $res->id }}">{{ $res->name }}</option>
-                        @endforeach
-                    </x-admin::form.control-group.control>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.resources.index.create.title')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="resource_id" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="select"
+                    name="resource_id"
+                    rules="required|numeric"
+                    value="{{ old('resource_id', $resource->id) }}"
+                    :label="trans('admin::app.settings.resources.index.create.title')"
+                >
+                    @foreach ($resources as $res)
+                        <option value="{{ $res->id }}">{{ $res->name }}</option>
+                    @endforeach
+                </x-adminc::components.field>
                 <x-adminc::shifts.partials.period
                     :periodStart="old('period_start', optional($shift->period_start)->format('Y-m-d'))"
                     :periodEnd="old('period_end', optional($shift->period_end)->format('Y-m-d'))"/>
@@ -60,20 +52,12 @@
                 @endphp
                 <x-adminc::shifts.partials.time-blocks :weekdayBlocks="$weekdayBlocks"/>
 
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="textarea"
-                        name="notes"
-                        value="{{ old('notes', $shift->notes) }}"
-                        :label="trans('admin::app.settings.shifts.fields.notes')"
-                    />
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.shifts.fields.notes')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="notes" />
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="textarea"
+                    name="notes"
+                    value="{{ old('notes', $shift->notes) }}"
+                    :label="trans('admin::app.settings.shifts.fields.notes')"
+                />
 
                 <x-admin::form.control-group>
                     <input type="hidden" name="available" value="0" />

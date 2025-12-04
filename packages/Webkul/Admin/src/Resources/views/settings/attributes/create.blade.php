@@ -82,23 +82,15 @@
                         {!! view_render_event('admin.settings.attributes.create.form_controls.name.before') !!}
 
                         <!-- Name -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="name"
-                                name="name"
-                                rules="required"
-                                value="{{ old('name') }}"
-                                :label="trans('admin::app.settings.attributes.create.name')"
-                                :placeholder="trans('admin::app.settings.attributes.create.name')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.attributes.create.name')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="name" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            id="name"
+                            name="name"
+                            :label="trans('admin::app.settings.attributes.create.name')"
+                            value="{{ old('name') }}"
+                            rules="required"
+                            :placeholder="trans('admin::app.settings.attributes.create.name')"
+                        />
 
                         {!! view_render_event('admin.settings.attributes.create.form_controls.name.after') !!}
 

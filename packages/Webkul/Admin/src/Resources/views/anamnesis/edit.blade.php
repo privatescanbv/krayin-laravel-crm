@@ -72,34 +72,24 @@
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Algemene informatie</h2>
 
                         <div class="mb-4">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="name"
-                                    :value="$anamnesis->name"
-                                    placeholder="Anamnesis naam"
-                                />
-                                <x-admin::form.control-group.label>
-                                    Naam
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="name"
+                                label="Naam"
+                                :value="$anamnesis->name"
+                                placeholder="Anamnesis naam"
+                            />
                         </div>
 
                         <div class="mb-4">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="description"
-                                    :value="$anamnesis->description"
-                                    placeholder="Beschrijving"
-                                    rows="3"
-                                />
-                                <x-admin::form.control-group.label>
-                                    Beschrijving
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="description"
+                                label="Beschrijving"
+                                :value="$anamnesis->description"
+                                placeholder="Beschrijving"
+                                rows="3"
+                            />
                         </div>
 
                         <div class="mb-4">
@@ -115,19 +105,14 @@
                         </div>
 
                         <div class="mb-4">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="comment_clinic"
-                                    :value="$anamnesis->comment_clinic"
-                                    placeholder="Kliniek opmerkingen"
-                                    rows="3"
-                                />
-                                <x-admin::form.control-group.label>
-                                    Kliniek opmerkingen
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="comment_clinic"
+                                label="Kliniek opmerkingen"
+                                :value="$anamnesis->comment_clinic"
+                                placeholder="Kliniek opmerkingen"
+                                rows="3"
+                            />
                         </div>
                     </div>
 
@@ -137,35 +122,25 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.control
-                                        type="number"
-                                        name="height"
-                                        :value="$anamnesis->height"
-                                        placeholder="180"
-                                        onchange="updateBMI()"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        Lengte (cm)
-                                    </x-admin::form.control-group.label>
-
-                                </x-admin::form.control-group>
+                                <x-adminc::components.field
+                                    type="number"
+                                    name="height"
+                                    label="Lengte (cm)"
+                                    :value="$anamnesis->height"
+                                    placeholder="180"
+                                    onchange="updateBMI()"
+                                />
                             </div>
 
                             <div>
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.control
-                                        type="number"
-                                        name="weight"
-                                        :value="$anamnesis->weight"
-                                        placeholder="70"
-                                        onchange="updateBMI()"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        Gewicht (kg)
-                                    </x-admin::form.control-group.label>
-
-                                </x-admin::form.control-group>
+                                <x-adminc::components.field
+                                    type="number"
+                                    name="weight"
+                                    label="Gewicht (kg)"
+                                    :value="$anamnesis->weight"
+                                    placeholder="70"
+                                    onchange="updateBMI()"
+                                />
                             </div>
                         </div>
 
@@ -214,9 +189,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="metals_comment" class="mt-2" style="display: {{ $anamnesis->metals == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="metals_notes"
+                                        label="Toelichting metalen"
                                         :value="$anamnesis->metals_notes"
                                         placeholder="Toelichting metalen"
                                     />
@@ -249,9 +225,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="medications_comment" class="mt-2" style="display: {{ $anamnesis->medications == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="medications_notes"
+                                        label="Toelichting medicijnen"
                                         :value="$anamnesis->medications_notes"
                                         placeholder="Toelichting medicijnen"
                                     />
@@ -284,9 +261,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="glaucoma_comment" class="mt-2" style="display: {{ $anamnesis->glaucoma == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="glaucoma_notes"
+                                        label="Toelichting glaucoom"
                                         :value="$anamnesis->glaucoma_notes"
                                         placeholder="Toelichting glaucoom"
                                     />
@@ -367,9 +345,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="heart_surgery_comment" class="mt-2" style="display: {{ $anamnesis->heart_surgery == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="heart_surgery_notes"
+                                        label="Toelichting hart operatie"
                                         :value="$anamnesis->heart_surgery_notes"
                                         placeholder="Toelichting hart operatie"
                                     />
@@ -402,9 +381,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="implant_comment" class="mt-2" style="display: {{ $anamnesis->implant == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="implant_notes"
+                                        label="Toelichting implantaat"
                                         :value="$anamnesis->implant_notes"
                                         placeholder="Toelichting implantaat"
                                     />
@@ -437,9 +417,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="surgeries_comment" class="mt-2" style="display: {{ $anamnesis->surgeries == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="surgeries_notes"
+                                        label="Toelichting operaties"
                                         :value="$anamnesis->surgeries_notes"
                                         placeholder="Toelichting operaties"
                                     />
@@ -472,9 +453,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="heart_problems_comment" class="mt-2" style="display: {{ $anamnesis->heart_problems == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="heart_problems_notes"
+                                        label="Toelichting hartklachten"
                                         :value="$anamnesis->heart_problems_notes"
                                         placeholder="Toelichting hartklachten"
                                     />
@@ -507,9 +489,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="back_problems_comment" class="mt-2" style="display: {{ $anamnesis->back_problems == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="back_problems_notes"
+                                        label="Toelichting rugklachten"
                                         :value="$anamnesis->back_problems_notes"
                                         placeholder="Toelichting rugklachten"
                                     />
@@ -546,9 +529,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="allergies_comment" class="mt-2" style="display: {{ $anamnesis->allergies == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="allergies_notes"
+                                        label="Toelichting allergie"
                                         :value="$anamnesis->allergies_notes"
                                         placeholder="Toelichting allergie"
                                     />
@@ -581,9 +565,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="digestive_problems_comment" class="mt-2" style="display: {{ $anamnesis->digestive_problems == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="digestive_problems_notes"
+                                        label="Toelichting spijsvertering"
                                         :value="$anamnesis->digestive_problems_notes"
                                         placeholder="Toelichting spijsvertering"
                                     />
@@ -626,9 +611,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="hereditary_heart_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_heart == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="hereditary_heart_notes"
+                                        label="Toelichting hart erfelijk"
                                         :value="$anamnesis->hereditary_heart_notes"
                                         placeholder="Toelichting hart erfelijk"
                                     />
@@ -661,9 +647,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="hereditary_vascular_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_vascular == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="hereditary_vascular_notes"
+                                        label="Toelichting vaat erfelijk"
                                         :value="$anamnesis->hereditary_vascular_notes"
                                         placeholder="Toelichting vaat erfelijk"
                                     />
@@ -696,9 +683,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="hereditary_tumors_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_tumors == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="hereditary_tumors_notes"
+                                        label="Toelichting tumoren erfelijk"
                                         :value="$anamnesis->hereditary_tumors_notes"
                                         placeholder="Toelichting tumoren erfelijk"
                                     />
@@ -731,9 +719,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="smoking_comment" class="mt-2" style="display: {{ $anamnesis->smoking == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="smoking_notes"
+                                        label="Toelichting roken"
                                         :value="$anamnesis->smoking_notes"
                                         placeholder="Toelichting roken"
                                     />
@@ -766,9 +755,10 @@
                                 </x-admin::form.control-group>
 
                                 <div id="diabetes_comment" class="mt-2" style="display: {{ $anamnesis->diabetes == 1 ? 'block' : 'none' }}">
-                                    <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                         type="text"
                                         name="diabetes_notes"
+                                        label="Toelichting diabetes"
                                         :value="$anamnesis->diabetes_notes"
                                         placeholder="Toelichting diabetes"
                                     />
@@ -801,18 +791,13 @@
 
                             <!-- Risico hartinfarct -->
                             <div class="space-y-2">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.control
-                                        type="text"
-                                        name="heart_attack_risk"
-                                        :value="$anamnesis->heart_attack_risk"
-                                        placeholder="Risico hartinfarct"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        Risico hartinfarct
-                                    </x-admin::form.control-group.label>
-
-                                </x-admin::form.control-group>
+                                <x-adminc::components.field
+                                    type="text"
+                                    name="heart_attack_risk"
+                                    label="Risico hartinfarct"
+                                    :value="$anamnesis->heart_attack_risk"
+                                    placeholder="Risico hartinfarct"
+                                />
                             </div>
                         </div>
                     </div>
@@ -825,34 +810,24 @@
 
                         <div class="space-y-4">
                             <div>
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.control
-                                        type="text"
-                                        name="remarks"
-                                        :value="$anamnesis->remarks"
-                                        placeholder="Algemene opmerking"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        Opmerking
-                                    </x-admin::form.control-group.label>
-
-                                </x-admin::form.control-group>
+                                <x-adminc::components.field
+                                    type="text"
+                                    name="remarks"
+                                    label="Opmerking"
+                                    :value="$anamnesis->remarks"
+                                    placeholder="Algemene opmerking"
+                                />
                             </div>
 
                             <div>
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.control
-                                        type="textarea"
-                                        name="advice_notes"
-                                        :value="$anamnesis->advice_notes"
-                                        placeholder="Advies voor patiënt"
-                                        rows="3"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        Advies
-                                    </x-admin::form.control-group.label>
-
-                                </x-admin::form.control-group>
+                                <x-adminc::components.field
+                                    type="textarea"
+                                    name="advice_notes"
+                                    label="Advies"
+                                    :value="$anamnesis->advice_notes"
+                                    placeholder="Advies voor patiënt"
+                                    rows="3"
+                                />
                             </div>
                         </div>
                     </div>

@@ -31,45 +31,29 @@
                 <div class="p-6">
                     <div class="grid gap-6">
                         <!-- Name -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="name"
-                                id="name"
-                                rules="required"
-                                :value="old('name') ?: $folder->name"
-                                :label="trans('admin::app.settings.folders.edit.name')"
-                                :placeholder="trans('admin::app.settings.folders.edit.name')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.folders.edit.name')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="name" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="text"
+                            name="name"
+                            id="name"
+                            :label="trans('admin::app.settings.folders.edit.name')"
+                            value="{{ old('name') ?: $folder->name }}"
+                            rules="required"
+                            :placeholder="trans('admin::app.settings.folders.edit.name')"
+                        />
 
                         <!-- Parent Folder -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="parent_id"
-                                id="parent_id"
-                                :value="old('parent_id') ?: $folder->parent_id"
-                                :label="trans('admin::app.settings.folders.edit.parent')"
-                            >
-                                <option value="">@lang('admin::app.settings.folders.edit.no-parent')</option>
-                                @foreach ($folders as $parentFolder)
-                                    <option value="{{ $parentFolder->id }}">{{ $parentFolder->name }}</option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.settings.folders.edit.parent')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="parent_id" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="select"
+                            name="parent_id"
+                            id="parent_id"
+                            :label="trans('admin::app.settings.folders.edit.parent')"
+                            value="{{ old('parent_id') ?: $folder->parent_id }}"
+                        >
+                            <option value="">@lang('admin::app.settings.folders.edit.no-parent')</option>
+                            @foreach ($folders as $parentFolder)
+                                <option value="{{ $parentFolder->id }}">{{ $parentFolder->name }}</option>
+                            @endforeach
+                        </x-adminc::components.field>
 
                     </div>
                 </div>

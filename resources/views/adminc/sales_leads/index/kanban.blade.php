@@ -331,15 +331,16 @@
                         </p>
 
                         <!-- Lost Reason -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="closed_at"
-                                v-model="currentStageUpdate.closed_at"
-                                placeholder="dd-mm-yyyy"
-                                required
-                            />
+                        <x-adminc::components.field
+                            type="text"
+                            name="closed_at"
+                            v-model="currentStageUpdate.closed_at"
+                            placeholder="dd-mm-yyyy"
+                            required
+                            label="Gesloten op"
+                        />
 
+                        <x-admin::form.control-group>
                             <select
                                 name="lost_reason"
                                 class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
@@ -353,14 +354,6 @@
                             </select>
                             <x-admin::form.control-group.label>
                                 Reden van verlies
-                            </x-admin::form.control-group.label>
-
-                        </x-admin::form.control-group>
-
-                        <!-- Closed At -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Gesloten op
                             </x-admin::form.control-group.label>
 
                         </x-admin::form.control-group>

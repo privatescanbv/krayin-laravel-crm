@@ -162,90 +162,62 @@
                         </x-slot>
 
                         <x-slot:content>
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    :value="old('name')"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.email-template.create.name')"
-                                    :placeholder="trans('admin::app.settings.email-template.create.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.email-template.create.name')
-                                </x-admin::form.control-group.label>
+                            <x-adminc::components.field
+                                type="text"
+                                name="name"
+                                id="name"
+                                :label="trans('admin::app.settings.email-template.create.name')"
+                                value="{{ old('name') }}"
+                                rules="required"
+                                :placeholder="trans('admin::app.settings.email-template.create.name')"
+                                class="!mb-0"
+                            />
 
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="code"
-                                    id="code"
-                                    :value="old('code')"
-                                    :label="'Code'"
-                                    :placeholder="'Bijv: reply, activity-created'"
-                                />
-                                <x-admin::form.control-group.label>
-                                    Code
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="code" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="code"
+                                id="code"
+                                label="Code"
+                                value="{{ old('code') }}"
+                                placeholder="Bijv: reply, activity-created"
+                                class="!mb-0"
+                            />
 
                             @php
                                 $selectedType = old('type', EmailTemplateType::ALGEMEEN->value);
                                 $selectedLanguage = old('language', EmailTemplateLanguage::NEDERLANDS->value);
                             @endphp
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    name="type"
-                                    id="type"
-                                    value="{{ $selectedType }}"
-                                    rules="required"
-                                    :label="'Type'"
-                                >
-                                    @foreach($templateTypes as $type)
-                                        <option value="{{ $type['value'] }}" @selected($selectedType === $type['value'])>
-                                            {{ $type['label'] }}
-                                        </option>
-                                    @endforeach
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label class="required">
-                                    Type
-                                </x-admin::form.control-group.label>
+                            <x-adminc::components.field
+                                type="select"
+                                name="type"
+                                id="type"
+                                label="Type"
+                                value="{{ $selectedType }}"
+                                rules="required"
+                                class="!mb-0"
+                            >
+                                @foreach($templateTypes as $type)
+                                    <option value="{{ $type['value'] }}" @selected($selectedType === $type['value'])>
+                                        {{ $type['label'] }}
+                                    </option>
+                                @endforeach
+                            </x-adminc::components.field>
 
-                                <x-admin::form.control-group.error control-name="type" />
-
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    name="language"
-                                    id="language"
-                                    value="{{ $selectedLanguage }}"
-                                    rules="required"
-                                    :label="'Taal'"
-                                >
-                                    @foreach($templateLanguages as $language)
-                                        <option value="{{ $language['value'] }}" @selected($selectedLanguage === $language['value'])>
-                                            {{ $language['label'] }}
-                                        </option>
-                                    @endforeach
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label class="required">
-                                    Taal
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="language" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="select"
+                                name="language"
+                                id="language"
+                                label="Taal"
+                                value="{{ $selectedLanguage }}"
+                                rules="required"
+                                class="!mb-0"
+                            >
+                                @foreach($templateLanguages as $language)
+                                    <option value="{{ $language['value'] }}" @selected($selectedLanguage === $language['value'])>
+                                        {{ $language['label'] }}
+                                    </option>
+                                @endforeach
+                            </x-adminc::components.field>
 
                             <x-admin::form.control-group class="!mb-0">
                                 <v-entity-selector

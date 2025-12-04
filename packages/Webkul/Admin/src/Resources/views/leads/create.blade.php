@@ -226,7 +226,11 @@ $salutationToGenderMapping = [
                                             ];
                                             $__entityPrefill = (object) array_merge($__defaults, ($prefilledLeadPerson ?? []));
                                         @endphp
-                                        @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
+                                        @include('admin::leads.common.personal-fields', [
+                                            'entity' => $__entityPrefill,
+                                            'bindModel' => 'formData',
+                                            'showPortalFields' => false,
+                                        ])
                                     </div>
 
                                     <!-- Contact Person Selection (aligned with edit view) -->
@@ -313,15 +317,13 @@ $salutationToGenderMapping = [
                                                                class="mr-2"> Nee
                                                     </label>
                                                     <div ref="metals_notes_container" style="display: none" class="relative">
-                                                    <x-admin::form.control-group.control
-                                                        type="text"
-                                                        name="metals_notes"
-                                                        placeholder="Toelichting"
-                                                    />
-                                                                                                    <x-admin::form.control-group.label>
-                                                    Toelichting
-                                                </x-admin::form.control-group.label>
-                                                </div>
+                                                        <x-adminc::components.field
+                                                            type="text"
+                                                            name="metals_notes"
+                                                            label="Toelichting"
+                                                            placeholder="Toelichting"
+                                                        />
+                                                    </div>
                                                 </div>
 
 
@@ -367,16 +369,14 @@ $salutationToGenderMapping = [
                                                                @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}"
                                                                class="mr-2"> Nee
                                                     </label>
-                                                                                               <div ref="allergies_notes_container" style="display: none" class="relative">
-                                                    <x-admin::form.control-group.control
-                                                        type="text"
-                                                        name="allergies_notes"
-                                                        placeholder="Toelichting"
-                                                    />
-                                                <x-admin::form.control-group.label>
-                                                    Toelichting
-                                                </x-admin::form.control-group.label>
-                                                </div>
+                                                    <div ref="allergies_notes_container" style="display: none" class="relative">
+                                                        <x-adminc::components.field
+                                                            type="text"
+                                                            name="allergies_notes"
+                                                            label="Toelichting"
+                                                            placeholder="Toelichting"
+                                                        />
+                                                    </div>
                                                 </div>
 
 
@@ -386,38 +386,26 @@ $salutationToGenderMapping = [
                                         <!-- Lengte en Gewicht (optioneel) -->
                                         <div class="mt-3 flex gap-4">
                                             <div class="w-1/2">
-                                                <x-admin::form.control-group>
-
-                                                    <x-admin::form.control-group.control
-                                                        type="number"
-                                                        name="height"
-                                                        placeholder="Bijv. 175"
-                                                        min="100"
-                                                        max="250"
-                                                        step="1"
-                                                    />
-                                                                                                        <x-admin::form.control-group.label>
-                                                        Lengte (cm)
-                                                    </x-admin::form.control-group.label>
-                                                    <x-admin::form.control-group.error control-name="height"/>
-                                                </x-admin::form.control-group>
+                                                <x-adminc::components.field
+                                                    type="number"
+                                                    name="height"
+                                                    label="Lengte (cm)"
+                                                    placeholder="Bijv. 175"
+                                                    min="100"
+                                                    max="250"
+                                                    step="1"
+                                                />
                                             </div>
                                             <div class="w-1/2">
-                                                <x-admin::form.control-group>
-
-                                                    <x-admin::form.control-group.control
-                                                        type="number"
-                                                        name="weight"
-                                                        placeholder="Bijv. 75"
-                                                        min="20"
-                                                        max="300"
-                                                        step="1"
-                                                    />
-                                                                                                        <x-admin::form.control-group.label>
-                                                        Gewicht (kg)
-                                                    </x-admin::form.control-group.label>
-                                                    <x-admin::form.control-group.error control-name="weight"/>
-                                                </x-admin::form.control-group>
+                                                <x-adminc::components.field
+                                                    type="number"
+                                                    name="weight"
+                                                    label="Gewicht (kg)"
+                                                    placeholder="Bijv. 75"
+                                                    min="20"
+                                                    max="300"
+                                                    step="1"
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -436,22 +424,14 @@ $salutationToGenderMapping = [
 
                                     <!-- Description -->
                                     <div class="mb-4">
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.control
-                                                type="textarea"
-                                                name="description"
-                                                v-model="formData.description"
-                                                label="Beschrijving"
-                                                placeholder="Beschrijving"
-                                                class="min-h-[80px]"
-                                            />
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.leads.create.description')
-                                            </x-admin::form.control-group.label>
-
-                                            <x-admin::form.control-group.error control-name="description"/>
-
-                                        </x-admin::form.control-group>
+                                        <x-adminc::components.field
+                                            type="textarea"
+                                            name="description"
+                                            v-model="formData.description"
+                                            label="Beschrijving"
+                                            placeholder="Beschrijving"
+                                            class="min-h-[80px]"
+                                        />
                                     </div>
 
                                     <!-- Organization Section -->
@@ -464,22 +444,18 @@ $salutationToGenderMapping = [
                                             $userOptions = app(Webkul\User\Repositories\UserRepository::class)->allActiveUsers();
                                             $currentUserId = $currentUserId ?? null;
                                         @endphp
-                                        <x-admin::form.control-group>                                            <x-admin::form.control-group.control
-                                                type="select"
-                                                name="user_id"
-                                                value="{{ $currentUserId }}"
-                                            >
-                                                <option value="">-- Kies gebruiker --</option>
-                                                @foreach ($userOptions as $user)
-                                                    <option
-                                                        value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
-                                                @endforeach
-                                            </x-admin::form.control-group.control>
-                                            <x-admin::form.control-group.label>
-                                                Toegewezen gebruiker
-                                            </x-admin::form.control-group.label>
-
-                                        </x-admin::form.control-group>
+                                        <x-adminc::components.field
+                                            type="select"
+                                            name="user_id"
+                                            value="{{ $currentUserId }}"
+                                            label="Toegewezen gebruiker"
+                                        >
+                                            <option value="">-- Kies gebruiker --</option>
+                                            @foreach ($userOptions as $user)
+                                                <option
+                                                    value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
+                                            @endforeach
+                                        </x-adminc::components.field>
                                     </div>
                                 </div>
                             </div>

@@ -40,63 +40,39 @@
 
                     <div class="border-y p-4 dark:border-gray-800">
                         <!-- Email -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="email"
-                                class="w-[254px] max-w-full"
-                                id="email"
-                                name="email"
-                                rules="required|email"
-                                :label="trans('admin::app.users.reset-password.email')"
-                                :placeholder="trans('admin::app.users.reset-password.email')"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.users.reset-password.email')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="email" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="email"
+                            class="w-[254px] max-w-full"
+                            id="email"
+                            name="email"
+                            :label="trans('admin::app.users.reset-password.email')"
+                            rules="required|email"
+                            :placeholder="trans('admin::app.users.reset-password.email')"
+                        />
 
                         <!-- Password -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="password"
-                                class="w-[254px] max-w-full"
-                                id="password"
-                                name="password"
-                                rules="required|min:6"
-                                :label="trans('admin::app.users.reset-password.password')"
-                                :placeholder="trans('admin::app.users.reset-password.password')"
-                                ref="password"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.users.reset-password.password')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="password" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="password"
+                            class="w-[254px] max-w-full"
+                            id="password"
+                            name="password"
+                            :label="trans('admin::app.users.reset-password.password')"
+                            rules="required|min:6"
+                            :placeholder="trans('admin::app.users.reset-password.password')"
+                            ref="password"
+                        />
 
                         <!-- Confirm Password -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.control
-                                type="password"
-                                class="w-[254px] max-w-full"
-                                id="password_confirmation"
-                                name="password_confirmation"
-                                rules="confirmed:@password"
-                                :label="trans('admin::app.users.reset-password.confirm-password')"
-                                :placeholder="trans('admin::app.users.reset-password.confirm-password')"
-                                ref="password"
-                            />
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.users.reset-password.confirm-password')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.error control-name="password_confirmation" />
-
-                        </x-admin::form.control-group>
+                        <x-adminc::components.field
+                            type="password"
+                            class="w-[254px] max-w-full"
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            :label="trans('admin::app.users.reset-password.confirm-password')"
+                            rules="confirmed:@password"
+                            :placeholder="trans('admin::app.users.reset-password.confirm-password')"
+                            ref="password"
+                        />
                     </div>
 
                     <div class="flex items-center justify-between p-4">

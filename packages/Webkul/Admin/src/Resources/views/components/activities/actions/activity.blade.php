@@ -96,35 +96,20 @@
                             />
 
                             <!-- Title -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="title"
-                                    rules="required|max:80"
-                                    :label="trans('admin::app.components.activities.actions.activity.title-control')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.activity.title-control')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="title" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="title"
+                                :label="trans('admin::app.components.activities.actions.activity.title-control')"
+                                rules="required|max:80"
+                            />
 
                             <!-- Description -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="comment"
-                                    rules="max:500"
-                                />
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.description')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="comment" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="comment"
+                                :label="trans('admin::app.components.activities.actions.activity.description')"
+                                rules="max:500"
+                            />
 
 
 

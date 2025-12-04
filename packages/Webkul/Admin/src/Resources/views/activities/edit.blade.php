@@ -77,23 +77,15 @@
                     {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
                     <!-- Title -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.control
-                            type="text"
-                            name="title"
-                            id="title"
-                            rules="required"
-                            :value="old('title') ?? $activity->title"
-                            :label="trans('admin::app.activities.edit.title')"
-                            :placeholder="trans('admin::app.activities.edit.title')"
-                        />
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.activities.edit.title')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.error control-name="title" />
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="text"
+                        name="title"
+                        id="title"
+                        :label="trans('admin::app.activities.edit.title')"
+                        value="{{ old('title') ?? $activity->title }}"
+                        rules="required"
+                        :placeholder="trans('admin::app.activities.edit.title')"
+                    />
 
                     <!-- Type -->
                     <x-admin::form.control-group>
@@ -157,22 +149,14 @@
                     </x-admin::form.control-group>
 
                     <!-- Description -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.control
-                            type="textarea"
-                            name="comment"
-                            id="comment"
-                            :value="old('comment') ?? $activity->comment"
-                            :label="trans('admin::app.components.activities.actions.activity.description')"
-                            :placeholder="trans('admin::app.components.activities.actions.activity.description')"
-                        />
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.components.activities.actions.activity.description')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.error control-name="comment" />
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="textarea"
+                        name="comment"
+                        id="comment"
+                        :label="trans('admin::app.components.activities.actions.activity.description')"
+                        value="{{ old('comment') ?? $activity->comment }}"
+                        :placeholder="trans('admin::app.components.activities.actions.activity.description')"
+                    />
 
                     <!-- Toegewezen aan -->
                     <x-admin::form.control-group>

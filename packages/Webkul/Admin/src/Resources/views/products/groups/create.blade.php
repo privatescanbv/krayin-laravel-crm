@@ -27,52 +27,34 @@
             </div>
 
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="name"
-                        :value="old('name')"
-                        rules="required"
-                        :label="trans('admin::app.productgroups.create.name')"
-                        :placeholder="trans('admin::app.productgroups.create.name')"
-                    />
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.productgroups.create.name')
-                    </x-admin::form.control-group.label>
+                <x-adminc::components.field
+                    type="text"
+                    name="name"
+                    :label="trans('admin::app.productgroups.create.name')"
+                    value="{{ old('name') }}"
+                    rules="required"
+                    :placeholder="trans('admin::app.productgroups.create.name')"
+                />
 
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="textarea"
+                    name="description"
+                    :label="trans('admin::app.productgroups.create.description')"
+                    value="{{ old('description') }}"
+                    :placeholder="trans('admin::app.productgroups.create.description')"
+                />
 
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="textarea"
-                        name="description"
-                        :value="old('description')"
-                        :label="trans('admin::app.productgroups.create.description')"
-                        :placeholder="trans('admin::app.productgroups.create.description')"
-                    />
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.productgroups.create.description')
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
-
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="select"
-                        name="parent_id"
-                        :value="old('parent_id')"
-                        :label="trans('admin::app.productgroups.create.parent')"
-                    >
-                        <option value="">@lang('admin::app.productgroups.create.select-parent')</option>
-                        @foreach ($productGroups as $group)
-                            <option value="{{ $group->id }}">{{ $group->path }}</option>
-                        @endforeach
-                    </x-admin::form.control-group.control>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.productgroups.create.parent')
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="select"
+                    name="parent_id"
+                    :label="trans('admin::app.productgroups.create.parent')"
+                    value="{{ old('parent_id') }}"
+                >
+                    <option value="">@lang('admin::app.productgroups.create.select-parent')</option>
+                    @foreach ($productGroups as $group)
+                        <option value="{{ $group->id }}">{{ $group->path }}</option>
+                    @endforeach
+                </x-adminc::components.field>
             </div>
         </div>
     </x-admin::form>

@@ -71,10 +71,13 @@
             @if (!isset($readonly) || !$readonly)
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
-                <button type="button" id="{{ $addressId }}-lookup-btn"
-                        class="address-lookup-button px-4 py-2 text-activity-note-text text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
-                    Adres opzoeken
-                </button>
+                    <button
+                        type="button"
+                        id="{{ $addressId }}-lookup-btn"
+                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]"
+                    >
+                        Adres opzoeken
+                    </button>
                 </div>
             </div>
             @endif

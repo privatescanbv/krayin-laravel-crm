@@ -235,53 +235,30 @@
                                     {!! view_render_event('admin.settings.marketing.campaigns.index.form_controls.modal.content.controls.before') !!}
 
                                     <!-- Name -->
-                                    <x-admin::form.control-group>
+                                    <x-admin::form.control-group.control
+                                        type="hidden"
+                                        name="id"
+                                        ::value="campaign.id"
+                                    />
 
-                                        <x-admin::form.control-group.control
-                                            type="hidden"
-                                            name="id"
-                                            ::value="campaign.id"
-                                        />
-
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="name"
-                                            id="name"
-                                            rules="required"
-                                            ::value="campaign.name"
-                                            :label="trans('admin::app.settings.marketing.campaigns.index.create.name')"
-                                        />
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="name"
-                                        >
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.name')
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="name" />
-
-                                    </x-admin::form.control-group>
+                                    <x-adminc::components.field
+                                        type="text"
+                                        name="name"
+                                        id="name"
+                                        :label="trans('admin::app.settings.marketing.campaigns.index.create.name')"
+                                        rules="required"
+                                        ::value="campaign.name"
+                                    />
 
                                     <!-- Subject -->
-                                    <x-admin::form.control-group>
-
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="subject"
-                                            id="subject"
-                                            rules="required"
-                                            rows="4"
-                                            ::value="campaign.subject"
-                                            :label="trans('admin::app.settings.marketing.campaigns.index.create.subject')"
-                                        />
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="subject"
-                                        >
-                                            @lang('admin::app.settings.marketing.campaigns.index.create.subject')
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="subject" />
+                                    <x-adminc::components.field
+                                        type="text"
+                                        name="subject"
+                                        id="subject"
+                                        :label="trans('admin::app.settings.marketing.campaigns.index.create.subject')"
+                                        rules="required"
+                                        ::value="campaign.subject"
+                                    />
 
                                     </x-admin::form.control-group>
 

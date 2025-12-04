@@ -53,7 +53,7 @@
                     </h3>
                 </div>
 
-                @include('admin::leads.common.personal-fields', ['entity' => null])
+                @include('admin::leads.common.personal-fields', ['entity' => null, 'showPortalFields' => false])
             </div>
 
             <!-- Emails Section -->

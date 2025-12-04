@@ -53,7 +53,7 @@ return [
 
     'portal' => [
         'patient' => [
-            'web_url'   => env('PATIENT_PORTAL_URL'),
+            'web_url'   => env('PATIENT_PORTAL_URL', 'https://patientdev.local.privatescan.nl'),
             'api_url'   => env('PATIENT_PORTAL_API_URL', env('PATIENT_PORTAL_URL')),
             'api_token' => env('FORMS_API_KEY'),
         ],

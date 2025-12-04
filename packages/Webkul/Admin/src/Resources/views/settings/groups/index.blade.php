@@ -206,44 +206,28 @@
                             {!! view_render_event('admin.settings.groups.index.form.form_controls.name.before') !!}
 
                             <!-- Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    rules="required|min:0|max:50"
-                                    :label="trans('admin::app.settings.groups.index.create.name')"
-                                    :placeholder="trans('admin::app.settings.groups.index.create.name')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.groups.index.create.name')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="name" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="name"
+                                name="name"
+                                :label="trans('admin::app.settings.groups.index.create.name')"
+                                rules="required|min:0|max:50"
+                                :placeholder="trans('admin::app.settings.groups.index.create.name')"
+                            />
 
                             {!! view_render_event('admin.settings.groups.index.form.form_controls.name.after') !!}
 
                             {!! view_render_event('admin.settings.groups.index.form.form_controls.description.before') !!}
 
                             <!-- Description -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    id="description"
-                                    name="description"
-                                    rules="required|max:250"
-                                    :label="trans('admin::app.settings.groups.index.create.description')"
-                                    :placeholder="trans('admin::app.settings.groups.index.create.description')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.groups.index.create.description')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="description" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="textarea"
+                                id="description"
+                                name="description"
+                                :label="trans('admin::app.settings.groups.index.create.description')"
+                                rules="required|max:250"
+                                :placeholder="trans('admin::app.settings.groups.index.create.description')"
+                            />
 
                             {!! view_render_event('admin.settings.groups.index.form.form_controls.description.after') !!}
                         </x-slot>

@@ -8,85 +8,45 @@
     </h3>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="price"
-                name="rel_purchase_price_misc"
-                value="{{ old('rel_purchase_price_misc', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_misc ?? 0, 2, ',', '') : '0') }}"
-                :label="trans('admin::app.partner_products.index.create.rel_purchase_price_misc')"
-                :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_misc')"
-            />
-            <x-admin::form.control-group.label>
-                @lang('admin::app.partner_products.index.create.rel_purchase_price_misc')
-            </x-admin::form.control-group.label>
+        <x-adminc::components.field
+            type="price"
+            name="rel_purchase_price_misc"
+            value="{{ old('rel_purchase_price_misc', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_misc ?? 0, 2, ',', '') : '0') }}"
+            :label="trans('admin::app.partner_products.index.create.rel_purchase_price_misc')"
+            :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_misc')"
+        />
 
-            <x-admin::form.control-group.error control-name="rel_purchase_price_misc" />
+        <x-adminc::components.field
+            type="price"
+            name="rel_purchase_price_doctor"
+            value="{{ old('rel_purchase_price_doctor', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_doctor ?? 0, 2, ',', '') : '0') }}"
+            :label="trans('admin::app.partner_products.index.create.rel_purchase_price_doctor')"
+            :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_doctor')"
+        />
 
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            type="price"
+            name="rel_purchase_price_cardiology"
+            value="{{ old('rel_purchase_price_cardiology', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_cardiology ?? 0, 2, ',', '') : '0') }}"
+            :label="trans('admin::app.partner_products.index.create.rel_purchase_price_cardiology')"
+            :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_cardiology')"
+        />
 
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="price"
-                name="rel_purchase_price_doctor"
-                value="{{ old('rel_purchase_price_doctor', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_doctor ?? 0, 2, ',', '') : '0') }}"
-                :label="trans('admin::app.partner_products.index.create.rel_purchase_price_doctor')"
-                :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_doctor')"
-            />
-            <x-admin::form.control-group.label>
-                @lang('admin::app.partner_products.index.create.rel_purchase_price_doctor')
-            </x-admin::form.control-group.label>
+        <x-adminc::components.field
+            type="price"
+            name="rel_purchase_price_clinic"
+            value="{{ old('rel_purchase_price_clinic', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_clinic ?? 0, 2, ',', '') : '0') }}"
+            :label="trans('admin::app.partner_products.index.create.rel_purchase_price_clinic')"
+            :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_clinic')"
+        />
 
-            <x-admin::form.control-group.error control-name="rel_purchase_price_doctor" />
-
-        </x-admin::form.control-group>
-
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="price"
-                name="rel_purchase_price_cardiology"
-                value="{{ old('rel_purchase_price_cardiology', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_cardiology ?? 0, 2, ',', '') : '0') }}"
-                :label="trans('admin::app.partner_products.index.create.rel_purchase_price_cardiology')"
-                :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_cardiology')"
-            />
-            <x-admin::form.control-group.label>
-                @lang('admin::app.partner_products.index.create.rel_purchase_price_cardiology')
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_cardiology" />
-
-        </x-admin::form.control-group>
-
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="price"
-                name="rel_purchase_price_clinic"
-                value="{{ old('rel_purchase_price_clinic', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_clinic ?? 0, 2, ',', '') : '0') }}"
-                :label="trans('admin::app.partner_products.index.create.rel_purchase_price_clinic')"
-                :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_clinic')"
-            />
-            <x-admin::form.control-group.label>
-                @lang('admin::app.partner_products.index.create.rel_purchase_price_clinic')
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_clinic" />
-
-        </x-admin::form.control-group>
-
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="price"
-                name="rel_purchase_price_radiology"
-                value="{{ old('rel_purchase_price_radiology', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_radiology ?? 0, 2, ',', '') : '0') }}"
-                :label="trans('admin::app.partner_products.index.create.rel_purchase_price_radiology')"
-                :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_radiology')"
-            />
-            <x-admin::form.control-group.label>
-                @lang('admin::app.partner_products.index.create.rel_purchase_price_radiology')
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="rel_purchase_price_radiology" />
-
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            type="price"
+            name="rel_purchase_price_radiology"
+            value="{{ old('rel_purchase_price_radiology', $partnerProduct ? number_format($partnerProduct->rel_purchase_price_radiology ?? 0, 2, ',', '') : '0') }}"
+            :label="trans('admin::app.partner_products.index.create.rel_purchase_price_radiology')"
+            :placeholder="trans('admin::app.partner_products.index.create.rel_purchase_price_radiology')"
+        />
     </div>
 
     <div class="mt-4 rounded-lg border bg-neutral-100 p-4 dark:border-gray-700 dark:bg-gray-800">

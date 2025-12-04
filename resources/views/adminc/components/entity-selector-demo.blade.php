@@ -1,4 +1,4 @@
-<x-adminc::components.entity-selector />
+@include('adminc.components.entity-selector')
 
 <x-admin::layouts>
     <x-slot:title>Entity Selector Demo</x-slot>
@@ -91,98 +91,64 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Text Input -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="text_demo"
-                        placeholder="Enter text..."
-                    />
-                    <x-admin::form.control-group.label>
-                        Text Input
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="text_demo"
+                    label="Text Input"
+                    placeholder="Enter text..."
+                />
 
                 <!-- Email Input -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="email"
-                        name="email_demo"
-                        placeholder="Enter email..."
-                    />
-                    <x-admin::form.control-group.label>
-                        Email Input
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="email"
+                    name="email_demo"
+                    label="Email Input"
+                    placeholder="Enter email..."
+                />
 
                 <!-- Date Picker -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="date"
-                        name="date_demo"
-                        placeholder="dd-mm-yyyy"
-                    />
-                    <x-admin::form.control-group.label>
-                        Date Picker
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="date"
+                    name="date_demo"
+                    label="Date Picker"
+                    placeholder="dd-mm-yyyy"
+                />
 
                 <!-- Select Dropdown -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="select"
-                        name="select_demo"
-                    >
-                        <option value="">Choose an option...</option>
-                        <option value="option1">Option 1</option>
-                        <option value="option2">Option 2</option>
-                        <option value="option3">Option 3</option>
-                    </x-admin::form.control-group.control>
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="select"
+                    name="select_demo"
+                    label="Select Dropdown"
+                >
+                    <option value="">Choose an option...</option>
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                </x-adminc::components.field>
 
                 <!-- Textarea -->
-                <x-admin::form.control-group class="md:col-span-2">                    <x-admin::form.control-group.control
-                        type="textarea"
-                        name="textarea_demo"
-                        placeholder="Enter description..."
-                    />
-                    <x-admin::form.control-group.label>
-                        Textarea
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.label>
-                        Select Dropdown
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
-
+                <x-adminc::components.field
+                    class="md:col-span-2"
+                    type="textarea"
+                    name="textarea_demo"
+                    label="Textarea"
+                    placeholder="Enter description..."
+                />
                 <!-- Number Input -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="number"
-                        name="number_demo"
-                        placeholder="Enter number..."
-                    />
-                    <x-admin::form.control-group.label>
-                        Number Input
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="number"
+                    name="number_demo"
+                    label="Number Input"
+                    placeholder="Enter number..."
+                />
 
                 <!-- Password Input -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="password"
-                        name="password_demo"
-                        placeholder="Enter password..."
-                    />
-                    <x-admin::form.control-group.label>
-                        Password Input
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="password"
+                    name="password_demo"
+                    label="Password Input"
+                    placeholder="Enter password..."
+                />
             </div>
         </div>
 
@@ -192,58 +158,39 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Multi-select -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="multiselect"
-                        name="multiselect_demo"
-                    >
-                        <option value="option1">Option 1</option>
-                        <option value="option2">Option 2</option>
-                        <option value="option3">Option 3</option>
-                        <option value="option4">Option 4</option>
-                    </x-admin::form.control-group.control>
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="multiselect"
+                    name="multiselect_demo"
+                    label="Multi-select"
+                >
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                    <option value="option4">Option 4</option>
+                </x-adminc::components.field>
 
                 <!-- URL Input -->
-                <x-admin::form.control-group>                    <x-admin::form.control-group.control
-                        type="url"
-                        name="url_demo"
-                        placeholder="https://example.com"
-                    />
-                    <x-admin::form.control-group.label>
-                        URL Input
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.label>
-                        Multi-select
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="url"
+                    name="url_demo"
+                    label="URL Input"
+                    placeholder="https://example.com"
+                />
 
                 <!-- File Upload -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="file"
-                        name="file_demo"
-                    />
-                    <x-admin::form.control-group.label>
-                        File Upload
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="file"
+                    name="file_demo"
+                    label="File Upload"
+                />
 
                 <!-- Search Input -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="search"
-                        name="search_demo"
-                        placeholder="Search..."
-                    />
-                    <x-admin::form.control-group.label>
-                        Search Input
-                    </x-admin::form.control-group.label>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="search"
+                    name="search_demo"
+                    label="Search Input"
+                    placeholder="Search..."
+                />
             </div>
         </div>
 
@@ -278,7 +225,4 @@
             </div>
         </div>
     </div>
-
-    @stack('scripts')
 </x-admin::layouts>
-

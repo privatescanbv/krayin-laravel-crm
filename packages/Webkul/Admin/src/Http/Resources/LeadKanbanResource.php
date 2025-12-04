@@ -36,6 +36,11 @@ class LeadKanbanResource extends JsonResource
             'mri_status_label'     => $this->mri_status?->label() ?? null,
             'has_diagnosis_form'   => (bool) ($this->has_diagnosis_form ?? false),
 
+            // Personal information needed on kanban cards (optimized subset)
+            'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
+            'age'                  => $this->age,
+            'ageOfBirthInFormat'   => $this->ageOfBirthInFormat,
+
             // Relationships - only what's needed for kanban
             'persons'              => [],
             'persons_count'        => 0, // Simplified for performance, avoid N+1 queries

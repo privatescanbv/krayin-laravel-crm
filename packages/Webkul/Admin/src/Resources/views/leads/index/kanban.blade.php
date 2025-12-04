@@ -141,7 +141,7 @@
                                                    @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
                                                </span>
                                                <span class="text-xs icon-calendar leading-normal">
-                                                   @{{ "date_of_birth"  }}
+                                                   @{{ element.date_of_birth }} (@{{ element.age }} jaar)
                                                </span>
                                                <span class="text-xs leading-normal truncate" v-if="element.has_multiple_persons">
                                                    +@{{ element.persons_count - 1 }} meer

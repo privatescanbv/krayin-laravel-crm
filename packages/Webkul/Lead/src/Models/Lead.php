@@ -239,6 +239,15 @@ class Lead extends Model implements LeadContract
         }
     }
 
+    public function getAgeAttribute(): ?int
+    {
+        if (!$this->date_of_birth) {
+            return null;
+        }
+
+        return $this->date_of_birth->age;
+    }
+
     /**
      * Attach persons to this lead.
      */

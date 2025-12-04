@@ -35,6 +35,7 @@ class DeletePortalAccountAction
             $person->forceFill([
                 'is_active'        => false,
                 'keycloak_user_id' => null,
+                'password'         => null,
             ])->save();
         });
 

@@ -45,7 +45,7 @@ test('sends welcome mail and links email to person when portal account is create
 
     $patientMailService = app(PatientMailService::class);
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $keycloakService, $patientMailService);
+    $action = new CreatePortalAccountAction($personKeycloakService, $patientMailService);
 
     $result = $action->execute($person);
 
@@ -90,7 +90,7 @@ test('links welcome mail to lead when lead is provided', function () {
 
     $patientMailService = app(PatientMailService::class);
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $keycloakService, $patientMailService);
+    $action = new CreatePortalAccountAction($personKeycloakService, $patientMailService);
 
     $result = $action->execute($person, null, $lead);
 

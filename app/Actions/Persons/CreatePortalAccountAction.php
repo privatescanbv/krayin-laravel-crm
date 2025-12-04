@@ -2,9 +2,9 @@
 
 namespace App\Actions\Persons;
 
-use App\Services\Keycloak\KeycloakService;
 use App\Services\Mail\PatientMailService;
 use App\Services\PersonKeycloakService;
+use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
@@ -16,7 +16,6 @@ class CreatePortalAccountAction
 {
     public function __construct(
         protected PersonKeycloakService $personKeycloakService,
-        private readonly KeycloakService $keycloakService,
         private readonly PatientMailService $patientMailService,
     ) {}
 
@@ -58,11 +57,8 @@ class CreatePortalAccountAction
 
         // Stuur welkomstmail met tijdelijk wachtwoord (indien beschikbaar).
         try {
-            $generatedPassword = $result['generated_password'] ?? null;
-
-            if ($generatedPassword && $person->findDefaultEmail()) {
-                $this->sendWelcomeMail($person, $generatedPassword, $lead);
-            }
+            $generatedPassword = $result['generated_password'] ?? throw new Exception('Missing generated password with create portal account');
+            $this->sendWelcomeMail($person, $generatedPassword, $lead);
         } catch (Throwable $e) {
             Log::warning('Failed to send portal welcome mail', [
                 'person_id' => $person->id,

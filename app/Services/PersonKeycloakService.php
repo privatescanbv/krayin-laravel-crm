@@ -34,10 +34,8 @@ class PersonKeycloakService
         }
 
         $passwordToUse = $password ?? $person->getPlaintextPassword() ?? $person->getDecryptedPassword();
-        $generatedPassword = false;
 
         if (! $passwordToUse) {
-            $generatedPassword = true;
             $passwordToUse = Str::random(16);
 
             Person::withoutEvents(function () use ($person, $passwordToUse) {
@@ -50,12 +48,12 @@ class PersonKeycloakService
         $result = $this->addKeycloakUserAction->execute(
             $userData,
             $passwordToUse,
-            $temporary || $generatedPassword,
+            $temporary,
             KeycloakRoles::Patient->value
         );
 
         if ($result['success']) {
-            $result['generated_password'] = $generatedPassword ? $passwordToUse : null;
+            $result['generated_password'] = $passwordToUse;
         }
 
         return $result;

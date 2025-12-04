@@ -26,7 +26,7 @@ abstract class TestCase extends BaseTestCase
         $connection = config('database.default');
         if ($connection !== 'sqlite') {
             throw new RuntimeException(
-                "Tests must use SQLite, but found: {$connection}. " .
+                "Tests must use SQLite, but found: {$connection}. ".
                 'This is a safety check to prevent accidental MySQL usage during tests.'
             );
         }

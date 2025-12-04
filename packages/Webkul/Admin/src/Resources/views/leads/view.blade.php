@@ -4,7 +4,7 @@
     </x-slot>
 
     <!-- Content -->
-    <div class="relative flex flex-col gap-4 max-lg:flex-wrap lg:grid" :class="isRightColumnCollapsed ? 'lg:grid-cols-[394px,1fr]' : 'lg:grid-cols-[394px,1fr,280px]'">
+    <div class="relative flex flex-col gap-4 pt-3 max-lg:flex-wrap lg:grid" :class="isRightColumnCollapsed ? 'lg:grid-cols-[394px,1fr,0px]' : 'lg:grid-cols-[394px,1fr,280px]'">
         <!-- Left Panel -->
         {!! view_render_event('admin.leads.view.left.before', ['lead' => $lead]) !!}
 
@@ -20,6 +20,11 @@
                         />
                     </div>
 
+                    <!-- Lead Person info's -->
+
+                    <x-adminc::leads.card :lead="$lead" show_actions="false" />
+
+
                     <div class="mb-2">
                         @if (($days = $lead->rotten_days) > 0)
                             @php
@@ -33,11 +38,11 @@
                         {!! view_render_event('admin.leads.view.tags.before', ['lead' => $lead]) !!}
 
                         <!-- Tags -->
-                        <x-admin::tags
+                        {{-- <x-admin::tags
                             :attach-endpoint="route('admin.leads.tags.attach', $lead->id)"
                             :detach-endpoint="route('admin.leads.tags.detach', $lead->id)"
                             :added-tags="$lead->tags"
-                        />
+                        /> --}}
 
                         {!! view_render_event('admin.leads.view.tags.after', ['lead' => $lead]) !!}
                     </div>
@@ -113,13 +118,7 @@
                             />
                           @endif
 
-                          @if (bouncer()->hasPermission('leads.delete'))
-                              <v-lead-delete
-                                  delete-url="{{ route('admin.leads.delete', $lead->id) }}"
-                                  redirect-url="{{ route('admin.leads.index') }}"
-                                  lead-name="{{ $lead->name }}"
-                              ></v-lead-delete>
-                          @endif
+
 
                           {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                     </div>
@@ -129,26 +128,17 @@
                     <x-adminc::persons.card :person="$lead->contactPerson" show_actions="false" />
                 @endif
 
-                <x-adminc::leads.card :lead="$lead" show_actions="false" />
 
 
-                <!-- Suite CRM link -->
-                @if (!empty($lead->sugar_link))
-                    <div class="mb-4 pt-[10px]">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugar Link</div>
-                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            <a href="{{ $lead->sugar_link }}" target="_blank">{{ $lead->external_id }}</a>
-                        </div>
-                    </div>
-                @endif
-                <x-adminc::leads.persons
+
+                {{-- <x-adminc::leads.persons
                     :entity="$lead"
                     entity-type="lead"
                     :show-add-button="false"
                     :show-sync-link="true"
                     :show-match-score="true"
                     :show-anamnesis="true"
-                />
+                /> --}}
             </div>
 
             <!-- Vertical Navigation Menu -->
@@ -202,6 +192,16 @@
 
             <!-- Footer with creation and modification dates -->
             <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+                          <!-- Suite CRM link -->
+                @if (!empty($lead->sugar_link))
+                    <div class="flex justify-between">
+                        <span>Sugar Link:</span>
+                        <span>
+                            <a href="{{ $lead->sugar_link }}" target="_blank">{{ $lead->external_id }}</a>
+                        </span>
+                    </div>
+                @endif
+
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $lead->created_at->format('d-m-Y') }}</span>
@@ -249,29 +249,28 @@
         </div>
 
         <!-- Right Panel Container -->
-        <div class="relative overflow-visible">
-            <!-- Right Panel -->
-            <div
-                class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 transition-all duration-300 ease-in-out"
-                :class="isRightColumnCollapsed ? 'lg:translate-x-[280px] lg:opacity-0 lg:pointer-events-none' : 'lg:translate-x-0 lg:opacity-100'"
-            >
-                <!-- Toggle Button - Floating, always visible, positioned on panel but stays visible -->
-                <button
-                    type="button"
-                    class="absolute left-0 top-0 z-30 flex h-8 w-8 -translate-x-4 items-center justify-center rounded-r-lg border text-gray-600 shadow-sm transition-all duration-300 ease-in-out hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    :class="isRightColumnCollapsed ? 'lg:opacity-100 lg:pointer-events-auto' : ''"
-                    @click="isRightColumnCollapsed = !isRightColumnCollapsed"
-                    title="Toggle rechterkolom"
-                >
-                    <i
-                        class="text-2xl transition-transform duration-200"
-                        :class="isRightColumnCollapsed ? 'icon-right-arrow' : 'icon-left-arrow'"
-                    ></i>
-                </button>
+<div class="relative overflow-visible transition-all duration-300 ease-in-out">
 
-                @include('admin::leads.view.right_panel', ['lead' => $lead])
-            </div>
-        </div>
+    <button
+        type="button"
+        class="absolute top-0 z-50 flex h-8 w-8 -translate-x-full items-center justify-center rounded-l-lg border border-r-0 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        @click="isRightColumnCollapsed = !isRightColumnCollapsed"
+        :class="isRightColumnCollapsed ? 'left-4 ' : '-right-12'"
+        title="Toggle rechterkolom"
+    >
+        <i
+            class="text-xl transition-transform duration-200"
+            :class="isRightColumnCollapsed ? 'icon-left-arrow' : 'icon-right-arrow'"
+        ></i>
+    </button>
+
+    <div
+        class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        :class="isRightColumnCollapsed ? 'translate-x-full opacity-0 pointer-events-none overflow-hidden' : 'translate-x-0 opacity-100'"
+    >
+        @include('admin::leads.view.right_panel', ['lead' => $lead])
+    </div>
+</div>
 
         {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
     </div>
@@ -280,7 +279,7 @@
     <script type="text/x-template" id="v-lead-delete-template">
         <button
             type="button"
-            class="secondary-button border border-error text-status-expired-text hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+            class="secondary-button border border-red-100 text-status-expired-text hover:border-error hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
             :class="{ 'opacity-50 pointer-events-none': isDeleting }"
             :disabled="isDeleting"
             @click="confirmDelete"
@@ -377,7 +376,7 @@
                     data() {
                         return {
                             leadDetailSection: 'algemeen',
-                            isRightColumnCollapsed: false,
+                            isRightColumnCollapsed: true,
                         };
                     },
                 });

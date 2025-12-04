@@ -9,17 +9,15 @@
     'age' => null
 ])
 
-<div class="relative rounded-xl border border-indigo-100 bg-indigo-50/80
-            dark:border-zinc-700 dark:bg-zinc-800/70
-            shadow-sm hover:shadow-md transition p-4">
+<div class="relative">
     <!-- accent links -->
     <span class="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-indigo-600 dark:bg-indigo-500"></span>
 
 <dt class="flex items-start gap-3">
 
 <dd class="min-w-0 flex-1">
-    <div class="flex items-center gap-2">
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+    <div class="flex items-center justify-between gap-2">
+        <h3 class="text-md font-semibold text-gray-900 dark:text-gray-100 truncate">
             {{ $entity->name }} @if ($age)( {{ $age }} jaar)@endif
         </h3>
 
@@ -34,7 +32,7 @@
     </div>
 
     <!-- Default contact info onder naam -->
-    <div class="mt-2 flex items-center gap-4 text-sm">
+    <div class="mt-2 flex flex-col items-start gap-2 text-sm">
         @php
             $defaultPhone = null;
             $defaultEmail = null;
@@ -127,22 +125,7 @@
         </div>
     @endif
 
-    @if ($showActions)
-        <!-- acties -->
-        <div class="mt-3 flex flex-wrap gap-2">
-            {{--            <a href="#"--}}
-            {{--               class="inline-flex items-center rounded-lg px-3 py-1.5 text-xs--}}
-            {{--                  bg-indigo-600 text-white hover:bg-indigo-700">--}}
-            {{--                Bel--}}
-            {{--            </a>--}}
-            <a href="{{ $viewRoute }}"
-               class="inline-flex items-center rounded-lg px-3 py-1.5 text-xs
-                  bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50
-                  dark:bg-transparent dark:text-indigo-200 dark:border-zinc-600">
-                {{ $viewButtonText }}
-            </a>
-        </div>
-    @endif
+
 </div>
 
 @pushOnce('scripts')

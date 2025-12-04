@@ -2,7 +2,7 @@
     // Anamnesis view with harmonica per person
 @endphp
 
-<div class="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+<div class="rounded-lg border border border-neutral-border bg-neutral-muted text-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
     Anamnese informatie komt hier in een latere iteratie.
 
     Let op: Elke gekoppelde persoon heeft een Anamnese per lead. Dus een vorm van versie.
@@ -30,7 +30,7 @@
             </x-admin::accordion>
         @endforeach
     @else
-        <div class="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+        <div class="rounded-lg border border-neutral-border bg-neutral-muted text-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
             Geen personen gekoppeld aan deze lead.
         </div>
     @endif

@@ -130,15 +130,14 @@
 
 
 
-
-                {{-- <x-adminc::leads.persons
+                <x-adminc::leads.persons_lead
                     :entity="$lead"
                     entity-type="lead"
                     :show-add-button="false"
                     :show-sync-link="true"
                     :show-match-score="true"
                     :show-anamnesis="true"
-                /> --}}
+                />
             </div>
 
             <!-- Vertical Navigation Menu -->

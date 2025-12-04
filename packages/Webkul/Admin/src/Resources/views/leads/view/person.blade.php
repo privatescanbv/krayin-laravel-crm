@@ -81,7 +81,30 @@ $title = $isContactPerson ? 'Contactpersoon' : 'Persoon';
 
         <!-- Portal Account Actions -->
         @if ($person && bouncer()->hasPermission('contacts.persons.edit'))
-        <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
+        @php
+            $defaultEmail = null;
+
+            if ($person->emails && is_array($person->emails) && count($person->emails) > 0) {
+                $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
+            }
+
+            $hasPortalAccount = ! empty($person->keycloak_user_id);
+            $canSendInfoMail = $defaultEmail && $hasPortalAccount;
+        @endphp
+
+        <div class="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center gap-3 flex-wrap">
+            @if ($hasPortalAccount && $defaultEmail)
+                <button
+                    type="button"
+                    id="info-mail-{{ $person->id }}-{{ $lead->id }}"
+                    class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-activity-note-text hover:text-blue-700"
+                    title="Stuur informatieve mail met GVL link"
+                    data-person-id="{{ $person->id }}"
+                    data-lead-id="{{ $lead->id }}"
+                    data-default-email="{{ $defaultEmail['value'] ?? '' }}"
+                ></button>
+            @endif
+
             @if (empty($person->keycloak_user_id))
             <form
                 class="inline-flex"
@@ -114,3 +137,121 @@ $title = $isContactPerson ? 'Contactpersoon' : 'Persoon';
 </div>
 
 @include('admin::components.match-score')
+
+@pushOnce('scripts')
+    <script type="module">
+        (function() {
+            const createGvlFormUrl = "{{ route('admin.anamnesis.create-and-attach-gvl-form') }}";
+
+            // Initialize info mail buttons (GVL info mail)
+            const initInfoMailButtons = () => {
+                document.querySelectorAll('[id^="info-mail-"]').forEach(button => {
+                    if (button.dataset.initialized === 'true') {
+                        return; // Already initialized
+                    }
+
+                    button.dataset.initialized = 'true';
+
+                    button.addEventListener('click', async function(e) {
+                        e.preventDefault();
+
+                        if (this.disabled) {
+                            return;
+                        }
+
+                        const personId = this.dataset.personId;
+                        const leadId = this.dataset.leadId;
+                        const defaultEmail = this.dataset.defaultEmail;
+
+                        if (! personId || ! leadId || ! defaultEmail) {
+                            return;
+                        }
+
+                        // Probeer een GVL-formulier aan te maken/te koppelen voor deze lead/persoon (onder water),
+                        // maar laat de compose-popup altijd openen, ongeacht het resultaat.
+                        try {
+                            await window.privatescan.ensureGvlForm(
+                            createGvlFormUrl,
+                            {
+                                lead_id: parseInt(leadId),
+                                person_id: parseInt(personId),
+                            },
+                            {
+                                errorPrefix: 'GVL formulier aanmaken/koppelen is mislukt.',
+                            },
+                            );
+                        } catch (e) {
+                            // Fouten worden al door ensureGvlForm afgehandeld (flash),
+                            // we blokkeren de mail-popup hier niet.
+                        }
+
+                        const payload = {
+                            defaultEmail: defaultEmail,
+                            subject: 'Informatie over uw aanvraag',
+                            body: '',
+                            emails: [{ value: defaultEmail, is_default: true }],
+                            lead_id: leadId,
+                            person_id: personId,
+                            default_template: 'informatief-met-gvl',
+                            entity_type: 'gvl',
+                        };
+
+                        // Dispatch event to open mail dialog
+                        window.dispatchEvent(new CustomEvent('open-email-dialog', {
+                            detail: payload
+                        }));
+
+                        // Wait for modal to open, then set template
+                        const setupFormAndTemplate = (retries = 5) => {
+                            const form = document.querySelector('form[name="mail-action-form"]');
+                            if (! form && retries > 0) {
+                                setTimeout(() => setupFormAndTemplate(retries - 1), 200);
+                                return;
+                            }
+
+                            if (form) {
+                                let leadIdInput = form.querySelector('[name="lead_id"]');
+                                if (! leadIdInput) {
+                                    leadIdInput = document.createElement('input');
+                                    leadIdInput.type = 'hidden';
+                                    leadIdInput.name = 'lead_id';
+                                    form.appendChild(leadIdInput);
+                                }
+                                leadIdInput.value = leadId;
+
+                                let personIdInput = form.querySelector('[name="person_id"]');
+                                if (! personIdInput) {
+                                    personIdInput = document.createElement('input');
+                                    personIdInput.type = 'hidden';
+                                    personIdInput.name = 'person_id';
+                                    form.appendChild(personIdInput);
+                                }
+                                personIdInput.value = personId;
+
+                                // Store IDs in data attributes for loadTemplate to use
+                                form.dataset.leadId = leadId;
+                                form.dataset.personId = personId;
+
+                                setTimeout(() => {
+                                    const templateSelect = document.querySelector('[name="email_template"]');
+                                    if (templateSelect) {
+                                        templateSelect.value = 'informatief';
+                                        templateSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    }
+                                }, 100);
+                            }
+                        };
+
+                        setTimeout(() => setupFormAndTemplate(), 300);
+                    });
+                });
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initInfoMailButtons);
+            } else {
+                initInfoMailButtons();
+            }
+        })();
+    </script>
+@endPushOnce

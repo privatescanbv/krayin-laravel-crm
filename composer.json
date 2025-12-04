@@ -36,6 +36,7 @@
         "friends-of-behat/mink-extension": "^2.7",
         "krayin/krayin-package-generator": "dev-master",
         "larastan/larastan": "*",
+        "laravel/boost": "^1.8",
         "laravel/pint": "^1.16",
         "laravel/sail": "^1.0.1",
         "laravel/telescope": "^5.14",

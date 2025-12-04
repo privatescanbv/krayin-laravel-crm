@@ -6,6 +6,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\WithFaker;
+use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -20,6 +21,15 @@ abstract class TestCase extends BaseTestCase
 
         // Disable CSRF token verification for tests
         $this->withoutMiddleware(VerifyCsrfToken::class);
+
+        // Safety check: ensure we're using SQLite, not MySQL
+        $connection = config('database.default');
+        if ($connection !== 'sqlite') {
+            throw new RuntimeException(
+                "Tests must use SQLite, but found: {$connection}. " .
+                'This is a safety check to prevent accidental MySQL usage during tests.'
+            );
+        }
 
         // Disable Keycloak sync during tests to prevent test users from being synced
         config(['services.keycloak.client_id' => null]);

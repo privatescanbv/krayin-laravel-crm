@@ -104,8 +104,8 @@ jobs:
             --configuration Release \
             --no-build \
             --logger "console;verbosity=detailed" \
-            --logger "trx;LogFileName=test_results.trx" |& tee -a ci_error.txt
-            --filter "FullyQualifiedName!~PartnerProduct"
+            --logger "trx;LogFileName=test_results.trx" \
+            --filter "FullyQualifiedName!~PartnerProduct" |& tee -a ci_error.txt
         env:
           TestSettings__BaseUrl: http://localhost:8000
 

@@ -44,333 +44,333 @@
         </template>
 
         <template v-else>
-            <div class="flex flex-col gap-4">
-                @include('admin::leads.index.kanban.toolbar')
 
-                {!! view_render_event('admin.leads.index.kanban.content.before') !!}
+            <div class="[&>*>*>*.toolbarRight]:max-lg:w-full [&>*>*>*.toolbarRight]:max-lg:justify-between [&>*>*>*.toolbarRight]:max-md:gap-y-2 [&>*>*>*.toolbarRight]:max-md:flex-wrap mt-3.5 [&>*>*:nth-child(1)]:max-lg:!flex-wrap">
+                <div class="flex flex-col gap-4">
+                    {!! view_render_event('admin.leads.index.kanban.content.before') !!}
 
-                <div class="flex gap-4 overflow-x-auto">
-                    <!-- Stage Cards -->
-                    <div
-                        class="flex min-w-[275px] basis-[20%] flex-col rounded-lg bg-neutral-border shadow-xs"
-                        v-for="(stage, index) in stageLeads"
-                    >
-                        {!! view_render_event('admin.leads.index.kanban.content.stage.header.before') !!}
-
-                        <!-- Stage Header -->
-                        <div class="flex flex-col px-3 py-2 rounded-t-xl bg-brand-privatescan-main gap-y-2">
-                            <!-- Stage Title and Action -->
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs font-bold text-white cursor-help"
-                                    :title="stage.description || null"
-                                    v-if="stage.description"
-                                >
-                                    @{{ stage.name }}
-                                </span>
-                                <span
-                                    class="text-xs font-bold text-white"
-                                    v-else
-                                >
-                                    @{{ stage.name }}
-                                </span>
-
-                                <div class="flex items-center gap-1">
-                                    <span
-                                        class="inline-flex items-center justify-center rounded-full bg-white text-xs leading-none min-w-[18px] h-[18px] px-1">
-                                        @{{ stage.leads.meta.total }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-
-                                <div class="flex items-center gap-1">
-                                    <span
-                                        class="inline-flex items-center justify-center rounded p-1 bg-neutral-border text-xs">
-                                       @{{  "Sorteerdropdown"  }}
-                                    </span>
-                                </div>
-                            </div>
-
-
-                        </div>
-
-                        {!! view_render_event('admin.leads.index.kanban.content.stage.header.after') !!}
-
-                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.before') !!}
-
-                        <!-- Draggable Stage Lead Cards -->
-                        <draggable
-                            class="flex h-[calc(100vh-317px)] flex-col overflow-y-auto p-1 gap-y-1"
-                            :class="{ 'justify-center': stage.leads.data.length === 0 }"
-                            ghost-class="draggable-ghost"
-                            handle=".lead-item"
-                            v-bind="{animation: 200}"
-                            :list="stage.leads.data"
-                            item-key="id"
-                            group="leads"
-                            @scroll="handleScroll(stage, $event)"
-                            @change="updateStage(stage, $event)"
-                            :scroll-sensitivity="100"
-                            :force-fallback="false"
+                    <div class="flex gap-4 overflow-x-auto">
+                        <!-- Stage Cards -->
+                        <div
+                            class="flex min-w-[275px] basis-[20%] flex-col rounded-lg bg-neutral-border shadow-xs"
+                            v-for="(stage, index) in stageLeads"
                         >
-                            <template #header>
-                                <div
-                                    class="flex flex-col items-center justify-center"
-                                    v-if="! stage.leads.data.length"
-                                >
-                                    <img
-                                        class="dark:mix-blend-exclusion dark:invert"
-                                        src="{{ vite()->asset('images/empty-placeholders/pipedrive.svg') }}"
+                            {!! view_render_event('admin.leads.index.kanban.content.stage.header.before') !!}
+
+                            <!-- Stage Header -->
+                            <div class="flex flex-col px-3 py-2 rounded-t-xl bg-brand-privatescan-main gap-y-2">
+                                <!-- Stage Title and Action -->
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-xs font-bold text-white cursor-help"
+                                        :title="stage.description || null"
+                                        v-if="stage.description"
                                     >
+                                        @{{ stage.name }}
+                                    </span>
+                                    <span
+                                        class="text-xs font-bold text-white"
+                                        v-else
+                                    >
+                                        @{{ stage.name }}
+                                    </span>
 
-                                    <div class="flex flex-col items-center gap-4">
-                                        <div class="flex flex-col items-center gap-2">
-                                            <p class="!text-base font-semibold dark:text-white">
-                                                @lang('admin::app.leads.index.kanban.empty-list')
-                                            </p>
-
-                                            <p class="!text-sm text-gray-400 dark:text-gray-400">
-                                                @lang('admin::app.leads.index.kanban.empty-list-description')
-                                            </p>
-                                        </div>
-
-                                        @if (bouncer()->hasPermission('leads.create') && $type=='leads')
-                                            <a
-                                                :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
-                                                class="primary-button"
-                                            >
-                                                @lang('admin::app.leads.index.kanban.create-lead-btn')
-                                            </a>
-                                        @endif
+                                    <div class="flex items-center gap-1">
+                                        <span
+                                            class="inline-flex items-center justify-center rounded-full bg-white text-xs leading-none min-w-[18px] h-[18px] px-1">
+                                            @{{ stage.leads.meta.total }}
+                                        </span>
                                     </div>
                                 </div>
-                            </template>
+                                <div class="flex items-center justify-between">
 
-                            <!-- Lead Card -->
-                            <template #item="{ element, index }">
-                                {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.before') !!}
+                                    <div class="flex items-center gap-1">
+                                        <span
+                                            class="inline-flex items-center justify-center rounded p-1 bg-neutral-border text-xs">
+                                           @{{  "Sorteerdropdown"  }}
+                                        </span>
+                                    </div>
+                                </div>
 
-                                <a
-                                    class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-neutral-border transition-shadow shadow-xs hover:z-10 hover:shadow-lg bg-white py-1 px-2 dark:border-gray-400 dark:bg-gray-400"
-                                    :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
-                                    style="min-height:unset;"
-                                >
-                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
 
-                                    <!-- Header -->
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="flex items-center gap-1 min-w-0 flex-1">
-                                            <div class="flex flex-col gap-0.5 min-w-0">
-                                               <span class="text-sm font-medium truncate">
-                                                   @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
-                                               </span>
-                                                <span class="text-xs icon-calendar leading-normal">
-                                                   @{{ element.date_of_birth }} (@{{ element.age }} jaar)
-                                               </span>
-                                                <span class="text-xs leading-normal truncate"
-                                                      v-if="element.has_multiple_persons">
-                                                   +@{{ element.persons_count - 1 }} meer
-                                               </span>
-                                                <span class="text-xs leading-normal"
-                                                      v-if="element.persons && element.persons.length > 0 && element.persons[0]?.organization?.name">
-                                                   @{{ element.persons[0]?.organization?.name }}
-                                               </span>
+                            </div>
+
+                            {!! view_render_event('admin.leads.index.kanban.content.stage.header.after') !!}
+
+                            {!! view_render_event('admin.leads.index.kanban.content.stage.body.before') !!}
+
+                            <!-- Draggable Stage Lead Cards -->
+                            <draggable
+                                class="flex h-[calc(100vh-317px)] flex-col overflow-y-auto p-1 gap-y-1"
+                                :class="{ 'justify-center': stage.leads.data.length === 0 }"
+                                ghost-class="draggable-ghost"
+                                handle=".lead-item"
+                                v-bind="{animation: 200}"
+                                :list="stage.leads.data"
+                                item-key="id"
+                                group="leads"
+                                @scroll="handleScroll(stage, $event)"
+                                @change="updateStage(stage, $event)"
+                                :scroll-sensitivity="100"
+                                :force-fallback="false"
+                            >
+                                <template #header>
+                                    <div
+                                        class="flex flex-col items-center justify-center"
+                                        v-if="! stage.leads.data.length"
+                                    >
+                                        <img
+                                            class="dark:mix-blend-exclusion dark:invert"
+                                            src="{{ vite()->asset('images/empty-placeholders/pipedrive.svg') }}"
+                                        >
+
+                                        <div class="flex flex-col items-center gap-4">
+                                            <div class="flex flex-col items-center gap-2">
+                                                <p class="!text-base font-semibold dark:text-white">
+                                                    @lang('admin::app.leads.index.kanban.empty-list')
+                                                </p>
+
+                                                <p class="!text-sm text-gray-400 dark:text-gray-400">
+                                                    @lang('admin::app.leads.index.kanban.empty-list-description')
+                                                </p>
                                             </div>
+
+                                            @if (bouncer()->hasPermission('leads.create') && $type=='leads')
+                                                <a
+                                                    :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
+                                                    class="primary-button"
+                                                >
+                                                    @lang('admin::app.leads.index.kanban.create-lead-btn')
+                                                </a>
+                                            @endif
                                         </div>
+                                    </div>
+                                </template>
 
-                                        <!-- Date and Rotten Days Indicator -->
-                                        <div class="flex items-center gap-1 flex-shrink-0">
-                                            <!-- Date -->
-                                            <span class="text-[9px] text-gray-500 whitespace-nowrap">
-                                               @{{ formatDate(element.created_at) }}
-                                           </span>
+                                <!-- Lead Card -->
+                                <template #item="{ element, index }">
+                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.before') !!}
 
-                                            <!-- Rotten Days Indicator -->
-                                            <div
-                                                class="group relative flex-shrink-0"
-                                                v-if="element.rotten_days > 0"
-                                            >
-                                                <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
-                                                <div
-                                                    class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                   <span
-                                                       class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                       @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
+                                    <a
+                                        class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-neutral-border transition-shadow shadow-xs hover:z-10 hover:shadow-lg bg-white py-1 px-2 dark:border-gray-400 dark:bg-gray-400"
+                                        :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
+                                        style="min-height:unset;"
+                                    >
+                                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
+
+                                        <!-- Header -->
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex items-center gap-1 min-w-0 flex-1">
+                                                <div class="flex flex-col gap-0.5 min-w-0">
+                                                   <span class="text-sm font-medium truncate">
+                                                       @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
                                                    </span>
+                                                    <span class="text-xs icon-calendar leading-normal">
+                                                       @{{ element.date_of_birth }} (@{{ element.age }} jaar)
+                                                   </span>
+                                                    <span class="text-xs leading-normal truncate"
+                                                          v-if="element.has_multiple_persons">
+                                                       +@{{ element.persons_count - 1 }} meer
+                                                   </span>
+                                                    <span class="text-xs leading-normal"
+                                                          v-if="element.persons && element.persons.length > 0 && element.persons[0]?.organization?.name">
+                                                       @{{ element.persons[0]?.organization?.name }}
+                                                   </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Date and Rotten Days Indicator -->
+                                            <div class="flex items-center gap-1 flex-shrink-0">
+                                                <!-- Date -->
+                                                <span class="text-[9px] text-gray-500 whitespace-nowrap">
+                                                   @{{ formatDate(element.created_at) }}
+                                               </span>
+
+                                                <!-- Rotten Days Indicator -->
+                                                <div
+                                                    class="group relative flex-shrink-0"
+                                                    v-if="element.rotten_days > 0"
+                                                >
+                                                    <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
                                                     <div
-                                                        class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
+                                                       <span
+                                                           class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                           @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
+                                                       </span>
+                                                        <div
+                                                            class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.after') !!}
+                                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.after') !!}
 
-                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
+                                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
 
-                                    <!-- Lost Reason (only for lost status) -->
-                                    <div
-                                        class="text-[10px] text-red-700 dark:text-red-400 mt-1"
-                                        v-if="element?.stage?.code && String(element.stage.code).toLowerCase().startsWith('lost') && element.lost_reason_label"
-                                    >
-                                        <span class="font-medium">Verliesreden:</span>
-                                        @{{ element.lost_reason_label }}
-                                    </div>
+                                        <!-- Lost Reason (only for lost status) -->
+                                        <div
+                                            class="text-[10px] text-red-700 dark:text-red-400 mt-1"
+                                            v-if="element?.stage?.code && String(element.stage.code).toLowerCase().startsWith('lost') && element.lost_reason_label"
+                                        >
+                                            <span class="font-medium">Verliesreden:</span>
+                                            @{{ element.lost_reason_label }}
+                                        </div>
 
-                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
+                                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
-                                    <!-- Card Footer -->
-                                    <div
-                                        class="flex items-center justify-between"
-                                        v-if="element.has_duplicates || element.open_activities_count === 0 || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
-                                    >
-                                        <div class="flex items-center gap-3">
-                                            <!-- Open Activities Count -->
-                                            <div
-                                                class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
-                                                <span class="icon-activity text-xs"></span>
-                                                <span>@{{ element.open_activities_count || 0 }}</span>
+                                        <!-- Card Footer -->
+                                        <div
+                                            class="flex items-center justify-between"
+                                            v-if="element.has_duplicates || element.open_activities_count === 0 || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
+                                        >
+                                            <div class="flex items-center gap-3">
+                                                <!-- Open Activities Count -->
                                                 <div
-                                                    class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                    <span
-                                                        class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Openstaande activiteiten
-                                                    </span>
+                                                    class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <span class="icon-activity text-xs"></span>
+                                                    <span>@{{ element.open_activities_count || 0 }}</span>
                                                     <div
-                                                        class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span
+                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                            Openstaande activiteiten
+                                                        </span>
+                                                        <div
+                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Unread Emails Count (includes nested activity emails) -->
+                                                <div
+                                                    class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <span class="icon-mail text-xs"></span>
+                                                    <span>@{{ element.unread_emails_count || 0 }}</span>
+                                                    <div
+                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span
+                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                            Ongelezen e-mails
+                                                        </span>
+                                                        <div
+                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Duplicate Indicator -->
+                                                <div
+                                                    class="group relative flex items-center gap-1"
+                                                    v-if="element.has_duplicates"
+                                                >
+                                                    <span
+                                                        class="icon-warning cursor-default text-xs text-orange-600"></span>
+                                                    <div
+                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span
+                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                            Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
+                                                        </span>
+                                                        <div
+                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- No Open Activities Warning -->
+                                                <div
+                                                    class="group relative flex items-center gap-1"
+                                                    v-if="element.open_activities_count === 0 && !(
+                                                        element?.stage?.code && (
+                                                            String(element.stage.code).toLowerCase().startsWith('lost') ||
+                                                            String(element.stage.code).toLowerCase().startsWith('won')
+                                                        )
+                                                    )"
+                                                >
+                                                    <span
+                                                        class="icon-warning cursor-default text-xs text-status-expired-text"></span>
+                                                    <div
+                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span
+                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                            Geen open activiteiten
+                                                        </span>
+                                                        <div
+                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Unread Emails Count (includes nested activity emails) -->
-                                            <div
-                                                class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
-                                                <span class="icon-mail text-xs"></span>
-                                                <span>@{{ element.unread_emails_count || 0 }}</span>
-                                                <div
-                                                    class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                    <span
-                                                        class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Ongelezen e-mails
-                                                    </span>
-                                                    <div
-                                                        class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Duplicate Indicator -->
-                                            <div
-                                                class="group relative flex items-center gap-1"
-                                                v-if="element.has_duplicates"
-                                            >
+                                            <!-- Days Until Due Date -->
+                                            <div class="relative text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span
-                                                    class="icon-warning cursor-default text-xs text-orange-600"></span>
-                                                <div
-                                                    class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                    <span
-                                                        class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
-                                                    </span>
-                                                    <div
-                                                        class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                                </div>
-                                            </div>
-
-                                            <!-- No Open Activities Warning -->
-                                            <div
-                                                class="group relative flex items-center gap-1"
-                                                v-if="element.open_activities_count === 0 && !(
-                                                    element?.stage?.code && (
-                                                        String(element.stage.code).toLowerCase().startsWith('lost') ||
-                                                        String(element.stage.code).toLowerCase().startsWith('won')
-                                                    )
-                                                )"
-                                            >
+                                                    v-if="element.days_until_due_date === null"
+                                                    class="text-gray-500"
+                                                >
+                                                    -
+                                                </span>
                                                 <span
-                                                    class="icon-warning cursor-default text-xs text-status-expired-text"></span>
-                                                <div
-                                                    class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                    <span
-                                                        class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Geen open activiteiten
-                                                    </span>
+                                                    v-else-if="element.days_until_due_date > 0"
+                                                    class="text-status-active-text"
+                                                >
+                                                    @{{ element.days_until_due_date }}d
+                                                </span>
+                                                <span
+                                                    v-else-if="element.days_until_due_date === 0"
+                                                    class="text-orange-600 font-medium"
+                                                >
+                                                    Vandaag
+                                                </span>
+                                                <span
+                                                    v-else
+                                                    class="text-status-expired-text font-medium"
+                                                >
+                                                    @{{ Math.abs(element.days_until_due_date) }}d over
+                                                </span>
+
+                                                <!-- Diagnosis Form Icon bottom-right (to the left of MRI) -->
+                                                <div v-if="element.has_diagnosis_form"
+                                                     class="absolute -bottom-1 right-4 group">
+                                                    <span class="icon-attachment text-xs"></span>
                                                     <div
-                                                        class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span
+                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                            Diagnoseformulier aanwezig
+                                                        </span>
+                                                        <div
+                                                            class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- MRI Status Icon bottom-right -->
+                                                <div v-if="element.mri_status"
+                                                     class="absolute -bottom-1 -right-1 group">
+                                                    <span class="icon-image text-xs"></span>
+                                                    <div
+                                                        class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span
+                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                            @{{ element.mri_status_label }}
+                                                        </span>
+                                                        <div
+                                                            class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    </a>
 
-                                        <!-- Days Until Due Date -->
-                                        <div class="relative text-[10px] text-gray-600 dark:text-gray-400">
-                                            <span
-                                                v-if="element.days_until_due_date === null"
-                                                class="text-gray-500"
-                                            >
-                                                -
-                                            </span>
-                                            <span
-                                                v-else-if="element.days_until_due_date > 0"
-                                                class="text-status-active-text"
-                                            >
-                                                @{{ element.days_until_due_date }}d
-                                            </span>
-                                            <span
-                                                v-else-if="element.days_until_due_date === 0"
-                                                class="text-orange-600 font-medium"
-                                            >
-                                                Vandaag
-                                            </span>
-                                            <span
-                                                v-else
-                                                class="text-status-expired-text font-medium"
-                                            >
-                                                @{{ Math.abs(element.days_until_due_date) }}d over
-                                            </span>
+                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.after') !!}
+                                </template>
+                            </draggable>
 
-                                            <!-- Diagnosis Form Icon bottom-right (to the left of MRI) -->
-                                            <div v-if="element.has_diagnosis_form"
-                                                 class="absolute -bottom-1 right-4 group">
-                                                <span class="icon-attachment text-xs"></span>
-                                                <div
-                                                    class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
-                                                    <span
-                                                        class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Diagnoseformulier aanwezig
-                                                    </span>
-                                                    <div
-                                                        class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                                </div>
-                                            </div>
-
-                                            <!-- MRI Status Icon bottom-right -->
-                                            <div v-if="element.mri_status"
-                                                 class="absolute -bottom-1 -right-1 group">
-                                                <span class="icon-image text-xs"></span>
-                                                <div
-                                                    class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
-                                                    <span
-                                                        class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        @{{ element.mri_status_label }}
-                                                    </span>
-                                                    <div
-                                                        class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-
-                                {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.after') !!}
-                            </template>
-                        </draggable>
-
-                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.after') !!}
+                            {!! view_render_event('admin.leads.index.kanban.content.stage.body.after') !!}
+                        </div>
                     </div>
+
+                    {!! view_render_event('admin.leads.index.kanban.content.after') !!}
                 </div>
-
-                {!! view_render_event('admin.leads.index.kanban.content.after') !!}
             </div>
-
             <!-- Lost Stage Modal -->
             <x-admin::modal ref="lostStageModal">
                 <x-slot:header>
@@ -1113,6 +1113,7 @@
                     setWonLostButtonText() {
                         this.wonLostLabel = this.hideWonLost ? 'Toon gewonnen/verloren' :
                             'Verberg gewonnen/verloren';
+                        this.$emitter.emit('kanban-wonlost-updated', this.wonLostLabel);
                     },
                 }
             });

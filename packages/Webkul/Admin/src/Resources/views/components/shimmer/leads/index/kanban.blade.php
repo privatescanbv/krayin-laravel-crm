@@ -1,5 +1,3 @@
-<x-admin::shimmer.leads.index.kanban.toolbar />
-
 <div class="flex gap-2.5 overflow-x-auto">
     <!-- Stages -->
     @for ($i = 1; $i <= 6; $i++)

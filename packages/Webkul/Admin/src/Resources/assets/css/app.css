@@ -148,6 +148,11 @@
 }
 
 @layer components {
+    nav.pipeline-nav a.active {
+        color: var(--privatescan-accent) !important;
+        text-decoration: none !important;
+    }
+
     .icon-image:before {
         content: "\e956";
     }

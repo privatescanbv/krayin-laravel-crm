@@ -99,6 +99,12 @@ class PersonController extends Controller
         $flashType = $result['success'] ? 'success' : 'error';
         session()->flash($flashType, $message);
 
+        // Check if we have a return URL (from form field)
+        $returnUrl = request()->input('return_url');
+        if ($returnUrl && filter_var($returnUrl, FILTER_VALIDATE_URL)) {
+            return redirect($returnUrl);
+        }
+
         return redirect()->route('admin.contacts.persons.view', $person->id);
     }
 
@@ -240,8 +246,9 @@ class PersonController extends Controller
     public function edit(int $id): View
     {
         $person = $this->personRepository->with('address')->findOrFail($id);
+        $returnUrl = request()->get('return_url');
 
-        return view('admin::contacts.persons.edit', compact('person'));
+        return view('admin::contacts.persons.edit', compact('person', 'returnUrl'));
     }
 
     /**
@@ -304,6 +311,12 @@ class PersonController extends Controller
         }
 
         session()->flash('success', trans('admin::app.contacts.persons.index.update-success'));
+
+        // Check if we have a return URL (from query parameter or form field)
+        $returnUrl = $request->get('return_url') ?? $request->input('return_url');
+        if ($returnUrl && filter_var($returnUrl, FILTER_VALIDATE_URL)) {
+            return redirect($returnUrl);
+        }
 
         return redirect()->route('admin.contacts.persons.view', $id);
     }
@@ -379,11 +392,8 @@ class PersonController extends Controller
                     return $personResource;
                 });
 
-                // Sort by match score (highest first) and only return persons with score > 0
+                // Sort by match score (highest first); keep all results, even with score 0 (required for multiple persons for lead)
                 $personsWithScores = $personsWithScores
-                    ->filter(function ($personResource) {
-                        return ($personResource->match_score ?? 0) > 0;
-                    })
                     ->sortByDesc(function ($personResource) {
                         return $personResource->match_score ?? 0;
                     })

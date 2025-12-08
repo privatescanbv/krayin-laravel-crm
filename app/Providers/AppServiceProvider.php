@@ -62,5 +62,8 @@ class AppServiceProvider extends ServiceProvider
         // Register custom Blade components
         //        Blade::componentNamespace('App\\View\\Components\\Adminc', 'adminc');
         Blade::anonymousComponentPath(resource_path('views/adminc'), 'adminc');
+
+        // Register adminc view namespace
+        $this->loadViewsFrom(resource_path('views/adminc'), 'adminc');
     }
 }

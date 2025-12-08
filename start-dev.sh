@@ -33,7 +33,7 @@ docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framewo
 if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ]; then
     echo "🎨 Starting CRM Vite on port $VITE_PORT..."
     docker-compose exec -d crm sh -lc "
-        cd /usr/share/nginx/html &&
+        cd /usr/share/nginx/html && npx update-browserslist-db@latest &&
         yarn install --silent &&
         VITE_HMR_HOST=$VITE_HMR_HOST yarn dev --host=0.0.0.0 --port=$VITE_PORT
     "
@@ -41,7 +41,7 @@ if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ]; then
     echo "🎨 Starting Admin Vite on port $VITE_ADMIN_PORT..."
     docker-compose exec -d crm sh -lc "
         cd /usr/share/nginx/html/packages/Webkul/Admin &&
-        npm install --silent &&
+        npm install --silent && npx update-browserslist-db@latest &&
         VITE_HMR_HOST=$VITE_HMR_HOST npm run dev -- --host=0.0.0.0 --port=$VITE_ADMIN_PORT
     "
 

@@ -35,7 +35,7 @@
     <!-- Person Blocks Grid -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         @if ($lead->hasContactPerson())
-            @include('admin::leads.view.person', [
+            @include('adminc::persons.person', [
                 'lead' => $lead,
                 'person' => $lead->contactPerson,
                 'isContactPerson' => true
@@ -44,7 +44,7 @@
 
         <!-- Person Blocks - One for each person -->
         @foreach ($lead->persons as $person)
-            @include('admin::leads.view.person', ['lead' => $lead, 'person' => $person])
+            @include('adminc::persons.person', ['lead' => $lead, 'person' => $person])
         @endforeach
     </div>
 

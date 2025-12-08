@@ -64,84 +64,39 @@
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-1">
-                                    @php
-                                        // Get default email and anamnesis for this person
-                                        $defaultEmail = null;
-                                        if ($person->emails && count($person->emails) > 0) {
-                                            $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
-                                        }
+                                @php
+                                    // Get default email and anamnesis for this person (needed for details section)
+                                    $defaultEmail = null;
+                                    if ($person->emails && count($person->emails) > 0) {
+                                        $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
+                                    }
 
-                                        $personAnamnesis = null;
-                                        if ($showAnamnesis) {
-                                            try {
-                                                // For sales leads, use the related lead to get anamnesis
-                                                if ($isSalesLead && $entity->lead && method_exists($entity->lead, 'findAnamnesisByPersonId')) {
-                                                    $personAnamnesis = $entity->lead->findAnamnesisByPersonId($person->id);
-                                                } elseif ($isLead && method_exists($entity, 'findAnamnesisByPersonId')) {
-                                                    $personAnamnesis = $entity->findAnamnesisByPersonId($person->id);
-                                                }
-                                            } catch (ModelNotFoundException $e) {
-                                                // Anamnesis not found for this person-lead combination, which is fine
-                                                $personAnamnesis = null;
+                                    $personAnamnesis = null;
+                                    if ($showAnamnesis) {
+                                        try {
+                                            // For sales leads, use the related lead to get anamnesis
+                                            if ($isSalesLead && $entity->lead && method_exists($entity->lead, 'findAnamnesisByPersonId')) {
+                                                $personAnamnesis = $entity->lead->findAnamnesisByPersonId($person->id);
+                                            } elseif ($isLead && method_exists($entity, 'findAnamnesisByPersonId')) {
+                                                $personAnamnesis = $entity->findAnamnesisByPersonId($person->id);
                                             }
+                                        } catch (ModelNotFoundException $e) {
+                                            // Anamnesis not found for this person-lead combination, which is fine
+                                            $personAnamnesis = null;
                                         }
+                                    }
+                                @endphp
 
-                                        $hasGvlLink = false;
-                                        if ($personAnamnesis && !empty($personAnamnesis->gvl_form_link)) {
-                                            $hasGvlLink = true;
-                                        }
-
-                                        // Check if person has a patient portal account (Keycloak user)
-                                        $hasPortalAccount = !empty($person->keycloak_user_id);
-                                        $canSendInfoMail = $isLead && $defaultEmail && $hasPortalAccount;
-                                    @endphp
-                                    @if ($isLead && $defaultEmail)
-                                        <button
-                                            type="button"
-                                            id="info-mail-{{ $person->id }}-{{ $entityId }}"
-                                            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $canSendInfoMail ? 'text-activity-note-text hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
-                                            title="{{ $hasPortalAccount ? 'Stuur informatieve mail met GVL link' : 'Persoon heeft geen patient portaal account. Maak eerst een portaalaccount aan.' }}"
-                                            @if (!$canSendInfoMail) disabled @endif
-                                            data-person-id="{{ $person->id }}"
-                                            data-lead-id="{{ $entityId }}"
-                                            data-default-email="{{ $defaultEmail['value'] ?? '' }}"
-                                        ></button>
-                                    @endif
-                                    @if (bouncer()->hasPermission('contacts.persons.edit'))
-                                        <a
-                                            href="{{ route('admin.contacts.persons.edit', $person->id) }}"
-                                            class="icon-edit rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
-                                            title="Wijzig persoon"
-                                        ></a>
-                                    @endif
-                                    <a
-                                        href="{{ route('admin.contacts.persons.view', $person->id) }}"
-                                        class="icon-eye rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950"
-                                        title="Bekijk persoon"
-                                    ></a>
-                                    @if ($showSyncLink && $isLead)
-                                        <!-- Sync lead to person link (replaces edit-with-lead) -->
-                                        <a
-                                            href="{{ route('admin.leads.sync-lead-to-person', ['leadId' => $entityId, 'personId' => $person->id]) }}"
-                                            class="rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-status-active-text hover:text-green-700"
-                                            title="Gegevens overnemen (lead → person)"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                            </svg>
-                                        </a>
-                                    @endif
-                                    @if ($detachRoute)
-                                        <button
-                                            type="button"
-                                            class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-status-expired-text hover:text-red-700"
-                                            title="Persoon ontkoppelen"
-                                            onclick="detachPerson({{ $person->id }})"
-                                        ></button>
-                                    @endif
-                                </div>
+                                <x-adminc::persons.person-lead-actions
+                                    :person="$person"
+                                    :entity="$entity"
+                                    :entity-id="$entityId"
+                                    :is-lead="$isLead"
+                                    :is-sales-lead="$isSalesLead"
+                                    :show-sync-link="$showSyncLink"
+                                    :show-anamnesis="$showAnamnesis"
+                                    :detach-route="$detachRoute"
+                                />
                             </div>
 
                             <!-- Always Expanded Content -->
@@ -192,135 +147,3 @@
     @include('admin::components.match-score')
 @endif
 
-@if ($isLead)
-    @pushOnce('scripts')
-    <script type="module">
-        (function() {
-            const createGvlFormUrl = "{{ route('admin.anamnesis.create-and-attach-gvl-form') }}";
-
-            // Initialize info mail buttons
-            const initInfoMailButtons = () => {
-                document.querySelectorAll('[id^="info-mail-"]').forEach(button => {
-                    if (button.dataset.initialized === 'true') {
-                        return; // Already initialized
-                    }
-
-                    button.dataset.initialized = 'true';
-
-                    button.addEventListener('click', async function(e) {
-                        e.preventDefault();
-
-                        if (this.disabled) {
-                            return;
-                        }
-
-                        const personId = this.dataset.personId;
-                        const leadId = this.dataset.leadId;
-                        const defaultEmail = this.dataset.defaultEmail;
-
-                        if (!personId || !leadId || !defaultEmail) {
-                            return;
-                        }
-
-                        // Zorg dat er een GVL-formulier bestaat voor deze lead/persoon (onder water).
-                        const ok = await window.privatescan.ensureGvlForm(
-                            createGvlFormUrl,
-                            {
-                                lead_id: parseInt(leadId),
-                                person_id: parseInt(personId),
-                            },
-                            {
-                                errorPrefix: 'GVL formulier aanmaken/koppelen is mislukt.',
-                            },
-                        );
-
-                        if (!ok) {
-                            return;
-                        }
-
-                        // Use the window event system to open mail dialog
-                        const payload = {
-                            defaultEmail: defaultEmail,
-                            subject: 'Informatie over uw aanvraag',
-                            body: '',
-                            emails: [{ value: defaultEmail, is_default: true }],
-                            lead_id: leadId,
-                            person_id: personId,
-                            default_template: 'informatief-met-gvl',
-                            entity_type: 'gvl',
-                        };
-
-                        // Dispatch event to open mail dialog
-                        window.dispatchEvent(new CustomEvent('open-email-dialog', {
-                            detail: payload
-                        }));
-
-                        // Wait for modal to open, then set template
-                        // Use a retry mechanism to ensure form is ready
-                        const setupFormAndTemplate = (retries = 5) => {
-                            const form = document.querySelector('form[name="mail-action-form"]');
-                            if (!form && retries > 0) {
-                                setTimeout(() => setupFormAndTemplate(retries - 1), 200);
-                                return;
-                            }
-
-                            if (form) {
-                                // Add lead_id and person_id to form for template resolution
-                                let leadIdInput = form.querySelector('[name="lead_id"]');
-                                if (!leadIdInput) {
-                                    leadIdInput = document.createElement('input');
-                                    leadIdInput.type = 'hidden';
-                                    leadIdInput.name = 'lead_id';
-                                    form.appendChild(leadIdInput);
-                                }
-                                leadIdInput.value = leadId;
-
-                                let personIdInput = form.querySelector('[name="person_id"]');
-                                if (!personIdInput) {
-                                    personIdInput = document.createElement('input');
-                                    personIdInput.type = 'hidden';
-                                    personIdInput.name = 'person_id';
-                                    form.appendChild(personIdInput);
-                                }
-                                personIdInput.value = personId;
-
-                                // Store IDs in data attributes for loadTemplate to use
-                                form.dataset.leadId = leadId;
-                                form.dataset.personId = personId;
-
-                                // Set template (this will trigger loadTemplate)
-                                setTimeout(() => {
-                                    const templateSelect = document.querySelector('[name="email_template"]');
-                                    if (templateSelect) {
-                                        templateSelect.value = 'informatief';
-                                        templateSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                                    }
-                                }, 100);
-                            }
-                        };
-
-                        setTimeout(() => setupFormAndTemplate(), 300);
-                    });
-                });
-            };
-
-            // Initialize on page load
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initInfoMailButtons);
-            } else {
-                initInfoMailButtons();
-            }
-
-            // Re-initialize after Vue renders (for dynamic content)
-            const observer = new MutationObserver(() => {
-                initInfoMailButtons();
-            });
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-        })();
-    </script>
-    @endPushOnce
-@endif

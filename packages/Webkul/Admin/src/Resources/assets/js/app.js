@@ -233,6 +233,185 @@ if (typeof window !== 'undefined') {
             return result.ok;
         };
     }
+
+    /**
+     * Check GVL form status and update button state.
+     * Only enables button if status is 'step1'.
+     *
+     * @param {HTMLElement} button - The button element to check and update
+     */
+    if (!window.privatescan.checkGvlFormStatus) {
+        window.privatescan.checkGvlFormStatus = async (button) => {
+            const statusUrl = button.dataset.statusUrl;
+            if (!statusUrl) {
+                console.error('button not initialized: ' + button.dataset.statusUrl);
+                return; // No status URL means no anamnesis/GVL form, button stays in initial state
+            }
+
+            // Store initial disabled state (based on portal account check)
+            const initiallyDisabled = button.disabled;
+
+            try {
+                const response = await fetch(statusUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    console.warn('[InfoMail] Could not fetch GVL form status', response.status);
+                    // Disable button on error (but only if it was initially enabled)
+                    if (!initiallyDisabled) {
+                        button.disabled = true;
+                        button.classList.remove('text-activity-note-text', 'hover:text-blue-700');
+                        button.classList.add('text-gray-400', 'cursor-not-allowed', 'opacity-50');
+                        button.title = 'Fout bij ophalen GVL formulier status.';
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                const status = data.data?.status || data.data?.state || null;
+                const statusLower = status ? status.toLowerCase() : '';
+
+                // Helper: disable all buttons for same person/lead to keep state consistent if duplicates exist
+                const disableAllMatchingButtons = (personId, leadId, title) => {
+                    document
+                        .querySelectorAll(`[data-person-id="${personId}"][data-lead-id="${leadId}"]`)
+                        .forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.remove('text-activity-note-text', 'hover:text-blue-700');
+                            btn.classList.add('text-gray-400', 'cursor-not-allowed', 'opacity-50');
+                            if (title) {
+                                btn.title = title;
+                            }
+                        });
+                };
+
+                // If status is completed: always disable
+                if (statusLower === 'completed') {
+                    const title = 'Er bestaat al een afgerond GVL formulier.';
+                    disableAllMatchingButtons(button.dataset.personId, button.dataset.leadId, title);
+                    return;
+                }
+
+                // Otherwise: enable only if button was initially enabled (portal/email ok)
+                if (!initiallyDisabled) {
+                    button.disabled = false;
+                    button.classList.remove('text-gray-400', 'cursor-not-allowed', 'opacity-50');
+                    button.classList.add('text-activity-note-text', 'hover:text-blue-700');
+                    button.title = 'Stuur informatieve mail met GVL link';
+                }
+            } catch (error) {
+                console.error('[InfoMail] Error checking GVL form status', error);
+                // On error, disable button to be safe (but only if it was initially enabled)
+                if (!initiallyDisabled) {
+                    button.disabled = true;
+                    button.classList.remove('text-activity-note-text', 'hover:text-blue-700');
+                    button.classList.add('text-gray-400', 'cursor-not-allowed', 'opacity-50');
+                    button.title = 'Fout bij ophalen GVL formulier status.';
+                }
+            }
+        };
+    }
+
+    /**
+     * Handle info mail button click: ensure GVL form exists and open email dialog.
+     *
+     * @param {HTMLElement} button - The info mail button element
+     * @param {string} createGvlFormUrl - URL to create/attach GVL form
+     */
+    if (!window.privatescan.handleInfoMailButtonClick) {
+        window.privatescan.handleInfoMailButtonClick = async (button, createGvlFormUrl) => {
+            const personId = button.dataset.personId;
+            const leadId = button.dataset.leadId;
+            const defaultEmail = button.dataset.defaultEmail;
+
+            if (!personId || !leadId || !defaultEmail) {
+                console.warn('[InfoMail] Missing required data attributes', { personId, leadId, defaultEmail });
+                return false;
+            }
+
+            // Ensure GVL form exists for this lead/person
+            const ok = await window.privatescan.ensureGvlForm(
+                createGvlFormUrl,
+                {
+                    lead_id: parseInt(leadId),
+                    person_id: parseInt(personId),
+                },
+                {
+                    errorPrefix: 'GVL formulier aanmaken/koppelen is mislukt.',
+                },
+            );
+
+            if (!ok) {
+                return false;
+            }
+
+            // Prepare payload for email dialog
+            const payload = {
+                defaultEmail: defaultEmail,
+                subject: 'Informatie over uw aanvraag',
+                body: '',
+                emails: [{ value: defaultEmail, is_default: true }],
+                lead_id: leadId,
+                person_id: personId,
+                default_template: 'informatief-met-gvl',
+                entity_type: 'gvl',
+            };
+
+            // Dispatch event to open mail dialog
+            window.dispatchEvent(new CustomEvent('open-email-dialog', {
+                detail: payload
+            }));
+
+            // Wait for modal to open, then set template
+            const setupFormAndTemplate = (retries = 5) => {
+                const form = document.querySelector('form[name="mail-action-form"]');
+                if (!form && retries > 0) {
+                    setTimeout(() => setupFormAndTemplate(retries - 1), 200);
+                    return;
+                }
+
+                if (form) {
+                    // Add lead_id and person_id to form for template resolution
+                    let leadIdInput = form.querySelector('[name="lead_id"]');
+                    if (!leadIdInput) {
+                        leadIdInput = document.createElement('input');
+                        leadIdInput.type = 'hidden';
+                        leadIdInput.name = 'lead_id';
+                        form.appendChild(leadIdInput);
+                    }
+                    leadIdInput.value = leadId;
+
+                    let personIdInput = form.querySelector('[name="person_id"]');
+                    if (!personIdInput) {
+                        personIdInput = document.createElement('input');
+                        personIdInput.type = 'hidden';
+                        personIdInput.name = 'person_id';
+                        form.appendChild(personIdInput);
+                    }
+                    personIdInput.value = personId;
+
+                    // Store IDs in data attributes for loadTemplate to use
+                    form.dataset.leadId = leadId;
+                    form.dataset.personId = personId;
+
+                    // Set template (this will trigger loadTemplate)
+                    setTimeout(() => {
+                        const templateSelect = document.querySelector('[name="email_template"]');
+                        if (templateSelect) {
+                            templateSelect.value = 'informatief';
+                            templateSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }, 100);
+                }
+            };
+
+            setTimeout(() => setupFormAndTemplate(), 300);
+            return true;
+        };
+    }
 }
 
 export default app;

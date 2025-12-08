@@ -22,6 +22,7 @@ class Stage extends Model implements StageContract
     protected $fillable = [
         'code',
         'name',
+        'description',
         'probability',
         'sort_order',
         'lead_pipeline_id',

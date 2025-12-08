@@ -1,3 +1,8 @@
+@props([
+    'columns',
+    'stages',
+])
+
 {!! view_render_event('admin.sales-leads.index.kanban.before') !!}
 
 <!-- Kanban Vue Component -->
@@ -52,7 +57,17 @@
                         <div class="flex flex-col px-2 py-3 rounded-t-lg" style="background-color: var(--brand-privatescan);">
                             <!-- Stage Title and Action -->
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-white">
+                                <span
+                                    class="text-xs font-medium text-white cursor-help"
+                                    :title="stage.description || null"
+                                    v-if="stage.description"
+                                >
+                                    @{{ stage.name }}
+                                </span>
+                                <span
+                                    class="text-xs font-medium text-white"
+                                    v-else
+                                >
                                     @{{ stage.name }}
                                 </span>
 

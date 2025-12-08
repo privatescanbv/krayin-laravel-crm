@@ -31,8 +31,8 @@ class PipelineSeeder extends BaseSeeder
 
         $privateSanPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
         $herniaPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
-        $privateScanWorkflowPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_WORKFLOW_ID->value;
-        $herniaWorkflowPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_WORKFLOW_ID->value;
+        $privateScanSalesPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value;
+        $herniaSalesPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value;
 
         // should always be empty, used for new leads
         $techBacklogPipelineId = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;;
@@ -56,7 +56,7 @@ class PipelineSeeder extends BaseSeeder
                 'updated_at' => $now,
             ],
             [
-                'id' => $privateScanWorkflowPipelineId,
+                'id' => $privateScanSalesPipelineId,
                 'name' => 'Privatescan',
                 'is_default' => 1,
                 'type' => PipelineType::BACKOFFICE,
@@ -64,7 +64,7 @@ class PipelineSeeder extends BaseSeeder
                 'updated_at' => $now,
             ],
             [
-                'id' => $herniaWorkflowPipelineId,
+                'id' => $herniaSalesPipelineId,
                 'name' => 'Herniapoli',
                 'is_default' => 0,
                 'type' => PipelineType::BACKOFFICE,
@@ -194,52 +194,82 @@ class PipelineSeeder extends BaseSeeder
                 'is_won' => false,
                 'is_lost' => true,
             ],
-            // workflow Privatescan
+            // SALES Privatescan
             [
                 'id' => ++$stageId,
                 'code' => 'bestelling-voorbereiden',
-                'name' => 'Bestelling voorbereiden',
+                'name' => 'Geadviseerd, order bevestigen',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
                 'is_won' => false,
                 'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'order-verzonden',
-                'name' => 'Order verzonden | Wachten akkoord',
+                'name' => 'Order bevestigd, wachten op akkoord',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
                 'is_won' => false,
                 'is_lost' => false,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-confirmed',
-                'name' => 'Order Akkoord',
+                'name' => 'Akkoord, kliniek bevestigen',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
                 'is_won' => false,
                 'is_lost' => false,
             ],[
                 'id' => ++$stageId,
-                'code' => self::STAGE_ORDER_LOST_PREFIX,
-                'name' => 'Verloren',
+                'code' => 'waiting-for-execution',
+                'name' => 'Wachten op uitvoering',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
                 'is_won' => false,
-                'is_lost' => true,
+                'is_lost' => false,
+            ],
+            [
+                'id' => ++$stageId,
+                'code' => 'waiting-reports',
+                'name' => 'Uitgevoerd, wacht op rapporten',
+                'description' => 'Status wordt door begeleidster kliniek gezet',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
+            ], [
+                'id' => ++$stageId,
+                'code' => 'reports-received',
+                'name' => 'Rapporten ontvangen',
+                'description' => 'Afhankelijk van wel of geen vertaling 1 of 2 acties-->rapport vertalen, rapport versturen',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-won',
-                'name' => 'Gewonnen',
+                'name' => 'Klantproces beëindigd',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
                 'is_won' => true,
                 'is_lost' => false,
+            ], [
+                'id' => ++$stageId,
+                'code' => self::STAGE_ORDER_LOST_PREFIX,
+                'name' => 'Afvoeren',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $privateScanSalesPipelineId,
+                'is_won' => false,
+                'is_lost' => true,
             ],
             // workflow Hennia
             [
@@ -248,7 +278,7 @@ class PipelineSeeder extends BaseSeeder
                 'name' => 'Bestelling voorbereiden',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'lead_pipeline_id' => $herniaSalesPipelineId,
                 'is_won' => false,
                 'is_lost' => false,
             ], [
@@ -257,7 +287,7 @@ class PipelineSeeder extends BaseSeeder
                 'name' => 'Order is verzonden',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'lead_pipeline_id' => $herniaSalesPipelineId,
                 'is_won' => false,
                 'is_lost' => false,
             ],[
@@ -266,7 +296,7 @@ class PipelineSeeder extends BaseSeeder
                 'name' => 'Verloren',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'lead_pipeline_id' => $herniaSalesPipelineId,
                 'is_won' => false,
                 'is_lost' => true,
             ],[
@@ -275,7 +305,7 @@ class PipelineSeeder extends BaseSeeder
                 'name' => 'Gewonnen',
                 'probability' => 100,
                 'sort_order' => $stageId,
-                'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'lead_pipeline_id' => $herniaSalesPipelineId,
                 'is_won' => true,
                 'is_lost' => false,
             ],
@@ -291,6 +321,14 @@ class PipelineSeeder extends BaseSeeder
                 'is_lost' => false,
             ],
         ];
+
+        // Add description => null to all stages that don't have it
+        foreach ($stages as &$stage) {
+            if (!isset($stage['description'])) {
+                $stage['description'] = null;
+            }
+        }
+        unset($stage); // Break reference
 
         //check
         if($stageId != PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value)

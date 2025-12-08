@@ -39,7 +39,7 @@ test('lead won creates sales lead and order', function (): void {
 
     // Create workflow pipeline and its first stage for SalesLead
     $workflowPipeline = Pipeline::factory()->create([
-        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_WORKFLOW_ID->value,
+        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
         'name' => 'Privatescan Workflow',
         'type' => 'workflow',
     ]);
@@ -150,7 +150,7 @@ test('lead won does not create sales lead when one exists in non-won/lost stage'
 
     // Create workflow pipeline and its stages for SalesLead
     $workflowPipeline = Pipeline::factory()->create([
-        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_WORKFLOW_ID->value,
+        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
         'name' => 'Privatescan Workflow',
         'type' => 'workflow',
     ]);
@@ -254,7 +254,7 @@ test('lead won creates sales lead when existing one is in won/lost stage', funct
 
     // Create workflow pipeline and its stages for SalesLead
     $workflowPipeline = Pipeline::factory()->create([
-        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_WORKFLOW_ID->value,
+        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
         'name' => 'Privatescan Workflow',
         'type' => 'workflow',
     ]);

@@ -39,7 +39,17 @@
                         <div class="flex flex-col px-3 py-2 rounded-t-xl bg-brand-privatescan-main gap-y-2">
                             <!-- Stage Title and Action -->
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-white">
+                                <span 
+                                    class="text-xs font-bold text-white cursor-help"
+                                    :title="stage.description || null"
+                                    v-if="stage.description"
+                                >
+                                    @{{ stage.name }}
+                                </span>
+                                <span 
+                                    class="text-xs font-bold text-white"
+                                    v-else
+                                >
                                     @{{ stage.name }}
                                 </span>
 

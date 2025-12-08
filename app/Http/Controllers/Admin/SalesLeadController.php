@@ -56,10 +56,11 @@ class SalesLeadController extends Controller
 
         $stages = $pipeline->stages->map(function ($stage) {
             return [
-                'id'         => $stage->id,
-                'name'       => $stage->name,
-                'sort_order' => $stage->sort_order,
-                'leads'      => [
+                'id'          => $stage->id,
+                'name'        => $stage->name,
+                'description' => $stage->description,
+                'sort_order'  => $stage->sort_order,
+                'leads'       => [
                     'data' => [],
                     'meta' => [
                         'total'        => 0,
@@ -172,10 +173,11 @@ class SalesLeadController extends Controller
             });
 
             $data[$stage->sort_order] = [
-                'id'         => $stage->id,
-                'name'       => $stage->name,
-                'sort_order' => $stage->sort_order,
-                'leads'      => [
+                'id'          => $stage->id,
+                'name'        => $stage->name,
+                'description' => $stage->description,
+                'sort_order'  => $stage->sort_order,
+                'leads'       => [
                     'data' => $salesLeads,
                     'meta' => [
                         'total'        => $salesLeads->count(),

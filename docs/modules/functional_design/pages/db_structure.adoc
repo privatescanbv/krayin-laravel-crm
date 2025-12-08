@@ -89,6 +89,7 @@ TABLE(Stage, "pipeline_stage") {
   PRIMARY_KEY(id): bigint
   FOREIGN_KEY(pipeline_id): bigint
   name: string
+  description: text
   sort_order: int
 }
 

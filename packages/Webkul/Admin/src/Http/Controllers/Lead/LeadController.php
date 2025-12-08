@@ -173,9 +173,9 @@ class LeadController extends Controller
         $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
 
         if (request()->query('pipeline_stage_id')) {
-            $stages = $pipeline->stages()->select('id','code','name','sort_order','lead_pipeline_id','is_won','is_lost')->where('id', request()->query('pipeline_stage_id'))->get();
+            $stages = $pipeline->stages()->select('id','code','name','description','sort_order','lead_pipeline_id','is_won','is_lost')->where('id', request()->query('pipeline_stage_id'))->get();
         } else {
-            $stages = $pipeline->stages()->select('id','code','name','sort_order','lead_pipeline_id','is_won','is_lost')->get();
+            $stages = $pipeline->stages()->select('id','code','name','description','sort_order','lead_pipeline_id','is_won','is_lost')->get();
 
             // Filter out won/lost stages if requested to improve performance
             if ($excludeWonLost) {

@@ -143,7 +143,7 @@
                     // Check if clicked element or its parent is an info-mail button
                     let target = e.target;
                     let button = null;
-                    
+
                     // Walk up the DOM tree to find the button
                     while (target && target !== document.body) {
                         if (target.id && target.id.startsWith('info-mail-')) {
@@ -152,14 +152,14 @@
                         }
                         target = target.parentElement;
                     }
-                    
+
                     if (!button || button.disabled) {
                         return;
                     }
-                    
+
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     if (window.privatescan?.handleInfoMailButtonClick) {
                         await window.privatescan.handleInfoMailButtonClick(button, createGvlFormUrl);
                     }

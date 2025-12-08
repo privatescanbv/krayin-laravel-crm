@@ -145,13 +145,13 @@ class SalesLeadRepository extends Repository
 
             if ($department->name === Departments::PRIVATESCAN->value) {
                 return $this->getFirstStageOfWorkflowPipeline(
-                    PipelineDefaultKeys::PIPELINE_PRIVATESCAN_WORKFLOW_ID->value
+                    PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value
                 ) ?? $defaultStageId;
             }
 
             if ($department->name === Departments::HERNIA->value) {
                 return $this->getFirstStageOfWorkflowPipeline(
-                    PipelineDefaultKeys::PIPELINE_HERNIA_WORKFLOW_ID->value
+                    PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value
                 ) ?? $defaultStageId;
             }
 

@@ -133,9 +133,31 @@ class LeadController extends Controller
             }
         }
 
+        $stages = $pipeline->stages->map(function ($stage) {
+            return [
+                'id'          => $stage->id,
+                'name'        => $stage->name,
+                'description' => $stage->description,
+                'sort_order'  => $stage->sort_order,
+                'leads'       => [
+                    'data' => [],
+                    'meta' => [
+                        'total'        => 0,
+                        'current_page' => 1,
+                        'per_page'     => 10,
+                        'last_page'    => 1,
+                    ],
+                ],
+            ];
+        })->toArray();
+
+        if(is_null($pipeline)) {
+            throw new Exception('No pipeline found for leads index page');
+        }
         return view('admin::leads.index', [
             'pipeline' => $pipeline,
             'columns' => $this->getKanbanColumns(),
+            'stages' => $stages,
         ]);
     }
 

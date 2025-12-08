@@ -26,8 +26,6 @@ class ApiKeyAuth
             $validApiKeys = config('api.keys', []);
 
             if (! empty($validApiKeys) && in_array($apiKey, $validApiKeys)) {
-                Log::info('ApiKeyAuth: valid API key accepted');
-
                 return $next($request);
             }
 

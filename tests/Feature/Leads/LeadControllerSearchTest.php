@@ -77,6 +77,16 @@ test('lead search with name and whitelisted fields works and person.name works',
     $idsName = collect($respName->json('data'))->pluck('id');
     expect($idsName)->toContain($leadByName->id);
 
+
+    // also check get and search endpoint
+    $respName = $this->getJson(route('admin.leads.get', [
+        'search'       => 'name:Kuh;',
+        'searchFields' => 'first_name:like;last_name:like;married_name:like;',
+    ]));
+    $respName->assertOk();
+    $idsName = collect($respName->json('data'))->pluck('id');
+    expect($idsName)->toContain($leadByName->id);
+
     // Disabled, I do not think we will need this.
     // user first/last name lookup finds lead assigned to the matching user
     //    $respUser = $this->getJson(route('admin.leads.search', [

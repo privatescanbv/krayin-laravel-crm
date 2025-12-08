@@ -41,7 +41,7 @@
         @if ((request()->view_type ?? "kanban") == "table")
             <x-adminc::sales_leads.index.table :pipeline="$pipeline"/>
         @else
-            <x-adminc::sales_leads.index.kanban :columns="$columns" :stages="$stages"/>
+            <x-adminc::sales_leads.index.kanban :columns="$columns" :stages="$stages" :pipeline="$pipeline"/>
         @endif
     </div>
 

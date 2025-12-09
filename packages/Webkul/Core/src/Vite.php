@@ -52,7 +52,7 @@ class Vite
         if (str_contains($hotUrl, '0.0.0.0')) {
 
             $host = env('VITE_HMR_HOST', 'localhost');
-            $port = env('VITE_PORT', '5173');
+//            $port = env('VITE_PORT', '5173');
 
             // Detect port based on hot file name
             $hotFileName = basename($cfg['hot_file']);

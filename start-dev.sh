@@ -30,13 +30,13 @@ echo "🧹 Clearing hot files..."
 docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framework/admin-vite.hot || true"
 
 # Alleen Vite-devservers starten als we expliciet in 'dev' modus draaien
-if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ]; then
-    echo "🎨 Starting CRM Vite on port $VITE_PORT..."
-    docker-compose exec -d crm sh -lc "
-        cd /usr/share/nginx/html &&
-        yarn install --silent &&
-        VITE_HMR_HOST=$VITE_HMR_HOST yarn dev --host=0.0.0.0 --port=$VITE_PORT
-    "
+#if [ "$APP_ENV" = "dev" ] || [ "$APP_ENV" = "local" ]; then
+#    echo "🎨 Starting CRM Vite on port $VITE_PORT..."
+#    docker-compose exec -d crm sh -lc "
+#        cd /usr/share/nginx/html &&
+#        yarn install --silent &&
+#        VITE_HMR_HOST=$VITE_HMR_HOST yarn dev --host=0.0.0.0 --port=$VITE_PORT
+#    "
 #&& npx update-browserslist-db@latest
     echo "🎨 Starting Admin Vite on port $VITE_ADMIN_PORT..."
     docker-compose exec -d crm sh -lc "

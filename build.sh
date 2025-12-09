@@ -12,15 +12,6 @@ BUILD_TYPE=${1:-production}
 
 #rm -rf node_modules .vite node_modules/.vite
 
-# clean up
-rm -rf node_modules .vite node_modules/.vite
-
-#install  --immutable
-yarn install
-
-# production build, not used locally. More to identify build issues before deployment.
-ROLLUP_SKIP_NODEJS_NATIVE=true yarn build
-
 # Build Admin package
 cd packages/Webkul/Admin
 npm install

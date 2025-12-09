@@ -22,7 +22,7 @@
 
         {!! view_render_event('admin.leads.index.header.right.before') !!}
 
-        <div class="flex items-center">
+        <div class="flex items-center gap-x-2.5">
             <!-- Upload File for Lead Creation -->
             @if(core()->getConfigData('general.magic_ai.doc_generation.enabled'))
                 @include('admin::leads.index.upload')
@@ -40,9 +40,7 @@
     {!! view_render_event('admin.leads.index.content.before') !!}
 
     <!-- Content -->
-    <div class="[&>*>*>*.toolbarRight]:max-lg:w-full [&>*>*>*.toolbarRight]:max-lg:justify-between [&>*>*>*.toolbarRight]:max-md:gap-y-2 [&>*>*>*.toolbarRight]:max-md:flex-wrap mt-3.5 [&>*>*:nth-child(1)]:max-lg:!flex-wrap">
-        @include('admin::leads.index.kanban')
-    </div>
+    @include('admin::leads.index.kanban')
 
     {!! view_render_event('admin.leads.index.content.after') !!}
 </x-admin::layouts>

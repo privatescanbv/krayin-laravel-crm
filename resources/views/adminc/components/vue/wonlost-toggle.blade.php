@@ -28,10 +28,14 @@
                 });
 
                 // CLICK LISTENER toevoegen aan checkbox
-                document.getElementById('winlost').addEventListener('click', () => {
-                    this.toggle();
-                });
-
+                const $inputWinLost = document.querySelector('input[name="winlost"]');
+                if ($inputWinLost) {
+                    $inputWinLost.addEventListener('click', () => {
+                        this.toggle();
+                    });
+                } else {
+                    console.error('Could not find winlost checkbox element.');
+                }
                 // listen for updates from kanban
                 this.$emitter.on('kanban-wonlost-updated', () => {
                     this.syncWithKanban();

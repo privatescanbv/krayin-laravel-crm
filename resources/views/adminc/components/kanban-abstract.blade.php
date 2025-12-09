@@ -26,7 +26,7 @@
 <v-leads-kanban ref="leadsKanban">
     <div class="flex flex-col gap-4">
         <!-- Shimmer -->
-        <x-admin::shimmer.leads.index.kanban/>
+        <x-admin::shimmer.leads.index.kanban />
     </div>
 </v-leads-kanban>
 
@@ -39,7 +39,7 @@
         id="v-leads-kanban-template">
         <template v-if="isLoading">
             <div class="flex flex-col gap-4">
-                <x-admin::shimmer.leads.index.kanban/>
+                <x-admin::shimmer.leads.index.kanban />
             </div>
         </template>
 
@@ -47,6 +47,7 @@
 
             <div class="[&>*>*>*.toolbarRight]:max-lg:w-full [&>*>*>*.toolbarRight]:max-lg:justify-between [&>*>*>*.toolbarRight]:max-md:gap-y-2 [&>*>*>*.toolbarRight]:max-md:flex-wrap mt-3.5 [&>*>*:nth-child(1)]:max-lg:!flex-wrap">
                 <div class="flex flex-col gap-4">
+
                     {!! view_render_event('admin.leads.index.kanban.content.before') !!}
 
                     <div class="flex gap-4 overflow-x-auto">
@@ -61,23 +62,12 @@
                             <div class="flex flex-col px-3 py-2 rounded-t-xl bg-brand-privatescan-main gap-y-2">
                                 <!-- Stage Title and Action -->
                                 <div class="flex items-center justify-between">
-                                    <span
-                                        class="text-xs font-bold text-white cursor-help"
-                                        :title="stage.description || null"
-                                        v-if="stage.description"
-                                    >
-                                        @{{ stage.name }}
-                                    </span>
-                                    <span
-                                        class="text-xs font-bold text-white"
-                                        v-else
-                                    >
+                                    <span class="text-xs font-bold text-white">
                                         @{{ stage.name }}
                                     </span>
 
                                     <div class="flex items-center gap-1">
-                                        <span
-                                            class="inline-flex items-center justify-center rounded-full bg-white text-xs leading-none min-w-[18px] h-[18px] px-1">
+                                        <span class="inline-flex items-center justify-center rounded-full bg-white text-xs leading-none min-w-[18px] h-[18px] px-1">
                                             @{{ stage.leads.meta.total }}
                                         </span>
                                     </div>
@@ -85,8 +75,7 @@
                                 <div class="flex items-center justify-between">
 
                                     <div class="flex items-center gap-1">
-                                        <span
-                                            class="inline-flex items-center justify-center rounded p-1 bg-neutral-border text-xs">
+                                        <span class="inline-flex items-center justify-center rounded p-1 bg-neutral-border text-xs">
                                            @{{  "Sorteerdropdown"  }}
                                         </span>
                                     </div>
@@ -135,7 +124,7 @@
                                                 </p>
                                             </div>
 
-                                            @if (bouncer()->hasPermission('leads.create') && $type=='leads')
+                                                @if (bouncer()->hasPermission('leads.create') && $type=='leads')
                                                 <a
                                                     :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
                                                     class="primary-button"
@@ -153,7 +142,7 @@
 
                                     <a
                                         class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-neutral-border transition-shadow shadow-xs hover:z-10 hover:shadow-lg bg-white py-1 px-2 dark:border-gray-400 dark:bg-gray-400"
-                                        :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
+                                            :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
                                         style="min-height:unset;"
                                     >
                                         {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
@@ -166,14 +155,14 @@
                                                        @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
                                                    </span>
                                                     <span class="text-xs icon-calendar leading-normal">
-                                                       @{{ element.date_of_birth }} (@{{ element.age }} jaar)
+                                                           @{{ element.date_of_birth }} (@{{ element.age }} jaar)
                                                    </span>
-                                                    <span class="text-xs leading-normal truncate"
-                                                          v-if="element.has_multiple_persons">
+                                                        <span class="text-xs leading-normal truncate"
+                                                              v-if="element.has_multiple_persons">
                                                        +@{{ element.persons_count - 1 }} meer
                                                    </span>
-                                                    <span class="text-xs leading-normal"
-                                                          v-if="element.persons && element.persons.length > 0 && element.persons[0]?.organization?.name">
+                                                        <span class="text-xs leading-normal"
+                                                              v-if="element.persons && element.persons.length > 0 && element.persons[0]?.organization?.name">
                                                        @{{ element.persons[0]?.organization?.name }}
                                                    </span>
                                                 </div>
@@ -192,14 +181,11 @@
                                                     v-if="element.rotten_days > 0"
                                                 >
                                                     <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
-                                                    <div
-                                                        class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                       <span
-                                                           class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
+                                                       <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                            @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
                                                        </span>
-                                                        <div
-                                                            class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -227,34 +213,26 @@
                                         >
                                             <div class="flex items-center gap-3">
                                                 <!-- Open Activities Count -->
-                                                <div
-                                                    class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                                <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                     <span class="icon-activity text-xs"></span>
                                                     <span>@{{ element.open_activities_count || 0 }}</span>
-                                                    <div
-                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                        <span
-                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                             Openstaande activiteiten
                                                         </span>
-                                                        <div
-                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
 
                                                 <!-- Unread Emails Count (includes nested activity emails) -->
-                                                <div
-                                                    class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                                <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                     <span class="icon-mail text-xs"></span>
                                                     <span>@{{ element.unread_emails_count || 0 }}</span>
-                                                    <div
-                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                        <span
-                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                             Ongelezen e-mails
                                                         </span>
-                                                        <div
-                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
 
@@ -263,16 +241,12 @@
                                                     class="group relative flex items-center gap-1"
                                                     v-if="element.has_duplicates"
                                                 >
-                                                    <span
-                                                        class="icon-warning cursor-default text-xs text-orange-600"></span>
-                                                    <div
-                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                        <span
-                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <span class="icon-warning cursor-default text-xs text-orange-600"></span>
+                                                    <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                             Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
                                                         </span>
-                                                        <div
-                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
 
@@ -286,16 +260,12 @@
                                                         )
                                                     )"
                                                 >
-                                                    <span
-                                                        class="icon-warning cursor-default text-xs text-status-expired-text"></span>
-                                                    <div
-                                                        class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
-                                                        <span
-                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <span class="icon-warning cursor-default text-xs text-status-expired-text"></span>
+                                                    <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                             Geen open activiteiten
                                                         </span>
-                                                        <div
-                                                            class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -331,14 +301,11 @@
                                                 <div v-if="element.has_diagnosis_form"
                                                      class="absolute -bottom-1 right-4 group">
                                                     <span class="icon-attachment text-xs"></span>
-                                                    <div
-                                                        class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
-                                                        <span
-                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <div class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                             Diagnoseformulier aanwezig
                                                         </span>
-                                                        <div
-                                                            class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
 
@@ -346,14 +313,11 @@
                                                 <div v-if="element.mri_status"
                                                      class="absolute -bottom-1 -right-1 group">
                                                     <span class="icon-image text-xs"></span>
-                                                    <div
-                                                        class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
-                                                        <span
-                                                            class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    <div class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
+                                                        <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                             @{{ element.mri_status_label }}
                                                         </span>
-                                                        <div
-                                                            class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                        <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -371,6 +335,7 @@
                     {!! view_render_event('admin.leads.index.kanban.content.after') !!}
                 </div>
             </div>
+
             <!-- Lost Stage Modal -->
             <x-admin::modal ref="lostStageModal">
                 <x-slot:header>
@@ -382,8 +347,7 @@
                     <x-slot:content>
                         <div v-if="currentStageUpdate">
                             <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                                Lead "<strong>@{{ getLeadName(currentStageUpdate.lead) }}</strong>" wordt verplaatst
-                                naar status "Verloren"
+                                Lead "<strong>@{{ getLeadName(currentStageUpdate.lead) }}</strong>" wordt verplaatst naar status "Verloren"
                             </p>
 
                             <!-- Lost Reason -->
@@ -450,7 +414,7 @@
     </script>
 
     <script type="module">
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             app.component('v-leads-kanban', {
                 template: '#v-leads-kanban-template',
 
@@ -542,6 +506,7 @@
                             });
                         }
                     },
+
 
 
                     /**

@@ -84,7 +84,6 @@ services:
       - './docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
     networks:
       - backend
-      - public
 #    healthcheck:
 #      test: ["CMD", "mysqladmin", "ping", "-p$DB_PASSWORD"]
 #      retries: 3

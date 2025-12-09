@@ -8,7 +8,6 @@ REPO_NAME="krayin-laravel-crm"
 GITHUB_REGISTRY="ghcr.io"
 TAG="latest"
 
-./build.sh
 ./doc.sh
 
 # Bouw de Docker image met een specifieke Dockerfile

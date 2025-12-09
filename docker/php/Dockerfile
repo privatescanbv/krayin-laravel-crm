@@ -80,7 +80,6 @@ COPY --from=vite /build/lang ./lang
 COPY --from=vite /build/docs ./docs
 COPY --from=vite /build/database ./database
 COPY --from=vite /build/artisan ./artisan
-COPY --from=vite /build/node_modules ./node_modules
 COPY --from=vite /build/packages ./packages
 
 # Create sail user and group (required for Laravel Sail)

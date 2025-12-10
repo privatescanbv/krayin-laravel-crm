@@ -2,6 +2,7 @@
 
 namespace Webkul\WebForm\Http\Controllers;
 
+use App\Enums\PipelineType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
@@ -74,7 +75,7 @@ class WebFormController extends Controller
 
             $data['status'] = 1;
 
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+            $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
 
             $stage = $pipeline->stages()->first();
 

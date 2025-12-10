@@ -9,10 +9,10 @@ beforeEach(function () {
     $this->seed(TestSeeder::class);
 });
 
-test('getDefaultPipelineByType returns default workflow pipeline when exists', function () {
+test('getDefaultPipeline returns default workflow pipeline when exists', function () {
 
     $this->assertEquals(3, $this->pipelineRepository->getLeadPipelines()->count());
-    $result = $this->pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
+    $result = $this->pipelineRepository->getDefaultPipeline(PipelineType::BACKOFFICE);
 
     expect($result)->not->toBeNull()
         ->and($result->name)->toBe('Privatescan')

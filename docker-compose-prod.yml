@@ -62,7 +62,6 @@ services:
     depends_on:
       - mysql
       - n8n
-#      - mailserver
 
   mysql:
     image: 'mysql/mysql-server:8.0'

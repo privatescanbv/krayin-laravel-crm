@@ -1,11 +1,9 @@
 @props([
-    'columns',
     'stages',
     'pipeline',
 ])
 <x-adminc::components.kanban-abstract
     type="leads"
-    :columns="$columns"
     :stages="$stages"
     :pipeline="$pipeline"
 />

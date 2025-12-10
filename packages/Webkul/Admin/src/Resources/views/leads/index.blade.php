@@ -28,7 +28,7 @@
                 @include('admin::leads.index.upload')
             @endif
 
-            @include('adminc::components.kanban-toolbar', ['type' => 'leads'])
+            @include('adminc::components.kanban-toolbar', ['type' => 'leads', 'currentPipelineId' => $pipeline->id])
 
         </div>
 

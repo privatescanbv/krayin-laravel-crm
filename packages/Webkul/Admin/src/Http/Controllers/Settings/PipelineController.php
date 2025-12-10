@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use App\Enums\PipelineType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
@@ -106,7 +107,7 @@ class PipelineController extends Controller
                 'message' => trans('admin::app.settings.pipelines.index.default-delete-error'),
             ], 400);
         } else {
-            $defaultPipeline = $this->pipelineRepository->getDefaultPipeline();
+            $defaultPipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
 
             $pipeline->leads()->update([
                 'lead_pipeline_id'       => $defaultPipeline->id,
@@ -124,7 +125,7 @@ class PipelineController extends Controller
             return response()->json([
                 'message' => trans('admin::app.settings.pipelines.index.delete-success'),
             ], 200);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return response()->json([
                 'message' => trans('admin::app.settings.pipelines.index.delete-failed'),
             ], 400);

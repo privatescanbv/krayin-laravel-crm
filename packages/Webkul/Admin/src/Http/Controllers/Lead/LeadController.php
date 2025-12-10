@@ -5,6 +5,8 @@ namespace Webkul\Admin\Http\Controllers\Lead;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineType;
+use App\Helpers\DatabaseHelper;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use Prettus\Repository\Contracts\CriteriaInterface;
 use Prettus\Repository\Contracts\RepositoryInterface;
@@ -116,23 +118,7 @@ class LeadController extends Controller
         if (request()->ajax()) {
             return datagrid(LeadDataGrid::class)->process();
         }
-
-        // Get effective pipeline ID (URL parameter takes precedence over cookie)
-        $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
-
-        if ($effectivePipelineId) {
-            $pipeline = $this->pipelineRepository->find($effectivePipelineId);
-        }
-
-        // Fall back to default pipeline if no valid pipeline found
-        if (!isset($pipeline) || !$pipeline) {
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
-            // Set cookie for default pipeline
-            if ($pipeline) {
-                $this->pipelineCookieService->setLastSelectedPipelineId($pipeline->id);
-            }
-        }
-
+        $pipeline = $this->pipelineCookieService->getPipeline(PipelineType::LEAD, request('pipeline_id'));
         $stages = $pipeline->stages->map(function ($stage) {
             return [
                 'id'          => $stage->id,
@@ -150,13 +136,11 @@ class LeadController extends Controller
                 ],
             ];
         })->toArray();
-
         if(is_null($pipeline)) {
             throw new Exception('No pipeline found for leads index page');
         }
         return view('admin::leads.index', [
             'pipeline' => $pipeline,
-            'columns' => $this->getKanbanColumns(),
             'stages' => $stages,
         ]);
     }
@@ -167,29 +151,9 @@ class LeadController extends Controller
     public function get(): JsonResponse
     {
         try {
-            // Get effective pipeline ID (URL parameter takes precedence over cookie)
-            $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request()->query('pipeline_id'));
-
-            if ($effectivePipelineId) {
-                $pipeline = $this->pipelineRepository->find($effectivePipelineId);
-            }
-
-            // Fall back to default pipeline if no valid pipeline found
-            if (!isset($pipeline) || !$pipeline) {
-                $pipeline = $this->pipelineRepository->getDefaultPipeline();
-            }
-
-            if (!$pipeline) {
-                Log::error('No pipeline found for leads.get endpoint', [
-                    'pipeline_id' => request()->query('pipeline_id'),
-                    'request_params' => request()->all()
-                ]);
-
-                return response()->json([
-                    'error' => 'No pipeline found',
-                    'message' => 'Could not find the specified pipeline'
-                ], 500);
-            }
+        // Get effective pipeline ID (URL parameter takes precedence over cookie)
+        $pipeline = $this->pipelineCookieService
+            ->getPipeline(PipelineType::LEAD, request()->query('pipeline_id'));
 
         // Check if we should exclude won/lost stages for performance optimization
         $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
@@ -204,22 +168,6 @@ class LeadController extends Controller
                 $stages = $stages->filter(function ($stage) {
                     return !($stage->is_won || $stage->is_lost);
                 });
-            }
-        }
-
-        // Normalize kanban search params: map `name` to first/last/married_name
-        $search = request()->query('search', '');
-        $searchFields = request()->query('searchFields', '');
-        if ($search && $searchFields && (str_contains($searchFields, 'name') || str_contains($search, 'name:'))) {
-            $matches = [];
-            preg_match_all('/name:([^;]+);?/i', $search, $matches);
-            $term = isset($matches[1][0]) ? trim($matches[1][0]) : '';
-            if ($term !== '') {
-                request()->merge([
-                    'search' => "first_name:{$term};last_name:{$term};married_name:{$term}",
-                    'searchFields' => 'first_name:like;last_name:like;married_name:like',
-                    'searchJoin' => 'or',
-                ]);
             }
         }
 
@@ -358,8 +306,9 @@ class LeadController extends Controller
         logger()->info('User default lead values', ['user_id' => $user->id, 'defaults' => $userDefaults]);
 
         // Get effective pipeline ID (URL parameter takes precedence over cookie)
-        $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
-
+        $effectivePipelineId = $this->pipelineCookieService
+            ->getPipeline(PipelineType::LEAD, request('pipeline_id'))
+            ->id;
         // Determine pipeline and stage based on request parameters and cookie
         $pipelineData = $this->determinePipelineForLead(
             $effectivePipelineId,
@@ -593,7 +542,7 @@ class LeadController extends Controller
 
                 // Fall back to default pipeline if not found
                 if (!$pipeline) {
-                    $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                    $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
                 }
 
                 $stage = $pipeline->stages()->first();
@@ -695,7 +644,7 @@ class LeadController extends Controller
             && !in_array($lead->user_id, $userIds)
         ) {
             // Get last selected pipeline from cookie to preserve selection
-            $lastPipelineId = $this->pipelineCookieService->getLastSelectedPipelineId();
+            $lastPipelineId = $this->pipelineCookieService->getPipeline(PipelineType::LEAD)->id;
             $routeParams = $lastPipelineId ? ['pipeline_id' => $lastPipelineId] : [];
             return redirect()->route('admin.leads.index', $routeParams);
         }
@@ -767,7 +716,7 @@ class LeadController extends Controller
 
                 // Fall back to default pipeline if not found
                 if (!$pipeline) {
-                    $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                    $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
                 }
 
                 $stage = $pipeline->stages()->first();
@@ -1190,7 +1139,7 @@ class LeadController extends Controller
             return response()->json([
                 'message' => trans('admin::app.leads.update-success'),
             ]);
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             return response()->json([
                 'message' => trans('admin::app.leads.update-failed'),
             ], 400);
@@ -1216,7 +1165,7 @@ class LeadController extends Controller
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-success'),
             ]);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-failed'),
             ]);
@@ -1268,92 +1217,7 @@ class LeadController extends Controller
                 'allow_multiple_values' => true,
                 'sortable' => true,
                 'visibility' => true,
-            ],
-            [
-                'index' => 'user_id',
-                'label' => trans('admin::app.leads.index.kanban.columns.sales-person'),
-                'type' => 'string',
-                'searchable' => false,
-                'search_field' => 'in',
-                'filterable' => true,
-                'filterable_type' => 'searchable_dropdown',
-                'filterable_options' => [
-                    'repository' => UserRepository::class,
-                    'column' => [
-                        'label' => DB::raw(\App\Helpers\DatabaseHelper::concatUserName('users.')),
-                        'value' => 'id',
-                    ],
-                ],
-                'allow_multiple_values' => true,
-                'sortable' => true,
-                'visibility' => true,
-            ],
-            [
-                'index' => 'persons.id',
-                'label' => trans('admin::app.leads.index.kanban.columns.contact-person'),
-                'type' => 'string',
-                'searchable' => false,
-                'search_field' => 'in',
-                'filterable' => true,
-                'filterable_options' => [],
-                'allow_multiple_values' => true,
-                'sortable' => true,
-                'visibility' => true,
-                'filterable_type' => 'searchable_dropdown',
-                'filterable_options' => [
-                    'repository' => PersonRepository::class,
-                    'column' => [
-                        'label' => DB::raw("CONCAT_WS(' ', persons.first_name, persons.lastname_prefix, persons.last_name)"),
-                        'value' => 'id',
-                    ],
-                ],
-            ],
-            [
-                'index' => 'lead_type_id',
-                'label' => trans('admin::app.leads.index.kanban.columns.lead-type'),
-                'type' => 'string',
-                'searchable' => false,
-                'search_field' => 'in',
-                'filterable' => true,
-                'filterable_type' => 'dropdown',
-                'filterable_options' => $this->typeRepository->all(['name as label', 'id as value'])->toArray(),
-                'allow_multiple_values' => true,
-                'sortable' => true,
-                'visibility' => true,
-            ],
-            [
-                'index' => 'lead_source_id',
-                'label' => trans('admin::app.leads.index.kanban.columns.source'),
-                'type' => 'string',
-                'searchable' => false,
-                'search_field' => 'in',
-                'filterable' => true,
-                'filterable_type' => 'dropdown',
-                'filterable_options' => $this->sourceRepository->all(['name as label', 'id as value'])->toArray(),
-                'allow_multiple_values' => true,
-                'sortable' => true,
-                'visibility' => true,
-            ],
-            [
-                'index' => 'tags.name',
-                'label' => trans('admin::app.leads.index.kanban.columns.tags'),
-                'type' => 'string',
-                'searchable' => false,
-                'search_field' => 'in',
-                'filterable' => true,
-                'filterable_options' => [],
-                'allow_multiple_values' => true,
-                'sortable' => true,
-                'visibility' => true,
-                'filterable_type' => 'searchable_dropdown',
-                'filterable_options' => [
-                    'repository' => TagRepository::class,
-                    'column' => [
-                        'label' => 'name',
-                        'value' => 'name',
-                    ],
-                ],
-            ],
+            ]
         ];
     }
 
@@ -1447,7 +1311,7 @@ class LeadController extends Controller
                 }
             }
 
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+            $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
 
             $stage = $pipeline->stages()->first();
 
@@ -1549,7 +1413,7 @@ class LeadController extends Controller
 
         // If still no pipeline, fall back to default
         if (!$pipeline) {
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+            $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
         }
 
         // Get first stage if no specific stage was requested
@@ -1565,7 +1429,6 @@ class LeadController extends Controller
                 $defaultDepartmentId = Department::findPrivateScanId();
             }
         }
-
         return [
             'pipeline' => $pipeline,
             'stage_id' => $defaultStageId,

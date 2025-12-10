@@ -3,8 +3,6 @@
 use App\Enums\ContactLabel;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Support\Facades\DB;
-use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;

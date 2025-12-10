@@ -3,12 +3,12 @@
 return [
     'viters' => [
 
-//        // CRM root
-//        'root' => [
-//            'hot_file'                 => storage_path('framework/vite.hot'),
-//            'build_directory'          => 'build',
-//            'package_assets_directory' => 'resources',
-//        ],
+        //        // CRM root
+        //        'root' => [
+        //            'hot_file'                 => storage_path('framework/vite.hot'),
+        //            'build_directory'          => 'build',
+        //            'package_assets_directory' => 'resources',
+        //        ],
 
         // ADMIN (Webkul)
         'admin' => [

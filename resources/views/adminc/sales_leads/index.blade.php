@@ -24,7 +24,7 @@
 
         <div class="flex items-center gap-x-2.5">
 
-            @include('adminc::components.kanban-toolbar', ['type' => 'sales'])
+            @include('adminc::components.kanban-toolbar', ['type' => 'sales', 'currentPipelineId' => $pipeline->id])
         </div>
 
         {!! view_render_event('admin.sales-leads.index.header.right.after') !!}
@@ -35,7 +35,7 @@
     {!! view_render_event('admin.sales-leads.index.content.before') !!}
 
     <!-- Content -->
-    @include('admin::leads.index.kanban')
+    @include('adminc::sales_leads.index.kanban')
 
     {!! view_render_event('admin.sales-leads.index.content.after') !!}
 </x-admin::layouts>

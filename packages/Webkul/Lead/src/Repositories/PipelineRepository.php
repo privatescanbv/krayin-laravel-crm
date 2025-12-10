@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Repositories;
 
 use App\Enums\PipelineType;
+use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -135,29 +136,14 @@ class PipelineRepository extends Repository
      *
      * @return Pipeline
      */
-    public function getDefaultPipeline()
+    public function getDefaultPipeline(PipelineType $type): Pipeline
     {
-        $pipeline = $this->findOneByField('is_default', 1);
-
-        if (! $pipeline) {
-            $pipeline = $this->model->leadPipelines()->first();
-        }
-
-        return $pipeline;
-    }
-
-    /**
-     * Return the default pipeline by type.
-     *
-     * @param  \App\Enums\PipelineType  $type
-     * @return \Webkul\Lead\Contracts\Pipeline
-     */
-    public function getDefaultPipelineByType(PipelineType $type)
-    {
-        $pipeline = $this->model->where('is_default', 1)->where('type', $type->value)->first();
-
-        if (! $pipeline) {
-            $pipeline = $this->model->where('type', $type)->first();
+        $pipeline = $this->findOneWhere([
+            ['is_default', '=', 1],
+            ['type', '=', $type->value]
+        ]);
+        if (is_null( $pipeline)) {
+            throw new Exception("Could not find pipeline by type {$type->value}");
         }
 
         return $pipeline;

@@ -1,4 +1,7 @@
-@props(['type'])
+@props([
+    'type',
+    'currentPipelineId'
+])
 
 @php
     if ($type == 'sales') {
@@ -10,8 +13,6 @@
         $cols = 3;
         $pipelines = app('Webkul\Lead\Repositories\PipelineRepository')->getLeadPipelines();
     }
-
-    $currentPipelineId = request('pipeline_id') ?? ($pipeline->id ?? null);
 
     $tabs = collect($pipelines)->map(function ($p) use ($routeNameIndex) {
         return [
@@ -36,7 +37,7 @@
     <nav class="pipeline-nav flex-shrink-0 border border-gray-200 bg-white rounded-md px-1 h-11 flex items-center">
         <div class="flex items-center space-x-[2px]">
             @foreach ($pipelines as $tempPipeline)
-                @php $active = $pipeline->id == $tempPipeline->id; @endphp
+                @php $active = $currentPipelineId == $tempPipeline->id; @endphp
 
                 <a
                     href="{{ route($routeNameIndex, ['pipeline_id' => $tempPipeline->id, 'view_type' => request('view_type')]) }}"

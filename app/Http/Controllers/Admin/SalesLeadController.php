@@ -10,8 +10,8 @@ use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SalesLead;
-use App\Models\User;
 use App\Repositories\SalesLeadRepository;
+use App\Services\PipelineCookieService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,7 +27,6 @@ use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\PipelineRepository;
-use Webkul\Lead\Repositories\StageRepository;
 
 class SalesLeadController extends Controller
 {
@@ -37,22 +36,14 @@ class SalesLeadController extends Controller
 
     public function __construct(
         private readonly SalesLeadRepository $salesLeadRepository,
-        private readonly PipelineRepository $pipelineRepository
+        private readonly PipelineRepository $pipelineRepository,
+        private readonly PipelineCookieService $pipelineCookieService
     ) {}
 
     public function index(Request $request)
     {
         // Get selected pipeline or default workflow pipeline
-        if ($request->has('pipeline_id')) {
-            $pipeline = $this->pipelineRepository->find($request->pipeline_id);
-        } else {
-            $pipeline = $this->pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
-        }
-
-        // Remember selected pipeline for subsequent data requests
-        if ($pipeline) {
-            session(['workflow_pipeline_id' => $pipeline->id]);
-        }
+        $pipeline = $this->pipelineCookieService->getPipeline(PipelineType::BACKOFFICE, $request->pipeline_id);
 
         $stages = $pipeline->stages->map(function ($stage) {
             return [
@@ -74,7 +65,6 @@ class SalesLeadController extends Controller
 
         return view('adminc.sales_leads.index', [
             'pipeline' => $pipeline,
-            'columns'  => $this->getKanbanColumns(),
             'stages'   => $stages,
         ]);
     }
@@ -87,26 +77,7 @@ class SalesLeadController extends Controller
             return $dataGrid->toJson();
         }
 
-        // For kanban view, return Sales grouped by pipeline stages
-
-        // Get selected pipeline or default workflow pipeline
-        if ($request->filled('pipeline_id')) {
-            $pipeline = $this->pipelineRepository->find($request->pipeline_id);
-        } else {
-            // Fallback to last selected pipeline from session
-            $selectedPipelineId = session('workflow_pipeline_id');
-            $pipeline = $selectedPipelineId
-                ? $this->pipelineRepository->find($selectedPipelineId)
-                : $this->pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
-        }
-
-        if (! $pipeline) {
-            Log::error('No default pipeline found for Sales.');
-
-            return response()->json([
-                'error' => 'No workflow pipeline found for this request.',
-            ], 404);
-        }
+        $pipeline = $this->pipelineCookieService->getPipeline(PipelineType::BACKOFFICE, $request->pipeline_id);
 
         $stages = $pipeline->stages;
         $data = [];
@@ -553,60 +524,6 @@ class SalesLeadController extends Controller
             'pipeline_stage_id',
             'created_at',
             'closed_at',
-        ];
-    }
-
-    /**
-     * Get kanban columns for filtering.
-     */
-    private function getKanbanColumns(): array
-    {
-        return [
-            [
-                'index'                 => 'id',
-                'label'                 => 'ID',
-                'type'                  => 'integer',
-                'searchable'            => false,
-                'search_field'          => 'in',
-                'filterable'            => true,
-                'filterable_type'       => null,
-                'filterable_options'    => [],
-                'allow_multiple_values' => true,
-                'sortable'              => true,
-                'visibility'            => true,
-            ],
-            [
-                'index'                 => 'user_id',
-                'label'                 => 'User',
-                'type'                  => 'string',
-                'searchable'            => false,
-                'search_field'          => 'in',
-                'filterable'            => true,
-                'filterable_type'       => 'searchable_dropdown',
-                'filterable_options'    => [
-                    'repository' => User::class,
-                    'column'     => [
-                        'label' => 'name',
-                        'value' => 'id',
-                    ],
-                ],
-                'allow_multiple_values' => true,
-                'sortable'              => true,
-                'visibility'            => true,
-            ],
-            [
-                'index'                 => 'pipeline_stage_id',
-                'label'                 => 'Pipeline Stage',
-                'type'                  => 'string',
-                'searchable'            => false,
-                'search_field'          => 'in',
-                'filterable'            => true,
-                'filterable_type'       => 'dropdown',
-                'filterable_options'    => app(StageRepository::class)->all(['name as label', 'id as value'])->toArray(),
-                'allow_multiple_values' => true,
-                'sortable'              => true,
-                'visibility'            => true,
-            ],
         ];
     }
 

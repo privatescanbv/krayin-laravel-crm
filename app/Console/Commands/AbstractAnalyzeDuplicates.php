@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\ValueNormalizer;
 use App\Services\DuplicateReasonHelpers;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
@@ -351,6 +352,6 @@ abstract class AbstractAnalyzeDuplicates extends Command
      */
     protected function stringify($value): string
     {
-        return \App\Helpers\ValueNormalizer::toString($value);
+        return ValueNormalizer::toString($value);
     }
 }

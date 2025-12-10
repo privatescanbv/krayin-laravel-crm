@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\PipelineType;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
+use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
@@ -17,8 +19,8 @@ beforeEach(function () {
     $this->withoutMiddleware(Authenticate::class);
 
     // Ensure workflow pipeline and stage exist (use the first available)
-    $this->pipeline = Pipeline::first();
-    $this->stage = Stage::first();
+    $this->pipeline = app(PipelineRepository::class)->getDefaultPipeline(PipelineType::BACKOFFICE);
+    $this->stage = Stage::where('lead_pipeline_id', $this->pipeline->id)->firstOrFail();
     if (! $this->pipeline || ! $this->stage) {
         throw new Exception('Pipeline or Stage not found. Ensure TestSeeder provisions them.');
     }
@@ -126,7 +128,8 @@ test('saleslead kanban shows records per stage including pipeline filter', funct
 
     $json = $response->json();
     $stageIds = collect($json)->pluck('id');
-    expect($stageIds)->toContain($this->stage->id)->and($stageIds)->toContain($secondStage->id);
+    expect($stageIds)->toContain($this->stage->id)
+        ->and($stageIds)->toContain($secondStage->id);
 
     $wlIds = collect($json)->flatMap(fn ($s) => $s['leads']['data'])->pluck('id');
     expect($wlIds)->toContain($wlStage1->id)->and($wlIds)->toContain($wlStage2->id);

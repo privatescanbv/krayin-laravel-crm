@@ -24,8 +24,11 @@ jobs:
 
       - name: Run OWASP ZAP Quick Scan
         run: |
-          zap.sh -quickurl https://forms.dev.jouwdomein.nl \
-                 -quickout zap_report.html || true
+          docker run --rm \
+            -v $(pwd):/zap/wrk \
+            owasp/zap2docker-stable zap-baseline.py \
+            -t https://forms.dev.jouwdomein.nl \
+            -r zap_report.html || true
 
       - name: Upload ZAP report
         uses: actions/upload-artifact@v4

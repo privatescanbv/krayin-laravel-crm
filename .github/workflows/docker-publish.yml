@@ -2,7 +2,7 @@ name: Build and push Docker image
 
 on:
   push:
-    branches: ["development"]
+    branches: ["development", "security_scans"]
 
 permissions:
   contents: read
@@ -25,39 +25,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # for building frontend, will be copied to docker later
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Build and push CRM image using build_image.sh
+      - name: Build image
         run: |
           chmod +x ./build_image.sh
           ./build_image.sh
 
-  docker-sync-flows:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push sync flows image using build_image_sync_flows.sh
+      #############################################
+      # Trivy Scan of the built image
+      #############################################
+      - name: Install Trivy
         run: |
-          chmod +x ./build_image_sync_flows.sh
-          echo "Building sync flows image..."
-          ./build_image_sync_flows.sh
-          echo "Sync flows image build completed successfully"
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.51.0_Linux-64bit.deb
+
+      - name: Scan Docker Image with Trivy
+        run: |
+          trivy image ghcr.io/${{ github.repository }}:latest \
+            --format table \
+            --output trivy_image_scan.txt \
+            || true
+
+      - name: Upload Trivy Image Scan
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-report
+          path: trivy_image_scan.txt
+          retention-days: 14

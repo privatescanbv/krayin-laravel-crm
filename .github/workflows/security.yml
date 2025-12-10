@@ -1,0 +1,79 @@
+name: Security Scans
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # dagelijks om 03:00
+  workflow_dispatch:
+  push:
+    branches: ["development", "main", "security_scans"]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      ##########################################
+      # OWASP ZAP
+      ##########################################
+      - name: Install OWASP ZAP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zaproxy
+
+      - name: Run OWASP ZAP Quick Scan
+        run: |
+          zap.sh -quickurl https://forms.dev.jouwdomein.nl \
+                 -quickout zap_report.html || true
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_report.html
+          retention-days: 14
+
+      ##########################################
+      # Nuclei
+      ##########################################
+      - name: Install Nuclei
+        run: |
+          curl -s https://api.github.com/repos/projectdiscovery/nuclei/releases/latest \
+            | grep browser_download_url \
+            | grep linux_amd64.zip \
+            | cut -d '"' -f 4 \
+            | wget -qi -
+          unzip nuclei_*_linux_amd64.zip
+          sudo mv nuclei /usr/local/bin/
+
+      - name: Run Nuclei
+        run: |
+          nuclei -u https://forms.dev.jouwdomein.nl -o nuclei_results.txt || true
+
+      - name: Upload Nuclei results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuclei-results
+          path: nuclei_results.txt
+          retention-days: 14
+
+      ##########################################
+      # Trivy filesystem scan
+      ##########################################
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.51.0_Linux-64bit.deb
+
+      - name: Trivy FS Scan
+        run: trivy fs . --format table --output trivy_fs.txt || true
+
+      - name: Upload Trivy FS Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-report
+          path: trivy_fs.txt
+          retention-days: 14

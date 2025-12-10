@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Actions\Sales\SalesToLostAction;
 use App\Models\SalesLead;
 use App\Observers\SalesLeadObserver;
 use App\Services\WebhookService;
@@ -27,7 +28,8 @@ class SalesLeadWebhookTest extends TestCase
         $this->webhookCallCount = 0;
 
         $this->observer = new SalesLeadObserver(
-            webhookService: $this->mockWebhookService()
+            webhookService: $this->mockWebhookService(),
+            salesToLostAction: app(SalesToLostAction::class)
         );
     }
 

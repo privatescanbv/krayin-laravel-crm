@@ -10,6 +10,11 @@ enum OrderStatus: string
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
 
+    public static function completedState(): OrderStatus
+    {
+        return self::APPROVED;
+    }
+
     public function label(): string
     {
         return match ($this) {

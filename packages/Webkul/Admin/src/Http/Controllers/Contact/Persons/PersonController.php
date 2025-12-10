@@ -6,8 +6,8 @@ use App\Actions\Persons\CreatePortalAccountAction;
 use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ContactLabel;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
-use App\Models\Address;
 use App\Repositories\AddressRepository;
+use App\Services\PersonValidationService;
 use BackedEnum;
 use Carbon\Carbon;
 use Exception;
@@ -17,15 +17,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Prettus\Repository\Contracts\CriteriaInterface;
-use Prettus\Repository\Contracts\RepositoryInterface;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Throwable;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
-use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
+use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\Json\AnonymousResourceCollection;
@@ -33,10 +30,8 @@ use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
-
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
-use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {

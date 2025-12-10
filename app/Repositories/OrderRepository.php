@@ -62,6 +62,17 @@ class OrderRepository extends Repository
     }
 
     /**
+     * Clean up unapproved orders, when sales is lost.
+     * This way we clean data and frees the agenda for clinics to plan other persons.
+     */
+    public function cleanUpFromLostSales(string $salesId): void
+    {
+        Order::where('sales_lead_id', $salesId)
+            ->whereNot('status', OrderStatus::completedState())
+            ->delete();
+    }
+
+    /**
      * Resolve appointment-related variables from order.
      * Extracts the first appointment details for template variables.
      */

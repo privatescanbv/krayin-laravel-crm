@@ -91,6 +91,7 @@ class OrderController extends SimpleEntityController
         $items = $payload['items'] ?? [];
         unset($payload['items']);
 
+        $payload['status'] = OrderStatus::NEW->value;
         $order = $this->orderRepository->create($payload);
 
         // Persist items

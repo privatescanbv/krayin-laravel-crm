@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Actions\Sales\SalesToLostAction;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
@@ -16,6 +17,7 @@ class SalesLeadObserver
      */
     public function __construct(
         protected WebhookService $webhookService,
+        private readonly SalesToLostAction $salesToLostAction,
     ) {}
 
     /**
@@ -31,9 +33,14 @@ class SalesLeadObserver
      */
     public function updated(SalesLead $salesLead): void
     {
-        // Send webhook if stage has changed and the stage is actually different
-        if ($salesLead->isDirty('pipeline_stage_id') && $salesLead->pipeline_stage_id !== $salesLead->getOriginal('pipeline_stage_id') && $salesLead->pipelineStage) {
-            $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
+        if ($salesLead->pipeline_stage_id !== $salesLead->getOriginal('pipeline_stage_id')) {
+            // Send webhook if stage has changed and the stage is actually different
+            if ($salesLead->isDirty('pipeline_stage_id')) {
+                $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
+            }
+            if ($salesLead->pipelineStage->is_lost) {
+                $result = $this->salesToLostAction->execute($salesLead);
+            }
         }
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FormStatus;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\Order;
@@ -21,7 +22,19 @@ class FormService
 
     /**
      * Get form status from forms API.
-     *
+     * @return array{
+     *      entity_type: string,
+     *      id: int,
+     *      action: string,
+     *      status: string,
+     *      url: string,
+     *      payload: array{
+     *          form_status: string,
+     *          previous_status: string,
+     *          form_response_id: int,
+     *          form_request_id: int
+     *      }
+     *  }
      * @throws Exception
      */
     public function getFormStatus(int $formId): array
@@ -46,6 +59,13 @@ class FormService
         ]);
 
         return $result['json'] ?? [];
+    }
+
+    public function getFormStatusAsString(int $formId): FormStatus
+    {
+        $status = $this->getFormStatus($formId)['status'];
+
+        return FormStatus::mapFrom($status);
     }
 
     /**

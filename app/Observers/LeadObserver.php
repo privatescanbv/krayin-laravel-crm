@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Actions\Leads\LeadToLostAction;
 use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
@@ -31,6 +32,7 @@ class LeadObserver
         protected ActivityRepository $activityRepository,
         private readonly LeadRepository $leadRepository,
         private readonly SalesLeadRepository $salesLeadRepository,
+        private readonly LeadToLostAction $leadToLostAction
     ) {}
 
     /**
@@ -62,6 +64,7 @@ class LeadObserver
                     ]);
                     throw new HttpException(422, 'Reden van verlies is verplicht bij status "Verloren"');
                 }
+                $this->leadToLostAction->execute($lead);
             }
         }
     }

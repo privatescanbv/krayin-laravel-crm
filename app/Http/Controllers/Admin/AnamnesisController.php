@@ -232,7 +232,30 @@ class AnamnesisController extends Controller
 
     public function detachGvlForm(Request $request, string $id): JsonResponse
     {
-        $anamnesis = Anamnesis::findOrFail($id);
+        return $this->doDetachGvlForm($id);
+    }
+
+    public function cleanUpForLead(string $personId, string $leadId): void
+    {
+        $anamnesis = Anamnesis::select(['id', 'gvl_form_link'])
+            ->where('person_id', $personId)
+            ->where('lead_id', $leadId)
+            ->firstOrFail();
+        logger()->info('Running clean up action for lead, gvl form found: '.$anamnesis->gvl_form_link);
+        if ($anamnesis->gvl_form_link) {
+            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            if (! $this->formService->getFormStatusAsString($formId)->isCompleted()) {
+                $this->doDetachGvlForm($anamnesis->id);
+            }
+        }
+    }
+
+    /**
+     * Removed the form and removes the relation with anamnesis
+     */
+    public function doDetachGvlForm(string $anamnesisid): JsonResponse
+    {
+        $anamnesis = Anamnesis::findOrFail($anamnesisid);
 
         if (empty($anamnesis->gvl_form_link)) {
             return response()->json([
@@ -245,7 +268,7 @@ class AnamnesisController extends Controller
 
             if ($formId === null) {
                 Log::error('AnamnesisController@detachGvlForm could not resolve form id from URL', [
-                    'anamnesis_id'  => $id,
+                    'anamnesis_id'  => $anamnesisid,
                     'gvl_form_link' => $anamnesis->gvl_form_link,
                 ]);
                 throw new Exception('Could not resolve form id from url: '.$anamnesis->gvl_form_link);
@@ -257,7 +280,7 @@ class AnamnesisController extends Controller
 
             if ($status !== 200) {
                 Log::warning('AnamnesisController@detachGvlForm Forms API fout', [
-                    'anamnesis_id'  => $id,
+                    'anamnesis_id'  => $anamnesisid,
                     'form_id'       => $formId,
                     'status'        => $status,
                     'response_json' => $json,
@@ -273,7 +296,7 @@ class AnamnesisController extends Controller
             ]);
 
             Log::info('AnamnesisController@detachGvlForm geslaagd', [
-                'anamnesis_id' => $id,
+                'anamnesis_id' => $anamnesisid,
             ]);
 
             return response()->json([
@@ -281,7 +304,7 @@ class AnamnesisController extends Controller
             ]);
         } catch (Exception $e) {
             Log::error('AnamnesisController@detachGvlForm failed', [
-                'anamnesis_id' => $id,
+                'anamnesis_id' => $anamnesisid,
                 'error'        => $e->getMessage(),
             ]);
 
@@ -293,7 +316,12 @@ class AnamnesisController extends Controller
 
     public function getGvlFormStatus(Request $request, string $id): JsonResponse
     {
-        $anamnesis = Anamnesis::findOrFail($id);
+        return $this->getGvlFormStatus2($id);
+    }
+
+    public function getGvlFormStatus2(string $anamnesisId): JsonResponse
+    {
+        $anamnesis = Anamnesis::findOrFail($anamnesisId);
 
         if (empty($anamnesis->gvl_form_link)) {
             return response()->json([
@@ -317,7 +345,7 @@ class AnamnesisController extends Controller
             ]);
         } catch (Exception $e) {
             Log::error('AnamnesisController@getGvlFormStatus failed', [
-                'anamnesis_id' => $id,
+                'anamnesis_id' => $anamnesisId,
                 'error'        => $e->getMessage(),
             ]);
 
@@ -441,5 +469,21 @@ class AnamnesisController extends Controller
         ]);
 
         return $formLink;
+    }
+
+    private function getGvlFormStatus3(string $anamnesisId): JsonResponse
+    {
+        $anamnesis = Anamnesis::findOrFail($anamnesisId);
+
+        if (empty($anamnesis->gvl_form_link)) {
+            return response()->json([
+                'message' => 'Er is geen GVL formulier gekoppeld aan deze anamnesis.',
+            ], 422);
+        }
+
+        $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+
+        return $this->formService->getFormStatus($formId);
+
     }
 }

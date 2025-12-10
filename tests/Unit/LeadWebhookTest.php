@@ -2,10 +2,12 @@
 
 namespace Tests\Unit;
 
+use App\Actions\Leads\LeadToLostAction;
 use App\Enums\Departments;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Department;
 use App\Observers\LeadObserver;
+use App\Repositories\SalesLeadRepository;
 use App\Services\WebhookService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,7 +36,8 @@ class LeadWebhookTest extends TestCase
             webhookService: $this->mockWebhookService(),
             activityRepository: app(ActivityRepository::class),
             leadRepository: app(LeadRepository::class),
-            salesLeadRepository: app(\App\Repositories\SalesLeadRepository::class)
+            salesLeadRepository: app(SalesLeadRepository::class),
+            leadToLostAction: app(LeadToLostAction::class),
         );
     }
 

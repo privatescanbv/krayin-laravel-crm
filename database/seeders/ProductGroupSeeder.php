@@ -144,6 +144,11 @@ class ProductGroupSeeder extends Seeder
                 'parent'      => 'Wervelkolom',
             ],
             [
+                'name'        => 'Halswervel- en borstwervelkolom (HWS-BWS)',
+                'description' => 'Halswervel- en borstwervelkolom (HWS-BWS)',
+                'parent'      => 'Wervelkolom',
+            ],
+            [
                 'name'        => 'Lendenwervelkolom (LWS)',
                 'description' => 'MRI en CT Lendenwervelkolom (LWS) incl. en excl. CM',
                 'parent'      => 'Wervelkolom',
@@ -182,6 +187,16 @@ class ProductGroupSeeder extends Seeder
                 'name'        => 'Abdomen en buikaorta',
                 'description' => 'MRI en CT Abdomen en buikaorta incl. en excl. CM',
                 'parent'      => 'Buik',
+            ],
+            [
+                'name'        => 'Darmen',
+                'description' => 'MRI en CT Darmen incl. en excl. CM',
+                'parent'      => 'Buik',
+            ],
+            [
+                'name'        => 'Hart en longen (Thorax)',
+                'description' => 'Hart en longen (Thorax)',
+                'parent'      => 'Onderzoeken',
             ],
             [
                 'name'        => 'Borsten',
@@ -264,6 +279,11 @@ class ProductGroupSeeder extends Seeder
                 'parent'      => 'Overig',
             ],
             [
+                'name' => 'Ledematen',
+                'description' => 'MRI en CT armen en benen',
+                'parent'      => 'Onderzoeken',
+            ],
+            [
                 'name'        => 'Deelonderzoek',
                 'description' => 'Deelonderzoek',
                 'parent'      => 'Overig',
@@ -283,6 +303,11 @@ class ProductGroupSeeder extends Seeder
             [
                 'name'        => 'Volledige vertaling Total Bodyscan',
                 'description' => 'Volledige vertaling Total Bodyscan',
+                'parent'      => 'Vertaling',
+            ],
+            [
+                'name'        => 'Vertaalde samenvatting',
+                'description' => 'Vertaalde samenvatting',
                 'parent'      => 'Vertaling',
             ],
             [

@@ -1939,18 +1939,23 @@ class ProductSeeder extends BaseSeeder
 
     private function mapResourceTypeNameToModel(string $name): ResourceType
     {
-        $resourceTypeEnum = match ($name) {
-            'MRI scanner'    => ResourceTypeEnum::MRI_SCANNER,
-            'CT scanner'     => ResourceTypeEnum::CT_SCANNER,
-            'PET CT scanner' => ResourceTypeEnum::PET_CT_SCANNER,
-            'Artsen'         => ResourceTypeEnum::ARTSEN,
-            'Other', 'Overig' => ResourceTypeEnum::OTHER,
-            'Cardiologie'    => ResourceTypeEnum::CARDIOLOGIE,
-            default          => throw new Exception("Unknown ResourceType name: {$name}"),
+        // normalize to lowercase for case-insensitive matching
+        $normalized = mb_strtolower(trim($name));
+
+        $resourceTypeEnum = match ($normalized) {
+            'mri scanner'    => ResourceTypeEnum::MRI_SCANNER,
+            'ct scanner'     => ResourceTypeEnum::CT_SCANNER,
+            'pet ct scanner' => ResourceTypeEnum::PET_CT_SCANNER,
+            'artsen'         => ResourceTypeEnum::ARTSEN,
+            'other', 'overig' => ResourceTypeEnum::OTHER,
+            'cardiologie'    => ResourceTypeEnum::CARDIOLOGIE,
+
+            default => throw new Exception("Unknown ResourceType name: {$name}"),
         };
 
         $resourceType = ResourceType::where('name', $resourceTypeEnum->label())->first();
 
         return $resourceType ?: throw new RuntimeException("ResourceType not found: {$name}");
     }
+
 }

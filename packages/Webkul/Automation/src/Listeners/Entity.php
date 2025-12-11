@@ -2,6 +2,8 @@
 
 namespace Webkul\Automation\Listeners;
 
+use Exception;
+use Illuminate\Support\Collection;
 use Webkul\Automation\Helpers\Validator;
 use Webkul\Automation\Repositories\WorkflowRepository;
 
@@ -26,18 +28,26 @@ class Entity
     {
         $workflows = $this->workflowRepository->findByField('event', $eventName);
 
+
         foreach ($workflows as $workflow) {
             $workflowEntity = app(config('workflows.trigger_entities.'.$workflow->entity_type.'.class'));
 
             $entity = $workflowEntity->getEntity($entity);
 
+            if (is_array($entity)) {
+                $entity = $entity[0] ?? null;
+            }
+
+            if ($entity instanceof Collection) {
+                $entity = $entity->first();
+            }
             if (! $this->validator->validate($workflow, $entity)) {
                 continue;
             }
 
             try {
                 $workflowEntity->executeActions($workflow, $entity);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 logger()->error($e->getMessage());
             }
         }

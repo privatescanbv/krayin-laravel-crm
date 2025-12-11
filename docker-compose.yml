@@ -96,7 +96,6 @@ services:
     volumes:
       - 'crm-mysql:/var/lib/mysql'
       # note: in prod, these are copies by update-and-run.sh
-      - './.docker/mysql/init-n8n.sql:/docker-entrypoint-initdb.d/20-init-n8n.sql'
       - './.docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
     networks:
       - backend
@@ -108,37 +107,6 @@ services:
         - '-p${DB_PASSWORD}'
       retries: 3
       timeout: 5s
-
-  #  krayin-phpmyadmin:
-  #    image: phpmyadmin:latest
-  #    restart: always
-  #    environment:
-  #      PMA_HOST: krayin-mysql
-  #      PMA_USER: root
-  #      PMA_PASSWORD: root
-  #    ports:
-  #      - 8080:80 # adjust your port here, if you want to change
-
-  #  This n8N will service for production workflows. For data flows, we will set up a separate n8n instance and will run on our data server.
-  n8n:
-    image: n8nio/n8n:stable
-    container_name: n8n
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      - DB_TYPE=sqlite
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=changeme
-      - N8N_HOST=n8n.local
-      - N8N_PORT=5678
-      - TZ=Europe/Amsterdam
-    networks:
-      - public
-      - backend
-    volumes:
-      - ./data/n8n_data:/home/node/.n8n
 
   k6:
     image: grafana/k6:latest

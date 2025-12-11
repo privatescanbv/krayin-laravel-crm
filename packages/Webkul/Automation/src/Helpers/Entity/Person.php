@@ -2,10 +2,10 @@
 
 namespace Webkul\Automation\Helpers\Entity;
 
+use Exception;
 use Illuminate\Support\Facades\Mail;
 use Webkul\Admin\Notifications\Common;
 use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\Automation\Contracts\Workflow;
 use Webkul\Automation\Repositories\WebhookRepository;
 use Webkul\Automation\Services\WebhookService;
 use Webkul\Contact\Contracts\Person as PersonContract;
@@ -61,10 +61,6 @@ class Person extends AbstractEntity
                 'name'       => trans('admin::app.settings.workflows.helpers.update-person'),
                 'attributes' => $this->getAttributes('persons'),
             ], [
-                'id'         => 'update_related_leads',
-                'name'       => trans('admin::app.settings.workflows.helpers.update-related-leads'),
-                'attributes' => $this->getAttributes('leads'),
-            ], [
                 'id'      => 'send_email_to_person',
                 'name'    => trans('admin::app.settings.workflows.helpers.send-email-to-person'),
                 'options' => $emailTemplates,
@@ -91,22 +87,6 @@ class Person extends AbstractEntity
 
                     break;
 
-                case 'update_related_leads':
-                    $leads = $this->leadRepository->findByField('person_id', $person->id);
-
-                    foreach ($leads as $lead) {
-                        $this->leadRepository->update(
-                            [
-                                'entity_type'        => 'leads',
-                                $action['attribute'] => $action['value'],
-                            ],
-                            $lead->id,
-                            [$action['attribute']]
-                        );
-                    }
-
-                    break;
-
                 case 'send_email_to_person':
                     $emailTemplate = $this->emailTemplateRepository->find($action['value']);
 
@@ -120,7 +100,7 @@ class Person extends AbstractEntity
                             'subject' => $this->replacePlaceholders($person, $emailTemplate->subject),
                             'body'    => $this->replacePlaceholders($person, $emailTemplate->content),
                         ]));
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         report($e);
                     }
 
@@ -129,7 +109,7 @@ class Person extends AbstractEntity
                 case 'trigger_webhook':
                     try {
                         $this->triggerWebhook($action['value'], $person);
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         report($e);
                     }
 

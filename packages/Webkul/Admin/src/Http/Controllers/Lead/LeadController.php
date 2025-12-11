@@ -840,14 +840,7 @@ class LeadController extends Controller
                 ], 422);
             }
         }
-
         Event::dispatch('lead.update.before', $leadId);
-
-        $lead = $this->leadRepository->update(
-            array_merge($data, ['entity_type' => 'leads']),
-            $leadId,
-            array_keys($data)
-        );
 
         // If requested, complete all open activities for this lead after successful update
         if (!empty($data['close_open_activities'])) {
@@ -861,6 +854,13 @@ class LeadController extends Controller
                 ]);
             }
         }
+
+        // update state after closing activiteit, otherwise new activities will be closed
+        $lead = $this->leadRepository->update(
+            array_merge($data, ['entity_type' => 'leads']),
+            $leadId,
+            array_keys($data)
+        );
 
         Event::dispatch('lead.update.after', $lead);
 

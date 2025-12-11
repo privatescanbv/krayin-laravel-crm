@@ -28,6 +28,7 @@ class Entity
 
         $events = [];
 
+
         foreach ($entities as $key => $entity) {
             $object = app($entity['class']);
 
@@ -37,7 +38,6 @@ class Entity
                 'events' => $entity['events'],
             ];
         }
-
         return $events;
     }
 
@@ -57,7 +57,6 @@ class Entity
 
             $conditions[$key] = $object->getConditions();
         }
-
         return $conditions;
     }
 
@@ -86,18 +85,30 @@ class Entity
      *
      * @return array
      */
-    public function getEmailTemplatePlaceholders()
+    public function getEmailTemplatePlaceholders(): array
     {
         $entities = config('workflows.trigger_entities');
 
-        $placeholders = [];
+        $output = [];
 
-        foreach ($entities as $key => $entity) {
-            $object = app($entity['class']);
+        foreach ($entities as $config) {
+            $object = app($config['class']);
 
-            $placeholders[] = $object->getEmailTemplatePlaceholders($entity);
+            $raw = method_exists($object, 'getEmailTemplatePlaceholders')
+                ? $object->getEmailTemplatePlaceholders($config)
+                : [];
+
+            // NORMALISEREN
+            $output[] = [
+                'text' => $raw['text'] ?? ($config['name'] ?? ''),   // fallback label
+                'menu' => array_map(function ($item) {
+                    return [
+                        'text'  => $item['text'] ?? '',
+                        'value' => $item['value'] ?? '',
+                    ];
+                }, $raw['menu'] ?? []),
+            ];
         }
-
-        return $placeholders;
+        return $output;
     }
 }

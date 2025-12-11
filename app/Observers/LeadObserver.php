@@ -11,6 +11,7 @@ use App\Services\LeadDuplicateCacheService;
 use App\Services\WebhookService;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -45,6 +46,7 @@ class LeadObserver
             // Resolve the NEW stage code explicitly from the incoming stage id, as the relation may be stale during updating
             $newStageCode = Stage::find($lead->lead_pipeline_stage_id)?->code;
 
+            Event::dispatch('lead.update_stage.after', $lead);
             // If changing to 'klant_adviseren' stage
             if ($newStageCode === LeadPipelineStageDefaults::ADVICE->value) {
                 // Check if person_id is set

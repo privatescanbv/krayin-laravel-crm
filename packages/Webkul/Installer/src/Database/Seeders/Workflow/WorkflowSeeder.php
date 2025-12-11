@@ -2,82 +2,104 @@
 
 namespace Webkul\Installer\Database\Seeders\Workflow;
 
+use App\Enums\ActivityType;
+use App\Enums\PipelineStage;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Webkul\Attribute\Models\AttributeOption;
-use Webkul\Lead\Models\Source;
-use Webkul\User\Models\Group;
+use phpDocumentor\Reflection\Types\String_;
 
 class WorkflowSeeder extends Seeder
 {
+
+    public function __construct()
+    {
+
+
+    }
+
     /**
-     * Seed the application's database.
-     *
-     * @param  array  $parameters
-     * @return void
+     * Generated default data
+     * @return array{title: string, description: string}
      */
+    private function createActivityTitle(PipelineStage $stage): array
+    {
+        $defaultDescription = 'Automatisch aangemaakt op basis van statuswijziging';
+        return match ($stage) {
+            PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
+            PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA
+            => ["Klant data bijwerken", $defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_START,
+            PipelineStage::KLANT_ADVISEREN_START_HERNIA
+            => ["Titel voor andere stage", $defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_OPVOLGEN =>['Klant bellen voor advies',$defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA => ["MRI aanleveren", $defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA => ['Klant levert MRI beelden aan, verwerken', $defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA => ['Klant adviseren met MRI beelden', $defaultDescription],
+
+            default => ["Auto-activity: {$stage->name()}", $defaultDescription],
+        };
+    }
+
+
     public function run($parameters = [])
     {
         DB::table('workflows')->delete();
 
         $now = Carbon::now();
+        $activityType = ActivityType::TASK->value;
 
-        $defaultLocale = $parameters['locale'] ?? config('app.locale');
+        $rows = [];
+        $id = 1;
 
-        $sourcePCId = Source::where('name', 'like', '%2552680%')->value('id');
-        $sourceHerniaId = Source::where('name', 'like', '%8200100%')->value('id');
-        $attributeOptionHerniaId = AttributeOption::where('name', 'Hernia')->value('id');
-        $attributeOptionPCId = AttributeOption::where('name', 'Privatescan')->value('id');
-//        $id = 1;
-//        DB::table('workflows')->insert([
-//            [
-//                'id'             => $id,
-//                'name'           => trans('installer::app.seeders.workflow.email-to-participants-after-activity-creation', [], $defaultLocale),
-//                'description'    => trans('installer::app.seeders.workflow.email-to-participants-after-activity-creation', [], $defaultLocale),
-//                'entity_type'    => 'activities',
-//                'event'          => 'activity.create.after',
-//                'condition_type' => 'and',
-//                'conditions'     => '[{"value": ["call", "meeting", "task"], "operator": "{}", "attribute": "type", "attribute_type": "multiselect"}]',
-//                'actions'        => '[{"id": "send_email_to_participants", "value": "1"}]',
-//                'created_at'     => $now,
-//                'updated_at'     => $now,
-//            ], [
-//                'id'             => ++$id,
-//                'name'           => trans('installer::app.seeders.workflow.email-to-participants-after-activity-updation', [], $defaultLocale),
-//                'description'    => trans('installer::app.seeders.workflow.email-to-participants-after-activity-updation', [], $defaultLocale),
-//                'entity_type'    => 'activities',
-//                'event'          => 'activity.update.after',
-//                'condition_type' => 'and',
-//                'conditions'     => '[{"value": ["call", "meeting", "task"], "operator": "{}", "attribute": "type", "attribute_type": "multiselect"}]',
-//                'actions'        => '[{"id": "send_email_to_participants", "value": "2"}]',
-//                'created_at'     => $now,
-//                'updated_at'     => $now,
-//            ],
-////            [
-////                'id'             => ++$id,
-////                'name'           => 'Set afdeling lead Hernia',
-////                'description'    => 'Op basis van kanaal / source',
-////                'entity_type'    => 'leads',
-////                'event'          => 'lead.create.after',
-////                'condition_type' => 'and',
-////                'conditions'     => '[{"value": "'.$sourceHerniaId.'", "operator": "==", "attribute": "source", "attribute_type": "select"}]',
-////                'actions'        => '[{"id": "update_lead", "value": "'.$attributeOptionHerniaId.'", "attribute": "department", "attribute_type": "select"}]',
-////                'created_at'     => $now,
-////                'updated_at'     => $now,
-////            ],
-////            [
-////                'id'             => ++$id,
-////                'name'           => 'Set afdeling lead Privatescan',
-////                'description'    => 'Op basis van kanaal / source',
-////                'entity_type'    => 'leads',
-////                'event'          => 'lead.create.after',
-////                'condition_type' => 'and',
-////                'conditions'     => '[{"value": "'.$sourcePCId.'", "operator": "==", "attribute": "lead_source_id", "attribute_type": "select"}]',
-////                'actions'        => '[{"id": "update_lead", "value": "'.$attributeOptionPCId.'", "attribute": "department", "attribute_type": "select"}]',
-////                'created_at'     => $now,
-////                'updated_at'     => $now,
-////            ]
-//        ]);
+        foreach (PipelineStage::cases() as $stage) {
+            $rows[] = $this->buildWorkflowRow(
+                id: $id++,
+                stage: $stage,
+                activityType: $activityType,
+                now: $now
+            );
+        }
+
+        DB::table('workflows')->insert(array_filter($rows));
+    }
+
+    private function buildWorkflowRow(int $id, PipelineStage $stage, string $activityType, Carbon $now): array
+    {
+        if ($stage->isLost() || $stage->isWon() || $stage == PipelineStage::NO_PIPELINE) {
+            // no auto activities
+            return [];
+        }
+        [$title, $description] = $this->createActivityTitle($stage);
+        $entityType = ($stage->isLead()) ? 'leads' : 'saleslead';
+        $entityTypeEvent = ($stage->isLead()) ? 'lead' : 'sale';
+        return [
+            'id'             => $id,
+            'name'           => $title,
+            'description'    => $description,
+            'entity_type'    => $entityType,
+            'event'          => $entityTypeEvent.'.update_stage.after',
+            'condition_type' => 'and',
+            'conditions'     => json_encode([
+                [
+                    'value'          => (string) $stage->id(),
+                    'operator'       => '==',
+                    'attribute'      => ($stage->isLead()) ? 'lead_pipeline_stage_id' : 'pipeline_stage_id',
+                    'attribute_type' => 'select',
+                ]
+            ]),
+            'actions' => json_encode([
+                [
+                    'id'         => 'create_activity',
+                    'attributes' => [
+                        'title'       => $title,
+                        'description' => $description,
+                        'type'        => $activityType,
+                    ],
+                ],
+            ]),
+
+            'created_at'     => $now,
+        ];
     }
 }

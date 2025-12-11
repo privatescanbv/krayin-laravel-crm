@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
+use App\Actions\Activities\DuplicateException;
 use App\Models\Department;
 use Exception;
 use Illuminate\Http\Request;
@@ -27,7 +29,8 @@ class ActivityController extends Controller
         protected ActivityRepository   $activityRepository,
         protected EmailRepository      $emailRepository,
         protected AttachmentRepository $attachmentRepository,
-        protected LeadRepository       $leadRepository
+        protected LeadRepository       $leadRepository,
+        private readonly CreateActivityForLeadOrSalesAction $createActivityAction
     )
     {
     }
@@ -79,22 +82,13 @@ class ActivityController extends Controller
             }
 
             // Always load the lead for department validation
-            $lead = $this->leadRepository->findOrFail($id);
-            $groupId = Department::getGroupIdForLead($lead);
-
-            // Duplicate guard: same title on same lead with is_done = 0 should be rejected
-            $isDuplicate = $this->activityRepository
-                ->where('lead_id', $id)
-                ->where('title', $data['title'] ?? null)
-                ->where('is_done', 0)
-                ->exists();
-
-            if ($isDuplicate) {
-                Log::warning('Lead activities store: duplicate detected', [
-                    'lead_id' => $id,
-                    'title' => $data['title'] ?? null,
-                ]);
-
+            try {
+                $activity = $this->createActivityAction->executeForLeadId(
+                    $id,
+                    $request->type == 'note' ? true : false,
+                    $data
+                );
+            } catch (DuplicateException $e) {
                 return response()->json([
                     'message' => 'Duplicate activity: same title exists for this lead and is not done.',
                     'errors' => [
@@ -102,13 +96,6 @@ class ActivityController extends Controller
                     ]
                 ], 409);
             }
-
-            $activity = $this->activityRepository->create(array_merge($data, [
-                'is_done' => $request->type == 'note' ? 1 : 0,
-                'user_id' => $data['user_id'] ?? null,
-                'group_id' => $groupId,
-                'lead_id' => $id,
-            ]));
             return response()->json([
                 'data' => new ActivityResource($activity),
                 'message' => trans('admin::app.activities.create-success'),

@@ -22,6 +22,7 @@ class FormService
 
     /**
      * Get form status from forms API.
+     *
      * @return array{
      *      entity_type: string,
      *      id: int,
@@ -35,6 +36,7 @@ class FormService
      *          form_request_id: int
      *      }
      *  }
+     *
      * @throws Exception
      */
     public function getFormStatus(int $formId): array

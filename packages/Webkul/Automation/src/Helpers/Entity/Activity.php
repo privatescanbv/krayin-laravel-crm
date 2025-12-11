@@ -2,7 +2,9 @@
 
 namespace Webkul\Automation\Helpers\Entity;
 
+use App\Enums\ActivityType;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Mail;
 use Webkul\Activity\Contracts\Activity as ContractsActivity;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -43,6 +45,11 @@ class Activity extends AbstractEntity
      */
     public function getAttributes(string $entityType, array $skipAttributes = []): array
     {
+        $types = collect(ActivityType::userSelectable())
+            ->map(fn (ActivityType $type) => (object) [
+                'id'   => $type->value,
+                'name' => $type->label(),
+            ]);
         $attributes = [
             [
                 'id'          => 'title',
@@ -55,24 +62,7 @@ class Activity extends AbstractEntity
                 'type'        => 'multiselect',
                 'name'        => 'Type',
                 'lookup_type' => null,
-                'options'     => collect([
-                    (object) [
-                        'id'   => 'note',
-                        'name' => 'Note',
-                    ], (object) [
-                        'id'   => 'call',
-                        'name' => 'Call',
-                    ], (object) [
-                        'id'   => 'meeting',
-                        'name' => 'Meeting',
-                    ], (object) [
-                        'id'   => 'task',
-                        'name' => 'task',
-                    ], (object) [
-                        'id'   => 'file',
-                        'name' => 'File',
-                    ],
-                ]),
+                'options'     => $types,
             ], [
                 'id'          => 'location',
                 'type'        => 'text',
@@ -234,7 +224,8 @@ class Activity extends AbstractEntity
                                 ],
                             ],
                         ]));
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
+                        logger()->error('Could not execute action send_email_to_sales_owner; '.$e->getMessage(),$e);
                     }
 
                     break;
@@ -263,7 +254,7 @@ class Activity extends AbstractEntity
                                 ],
                             ]));
                         }
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                     }
 
                     break;
@@ -271,7 +262,7 @@ class Activity extends AbstractEntity
                 case 'trigger_webhook':
                     try {
                         $this->triggerWebhook($action['value'], $activity);
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         report($e);
                     }
 

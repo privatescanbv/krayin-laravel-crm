@@ -148,36 +148,27 @@
                         />
 
                         <div class="w-1/2 max-md:w-full">
-                            <!-- Event -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    id="event"
-                                    name="event"
-                                    ::value="event"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.workflows.edit.event')"
-                                    :placeholder="trans('admin::app.settings.workflows.edit.event')"
-                                    v-model="event"
+                            <x-adminc::components.field
+                                type="select"
+                                id="event"
+                                name="event"
+                                ::value="event"
+                                :label="trans('admin::app.settings.workflows.create.event')"
+                                rules="required"
+                                v-model="event"
+                            >
+                                <optgroup
+                                    v-for="entity in events"
+                                    :label="entity.name"
                                 >
-                                    <optgroup
-                                        v-for='entity in events'
-                                        :label="entity.name"
+                                    <option
+                                        v-for="ev in entity.events"
+                                        :value="ev.event"
                                     >
-                                        <option
-                                            v-for='event in entity.events'
-                                            :value="event.event"
-                                            :text="event.name"
-                                        ></option>
-                                    </optgroup>
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.workflows.edit.event')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="event" />
-
-                            </x-admin::form.control-group>
+                                        @{{ ev.name }}
+                                    </option>
+                                </optgroup>
+                            </x-adminc::components.field>
                         </div>
                     </div>
 
@@ -201,33 +192,24 @@
                         </div>
 
                         <div class="flex w-1/2 flex-col gap-2 max-md:w-full">
-                            <!-- Condition Type -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    class="ltr:pr-10 rtl:pl-10"
-                                    id="condition_type"
-                                    name="condition_type"
-                                    v-model="conditionType"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.workflows.edit.condition-type')"
-                                    :placeholder="trans('admin::app.settings.workflows.edit.condition-type')"
-                                >
-                                    <option value="and">
-                                        @lang('admin::app.settings.workflows.edit.all-condition-are-true')
-                                    </option>
+                            <x-adminc::components.field
+                                type="select"
+                                class="ltr:pr-10 rtl:pl-10"
+                                id="condition_type"
+                                name="condition_type"
+                                v-model="conditionType"
+                                rules="required"
+                                :label="trans('admin::app.settings.workflows.create.condition-type')"
+                                :placeholder="trans('admin::app.settings.workflows.create.condition-type')"
+                            >
+                                <option value="and">
+                                    @lang('admin::app.settings.workflows.create.all-condition-are-true')
+                                </option>
 
-                                    <option value="or">
-                                        @lang('admin::app.settings.workflows.edit.any-condition-are-true')
-                                    </option>
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.workflows.edit.condition-type')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="condition_type" />
-
-                            </x-admin::form.control-group>
+                                <option value="or">
+                                    @lang('admin::app.settings.workflows.create.any-condition-are-true')
+                                </option>
+                            </x-adminc::components.field>
 
                             <!-- Workflow Condition Vue Component. -->
                             <template
@@ -381,7 +363,7 @@
                             <v-field
                                 :name="`conditions[${index}][value]`"
                                 v-slot="{ field, errorMessage }"
-                                :label="trans('admin::app.settings.workflows.edit.value')"
+                                label="Aanpassen"
                                 :id="`conditions[${index}][value]`"
                                 :rules="
                                     matchedAttribute.type == 'price' ? 'regex:^[0-9]+(\\.[0-9]+)?$' : ''
@@ -550,200 +532,38 @@
                 </x-admin::table.td>
 
                 <x-admin::table.td>
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex w-full items-center justify-between gap-4">
-                            <template v-if="matchedAction && matchedAction.attributes">
-                                <!-- Mattched Attribute -->
+                        <div class="flex flex-col gap-2 w-full">
+                            <div v-for="attr in matchedAction.attributes" :key="attr.id">
+                                <label class="text-xs text-gray-600">@{{ attr.name }}</label>
+
+                                <!-- TEXT -->
+                                <input
+                                    v-if="attr.type === 'text'"
+                                    type="text"
+                                    class="border px-2 py-1 w-full"
+                                    :name="`actions[${index}][attributes][${attr.id}]`"
+                                    v-model="action.attributes[attr.id]"
+                                />
+
+                                <!-- TEXTAREA -->
+                                <textarea
+                                    v-if="attr.type === 'textarea'"
+                                    class="border px-2 py-1 w-full"
+                                    :name="`actions[${index}][attributes][${attr.id}]`"
+                                    v-model="action.attributes[attr.id]"
+                                ></textarea>
+
+                                <!-- SELECT -->
                                 <select
-                                    :name="['actions[' + index + '][attribute]']"
-                                    :id="['actions[' + index + '][attribute]']"
-                                    class=" inline-flex h-10 w-full items-center justify-between gap-x-1 rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 max-sm:max-w-full max-sm:flex-auto"
-                                    v-model="action.attribute"
+                                    v-if="attr.type === 'select'"
+                                    class="border px-2 py-1 w-full"
+                                    :name="`actions[${index}][attributes][${attr.id}]`"
+                                    v-model="action.attributes[attr.id]"
                                 >
-                                    <option
-                                        v-for='attribute in matchedAction.attributes'
-                                        :value="attribute.id"
-                                        :text="attribute.name"
-                                    ></option>
+                                    <option v-for="opt in attr.options" :value="opt.id">@{{ opt.name }}</option>
                                 </select>
+                            </div>
 
-                                <template v-if="matchedAttribute">
-                                    <input
-                                        type="hidden"
-                                        :name="['actions[' + index + '][attribute_type]']"
-                                        v-model="matchedAttribute.type"
-                                    >
-
-                                    <!-- Text, Price, Decimal and Integer -->
-                                    <template
-                                        v-if="
-                                            matchedAttribute.type == 'text'
-                                            || matchedAttribute.type == 'price'
-                                            || matchedAttribute.type == 'decimal'
-                                            || matchedAttribute.type == 'integer'
-                                        "
-                                    >
-                                        <v-field
-                                            :name="`actions[${index}][value]`"
-                                            v-slot="{ field, errorMessage }"
-                                            :id="`actions[${index}][value]`"
-                                            :rules="
-                                                matchedAttribute.type == 'price' ? 'regex:^[0-9]+(\\.[0-9]+)?$' : ''
-                                                || matchedAttribute.type == 'decimal' ? 'regex:^[0-9]+(\\.[0-9]+)?$' : ''
-                                                || matchedAttribute.type == 'integer' ? 'regex:^[0-9]+$' : ''
-                                                || matchedAttribute.type == 'text' ? 'regex:^.*$' : ''
-                                            "
-                                            v-model="action.value"
-                                        >
-                                            <input
-                                                type="text"
-                                                v-bind="field"
-                                                :class="{ 'border border-error': errorMessage }"
-                                                class="flex h-10 w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                            />
-                                        </v-field>
-
-                                        <v-error-message
-                                            :name="`actions[${index}][value]`"
-                                            class="mt-1 text-xs italic text-red-500"
-                                            as="p"
-                                        >
-                                        </v-error-message>
-                                    </template>
-
-                                    <!-- Email and Phone -->
-                                    <template
-                                        v-if="
-                                            matchedAttribute.type == 'email'
-                                            || matchedAttribute.type == 'phone'
-                                        "
-                                    >
-                                        <input
-                                            type="hidden"
-                                            :name="['actions[' + index + '][value][0][value]']"
-                                            value="work"
-                                        />
-
-                                        <input
-                                            type="email"
-                                            :name="`actions[${index}][value][0][value]`"
-                                            :id="`actions[${index}][value][0][value]`"
-                                            class="flex h-10 w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                            v-model="action.value[0].value"
-                                        />
-                                    </template>
-
-                                    <!-- Textarea -->
-                                    <template v-if="matchedAttribute.type == 'textarea'">
-                                        <textarea
-                                            :name="['actions[' + index + '][value]']"
-                                            :id="['actions[' + index + '][value]']"
-                                            v-model="action.value"
-                                            class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                        ></textarea>
-                                    </template>
-
-                                    <!-- Date Picker -->
-                                    <template v-if="matchedAttribute.type == 'date'">
-                                        <x-admin::flat-picker.date
-                                            class="!w-full"
-                                            ::allow-input="false"
-                                        >
-                                            <input
-                                                type="date"
-                                                class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                                :name="['actions[' + index + '][value]']"
-                                                v-model="action.value"
-                                            />
-                                        </x-admin::flat-picker.date>
-                                    </template>
-
-                                    <!-- Date Time Picker -->
-                                    <template v-if="matchedAttribute.type == 'datetime'">
-                                        <x-admin::flat-picker.date
-                                            class="!w-full"
-                                            ::allow-input="false"
-                                        >
-                                            <input
-                                                type="datetime"
-                                                class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                                :name="['actions[' + index + '][value]']"
-                                                v-model="action.value"
-                                            />
-                                        </x-admin::flat-picker.date>
-                                    </template>
-
-                                    <!-- Boolean -->
-                                    <template v-if="matchedAttribute.type == 'boolean'">
-                                        <select
-                                            :name="['actions[' + index + '][value]']"
-                                            class=" inline-flex h-10 w-full items-center justify-between gap-x-1 rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 max-sm:max-w-full max-sm:flex-auto"
-                                            v-model="action.value"
-                                        >
-                                            <option value="1">
-                                                @lang('admin::app.settings.workflows.edit.yes')
-                                            </option>
-
-                                            <option value="0">
-                                                @lang('admin::app.settings.workflows.edit.no')
-                                            </option>
-                                        </select>
-                                    </template>
-
-                                    <!-- Select, Radio and Lookup -->
-                                    <template
-                                        v-if="
-                                            matchedAttribute.type == 'select'
-                                            || matchedAttribute.type == 'radio'
-                                            || matchedAttribute.type == 'lookup'
-                                        "
-                                    >
-                                        <!-- Attribute Options -->
-                                        <template v-if="! matchedAttribute.lookup_type">
-                                            <select
-                                                :name="['actions[' + index + '][value]']"
-                                                class=" inline-flex h-10 w-full items-center justify-between gap-x-1 rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                                v-model="action.value"
-                                            >
-                                                <option
-                                                    v-for='option in matchedAttribute.options'
-                                                    :value="option.id"
-                                                    :text="option.name"
-                                                ></option>
-                                            </select>
-                                        </template>
-
-                                        <!-- Look vue component -->
-                                        <template v-else>
-                                            <div class="w-full">
-                                                <v-lookup-component
-                                                    :attribute="{'code': 'actions[' + index + '][value]', 'name': 'Email', 'lookup_type': matchedAttribute.lookup_type}"
-                                                    validations="required|email"
-                                                    :data="action.value"
-                                                    can-add-new="true"
-                                                ></v-lookup-component>
-                                            </div>
-                                        </template>
-                                    </template>
-
-                                    <!-- Attribute Options -->
-                                    <template v-if="this.matchedAttribute.type === 'multiselect' || this.matchedAttribute.type === 'checkbox'">
-                                        <select
-                                            :name="`actions[${index}][value][]`"
-                                            class="inline-flex h-20 w-full items-center justify-between gap-x-1 rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                            v-model="action.value"
-                                            multiple
-                                        >
-                                            <option
-                                                v-for="option in matchedAttribute.options"
-                                                :key="option.id"
-                                                :value="option.id"
-                                                :text="option.name"
-                                            ></option>
-                                        </select>
-                                    </template>
-                                </template>
-                            </template>
 
                             <template v-if="matchedAction && matchedAction.options">
                                 <select
@@ -789,7 +609,6 @@
                                 </v-error-message>
                             </template>
                         </div>
-                    </div>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="text-right">
@@ -815,7 +634,21 @@
 
                         conditions: @json($workflow->conditions ?: []),
 
-                        actions: @json($workflow->actions ?: []),
+
+                        actions: @json($workflow->actions ?: []).map(a => ({
+                            id: a.id ?? '',
+
+                            // Nieuwe structuur
+                            attributes: a.attributes ?? {
+                                title: a.title ?? '',
+                                description: a.description ?? '',
+                                type: a.type ?? '',
+                            },
+
+                            // Belangrijk voor acties met 'options'
+                            value: a.value ?? '',
+                        })),
+
 
                         activeTab: 'basic-details',
 
@@ -899,11 +732,15 @@
                      */
                     addAction() {
                         this.actions.push({
-                            'id': '',
-                            'attribute': '',
-                            'value': '',
+                            id: '',
+                            attributes: {
+                                title: '',
+                                description: '',
+                                type: '',
+                            }
                         });
                     },
+
 
                     /**
                      * Remove the action.
@@ -1182,12 +1019,9 @@
                      *
                      * @returns {Object}
                      */
-                    matchedAction () {
-                        if (this.entityType == '') {
-                            return;
-                        }
-
-                        return this.actions[this.entityType].find(action => action.id == this.action.id);
+                    matchedAction() {
+                        if (!this.entityType || !this.actions[this.entityType]) return null;
+                        return this.actions[this.entityType].find(a => a.id === this.action.id) || null;
                     },
 
                     /**
@@ -1196,43 +1030,38 @@
                      * @return {void}
                      */
                     matchedAttribute() {
-                        if (! this.matchedAction) {
-                            return;
+                        const action = this.matchedAction;
+                        if (!action || !action.attributes) {
+                            return null;
                         }
 
-                        let matchedAttribute = this.matchedAction.attributes.find(attribute => attribute.id == this.action.attribute);
-
-                        if (! matchedAttribute) {
-                            return;
+                        // Als gebruiker net actie heeft gekozen, nog geen attribute geselecteerd
+                        if (!this.action.attribute) {
+                            return null;
                         }
 
-                        if (
-                            matchedAttribute['type'] == 'multiselect'
-                            || matchedAttribute['type'] == 'checkbox'
-                        ) {
-                            if (! this.action.value) {
-                                this.action.value = [];
-                            }
-                        } else if (
-                            matchedAttribute['type'] == 'email'
-                            || matchedAttribute['type'] == 'phone'
-                        ) {
-                            if (! this.action.value) {
-                                this.action.value = [{
-                                    'label': 'work',
-                                    'value': ''
-                                }];
-                            }
-                        } else if (matchedAttribute['type'] == 'text') {
-                            if (! this.action.value) {
-                                this.action.value = '';
-                            }
+                        const attr = action.attributes.find(a => a.id === this.action.attribute);
+
+                        if (!attr) {
+                            return null;
                         }
 
-                        return matchedAttribute;
+                        // Initialiseer value voor diverse types
+                        if (attr.type === 'text' && typeof this.action.attributes[attr.id] !== 'string') {
+                            this.action.attributes[attr.id] = '';
+                        }
+
+                        if (attr.type === 'textarea' && typeof this.action.attributes[attr.id] !== 'string') {
+                            this.action.attributes[attr.id] = '';
+                        }
+
+                        if (attr.type === 'select' && !this.action.attributes[attr.id]) {
+                            this.action.attributes[attr.id] = '';
+                        }
+
+                        return attr;
                     },
                 },
-
                 methods: {
                     /**
                      * Remove the action.
@@ -1243,6 +1072,7 @@
                         this.$emit('onRemoveAction', this.action);
                     },
                 },
+
             });
         </script>
     @endPushOnce

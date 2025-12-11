@@ -31,7 +31,6 @@ class PipelineCookieService
 
             // Validate that the pipeline still exists
             $pipeline = $this->pipelineRepository->find((int) $pipelineId);
-            logger()->info('get cookie pipline '.$pipelineId);
 
             return $pipeline ? (int) $pipelineId : null;
         } catch (Exception $e) {
@@ -93,8 +92,6 @@ class PipelineCookieService
         if (is_null($pipeline)) {
             return $this->pipelineRepository->getDefaultPipeline($type);
         }
-
-        logger()->info('cookie server get pipeline '.$pipeline->id);
 
         return $pipeline;
     }

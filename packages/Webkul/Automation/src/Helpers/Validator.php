@@ -2,6 +2,8 @@
 
 namespace Webkul\Automation\Helpers;
 
+use Illuminate\Support\Collection;
+
 class Validator
 {
     /**
@@ -70,6 +72,8 @@ class Validator
      */
     public function getAttributeValue($condition, $entity)
     {
+        logger()->info('getAttr '.get_class($entity));
+        logger()->info('getAttr coll'.print_r($entity, true));
         $value = $entity->{$condition['attribute']};
 
         if (! in_array($condition['attribute_type'], ['multiselect', 'checkbox'])) {

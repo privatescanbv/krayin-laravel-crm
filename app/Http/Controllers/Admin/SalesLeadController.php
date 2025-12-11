@@ -270,9 +270,6 @@ class SalesLeadController extends Controller
         ]);
 
         $salesLead = SalesLead::findOrFail($id);
-        $salesLead->update([
-            'pipeline_stage_id' => request('lead_pipeline_stage_id'),
-        ]);
 
         // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
@@ -280,6 +277,10 @@ class SalesLeadController extends Controller
                 ->where('is_done', 0)
                 ->update(['is_done' => 1]);
         }
+        // update state after closing activiteit, otherwise new activities will be closed
+        $salesLead->update([
+            'pipeline_stage_id' => request('lead_pipeline_stage_id'),
+        ]);
 
         return response()->json([
             'message' => 'Sales stage updated successfully.',

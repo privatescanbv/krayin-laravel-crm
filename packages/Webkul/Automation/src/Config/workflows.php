@@ -17,6 +17,29 @@ return [
                     'event' => 'lead.delete.before',
                     'name'  => 'Deleted',
                 ],
+                [   'event' => 'lead.update_stage.after',
+                    'name'  => 'Status',
+                ]
+            ],
+        ],
+
+        'saleslead' => [
+            'name'   => 'Sales',
+            'class'  => 'Webkul\Automation\Helpers\Entity\SalesLead',
+            'events' => [
+                [
+                    'event' => 'sale.create.after',
+                    'name'  => 'Created',
+                ], [
+                    'event' => 'sale.update.after',
+                    'name'  => 'Updated',
+                ], [
+                    'event' => 'sale.delete.before',
+                    'name'  => 'Deleted',
+                ],
+                [   'event' => 'sale.update_stage.after',
+                    'name'  => 'Status',
+                ]
             ],
         ],
 

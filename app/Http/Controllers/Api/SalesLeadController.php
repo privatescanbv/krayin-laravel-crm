@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
 use App\Http\Controllers\Controller;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
@@ -12,6 +13,10 @@ use Webkul\Lead\Models\Pipeline;
 
 class SalesLeadController extends Controller
 {
+    public function __construct(
+        private readonly CreateActivityForLeadOrSalesAction $createActivityForLeadOrSalesAction,
+    ) {}
+
     /**
      * Store a newly created workflow lead via API.
      */
@@ -80,16 +85,18 @@ class SalesLeadController extends Controller
 
         $salesLead = SalesLead::findOrFail($id);
 
-        $activity = Activity::create([
-            'type'             => $validated['type'],
-            'title'            => $validated['title'] ?? null,
-            'comment'          => $validated['comment'] ?? ($validated['description'] ?? null),
-            'user_id'          => $validated['user_id'] ?? auth()->id(),
-            'sales_lead_id'    => $salesLead->id,
-            'schedule_from'    => $validated['schedule_from'] ?? null,
-            'schedule_to'      => $validated['schedule_to'] ?? null,
-            'is_done'          => 0,
-        ]);
+        $activity = $this->createActivityForLeadOrSalesAction->executeForSales(
+            $salesLead,
+            false,
+            [
+                'type'             => $validated['type'],
+                'title'            => $validated['title'] ?? null,
+                'comment'          => $validated['comment'] ?? ($validated['description'] ?? null),
+                'user_id'          => $validated['user_id'] ?? auth()->id(),
+                'sales_lead_id'    => $salesLead->id,
+                'schedule_from'    => $validated['schedule_from'] ?? null,
+                'schedule_to'      => $validated['schedule_to'] ?? null,
+            ]);
 
         return response()->json([
             'message' => 'Activity created successfully.',

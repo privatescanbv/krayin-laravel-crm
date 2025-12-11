@@ -61,7 +61,6 @@ services:
       - public
     depends_on:
       - mysql
-      - n8n
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -79,7 +78,6 @@ services:
     volumes:
       - 'sail-mysql:/var/lib/mysql'
 #      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-      - './docker/mysql/init-n8n.sql:/docker-entrypoint-initdb.d/20-init-n8n.sql'
       - './docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
     networks:
       - backend
@@ -87,60 +85,6 @@ services:
 #      test: ["CMD", "mysqladmin", "ping", "-p$DB_PASSWORD"]
 #      retries: 3
 #      timeout: 5s
-
-  #  This n8N will service for production workflows. For data flows, we will set up a separate n8n instance and will run on our data server.
-  n8n:
-    image: n8nio/n8n:stable
-    container_name: n8n
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DB_TYPE: 'mysqldb'
-      N8N_BASIC_AUTH_ACTIVE: 'false'
-#      N8N_BASIC_AUTH_USER: 'admin'
-#      N8N_BASIC_AUTH_PASSWORD: "V!*q3&hD8Lsq8yL3RdAY"
-      N8N_API_KEY: '${N8N_API_KEY}'
-      N8N_HOST: 'n8n.local'
-      N8N_PORT: 5678
-      TZ: 'Europe/Amsterdam'
-      N8N_ENCRYPTION_KEY: 'FUC16A-23(<d!io'
-      N8N_RUN_MIGRATIONS: 'true'
-      N8N_RUNNERS_ENABLED: 'true'
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.n8n.rule=Host("n8ncrm.dev.privatescan.nl")
-      - traefik.http.routers.n8n.entrypoints=https
-      - traefik.http.routers.n8n.tls=true
-      - traefik.http.routers.n8n.tls.certresolver=myresolver
-      - traefik.http.routers.n8n.service=n8n-svc
-      - traefik.http.services.n8n-svc.loadbalancer.server.port=5678
-      - traefik.docker.network=public
-      - logging=promtail
-    networks:
-      - backend
-      - public
-    volumes:
-      - n8n_data:/home/node/.n8n
-    depends_on:
-      - mysql
-
-  n8n-sync:
-    image: ghcr.io/privatescanbv/krayin-laravel-crm/crmsyncn8n:latest
-    container_name: n8n-sync
-    env_file:
-      - .env
-    environment:
-      N8N_RUNNERS_ENABLED: 'true'
-      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: 'true'
-      DB_TYPE: 'mysqldb'
-      N8N_HOST: 'n8n'
-      N8N_PORT: '5678'
-      N8N_API_URL: 'http://n8n:5678/api/v1/workflows'
-    depends_on:
-      - n8n
-    networks:
-      - backend
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -419,8 +363,6 @@ networks:
 
 volumes:
   sail-mysql:
-    driver: local
-  n8n_data:
     driver: local
   loki-data:
     driver: local

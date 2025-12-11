@@ -16,7 +16,19 @@ enum ActivityType: string
      */
     public static function userSelectable(): array
     {
-        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::NOTE, self::FILE], true));
+        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::FILE], true));
+    }
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::CALL    => 'Call',
+            self::MEETING => 'Meeting',
+            self::TASK    => 'Task',
+            self::SYSTEM  => 'System',
+            self::NOTE    => 'Note',
+            self::FILE    => 'File',
+        };
     }
 
     /**

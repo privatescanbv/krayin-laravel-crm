@@ -6,6 +6,7 @@ use App\Actions\Sales\SalesToLostAction;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
+use Illuminate\Support\Facades\Event;
 
 /**
  * Observer for SalesLead model to handle pipeline stage changes and webhooks.
@@ -36,10 +37,11 @@ class SalesLeadObserver
         if ($salesLead->pipeline_stage_id !== $salesLead->getOriginal('pipeline_stage_id')) {
             // Send webhook if stage has changed and the stage is actually different
             if ($salesLead->isDirty('pipeline_stage_id')) {
+                Event::dispatch('sale.update_stage.after', $salesLead);
                 $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
             }
             if ($salesLead->pipelineStage->is_lost) {
-                $result = $this->salesToLostAction->execute($salesLead);
+                $this->salesToLostAction->execute($salesLead);
             }
         }
     }

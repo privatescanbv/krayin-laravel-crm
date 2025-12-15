@@ -1,0 +1,3 @@
+com/mbsoftware/keycloak/events/HttpEventListenerProviderFactory.class
+com/mbsoftware/keycloak/events/HttpEventListenerProvider.class
+com/mbsoftware/keycloak/events/HttpEventSender.class

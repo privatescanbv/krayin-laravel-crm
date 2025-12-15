@@ -172,7 +172,7 @@ services:
       KEYCLOAK_APPEND_DECODED_TOKEN: true
       KEYCLOAK_ALLOWED_RESOURCES: 'patient-app'
       KEYCLOAK_LEEWAY: 60
-      KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
+      KEYCLOAK_CLIENT_SECRET: "$PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET"
       CRM_API_KEY: "${API_KEY_1}"
     labels:
       - traefik.enable=true
@@ -296,7 +296,8 @@ services:
       public:
       backend:
     volumes:
-      - ./.docker/keycloak-providers:/opt/keycloak/providers
+      - ./.docker/keycloak/providers:/opt/keycloak/providers
+      - ./.docker/keycloak/themes:/opt/keycloak/themes
     depends_on:
       keycloak-db:
         condition: service_healthy
@@ -330,12 +331,14 @@ services:
       POSTGRES_DB: keycloak
       # POSTGRES_USER en POSTGRES_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME en KEYCLOAK_DB_PASSWORD via entrypoint
     entrypoint: ["/bin/sh", "-c", "export POSTGRES_USER=$${KEYCLOAK_DB_USERNAME:-keycloak} && export POSTGRES_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && exec docker-entrypoint.sh postgres"]
+    ports:
+      - "5432:5432"
     volumes:
       - keycloak-db-data:/var/lib/postgresql/data
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USERNAME:-keycloak}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak}"]
       interval: 10s
       timeout: 5s
       retries: 5

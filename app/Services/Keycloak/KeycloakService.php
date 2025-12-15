@@ -163,6 +163,8 @@ class KeycloakService
             'realm'       => $realmName,
             'enabled'     => true,
             'displayName' => ucfirst($realmName),
+            'loginTheme'  => config('services.keycloak.themes.login'),
+
         ], $realmData);
 
         $response = $this->makeRequest('POST', $url, $accessToken, $realmData, true);

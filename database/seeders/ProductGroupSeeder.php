@@ -279,7 +279,7 @@ class ProductGroupSeeder extends Seeder
                 'parent'      => 'Overig',
             ],
             [
-                'name' => 'Ledematen',
+                'name'        => 'Ledematen',
                 'description' => 'MRI en CT armen en benen',
                 'parent'      => 'Onderzoeken',
             ],

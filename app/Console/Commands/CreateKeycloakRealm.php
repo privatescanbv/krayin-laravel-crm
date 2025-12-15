@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Actions\Keycloak\GetKeycloakClientSecretAction;
 use App\Actions\Keycloak\GetKeycloakRealmPublicKeyAction;
+use App\Enums\KeyCloakClient;
 use App\Services\Keycloak\KeycloakConfigService;
 use Illuminate\Console\Command;
 
@@ -42,16 +43,15 @@ class CreateKeycloakRealm extends Command
 
             return Command::FAILURE;
         }
-
-        // Get and display CRM client secret
-        $crmSecretResult = $this->getAndDisplayClientSecret($getClientSecretAction, 'CRM');
-        if (! $crmSecretResult) {
-            return Command::FAILURE;
+        $clientSecrets = [];
+        foreach (KeyCloakClient::cases() as $keyCloakClient) {
+            $this->info("✓ Client '{$keyCloakClient->clientId()}' is ingesteld met client ID");
+            $secret = $this->getAndDisplayClientSecret($getClientSecretAction, $keyCloakClient, true);
+            if (! $secret) {
+                return Command::FAILURE;
+            }
+            $clientSecrets[$keyCloakClient->envKeySecret()] = $secret['secret'];
         }
-
-        // Get and display Forms client secret (optional)
-        $formsSecretResult = $this->getAndDisplayClientSecret($getClientSecretAction, 'Forms', 'forms-app', false);
-
         // Get and display realm public key
         $publicKeyResult = $this->getAndDisplayRealmPublicKey($getRealmPublicKeyAction);
         if (! $publicKeyResult) {
@@ -59,7 +59,7 @@ class CreateKeycloakRealm extends Command
         }
 
         // Output parseerbare key=value pairs voor scripts (bijv. reset_base.sh)
-        $this->outputParseableValues($crmSecretResult, $formsSecretResult, $publicKeyResult);
+        $this->outputParseableValues($clientSecrets, $publicKeyResult);
 
         return Command::SUCCESS;
     }
@@ -69,14 +69,13 @@ class CreateKeycloakRealm extends Command
      */
     private function getAndDisplayClientSecret(
         GetKeycloakClientSecretAction $action,
-        string $label,
-        ?string $clientId = null,
+        KeyCloakClient $keyCloakClient,
         bool $required = true
     ): ?array {
         $this->newLine();
-        $this->info("Ophalen van client secret ({$label})...");
+        $this->info("Ophalen van client secret ({$keyCloakClient->clientId()})...");
 
-        $result = $action->execute($clientId);
+        $result = $action->execute($keyCloakClient);
 
         if (! $result['success']) {
             if ($required) {
@@ -86,7 +85,7 @@ class CreateKeycloakRealm extends Command
             }
 
             if (! empty($result['message'])) {
-                $this->warn("{$label} client secret kon niet worden opgehaald: {$result['message']}");
+                $this->warn("{$keyCloakClient->clientId()} client secret kon niet worden opgehaald: {$result['message']}");
             }
 
             return null;
@@ -123,16 +122,13 @@ class CreateKeycloakRealm extends Command
     /**
      * Output parseerbare key=value pairs voor scripts.
      */
-    private function outputParseableValues(array $crmSecretResult, ?array $formsSecretResult, array $publicKeyResult): void
+    private function outputParseableValues(array $secretsEnvKeyBySecret, array $publicKeyResult): void
     {
         $this->newLine();
         $this->line('---');
-        $this->line('KEYCLOAK_CLIENT_SECRET='.$crmSecretResult['secret']);
-
-        if ($formsSecretResult) {
-            $this->line('FORMS_KEYCLOAK_CLIENT_SECRET='.$formsSecretResult['secret']);
+        foreach ($secretsEnvKeyBySecret as $envKey => $secret) {
+            $this->line("{$envKey}={$secret}");
         }
-
         $this->line('KEYCLOAK_REALM_PUBLIC_KEY='.$publicKeyResult['public_key']);
     }
 }

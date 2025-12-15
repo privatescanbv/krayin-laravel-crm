@@ -1957,5 +1957,4 @@ class ProductSeeder extends BaseSeeder
 
         return $resourceType ?: throw new RuntimeException("ResourceType not found: {$name}");
     }
-
 }

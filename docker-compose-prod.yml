@@ -194,7 +194,7 @@ services:
       KEYCLOAK_APPEND_DECODED_TOKEN: 'true'
       KEYCLOAK_ALLOWED_RESOURCES: 'patient-app'
       KEYCLOAK_LEEWAY: 60
-      KEYCLOAK_CLIENT_SECRET: "$KEYCLOAK_CLIENT_SECRET_FORMS"
+      KEYCLOAK_CLIENT_SECRET: "$PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET"
       CRM_API_KEY: "${API_KEY_1}"
       CRM_API_URL: "https://newcrm.dev.privatescan.nl/api/"
     labels:
@@ -290,7 +290,7 @@ services:
       - loki
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:latest
     container_name: keycloak
     restart: unless-stopped
     env_file:
@@ -300,14 +300,12 @@ services:
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
-      # KC_DB_USERNAME, KC_DB_PASSWORD, KC_BOOTSTRAP_ADMIN_USERNAME en KC_BOOTSTRAP_ADMIN_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME, KEYCLOAK_DB_PASSWORD, KEYCLOAK_ADMIN en KEYCLOAK_ADMIN_PASSWORD via entrypoint
       KC_HOSTNAME: sso.dev.privatescan.nl
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       KC_PROXY: edge
-    entrypoint: ["/bin/sh", "-c", "export KC_DB_USERNAME=$${KEYCLOAK_DB_USERNAME:-keycloak} && export KC_DB_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && export KC_BOOTSTRAP_ADMIN_USERNAME=$${KEYCLOAK_ADMIN} && export KC_BOOTSTRAP_ADMIN_PASSWORD=$${KEYCLOAK_ADMIN_PASSWORD} && exec /opt/keycloak/bin/kc.sh start"]
     networks:
       - backend
       - public
@@ -340,10 +338,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env.keycloak
-    environment:
-      POSTGRES_DB: keycloak
-      # POSTGRES_USER en POSTGRES_PASSWORD worden automatisch gekopieerd van KEYCLOAK_DB_USERNAME en KEYCLOAK_DB_PASSWORD via entrypoint
-    entrypoint: ["/bin/sh", "-c", "export POSTGRES_USER=$${KEYCLOAK_DB_USERNAME:-keycloak} && export POSTGRES_PASSWORD=$${KEYCLOAK_DB_PASSWORD:-changeme} && exec docker-entrypoint.sh postgres"]
     volumes:
       - keycloak-db-data:/var/lib/postgresql/data
     networks:

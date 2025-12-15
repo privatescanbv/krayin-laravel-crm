@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\KeyCloakClient;
+
 return [
 
     /*
@@ -40,8 +42,8 @@ return [
     ],
 
     'keycloak' => [
-        'client_id'                   => env('KEYCLOAK_CLIENT_ID'),
-        'client_secret'               => env('KEYCLOAK_CLIENT_SECRET'),
+        'client_id'                   => KeyCloakClient::CRM->clientId(),
+        'client_secret'               => env(KeyCloakClient::CRM->envKeySecret()),
         'redirect'                    => env('KEYCLOAK_REDIRECT_URI', '/admin/auth/keycloak/callback'),
         'base_url_external'           => env('KEYCLOAK_EXTERNAL_BASE_URL', 'http://keycloak.local'),
         'base_url_internal'           => env('KEYCLOAK_INTERNAL_BASE_URL', 'http://keycloak.local:8080'),
@@ -49,6 +51,9 @@ return [
         'default_role_id'             => env('KEYCLOAK_DEFAULT_ROLE_ID', 1),
         'admin_username'              => env('KEYCLOAK_ADMIN', 'admin'),
         'admin_password'              => env('KEYCLOAK_ADMIN_PASSWORD', 'changeme'),
+        'themes'                      => [
+            'login' => 'privatescan',
+        ],
     ],
 
     'portal' => [
@@ -56,9 +61,15 @@ return [
             'web_url'   => env('PATIENT_PORTAL_URL', 'https://patientdev.local.privatescan.nl'),
             'api_url'   => env('PATIENT_PORTAL_API_URL', env('PATIENT_PORTAL_URL')),
             'api_token' => env('FORMS_API_KEY'),
+            'secret'    => env(KeyCloakClient::PATIENT->envKeySecret()),
         ],
         'clinic' => [
             'web_url' => env('CLINIC_PORTAL_URL', 'https://clinic.local.privatescan.nl'),
+            'secret'  => env(KeyCloakClient::CLINIC->envKeySecret()),
+        ],
+        'employee' => [
+            'web_url' => env('EMPLOYEE_PORTAL_URL', 'https://employee.local.privatescan.nl'),
+            'secret'  => env(KeyCloakClient::EMPLOYEE->envKeySecret()),
         ],
     ],
 

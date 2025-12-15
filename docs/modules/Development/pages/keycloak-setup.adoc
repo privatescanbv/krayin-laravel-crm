@@ -28,7 +28,27 @@ Keycloak is beschikbaar op: `http://localhost:8085`
    - Username: `admin`
    - Password: [zie de waarde uit `.env.keycloak` / `.env.keycloak.prod`]
 
-==== Stap 3: Automatische Configuratie Synchronisatie
+==== Stap 3: Environment Variabelen Configureren
+ plaats deze in je .env file:
+
+[source,env]
+----
+# Keycloak Configuration
+KEYCLOAK_BASE_URL_EXTERNAL=http://localhost:8085
+KEYCLOAK_BASE_URL_INTERNAL=http://keycloak:8080
+KEYCLOAK_REALM=crm
+KEYCLOAK_CLIENT_ID=crm-app
+KEYCLOAK_REDIRECT_URI=/admin/auth/keycloak/callback
+KEYCLOAK_DEFAULT_ROLE_ID=1
+
+# Keycloak Admin Credentials (voor automatische configuratie synchronisatie)
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=<wachtwoord uit .env.keycloak>
+
+#<replace_keycload_realm_secrets>
+----
+
+==== Stap 4: Automatische Configuratie Synchronisatie
 
 De applicatie synchroniseert automatisch de Keycloak configuratie tijdens boot. Dit betekent dat de Realm en Client automatisch worden aangemaakt als ze nog niet bestaan.
 
@@ -42,67 +62,9 @@ De applicatie synchroniseert automatisch de Keycloak configuratie tijdens boot. 
 **Handmatige synchronisatie:**
 
 Je kunt ook handmatig de configuratie synchroniseren met:
+zie "Keycloak Realm en Clients synchroniseren"
 
-[source,bash]
-----
-docker-compose exec crm php artisan keycloak:sync-config
-----
-
-Dit commando is idempotent: je kunt het meerdere keren draaien zonder problemen.
-
-**Wat wordt automatisch geconfigureerd:**
-
-*Realm:*
-- Naam: uit config (`KEYCLOAK_REALM`)
-- Frontend URL: uit config (`KEYCLOAK_BASE_URL`)
-- Enabled: true
-
-*Realm Roles:*
-- `medewerker` - Medewerker rol voor CRM gebruikers
-- `patient` - Patient rol
-- **Belangrijk**: Deze rollen worden aangemaakt op **realm-niveau**, niet op client-niveau
-- Je vindt ze in Keycloak Admin Console onder: **Realm → Roles** (niet onder Clients → [client] → Roles)
-- Alle nieuwe gebruikers krijgen automatisch de rol "medewerker" toegewezen
-
-*Client:*
-- Client ID: uit config (`KEYCLOAK_CLIENT_ID`)
-- Redirect URIs: `{app.url}/admin/auth/keycloak/callback`, `{app.url}/admin/auth/keycloak/logout-callback`
-- Post Logout Redirect URIs: `{app.url}/admin/login`, `{app.url}/admin/auth/keycloak/logout-callback`
-- Backchannel Logout URL: `{app.url}/admin/auth/keycloak/backchannel-logout`
-- Standard Flow Enabled: true
-- Direct Access Grants Enabled: true
-- Public Client: false (confidential)
-
-**Belangrijk:** Na het aanmaken van de client wordt een client secret gegenereerd. Dit secret wordt gelogd en moet worden toegevoegd aan je `.env` bestand.
-
-==== Stap 4: Environment Variabelen Configureren
-
-Voeg de volgende variabelen toe aan je `.env` bestand:
-
-[source,env]
-----
-# Keycloak Configuration
-KEYCLOAK_BASE_URL_EXTERNAL=http://localhost:8085
-KEYCLOAK_BASE_URL_INTERNAL=http://keycloak:8080
-KEYCLOAK_REALM=crm
-KEYCLOAK_CLIENT_ID=crm-app
-KEYCLOAK_CLIENT_SECRET=<het secret dat is gegenereerd na sync-config>
-KEYCLOAK_REDIRECT_URI=/admin/auth/keycloak/callback
-KEYCLOAK_DEFAULT_ROLE_ID=1
-
-# Keycloak Admin Credentials (voor automatische configuratie synchronisatie)
-KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=<wachtwoord uit .env.keycloak>
-----
-
-**Belangrijk**:
-- Vervang `<het secret dat is gegenereerd na sync-config>` met het client secret uit de logs of Keycloak Admin Console
-- Vervang `<wachtwoord uit .env.keycloak>` met hetzelfde wachtwoord als `KEYCLOAK_ADMIN_PASSWORD` in `.env.keycloak`
-- `KEYCLOAK_DOCKER_SERVICE_URL` wordt gebruikt voor server-to-server communicatie vanuit de container
-  - Lokaal: `http://keycloak:8080` (Keycloak draait intern op poort 8080)
-  - Productie: `http://keycloak:8080` (binnen Docker netwerk)
-- `KEYCLOAK_ADMIN` en `KEYCLOAK_ADMIN_PASSWORD` zijn nodig voor automatische configuratie synchronisatie tijdens boot
-- Na het aanmaken van de client via `keycloak:sync-config`, wordt het secret gelogd - gebruik dit om `KEYCLOAK_CLIENT_SECRET` in te stellen
+script create-realm.sh maakt hier gebruik van en vervangt "#<replace_keycload_realm_secrets>" in je .env file.
 
 ==== Stap 5: Database Credentials Configureren
 
@@ -120,14 +82,7 @@ KEYCLOAK_DB_PASSWORD=c8f4b3a8323369
 
 ==== Stap 6: Applicatie Herstarten
 
-Herstart de applicatie containers:
-
-[source,bash]
-----
-docker-compose restart crm
-----
-
-Tijdens de eerste boot worden automatisch de Realm en Client aangemaakt.
+Herstart de applicatie containers.
 
 ==== Stap 7: Testen
 
@@ -175,9 +130,9 @@ De applicatie synchroniseert automatisch gebruikers met Keycloak via een `UserOb
 - Alle nieuwe gebruikers krijgen automatisch de rol "medewerker" toegewezen
 - Bestaande gebruikers krijgen de rol "medewerker" toegewezen tijdens `keycloak:sync-users`
 
-==== Forms Applicatie Configuratie
+==== Portal Applicatie Configuratie
 
-Voor de Forms applicatie moet je een vergelijkbare configuratie toevoegen. Omdat Forms een aparte container is, moet je:
+Voor de Forms applicatie moet je een vergelijkbare configuratie toevoegen. Omdat Portal een aparte container is, moet je:
 
 1. Dezelfde Keycloak client gebruiken (of een aparte client aanmaken)
 2. De Forms applicatie configureren met Keycloak OAuth2 integratie

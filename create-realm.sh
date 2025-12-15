@@ -20,12 +20,16 @@ extract_value() {
 
 replace_keycloak_secrets_block() {
   local secret="$1"
-  local forms_secret="$2"
-  local realm_public_key="$3"
+  local patient_secret="$2"
+  local clinic_secret="$3"
+  local employee_secret="$4"
+  local realm_public_key="$5"
 
   # Generate replacement block
-  local replacement_block="KEYCLOAK_CLIENT_SECRET=${secret}
-KEYCLOAK_CLIENT_SECRET_FORMS=${forms_secret}
+  local replacement_block="CRM_KEYCLOAK_CLIENT_SECRET=${secret}
+PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET=${patient_secret}
+CLINIC_PORTAL_KEYCLOAK_CLIENT_SECRET=${clinic_secret}
+EMPLOYEE_PORTAL_KEYCLOAK_CLIENT_SECRET=${employee_secret}
 KEYCLOAK_REALM_PUBLIC_KEY=${realm_public_key}"
 
   # If prod, only print, don't replace
@@ -62,7 +66,7 @@ KEYCLOAK_REALM_PUBLIC_KEY=${realm_public_key}"
     in_block = 1
     next
   }
-  in_block && /^KEYCLOAK_(CLIENT_SECRET|CLIENT_SECRET_FORMS|REALM_PUBLIC_KEY)=/ {
+  in_block && /^KEYCLOAK_(CRM_KEYCLOAK_CLIENT_SECRET|PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET|CLINIC_PORTAL_KEYCLOAK_CLIENT_SECRET|EMPLOYEE_PORTAL_KEYCLOAK_CLIENT_SECRET|REALM_PUBLIC_KEY)=/ {
     if (/^KEYCLOAK_REALM_PUBLIC_KEY=/) in_block = 0
     next
   }
@@ -87,12 +91,14 @@ echo "Running keycloak sync using: $ARTISAN"
 realm_output=$($ARTISAN keycloak:create-realm)
 
 # extract values (ensure they are properly quoted)
-secret="$(extract_value "KEYCLOAK_CLIENT_SECRET" "KEYCLOAK_CLIENT_SECRET")"
-forms_secret="$(extract_value "FORMS_KEYCLOAK_CLIENT_SECRET" "FORMS_KEYCLOAK_CLIENT_SECRET")"
+secret="$(extract_value "CRM_KEYCLOAK_CLIENT_SECRET" "CRM_KEYCLOAK_CLIENT_SECRET")"
+patient_secret="$(extract_value "PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET" "PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET")"
+clinic_secret="$(extract_value "CLINIC_PORTAL_KEYCLOAK_CLIENT_SECRET" "CLINIC_PORTAL_KEYCLOAK_CLIENT_SECRET")"
+employee_secret="$(extract_value "EMPLOYEE_PORTAL_KEYCLOAK_CLIENT_SECRET" "EMPLOYEE_PORTAL_KEYCLOAK_CLIENT_SECRET")"
 realm_public_key="$(extract_value "KEYCLOAK_REALM_PUBLIC_KEY" "KEYCLOAK_REALM_PUBLIC_KEY")"
 
 # Replace the block in .env file
-replace_keycloak_secrets_block "$secret" "$forms_secret" "$realm_public_key" &&
+replace_keycloak_secrets_block "$secret" "$patient_secret" "$clinic_secret" "$employee_secret" "$realm_public_key" &&
 $ARTISAN cache:clear &&
 $ARTISAN config:clear &&
 $ARTISAN optimize:clear

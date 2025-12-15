@@ -3,6 +3,7 @@
 namespace App\Services\Keycloak;
 
 use App\Actions\Keycloak\GetKeycloakClientSecretAction;
+use App\Enums\KeyCloakClient;
 use App\Enums\KeycloakRoles;
 use Exception;
 use Illuminate\Support\Facades\Config;
@@ -94,17 +95,15 @@ class KeycloakConfigService
             }
         }
 
-        // Get client configurations
-        $clientConfigs = $this->getClientConfigs();
-
         // Sync each client
-        foreach ($clientConfigs as $clientId => $clientConfig) {
-            $clientResult = $this->syncClient($clientId, $clientConfig, $realmName, $accessToken);
-            $results['clients'][$clientId] = $clientResult;
+        foreach (KeyCloakClient::cases() as $keyCloakClient) {
+            $clientResult = $this->syncClient($keyCloakClient, $realmName, $accessToken);
+            $results['clients'][$keyCloakClient->clientId()] = $clientResult;
 
             if (! empty($clientResult['errors'])) {
                 $results['errors'] = array_merge($results['errors'], $clientResult['errors']);
             }
+
         }
 
         // Sync roles
@@ -127,18 +126,33 @@ class KeycloakConfigService
      *
      * @return array<string, array> Array of client configurations keyed by client ID
      */
-    protected function getClientConfigs(): array
+    public function getClientConfigs(): array
     {
         $appUrl = $this->normalizeUrl(config('app.url', 'http://localhost:8000'), 8000);
         $internalAppUrl = config('app.internal_url', 'http://crm:80');
         $patientPortalUrl = config('services.portal.patient.web_url');
+        $clinicPortalUrl = config('services.portal.clinic.web_url');
 
         return KeycloakRealmClientSeeder::getClientConfigs(
             $appUrl,
             $internalAppUrl,
             $patientPortalUrl,
+            $clinicPortalUrl,
             $this->keycloakService->getClientId()
         );
+    }
+
+    /**
+     * @throws Exception if no config found
+     */
+    public function getClientConfigByIdOrFail(string $clientId)
+    {
+        $config = $this->getClientConfigs();
+        if (array_key_exists($clientId, $config)) {
+            return $config[$clientId];
+        } else {
+            throw new Exception('Geen configuratie gevonden voor Keycloak client: '.$clientId);
+        }
     }
 
     /**
@@ -151,14 +165,17 @@ class KeycloakConfigService
      *                         - post_logout_redirect_uris: Array of post-logout redirect URIs
      *                         - backchannel_logout_url: Backchannel logout URL
      *                         - home_url: Home URL
-     *                         - secret_env_key: Environment variable key for the secret (optional)
      *                         - secret_log_message: Log message for secret generation (optional)
      * @param  string  $realmName  The realm name
      * @param  string  $accessToken  Admin access token
      * @return array{created: bool, exists: bool, updated: bool, secret: string|null, errors: array}
+     *
+     * @throws Exception invalid configuration of clients
      */
-    protected function syncClient(string $clientId, array $config, string $realmName, string $accessToken): array
+    protected function syncClient(KeyCloakClient $keyCloakClient, string $realmName, string $accessToken): array
     {
+        $clientId = $keyCloakClient->clientId();
+        $config = $this->getClientConfigByIdOrFail($keyCloakClient->clientId());
         $results = [
             'created' => false,
             'exists'  => false,
@@ -199,13 +216,11 @@ class KeycloakConfigService
             }
 
             // Always try to get the secret for existing clients (useful for production setup)
-            $secretResult = $this->getClientSecret($clientId, $realmName, $accessToken);
+            $secretResult = $this->getClientSecret($keyCloakClient, $realmName, $accessToken);
             if ($secretResult['secret']) {
                 $results['secret'] = $secretResult['secret'];
-                $secretEnvKey = $config['secret_env_key'] ?? 'KEYCLOAK_CLIENT_SECRET';
-
                 // Get configured secret from config
-                $configuredSecret = $this->getConfiguredSecret($clientId, $secretEnvKey);
+                $configuredSecret = config($keyCloakClient->configKeySecret());
 
                 // Compare secrets and log error if they don't match
                 if ($configuredSecret !== null && $configuredSecret !== $secretResult['secret']) {
@@ -213,8 +228,8 @@ class KeycloakConfigService
                         'client_id'          => $clientId,
                         'keycloak_secret'    => $secretResult['secret'],
                         'configured_secret'  => $configuredSecret,
-                        'env_key'            => $secretEnvKey,
-                        'message'            => "Client secret in Keycloak does not match {$secretEnvKey} in .env/config. Update {$secretEnvKey} to match Keycloak or regenerate the secret in Keycloak.",
+                        'env_key'            => $keyCloakClient->envKeySecret(),
+                        'message'            => "Client secret in Keycloak does not match {$keyCloakClient->envKeySecret()} in .env/config. Update {$keyCloakClient->envKeySecret()} to match Keycloak or regenerate the secret in Keycloak.",
                     ]);
                 }
             }
@@ -228,12 +243,11 @@ class KeycloakConfigService
                 Log::info('Keycloak client created', ['client_id' => $clientId, 'realm' => $realmName]);
 
                 // Get client secret
-                $secretResult = $this->getClientSecret($clientId, $realmName, $accessToken);
+                $secretResult = $this->getClientSecret($keyCloakClient, $realmName, $accessToken);
                 $results['secret'] = $secretResult['secret'];
 
                 if ($secretResult['secret']) {
-                    $secretEnvKey = $config['secret_env_key'] ?? 'KEYCLOAK_CLIENT_SECRET';
-                    $secretLogMessage = $config['secret_log_message'] ?? "Keycloak client secret generated. Please update {$secretEnvKey} in .env";
+                    $secretLogMessage = $config['secret_log_message'] ?? "Keycloak client secret generated. Please update {$keyCloakClient->envKeySecret()} in .env";
 
                     Log::warning($secretLogMessage, [
                         'client_id' => $clientId,
@@ -369,14 +383,14 @@ class KeycloakConfigService
     /**
      * Get client secret from Keycloak.
      *
-     * @param  string  $clientId  The client ID
+     * @param  KeyCloakClient  $keyCloakClient  The client ID
      * @param  string  $realmName  The realm name
      * @param  string  $accessToken  Admin access token
      * @return array{secret: string|null, error: string|null}
      */
-    protected function getClientSecret(string $clientId, string $realmName, string $accessToken): array
+    protected function getClientSecret(KeyCloakClient $keyCloakClient, string $realmName, string $accessToken): array
     {
-        $result = $this->getClientSecretAction->execute($clientId, $realmName, $accessToken);
+        $result = $this->getClientSecretAction->execute($keyCloakClient, $realmName, $accessToken);
 
         if ($result['success']) {
             return ['secret' => $result['secret'], 'error' => null];
@@ -496,35 +510,6 @@ class KeycloakConfigService
         }
 
         return $results;
-    }
-
-    /**
-     * Get configured secret from config or env.
-     *
-     * @param  string  $clientId  The client ID
-     * @param  string  $envKey  The environment variable key
-     * @return string|null The configured secret, or null if not set
-     */
-    protected function getConfiguredSecret(string $clientId, string $envKey): ?string
-    {
-        // For CRM client, get from config
-        if ($clientId === $this->keycloakService->getClientId()) {
-            return Config::get('services.keycloak.client_secret');
-        }
-
-        // For other clients (like forms-app), get from env directly
-        // Forms doesn't have a config entry, so we check env directly
-        // Use getenv() to avoid linter warnings for non-existent config keys
-        if ($clientId === 'forms-app') {
-            $formsSecret = getenv('FORMS_KEYCLOAK_CLIENT_SECRET');
-
-            return $formsSecret ?: null;
-        }
-
-        // Fallback: try to get from env using the provided key
-        $secret = getenv($envKey);
-
-        return $secret ?: null;
     }
 
     /**

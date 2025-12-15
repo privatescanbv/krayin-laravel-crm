@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\ValueNormalizer;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -574,7 +575,7 @@ HTML;
             $key = $matches[1];
 
             return array_key_exists($key, $variables)
-                ? \App\Helpers\ValueNormalizer::toString($variables[$key])
+                ? ValueNormalizer::toString($variables[$key])
                 : $matches[0];
         }, $template) ?? $template;
     }

@@ -21,7 +21,7 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 
 # CRM client configuratie
 KEYCLOAK_CLIENT_ID=crm-app
-KEYCLOAK_CLIENT_SECRET=your_client_secret
+CRM_KEYCLOAK_CLIENT_SECRET=your_client_secret
 ----
 
 De precieze standaardwaarden hangen af van je omgeving (docker, productie, etc.), maar deze variabelen moeten allemaal gezet zijn zodat `keycloak:sync-config` met de Keycloak Admin API kan praten.
@@ -50,7 +50,7 @@ Het commando:
 Synchroniseren van Keycloak configuratie...
 ✓ Realm aangemaakt: privatescan
 ✓ Client aangemaakt: crm-app
-⚠ Client secret gegenereerd. Update KEYCLOAK_CLIENT_SECRET in .env met:
+⚠ Client secret gegenereerd. Update CRM_KEYCLOAK_CLIENT_SECRET in .env met:
    <secret-value>
 ✓ Keycloak configuratie gesynchroniseerd
 ----
@@ -80,7 +80,8 @@ In sommige gevallen wordt er geen secret teruggegeven (bijvoorbeeld bij bepaalde
 *Oplossing:*
 
 1. Controleer in de Keycloak Admin Console of er een client secret is en kopieer deze handmatig.
-2. Voeg de waarde toe aan `.env` onder de sleutel die in de waarschuwing wordt genoemd (bijv. `KEYCLOAK_CLIENT_SECRET` of `FORMS_KEYCLOAK_CLIENT_SECRET`).
+2. Voeg de waarde toe aan `.env` onder de sleutel die in de waarschuwing wordt genoemd (bijv. `CRM_KEYCLOAK_CLIENT_SECRET` of `PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET`).
+
 
 
 

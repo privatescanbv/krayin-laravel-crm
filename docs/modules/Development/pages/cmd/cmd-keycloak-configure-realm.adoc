@@ -1,6 +1,7 @@
-=== Keycloak Realm Frontend URL Configureren
+=== Keycloak Realm en Clients synchroniseren
 
-Dit commando past de Keycloak realm-configuratie aan zodat de `frontendUrl` overeenkomt met de externe URL van de CRM. Hierdoor worden tokens met de juiste issuer-URL uitgegeven en werkt browser-based SSO correct.
+Met dit commando wordt de realm aangemaakt in keycloak en clients gesynchoriniseerd.
+Indien realm al bestaat, worden alleen de clients gesynchroniseerd.
 
 ==== Configuratie
 
@@ -76,6 +77,7 @@ Bij foutieve admin-credentials krijg je meestal een 401/403 response.
 
 1. Controleer `KEYCLOAK_ADMIN_USERNAME` en `KEYCLOAK_ADMIN_PASSWORD`.
 2. Zorg dat de user in Keycloak de juiste admin-rollen heeft om realm-configuratie te wijzigen.
+
 
 
 

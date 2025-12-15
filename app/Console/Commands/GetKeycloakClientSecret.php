@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Actions\Keycloak\GetKeycloakClientSecretAction;
+use App\Enums\KeyCloakClient;
 use Illuminate\Console\Command;
 
 class GetKeycloakClientSecret extends Command
@@ -27,10 +28,11 @@ class GetKeycloakClientSecret extends Command
     public function handle(GetKeycloakClientSecretAction $action): int
     {
         $clientId = $this->argument('client_id');
+        $keyCloakClient = KeyCloakClient::mapFrom($clientId);
 
         $this->info('Ophalen van client secret...');
 
-        $result = $action->execute($clientId);
+        $result = $action->execute($keyCloakClient);
 
         if (! $result['success']) {
             $this->error($result['message'] ?? 'Kon client secret niet ophalen.');

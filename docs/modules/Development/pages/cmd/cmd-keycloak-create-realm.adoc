@@ -54,18 +54,18 @@ Ophalen van client secret (CRM)...
 ✓ Client secret voor crm-app:
    <crm-secret>
 ⚠ Voeg dit toe aan je .env file:
-   KEYCLOAK_CLIENT_SECRET=<crm-secret>
+   CRM_KEYCLOAK_CLIENT_SECRET=<crm-secret>
 
 Ophalen van client secret (Forms)...
 ✓ Client secret voor forms-app:
    <forms-secret>
 ⚠ Voeg dit toe aan je .env file:
-   FORMS_KEYCLOAK_CLIENT_SECRET=<forms-secret>
+   PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET=<forms-secret>
 
 Ophalen van realm public key...
 ---
-KEYCLOAK_CLIENT_SECRET=<crm-secret>
-FORMS_KEYCLOAK_CLIENT_SECRET=<forms-secret>
+CRM_KEYCLOAK_CLIENT_SECRET=<crm-secret>
+PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET=<forms-secret>
 KEYCLOAK_REALM_PUBLIC_KEY=<public-key>
 ----
 
@@ -99,6 +99,7 @@ Failed to retrieve Keycloak client secret.
 1. Controleer of `KEYCLOAK_REALM` correct is.
 2. Verifieer dat de realm in Keycloak bestaat (bijvoorbeeld via de Admin Console).
 3. Check de volledige foutmelding in de console voor HTTP-status en body.
+
 
 
 

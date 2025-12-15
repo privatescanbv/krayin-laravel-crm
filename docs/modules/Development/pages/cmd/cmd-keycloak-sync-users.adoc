@@ -18,7 +18,7 @@ KEYCLOAK_ADMIN_USERNAME=admin
 KEYCLOAK_ADMIN_PASSWORD=admin
 
 KEYCLOAK_CLIENT_ID=crm-app
-KEYCLOAK_CLIENT_SECRET=your_client_secret
+CRM_KEYCLOAK_CLIENT_SECRET=your_client_secret
 ----
 
 Daarnaast moeten CRM-gebruikers in de database aanwezig zijn (bijv. via seeders of import).
@@ -98,6 +98,7 @@ Gebruikers worden automatisch gesynchroniseerd wanneer:
 
 1. Controleer `KEYCLOAK_ADMIN_USERNAME` en `KEYCLOAK_ADMIN_PASSWORD`.
 2. Controleer of Keycloak bereikbaar is vanaf de CRM-container (`KEYCLOAK_INTERNAL_BASE_URL`).
+
 
 
 

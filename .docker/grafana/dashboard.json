@@ -442,6 +442,46 @@
         {
             "datasource": {
                 "type": "loki",
+                "uid": "af5rseqd45kowf"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 48
+            },
+            "id": 10,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "12.2.1",
+            "targets": [
+                {
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\"}",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Keycloak Logs",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
                 "uid": "af3xcqn2k6io0a"
             },
             "fieldConfig": {
@@ -481,7 +521,7 @@
         }
     ],
     "preload": false,
-    "refresh": "",
+    "refresh": "30s",
     "schemaVersion": 42,
     "tags": [],
     "templating": {
@@ -519,12 +559,12 @@
         ]
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-15m",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 25
+    "version": 3
 }

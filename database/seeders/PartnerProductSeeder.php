@@ -105,8 +105,8 @@ class PartnerProductSeeder extends BaseSeeder
         $availableTypes = array_keys($mappedResources[$clinic->id] ?? []);
         $resourceId = $mappedResources[$clinic->id][$resourceType->name]['id']
             ?? throw new Exception(
-                'No resource of type "' . $resourceType->name . '" found for clinic "' . $clinic->name . '". ' .
-                'Available types: [' . implode(', ', $availableTypes) . ']'
+                'No resource of type "'.$resourceType->name.'" found for clinic "'.$clinic->name.'". '.
+                'Available types: ['.implode(', ', $availableTypes).']'
             );
         // Parse reporting field (comma-separated string matching ProductReports enum labels)
         $reporting = [];

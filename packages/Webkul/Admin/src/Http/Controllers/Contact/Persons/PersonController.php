@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 use App\Actions\Persons\CreatePortalAccountAction;
 use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ContactLabel;
+use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
 use App\Services\PersonValidationService;
@@ -35,7 +36,7 @@ use Webkul\Lead\Repositories\LeadRepository;
 
 class PersonController extends Controller
 {
-    use NormalizesContactFields, HasAdvancedSearch;
+    use NormalizesContactFields, HasAdvancedSearch, Comparable;
     private bool $enableLogging = false;
 
     /**
@@ -625,35 +626,6 @@ class PersonController extends Controller
         ];
     }
 
-    /**
-     * Format value for display in the UI.
-     */
-    private function formatValueForDisplay($value, $field): string
-    {
-        if (is_null($value)) {
-            return 'Geen waarde';
-        }
-
-        if (in_array($field, ['emails', 'phones'])) {
-            if (is_array($value)) {
-                $values = $this->extractArrayValues($value);
-                return implode(', ', $values) ?: 'Geen waarde';
-            }
-            return \App\Helpers\ValueNormalizer::toString($value);
-        }
-
-        if ($field === 'date_of_birth') {
-            $formatted = $this->formatDateForComparison($value);
-            return $formatted ?: 'Geen waarde';
-        }
-
-        // For enums, return backing value for display
-        if ($value instanceof BackedEnum) {
-            return (string) $value->value;
-        }
-
-        return \App\Helpers\ValueNormalizer::toString($value);
-    }
 
     /**
      * Build match breakdown and final percentage for a lead/person pair.
@@ -803,8 +775,8 @@ class PersonController extends Controller
         }
 
         // Handle regular string fields
-        $leadNormalized = $this->normalizeValue($leadValue);
-        $personNormalized = $this->normalizeValue($personValue);
+        $leadNormalized = self::normalizeValue($leadValue);
+        $personNormalized = self::normalizeValue($personValue);
 
         return $leadNormalized === $personNormalized;
     }
@@ -854,27 +826,6 @@ class PersonController extends Controller
         }
 
         return array_filter($values);
-    }
-
-    /**
-     * Normalize value for comparison.
-     */
-    private function normalizeValue($value): string
-    {
-        if (is_null($value)) {
-            return '';
-        }
-
-        // Unwrap backed enums to their scalar backing values for comparison
-        if ($value instanceof BackedEnum) {
-            $value = $value->value;
-        }
-
-        if (is_string($value)) {
-            return strtolower(trim($value));
-        }
-
-        return strtolower(trim((string) $value));
     }
 
     /**
@@ -1091,7 +1042,7 @@ class PersonController extends Controller
 
         $matchBreakdown = $this->buildLeadToPersonMatchBreakdown($lead, $person);
 
-        return view('admin::leads.sync-lead-to-person', compact('lead', 'person', 'matchBreakdown'));
+        return view('adminc::leads.sync-lead-to-person', compact('lead', 'person', 'matchBreakdown'));
     }
 
     // Removed legacy edit-with-lead and update-with-lead in favor of sync-lead-to-person
@@ -1321,20 +1272,6 @@ class PersonController extends Controller
         return null;
     }
 
-    /**
-     * Get the field type for proper display handling.
-     */
-    private function getFieldType(string $field): string
-    {
-        if (in_array($field, ['emails', 'phones'])) {
-            return 'array';
-        }
 
-        if ($field === 'address') {
-            return 'address';
-        }
-
-        return 'text';
-    }
 
 }

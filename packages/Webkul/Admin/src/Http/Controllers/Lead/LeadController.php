@@ -506,6 +506,8 @@ class LeadController extends Controller
                 if (array_key_exists($enumKey, $data)) {
                     if ($data[$enumKey] === '' || $data[$enumKey] === '?') {
                         $data[$enumKey] = null;
+                    } elseif ($data[$enumKey] instanceof \BackedEnum) {
+                        $data[$enumKey] = $data[$enumKey]->value;
                     }
                 }
             }

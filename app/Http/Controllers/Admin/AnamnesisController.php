@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\Comparable;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
 use App\Services\FormService;
@@ -9,6 +10,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -16,6 +18,8 @@ use Webkul\Lead\Repositories\LeadRepository;
 
 class AnamnesisController extends Controller
 {
+    use Comparable;
+
     /**
      * Create a new controller instance.
      *
@@ -355,6 +359,88 @@ class AnamnesisController extends Controller
         }
     }
 
+    public function syncLatestWithOlder(string $personId)
+    {
+        $lastAnamnesis = $this->lastAnamnesisByPersonId($personId);
+        if (is_null($lastAnamnesis)) {
+            abort(404, 'Geen anamnese gevonden voor deze persoon.');
+        }
+        $olderAnamnises = Anamnesis::where('id', '!=', $lastAnamnesis->id)
+            ->where('person_id', $personId)
+            ->orderBy('created_at', 'desc')
+            ->with('lead')
+            ->get();
+
+        $lastLeadId = $lastAnamnesis->lead_id;
+
+        $matchBreakdown = $this->buildAnamnesisMatchBreakdown($lastAnamnesis, $olderAnamnises);
+
+        // neem de beste match (hoogste percentage)
+        $bestMatch = collect($matchBreakdown)->sortByDesc('percentage')->first();
+
+        $anamnesis = $lastAnamnesis;
+        $person = $lastAnamnesis->person;
+
+        return view(
+            'adminc::leads.sync-anamnesis',
+            compact('anamnesis', 'matchBreakdown', 'bestMatch', 'lastLeadId', 'olderAnamnises', 'person')
+        );
+    }
+
+    /**
+     * @throws Exception if no anamnesis found for person
+     */
+    public function storeSyncLatestWithOlder(Request $request, string $personId)
+    {
+        $anamnesis = $this->lastAnamnesisByPersonId($personId);
+        if (is_null($anamnesis)) {
+            throw new Exception('Geen anamnese gevonden voor deze persoon.'. $personId);
+        }
+        $data = $request->validate([
+            'choice'   => 'required|array',
+            'choice.*' => 'required|string', // 'current' or anamnesis id
+        ]);
+
+        $updates = [];
+        // Get all referenced older anamneses in one query
+        $referencedIds = array_unique(array_filter(array_values($data['choice']), fn ($v) => $v !== 'current'));
+
+        if (! empty($referencedIds)) {
+            $olderAnamnises = Anamnesis::whereIn('id', $referencedIds)->get()->keyBy('id');
+
+            foreach ($data['choice'] as $field => $choice) {
+                if ($choice === 'current') {
+                    continue;
+                }
+
+                if (isset($olderAnamnises[$choice])) {
+                    $olderAnamnesis = $olderAnamnises[$choice];
+                    // Verify the field exists on the model to avoid errors
+                    if (array_key_exists($field, $olderAnamnesis->getAttributes())) {
+                        $updates[$field] = $olderAnamnesis->$field;
+                    }
+                }
+            }
+        }
+
+        if (! empty($updates)) {
+            $anamnesis->update($updates);
+            session()->flash('success', 'Anamnesis is bijgewerkt met gegevens van oudere anamnese(s).');
+        } else {
+            session()->flash('info', 'Geen wijzigingen doorgevoerd.');
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message'      => 'Anamnesis succesvol bijgewerkt.',
+                'redirect_url' => route('admin.leads.view', $anamnesis->lead_id),
+            ]);
+        }
+
+        return redirect()->route('admin.leads.view', $anamnesis->lead_id)
+            ->with('success', 'Anamnesis succesvol bijgewerkt.');
+    }
+
     /**
      * Create a form request for anamnesis and return the form link.
      */
@@ -447,13 +533,13 @@ class AnamnesisController extends Controller
 
         if (! isset($result['json']['data']['id'])) {
             $errorDetails = [
-                'anamnesis_id'    => $anamnesis->id,
-                'person_id'       => $person->id,
-                'lead_id'         => $lead->id,
-                'http_status'     => $result['status'],
-                'response'        => $result['json'],
-                'response_body'   => $response->body(),
-                'response_keys'   => $result['json'] ? array_keys($result['json']) : null,
+                'anamnesis_id'  => $anamnesis->id,
+                'person_id'     => $person->id,
+                'lead_id'       => $lead->id,
+                'http_status'   => $result['status'],
+                'response'      => $result['json'],
+                'response_body' => $response->body(),
+                'response_keys' => $result['json'] ? array_keys($result['json']) : null,
             ];
 
             Log::error('AnamnesisController: Forms API response missing form ID', $errorDetails);
@@ -471,19 +557,105 @@ class AnamnesisController extends Controller
         return $formLink;
     }
 
-    private function getGvlFormStatus3(string $anamnesisId): JsonResponse
+    // todo move to repro
+    private function lastAnamnesisByPersonId(string $personId): ?Anamnesis
     {
-        $anamnesis = Anamnesis::findOrFail($anamnesisId);
+        return Anamnesis::with(['lead', 'person'])
+            ->where('person_id', $personId)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-        if (empty($anamnesis->gvl_form_link)) {
-            return response()->json([
-                'message' => 'Er is geen GVL formulier gekoppeld aan deze anamnesis.',
-            ], 422);
+    }
+
+    /**
+     * Vergelijk huidige Anamnesis met meerdere oudere Anamneses.
+     *
+     * @return array<string, array{
+     *     percentage: float,
+     *     total_fields: int,
+     *     matching_fields: int,
+     *     field_differences: array<string, array{
+     *         label: string,
+     *         new_value: null|string,
+     *         old_value: null|string,
+     *         type: string
+     *     }>
+     * }>
+     */
+    private function buildAnamnesisMatchBreakdown(Anamnesis $anamnesis, Collection $olderAnamnese): array
+    {
+        $comparableFields = [
+            'description'             => 'description',
+            'height'                  => 'Lengte',
+            'weight'                  => 'Gewicht',
+            'metals'                  => 'Metaalimplantaten',
+            'glaucoma'                => 'Glaucoom',
+            'claustrophobia'          => 'Claustrofobie',
+            'heart_surgery'           => 'Hartoperatie',
+            'implant'                 => 'Implantaat',
+            'surgeries'               => 'Operaties',
+            'hereditary_heart'        => 'Erfelijke hartproblemen',
+            'hereditary_vascular'     => 'Erfelijke vaatproblemen',
+            'hereditary_tumors'       => 'Erfelijke tumoren',
+            'allergies'               => 'Allergieën',
+            'back_problems'           => 'Rugproblemen',
+            'heart_problems'          => 'Hartproblemen',
+            'smoking'                 => 'Roken',
+            'diabetes'                => 'Diabetes',
+            'spijsverteringsklachten' => 'Spijsverteringsklachten',
+            'digestive_problems'      => 'Spijsverteringsproblemen',
+        ];
+
+        $results = [];
+
+        foreach ($olderAnamnese as $oldAnamnesis) {
+            $totalFields = 0;
+            $matchingFields = 0;
+            $fieldDifferences = [];
+
+            foreach ($comparableFields as $field => $label) {
+                $newValue = $anamnesis->$field ?? '';
+                $oldValue = $oldAnamnesis->$field ?? null;
+
+                $totalFields++;
+
+                $isMatch = $this->valuesMatch($newValue, $oldValue, $field, 'anamnesis');
+
+                if ($isMatch) {
+                    $matchingFields++;
+                } else {
+                    $fieldDifferences[$field] = [
+                        'label'     => $label,
+                        'new_value' => $this->formatValueForDisplay($newValue, $field),
+                        'old_value' => $this->formatValueForDisplay($oldValue, $field),
+                        'type'      => $this->getFieldType($field),
+                    ];
+                }
+            }
+
+            $percentage = $totalFields > 0 ? ($matchingFields / $totalFields) * 100 : 0;
+            $resultKey = $oldAnamnesis->id;
+
+            $results[$resultKey] = [
+                'percentage'        => round($percentage, 1),
+                'total_fields'      => $totalFields,
+                'matching_fields'   => $matchingFields,
+                'field_differences' => $fieldDifferences,
+            ];
         }
 
-        $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+        return $results;
+    }
 
-        return $this->formService->getFormStatus($formId);
+    /**
+     * Check if two values match for comparison.
+     */
+    private function valuesMatch($leadValue, $personValue, $field, string $perspective = 'generic'): bool
+    {
+        // Handle regular string fields
+        $leadNormalized = self::normalizeValue($leadValue);
+        $personNormalized = self::normalizeValue($personValue);
 
+        return $leadNormalized === $personNormalized;
     }
 }

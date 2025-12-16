@@ -2,7 +2,9 @@
 
 namespace App\Helpers;
 
-class ValueNormalizer
+use BackedEnum;
+
+trait ValueNormalizer
 {
     /**
      * Normalize any value to a string.
@@ -56,5 +58,59 @@ class ValueNormalizer
 
         // Fallback: convert to string
         return (string) $value;
+    }
+
+    /**
+     * Normalize value for comparison.
+     */
+    public static function normalizeValue($value): string
+    {
+        if (is_null($value)) {
+            return '';
+        }
+
+        // Unwrap backed enums to their scalar backing values for comparison
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
+        if (is_string($value)) {
+            return strtolower(trim($value));
+        }
+
+        return strtolower(trim((string) $value));
+    }
+
+    /**
+     * Format value for display in the UI.
+     */
+    public function formatValueForDisplay($value, $field): string
+    {
+        if (is_null($value)) {
+            return 'Geen waarde';
+        }
+
+        if (in_array($field, ['emails', 'phones'])) {
+            if (is_array($value)) {
+                $values = $this->extractArrayValues($value);
+
+                return implode(', ', $values) ?: 'Geen waarde';
+            }
+
+            return ValueNormalizer::toString($value);
+        }
+
+        if ($field === 'date_of_birth') {
+            $formatted = $this->formatDateForComparison($value);
+
+            return $formatted ?: 'Geen waarde';
+        }
+
+        // For enums, return backing value for display
+        if ($value instanceof BackedEnum) {
+            return (string) $value->value;
+        }
+
+        return ValueNormalizer::toString($value);
     }
 }

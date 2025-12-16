@@ -45,6 +45,9 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::post('sync-lead-to-person/{leadId}/{personId}', [PersonController::class, 'syncLeadToPersonUpdate'])->name('admin.leads.sync-lead-to-person-update');
 
+    Route::get('sync-anamnesis/{personId}', [AnamnesisController::class, 'syncLatestWithOlder'])->name('admin.leads.sync-anamnesis-to-older-update');
+    Route::post('sync-anamnesis/{personId}', [AnamnesisController::class, 'storeSyncLatestWithOlder'])->name('admin.leads.sync-anamnesis-update');
+
     Route::get('kanban/look-up', [LeadController::class, 'kanbanLookup'])->name('admin.leads.kanban.look_up');
 
     Route::get('{id}/default-group', [ActivityController::class, 'getDefaultGroup'])->name('admin.leads.default-group');

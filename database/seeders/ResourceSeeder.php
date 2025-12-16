@@ -72,6 +72,7 @@ class ResourceSeeder extends BaseSeeder
             ['name' => 'Maria-Hilf Dr. - consultatie', 'resource_type' => 'Artsen', 'clinic' => 'Maria-Hilf Krankenhaus', 'is_active' => false],
             ['name' => 'Maria-Hilf CT Scanner 1 - op aanvraag', 'resource_type' => 'CT scanner', 'clinic' => 'Maria-Hilf Krankenhaus', 'is_active' => false],
             ['name' => 'Maria-Hilf MRI Scanner 1', 'resource_type' => 'MRI scanner', 'clinic' => 'Maria-Hilf Krankenhaus', 'is_active' => false],
+            ['name' => 'Intertran Other', 'resource_type' => 'Other', 'clinic' => 'Intertran', 'is_active' => true],
         ];
 
         $created = 0;

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Webkul\Installer\Database\Seeders\DatabaseSeeder as KrayinDatabaseSeeder;
+use Webkul\Installer\Database\Seeders\Workflow\WorkflowSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,5 +24,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ResourceSeeder::class);
         $this->call(ProductSeeder::class);
         $this->call(PartnerProductSeeder::class);
+        $this->call(WorkflowSeeder::class);
     }
 }

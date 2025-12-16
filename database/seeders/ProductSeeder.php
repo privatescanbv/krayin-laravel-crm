@@ -1433,7 +1433,7 @@ class ProductSeeder extends BaseSeeder
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '0,00',
                 'producttype'   => '11 Overige',
-                'resourcetype'  => 'Other',
+                'resourcetype'  => 'MRI scanner',
                 'productgroep'  => 'Overig',
             ],
             [

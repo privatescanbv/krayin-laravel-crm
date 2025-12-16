@@ -22,6 +22,7 @@ class ResourceSeeder extends BaseSeeder
             ['name' => 'Augusta Cardiologie', 'resource_type' => 'Cardiologie', 'clinic' => 'Ambulante Kardiologie Augusta', 'is_active' => true],
             ['name' => 'Ranova - Augusta MRI Scanner 1', 'resource_type' => 'MRI scanner', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
             ['name' => 'Ranova-Augusta CT scanner', 'resource_type' => 'CT scanner', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
+            ['name' => 'Other', 'resource_type' => 'Other', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
             ['name' => 'Gradus CT PRT', 'resource_type' => 'CT scanner', 'clinic' => 'GRADUS - Orthopadie & Unfallchirurgie Dusseldorf', 'is_active' => true],
             ['name' => 'Procelsio - Arts - consult', 'resource_type' => 'Artsen', 'clinic' => 'Procelsio Clinic GMBH', 'is_active' => true],
             ['name' => 'Procelsio - Arts - operatie', 'resource_type' => 'Artsen', 'clinic' => 'Procelsio Clinic GMBH', 'is_active' => true],

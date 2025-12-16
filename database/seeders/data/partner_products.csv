@@ -1,0 +1,204 @@
+PartnerProductID-SuiteCRM;Naam;Beschrijving;Verkoopprijs;Valuta;Inkoopprijs;Duur onderzoek;Resource Type;Inkoopprijs Kliniek;Inkoopprijs Arts;Planning basseren op andere resource;Korting informatie;Active;Inkoopprijs overig;Omschrijving kliniek (AFB);Rapporten;Inkoopprijs Radiologie;Inkoopprijs Cardiologie;Kliniek;KliniekId-SuiteCRM;Producten;ProductId-SuiteCRM;Product key;;
+4f1eec6d-0efe-a212-296f-5e3029d410ac;TB1 Regular Bodyscan zonder cardio;"TB1 Regular Bodyscan zonder cardio, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken) ";1340;EUR;337;30;MRI scanner;0;0;0;;1;0;"TB1
+";Radiologie MRI;337;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB1 Regular Bodyscan zonder cardio;6f3e5090-5ee9-a142-e37c-53916b3fa7d9;1098;;
+c3747b92-13b2-3258-25d6-5e3050c6d381;TB1 Last-Minute Bodyscan;"TB1 Last-Minute Bodyscan, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Onderrug/Lendenwervels (overzichtsscan)";1250;EUR;337;30;MRI scanner;0;0;0;;1;0;TB1;Radiologie MRI;337;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB1 Last-Minute Bodyscan;c221296c-8c35-f0f7-dd8a-4ea1939e79d2;1093;;
+87a60b15-7c95-8843-863b-5e3052e04150;TB2 Last-Minute Bodyscan + Angiografie;"TB2 Last-Minute Bodyscan + Angiografie, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Onderrug/Lendenwervels (overzichtsscan)
+- MRI Gehele bloedvatenstelsel";1990;EUR;506;45;MRI scanner;0;0;0;;0;0;TB2 ;Radiologie MRI;506;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB2 Last-Minute Bodyscan + Angiografie;c773c3e1-41aa-5921-db6e-4ea193cc8578;1156;2 x verkocht;Toevoegen en op inactief
+44cc3619-0b72-fc84-6d75-5e3053109192;TB2 Regular Bodyscan + Angiografie zonder cardio;"TB2 Regular Bodyscan + Angiografie zonder cardio, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI scan van het gehele slagaderstelsel, inclusief contrastmiddel";2090;EUR;506;45;MRI scanner;0;0;0;;1;0;TB2 ;Radiologie MRI;506;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB2 Regular Bodyscan + Angiografie zonder cardio;9bf8c68f-4a49-9c7f-cd11-53918b7e4804;1099;;
+5d5c6da5-b69d-1049-ba51-5e30567e601a;TB3 Regular Bodyscan + Wervelkolom zonder cardio;"TB3 Regular Bodyscan + Wervelkolom zonder cardio, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Gehele wervelkolom gedetailleerd";1790;EUR;506;45;MRI scanner;0;0;0;;1;0;TB3 ;Radiologie MRI;506;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB3 Regular Bodyscan + Wervelkolom zonder cardio;b4d6e401-07fb-a847-5f71-53919c1f9b7e;1100;;
+b0fd0218-0755-876a-d45a-5e3058479398;TB4 Regular Bodyscan + Angiografie + Wervelkolom zonder cardio;"TB4 Regular Bodyscan + Angiografie + Wervelkolom zonder cardio, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Gehele wervelkolom gedetailleerd
+- MRI Gehele bloedvatenstelsel";2940;EUR;618;60;MRI scanner;0;0;0;;1;0;TB4 ;Radiologie MRI;618;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB4 Regular Bodyscan + Angiografie + Wervelkolom zonder cardio;6731f814-ef92-7893-edf6-5391a6beaa99;1101;;
+6370ad50-ca77-ee81-5def-5e305808c414;MRI Abdomen en buikaorta inclusief CM;MRI scan van de abdomen en buikaorta, inclusief contrastmiddel;850;EUR;350;30;MRI scanner;0;0;0;;1;0;MRT Abdomen und Aorta mit KM;Radiologie MRI;350;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Abdomen en buikaorta inclusief CM;d74b0a58-4312-204e-9565-4ea2771bdcec;1157;0 verkopen;Toevoegen en op inactief
+823f46b8-a744-cceb-e1e3-5e305983ce50;MRI Abdomen inclusief CM;MRI scan van de onder- en bovenbuik (abdomen), inclusief contrastmiddel;950;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT oben und unterbauch zusammen mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Abdomen inclusief CM;6d680ddb-3056-4af1-d62e-4ea2770d9f16;1078;;
+adc06170-38b5-aff1-8794-5e305908d412;MRI Bekken, inclusief contrastmiddel;MRI scan van het bekken, inclusief contrastmiddel;650;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT Becken mit KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bekken inclusief contrastmiddel;2737f022-ecc3-2cda-8389-59db818f78ac;1011;;
+a1a4bff2-144c-16f6-cade-5e305af6e381;MRI Borstwervelkolom (BWS) exclusief CM;MRI scan van de borstwervelkolom;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT BWS ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Borstwervelkolom (BWS) exclusief CM;3e52a4f0-0f44-9712-924e-4ea295f90103;1063;;
+620aa6c5-3314-52ce-29a5-5e305a46d125;MRI Borstwervelkolom (BWS) inclusief CM;MRI scan van de borstwervelkolom, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT BWS mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Borstwervelkolom (BWS) inclusief CM;3ffebf26-f379-d081-bbf6-4ea295e94c19;1064;;
+adeaf137-0f23-8406-7f2d-5e305bce6e3b;MRI Bovenbuik inclusief CM;MRI scan van de bovenbuik, inclusief contrastmiddel;650;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT Oberbauch mit KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bovenbuik inclusief CM;302006b3-0e7a-5ee5-263e-4ea27719fade;1080;;
+24e0af9f-fb5b-a707-b469-5e305b6ccded;MRI Carotiden inclusief CM;MRI scan van de hersenaanvoerende bloedvaten, inclusief contrastmiddel;550;EUR;220;30;MRI scanner;0;0;0;;1;0;MRT Carotiden mit KM;Radiologie MRI;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Carotiden inclusief CM;3ac668ed-c531-6250-925c-4ea27756e7ac;1010;;
+f02d08d9-d832-a880-fed9-5e305ca43a63;MRI Enkel exclusief CM;MRI scan van de enkel;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Fussgelenk ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Enkel exclusief CM;20adc70e-a88c-79b4-92be-4ea277b11280;1029;;
+4dd08be0-3eba-8cfc-4593-5e305e0c6fdf;MRI Enkel inclusief CM;MRI scan van de enkel, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Fussgelenk mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Enkel inclusief CM;21c43df7-7da6-3fe5-85f3-4ea277c9ecac;1030;;
+24c1bad4-fcb0-19da-3c7e-5e305eedd99d;MRI Gehele wervelkolom exclusief CM;MRI scan van de gehele wervelkolom;950;EUR;197;30;MRI scanner;0;0;0;;1;0;MRT Ganze Wirbelsäule (LWS+BWS+HWS) ohne KM;Radiologie MRI;197;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Gehele wervelkolom exclusief CM;46cd6b66-a630-85d4-8e4c-4ea2954ba872;1059;;
+e8993080-b40a-e23e-3803-5e305f890034;MRI Gehele wervelkolom inclusief CM;MRI scan van de gehele wervelkolom, inclusief contrastmiddel;1050;EUR;281;30;MRI scanner;0;0;0;;1;0;MRT Ganze Wirbelsäule (LWS+BWS+HWS) mit KM;Radiologie MRI;281;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Gehele wervelkolom inclusief CM;487ff4f0-45c0-3c2b-aa0f-4ea295a64d8c;1060;;
+4b970e1a-e9b9-1c6d-6e36-5e305fc62416;MRI hals weke delen inclusief CM ;MRI scan van de weke delen van de hals, inclusief contrastmiddel ;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Hals Weichteile mit KM ;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Hals weke delen;ef1b7c6f-93c9-2869-29fa-505c5107c16b;1004;;
+af494efb-aeb5-d349-1057-5e305f342f61;MRI Halswervel- en borstwervelkolom (HWS-BWS) exclusief CM;MRI scan van de halswervel- en borstwervelkolom;550;EUR;165;30;MRI scanner;0;0;0;;0;0;MRT HWS und BWS ohne KM;Radiologie MRI;165;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Halswervel- en borstwervelkolom (HWS-BWS) excl;4a3445bc-1a01-ced6-6fb6-4ea295237b19;1164;0 verkopen;Toevoegen en op inactief
+24931991-f220-e3a2-f161-5e306049a680;MRI Halswervelkolom (HWS) exclusief CM;MRI scan van de halswervelkolom;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT HWS ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Halswervelkolom (HWS) exclusief CM;4da43483-1df9-4193-09d7-4ea2956ab15c;1061;;
+82b248a8-c7bb-d21c-a21a-5e3060ef2c27;MRI Halswervelkolom (HWS) inclusief CM;MRI scan van de halswervelkolom, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT HWS mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Halswervelkolom (HWS) inclusief CM;4f4eabd4-b0ca-deee-150d-4ea2951c7320;1062;;
+25c2a01f-bfdc-b265-0b96-5e30608ef076;MRI Hand exclusief CM;MRI scan van de hand;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Handgelenk ohne KM;;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Hand exclusief CM;2db5afbb-0450-e960-6535-4ea2779120e1;1023;;
+d3745068-e2a1-dd1e-f899-5e30611521d1;MRI Hand inclusief CM;MRI scan van de hand, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;"MRT Handgelenk mit KM
+";;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Hand inclusief CM;2ecd3f71-3880-ec7a-4048-4ea27723f37c;1024;;
+583a0d06-2ecc-0594-209e-5e3061881f5a;MRI Heup exclusief CM;MRI scan van de heup;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Hüfte ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Heup exclusief CM;17ffebfa-df15-a268-df55-4ea2771813dc;1025;;
+ac0a2586-103b-2c5b-7925-5e306169fd2a;MRI Heup inclusief CM;MRI scan van de heup, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Hüfte mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Heup inclusief CM;191572eb-b09e-aa57-9d70-4ea2771a9516;1026;;
+e6f7e5fd-e12b-ea87-1fb8-5e306293e92d;MRI hypofyse  inclusief CM;MRI scan van de hypofyse, inclusief contrastmiddel;650;EUR;255;30;MRI scanner;0;0;0;;1;0;MRT Hypophyse mit KM;Radiologie MRI;255;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Hypofyse  inclusief CM;9ebb1395-e20d-855d-c122-5ad49319a464;1002;;
+60fe2c03-2652-89c1-8a2c-5e306215b48b;MRI Knie exclusief CM;MRI scan van de knie;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Knie ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Knie exclusief CM;1c5366da-79a5-1e14-fe3c-4ea2774ddbb4;1027;;
+e8d32478-ff20-20bb-79b5-5e306277fb68;MRI Knie inclusief CM;MRI scan van de knie, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Knie mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Knie inclusief CM;1d681658-9826-567b-300a-4ea27725c247;1028;;
+a5f94127-bfb7-8df6-2720-5e3062087b5d;MRI Lendenwervelkolom (LWS) exclusief CM;MRI scan van de lendenwervelkolom;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT LWS ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Lendenwervelkolom (LWS) exclusief CM;546ba84d-7cee-c526-4937-4ea295716733;1065;;
+e267abd6-0daa-0b3b-81aa-5e306396ee50;MRI Lendenwervelkolom (LWS) inclusief CM;MRI scan van de lendenwervelkolom, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT LWS mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Lendenwervelkolom (LWS) inclusief CM;5619cd4f-9df2-7818-4ada-4ea295933674;1066;;
+b27db7a2-8be2-773e-3945-5e306399e941;MRI Lichaamangiografie inclusief CM;MRI scan van het gehele slagaderstelsel, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Angiographie (GK);Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Lichaamangiografie inclusief CM;e55a576a-a0ee-a1ff-e772-4ea277755438;1012;;
+d3f13cca-469e-415f-0cd0-5e3063c2bd41;MRI Mammografie inclusief CM;MRI scan mammografie (borstonderzoek), inclusief contrastmiddel;850;EUR;337;30;MRI scanner;0;0;0;;1;0;MRT Mammographie mit KM;;337;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Mammografie inclusief CM;211db7c2-d0fc-6abf-08a3-4ea29e80bb4e;1091;;
+b52ba82a-70d2-6f6e-0bf3-5e3064ff485b;MRI Onderbuik inclusief CM;MRI scan van de onderbuik, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Unterbauch mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Onderbuik inclusief CM;edad1545-26d8-a714-5597-4ea2772f63e6;1082;;
+a286d318-c44f-6869-ac4a-5e30659d6fbd;MRI Pols exclusief CM;MRI scan van de pols;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Handgelenk ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Pols exclusief CM;2507d1b3-e7e1-945b-54fd-4ea2773015ec;1021;;
+565c44eb-aab7-ca26-8a57-5e306568f8a4;MRI Pols inclusief CM;MRI scan van de pols, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Handgelenk mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Pols inclusief CM;261d3410-d035-4538-2f81-4ea277d3f7c3;1022;;
+208dd0b8-59a7-3a32-a4b5-5e306597c45c;MRI Prostaat gedetailleerd inclusief CM;Gedetailleerde MRI scan van de prostaat, inclusief contrastmiddel;950;EUR;337;30;MRI scanner;0;0;0;;1;0;MRT Prostata mit KM;;337;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Prostaat gedetailleerd inclusief CM;24700fcd-7010-59c7-a760-4ea29eb513b0;1092;;
+2dbe9296-6355-6528-bfde-5e30659260f9;MRI Schedel en Carotiden inclusief CM;MRI scan van de schedel en hersenaanvoerende bloedvaten, inclusief contrastmiddel;750;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Schädel und Carotiden mit KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Schedel en Carotiden inclusief CM;edfe192d-8036-76e4-e1ef-4e08777fe84b;1003;;
+6ecd8017-3b9b-47ad-f16e-5e3066d0468d;MRI Schedel exclusief CM;MRI scan van de schedel;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Schädel ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Schedel exclusief CM;366d26c1-b907-365b-ee67-4ea277189d91;1000;;
+84f3f716-0dce-4ec1-97cc-5e3066ce3707;MRI Schedel inclusief CM;MRI scan van de schedel, inclusief contrastmiddel;750;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Schädel mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Schedel inclusief CM;3783f447-e034-f298-920a-4ea2775e698c;1001;;
+811ef9d1-1a63-c125-59b8-5e30663ddd53;MRI Schouder exclusief CM;MRI scan van de schouder;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Schulter ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Schouder exclusief CM;13a9f043-a4a0-5c7a-53c4-4ea277a83d22;1017;;
+d47bb869-bc37-ec33-bf84-5e30668c53d2;MRI Schouder inclusief CM;MRI scan van de schouder, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Schulter mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Schouder inclusief CM;14bf7192-ad29-9505-a71c-4ea277c1defb;1018;;
+22ce3652-e00a-1717-3146-5e30675c225b;MRI Voet exclusief CM;MRI scan van de voet;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Fuss ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Voet exclusief CM;3214150f-9077-ca97-0035-4ea277a23d47;1031;;
+64dfcc71-91dd-1769-efef-5e30673bff84;MRI Voet inclusief CM;MRI scan van de voet, inclusief contrastmiddel;650;EUR;225;30;MRI scanner;0;0;0;;1;0;MRT Fuss mit KM;Radiologie MRI;225;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Voet inclusief CM;332c3e8f-1e83-31fb-3ea7-4ea277351301;1032;;
+2bbeb9c7-7b7d-b0f5-0333-5e30698d85e3;CT Abdomen inclusief CM;CT scan van de onder- en bovenbuik (abdomen), inclusief contrastmiddel;750;EUR;220;15;CT scanner;0;0;0;;1;0;CT Abdomen mit KM;;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Abdomen inclusief CM;a2340894-a156-81d8-09bf-4ea2771aca73;1085;;
+87e8319d-bdaa-60e1-b1db-5e30699f24cf;CT Gehele wervelkolom exclusief CM;CT scan van de gehele wervelkolom;650;EUR;165;30;CT scanner;0;0;0;;1;0;CT Wirbelsäule ohne KM;;165;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Gehele wervelkolom exclusief CM;326076c1-b8e3-8e70-16cf-4ea295c25b8f;1069;;
+15f7a061-97f2-cee8-269d-5e306a85ce72;CT Halswervelkolom (HWS) exclusief CM;CT scan van de halswervelkolom;450;EUR;110;15;CT scanner;0;0;0;;1;0;CT HWS ohne KM;Radiologie CT;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Halswervelkolom (HWS) exclusief CM;35c8e138-7ba6-1607-54cd-4ea2955c8dfa;1071;;
+3e090470-ffd2-3634-2441-5e306bcef6fd;CT Hart en longen (Thorax) exclusief CM;CT scan van het hart en de longen (thorax);650;EUR;169;15;CT scanner;0;0;0;;0;0;CT Thorax ( Herz/Lungen) ohne KM;Radiologie CT;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Hart en longen (Thorax) exclusief CM;4d4306d3-d33b-910d-3222-4ea277e84802;1165;7 x verkocht;20-10-2022
+71b29593-f8c4-9ec7-7a84-5e306bbf5394;CT Hart exclusief CM (CTC);CT scan van het hart (coronaire calciumscore);450;EUR;112;15;CT scanner;0;0;0;;1;0;CTC (Koronare Kalziumscore);Radiologie CT;112;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Hart exclusief CM (CTC);47d15023-dede-8dcf-c39c-4ea277c21a84;1057;;
+c4f65f82-8bd0-7c80-aadf-5e306bfc5428;CT Hart inclusief CM (CTA);CT scan van het hart, inclusief contrastmiddel;650;EUR;281;15;CT scanner;0;0;0;;1;0;CT Herz Angiographie mit KM;Radiologie CT;281;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Hart inclusief CM (CTA);48e959d3-95a6-3e20-3389-4ea277552e0f;1058;;
+aca303e1-d34e-8333-cbb1-5e306bcf7f13;CT Longen exclusief CM;CT scan van de longen;450;EUR;112;15;CT scanner;0;0;0;;1;0;CT Thorax ohne KM;Radiologie CT;112;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Longen exclusief CM;41503ab5-90ef-c4ef-56b8-4ea2777fb864;1051;;
+c92a1634-3fad-c50b-be89-5e306cea5b25;CT Longen inclusief CM;CT scan van de longen, inclusief contrastmiddel;650;EUR;224;15;CT scanner;0;0;0;;1;0;CT Lungen mit KM;Radiologie CT;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Longen inclusief CM;4265dd56-d28e-3007-ecae-4ea277282710;1052;;
+dd2f4008-71fe-493f-fa20-5e306c9e68b4;CT Neus;CT Neus;550;EUR;112;15;CT scanner;0;0;0;;1;0;CT Mittelgesicht;Radiologie CT;112;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Neustussenschot;5492c4c2-3c3c-f7bf-fa73-51878a6f1611;1007;;
+c00d6854-531d-975c-b6eb-5e306c85d9d3;CT Thorax / longen inclusief CM;CT scan thorax / longen, inclusief contrastmiddel;550;EUR;250;15;CT scanner;0;0;0;;0;0;CT Thorax/Lungen mit KM;Radiologie CT;250;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Hart en longen (Thorax) inclusief CM;4e5ac626-22c5-6435-7d3c-4ea277369714;1166;6 x verkocht;20-2-2023
+8349fac2-f1b3-87a9-1560-5e306c6611c4;CTA Longen inclusief contrastmiddel;CTA scan van de longen inclusief contrastmiddel;950;EUR;250;15;CT scanner;0;0;0;;1;0;CTA der Lungenfäße mit KM;Radiologie CT;250;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CTA Longen;5a458102-23bb-6663-ca56-57c43d45cd1d;1053;;
+d384c882-7bed-c468-3a5c-5e5cd6ceceb1;Aan te passen product (eenmalig);Deze tekst aanpassen;0;EUR;0;0;Other;0;0;0;;1;0;;;0;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;Aan te passen product (eenmalig);752310eb-6b55-5343-7d67-568e77be1829;1128;;
+654bdbd9-ab07-a604-d951-5e7cb90cea1e;CT Angiografie Abdomen inclusief CM;CT Angiografie Abdomen inclusief CM;650;EUR;220;15;CT scanner;0;0;0;;1;0;CT Angiographie Abdomen mit KM;;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Angiografie Abdomen inclusief CM;77cb82b2-c593-1728-4d27-5e7cb8728004;1013;;
+619ce4c0-f82d-6166-4a35-5e8f41bffa27;CT gestuurde PRT wervelkolom;CT gestuurde cortisonen injecties (PRT) voor de wervelkolom;550;EUR;247,5;30;CT scanner;0;0;0;;1;0;PRT Behandlung;Radiologie CT;247,5;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;1x PRT-injectie;e4bf7ce9-afc9-02cb-876e-4e71fed2f5b2;1151;85 x verkocht;Voorkeur op 1 x prt injectie
+2d4e4117-251d-aab8-4670-5e94415dd690;MRI Hart inclusief CM;MRI scan van het hart, inclusief contrastmiddel;1450;EUR;640;45;MRI scanner;0;0;0;;1;0;MRT Herz mit KM;Radiologie MRI;640;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Hart inclusief CM;45a5b53b-c7ac-55de-3bd1-4ea2770f41e3;1055;;
+9e1f0852-b693-100c-921c-5ebe68214ce3;Rontgenfoto;Rontgenfoto;200;EUR;30;15;Other;0;0;0;;1;0;Rontgenfoto;;30;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;Rontgenfoto;4e5adc12-a0ed-1023-ca14-5190d9c6212f;1113;;
+caf111e7-1973-807c-96f6-5ecb8439e9d9;MRI Coloscopie inclusief CM;MRI scan van de darmen (hydro MRI);1250;EUR;550;60;MRI scanner;0;0;0;;1;0;MRT Hydro Kolonskopie mit KM;Radiologie MRI;550;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Hydro Coloscopie inclusief CM;2616fab4-1ece-3367-48de-4ea29e23ce7c;1167;1 x verkocht;25-5-2020
+c17ee0f4-d8bf-5a65-8697-5ecd2550ca02;TB1 Royal Bodyscan;"TB1 Royal Bodyscan, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken) ";1840;EUR;337;30;MRI scanner;0;0;0;;1;0;TB1;Radiologie MRI;337;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB1 Royal Bodyscan;a6bd9a5b-7e96-0c0a-cf47-4d9b2fd82e35;1094;;
+e91e42a4-2ae8-37ef-4342-5ecd26cfd63c;TB2 Royal Bodyscan + Angiografie;"TB2 Royal Bodyscan + Angiografie, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI scan van het gehele slagaderstelsel, inclusief contrastmiddel";2590;EUR;506;45;MRI scanner;0;0;0;;1;0;TB2 ;Radiologie MRI;506;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB2 Royal Bodyscan + Angiografie;c4b236dd-4f60-7b56-5c58-4ea193c52cfb;1095;;
+ea85eeab-d6aa-4791-1a9e-5ecd288b08df;TB3 Royal Bodyscan + Wervelkolom;"TB3 Royal Bodyscan + Wervelkolom, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Gehele wervelkolom gedetailleerd";2690;EUR;506;45;MRI scanner;0;0;0;;1;0;TB3 ;Radiologie MRI;506;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB3 Royal Bodyscan + Wervelkolom;c8c933cf-d668-0bfa-1f0f-4ea19335e933;1096;;
+2990156b-7ef3-ca83-c781-5ecd2847cfa8;TB4 Royal Bodyscan + Angiografie + Wervelkolom;"TB4 Royal Bodyscan + Angiografie + Wervelkolom, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Gehele wervelkolom gedetailleerd
+- MRI Gehele bloedvatenstelsel";3440;EUR;618;60;MRI scanner;0;0;0;;1;0;TB4 ;Radiologie MRI;618;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB4 Royal Bodyscan + Angiografie + Wervelkolom;ccd71d05-e025-4bd2-04d9-4ea19365eeaa;1097;;
+66a78938-f2ce-6524-9f18-5ed61e05fc78;MRI hele lichaam exclusief CM;MRI van het hele lichaam, exclusief contrastmiddel;1900;EUR;550;45;MRI scanner;0;0;0;;1;0;Ganzkörper MRT TB1 + MRT Schädel und MRT unt. Extremitäten ;Radiologie MRI;550;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI hele lichaam exclusief CM;2c600d13-1b58-818d-fb83-5ed61d17114f;1168;2 x verkocht;20-7-2021
+d69542d8-5e46-2c3a-d21a-5ef093a9aa11;MRI MRCP sequenties;MRI MRCP sequenties (galwegen);550;EUR;200;15;MRI scanner;0;0;0;;1;0;MRT MRCP;Radiologie MRI;200;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI MRCP sequenties;df9a1cf8-8493-6aab-ac89-55c8969e941b;1079;;
+a7d52f0c-7d7d-db83-34c1-5f071c23e24d;CT Heup exclusief CM;CT scan van de heup;450;EUR;110;15;CT scanner;0;0;0;;1;0;CT Hüfte ohne KM;Radiologie CT;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Heup exclusief CM;1a288cb9-e64b-13ee-d845-4ea2776102f0;1040;;
+28b08932-bad1-bb3c-7fb4-5f086f9e44a4;TB5 Regular Bodyscan zonder cardio;"TB5 Regular Bodyscan zonder cardio, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Onderrug/Lendenwervels (overzichtsscan)
+CT scan van het hart (coronaire calciumscore)
+Functionele MRI scan van het hart";1950;EUR;730;60;MRI scanner;0;0;0;;0;0;TB5 ;Radiologie MRI;730;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;TB5 Regular Bodyscan zonder cardio;5c7fa729-7b56-ee4a-416e-5f086e483126;1169;13 x verkocht;8-10-2020
+60db9d2b-35c1-02e7-9ab0-5f0c36e34f5e;MRI bloedvaten bekken en been inclusief CM;MRI scan van de bloedvaten van bekken en benen, inclusief contrastmiddel;850;EUR;337;30;MRI scanner;0;0;0;;1;0;Becken- und Beinangiographie mit KM;Radiologie MRI;337;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bekken en bloedvaten been inclusief CM;e8a6b57b-0aca-2f8e-34e1-4ea277e8a713;1011;;
+98ccf4a6-45ce-8cb2-07b7-5f3a4f490bc2;MRI Onderbuik exclusief CM;MRI scan van de onderbuik;650;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT Unterbauch ohne KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Onderbuik exclusief CM;ec05d8ec-0893-2ca0-fc57-4ea277e16280;1083;;
+66fdaca4-f334-b894-23bb-5f4cb1ed7c39;CT Lendenwervelkolom (LWS) exclusief CM;CT scan van de lendenwervelkolom;450;EUR;110;15;CT scanner;0;0;0;;1;0;CT LWS ohne KM;Radiologie CT;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Lendenwervelkolom (LWS) exclusief CM;39e1fb38-6d86-3e61-3ec7-4ea2956dcd99;1075;;
+dc19ece4-ac8f-e0a1-3b88-5f6c9d096aa8;MRI Thorax inclusief CM;MRI van de Thorax inclusief contrastmiddel;950;EUR;275;30;MRI scanner;0;0;0;;0;0;MRT Thorax mit KM;Radiologie MRI;275;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Thorax inclusief CM;40ab71a8-48c2-2530-45b2-5f6c9c322b52;1170;3 x verkocht;7-11-2022
+92de1ef6-531e-bf4e-bb5a-5f8435b9e716;CT hals weke delen inclusief CM ;CT scan van de weke delen van de hals, inclusief contrastmiddel ;550;EUR;110;15;CT scanner;0;0;0;;1;0;CT Hals Weichteile mit KM ;Radiologie CT;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT van de Hals weke delen;9e850a8f-331c-c98c-fc36-5f8434ae344d;1009;;
+230234ca-1351-6e67-2c2e-5f9c3a84925d;CT Lendenwervelkolom (LWS) inclusief CM;CT scan van de lendenwervelkolom, inclusief contrastmiddel;650;EUR;220;15;CT scanner;0;0;0;;1;0;"CT LWS mit KM
+";;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Lendenwervelkolom (LWS) inclusief CM;3b8e611e-df23-7d0e-ea16-4ea2956d9ec4;1076;;
+300ddaee-45f1-ce63-9f69-5fd7527c4ed1;CT Voet exclusief CM;CT scan van de voet;550;EUR;110;15;CT scanner;0;0;0;;1;0;"CT Fuss ohne KM
+";;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Voet exclusief CM;34408988-2831-75b9-29ff-4ea2779279b8;1034;;
+51ab6474-9a81-f169-dd0c-6038dce37102;MRI Arm inclusief CM;MRI scan van de arm;650;EUR;250;30;MRI scanner;0;0;0;;1;0;MRT Arm mit KM;Radiologie MRI;250;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Arm inclusief CM;3daab55a-9d63-12df-dc3a-6038db86ca2f;1171;4 x verkocht (2 x verloren);23-7-2025
+81c55933-14f0-3b1b-db8a-6156dde2433b;MRI Achillespees exclusief CM;MRI scan van de achillespees, exclusief contrastmiddel;650;EUR;165;30;MRI scanner;0;0;0;;1;0;MRT Achillessehne ohne KM;Radiologie MRI;165;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Achillespees exclusief CM;44796f83-7b74-7dc2-49d2-6156dd759a8d;1172;4 x verkocht;24-1-2025
+1bd50fe7-5043-ce96-aa81-6169479fba35;MRI Borstbeen inclusief CM;MRI scan van het borstbeen, inclusief contrastmiddel;650;EUR;220;30;MRI scanner;0;0;0;;1;0;MRT Brustbein mit KM;Radiologie MRI;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Borstbeen inclusief CM;19bf27bf-e95a-dae8-8a11-616947e6aace;1173;1 x verkocht (verloren);15-10-2021
+8e4e5992-e942-b973-71d0-61f7b6656dc3;CT Schedel exclusief CM;CT scan van de schedel;550;EUR;110;15;CT scanner;0;0;0;;1;0;CT Schädel ohne KM;Radiologie CT;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Schedel exclusief CM;389a6274-1f6a-9ade-44fc-4ea277e82518;1005;;
+f6a70371-4af0-6189-8183-61f80b00f36c;MRI Kuitbeen;MRI scan van het kuitbeen;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Fibula;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Kuitbeen;e8f0641e-0773-d5a1-1b2a-61f80b52b668;1174;4 x verkocht (1 x verloren);1-10-2025
+ad1c41e7-a2df-2467-7d27-6257e07f96c3;MRI Elleboog exclusief CM;MRI scan van de elleboog;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Ellenbogen ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Elleboog exclusief CM;295dd806-3acc-28fa-99e0-4ea277c00189;1019;;
+a0017a68-c39b-007b-dbc1-627d1f739cf3;CT Bovenbuik inclusief CM;CT scan van de bovenbuik, inclusief contrastmiddel;750;EUR;220;15;CT scanner;0;0;0;;1;0;CT Oberbauch mit KM;Radiologie CT;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Bovenbuik inclusief CM;37fb0c95-4fe2-8847-0d5f-4ea27700ae13;1088;;
+d044eae9-a358-6259-2daa-627e094025bc;CT Bovenbuik exclusief CM;CT scan van de bovenbuik;550;EUR;110;15;CT scanner;0;0;0;;1;0;CT Oberbauch ohne KM;Radiologie CT;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Bovenbuik exclusief CM;1d670a2d-b20d-6fd6-f83e-4ea277b03f0d;1087;;
+8a44b844-3419-77f6-e44f-62d024245f4e;MRI Halswervel- en borstwervelkolom (HWS-BWS) inclusief CM;MRI scan van de halswervel- en borstwervelkolom;650;EUR;220;30;MRI scanner;0;0;0;;1;0;MRT HWS und BWS mit KM;Radiologie MRI;220;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Halswervel- en borstwervelkolom (HWS-BWS) incl;4bf2c194-122b-132c-e3a2-4ea2951e290f;1175;5 x verkocht (1 x verloren);29-2-2024
+227a1ec6-aef5-6bda-d483-64997453d339;MRI Bovenbeen exclusief CM;MRI scan van het bovenbeen, exclusief contrastmiddel;550;EUR;165;30;MRI scanner;0;0;0;;1;0;MRT Oberschenkel ohne KM;Radiologie MRI;165;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bovenbeen exclusief CM;44e67918-103a-a7c1-9fad-505c4ec0d601;1176;2 x verkocht;14-9-2023
+c25283be-c4e2-d2ba-71be-64ba742a7a6b;MRI Bovenbuik exclusief CM;MRI scan van de bovenbuik;650;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT Oberbauch ohne KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bovenbuik exclusief CM;f2a985fc-5cb6-8684-222f-4ea277e22f01;1081;;
+10b9a737-1ef9-b68e-990d-65c49f474139;Stress MRI Hart inclusief CM;MRI scan van het hart tijdens kunstmatig opgewekte inspanning;1450;EUR;697;60;MRI scanner;0;0;0;;1;0;Stress MRT Herz;Radiologie MRI;697;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;Stress MRI Hart inclusief CM;46bdf56f-170d-0e99-f432-4ea27763733a;1056;;
+2fc31bc0-e0a6-6094-0de3-65d31ec17392;MRI SI gewricht exclusief CM;MRI SI gewricht exclusief CM;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT SI Gelenk ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI SI Gewricht exclusief CM;4a80d3b4-1570-3bb3-0707-65d31ec7d68d;1068;;
+e23bcbae-cbaf-47e4-dc20-66c324ffbfa1;MRI Abdomen exclusief CM;MRI scan van de onder- en bovenbuik (abdomen), exclusief contrastmiddel;850;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT oben und unterbauch zusammen ohne KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Abdomen exclusief CM;24f20b40-e761-351a-61f8-66c32398eab3;1077;;
+900b0f0e-ac5d-4457-ba05-6708e026455f;CT bloedvaten bekken en been inclusief CM;CT scan van de bloedvaten van bekken en benen, inclusief contrastmiddel;750;EUR;275;30;MRI scanner;0;0;0;;1;0;CT Becken- und Beinangiographie mit KM;Radiologie CT;275;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Bekken en bloedvaten been inclusief CM;31c9f5e4-55a9-9085-6e57-6708e03037ca;1014;;
+eddc9783-d5a2-09a1-6264-671a050fd6fd;MRI Bekken, exclusief contrastmiddel;MRI scan van het bekken, exclusief contrastmiddel;650;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT Becken ohne KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bekken exclusief contrastmiddel;1113e7f7-db3f-9f9e-a6fd-671a0507f615;1033;;
+a9ee9ae6-07c2-c1f4-4937-67bc89675b67;CT Enkel exclusief CM;CT scan van de enkel;550;EUR;110;15;CT scanner;0;0;0;;1;0;"CT Fussgelenk ohne KM
+";;110;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Enkel exclusief CM;22dc1eae-be7e-197c-bed8-4ea277486bed;1044;;
+1b5e9816-0a58-f527-bd17-68cbe4a0122f;MRI Bovenarm exclusief CM;MRI scan van de bovenarm, exclusief contrastmiddel;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Oberarm ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Bovenarm exclusief CM;2f082b49-9ce3-6980-6df2-68cbe4c0f8da;1177;2 x verkocht;18-9-2025
+aafce6da-49e2-83cf-cc6f-68cd2b86fb13;MRI Onderbeen exclusief CM;MRI scan van het onderbeen, exclusief contrastmiddel;550;EUR;169;30;MRI scanner;0;0;0;;1;0;MRT Unterschenkel ohne KM;Radiologie MRI;169;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI Onderbeen exclusief CM;73657b6f-212c-327f-a488-68cd2b19c663;1178;2 x verkocht;23-9-2025
+38c68ff0-d04f-757b-fc62-68d533696df4;CT Hand exclusief CM;CT scan van de hand;450;EUR;112;15;CT scanner;0;0;0;;1;0;CT Hand ohne KM;Radiologie CT;112;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;CT Hand exclusief CM;2fe136c7-9933-a306-3f98-4ea277e11704;1048;;
+a3cfb73f-756c-86ec-3197-69036a6afef6;MRI SI gewricht inclusief CM;MRI SI gewricht inclusief CM;650;EUR;224;30;MRI scanner;0;0;0;;1;0;MRT SI Gelenk mit KM;Radiologie MRI;224;0;Evidia - Augusta Klinik;3e31d364-93f7-837f-6e7c-5e3027d93466;MRI SI Gewricht inclusief CM;e20a0cfe-3f73-ca1d-32b3-6903690d6a3a;1067;;

@@ -161,9 +161,9 @@ class SalesLead extends AbstractEntity
             Log::info("workflow start sales, {$action['id']}");
             switch ($action['id']) {
                 case 'create_activity':
-                    $title = $action['title'];
-                    $type = $action['type'];
-                    $comment = $action['comment'] ?? '';
+                    $title = $action['attributes']['title'];
+                    $type = $action['attributes']['type'];
+                    $comment = $action['attributes']['comment'] ?? '';
                     try {
                         $this->createActivityForLeadOrSalesAction->executeForSales($sales, false,
                             [

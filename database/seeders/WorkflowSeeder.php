@@ -1,6 +1,6 @@
 <?php
 
-namespace Webkul\Installer\Database\Seeders\Workflow;
+namespace Database\Seeders;
 
 use App\Enums\ActivityType;
 use App\Enums\PipelineStage;

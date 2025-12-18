@@ -5,27 +5,14 @@
     </x-slot:header>
     <x-slot:content>
         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
-            <!-- Order item selection -->
-            <div class="relative">
-                <input
-                    type="datetime-local"
-                    v-model="form.from"
-                    @change="calculateEndTime"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                    style="pointer-events: auto; z-index: 10; position: relative;"
-                    @click.stop
-                />
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Orderitem
-                    <span class="text-xs text-gray-500 font-normal ml-2">
-                        (Nog niet ingeplande items staan bovenaan)
-                    </span>
-                </label>
-                <select
+            <!-- Orderitem -->
+            <div>
+                <x-adminc::components.field
+                    type="select"
+                    name="order_item_id"
+                    label="Orderitem (Nog niet ingeplande items staan bovenaan)"
                     v-model.number="form.order_item_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                    style="pointer-events: auto; z-index: 10; position: relative;"
-                    @click.stop
+                    class="w-full"
                 >
                     <option value="">Selecteer orderitem</option>
                     <!-- Unplanned items first -->
@@ -62,7 +49,8 @@
                             ⚠ @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - Niet planbaar
                         </option>
                     </optgroup>
-                </select>
+                </x-adminc::components.field>
+
                 <!-- Show booking details for selected item -->
                 <div v-if="selectedOrderItem && selectedOrderItem.bookings && selectedOrderItem.bookings.length > 0"
                      class="mt-3 p-3 bg-activity-note-bg dark:bg-blue-900/20 border border-activity-note-border dark:border-blue-800 rounded-md">
@@ -76,44 +64,50 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Resource -->
+            <x-adminc::components.field
+                type="select"
+                name="resource_id"
+                label="Resource"
+                v-model.number="form.resource_id"
+                class="w-full"
+            >
+                <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{
+                    r.clinic }})
+                </option>
+            </x-adminc::components.field>
+
+            <!-- From -->
+            <x-adminc::components.field
+                type="datetime-local"
+                name="from"
+                label="Van"
+                v-model="form.from"
+                @change="calculateEndTime"
+            />
+
+            <!-- To -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>
-                <select
-                    v-model.number="form.resource_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                    style="pointer-events: auto; z-index: 10; position: relative;"
-                    @click.stop
-                >
-                    <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{
-                        r.clinic }})
-                    </option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van</label>
-            </div>
-            <div class="relative">
-                <input
+                <x-adminc::components.field
                     type="datetime-local"
+                    name="to"
+                    label="Tot"
                     v-model="form.to"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                    style="pointer-events: auto; z-index: 10; position: relative;"
-                    @click.stop
                 />
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tot
-                    <span v-if="selectedOrderItem && selectedOrderItem.duration" class="text-xs text-gray-500">
-                        (@{{ selectedOrderItem.duration }} min)
-                    </span>
-                </label>
+                <span v-if="selectedOrderItem && selectedOrderItem.duration" class="text-xs text-gray-500 mt-1 block">
+                    (@{{ selectedOrderItem.duration }} min)
+                </span>
             </div>
-            <div class="flex items-center gap-2">
-                <input id="replace_existing" type="checkbox" v-model="form.replace_existing"
-                       class="h-4 w-4 text-activity-note-text border-gray-300 rounded focus:ring-blue-500"/>
-                <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang
-                    bestaande afspraak (verwijdert eerdere boekingen voor deze
-                    orderitem)</label>
-            </div>
+
+            <!-- Replace existing -->
+            <x-adminc::components.field
+                type="checkbox"
+                name="replace_existing"
+                label="Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderitem)"
+                v-model="form.replace_existing"
+            />
+
         </div>
     </x-slot:content>
     <x-slot:footer>

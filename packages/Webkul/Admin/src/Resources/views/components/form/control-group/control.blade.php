@@ -200,39 +200,28 @@
         @break
 
     @case('checkbox')
-        <v-field
-            v-slot="{ field }"
-            type="checkbox"
-            class="hidden"
-            {{ $attributes->only(['name', ':name', 'value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key']) }}
+         <v-field
+            v-slot="{ field, errors }"
+            {{ $attributes->only(['name', ':name', 'value', ':value', 'v-model', 'rules', ':rules', 'label', ':label']) }}
             name="{{ $name }}"
         >
             <input
                 type="checkbox"
                 name="{{ $name }}"
                 id="{{ $attributes->get('id') ?? $name }}"
-                v-bind="field"
-                class="peer w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
-                {{ $attributes->except(['rules', 'label', ':label', 'key', ':key']) }}
-            />
+                class="h-4 w-4 text-activity-note-text border-gray-300 rounded focus:ring-blue-500"
+                {{ $attributes->except(['label', 'name', 'value', 'readonly', 'type', 'class', 'rules', 'labelClass']) }}
+             />
+         </v-field>
+        @break
 
-            <v-checked-handler
-                :field="field"
-                checked="{{ $attributes->get('checked') }}"
-            >
-            </v-checked-handler>
-        </v-field>
-
-        <label
-             {{
-                $attributes
-                    ->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key'])
-                    ->merge(['class' => 'text-gray-500 icon-checkbox-outline peer-checked:icon-checkbox-select text-2xl peer-checked:text-brandColor'])
-                    ->merge(['class' => $attributes->get('disabled') ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'])
-            }}
-            for="{{ $attributes->get('id') ?? $name }}"
-        >
-        </label>
+    @case('datetime-local')
+        <input
+            type="datetime-local"
+            name="{{ $name }}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
+            {{ $attributes->except(['label', 'name', 'value', 'readonly', 'type', 'class', 'rules', 'labelClass']) }}
+        />
 
         @break
 

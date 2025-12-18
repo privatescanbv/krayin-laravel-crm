@@ -38,6 +38,7 @@
 
     <x-admin::form.control-group.label
         :switch="$type === 'switch'"
+        :check="$type === 'checkbox'"
         class="{{ $computedLabelClass }}"
     >
         {{ $labelText }}

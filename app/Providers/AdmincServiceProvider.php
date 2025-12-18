@@ -15,8 +15,8 @@ class AdmincServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Register components in resources/views/admin under the 'adminc' namespace
-        Blade::anonymousComponentPath(resource_path('views/admin'), 'adminc');
+        // Register components in resources/views/adminc under the 'adminc' namespace
+        Blade::anonymousComponentPath(resource_path('views/adminc'), 'adminc');
     }
 
     /**

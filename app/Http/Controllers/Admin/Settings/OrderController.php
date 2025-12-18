@@ -744,9 +744,11 @@ class OrderController extends SimpleEntityController
         if ($requestedStatus === OrderStatus::PLANNED->value) {
             $order = $this->orderRepository->findOrFail($orderId);
 
-            $hasUnplannedItems = $order->orderItems()
-                ->where('status', '!=', OrderItemStatus::PLANNED->value)
-                ->exists();
+            $hasUnplannedItems = $order->orderItems
+                ->filter(function (OrderItem $item) {
+                    return $item->isPlannable() && $item->status !== OrderItemStatus::PLANNED;
+                })
+                ->isNotEmpty();
 
             if ($hasUnplannedItems) {
                 throw ValidationException::withMessages([

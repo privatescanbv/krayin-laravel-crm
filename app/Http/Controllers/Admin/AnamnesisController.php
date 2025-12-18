@@ -383,7 +383,7 @@ class AnamnesisController extends Controller
 
         return view(
             'adminc::leads.sync-anamnesis',
-             [
+            [
                 'anamnesis'       => $anamnesis,
                 'matchBreakdown'  => $matchBreakdown,
                 'bestMatch'       => $bestMatch,

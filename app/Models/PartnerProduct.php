@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Enums\ProductReports;
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Abstracts\BaseProduct;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
-use App\Enums\ResourceType as ResourceTypeEnum;
 
 class PartnerProduct extends BaseProduct
 {

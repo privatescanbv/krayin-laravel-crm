@@ -105,9 +105,24 @@ class ResourcePlanningMonitorController extends Controller
                 'to'               => ['required', 'date', 'after:from'],
                 'replace_existing' => ['sometimes', 'boolean'],
             ]);
-
-            $orderItem = OrderItem::findOrFail($orderItemId);
             $replace = $request->boolean('replace_existing', true);
+
+            // Load orderItem with product + resourceType
+            $orderItem = OrderItem::with('product.resourceType')->findOrFail($orderItemId);
+
+            // Load resource with resourceType
+            $resource = Resource::with('resourceType')->findOrFail((int) $request->input('resource_id'));
+
+            // -------------------------------
+            // VALIDATION: ResourceType match
+            // -------------------------------
+            if ($orderItem->product->resourceType?->name !== $resource->resourceType?->name) {
+                return response()->json([
+                    'message'       => 'Gekozen resource heeft een ander type dan vereist voor dit order item.',
+                    'required_type' => $orderItem->product->resourceType?->name,
+                    'resource_type' => $resource->resourceType?->name,
+                ], 422);
+            }
 
             $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
                 if ($replace) {

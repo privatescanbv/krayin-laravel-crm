@@ -7,6 +7,7 @@ use App\Models\Abstracts\BaseProduct;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
+use App\Enums\ResourceType as ResourceTypeEnum;
 
 class PartnerProduct extends BaseProduct
 {
@@ -183,7 +184,7 @@ class PartnerProduct extends BaseProduct
     public function isPlannable(): bool
     {
         // ignore, too much relations and these clinics won't have a schedule; $this->clinics()->where('is_active', true)->exists()
-        return \App\Enums\ResourceType::mapFrom($this->resourceType?->name) !== \App\Enums\ResourceType::OTHER;
+        return ResourceTypeEnum::mapFrom($this->resourceType?->name) !== ResourceTypeEnum::OTHER;
 
     }
 }

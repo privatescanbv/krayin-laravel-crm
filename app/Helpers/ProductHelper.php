@@ -63,7 +63,6 @@ class ProductHelper
                 'price'            => $product->price,
                 'costs'            => $product->costs,
                 'resource_type_id' => $product->resource_type_id,
-                'can_plan'         => $product->isPlannable(),
             ];
         });
     }

@@ -349,12 +349,12 @@ test('can get template products for selection', function () {
     $response->assertOk();
 
     $data = $response->json('data');
-    expect($data)->toHaveCount(2); // Only active products
-    expect(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2');
-    expect(collect($data)->pluck('name'))->not->toContain('Product 3');
+    expect($data)->toHaveCount(2)
+        ->and(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2')
+        ->and(collect($data)->pluck('name'))->not->toContain('Product 3')
+        ->and(collect($data)->pluck('name_with_path'))->toContain('Product 1', 'Product 2'); // Only active products
 
     // Check that name_with_path is present and matches name when no product group
-    expect(collect($data)->pluck('name_with_path'))->toContain('Product 1', 'Product 2');
 });
 
 test('can get specific template product details', function () {
@@ -406,9 +406,9 @@ test('template products show product group path when available', function () {
     $data = $response->json('data');
     $product = collect($data)->firstWhere('id', $templateProduct->id);
 
-    expect($product)->not->toBeNull();
-    expect($product['name'])->toBe('Template Product');
-    expect($product['name_with_path'])->toBe('Parent Group/Child Group/Template Product');
+    expect($product)->not->toBeNull()
+        ->and($product['name'])->toBe('Template Product')
+        ->and($product['name_with_path'])->toBe('Parent Group/Child Group/Template Product');
 });
 
 test('edit partner product shows linked product with full path', function () {

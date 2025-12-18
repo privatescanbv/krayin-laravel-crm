@@ -383,7 +383,14 @@ class AnamnesisController extends Controller
 
         return view(
             'adminc::leads.sync-anamnesis',
-            compact('anamnesis', 'matchBreakdown', 'bestMatch', 'lastLeadId', 'olderAnamnises', 'person')
+             [
+                'anamnesis'       => $anamnesis,
+                'matchBreakdown'  => $matchBreakdown,
+                'bestMatch'       => $bestMatch,
+                'lastLeadId'      => $lastLeadId,
+                'olderAnamnises'  => $olderAnamnises,
+                'person'          => $person,
+            ]
         );
     }
 

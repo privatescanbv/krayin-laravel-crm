@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Support\Facades\DB;
 
 class OrderStatusService
@@ -21,16 +22,25 @@ class OrderStatusService
     public function calculate(Order $order): OrderStatus
     {
         // Get order items with their product information
-        $orderItems = DB::table('order_items')
+        //        $orderItems = DB::table('order_items')
+        //            ->where('order_id', $order->id)
+        //            ->join('products', 'order_items.product_id', '=', 'products.id')
+        //            ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
+        //            ->select(
+        //                'order_items.id',
+        //                'order_items.status',
+        //                'order_items.product_id',
+        //                DB::raw('COUNT(partner_products.id) as partner_product_count')
+        //            )
+        //            ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id')
+        //            ->get();
+
+        $orderItems = OrderItem::query()
             ->where('order_id', $order->id)
+            ->select('order_items.id', 'order_items.status', 'order_items.product_id')
+            ->selectRaw('COUNT(partner_products.id) AS partner_product_count')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
-            ->select(
-                'order_items.id',
-                'order_items.status',
-                'order_items.product_id',
-                DB::raw('COUNT(partner_products.id) as partner_product_count')
-            )
             ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id')
             ->get();
 
@@ -39,8 +49,8 @@ class OrderStatusService
         }
 
         // Filter to only planable items (items with partner products)
-        $planableItems = $orderItems->filter(function ($item) {
-            return $item->partner_product_count > 0;
+        $planableItems = $orderItems->filter(function (OrderItem $item) {
+            return $item->isPlannable();
         });
 
         // If there are no planable items, order status is NEW
@@ -50,7 +60,7 @@ class OrderStatusService
 
         // Check if all planable items are planned
         foreach ($planableItems as $orderItem) {
-            if ($orderItem->status !== OrderItemStatus::PLANNED->value) {
+            if ($orderItem->status !== OrderItemStatus::PLANNED) {
                 // At least one planable item is not planned, so order should be NEW
                 return OrderStatus::NEW;
             }

@@ -29,10 +29,10 @@
                 >
                     <option value="">Selecteer orderitem</option>
                     <!-- Unplanned items first -->
-                    <optgroup v-if="sortedOrderItems.filter(item => item.can_plan && (!item.bookings || item.bookings.length === 0)).length > 0"
+                    <optgroup v-if="unplannedItems.length > 0"
                               label="━━━ Nog niet ingepland (voorrang) ━━━">
                         <option
-                            v-for="item in sortedOrderItems.filter(item => item.can_plan && (!item.bookings || item.bookings.length === 0))"
+                            v-for="item in unplannedItems"
                             :key="item.id"
                             :value="item.id"
                         >
@@ -40,10 +40,10 @@
                         </option>
                     </optgroup>
                     <!-- Planned items -->
-                    <optgroup v-if="sortedOrderItems.filter(item => item.can_plan && item.bookings && item.bookings.length > 0).length > 0"
+                    <optgroup v-if="plannedItems.length > 0"
                               label="━━━ Al ingepland (aanpassen) ━━━">
                         <option
-                            v-for="item in sortedOrderItems.filter(item => item.can_plan && item.bookings && item.bookings.length > 0)"
+                            v-for="item in plannedItems"
                             :key="item.id"
                             :value="item.id"
                         >
@@ -51,10 +51,10 @@
                         </option>
                     </optgroup>
                     <!-- Not planable items -->
-                    <optgroup v-if="sortedOrderItems.filter(item => !item.can_plan).length > 0"
+                    <optgroup v-if="notPlanableItems.length > 0"
                               label="━━━ Niet planbaar ━━━">
                         <option
-                            v-for="item in sortedOrderItems.filter(item => !item.can_plan)"
+                            v-for="item in notPlanableItems"
                             :key="item.id"
                             :value="item.id"
                             :disabled="true"

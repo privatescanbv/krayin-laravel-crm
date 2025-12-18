@@ -36,7 +36,7 @@
                     'quantity' => $item->quantity,
                     'duration' => $duration, // Duration in minutes
                     'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'new')),
-                    'can_plan' => $item->product && method_exists($item->product, 'partnerProducts') && $item->product->partnerProducts()->exists(),
+                    'can_plan' => $item->isPlannable(),
                     'bookings' => $item->resourceOrderItems->map(function ($booking) {
                         return [
                             'id' => $booking->id,
@@ -253,15 +253,21 @@
                         }));
                     },
                     // Sorted order items: unplanned first, then planned
-                    sortedOrderItems() {
-                        const unplanned = this.orderItems.filter(item =>
+                    unplannedItems() {
+                        return this.orderItems.filter(item =>
                             item.can_plan && (!item.bookings || item.bookings.length === 0)
                         );
-                        const planned = this.orderItems.filter(item =>
+                    },
+                    plannedItems() {
+                        return this.orderItems.filter(item =>
                             item.can_plan && item.bookings && item.bookings.length > 0
                         );
-                        const notPlanable = this.orderItems.filter(item => !item.can_plan);
-                        return [...unplanned, ...planned, ...notPlanable];
+                    },
+                    notPlanableItems() {
+                        return this.orderItems.filter(item => !item.can_plan);
+                    },
+                    sortedOrderItems() {
+                        return [...this.unplannedItems, ...this.plannedItems, ...this.notPlanableItems];
                     },
                     selectedOrderItem() {
                         if (!this.form.order_item_id) return null;
@@ -344,7 +350,7 @@
                         this.form.to = toLocal(new Date(block.to));
                         // Preselect the first order item that is planable and not yet planned
                         if (!this.form.order_item_id) {
-                            const candidate = this.sortedOrderItems.find(item => item.can_plan && (!item.bookings || item.bookings.length === 0));
+                            const candidate = this.unplannedItems.length > 0 ? this.unplannedItems[0] : null;
                             if (candidate) {
                                 this.form.order_item_id = candidate.id;
                             }

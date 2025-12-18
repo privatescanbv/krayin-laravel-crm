@@ -4,10 +4,12 @@ namespace Tests\Feature\Orders;
 
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\ResourceOrderItem;
+use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Services\OrderStatusService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,10 +22,17 @@ class OrderStatusTest extends TestCase
 
     protected OrderStatusService $orderStatusService;
 
+    protected ResourceType $plannableResourceType;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->orderStatusService = app(OrderStatusService::class);
+
+        // Create a valid plannable resource type
+        $this->plannableResourceType = ResourceType::factory()->create([
+            'name' => ResourceTypeEnum::MRI_SCANNER->label(),
+        ]);
     }
 
     /**
@@ -52,7 +61,10 @@ class OrderStatusTest extends TestCase
         $productWithoutPartner = Product::factory()->create();
 
         // Create partner product for first product
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - some planned, some not, some not planable
         OrderItem::factory()->create([
@@ -93,7 +105,10 @@ class OrderStatusTest extends TestCase
         $productWithoutPartner = Product::factory()->create();
 
         // Create partner products for first product
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - all planable items planned
         OrderItem::factory()->create([
@@ -133,7 +148,10 @@ class OrderStatusTest extends TestCase
         $productWithPartner = Product::factory()->create();
 
         // Create partner products
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - all new
         $item1 = OrderItem::factory()->create([
@@ -175,7 +193,10 @@ class OrderStatusTest extends TestCase
         $productWithPartner = Product::factory()->create();
 
         // Create partner products
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - all planned
         OrderItem::factory()->create([
@@ -216,7 +237,10 @@ class OrderStatusTest extends TestCase
         $productWithoutPartner = Product::factory()->create();
 
         // Create partner products for first product
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - all planable items planned
         OrderItem::factory()->create([
@@ -256,7 +280,10 @@ class OrderStatusTest extends TestCase
         $productWithPartner = Product::factory()->create();
 
         // Create partner products
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - all planned
         $item1 = OrderItem::factory()->create([
@@ -298,7 +325,10 @@ class OrderStatusTest extends TestCase
         $productWithPartner = Product::factory()->create();
 
         // Create partner products
-        PartnerProduct::factory()->create(['product_id' => $productWithPartner->id]);
+        PartnerProduct::factory()->create([
+            'product_id'       => $productWithPartner->id,
+            'resource_type_id' => $this->plannableResourceType->id,
+        ]);
 
         // Create order items - all planable items planned
         OrderItem::factory()->create([

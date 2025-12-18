@@ -11,7 +11,7 @@
 
 <div class="relative">
     <!-- accent links -->
-    <span class="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-indigo-600 dark:bg-indigo-500"></span>
+    {{-- <span class="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-indigo-600 dark:bg-indigo-500"></span> --}}
 
 <dt class="flex items-start gap-3">
 

@@ -11,7 +11,7 @@
 <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
     <!-- Header -->
     <div
-        class="{{ $isContactPerson ? 'bg-blue-100 dark:bg-blue-900/30 border-l-4 border-blue-500' : 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500' }} px-4 py-3 flex items-center justify-between">
+        class="{{ $isContactPerson ? 'bg-blue-100 dark:bg-blue-900/30  border-blue-500' : 'bg-orange-50 dark:bg-orange-900/20  border-orange-500' }} px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <h4 class="text-base font-semibold text-gray-900 dark:text-white">{{ $title }}</h4>
         </div>

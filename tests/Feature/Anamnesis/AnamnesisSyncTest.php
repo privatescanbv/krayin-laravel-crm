@@ -65,12 +65,12 @@ it('can sync specific fields from older anamnesis', function () {
     $leadOld->persons()->attach($person->id);
 
     $anamnesisOld = Anamnesis::factory()->create([
-        'person_id' => $person->id,
-        'lead_id'   => $leadOld->id,
+        'person_id'  => $person->id,
+        'lead_id'    => $leadOld->id,
         'created_at' => now()->subDay(),
-        'height'    => 180,
-        'weight'    => 80,
-        'metals'    => 1,
+        'height'     => 180,
+        'weight'     => 80,
+        'metals'     => 1,
     ]);
 
     // Nieuwe anamnesis (current)
@@ -78,12 +78,12 @@ it('can sync specific fields from older anamnesis', function () {
     $leadNew->persons()->attach($person->id);
 
     $anamnesisNew = Anamnesis::factory()->create([
-        'person_id' => $person->id,
-        'lead_id'   => $leadNew->id,
+        'person_id'  => $person->id,
+        'lead_id'    => $leadNew->id,
         'created_at' => now(),
-        'height'    => 170, // To remain current
-        'weight'    => 70,  // To be updated
-        'metals'    => 0,   // To be updated
+        'height'     => 170, // To remain current
+        'weight'     => 70,  // To be updated
+        'metals'     => 0,   // To be updated
     ]);
 
     $data = [

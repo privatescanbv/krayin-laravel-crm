@@ -24,8 +24,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Schedel (los)',
             ],
             [
@@ -35,8 +35,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Schedel (los)',
             ],
             [
@@ -46,8 +46,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Schedel (los)',
             ],
             [
@@ -57,8 +57,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Schedel en Carotiden',
             ],
             [
@@ -68,8 +68,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '281,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hals weke delen',
             ],
             [
@@ -79,8 +79,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Schedel (los)',
             ],
             [
@@ -90,8 +90,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Schedel (los)',
             ],
             [
@@ -101,8 +101,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Schedel (los)',
             ],
             [
@@ -112,8 +112,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Schedel en Carotiden',
             ],
             [
@@ -123,8 +123,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hals weke delen',
             ],
             [
@@ -134,8 +134,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '220,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Carotiden',
             ],
             [
@@ -145,8 +145,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bloedvaten',
             ],
             [
@@ -156,8 +156,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bloedvaten',
             ],
             [
@@ -167,8 +167,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Bloedvaten',
             ],
             [
@@ -178,8 +178,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Bloedvaten',
             ],
             [
@@ -189,8 +189,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Bloedvaten',
             ],
             [
@@ -200,8 +200,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Carotiden',
             ],
             [
@@ -211,8 +211,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Schouder',
             ],
             [
@@ -222,8 +222,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Schouder',
             ],
             [
@@ -233,8 +233,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Elleboog',
             ],
             [
@@ -244,8 +244,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Elleboog',
             ],
             [
@@ -255,8 +255,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Pols',
             ],
             [
@@ -266,8 +266,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Pols',
             ],
             [
@@ -277,8 +277,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hand',
             ],
             [
@@ -288,8 +288,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hand',
             ],
             [
@@ -299,8 +299,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Heup',
             ],
             [
@@ -310,8 +310,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Heup',
             ],
             [
@@ -321,8 +321,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Knie',
             ],
             [
@@ -332,8 +332,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Knie',
             ],
             [
@@ -343,8 +343,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Enkel',
             ],
             [
@@ -354,8 +354,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Enkel',
             ],
             [
@@ -365,8 +365,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Voet',
             ],
             [
@@ -376,8 +376,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Voet',
             ],
             [
@@ -387,8 +387,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bekken ',
             ],
             [
@@ -398,8 +398,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Voet',
             ],
             [
@@ -409,8 +409,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Voet',
             ],
             [
@@ -420,8 +420,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Schouder',
             ],
             [
@@ -431,8 +431,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Schouder',
             ],
             [
@@ -442,8 +442,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Knie',
             ],
             [
@@ -453,8 +453,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Knie',
             ],
             [
@@ -464,8 +464,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Heup',
             ],
             [
@@ -475,8 +475,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Heup',
             ],
             [
@@ -486,8 +486,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Pols',
             ],
             [
@@ -497,8 +497,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Pols',
             ],
             [
@@ -508,8 +508,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Enkel',
             ],
             [
@@ -519,8 +519,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Enkel',
             ],
             [
@@ -530,8 +530,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Elleboog',
             ],
             [
@@ -541,8 +541,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Elleboog',
             ],
             [
@@ -552,8 +552,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hand',
             ],
             [
@@ -563,8 +563,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hand',
             ],
             [
@@ -574,8 +574,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '281,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Longen',
             ],
             [
@@ -585,8 +585,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '450,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Longen',
             ],
             [
@@ -596,8 +596,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Longen',
             ],
             [
@@ -607,8 +607,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Longen',
             ],
             [
@@ -618,8 +618,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hart',
             ],
             [
@@ -629,8 +629,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '640,00',
                 'verkoopprijs'  => '1350,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hart',
             ],
             [
@@ -640,8 +640,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '697,00',
                 'verkoopprijs'  => '1450,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hart',
             ],
             [
@@ -651,8 +651,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '450,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hart',
             ],
             [
@@ -662,8 +662,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '281,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hart',
             ],
             [
@@ -673,8 +673,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '197,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Gehele wervelkolom',
             ],
             [
@@ -684,8 +684,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '281,00',
                 'verkoopprijs'  => '950,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Gehele wervelkolom',
             ],
             [
@@ -695,8 +695,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Halswervelkolom (HWS)',
             ],
             [
@@ -706,8 +706,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Halswervelkolom (HWS)',
             ],
             [
@@ -717,8 +717,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Borstwervelkolom (BWS)',
             ],
             [
@@ -728,8 +728,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Borstwervelkolom (BWS)',
             ],
             [
@@ -739,8 +739,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Lendenwervelkolom (LWS)',
             ],
             [
@@ -750,8 +750,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Lendenwervelkolom (LWS)',
             ],
             [
@@ -761,8 +761,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'SI gewricht',
             ],
             [
@@ -772,8 +772,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'SI gewricht',
             ],
             [
@@ -783,8 +783,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Gehele wervelkolom',
             ],
             [
@@ -794,8 +794,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '281,00',
                 'verkoopprijs'  => '950,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Gehele wervelkolom',
             ],
             [
@@ -805,8 +805,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Halswervelkolom (HWS)',
             ],
             [
@@ -816,8 +816,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Halswervelkolom (HWS)',
             ],
             [
@@ -827,8 +827,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Borstwervelkolom (BWS)',
             ],
             [
@@ -838,8 +838,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Borstwervelkolom (BWS)',
             ],
             [
@@ -849,8 +849,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Lendenwervelkolom (LWS)',
             ],
             [
@@ -860,8 +860,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Lendenwervelkolom (LWS)',
             ],
             [
@@ -871,8 +871,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Abdomen (onderbuik en bovenbuik)',
             ],
             [
@@ -882,8 +882,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Abdomen (onderbuik en bovenbuik)',
             ],
             [
@@ -893,8 +893,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '225,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Extra sequenties',
             ],
             [
@@ -904,8 +904,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bovenbuik',
             ],
             [
@@ -915,8 +915,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bovenbuik',
             ],
             [
@@ -926,8 +926,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Onderbuik',
             ],
             [
@@ -937,8 +937,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Onderbuik',
             ],
             [
@@ -948,8 +948,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Abdomen (onderbuik en bovenbuik)',
             ],
             [
@@ -959,8 +959,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Abdomen (onderbuik en bovenbuik)',
             ],
             [
@@ -970,8 +970,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Abdomen en buikaorta',
             ],
             [
@@ -981,8 +981,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Bovenbuik',
             ],
             [
@@ -992,8 +992,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Bovenbuik',
             ],
             [
@@ -1003,8 +1003,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '112,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Onderbuik',
             ],
             [
@@ -1014,8 +1014,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '224,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Onderbuik',
             ],
             [
@@ -1025,8 +1025,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '337,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Borsten',
             ],
             [
@@ -1036,8 +1036,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '337,00',
                 'verkoopprijs'  => '950,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Prostaat',
             ],
             [
@@ -1047,8 +1047,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '337,00',
                 'verkoopprijs'  => '1250,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Last-Minute',
             ],
             [
@@ -1058,8 +1058,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '337,00',
                 'verkoopprijs'  => '1840,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Royal',
             ],
             [
@@ -1069,8 +1069,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '506,00',
                 'verkoopprijs'  => '2490,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Royal',
             ],
             [
@@ -1080,8 +1080,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '506,00',
                 'verkoopprijs'  => '2390,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Royal',
             ],
             [
@@ -1091,8 +1091,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '618,00',
                 'verkoopprijs'  => '3040,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Royal',
             ],
             [
@@ -1102,8 +1102,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '337,00',
                 'verkoopprijs'  => '1340,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Regular',
             ],
             [
@@ -1113,8 +1113,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '506,00',
                 'verkoopprijs'  => '1990,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Regular',
             ],
             [
@@ -1124,8 +1124,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '506,00',
                 'verkoopprijs'  => '1890,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Regular',
             ],
             [
@@ -1135,8 +1135,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '618,00',
                 'verkoopprijs'  => '2540,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Regular',
             ],
             [
@@ -1146,8 +1146,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '45,48',
                 'verkoopprijs'  => '250,00',
-                'producttype'   => '07 Laboratorium',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::LABORATORIUM,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Preventief bloed- en urineonderzoek uitgebreid',
             ],
             [
@@ -1157,8 +1157,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '45,48',
                 'verkoopprijs'  => '250,00',
-                'producttype'   => '07 Laboratorium',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::LABORATORIUM,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Preventief bloed- en urineonderzoek uitgebreid',
             ],
             [
@@ -1168,8 +1168,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '23,61',
                 'verkoopprijs'  => '75,00',
-                'producttype'   => '04 Cardiologie',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::CARDIOLOGIE,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Hart Cardio',
             ],
             [
@@ -1179,8 +1179,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '24,94',
                 'verkoopprijs'  => '75,00',
-                'producttype'   => '04 Cardiologie',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::CARDIOLOGIE,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Hart Cardio',
             ],
             [
@@ -1190,8 +1190,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '154,46',
                 'verkoopprijs'  => '350,00',
-                'producttype'   => '04 Cardiologie',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::CARDIOLOGIE,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Hart Cardio',
             ],
             [
@@ -1201,8 +1201,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '310,31',
                 'verkoopprijs'  => '0,00',
-                'producttype'   => '04 Cardiologie',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::CARDIOLOGIE,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Hart Cardio',
             ],
             [
@@ -1212,8 +1212,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '8,16',
                 'verkoopprijs'  => '50,00',
-                'producttype'   => '04 Cardiologie',
-                'resourcetype'  => 'Cardiologie',
+                'producttype'   => ProductTypeEnum::CARDIOLOGIE,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Longen Cardio',
             ],
             [
@@ -1223,8 +1223,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '1800,00',
                 'verkoopprijs'  => '4100,00',
-                'producttype'   => '06 PET scan',
-                'resourcetype'  => 'PET CT scanner',
+                'producttype'   => ProductTypeEnum::PETSCAN,
+                'resourcetype'  => ResourceTypeEnum::PET_CT_SCANNER,
                 'productgroep'  => 'Metastasen',
             ],
             [
@@ -1234,8 +1234,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '2400,00',
                 'verkoopprijs'  => '4800,00',
-                'producttype'   => '06 PET scan',
-                'resourcetype'  => 'PET CT scanner',
+                'producttype'   => ProductTypeEnum::PETSCAN,
+                'resourcetype'  => ResourceTypeEnum::PET_CT_SCANNER,
                 'productgroep'  => 'Metastasen',
             ],
             [
@@ -1245,8 +1245,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '250,00',
                 'verkoopprijs'  => '750,00',
-                'producttype'   => '11 Overige',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::OVERIG,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Schildklier',
             ],
             [
@@ -1256,8 +1256,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '150,00',
                 'verkoopprijs'  => '350,00',
-                'producttype'   => '11 Overige',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::OVERIG,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Carotiden',
             ],
             [
@@ -1267,8 +1267,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '44,00',
                 'verkoopprijs'  => '250,00',
-                'producttype'   => '11 Overige',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::OVERIG,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Deelonderzoek',
             ],
             [
@@ -1278,8 +1278,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '60,00',
                 'verkoopprijs'  => '110,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling gericht onderzoek',
             ],
             [
@@ -1289,8 +1289,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '50,00',
                 'verkoopprijs'  => '100,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling gericht onderzoek',
             ],
             [
@@ -1300,8 +1300,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '150,00',
                 'verkoopprijs'  => '80,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1311,8 +1311,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '165,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1322,8 +1322,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '165,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1333,8 +1333,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '105,00',
                 'verkoopprijs'  => '185,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1344,8 +1344,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '125,00',
                 'verkoopprijs'  => '215,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1355,8 +1355,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '125,00',
                 'verkoopprijs'  => '215,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1366,8 +1366,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '125,00',
                 'verkoopprijs'  => '215,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1377,8 +1377,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '140,00',
                 'verkoopprijs'  => '240,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1388,8 +1388,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '125,00',
                 'verkoopprijs'  => '215,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1399,8 +1399,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '15,00',
                 'verkoopprijs'  => '15,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1410,8 +1410,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '50,00',
                 'verkoopprijs'  => '100,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total Bodyscan',
             ],
             [
@@ -1421,8 +1421,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '150,00',
                 'verkoopprijs'  => '195,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Overnachting',
             ],
             [
@@ -1432,8 +1432,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '0,00',
-                'producttype'   => '11 Overige',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::OVERIG,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Overig',
             ],
             [
@@ -1443,8 +1443,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '59,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Administratief',
             ],
             [
@@ -1454,8 +1454,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '1,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Administratief',
             ],
             [
@@ -1465,8 +1465,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '1,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Administratief',
             ],
             [
@@ -1476,8 +1476,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '1,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Administratief',
             ],
             [
@@ -1487,8 +1487,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '25,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Administratief',
             ],
             [
@@ -1498,8 +1498,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '100,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Beoordeling',
             ],
             [
@@ -1509,8 +1509,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '350,00',
-                'producttype'   => '10 Diensten',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::DIENSTEN,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Arts consultatie',
             ],
             [
@@ -1520,8 +1520,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '4100,00',
                 'verkoopprijs'  => '7900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'PTED',
             ],
             [
@@ -1531,8 +1531,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '5000,00',
                 'verkoopprijs'  => '13900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'PTED',
             ],
             [
@@ -1542,8 +1542,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '4800,00',
                 'verkoopprijs'  => '8900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Micro',
             ],
             [
@@ -1553,8 +1553,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '5000,00',
                 'verkoopprijs'  => '13900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Micro',
             ],
             [
@@ -1564,8 +1564,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '7500,00',
                 'verkoopprijs'  => '16900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Micro',
             ],
             [
@@ -1575,8 +1575,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '7500,00',
                 'verkoopprijs'  => '17900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Micro',
             ],
             [
@@ -1586,8 +1586,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '9400,00',
                 'verkoopprijs'  => '18900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'TLIF',
             ],
             [
@@ -1597,8 +1597,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '10800,00',
                 'verkoopprijs'  => '18500,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'TLIF',
             ],
             [
@@ -1608,8 +1608,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '13500,00',
                 'verkoopprijs'  => '21500,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'TLIF',
             ],
             [
@@ -1619,8 +1619,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '4800,00',
                 'verkoopprijs'  => '8900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'ACDF',
             ],
             [
@@ -1630,8 +1630,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '5900,00',
                 'verkoopprijs'  => '13900,00',
-                'producttype'   => '12 Operaties',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'ACDF',
             ],
             [
@@ -1641,8 +1641,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '270,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Infiltratie',
             ],
             [
@@ -1652,8 +1652,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '325,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Infiltratie',
             ],
             [
@@ -1663,8 +1663,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '350,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Infiltratie',
             ],
             [
@@ -1674,8 +1674,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '270,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Infiltratie',
             ],
             [
@@ -1685,8 +1685,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '270,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'PRT',
             ],
             [
@@ -1696,8 +1696,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '90,00',
                 'verkoopprijs'  => '325,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'PRT',
             ],
             [
@@ -1707,8 +1707,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '500,00',
                 'verkoopprijs'  => '890,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Denervatie',
             ],
             [
@@ -1718,8 +1718,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '500,00',
                 'verkoopprijs'  => '900,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Denervatie',
             ],
             [
@@ -1729,8 +1729,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '500,00',
                 'verkoopprijs'  => '890,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'Artsen',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Denervatie',
             ],
             [
@@ -1740,8 +1740,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '506,00',
                 'verkoopprijs'  => '1190,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Last-Minute',
             ],
             [
@@ -1751,8 +1751,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '350,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Abdomen en buikaorta',
             ],
             [
@@ -1762,8 +1762,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '5,00',
                 'verkoopprijs'  => '20,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Vertaalde samenvatting',
             ],
             [
@@ -1773,8 +1773,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '22,50',
                 'verkoopprijs'  => '45,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling gericht onderzoek',
             ],
             [
@@ -1784,8 +1784,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '22,50',
                 'verkoopprijs'  => '45,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling gericht onderzoek',
             ],
             [
@@ -1795,8 +1795,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '40,00',
                 'verkoopprijs'  => '90,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling gericht onderzoek',
             ],
             [
@@ -1806,8 +1806,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '40,00',
                 'verkoopprijs'  => '80,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Volledige vertaling Total bodyscan',
             ],
             [
@@ -1817,8 +1817,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '35,00',
                 'verkoopprijs'  => '90,00',
-                'producttype'   => '09 Vertaling',
-                'resourcetype'  => 'Other',
+                'producttype'   => ProductTypeEnum::VERTALING,
+                'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Vertaalde samenvatting',
             ],
             [
@@ -1828,8 +1828,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '165,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Halswervel- en borstwervelkolom (HWS-BWS)',
             ],
             [
@@ -1839,8 +1839,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hart en longen (Thorax)',
             ],
             [
@@ -1850,8 +1850,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '250,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '03 CT scan',
-                'resourcetype'  => 'CT scanner',
+                'producttype'   => ProductTypeEnum::CT_SCAN,
+                'resourcetype'  => ResourceTypeEnum::CT_SCANNER,
                 'productgroep'  => 'Hart en longen (Thorax)',
             ],
             [
@@ -1861,8 +1861,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '350,00',
                 'verkoopprijs'  => '850,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Abdomen en buikaorta',
             ],
             [
@@ -1872,8 +1872,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '550,00',
                 'verkoopprijs'  => '1900,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bodyscans',
             ],
             [
@@ -1883,8 +1883,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '730,00',
                 'verkoopprijs'  => '1950,00',
-                'producttype'   => '01 Total Bodyscan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::TOTAL_BODYSCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Bodyscans',
             ],
             [
@@ -1894,8 +1894,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '275,00',
                 'verkoopprijs'  => '950,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Hart en longen (Thorax)',
             ],
             [
@@ -1905,8 +1905,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '250,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Ledematen',
             ],
             [
@@ -1916,8 +1916,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '165,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Deelonderzoek',
             ],
             [
@@ -1927,8 +1927,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '220,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Borstwervelkolom (BWS)',
             ],
             [
@@ -1938,8 +1938,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Ledematen',
             ],
             [
@@ -1949,8 +1949,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '220,00',
                 'verkoopprijs'  => '650,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Halswervel- en borstwervelkolom (HWS-BWS)',
             ],
             [
@@ -1960,8 +1960,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '165,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Ledematen',
             ],
             [
@@ -1971,8 +1971,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Ledematen',
             ],
             [
@@ -1982,8 +1982,8 @@ class ProductSeeder extends BaseSeeder
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '169,00',
                 'verkoopprijs'  => '550,00',
-                'producttype'   => '02 MRI scan',
-                'resourcetype'  => 'MRI scanner',
+                'producttype'   => ProductTypeEnum::MRI_SCAN,
+                'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Ledematen',
             ],
         ];
@@ -1991,14 +1991,26 @@ class ProductSeeder extends BaseSeeder
         foreach ($rows as $row) {
             $name = $row['productnaam'];
 
-            // Resolve ProductType by name (label) if provided
+            // Resolve ProductType
             $productTypeId = null;
             if (! empty($row['producttype'])) {
-                $productTypeId = $this->mapProductTypeNameToId($row['producttype']);
+                $productTypeEnum = $row['producttype'];
+                $productType = ProductType::where('name', $productTypeEnum->label())->first();
+
+                if (! $productType) {
+                    throw new Exception("ProductType not found: {$productTypeEnum->label()}");
+                }
+
+                $productTypeId = $productType->id;
             }
 
-            // Resolve ResourceType by display name via enum mapping
-            $resourceType = $this->mapResourceTypeNameToModel($row['resourcetype']);
+            // Resolve ResourceType
+            $resourceTypeEnum = $row['resourcetype'];
+            $resourceType = ResourceType::where('name', $resourceTypeEnum->label())->first();
+
+            if (! $resourceType) {
+                throw new RuntimeException("ResourceType not found: {$resourceTypeEnum->label()}");
+            }
 
             // Resolve ProductGroup by name
             $group = ProductGroup::where('name', $row['productgroep'])->first();
@@ -2024,47 +2036,5 @@ class ProductSeeder extends BaseSeeder
                 'active'           => true,
             ]);
         }
-    }
-
-    private function mapProductTypeNameToId(string $name): int
-    {
-        $ProductTypeEnum = match ($name) {
-            '01 Total Bodyscan' => ProductTypeEnum::TOTAL_BODYSCAN,
-            '02 MRI scan'       => ProductTypeEnum::MRI_SCAN,
-            '03 CT scan'        => ProductTypeEnum::CT_SCAN,
-            '04 Cardiologie'    => ProductTypeEnum::CARDIOLOGIE,
-            '06 PET scan'       => ProductTypeEnum::PETSCAN,
-            '07 Laboratorium'   => ProductTypeEnum::LABORATORIUM,
-            '09 Vertaling'      => ProductTypeEnum::VERTALING,
-            '10 Diensten'       => ProductTypeEnum::DIENSTEN,
-            '11 Overige'        => ProductTypeEnum::OVERIG,
-            '12 Operaties'      => ProductTypeEnum::OPERATIONS,
-            default             => throw new Exception("Unknown ProductType name: {$name}"),
-        };
-
-        $productType = ProductType::where('name', $ProductTypeEnum->label())->first();
-
-        return $productType ? $productType->id : throw new Exception("ProductType not found: {$name}");
-    }
-
-    private function mapResourceTypeNameToModel(string $name): ResourceType
-    {
-        // normalize to lowercase for case-insensitive matching
-        $normalized = mb_strtolower(trim($name));
-
-        $resourceTypeEnum = match ($normalized) {
-            'mri scanner'    => ResourceTypeEnum::MRI_SCANNER,
-            'ct scanner'     => ResourceTypeEnum::CT_SCANNER,
-            'pet ct scanner' => ResourceTypeEnum::PET_CT_SCANNER,
-            'artsen'         => ResourceTypeEnum::ARTSEN,
-            'other', 'overig' => ResourceTypeEnum::OTHER,
-            'cardiologie'    => ResourceTypeEnum::CARDIOLOGIE,
-
-            default => throw new Exception("Unknown ResourceType name: {$name}"),
-        };
-
-        $resourceType = ResourceType::where('name', $resourceTypeEnum->label())->first();
-
-        return $resourceType ?: throw new RuntimeException("ResourceType not found: {$name}");
     }
 }

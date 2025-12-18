@@ -48,11 +48,11 @@ class ProductHelper
 
     /**
      * Format multiple products with their paths.
-     *
-     * @param  \Illuminate\Database\Eloquent\Collection  $products
      */
-    public static function formatCollectionWithPaths($products): Collection
+    public static function formatCollectionWithPaths(Collection $products): Collection
     {
+        logger()->info('Formatting products with paths', ['count' => $products->count(), 'class' => get_class($products[0])]);
+
         return $products->map(function ($product) {
             return [
                 'id'               => $product->id,
@@ -63,6 +63,7 @@ class ProductHelper
                 'price'            => $product->price,
                 'costs'            => $product->costs,
                 'resource_type_id' => $product->resource_type_id,
+                'can_plan'         => $product->isPlannable(),
             ];
         });
     }

@@ -44,7 +44,7 @@ docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framewo
         npm install --silent &&
         VITE_HMR_HOST=$VITE_HMR_HOST npm run dev -- --host=0.0.0.0 --port=$VITE_ADMIN_PORT
     "
-
+#cd /usr/share/nginx/html/packages/Webkul/Admin && npm install --silent && npm run dev -- --host=0.0.0.0 --port=5174
     echo "⏳ Checking Vite URLs…"
     sleep 5
 

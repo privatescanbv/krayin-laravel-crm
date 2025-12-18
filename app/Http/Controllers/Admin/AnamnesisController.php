@@ -394,7 +394,7 @@ class AnamnesisController extends Controller
     {
         $anamnesis = $this->lastAnamnesisByPersonId($personId);
         if (is_null($anamnesis)) {
-            throw new Exception('Geen anamnese gevonden voor deze persoon.'. $personId);
+            throw new Exception('Geen anamnese gevonden voor deze persoon.'.$personId);
         }
         $data = $request->validate([
             'choice'   => 'required|array',

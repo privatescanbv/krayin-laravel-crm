@@ -19,6 +19,7 @@ class Order extends Model
         'title',
         'total_price',
         'status',
+        'first_examination_at',
         'sales_lead_id',
         'combine_order',
         'confirmation_letter_content',
@@ -27,22 +28,24 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'total_price'   => 'decimal:2',
-        'status'        => OrderStatus::class,
-        'sales_lead_id' => 'integer',
-        'combine_order' => 'boolean',
-        'created_by'    => 'integer',
-        'updated_by'    => 'integer',
+        'total_price'          => 'decimal:2',
+        'status'               => OrderStatus::class,
+        'first_examination_at' => 'datetime',
+        'sales_lead_id'        => 'integer',
+        'combine_order'        => 'boolean',
+        'created_by'           => 'integer',
+        'updated_by'           => 'integer',
     ];
 
     public static function rules(): array
     {
         return [
-            'title'         => 'required|string|max:255',
-            'total_price'   => 'required|numeric|min:0',
-            'status'        => 'required|string',
-            'sales_lead_id' => 'required|integer|exists:salesleads,id',
-            'combine_order' => 'boolean',
+            'title'                => 'required|string|max:255',
+            'total_price'          => 'required|numeric|min:0',
+            'status'               => 'required|string',
+            'first_examination_at' => 'nullable|date',
+            'sales_lead_id'        => 'required|integer|exists:salesleads,id',
+            'combine_order'        => 'boolean',
         ];
     }
 

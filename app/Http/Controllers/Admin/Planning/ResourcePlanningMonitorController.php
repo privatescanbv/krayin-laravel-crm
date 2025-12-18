@@ -650,7 +650,7 @@ class ResourcePlanningMonitorController extends Controller
                 'quantity'     => $item->quantity,
                 'status'       => $item->status,
                 // Only plan if product has partner products linked to active clinics
-                'can_plan'     => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
+                'can_plan'     => $item->isPlannable(),
                 'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
                     'resource_id'   => $booking->resource_id,
@@ -726,8 +726,7 @@ class ResourcePlanningMonitorController extends Controller
                 'product_name' => $item->product?->name ?? 'Onbekend product',
                 'quantity'     => $item->quantity,
                 'status'       => $item->status,
-                // Only plan if product has partner products linked to active clinics
-                'can_plan'     => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
+                'can_plan'     => $item->isPlannable(),
                 'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
                     'resource_id'   => $booking->resource_id,

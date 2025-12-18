@@ -1,3 +1,4 @@
+@php use Carbon\Carbon; @endphp
 @props([
     'orderItems' => []
 ])
@@ -12,7 +13,7 @@
                 $statusLabel = is_object($item->status) && method_exists($item->status, 'label')
                     ? $item->status->label()
                     : ucfirst(str_replace('_', ' ', $statusValue));
-                $canPlan = $item->product && $item->product->partnerProducts()->exists();
+                $canPlan = $item->isPlannable();
             @endphp
             <div
                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $canPlan ? 'bg-activity-note-bg dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
@@ -23,21 +24,22 @@
                         {{ $statusLabel }}
                     </span>
                 </div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $item->person?->name ?? 'Geen persoon toegewezen' }} &mdash; Aantal: {{ $item->quantity }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    {{ $item->person?->name ?? 'Geen persoon toegewezen' }} &mdash; Aantal: {{ $item->quantity }}</div>
                 @if ($item->resourceOrderItems && $item->resourceOrderItems->count() > 0)
                     <div class="text-xs text-gray-700 dark:text-gray-300">
                         <div class="font-medium mb-1">Ingepland:</div>
                         @foreach ($item->resourceOrderItems as $booking)
                             <div class="mb-1">
                                 <strong>{{ $booking->resource?->name ?? 'Onbekend' }}</strong><br>
-                                {{ \Carbon\Carbon::parse($booking->from)->format('d-m-Y H:i') }}
-                                - {{ \Carbon\Carbon::parse($booking->to)->format('H:i') }}
+                                {{ Carbon::parse($booking->from)->format('d-m-Y H:i') }}
+                                - {{ Carbon::parse($booking->to)->format('H:i') }}
                             </div>
                         @endforeach
                     </div>
                 @else
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Niet ingepland
+                        @if ($canPlan) Niet ingepland @else Niet planbaar @endif
                     </div>
                 @endif
             </div>

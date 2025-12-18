@@ -17,6 +17,8 @@ class OrderItem extends Model
 
     protected $table = 'order_items';
 
+    protected $appends = ['can_plan'];
+
     protected $fillable = [
         'order_id',
         'product_id',
@@ -57,5 +59,17 @@ class OrderItem extends Model
     public function resourceOrderItems(): HasMany
     {
         return $this->hasMany(ResourceOrderItem::class, 'orderitem_id');
+    }
+
+    public function isPlannable(): bool
+    {
+        return $this->product &&
+            $this->product->partnerProducts &&
+            $this->product->partnerProducts->filter(fn ($product) => $product->isPlannable())->count() > 0;
+    }
+
+    public function getCanPlanAttribute(): string
+    {
+        return $this->isPlannable();
     }
 }

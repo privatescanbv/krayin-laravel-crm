@@ -1,3 +1,6 @@
+@props([
+    'order' => null
+])
 <div id="order-items" class="flex flex-col gap-4">
     <div class="flex flex-col gap-1">
         <p class="text-base font-semibold text-gray-800 dark:text-white">Orderitems</p>
@@ -44,6 +47,7 @@
                     :current-value="item.product_id"
                     :current-label="item.product_name || (item.product && (item.product.name_with_path || item.product.name)) || ''"
                     :can-add-new="false"
+                    :multiple="false"
                     @change="(p) => selectProduct(p)"
                     @update:value="(id) => { item.product_id = id; }"
                 />
@@ -91,7 +95,10 @@
                         @{{ booking.from }} - @{{ booking.to }}
                     </div>
                 </div>
-                <span v-else class="text-gray-400 text-xs">Niet ingepland</span>
+                <span v-else class="text-gray-400 text-xs">
+                    <span v-if="item.canPlan">Niet ingepland</span>
+                    <span v-else>Niet planbaar</span>
+                </span>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <div class="flex items-center justify-end gap-2">
@@ -108,10 +115,11 @@
             data() {
                 return {
                     items: this.data && this.data.length ? this.data.map(r => {
+                        console.log('Processing order item data:', r);
                         // Get product name with path if available
-                        const productName = (r.product && r.product.name_with_path) 
-                            || (r.product && r.product.name) 
-                            || r.product_name 
+                        const productName = (r.product && r.product.name_with_path)
+                            || (r.product && r.product.name)
+                            || r.product_name
                             || null;
                         return {
                             id: r.id ?? null,
@@ -125,19 +133,20 @@
                             product: r.product || null,
                             partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
                             planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
+                            canPlan: r.can_plan === '1' || r.can_plan === true || false,
                         };
-                    }) : [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
+                    }) : [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
                 };
             },
             methods: {
                 addItem() {
-                    this.items.push({ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null });
+                    this.items.push({ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
                 },
                 removeItem(item) {
                     this.$emitter.emit('open-confirm-modal', {
                         agree: () => {
                             if (this.items.length === 1) {
-                                this.items = [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }];
+                                this.items = [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null , canPlan: false}];
                             } else {
                                 const index = this.items.indexOf(item);
                                 if (index !== -1) this.items.splice(index, 1);
@@ -178,15 +187,6 @@
                 inputName() {
                     return this.item.id ? `items[${this.item.id}]` : `items[item_${this.index}]`;
                 },
-                canPlan() {
-                    // Accept different shapes coming from backend
-                    const product = this.item.product || this.item.product_data || {};
-                    const ppSnake = product && Array.isArray(product.partner_products) ? product.partner_products : null;
-                    const ppCamel = product && Array.isArray(product.partnerProducts) ? product.partnerProducts : null;
-                    const hasPartnerProducts = (ppSnake && ppSnake.length > 0) || (ppCamel && ppCamel.length > 0);
-                    const precomputed = Number(this.item.partner_product_count || this.item.partnerProductsCount || 0) > 0;
-                    return !!(this.item.id && (hasPartnerProducts || precomputed));
-                },
             },
             methods: {
                 selectProduct(result) {
@@ -208,6 +208,7 @@
                         this.item.total_price = 0;
                         this.productPrice = null;
                     }
+                    console.log('Updated item after product selection:', this.item);
                 },
                 updateQuantity(quantity) {
                     this.item.quantity = quantity;

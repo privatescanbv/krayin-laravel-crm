@@ -17,7 +17,7 @@
                                     :key="item.id ?? idx"
                                     class="p-2 border rounded bg-status-active-bg border-status-active-border flex items-center justify-between"
                             >
-                                <div class="text-sm font-medium truncate">
+                                <div class="text-sm font-medium truncate" :title="item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx))">
                                     {{ item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}
                                 </div>
                                 <button

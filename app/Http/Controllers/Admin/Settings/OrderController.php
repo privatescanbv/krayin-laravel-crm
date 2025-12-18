@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
-use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\OrderCheck;
+use App\Models\OrderItem;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
@@ -153,50 +153,60 @@ class OrderController extends SimpleEntityController
 
         $order = $this->orderRepository->update($payload, $id);
 
-        // Preserve existing order items: update by ID, create new ones, do not delete missing to avoid losing planning
-        if (is_array($items) && ! empty($items)) {
+        // Preserve existing order items: update by ID, create new ones, delete missing
+        if ($request->has('items')) {
             // Load current items keyed by id for quick lookup
             $currentItems = $order->orderItems()->get()->keyBy('id');
+            $updatedItemIds = [];
 
-            foreach ($items as $normalizedKey => $item) {
-                // Skip invalid rows
-                if (empty($item['product_id']) || empty($item['quantity'])) {
-                    continue;
-                }
+            if (is_array($items) && ! empty($items)) {
+                foreach ($items as $normalizedKey => $item) {
+                    // Skip invalid rows
+                    if (empty($item['product_id']) || empty($item['quantity'])) {
+                        continue;
+                    }
 
-                // Use original key if available, otherwise use normalized key
-                // Original keys mapping helps us distinguish between existing items (numeric keys)
-                // and new items (non-numeric keys like "item_1")
-                $key = $originalKeys[$normalizedKey] ?? $normalizedKey;
+                    // Use original key if available, otherwise use normalized key
+                    // Original keys mapping helps us distinguish between existing items (numeric keys)
+                    // and new items (non-numeric keys like "item_1")
+                    $key = $originalKeys[$normalizedKey] ?? $normalizedKey;
 
-                $productId = (int) $item['product_id'];
-                $quantity = (int) $item['quantity'];
+                    $productId = (int) $item['product_id'];
+                    $quantity = (int) $item['quantity'];
 
-                // Get total_price from request, or calculate from product price
-                $totalPrice = (float) ($item['total_price'] ?? 0);
-                if ($totalPrice == 0) {
-                    $product = Product::find($productId);
-                    if ($product && $product->price) {
-                        $totalPrice = (float) $product->price * $quantity;
+                    // Get total_price from request, or calculate from product price
+                    $totalPrice = (float) ($item['total_price'] ?? 0);
+                    if ($totalPrice == 0) {
+                        $product = Product::find($productId);
+                        if ($product && $product->price) {
+                            $totalPrice = (float) $product->price * $quantity;
+                        }
+                    }
+
+                    $attributes = [
+                        'product_id'  => $productId,
+                        'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
+                        'quantity'    => $quantity,
+                        'total_price' => $totalPrice,
+                    ];
+
+                    // If key is a numeric id and exists, update without touching status
+                    if (is_numeric($key) && $currentItems->has((int) $key)) {
+                        $current = $currentItems->get((int) $key);
+                        $current->update($attributes);
+                        $updatedItemIds[] = (int) $key;
+                    } else {
+                        // New item: create with default status NEW
+                        // Status will be automatically calculated by OrderItemObserver
+                        $order->orderItems()->create($attributes);
                     }
                 }
+            }
 
-                $attributes = [
-                    'product_id'  => $productId,
-                    'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
-                    'quantity'    => $quantity,
-                    'total_price' => $totalPrice,
-                ];
-
-                // If key is a numeric id and exists, update without touching status
-                if (is_numeric($key) && $currentItems->has((int) $key)) {
-                    $current = $currentItems->get((int) $key);
-                    $current->update($attributes);
-                } else {
-                    // New item: create with default status NEW
-                    // Status will be automatically calculated by OrderItemObserver
-                    $order->orderItems()->create($attributes);
-                }
+            // Delete items that are in DB but not in the update list
+            $itemsToDelete = $currentItems->keys()->diff($updatedItemIds);
+            if ($itemsToDelete->isNotEmpty()) {
+                OrderItem::destroy($itemsToDelete->toArray());
             }
         }
 
@@ -556,11 +566,16 @@ class OrderController extends SimpleEntityController
 
     protected function getEditViewData(Request $request, Model $entity): array
     {
+        /** @var Order $order */
+        $order = $entity instanceof Order
+            ? $entity
+            : throw new Exception('Entity is not an Order instance');
+        // Model = Order
         // Eager-load relations needed for planning button visibility and planning info
-        $entity->load([
+        $order->load([
             'orderItems.product.productGroup', // Load productGroup for name_with_path
             'orderItems.product.partnerProducts' => function ($q) {
-                $q->select('partner_products.id', 'partner_products.product_id');
+                $q->select('partner_products.id', 'partner_products.product_id', 'partner_products.resource_type_id');
             },
             'orderItems.resourceOrderItems.resource',
             'orderItems.person',
@@ -572,7 +587,7 @@ class OrderController extends SimpleEntityController
         if ($entity->salesLead) {
             try {
                 $entity->salesLead->load(['persons', 'contactPerson']);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // If salesLead relations can't be loaded, just log and continue
                 Log::warning('Failed to load salesLead relations for order', [
                     'order_id'      => $entity->id,
@@ -637,6 +652,8 @@ class OrderController extends SimpleEntityController
 
         return [
             $this->entityName         => $entity,
+
+            'orders'                  => $entity,
             'salesLeads'              => $salesLeads,
             'persons'                 => $persons,
             'personsWithAnamnesis'    => $personsWithAnamnesis,
@@ -690,13 +707,6 @@ class OrderController extends SimpleEntityController
                     $originalKeys[$normalizedKey] = $key;
                 }
             }
-
-            logger()->info('OrderController@validateStore - after normalization', [
-                'normalized_items' => $normalizedItems,
-                'normalized_keys'  => array_keys($normalizedItems),
-                'original_keys'    => $originalKeys,
-            ]);
-
             // Replace the items in the request using replace method which properly handles arrays
             $request->replace(array_merge($request->except('items'), [
                 'items'                => $normalizedItems,
@@ -705,15 +715,16 @@ class OrderController extends SimpleEntityController
         }
 
         $request->validate([
-            'title'               => ['required', 'string', 'max:255'],
-            'total_price'         => ['nullable', 'numeric', 'min:0'],
-            'sales_lead_id'       => ['required', 'integer', 'exists:salesleads,id'],
-            'combine_order'       => ['nullable', 'boolean'],
-            'items'               => ['nullable', 'array'],
-            'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
-            'items.*.person_id'   => ['nullable', 'integer', 'exists:persons,id'],
-            'items.*.quantity'    => ['nullable', 'integer', 'min:1'],
-            'items.*.total_price' => ['nullable', 'numeric', 'min:0'],
+            'title'                => ['required', 'string', 'max:255'],
+            'total_price'          => ['nullable', 'numeric', 'min:0'],
+            'sales_lead_id'        => ['required', 'integer', 'exists:salesleads,id'],
+            'combine_order'        => ['nullable', 'boolean'],
+            'first_examination_at' => ['nullable', 'date'],
+            'items'                => ['nullable', 'array'],
+            'items.*.product_id'   => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.person_id'    => ['nullable', 'integer', 'exists:persons,id'],
+            'items.*.quantity'     => ['nullable', 'integer', 'min:1'],
+            'items.*.total_price'  => ['nullable', 'numeric', 'min:0'],
         ]);
     }
 

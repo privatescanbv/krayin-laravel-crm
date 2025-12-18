@@ -136,6 +136,13 @@ use App\Models\SalesLead;
                             </x-adminc::components.field>
 
                             <x-adminc::components.field
+                                type="datetime"
+                                name="first_examination_at"
+                                label="Datum eerste onderzoek"
+                                value="{{ $orders->first_examination_at }}"
+                            />
+
+                            <x-adminc::components.field
                                 type="select"
                                 name="combine_order"
                                 label="Orders combineren"

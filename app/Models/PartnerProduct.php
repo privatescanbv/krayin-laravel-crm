@@ -176,4 +176,14 @@ class PartnerProduct extends BaseProduct
 
         return $labels;
     }
+
+    /**
+     * @return bool if the product is plannable (i.e. not of type OTHER and has at least one active clinic)
+     */
+    public function isPlannable(): bool
+    {
+        // ignore, too much relations and these clinics won't have a schedule; $this->clinics()->where('is_active', true)->exists()
+        return \App\Enums\ResourceType::mapFrom($this->resourceType?->name) !== \App\Enums\ResourceType::OTHER;
+
+    }
 }

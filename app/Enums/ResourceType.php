@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Exception;
+
 enum ResourceType: string
 {
     case MRI_SCANNER = 'mri_scanner';
@@ -10,6 +12,20 @@ enum ResourceType: string
     case ARTSEN = 'artsen';
     case OTHER = 'other';
     case CARDIOLOGIE = 'cardiologie';
+
+    /**
+     * @throws Exception for none existing labels
+     */
+    public static function mapFrom(string $label): ResourceType
+    {
+        foreach (self::cases() as $case) {
+            if (strtolower($case->label()) === strtolower($label)) {
+                return $case;
+            }
+        }
+
+        throw new Exception('Unknown resource type label: '.$label);
+    }
 
     public function label(): string
     {

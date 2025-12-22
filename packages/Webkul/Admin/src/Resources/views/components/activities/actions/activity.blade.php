@@ -152,6 +152,7 @@
                                         name="schedule_from"
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
                                         rules="required"
+                                        :value="now()->format('Y-m-d\TH:i')"
                                         class="w-full"
                                     />
 
@@ -161,6 +162,7 @@
                                         name="schedule_to"
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
                                         rules="required"
+                                        :value="now()->addWeeks(2)->format('Y-m-d\TH:i')"
                                         class="w-full"
                                     />
                                 </div>

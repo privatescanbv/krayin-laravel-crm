@@ -4,6 +4,8 @@ namespace Webkul\Contact\Models;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Models\Anamnesis;
+use App\Models\PatientMessage;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -257,7 +259,15 @@ class Person extends Model implements PersonContract
      */
     public function anamnesis()
     {
-        return $this->hasMany(\App\Models\Anamnesis::class, 'person_id');
+        return $this->hasMany(Anamnesis::class, 'person_id');
+    }
+
+    /**
+     * Get the patient messages for the person.
+     */
+    public function patientMessages()
+    {
+        return $this->hasMany(PatientMessage::class, 'person_id');
     }
 
     /**

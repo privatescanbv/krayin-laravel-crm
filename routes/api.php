@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
+use App\Http\Controllers\Api\PatientMessageController;
 use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
@@ -73,7 +74,8 @@ $registerAuthenticatedApiRoutes = function () {
     // Person patient messages, by keycloak user id
     Route::get('patient/{id}/messages', [PersonActivityController::class, 'index']);
     Route::post('patient/{id}/messages', [PersonActivityController::class, 'store']);
-    Route::get('patient/{id}/activities/unread/count', [PersonActivityController::class, 'unreadCount']);
+    Route::post('patient/{id}/messages/{messageId}', [PersonActivityController::class, 'markAsRead']);
+    Route::get('patient/{id}/activities/unread/count', [PatientMessageController::class, 'unreadCount']);
 };
 
 // All API routes are protected by ApiKeyAuth middleware, which supports:

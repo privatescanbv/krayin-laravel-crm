@@ -24,6 +24,14 @@ abstract class TestCase extends BaseTestCase
 
         // Safety check: ensure we're using SQLite, not MySQL
         $connection = config('database.default');
+
+        // If running in CI/Sail, we might need to override config if environment variables aren't picking up
+        if (env('APP_ENV') === 'testing' && $connection !== 'sqlite') {
+            config(['database.default' => 'sqlite']);
+            config(['database.connections.sqlite.database' => ':memory:']);
+            $connection = 'sqlite';
+        }
+
         if ($connection !== 'sqlite') {
             throw new RuntimeException(
                 "Tests must use SQLite, but found: {$connection}. ".

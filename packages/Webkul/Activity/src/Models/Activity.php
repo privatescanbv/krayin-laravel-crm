@@ -3,6 +3,9 @@
 namespace Webkul\Activity\Models;
 
 use App\Models\CallStatus;
+use App\Models\Clinic;
+use App\Models\PatientMessage;
+use App\Models\SalesLead;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use App\Enums\ActivityType;
@@ -68,7 +71,6 @@ class Activity extends Model implements ActivityContract
         'sales_lead_id',
         'clinic_id',
         'external_id',
-        'parent_id',
     ];
 
     /**
@@ -78,23 +80,6 @@ class Activity extends Model implements ActivityContract
     {
         return $this->belongsTo(UserProxy::modelClass());
     }
-
-    /**
-     * Get the parent activity.
-     */
-    public function parent()
-    {
-        return $this->belongsTo(self::class, 'parent_id');
-    }
-
-    /**
-     * Get the child activities (replies).
-     */
-    public function children()
-    {
-        return $this->hasMany(self::class, 'parent_id');
-    }
-
 
 
     /**
@@ -121,7 +106,7 @@ class Activity extends Model implements ActivityContract
      */
     public function salesLead()
     {
-        return $this->belongsTo(\App\Models\SalesLead::class, 'sales_lead_id');
+        return $this->belongsTo(SalesLead::class, 'sales_lead_id');
     }
 
     /**
@@ -129,7 +114,7 @@ class Activity extends Model implements ActivityContract
      */
     public function clinic()
     {
-        return $this->belongsTo(\App\Models\Clinic::class);
+        return $this->belongsTo(Clinic::class);
     }
 
     /**
@@ -138,6 +123,14 @@ class Activity extends Model implements ActivityContract
     public function emails()
     {
         return $this->hasMany(EmailProxy::modelClass(), 'activity_id');
+    }
+
+    /**
+     * Get the patient messages associated with the activity.
+     */
+    public function patientMessages()
+    {
+        return $this->hasMany(PatientMessage::class, 'activity_id');
     }
 
     /**

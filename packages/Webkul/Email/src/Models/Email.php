@@ -4,7 +4,6 @@ namespace Webkul\Email\Models;
 
 use App\Helpers\ValueNormalizer;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
 use Webkul\Activity\Models\Activity;

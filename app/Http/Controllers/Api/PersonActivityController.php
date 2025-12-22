@@ -28,16 +28,13 @@ class PersonActivityController extends Controller
         }
         $personId = $person->id;
         logger()->info("Fetching patient messages for person ID: {$personId}");
-        // Get all root activities (no parent) of type PATIENT_MESSAGE linked to this person
+        // Get all activities of type PATIENT_MESSAGE linked to this person
         $activities = Activity::query()
             ->where('type', ActivityType::PATIENT_MESSAGE->value)
-            ->whereNull('parent_id')
             ->whereHas('persons', function ($query) use ($personId) {
                 $query->where('persons.id', $personId);
             })
-            ->with(['children' => function ($query) {
-                $query->orderBy('created_at', 'asc'); // Oldest replies first
-            }, 'user', 'persons'])
+            ->with(['user', 'persons'])
             ->orderBy('created_at', 'desc') // Newest threads first
             ->get();
 
@@ -62,14 +59,12 @@ class PersonActivityController extends Controller
         $validated = $request->validate([
             'title'     => 'nullable|string|max:255',
             'comment'   => 'required|string',
-            'parent_id' => 'nullable|exists:activities,id',
         ]);
 
         $activity = DB::transaction(function () use ($validated, $person) {
             $activity = Activity::create([
                 'type'          => ActivityType::PATIENT_MESSAGE->value,
-                'parent_id'     => $validated['parent_id'] ?? null,
-                'title'         => $validated['title'] ?? ($validated['parent_id'] ? 'Reply' : 'New Message'),
+                'title'         => $validated['title'] ?? 'New Message',
                 'comment'       => $validated['comment'],
                 'user_id'       => auth()->id(), // Null if not authenticated (e.g. public API? but routes are protected)
                 'is_done'       => 1, // Messages are instant
@@ -80,6 +75,8 @@ class PersonActivityController extends Controller
 
             // Link to person
             $activity->persons()->attach($person->id);
+            // required to get the event in ActvityObserver#update
+            $activity->touch();
 
             return $activity;
         });
@@ -90,14 +87,5 @@ class PersonActivityController extends Controller
         ], 201);
     }
 
-    public function unreadCount(string $keycloakUserId): JsonResponse
-    {
-        return response()->json([
-            'message' => 'Message created successfully.',
-            'data'    => [ 'new_messages_count' => 123,
-                'new_appointments_count' => 32,
-                'new_docs_count' => 3,],
-        ], 201);
-
-    }
+    public function markAsRead(string $id, string $messageId) {}
 }

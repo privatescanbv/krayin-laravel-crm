@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Listeners;
 
+use App\Actions\Activities\CreatePatientMessageFromActivityAction;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -16,10 +17,11 @@ class Activity
      * @return void
      */
     public function __construct(
-        protected LeadRepository $leadRepository,
-        protected PersonRepository $personRepository,
-        protected ProductRepository $productRepository,
-        protected WarehouseRepository $warehouseRepository
+        protected LeadRepository                                $leadRepository,
+        protected PersonRepository                              $personRepository,
+        protected ProductRepository                             $productRepository,
+        protected WarehouseRepository                           $warehouseRepository,
+        private readonly CreatePatientMessageFromActivityAction $createPatientMessageFromActivityAction,
     ) {}
 
     /**
@@ -35,6 +37,7 @@ class Activity
 
             if (! $person->activities->contains($activity->id)) {
                 $person->activities()->attach($activity->id);
+                $this->createPatientMessageFromActivityAction->handle($activity, 'afterUpdateOrCreate', $person);
             }
         } elseif (request()->input('warehouse_id')) {
             $warehouse = $this->warehouseRepository->find(request()->input('warehouse_id'));

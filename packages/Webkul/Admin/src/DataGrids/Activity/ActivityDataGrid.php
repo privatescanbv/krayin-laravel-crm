@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Activity;
 
+use App\Enums\ActivityType;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,6 @@ use Webkul\Admin\Traits\ProvideDropdownOptions;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Models\Lead;
 use Webkul\Contact\Models\Person;
-use Webkul\User\Repositories\UserRepository;
 
 class ActivityDataGrid extends DataGrid
 {
@@ -77,7 +77,7 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('warehouses', 'warehouse_activities.warehouse_id', '=', 'warehouses.id')
             ->leftJoin('emails', 'activities.id', '=', 'emails.activity_id')
             ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
-            ->whereIn('type', ['call', 'meeting','task'])
+            ->whereIn('type', ['call', 'meeting','task', ActivityType::PATIENT_MESSAGE->value])
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
                     if ($userIds = bouncer()->getAuthorizedUserIds()) {

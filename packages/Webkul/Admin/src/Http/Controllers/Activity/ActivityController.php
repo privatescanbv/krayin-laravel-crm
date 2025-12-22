@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -170,6 +171,7 @@ class ActivityController extends Controller
 
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
+        logger()->info('Activity store data', $data);
 
         // If lead_id is set, ensure we do not also bind a person via pivot
         if (!empty($data['lead_id'])) {
@@ -283,7 +285,7 @@ class ActivityController extends Controller
 
         // Validate that assigned user is active
         if (request()->has('user_id') && request('user_id')) {
-            $validator = \Illuminate\Support\Facades\Validator::make(
+            $validator = Validator::make(
                 ['user_id' => request('user_id')],
                 ['user_id' => 'active_user']
             );
@@ -497,20 +499,31 @@ class ActivityController extends Controller
     /*
      * Remove the specified resource from storage.
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(int $id): RedirectResponse|JsonResponse
     {
         $activity = $this->activityRepository->findOrFail($id);
         $leadId = $activity->lead_id;
+        $firstPersonId = $activity->persons()->first()?->id;
         try {
             Event::dispatch('activity.delete.before', $id);
-            $activity->delete($id);
+            $activity->delete();
 
             Event::dispatch('activity.delete.after', $id);
 
-            if($leadId) {
+            // ✅ JSON request (AJAX / API)
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Activiteit is verwijderd.',
+                    'data'    => [
+                        'activity_id' => $id,
+                    ],
+                ]);
+            }
+            if(!is_null($leadId)) {
                 return redirect()->route('admin.leads.view', $leadId)->with('Activiteit is verwijderd.');
             } else {
-                return redirect()->route('admin.persons.view', $activity->persons()->first()->id)->with('Activiteit is verwijderd.');
+                return redirect()->route('admin.contacts.persons.view', $firstPersonId)->with('Activiteit is verwijderd.');
             }
         } catch (Exception $exception) {
             logger()->error('Could not delete activity: '.$exception->getMessage());

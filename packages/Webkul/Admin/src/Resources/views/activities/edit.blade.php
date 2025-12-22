@@ -1,3 +1,4 @@
+@php use App\Enums\ActivityType; @endphp
 <x-admin::layouts>
     <!-- Page Title -->
     <x-slot:title>
@@ -12,7 +13,8 @@
     >
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <!-- Breadcrumbs -->
                     <x-admin::breadcrumbs
@@ -23,7 +25,7 @@
                     <!-- Page Title; status UI hidden per requirement -->
                     <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
                         <div class="flex items-center gap-2">
-                            <x-admin::activities.icon :type="$activity->type" />
+                            <x-admin::activities.icon :type="$activity->type"/>
                             <span>@lang('admin::app.activities.edit.title')</span>
                         </div>
 
@@ -73,7 +75,8 @@
             <!-- Form Content -->
             <div class="flex">
                 <!-- Single full-width editor -->
-                <div class="box-shadow w-full gap-2 rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div
+                    class="box-shadow w-full gap-2 rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
                     <!-- Title -->
@@ -91,18 +94,19 @@
                     <x-admin::form.control-group>
                         @php
                             $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
-                            $currentTypeLabel = trans('admin::app.activities.edit.' . $currentTypeValue);
+                            $currentTypeLabel = $activity->type->label();
                         @endphp
 
-                        <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                        <div
+                            class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
                             <span>{{ $currentTypeLabel }}</span>
                         </div>
-                        <input type="hidden" name="type" value="{{ $currentTypeValue }}" />
+                        <input type="hidden" name="type" value="{{ $currentTypeValue }}"/>
                         <x-admin::form.control-group.label class="required">
                             @lang('admin::app.activities.edit.type')
                         </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.error control-name="type" />
+                        <x-admin::form.control-group.error control-name="type"/>
 
                     </x-admin::form.control-group>
 
@@ -117,12 +121,12 @@
                                         value="{{ old('schedule_from') ?? $activity->schedule_from }}"
                                         class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                                         placeholder="@lang('admin::app.activities.edit.schedule_from')"
-                                        @if($activity->type === \App\Enums\ActivityType::CALL) onchange="updateScheduleToForCall()" @endif
+                                        @if($activity->type === ActivityType::CALL) onchange="updateScheduleToForCall()" @endif
                                     />
                                 </x-admin::flat-picker.datetime>
                             </div>
 
-                            @if($activity->type !== \App\Enums\ActivityType::CALL)
+                            @if($activity->type !== ActivityType::CALL)
                                 <div class="w-full">
                                     <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
                                         <input
@@ -135,16 +139,17 @@
                                 </div>
                             @else
                                 <!-- Hidden field for call type - automatically set to schedule_from + 1 hour -->
-                                <input type="hidden" name="schedule_to" id="schedule_to_hidden" value="{{ old('schedule_to') ?? $activity->schedule_to }}" />
+                                <input type="hidden" name="schedule_to" id="schedule_to_hidden"
+                                       value="{{ old('schedule_to') ?? $activity->schedule_to }}"/>
                             @endif
                         </div>
                         <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.schedule_from')
-                                </x-admin::form.control-group.label>
+                            @lang('admin::app.activities.edit.schedule_from')
+                        </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.activities.edit.schedule_to')
-                                    </x-admin::form.control-group.label>
+                            @lang('admin::app.activities.edit.schedule_to')
+                        </x-admin::form.control-group.label>
 
                     </x-admin::form.control-group>
 
@@ -195,52 +200,53 @@
                             @lang('admin::app.activities.assign-to')
                         </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.error control-name="user_id" />
+                        <x-admin::form.control-group.error control-name="user_id"/>
 
                     </x-admin::form.control-group>
 
                     <!-- Group -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.control
-                            type="select"
-                            name="group_id"
-                            :value="old('group_id', $activity->group_id)"
-                        >
-                            <option value="">{{ __('admin::app.activities.select-group') }}</option>
-                            @foreach ($groups as $group)
-                                <option value="{{ $group->id }}" {{ $activity->group_id == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
-                                </option>
-                            @endforeach
-                        </x-admin::form.control-group.control>
-                        <x-admin::form.control-group.label>
-                            {{ __('admin::app.activities.group') }}
-                        </x-admin::form.control-group.label>
-
-                    </x-admin::form.control-group>
+                    <x-adminc::components.field
+                        type="select"
+                        name="group_id"
+                        :label="__('admin::app.activities.group')"
+                        :value="old('group_id', $activity->group_id)"
+                    >
+                        <option value="">{{ __('admin::app.activities.select-group') }}</option>
+                        @foreach ($groups as $group)
+                            <option
+                                value="{{ $group->id }}" {{ $activity->group_id == $group->id ? 'selected' : '' }}>
+                                {{ $group->name }}
+                            </option>
+                        @endforeach
+                    </x-adminc::components.field>
 
                     <!-- Related Entity Information -->
                     @if($relatedEntity && $relatedEntityName)
                         <x-admin::form.control-group class="!mb-0">
-                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
+                            <div
+                                class="flex items-center gap-2 p-3 bg-gray-50 rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
                                     {{ $relatedEntityName }}:
                                 </span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">
                                     @if($relatedEntityName === 'Lead')
-                                        <a href="{{ route('admin.leads.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.leads.view', $relatedEntity->id) }}"
+                                           class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? $relatedEntity->title ?? 'Onbekende lead' }}
                                         </a>
                                     @elseif($relatedEntityName === 'Person')
-                                        <a href="{{ route('admin.contacts.persons.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.contacts.persons.view', $relatedEntity->id) }}"
+                                           class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? 'Onbekende persoon' }}
                                         </a>
                                     @elseif($relatedEntityName === 'Product')
-                                        <a href="{{ route('admin.products.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.products.view', $relatedEntity->id) }}"
+                                           class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? 'Onbekend product' }}
                                         </a>
                                     @elseif($relatedEntityName === 'Warehouse')
-                                        <a href="{{ route('admin.warehouses.view', $relatedEntity->id) }}" class="text-activity-note-text hover:text-activity-task-text underline">
+                                        <a href="{{ route('admin.warehouses.view', $relatedEntity->id) }}"
+                                           class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? 'Onbekende warehouse' }}
                                         </a>
                                     @endif
@@ -264,18 +270,22 @@
     </x-admin::form>
 
     <!-- Hidden form used by Afronden button -->
-    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif" method="POST" class="hidden">
+    <form id="activity-complete-form"
+          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
+          method="POST" class="hidden">
         @csrf
-        <input type="hidden" name="_method" value="PUT" />
-        <input type="hidden" name="is_done" value="1" />
-        <input type="hidden" name="status" value="done" />
+        <input type="hidden" name="_method" value="PUT"/>
+        <input type="hidden" name="is_done" value="1"/>
+        <input type="hidden" name="status" value="done"/>
     </form>
 
     <!-- Hidden form used by Heropenen button -->
-    <form id="activity-reopen-form" action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif" method="POST" class="hidden">
+    <form id="activity-reopen-form"
+          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
+          method="POST" class="hidden">
         @csrf
-        <input type="hidden" name="_method" value="PUT" />
-        <input type="hidden" name="is_done" value="0" />
+        <input type="hidden" name="_method" value="PUT"/>
+        <input type="hidden" name="is_done" value="0"/>
     </form>
 
     {!! view_render_event('admin.activities.edit.form.after') !!}
@@ -289,7 +299,7 @@
              * @param {Number} activityId
              * @return {void}
              */
-            window.takeoverActivity = async function(activityId) {
+            window.takeoverActivity = async function (activityId) {
                 if (!activityId) return;
 
                 try {
@@ -339,14 +349,14 @@
             /**
              * Handle user assignment dropdown change
              */
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const userSelect = document.querySelector('select[name="user_id"]');
                 const takeoverButton = document.querySelector('button[onclick*="takeoverActivity"]');
                 const currentUserId = {{ auth()->guard('user')->id() ?? 'null' }};
                 const canTakeover = {{ $canTakeover ? 'true' : 'false' }};
 
                 if (userSelect) {
-                    userSelect.addEventListener('change', function() {
+                    userSelect.addEventListener('change', function () {
                         const selectedUserId = parseInt(this.value);
 
                         // Show/hide takeover button based on selection and permissions
@@ -366,7 +376,7 @@
 
         <script>
             // Inline status update without leaving the page (global function + immediate bind)
-            (function(){
+            (function () {
                 const container = document.getElementById('activity-status-buttons');
                 if (!container) return;
                 const url = container.getAttribute('data-update-url');
@@ -381,7 +391,7 @@
                     done: 'bg-gray-200 text-gray-800 border-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600',
                 };
 
-                window.updateActivityStatus = async function(status) {
+                window.updateActivityStatus = async function (status) {
                     try {
                         console.debug('[activity-status:global] update ->', status);
                         const params = new URLSearchParams();
@@ -399,12 +409,18 @@
                             body: params.toString()
                         });
 
-                        const body = await (async () => { try { return await res.json(); } catch (_) { return {}; } })();
+                        const body = await (async () => {
+                            try {
+                                return await res.json();
+                            } catch (_) {
+                                return {};
+                            }
+                        })();
 
                         if (!res.ok) {
                             // Server-side validation: update UI to computed status and show message
                             const computed = body && body.status ? body.status : null;
-                            const message  = body && body.message ? body.message : 'Status bijwerken mislukt';
+                            const message = body && body.message ? body.message : 'Status bijwerken mislukt';
                             if (computed) {
                                 container.querySelectorAll('button.status-btn').forEach(b => {
                                     b.classList.remove('ring-2');
@@ -440,7 +456,7 @@
             /**
              * Update schedule_to for call activities (schedule_from + 1 hour)
              */
-            window.updateScheduleToForCall = function() {
+            window.updateScheduleToForCall = function () {
                 const scheduleFromInput = document.getElementById('schedule_from');
                 const scheduleToHidden = document.getElementById('schedule_to_hidden');
 
@@ -458,9 +474,9 @@
             };
 
             // Initialize schedule_to for call activities on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                @if($activity->type === \App\Enums\ActivityType::CALL)
-                    updateScheduleToForCall();
+            document.addEventListener('DOMContentLoaded', function () {
+                @if($activity->type === ActivityType::CALL)
+                updateScheduleToForCall();
                 @endif
             });
         </script>

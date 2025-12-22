@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Traits;
 
+use App\Enums\ActivityType;
+
 /**
  * Single place for all dropdown options. Sets of sorted dropdown
  * options methods. Use as per your need.
@@ -200,7 +202,7 @@ trait ProvideDropdownOptions
     {
         $options = [
             [
-                'label'    => trans('admin::app.common.select-type'),
+                'label'    => 'Selecteer type',
                 'value'    => '',
                 'disabled' => true,
                 'selected' => true,
@@ -208,9 +210,9 @@ trait ProvideDropdownOptions
         ];
 
         // Only include user-selectable activity types
-        foreach (\App\Enums\ActivityType::userSelectable() as $type) {
+        foreach (ActivityType::userSelectable() as $type) {
             $options[] = [
-                'label'    => trans('admin::app.activities.edit.' . $type->value),
+                'label'    => $type->label(),
                 'value'    => $type->value,
                 'disabled' => false,
                 'selected' => false,

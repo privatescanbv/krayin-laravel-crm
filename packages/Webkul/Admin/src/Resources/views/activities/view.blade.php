@@ -133,7 +133,7 @@
                             class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.type'):
                         </div>
                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                            {{ __("admin::app.activities.edit." . ($activity->type?->value ?? $activity->type)) }}
+                            {{ $activity->type?->label() }}
                         </div>
                     </div>
 

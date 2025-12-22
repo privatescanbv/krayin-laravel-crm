@@ -55,8 +55,7 @@
                             <x-admin::dropdown>
                                 <x-slot:toggle>
                                     <h3 class="flex cursor-pointer items-center gap-1 text-base font-semibold dark:text-white">
-                                        @lang('admin::app.components.activities.actions.activity.title') - @{{
-                                        selectedType.label }}
+                                        @lang('admin::app.components.activities.actions.activity.title') - @{{  selectedType.label }}
 
                                         <span class="icon-down-arrow text-2xl"></span>
                                     </h3>
@@ -231,14 +230,14 @@
                     isStoring: false,
 
                     selectedType: {
-                        label: "{{ trans('admin::app.activities.edit.call') }}",
+                        label: "{{ ActivityType::CALL->label() }}",
                         value: 'call'
                     },
 
                     availableTypes: [
                             @foreach(ActivityType::userSelectable() as $type)
                         {
-                            label: "{{ trans('admin::app.activities.edit.' . $type->value) }}",
+                            label: "{{ $type->label() }}",
                             value: '{{ $type->value }}'
                         },
                         @endforeach

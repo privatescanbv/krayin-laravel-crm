@@ -68,6 +68,7 @@ class Activity extends Model implements ActivityContract
         'sales_lead_id',
         'clinic_id',
         'external_id',
+        'parent_id',
     ];
 
     /**
@@ -76,6 +77,22 @@ class Activity extends Model implements ActivityContract
     public function user()
     {
         return $this->belongsTo(UserProxy::modelClass());
+    }
+
+    /**
+     * Get the parent activity.
+     */
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /**
+     * Get the child activities (replies).
+     */
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
 

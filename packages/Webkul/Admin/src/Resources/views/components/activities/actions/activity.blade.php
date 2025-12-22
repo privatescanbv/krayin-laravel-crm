@@ -1,3 +1,4 @@
+@php use App\Enums\ActivityType; @endphp
 @props([
     'entity'            => null,
     'entityControlName' => null,
@@ -54,70 +55,70 @@
                             <x-admin::dropdown>
                                 <x-slot:toggle>
                                     <h3 class="flex cursor-pointer items-center gap-1 text-base font-semibold dark:text-white">
-                                        @lang('admin::app.components.activities.actions.activity.title') - @{{ selectedType.label }}
+                                        @lang('admin::app.components.activities.actions.activity.title') - @{{
+                                        selectedType.label }}
 
                                         <span class="icon-down-arrow text-2xl"></span>
                                     </h3>
-                                </x-slot>
+                                    </x-slot>
 
-                                <x-slot:menu>
-                                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.before') !!}
+                                    <x-slot:menu>
+                                        {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.before') !!}
 
-                                    <x-admin::dropdown.menu.item
-                                        ::class="{ 'bg-neutral-bg dark:bg-gray-950': selectedType.value === type.value }"
-                                        v-for="type in availableTypes"
-                                        @click="selectedType = type"
-                                    >
-                                        @{{ type.label }}
-                                    </x-admin::dropdown.menu.item>
+                                        <x-admin::dropdown.menu.item
+                                            ::class="{ 'bg-neutral-bg dark:bg-gray-950': selectedType.value === type.value }"
+                                            v-for="type in availableTypes"
+                                            @click="selectedType = type"
+                                        >
+                                            @{{ type.label }}
+                                        </x-admin::dropdown.menu.item>
 
-                                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.after') !!}
-                                </x-slot>
+                                        {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.after') !!}
+                                        </x-slot>
                             </x-admin::dropdown>
 
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.after') !!}
-                        </x-slot>
+                            </x-slot>
 
-                        <x-slot:content>
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.before') !!}
+                            <x-slot:content>
+                                {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.before') !!}
 
-                            <!-- Activity Type -->
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                name="type"
-                                v-model="selectedType.value"
-                            />
-
-                            <!-- Id -->
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                ::name="entityControlName"
-                                ::value="entity.id"
-                            />
-
-                            <!-- Title -->
-                            <x-adminc::components.field
-                                type="text"
-                                name="title"
-                                :label="trans('admin::app.components.activities.actions.activity.title-control')"
-                                rules="required|max:80"
-                            />
-
-                            <!-- Description -->
-                            <x-adminc::components.field
-                                type="textarea"
-                                name="comment"
-                                :label="trans('admin::app.components.activities.actions.activity.description')"
-                                rules="max:500"
-                            />
-
-
-
-                            <!-- User Assignment -->
-                            <x-admin::form.control-group>
+                                <!-- Activity Type -->
                                 <x-admin::form.control-group.control
+                                    type="hidden"
+                                    name="type"
+                                    v-model="selectedType.value"
+                                />
+
+                                <!-- Id -->
+                                <x-admin::form.control-group.control
+                                    type="hidden"
+                                    ::name="entityControlName"
+                                    ::value="entity.id"
+                                />
+
+                                <!-- Title -->
+                                <x-adminc::components.field
+                                    type="text"
+                                    name="title"
+                                    :label="trans('admin::app.components.activities.actions.activity.title-control')"
+                                    rules="required|max:80"
+                                />
+
+                                <!-- Description -->
+                                <x-adminc::components.field
+                                    type="textarea"
+                                    name="comment"
+                                    :label="trans('admin::app.components.activities.actions.activity.description')"
+                                    rules="max:500"
+                                />
+
+
+                                <!-- User Assignment -->
+                                <x-adminc::components.field
                                     type="select"
                                     name="user_id"
+                                    :label="trans('admin::app.activities.assign-to')"
                                     :value="old('user_id', auth()->guard('user')->id())"
                                 >
                                     <option value="">{{ __('admin::app.activities.select-user') }}</option>
@@ -129,97 +130,73 @@
                                             {{ $user->name }}
                                         </option>
                                     @endforeach
-                                </x-admin::form.control-group.control>
-                            </x-admin::form.control-group>
+                                </x-adminc::components.field>
 
-                            <!-- Group -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
+                                <!-- Group -->
+                                <x-adminc::components.field
                                     type="select"
                                     name="group_id"
+                                    :label="trans('admin::app.activities.group')"
                                     v-model="selectedGroupId"
                                 >
                                     <option value="">{{ __('admin::app.activities.select-group') }}</option>
                                     @foreach (app(Webkul\User\Repositories\GroupRepository::class)->all() as $group)
                                         <option value="{{ $group->id }}">{{ $group->name }}</option>
                                     @endforeach
-                                </x-admin::form.control-group.control>
-                            </x-admin::form.control-group>
+                                </x-adminc::components.field>
 
-                            <!-- Schedule Date -->
-                            <div class="flex gap-4">
-                                <!-- Started From -->
-                                <x-admin::form.control-group class="w-full">
-                                    <x-admin::form.control-group.control
+                                <!-- Schedule Date -->
+                                <div class="flex gap-4">
+                                    <!-- Started From -->
+                                    <x-adminc::components.field
                                         type="datetime"
                                         name="schedule_from"
-                                        rules="required"
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
+                                        rules="required"
+                                        class="w-full"
                                     />
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.components.activities.actions.activity.schedule-from')
-                                    </x-admin::form.control-group.label>
 
-                                    <x-admin::form.control-group.label>
-                                    @lang('admin::app.activities.assign-to')
-                                </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.label>
-                                    @lang('admin::app.activities.group')
-                                </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="schedule_from" />
-
-                                </x-admin::form.control-group>
-
-                                <!-- Started To -->
-                                <x-admin::form.control-group class="w-full">
-                                    <x-admin::form.control-group.control
+                                    <!-- Started To -->
+                                    <x-adminc::components.field
                                         type="datetime"
                                         name="schedule_to"
-                                        rules="required"
                                         :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                                        rules="required"
+                                        class="w-full"
                                     />
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.components.activities.actions.activity.schedule-to')
-                                    </x-admin::form.control-group.label>
+                                </div>
 
-                                    <x-admin::form.control-group.error control-name="schedule_to" />
+                                {{--                            <!-- Location -->--}}
+                                {{--                            <x-admin::form.control-group class="!mb-0">--}}
+                                {{----}}
 
-                                </x-admin::form.control-group>
-                            </div>
+                                {{--                                <x-admin::form.control-group.control--}}
+                                {{--                                    type="text"--}}
+                                {{--                                    name="location"--}}
+                                {{--                                />--}}
+                                {{--{{--
+                                {{--
+                                {{--                                <x-admin::form.control-group.label>--}}
+                                {{--                                    @lang('admin::app.components.activities.actions.activity.location')--}}
+                                {{--                                </x-admin::form.control-group.label>
 
-{{--                            <!-- Location -->--}}
-{{--                            <x-admin::form.control-group class="!mb-0">--}}
-{{----}}
+                                {{--                            </x-admin::form.control-group>--}}
 
-{{--                                <x-admin::form.control-group.control--}}
-{{--                                    type="text"--}}
-{{--                                    name="location"--}}
-{{--                                />--}}
-{{--{{--
-{{--
-{{--                                <x-admin::form.control-group.label>--}}
-{{--                                    @lang('admin::app.components.activities.actions.activity.location')--}}
-{{--                                </x-admin::form.control-group.label>
+                                {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
+                                </x-slot>
 
-{{--                            </x-admin::form.control-group>--}}
+                                <x-slot:footer>
+                                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.before') !!}
 
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
-                        </x-slot>
+                                    <x-admin::button
+                                        class="primary-button"
+                                        :title="trans('admin::app.components.activities.actions.activity.save-btn')"
+                                        ::loading="isStoring"
+                                        ::disabled="isStoring"
+                                    />
 
-                        <x-slot:footer>
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.before') !!}
-
-                            <x-admin::button
-                                class="primary-button"
-                                :title="trans('admin::app.components.activities.actions.activity.save-btn')"
-                                ::loading="isStoring"
-                                ::disabled="isStoring"
-                            />
-
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.after') !!}
-                        </x-slot>
+                                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.after') !!}
+                                    </x-slot>
                     </x-admin::modal>
 
                     {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.after') !!}
@@ -238,7 +215,8 @@
                 entity: {
                     type: Object,
                     required: true,
-                    default: () => {}
+                    default: () => {
+                    }
                 },
 
                 entityControlName: {
@@ -258,7 +236,7 @@
                     },
 
                     availableTypes: [
-                        @foreach(\App\Enums\ActivityType::userSelectable() as $type)
+                            @foreach(ActivityType::userSelectable() as $type)
                         {
                             label: "{{ trans('admin::app.activities.edit.' . $type->value) }}",
                             value: '{{ $type->value }}'
@@ -295,7 +273,7 @@
                         });
                 },
 
-                save(params, { setErrors }) {
+                save(params, {setErrors}) {
                     this.isStoring = true;
 
                     // Use entity-specific route based on entity control name
@@ -317,22 +295,22 @@
                     }
 
                     this.$axios.post(url, params)
-                        .then (response => {
+                        .then(response => {
                             this.isStoring = false;
 
-                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            this.$emitter.emit('add-flash', {type: 'success', message: response.data.message});
 
                             this.$emitter.emit('on-activity-added', response.data.data);
 
                             this.$refs.activityModal.close();
                         })
-                        .catch (error => {
+                        .catch(error => {
                             this.isStoring = false;
 
                             if (error.response.status == 422) {
                                 setErrors(error.response.data.errors);
                             } else {
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                                this.$emitter.emit('add-flash', {type: 'error', message: error.response.data.message});
 
                                 this.$refs.activityModal.close();
                             }

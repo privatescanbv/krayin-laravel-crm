@@ -10,6 +10,7 @@ enum ActivityType: string
     case SYSTEM = 'system';
     case NOTE = 'note';
     case FILE = 'file';
+    case PATIENT_MESSAGE = 'patient_message';
 
     /**
      * Get all user-selectable activity types (excludes SYSTEM)
@@ -22,12 +23,13 @@ enum ActivityType: string
     public function label(): string
     {
         return match ($this) {
-            self::CALL    => 'Call',
-            self::MEETING => 'Meeting',
-            self::TASK    => 'Task',
-            self::SYSTEM  => 'System',
-            self::NOTE    => 'Note',
-            self::FILE    => 'File',
+            self::CALL            => trans('admin::app.components.activities.index.calls'),
+            self::MEETING         => trans('admin::app.components.activities.index.meetings'),
+            self::TASK            => trans('admin::app.components.activities.index.internal-task'),
+            self::SYSTEM          => trans('admin::app.components.activities.index.change-log'),
+            self::NOTE            => trans('admin::app.components.activities.index.notes'),
+            self::FILE            => trans('admin::app.components.activities.index.files'),
+            self::PATIENT_MESSAGE => 'Patient Messages',
         };
     }
 
@@ -36,6 +38,6 @@ enum ActivityType: string
      */
     public function isUserSelectable(): bool
     {
-        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE], true);
+        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE, self::PATIENT_MESSAGE], true);
     }
 }

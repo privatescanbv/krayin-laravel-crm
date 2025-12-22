@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
+use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
 use Illuminate\Support\Facades\Route;
@@ -68,6 +69,11 @@ $registerAuthenticatedApiRoutes = function () {
     // Keycloak mapping: get person id for a given Keycloak user id
     Route::get('keycloak/persons/{keycloakUserId}', [KeycloakUserController::class, 'findPersonByKeycloakId'])
         ->name('api.keycloak.persons.findByKeycloakId');
+
+    // Person patient messages, by keycloak user id
+    Route::get('patient/{id}/messages', [PersonActivityController::class, 'index']);
+    Route::post('patient/{id}/messages', [PersonActivityController::class, 'store']);
+    Route::get('patient/{id}/activities/unread/count', [PersonActivityController::class, 'unreadCount']);
 };
 
 // All API routes are protected by ApiKeyAuth middleware, which supports:

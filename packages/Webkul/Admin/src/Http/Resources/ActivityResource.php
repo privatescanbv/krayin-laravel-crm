@@ -63,6 +63,9 @@ class ActivityResource extends JsonResource
                 return [];
             })(),
             'files'           => is_array($this->files) ? $this->files : ActivityFileResource::collection($this->files),
+//            'children'        => $this->whenLoaded('children', function () {
+//                return ActivityResource::collection($this->children);
+//            }),
             'location'        => $this->location,
             'linked_entity_type' => (isset($this->emailLinkedEntityType)) ? $this->emailLinkedEntityType: '',
             'created_at'      => $this->created_at,

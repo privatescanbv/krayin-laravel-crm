@@ -486,27 +486,16 @@
                         {
                             name: 'planned',
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
-                        }, {
-                            name: 'note',
-                            label: "{{ trans('admin::app.components.activities.index.notes') }}",
-                        }, {
+                        },
+                        @foreach (App\Enums\ActivityType::cases() as $type)
+                            {
+                                name: '{{ $type->value }}',
+                                label: '{{ $type->label() }}',
+                            },
+                        @endforeach
+                        {
                             name: 'email',
                             label: "{{ trans('admin::app.components.activities.index.emails') }}",
-                        }, {
-                            name: 'call',
-                            label: "{{ trans('admin::app.components.activities.index.calls') }}",
-                        }, {
-                            name: 'meeting',
-                            label: "{{ trans('admin::app.components.activities.index.meetings') }}",
-                        }, {
-                            name: 'task',
-                            label: "{{ trans('admin::app.components.activities.index.internal-task') }}",
-                        }, {
-                            name: 'file',
-                            label: "{{ trans('admin::app.components.activities.index.files') }}",
-                        }, {
-                            name: 'system',
-                            label: "{{ trans('admin::app.components.activities.index.change-log') }}",
                         }, {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",

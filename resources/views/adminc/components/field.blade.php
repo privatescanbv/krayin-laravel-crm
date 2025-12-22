@@ -19,6 +19,7 @@
     if (! $computedLabelClass && $rules && \Illuminate\Support\Str::contains($rules, 'required')) {
         $computedLabelClass = 'required';
     }
+    $isGroupedControl = in_array($type, ['group', 'radio-group'], true);
 @endphp
 
 <x-admin::form.control-group class="{{ $class }}">
@@ -36,13 +37,15 @@
         {{ $slot }}
     </x-admin::form.control-group.control>
 
-    <x-admin::form.control-group.label
-        :switch="$type === 'switch'"
-        :check="$type === 'checkbox'"
-        class="{{ $computedLabelClass }}"
-    >
-        {{ $labelText }}
-    </x-admin::form.control-group.label>
+    @if (! $isGroupedControl && $labelText)
+        <x-admin::form.control-group.label
+            :switch="$type === 'switch'"
+            :check="$type === 'checkbox'"
+            class="{{ $computedLabelClass }}"
+        >
+            {{ $labelText }}
+        </x-admin::form.control-group.label>
+    @endif
 
     <x-admin::form.control-group.error control-name="{{ $controlName }}" />
 </x-admin::form.control-group>

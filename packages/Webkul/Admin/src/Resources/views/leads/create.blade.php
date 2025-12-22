@@ -27,6 +27,25 @@ $salutationToGenderMapping = [
     {!! view_render_event('admin.leads.create.form.after') !!}
 
     @pushOnce('scripts')
+        <script>
+            // for anamnesis fields
+            function toggleCommentField(fieldName, showField) {
+                const commentDiv = document.getElementById(fieldName + '_comment');
+                if (commentDiv) {
+                    commentDiv.style.display = showField ? 'block' : 'none';
+
+                    // Find inputs within the comment container
+                    const inputs = commentDiv.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => {
+                        if (showField) {
+                            input.setAttribute('required', 'required');
+                        } else {
+                            input.removeAttribute('required');
+                        }
+                    });
+                }
+            }
+        </script>
         <script type="text/x-template" id="v-multiple-persons-component-template">
             <div class="flex flex-col gap-3">
                 <div class="flex items-center justify-between">
@@ -301,86 +320,49 @@ $salutationToGenderMapping = [
 
                                         <!-- Heeft u metalen? -->
                                         <div class="mt-3">
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label static>
-                                                    Heeft u metalen?
-                                                </x-admin::form.control-group.label>
-                                                <div class="flex gap-4">
-                                                    <label class="flex items-center">
-                                                        <input type="radio" name="metals" value="1" required
-                                                               @change="() => {$refs.metals_notes_container.style.display='block'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.setAttribute('required','required');}}"
-                                                               class="mr-2"> Ja
-                                                    </label>
-                                                    <label class="flex items-center">
-                                                        <input type="radio" name="metals" value="0" required
-                                                               @change="() => {$refs.metals_notes_container.style.display='none'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.removeAttribute('required');}}"
-                                                               class="mr-2"> Nee
-                                                    </label>
-                                                    <div ref="metals_notes_container" style="display: none" class="relative">
-                                                        <x-adminc::components.field
-                                                            type="text"
-                                                            name="metals_notes"
-                                                            label="Toelichting"
-                                                            placeholder="Toelichting"
-                                                        />
-                                                    </div>
-                                                </div>
+                                            <x-adminc::components.yes-no
+                                                name="metals"
+                                                label="Heeft u metalen?"
+                                                rules="required"
+                                                comment-field="metals"
+                                            />
 
-
-                                                <x-admin::form.control-group.error control-name="height"/>
-
-                                            </x-admin::form.control-group>
+                                            <div id="metals_comment" class="mt-2" style="display: none">
+                                                <x-adminc::components.field
+                                                    type="text"
+                                                    name="metals_notes"
+                                                    label="Toelichting"
+                                                    placeholder="Toelichting"
+                                                />
+                                            </div>
                                         </div>
 
                                         <!-- Claustrofobisch? -->
                                         <div class="mt-3">
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label static>
-                                                    Claustrofobisch?
-                                                </x-admin::form.control-group.label>
-                                                <div class="flex gap-4">
-                                                    <label class="flex items-center">
-                                                        <input type="radio" name="claustrophobia" value="1" required
-                                                               class="mr-2"> Ja
-                                                    </label>
-                                                    <label class="flex items-center">
-                                                        <input type="radio" name="claustrophobia" value="0" required
-                                                               class="mr-2"> Nee
-                                                    </label>
-                                                </div>
-
-                                            </x-admin::form.control-group>
+                                            <x-adminc::components.yes-no
+                                                name="claustrophobia"
+                                                label="Claustrofobisch?"
+                                                rules="required"
+                                            />
                                         </div>
 
                                         <!-- Allergieën? bij ja uitleg -->
                                         <div class="mt-3">
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label static>
-                                                    Allergieën?
-                                                </x-admin::form.control-group.label>
-                                                <div class="flex gap-4">
-                                                    <label class="flex items-center">
-                                                        <input type="radio" name="allergies" value="1" required
-                                                               @change="() => {$refs.allergies_notes_container.style.display='block'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.setAttribute('required','required');}}"
-                                                               class="mr-2"> Ja
-                                                    </label>
-                                                    <label class="flex items-center">
-                                                        <input type="radio" name="allergies" value="0" required
-                                                               @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}"
-                                                               class="mr-2"> Nee
-                                                    </label>
-                                                    <div ref="allergies_notes_container" style="display: none" class="relative">
-                                                        <x-adminc::components.field
-                                                            type="text"
-                                                            name="allergies_notes"
-                                                            label="Toelichting"
-                                                            placeholder="Toelichting"
-                                                        />
-                                                    </div>
-                                                </div>
+                                            <x-adminc::components.yes-no
+                                                name="allergies"
+                                                label="Allergieën?"
+                                                rules="required"
+                                                comment-field="allergies"
+                                            />
 
-
-                                            </x-admin::form.control-group>
+                                            <div id="allergies_comment" class="mt-2" style="display: none">
+                                                <x-adminc::components.field
+                                                    type="text"
+                                                    name="allergies_notes"
+                                                    label="Toelichting"
+                                                    placeholder="Toelichting"
+                                                />
+                                            </div>
                                         </div>
 
                                         <!-- Lengte en Gewicht (optioneel) -->

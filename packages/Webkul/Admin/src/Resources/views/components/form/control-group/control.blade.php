@@ -304,9 +304,16 @@
         @break
 
     @case('custom')
-        <v-field {{ $attributes }}>
+        <v-field {{ $attributes }} name="{{ $name }}">
             {{ $slot }}
         </v-field>
+
+        @break
+
+    @case('group')
+        <div {{ $attributes }}>
+            {{ $slot }}
+        </div>
 
         @break
 

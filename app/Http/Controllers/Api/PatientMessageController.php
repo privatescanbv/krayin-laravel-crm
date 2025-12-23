@@ -15,7 +15,17 @@ class PatientMessageController extends Controller
      */
     public function unreadCount(string $keycloakUserId): JsonResponse
     {
-        $person = Person::where('keycloak_user_id', $keycloakUserId)->firstOrFail();
+        [$person, $user] = Person::where('keycloak_user_id', $keycloakUserId)->firstOrFail();
+        if(!is_null($user)) {
+            return response()->json([
+                'message' => 'No messages for users without person association.',
+                'data'    => [
+                    'new_messages_count'     => 0,
+                    'new_appointments_count' => 0,
+                    'new_docs_count'         => 0,
+                ],
+            ], 200);
+        }
 
         // Count unread messages sent by STAFF or SYSTEM
         $messageCount = PatientMessage::where('person_id', $person->id)

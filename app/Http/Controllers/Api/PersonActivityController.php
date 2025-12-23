@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\ActivityType;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PatientMessageResource;
+use App\Models\PatientMessage;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Webkul\Activity\Models\Activity;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Contact\Models\Person;
 
@@ -16,30 +18,34 @@ use Webkul\Contact\Models\Person;
  */
 class PersonActivityController extends Controller
 {
+    public function __construct(private KeycloakService $keycloakService) {}
+
     /**
      * Get all patient messages for a person, grouped by thread.
      */
     public function index(string $keycloakUserId): JsonResponse
     {
-        $person = Person::where('keycloak_user_id', $keycloakUserId)->first();
+        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
         if (is_null($person)) {
-            logger()->debug('Person not found for Keycloak User ID: '.$keycloakUserId);
+            if (! is_null($user)) {
+                // handle as no messages for users
+                return response()->json([
+                    'data' => [],
+                ]);
+            }
             abort(404);
         }
         $personId = $person->id;
         logger()->info("Fetching patient messages for person ID: {$personId}");
-        // Get all activities of type PATIENT_MESSAGE linked to this person
-        $activities = Activity::query()
-            ->where('type', ActivityType::PATIENT_MESSAGE->value)
-            ->whereHas('persons', function ($query) use ($personId) {
-                $query->where('persons.id', $personId);
-            })
-            ->with(['user', 'persons'])
-            ->orderBy('created_at', 'desc') // Newest threads first
+        // Get all patient messages linked to this person
+        $messages = PatientMessage::query()
+            ->where('person_id', $personId)
+            ->with(['sender'])
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
-            'data' => ActivityResource::collection($activities),
+            'data' => PatientMessageResource::collection($messages),
         ]);
     }
 
@@ -48,9 +54,15 @@ class PersonActivityController extends Controller
      */
     public function store(Request $request, string $keycloakUserId): JsonResponse
     {
-        $person = Person::where('keycloak_user_id', $keycloakUserId)->first();
+        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
         if (is_null($person)) {
-            logger()->debug('Person not found for Keycloak User ID: '.$keycloakUserId);
+            if (! is_null($user)) {
+                logger()->error('No support for creating messages for users without person association.');
+
+                return response()->json([
+                    'data' => [],
+                ]);
+            }
             abort(404);
         }
         $personId = $person->id;
@@ -62,23 +74,18 @@ class PersonActivityController extends Controller
         ]);
 
         $activity = DB::transaction(function () use ($validated, $person) {
-            $activity = Activity::create([
-                'type'          => ActivityType::PATIENT_MESSAGE->value,
-                'title'         => $validated['title'] ?? 'New Message',
-                'comment'       => $validated['comment'],
-                'user_id'       => auth()->id(), // Null if not authenticated (e.g. public API? but routes are protected)
-                'is_done'       => 1, // Messages are instant
-                'location'      => null,
-                'schedule_from' => now(),
-                'schedule_to'   => now(),
+            $message = PatientMessage::create([
+                'sender_type'          => ActivityType::PATIENT_MESSAGE->value,
+                'body'                 => ($validated['title'] ?? 'New Message').' '.$validated['comment'],
+                'person_id'            => $person->id,
             ]);
 
-            // Link to person
-            $activity->persons()->attach($person->id);
-            // required to get the event in ActvityObserver#update
-            $activity->touch();
+            //            // Link to person
+            //            $message->persons()->attach($person->id);
+            //            // required to get the event in ActvityObserver#update
+            //            $activity->touch();
 
-            return $activity;
+            return $message;
         });
 
         return response()->json([
@@ -87,5 +94,8 @@ class PersonActivityController extends Controller
         ], 201);
     }
 
-    public function markAsRead(string $id, string $messageId) {}
+    public function markAsRead(string $id, string $messageId)
+    {
+        logger()->warning("please implement me. Marking message as read: {$messageId}");
+    }
 }

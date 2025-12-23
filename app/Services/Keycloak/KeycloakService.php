@@ -2,14 +2,17 @@
 
 namespace App\Services\Keycloak;
 
+use App\Models\User as modelUser;
 use App\Support\KeycloakConfig;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User;
+use Webkul\Contact\Models\Person;
 
 class KeycloakService
 {
@@ -653,6 +656,25 @@ class KeycloakService
     }
 
     /**
+     * @return array{0: Person|null, 1: ModelUser|null}
+     */
+    public function resolvePersonOrUser(string $keycloakUserId): array
+    {
+        $person = Person::where('keycloak_user_id', $keycloakUserId)->first();
+        $user = null;
+        if (is_null($person)) {
+            $user = ModelUser::where('keycloak_user_id', $keycloakUserId)->first();
+            logger()->debug('User found by keycloak user id'.$keycloakUserId.', user id: '.($user ? $user->id : 'not found'));
+
+        }
+        if (is_null($user) && is_null($person)) {
+            logger()->error('No person or user found for keycloak user id: '.$keycloakUserId);
+        }
+
+        return [$person, $user];
+    }
+
+    /**
      * Resolve a Keycloak URL by appending a path to the internal base URL.
      */
     private function resolveKeycloakUrl(string $path): string
@@ -671,7 +693,7 @@ class KeycloakService
     /**
      * Make an authenticated HTTP request to Keycloak.
      */
-    private function makeRequest(string $method, string $url, ?string $accessToken, array $data = [], bool $asJson = false): ?\Illuminate\Http\Client\Response
+    private function makeRequest(string $method, string $url, ?string $accessToken, array $data = [], bool $asJson = false): ?Response
     {
         $token = $this->getOrResolveToken($accessToken);
 

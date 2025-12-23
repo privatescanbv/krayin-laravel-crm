@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use App\Enums\ActivityType;
 use App\Enums\ActivityStatus;
+use Webkul\Contact\Models\Person;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Models\LeadProxy;
@@ -194,5 +195,12 @@ class Activity extends Model implements ActivityContract
             ActivityType::TASK => 'Tasks',
             default => null,
         };
+    }
+
+    public function getPatientFromActivity(): ?Person
+    {
+        return$this->persons->first()
+            ?? $this->lead?->persons->first()
+            ?? $this->salesLead?->persons->first();
     }
 }

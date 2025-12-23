@@ -35,4 +35,9 @@ class PatientMessage extends Model
     {
         return $this->belongsTo(UserProxy::modelClass(), 'sender_id');
     }
+
+    public function activity()
+    {
+        return $this->belongsTo(\Webkul\Activity\Models\Activity::class, 'activity_id');
+    }
 }

@@ -30,7 +30,7 @@
                     // Employee Left, Patient Right (as per requirements)
                     $alignment = $isEmployee ? 'justify-start' : 'justify-end';
                     $bubbleColor = $isEmployee ? 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200' : 'bg-green-100 dark:bg-green-900 text-gray-800 dark:text-gray-200';
-                    $senderName = $isEmployee ? ($message->sender->name ?? 'Medewerker') : 'Patiënt';
+                    $senderName = $isEmployee ? ($message->sender->name ?? 'Medewerker') : $message->person->name;
                 @endphp
 
                 <div class="flex {{ $alignment }}">
@@ -50,19 +50,13 @@
 
     <!-- Input Area -->
     <div class="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 rounded-b-lg">
-        <form action="{{ route('admin.activities.store') }}" method="POST">
+        <form action="{{ route('admin.messages.store') }}" method="POST">
             @csrf
-            <input type="hidden" name="type" value="{{ ActivityType::PATIENT_MESSAGE->value }}">
-            <!-- We send lead_id if available, logic in observer handles creation of PatientMessage -->
-            @if($activity->lead_id)
-                <input type="hidden" name="lead_id" value="{{ $activity->lead_id }}">
-            @endif
-            <input type="hidden" name="is_done" value="1">
-            <input type="hidden" name="title" value="Bericht vanuit CRM">
-
+            <input type="hidden" name="activity_id" value="{{ $activity->id }}">
+            <input type="hidden" name="is_read" value="true">
             <div class="flex gap-2">
                 <textarea
-                    name="comment"
+                    name="body"
                     class="flex-1 rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
                     rows="2"
                     placeholder="Typ een bericht..."

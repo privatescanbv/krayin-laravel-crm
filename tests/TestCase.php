@@ -26,7 +26,7 @@ abstract class TestCase extends BaseTestCase
         $connection = config('database.default');
 
         // If running in CI/Sail, we might need to override config if environment variables aren't picking up
-        if (env('APP_ENV') === 'testing' && $connection !== 'sqlite') {
+        if (config('app.env') === 'testing' && $connection !== 'sqlite') {
             config(['database.default' => 'sqlite']);
             config(['database.connections.sqlite.database' => ':memory:']);
             $connection = 'sqlite';

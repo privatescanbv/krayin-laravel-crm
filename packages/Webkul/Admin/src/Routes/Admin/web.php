@@ -35,6 +35,7 @@ require 'contacts-routes.php';
  * Activities routes.
  */
 require 'activities-routes.php';
+require 'messages-routes.php';
 
 /**
  * Workflow routes.

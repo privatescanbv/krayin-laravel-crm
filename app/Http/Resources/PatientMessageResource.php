@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\PatientMessageSenderType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +15,14 @@ class PatientMessageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        if ($this->sender_type == PatientMessageSenderType::STAFF) {
+            $sendName = $this->sender ? $this->sender->name : 'Onbekend';
+        } elseif ($this->sender_type == PatientMessageSenderType::SYSTEM) {
+            $sendName = 'Systeem';
+        } else {
+            $sendName = $this->person->name;
+        }
+
         return [
             'id'          => $this->id,
             'person_id'   => $this->person_id,
@@ -24,6 +33,7 @@ class PatientMessageResource extends JsonResource
             'created_at'  => $this->created_at,
             'updated_at'  => $this->updated_at,
             'sender'      => $this->whenLoaded('sender'),
+            'sender_name' => $sendName,
         ];
     }
 }

@@ -5,19 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PatientMessageSenderType;
 use App\Http\Controllers\Controller;
 use App\Models\PatientMessage;
+use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Webkul\Activity\Models\Activity;
-use Webkul\Contact\Models\Person;
 
 class PatientMessageController extends Controller
 {
+    public function __construct(private readonly KeycloakService $keycloakService) {}
+
     /**
      * Get the count of unread messages for a specific person.
      */
     public function unreadCount(string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = Person::where('keycloak_user_id', $keycloakUserId)->firstOrFail();
+        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
         if (! is_null($user)) {
             return response()->json([
                 'message' => 'No messages for users without person association.',
@@ -27,6 +29,9 @@ class PatientMessageController extends Controller
                     'new_docs_count'         => 0,
                 ],
             ], 200);
+        }
+        if (is_null($person)) {
+            abort(404, 'No person found for the given Keycloak user ID.');
         }
 
         // Count unread messages sent by STAFF or SYSTEM
@@ -54,7 +59,7 @@ class PatientMessageController extends Controller
                 FILTER_NULL_ON_FAILURE
             ) ?? true,
         ]);
-        request()->validate(request(), [
+        request()->validate([
             'body'        => 'required',
             'activity_id' => 'required|exists:activities,id',
             'is_read'     => 'boolean',

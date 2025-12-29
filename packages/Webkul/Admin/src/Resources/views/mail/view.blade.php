@@ -166,6 +166,12 @@
                                         name="parent_id"
                                         value="{{ request('id') }}"
                                     />
+                                    {{-- mark email as read, employee is sending the mail here --}}
+                                    <x-admin::form.control-group.control
+                                        type="hidden"
+                                        name="is_read"
+                                        value="1"
+                                    />
 
                                     <!-- To -->
                                     <x-admin::form.control-group>
@@ -205,45 +211,39 @@
 
                                     <template v-if="showCC">
                                         <!-- Cc -->
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.control
-                                                type="tags"
-                                                name="cc"
-                                                input-rules="email"
-                                                :label="trans('admin::app.mail.view.cc')"
-                                                :placeholder="trans('admin::app.mail.view.enter-mails')"
-                                            />
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.mail.view.cc')
-                                            </x-admin::form.control-group.label>
-
-                                            <x-admin::form.control-group.error control-name="cc" />
-
-                                        </x-admin::form.control-group>
+                                        <x-adminc::components.field
+                                            type="tags"
+                                            name="cc"
+                                            input-rules="email"
+                                            :label="trans('admin::app.mail.view.cc')"
+                                            :placeholder="trans('admin::app.mail.view.enter-mails')"
+                                        />
                                     </template>
 
                                     <template v-if="showBCC">
                                         <!-- Cc -->
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.control
-                                                type="tags"
-                                                name="bcc"
-                                                input-rules="email"
-                                                :label="trans('admin::app.mail.view.bcc')"
-                                                :placeholder="trans('admin::app.mail.view.enter-mails')"
-                                            />
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.mail.view.bcc')
-                                            </x-admin::form.control-group.label>
-
-                                            <x-admin::form.control-group.error control-name="bcc" />
-
-                                        </x-admin::form.control-group>
+                                        <x-adminc::components.field
+                                            type="tags"
+                                            name="bcc"
+                                            input-rules="email"
+                                            :label="trans('admin::app.mail.view.bcc')"
+                                            :placeholder="trans('admin::app.mail.view.enter-mails')"
+                                        />
                                     </template>
 
+                                    <!-- Subject -->
+                                    <x-adminc::components.field
+                                            type="text"
+                                            name="subject"
+                                            id="subject"
+                                            rules="required"
+                                            v-model="subject"
+                                            :label="trans('admin::app.components.activities.actions.mail.subject')"
+                                            :placeholder="trans('admin::app.components.activities.actions.mail.subject')"
+                                        />
+
                                     <!-- Content -->
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.control
+                                    <x-adminc::components.field
                                             type="textarea"
                                             name="reply"
                                             id="reply"
@@ -252,9 +252,6 @@
                                             :tinymce="true"
                                             :label="trans('admin::app.mail.view.message')"
                                         />
-                                        <x-admin::form.control-group.error control-name="reply" />
-
-                                    </x-admin::form.control-group>
 
                                     <!-- Attachments -->
                                     <x-admin::form.control-group>
@@ -1089,6 +1086,8 @@
                         showBCC: false,
 
                         isStoring: false,
+
+                        subject: '',
                     };
                 },
 
@@ -1166,6 +1165,13 @@
                 },
 
                 watch: {
+                    action: {
+                        handler() {
+                            this.updateSubject();
+                        },
+                        deep: true,
+                    },
+
                     reply(newVal) {
                         // When reply content changes, set it in TinyMCE
                         if (newVal && newVal.trim()) {
@@ -1188,6 +1194,8 @@
                 },
 
                 mounted() {
+                    this.updateSubject();
+
                     // Set initial content in TinyMCE when component is mounted
                     // For reply/reply-all, use the original email content
                     let contentToSet = '';
@@ -1207,6 +1215,19 @@
                 },
 
                 methods: {
+                    updateSubject() {
+                        const type = this.getActionType;
+                        const currentSubject = this.email.subject || '';
+
+                        if (type == 'reply' || type == 'reply-all') {
+                            this.subject = currentSubject.toLowerCase().startsWith('re:') ? currentSubject : 'Re: ' + currentSubject;
+                        } else if (type == 'forward') {
+                            this.subject = currentSubject.toLowerCase().startsWith('fwd:') ? currentSubject : 'Fwd: ' + currentSubject;
+                        } else {
+                            this.subject = currentSubject;
+                        }
+                    },
+
                     setContentInTinyMCE(html, retries = 25) {
                         if (!html || !html.trim()) return;
 

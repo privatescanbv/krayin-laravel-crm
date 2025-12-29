@@ -5,8 +5,10 @@ namespace Webkul\Email\Models;
 use App\Helpers\ValueNormalizer;
 use App\Models\Clinic;
 use App\Models\SalesLead;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
 use Webkul\Contact\Models\PersonProxy;
@@ -320,7 +322,7 @@ class Email extends Model implements EmailContract
      */
     public function getHasRelationshipsAttribute(): bool
     {
-        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id || $this->activity_id;
+        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id;
     }
 
     /**
@@ -352,12 +354,12 @@ class Email extends Model implements EmailContract
         // Validate email is not empty
         $email = trim((string) $email);
         if (empty($email)) {
-            throw new \Exception('Email address is required for the from field');
+            throw new Exception('Email address is required for the from field');
         }
 
         // Validate email format
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \Exception("Invalid email address format: {$email}");
+            throw new Exception("Invalid email address format: {$email}");
         }
 
         // Normalize name (empty string if not provided or empty)
@@ -390,5 +392,32 @@ class Email extends Model implements EmailContract
     {
         return self::forLeadThread($leadId)
             ->where('is_read', 0);
+    }
+
+    public function getThreadRoot(): self
+    {
+        $email = $this;
+
+        while ($email->parent_id) {
+            $email = $email->parent;
+        }
+
+        return $email;
+    }
+
+    /**
+     * Get the full parent chain (oldest first, including self).
+     */
+    public function getThreadChain(): Collection
+    {
+        $chain = collect();
+        $current = $this;
+
+        while ($current) {
+            $chain->prepend($current);
+            $current = $current->parent;
+        }
+
+        return $chain;
     }
 }

@@ -23,10 +23,12 @@ trait ConcatsEmailActivities
         }
 
         $mapped = $emails->map(function ($email) use ($user, $attachmentRepository) {
+            $subject = $email->getThreadChain()->pluck('subject')
+                ->implode(' / ');
             return (object) [
                 'id'            => $email->id,
                 'parent_id'     => $email->parent_id,
-                'title'         => $email->subject,
+                'title'         => $subject,
                 'type'          => 'email',
                 'is_done'       => 1,
                 'is_read'       => $email->is_read,

@@ -134,6 +134,7 @@ class EmailController extends Controller
             'reply_to' => 'required|array|min:1',
             'reply_to.*' => 'email',
             'reply' => 'required',
+            'subject' => 'required',
         ]);
 
         Event::dispatch('email.create.before');

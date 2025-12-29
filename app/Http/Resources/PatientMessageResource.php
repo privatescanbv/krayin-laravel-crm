@@ -37,3 +37,4 @@ class PatientMessageResource extends JsonResource
         ];
     }
 }
+

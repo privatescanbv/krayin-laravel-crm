@@ -75,6 +75,22 @@ class EmailRepository extends Repository
             // (e.g., system emails that don't need to be linked to a specific entity)
         }
 
+        if(!is_null($parent)) {
+            //use releation of parent
+            if($parent->lead_id) {
+                $data['lead_id'] = $parent->lead_id;
+            }
+            if($parent->sales_lead_id) {
+                $data['sales_lead_id)'] = $parent->sales_lead_id;
+            }
+            if($parent->person_id) {
+                $data['person_id'] = $parent->person_id;
+            }
+            if($parent->clinic_id) {
+                $data['clinic_id'] = $parent->clinic_id;
+            }
+        }
+
         $data = $this->sanitizeEmails(array_merge([
             'source'        => 'web',
             'from'          => $normalizedFrom,

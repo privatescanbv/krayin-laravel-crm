@@ -62,6 +62,10 @@
                         </span>
                     @endforeach
                 </div>
+            @else
+                <div class="flex flex-wrap gap-1 mt-1">
+                    Geen bijzonderheden
+                </div>
             @endif
 
             <!-- Last Updated -->

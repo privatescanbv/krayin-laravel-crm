@@ -2,8 +2,7 @@
 
 @if ($anamnesis)
     <div class="px-4 py-2 bg-neutral-bg border border-neutral-border rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
-        <div class="flex items-center justify-between mb-1">
-            <h6 class="text-xl font-semibold dark:text-activity-note-text">Anamnese</h6>
+        <div class="flex justify-end mb-1">
             <a
                 href="{{ route('admin.anamnesis.edit', $anamnesis->id) }}"
                 class="text-lg hover:text-activity-task-text dark:text-blue-400"
@@ -19,7 +18,6 @@
                     {{ Str::limit($anamnesis->description, 80) }}
                 </div>
             @endif
-
             @if ($anamnesis->height || $anamnesis->weight)
                 <div class="flex gap-2 text-neutral-text dark:text-gray-400">
                     @if ($anamnesis->height)

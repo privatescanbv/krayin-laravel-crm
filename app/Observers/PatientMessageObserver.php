@@ -14,8 +14,8 @@ class PatientMessageObserver
     public function created(PatientMessage $patientMessage): void
     {
         // Don't create an activity if one is already linked (e.g. manually set)
-        if ($patientMessage->activity_id && $patientMessage->activity()->is_done) {
-            $activity = $patientMessage->activity();
+        if ($patientMessage->activity_id && $patientMessage->activity->is_done) {
+            $activity = $patientMessage->activity;
             /**
              * @var $activity Activity
              */

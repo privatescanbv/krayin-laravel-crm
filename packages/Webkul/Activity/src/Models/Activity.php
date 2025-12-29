@@ -197,10 +197,10 @@ class Activity extends Model implements ActivityContract
     }
 
     public function reOpen():Activity {
-        $activity = $this->clone();
+        $activity = $this->replicate();
         $activity->is_done = false;
         $activity->schedule_from = Carbon::today();
-        $activity->schedule_from = Carbon::today()->addWeek();
+        $activity->schedule_to = Carbon::today()->addWeek();
         return $activity;
     }
 }

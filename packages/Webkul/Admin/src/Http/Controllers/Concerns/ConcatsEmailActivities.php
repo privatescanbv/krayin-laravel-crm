@@ -38,10 +38,10 @@ trait ConcatsEmailActivities
                 'location'      => null,
                 'additional'    => [
                     'folders' => $email->folder_id ? [Folder::find($email->folder_id)?->name] : [],
-                    'from'    => json_decode($email->from),
-                    'to'      => json_decode($email->reply_to),
-                    'cc'      => json_decode($email->cc),
-                    'bcc'     => json_decode($email->bcc),
+                    'from'    => $this->toArray($email->from),
+                    'to'      => $this->toArray($email->reply_to),
+                    'cc'      => $this->toArray($email->cc),
+                    'bcc'     => $this->toArray($email->bcc),
                 ],
                 'files'         => $attachmentRepository->findWhere(['email_id' => $email->id])->map(function ($attachment) {
                     return (object) [
@@ -61,6 +61,12 @@ trait ConcatsEmailActivities
         });
 
         return $activities->concat($mapped)->sortByDesc('id')->sortByDesc('created_at');
+    }
+
+    private function toArray($value): ?array {
+        return is_array($value)
+            ? $value
+            : json_decode($value, true);
     }
 }
 

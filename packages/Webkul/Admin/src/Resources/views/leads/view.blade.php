@@ -1,3 +1,4 @@
+@php use Webkul\Admin\Http\Controllers\Lead\ActivityController; @endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $lead->name }}
@@ -5,7 +6,7 @@
 
     <!-- Content -->
     <div class="relative flex flex-col gap-4 pt-3 max-lg:flex-wrap lg:grid"
-        :class="isRightColumnCollapsed ? 'lg:grid-cols-[394px,minmax(0,1fr),0px]' : 'lg:grid-cols-[394px,minmax(0,1fr),280px]'">
+         :class="isRightColumnCollapsed ? 'lg:grid-cols-[394px,minmax(0,1fr),0px]' : 'lg:grid-cols-[394px,minmax(0,1fr),280px]'">
         <!-- Left Panel -->
         {!! view_render_event('admin.leads.view.left.before', ['lead' => $lead]) !!}
 
@@ -16,12 +17,12 @@
                 <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                     <!-- Breadcrumb's -->
                     <div class="flex items-center justify-between">
-                        <x-admin::breadcrumbs name="leads.view" :entity="$lead" />
+                        <x-admin::breadcrumbs name="leads.view" :entity="$lead"/>
                     </div>
 
                     <!-- Lead Person info's -->
 
-                    <x-adminc::leads.card :lead="$lead" show_actions="false" />
+                    <x-adminc::leads.card :lead="$lead" show_actions="false"/>
 
                     <div class="mb-2">
                         @if (($days = $lead->rotten_days) > 0)
@@ -53,7 +54,7 @@
                                     </span>
                                 </div>
                                 <a href="{{ route('admin.leads.duplicates.index', $lead->id) }}"
-                                    class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700">
+                                   class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700">
                                     Duplicaten samenvoegen
                                 </a>
                             </div>
@@ -85,18 +86,18 @@
 
                         @if (bouncer()->hasPermission('mail.compose'))
                             <!-- Mail Activity Action -->
-                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id" />
+                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id"/>
                         @endif
 
                         @if (bouncer()->hasPermission('activities.create'))
                             <!-- File Activity Action -->
-                            <x-admin::activities.actions.file :entity="$lead" entity-control-name="lead_id" />
+                            <x-admin::activities.actions.file :entity="$lead" entity-control-name="lead_id"/>
 
                             <!-- Note Activity Action -->
-                            <x-admin::activities.actions.note :entity="$lead" entity-control-name="lead_id" />
+                            <x-admin::activities.actions.note :entity="$lead" entity-control-name="lead_id"/>
 
                             <!-- Activity Action -->
-                            <x-admin::activities.actions.activity :entity="$lead" entity-control-name="lead_id" />
+                            <x-admin::activities.actions.activity :entity="$lead" entity-control-name="lead_id"/>
                         @endif
 
                         {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
@@ -113,47 +114,45 @@
             </div>
 
 
-         @php
-            $activitiesCount = 99;            // TODO Get total open activities
+            @php
+                $activitiesCount = app(ActivityController::class)->countOpen($lead->id)->getData()->data;
+            @endphp
 
-        @endphp
-
-
-            <!-- Vertical Navigation Menu -->
+                <!-- Vertical Navigation Menu -->
             <div class="border-t border-gray-200 p-4 dark:border-gray-800">
                 <nav class="flex flex-col gap-1 text-sm font-medium">
                     <button type="button" class="rounded-md px-3 py-2 text-left transition"
-                        :class="leadDetailSection === 'algemeen'
+                            :class="leadDetailSection === 'algemeen'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="setSection('algemeen')"
+                            @click="setSection('algemeen')"
                     >
                         Algemeen
                     </button>
 
                     <button type="button" class="flex justify-between rounded-md px-3 py-2 text-left transition"
-                        :class="leadDetailSection === 'activiteiten'
+                            :class="leadDetailSection === 'activiteiten'
                             ?
                             'bg-brandColor text-white dark:bg-brandColor' :
                             'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="setSection('activiteiten')">
+                            @click="setSection('activiteiten')">
                         Activiteiten <span class="text-white rounded bg-error p-1 -m-1">{{ $activitiesCount }}</span>
                     </button>
 
                     <button type="button" class="rounded-md px-3 py-2 text-left transition"
-                        :class="leadDetailSection === 'anamnese'
+                            :class="leadDetailSection === 'anamnese'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="setSection('anamnese')"
+                            @click="setSection('anamnese')"
                     >
                         Anamnese
                     </button>
 
                     <button type="button" class="rounded-md px-3 py-2 text-left transition"
-                        :class="leadDetailSection === 'marketing'
+                            :class="leadDetailSection === 'marketing'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="setSection('marketing')"
+                            @click="setSection('marketing')"
                     >
                         Marketing
                     </button>
@@ -212,14 +211,15 @@
         <div class="relative overflow-visible transition-all duration-300 ease-in-out">
 
             <button type="button"
-                class="absolute top-0 z-50 flex h-8 w-8 -translate-x-full items-center justify-center rounded-l-lg border border-r-0 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                @click="isRightColumnCollapsed = !isRightColumnCollapsed"
-                :class="isRightColumnCollapsed ? 'left-4 ' : '-right-12'" title="Toggle rechterkolom">
+                    class="absolute top-0 z-50 flex h-8 w-8 -translate-x-full items-center justify-center rounded-l-lg border border-r-0 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    @click="isRightColumnCollapsed = !isRightColumnCollapsed"
+                    :class="isRightColumnCollapsed ? 'left-4 ' : '-right-12'" title="Toggle rechterkolom">
                 <i class="text-xl transition-transform duration-200"
-                    :class="isRightColumnCollapsed ? 'icon-left-arrow' : 'icon-right-arrow'"></i>
+                   :class="isRightColumnCollapsed ? 'icon-left-arrow' : 'icon-right-arrow'"></i>
             </button>
 
-            <div class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+            <div
+                class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                 :class="isRightColumnCollapsed ? 'translate-x-full opacity-0 pointer-events-none overflow-hidden' :
                     'translate-x-0 opacity-100'">
                 @include('admin::leads.view.right_panel', ['lead' => $lead])
@@ -231,18 +231,18 @@
 
     @pushOnce('scripts', 'lead-view-delete-action')
         <script type="text/x-template" id="v-lead-delete-template">
-        <button
-            type="button"
-            class="secondary-button border border-red-100 text-status-expired-text hover:border-error hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
-            :class="{ 'opacity-50 pointer-events-none': isDeleting }"
-            :disabled="isDeleting"
-            @click="confirmDelete"
-        >
-            <span class="icon-delete text-base"></span>
+            <button
+                type="button"
+                class="secondary-button border border-red-100 text-status-expired-text hover:border-error hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+                :class="{ 'opacity-50 pointer-events-none': isDeleting }"
+                :disabled="isDeleting"
+                @click="confirmDelete"
+            >
+                <span class="icon-delete text-base"></span>
 
-            <span>@lang('admin::app.leads.view.delete-btn')</span>
-        </button>
-    </script>
+                <span>@lang('admin::app.leads.view.delete-btn')</span>
+            </button>
+        </script>
 
         <script type="module">
             app.component('v-lead-delete', {
@@ -330,40 +330,40 @@
         </script>
     @endPushOnce
 
-@pushOnce('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof app !== 'undefined') {
-                app.mixin({
-                    data() {
-                        return {
-                            leadDetailSection: 'algemeen',
-                            isRightColumnCollapsed: true,
-                        };
-                    },
+    @pushOnce('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof app !== 'undefined') {
+                    app.mixin({
+                        data() {
+                            return {
+                                leadDetailSection: 'algemeen',
+                                isRightColumnCollapsed: true,
+                            };
+                        },
 
-                    mounted() {
-                        if (window.location.hash) {
-                            let hash = window.location.hash.substring(1); // Remove '#'
+                        mounted() {
+                            if (window.location.hash) {
+                                let hash = window.location.hash.substring(1); // Remove '#'
 
-                            // Valid sections
-                            const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing'];
+                                // Valid sections
+                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing'];
 
-                            if (validSections.includes(hash)) {
-                                this.leadDetailSection = hash;
+                                if (validSections.includes(hash)) {
+                                    this.leadDetailSection = hash;
+                                }
+                            }
+                        },
+
+                        methods: {
+                            setSection(section) {
+                                this.leadDetailSection = section;
+                                window.location.hash = section;
                             }
                         }
-                    },
-
-                    methods: {
-                        setSection(section) {
-                            this.leadDetailSection = section;
-                            window.location.hash = section;
-                        }
-                    }
-                });
-            }
-        });
-    </script>
-@endPushOnce
+                    });
+                }
+            });
+        </script>
+    @endPushOnce
 </x-admin::layouts>

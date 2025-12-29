@@ -7,11 +7,11 @@ use App\Actions\Activities\DuplicateException;
 use App\Models\Department;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -119,13 +119,26 @@ class ActivityController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index($id)
+    public function index(string $leadId)
     {
             $activities = $this->activityRepository
-                ->where('lead_id', $id)
+                ->where('lead_id', $leadId)
                 ->get();
 
-        return ActivityResource::collection($this->concatEmailAsActivities($id, $activities));
+        return ActivityResource::collection($this->concatEmailAsActivities($leadId, $activities));
+    }
+
+    public function countOpen(string $leadId)
+    {
+        $count = $this->activityRepository
+            ->where('lead_id', $leadId)
+            ->where('is_done', 0)
+            ->count();
+        $unreadEmail = Email::forLeadThreadAndUnread($leadId)
+            ->count();
+        return response()->json([
+            'data' => $count + $unreadEmail,
+        ]);
     }
 
     /**
@@ -133,13 +146,7 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($leadId, $activities)
     {
-        $emails = DB::table('emails as child')
-            ->select('child.*')
-            ->join('emails as parent', 'child.parent_id', '=', 'parent.id')
-            ->where('parent.lead_id', $leadId)
-            ->union(DB::table('emails as parent')->where('parent.lead_id', $leadId))
-            ->get();
-
+        $emails = Email::forLeadThread($leadId)->get();
         return $this->concatEmails($activities, $emails, $this->attachmentRepository);
     }
 }

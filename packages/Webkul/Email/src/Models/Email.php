@@ -6,9 +6,9 @@ use App\Helpers\ValueNormalizer;
 use App\Models\Clinic;
 use App\Models\SalesLead;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Throwable;
-use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Contracts\Email as EmailContract;
 use Webkul\Lead\Models\LeadProxy;
@@ -370,5 +370,25 @@ class Email extends Model implements EmailContract
             'name'  => $name,
             'email' => $email,
         ];
+    }
+    /**
+     * Scope: all emails (parents + replies) for a given lead.
+     */
+    public function scopeForLeadThread(Builder $query, int $leadId): Builder
+    {
+        // Subquery: parents that belong to the lead
+        $parentEmails = static::query()
+            ->select('id')
+            ->where('lead_id', $leadId);
+
+        return $query
+            ->whereIn('parent_id', $parentEmails)
+            ->orWhere('lead_id', $leadId);
+    }
+
+    public function scopeForLeadThreadAndUnread(Builder $query, int $leadId): Builder
+    {
+        return self::forLeadThread($leadId)
+            ->where('is_read', 0);
     }
 }

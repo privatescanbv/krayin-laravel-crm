@@ -54,6 +54,7 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
         Route::get('', 'index')->name('admin.leads.activities.index');
+        Route::get('open/count', 'countOpen')->name('admin.leads.activities.open.count');
         Route::post('', 'store')->name('admin.leads.activities.store');
     });
 

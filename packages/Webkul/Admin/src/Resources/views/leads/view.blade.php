@@ -118,6 +118,19 @@
                     <x-adminc::persons.card :person="$lead->contactPerson" show_actions="false" />
                 @endif
             </div>
+            <div class="flex flex-col gap-1.5 border-none border-gray-200 p-4 dark:border-gray-800">
+
+                <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
+                    @{{ "Status change dropdown" }}
+                </div>
+
+                <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
+                    @{{ "Diagnoseformulier ingevuld" }}
+                </div>
+                <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
+                    @{{ "MRI Scan" }}
+                </div>
+            </div>
 
 
          @php

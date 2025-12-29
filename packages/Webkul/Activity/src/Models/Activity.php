@@ -6,6 +6,7 @@ use App\Models\CallStatus;
 use App\Models\Clinic;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use App\Enums\ActivityType;
@@ -190,8 +191,16 @@ class Activity extends Model implements ActivityContract
 
     public function getPatientFromActivity(): ?Person
     {
-        return$this->persons->first()
+        return $this->persons->first()
             ?? $this->lead?->persons->first()
             ?? $this->salesLead?->persons->first();
+    }
+
+    public function reOpen():Activity {
+        $activity = $this->clone();
+        $activity->is_done = false;
+        $activity->schedule_from = Carbon::today();
+        $activity->schedule_from = Carbon::today()->addWeek();
+        return $activity;
     }
 }

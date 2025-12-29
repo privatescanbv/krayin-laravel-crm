@@ -23,7 +23,6 @@ trait ConcatsEmailActivities
         }
 
         $mapped = $emails->map(function ($email) use ($user, $attachmentRepository) {
-            logger()->info('mapping mail '.$email->subject . ', is read ='.$email->is_read);
             return (object) [
                 'id'            => $email->id,
                 'parent_id'     => $email->parent_id,

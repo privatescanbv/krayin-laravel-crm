@@ -29,12 +29,12 @@
                         <!-- Mailer receivers -->
                         <div class="flex flex-col gap-1">
                             <!-- Mailer Name -->
-                            <span class="dark:text-gray-300">@{{ email.name ?? email.from }}</span>
+                            <span class="dark:text-gray-300">Van: @{{ email.from.name }} (@{{ email.from.email }})</span>
 
                             <div class="flex flex-col gap-1 dark:text-gray-300">
                                 <div class="flex items-center gap-1">
                                     <!-- Mail To -->
-                                    <span>@lang('admin::app.mail.view.to') @{{ (email.reply_to || []).join(', ') }}</span>
+                                    <span>@lang('admin::app.mail.view.to'): @{{ (email.reply_to || []).join(', ') }}</span>
 
                                     <!-- Show More Button -->
                                     <i

@@ -36,6 +36,7 @@ class EmailDataGrid extends DataGrid
                 'emails.from',
                 'emails.subject',
                 'emails.reply',
+                'emails.reply_to',
                 'emails.is_read',
                 'emails.created_at',
                 'emails.parent_id',
@@ -129,18 +130,44 @@ class EmailDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'name',
+            'index'      => 'from',
             'label'      => trans('admin::app.mail.index.datagrid.from'),
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
             'closure'    => function ($row) {
-                return $row->name
-                    ? trim($row->name, '"')
-                    : trim($row->from, '"');
+                $from = $row->from;
+
+                // Als het een JSON-string is → decode
+                if (is_string($from)) {
+                    $from = json_decode($from, true);
+                }
+
+                // Verwachte standaardstructuur
+                if (is_array($from)) {
+                    if (!empty($from['name'])) {
+                        return $from['name'] . ' - ' . ($from['email'] ?? '');
+                    }
+
+                    return $from['email'] ?? '';
+                }
+
+                return '';
             },
         ]);
+
+//        $this->addColumn([
+//            'index'      => 'reply_to',
+//            'label'      => trans('admin::app.mail.index.datagrid.to'),
+//            'type'       => 'string',
+//            'sortable'   => true,
+//            'searchable' => true,
+//            'filterable' => true,
+//            'closure'    => function ($row) {
+//                return (is_array($row->reply_to)) ? implode(', ', $row->reply_to) : $row->reply_to;
+//            },
+//        ]);
 
         $this->addColumn([
             'index'      => 'subject',

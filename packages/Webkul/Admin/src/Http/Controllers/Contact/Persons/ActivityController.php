@@ -48,18 +48,7 @@ class ActivityController extends Controller
     public function concatEmailAsActivities($personId, $activities)
     {
         $leadIds = Person::findOrFail($personId)->leads->pluck('id')->toArray();
-        $emails = DB::table('emails as child')
-            ->select('child.*')
-            ->join('emails as parent', 'child.parent_id', '=', 'parent.id')
-            ->where('parent.person_id', $personId)
-            ->orWhereIn('child.lead_id', $leadIds)
-            ->union(
-                DB::table('emails as parent')
-                    ->where('parent.person_id', $personId)
-                    ->orWhereIn('parent.lead_id', $leadIds)
-            )
-            ->get();
-
+        $emails = Email::forPersonThread($personId, $leadIds)->get();
         return $this->concatEmails($activities, $emails, $this->attachmentRepository);
     }
 }

@@ -388,6 +388,32 @@ class Email extends Model implements EmailContract
             ->orWhere('lead_id', $leadId);
     }
 
+    public function scopeForClinicThread(Builder $query, int $clinicId): Builder
+    {
+        // Subquery: parents that belong to the lead
+        $parentEmails = static::query()
+            ->select('id')
+            ->where('clinic_id', $clinicId);
+
+        return $query
+            ->whereIn('parent_id', $parentEmails)
+            ->orWhere('clinic_id', $clinicId);
+    }
+
+    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds): Builder
+    {
+        // Subquery: parents that belong to the lead
+        $parentEmails = static::query()
+            ->select('id')
+            ->where('person_id', $personId)
+            ->orWhereIn('lead_id', $leadIds);
+
+        return $query
+            ->whereIn('parent_id', $parentEmails)
+            ->orWhere('person_id', $personId)
+            ->orWhereIn('lead_id', $leadIds);
+    }
+
     public function scopeForLeadThreadAndUnread(Builder $query, int $leadId): Builder
     {
         return self::forLeadThread($leadId)

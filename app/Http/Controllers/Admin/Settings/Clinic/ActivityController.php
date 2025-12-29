@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin\Settings\Clinic;
 
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -108,21 +108,8 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($clinicId, $activities)
     {
-        // Get emails directly linked to clinic (parent emails)
-        $emails = DB::table('emails as parent')
-            ->where('parent.clinic_id', $clinicId)
-            ->get();
+        $emails = Email::forClinicThread($clinicId)->get();
 
-        // Also get child emails (replies) where parent is linked to clinic
-        $childEmails = DB::table('emails as child')
-            ->select('child.*')
-            ->join('emails as parent', 'child.parent_id', '=', 'parent.id')
-            ->where('parent.clinic_id', $clinicId)
-            ->get();
-
-        // Merge parent and child emails
-        $allEmails = $emails->merge($childEmails);
-
-        return $this->concatEmails($activities, $allEmails, $this->attachmentRepository);
+        return $this->concatEmails($activities, $emails, $this->attachmentRepository);
     }
 }

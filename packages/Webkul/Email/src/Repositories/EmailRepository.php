@@ -39,6 +39,7 @@ class EmailRepository extends Repository
 
         $referenceIds = [];
 
+        $parent = null;
         if (isset($data['parent_id'])) {
             $parent = parent::findOrFail($data['parent_id']);
 

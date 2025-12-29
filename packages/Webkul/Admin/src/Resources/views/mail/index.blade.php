@@ -145,7 +145,7 @@
                         <div class="row grid grid-cols-[2fr_2fr_6fr_.8fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
                             <div
                                 class="flex items-center gap-6"
-                                v-for="(columnGroup, index) in [['name'], ['entity_type'], ['subject', 'reply'], ['created_at']]"
+                                v-for="(columnGroup, index) in [['reply_to'], ['entity_type'], ['subject', 'reply'], ['created_at']]"
                             >
                                 <label
                                     class="flex w-max cursor-pointer select-none items-center gap-2"
@@ -306,9 +306,12 @@
                                     ></label>
                                 </div>
                                 <x-admin::avatar ::name="record.name ?? record.from" />
-                                <span class="truncate">@{{ record.name }}</span>
+{{--                                <span class="truncate">@{{ record.name }}</span>--}}
+{{--                                <span class="truncate">@{{ record.from.email }}</span>--}}
+{{--                                <span class="truncate">--}}
+{{--                                    @{{ Array.isArray(record.reply_to) ? record.reply_to.join(', ') : record.reply_to || '' }}--}}
+{{--                                </span>--}}
                             </div>
-
                             <!-- Col 2: Related entity -->
                             <div class="text-sm text-gray-800 dark:text-gray-300">
                                 <span v-html="record.entity_type"></span>
@@ -523,14 +526,13 @@
                             </template>
 
                             <!-- Template Selector -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
+                            <x-adminc::components.field
                                     type="select"
                                     id="email_template"
                                     name="email_template"
                                     v-model="selectedTemplate"
                                     @change="loadTemplate"
-                                    :label="trans('admin::app.mail.index.mail.template')"
+                                    label="Template"
                                 >
                                     <option value="">Geen template</option>
                                     <option
@@ -540,33 +542,19 @@
                                     >
                                         @{{ template.label }}
                                     </option>
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.error control-name="email_template" />
+                            </x-adminc::components.field>
 
-                            </x-admin::form.control-group>
 
                             <!-- Subject -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="subject"
-                                    name="subject"
-                                    rules="required"
-                                    v-model="draft.subject"
-                                    :label="trans('admin::app.mail.index.mail.subject')"
-                                    :placeholder="trans('admin::app.mail.index.mail.subject')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.mail.index.mail.subject')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.label>
-                                    Template
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="subject" />
-
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                id="subject"
+                                name="subject"
+                                rules="required"
+                                v-model="draft.subject"
+                                :label="trans('admin::app.mail.index.mail.subject')"
+                                :placeholder="trans('admin::app.mail.index.mail.subject')"
+                            />
 
                             <!-- Content -->
                             <x-admin::form.control-group>

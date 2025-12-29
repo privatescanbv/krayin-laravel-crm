@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Concerns;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\User\Models\User;
 use Webkul\Email\Models\Folder;
@@ -22,7 +23,7 @@ trait ConcatsEmailActivities
             return $activities;
         }
 
-        $mapped = $emails->map(function ($email) use ($user, $attachmentRepository) {
+        $mapped = $emails->map(function (Email $email) use ($user, $attachmentRepository) {
             $subject = $email->getThreadChain()->pluck('subject')
                 ->implode(' / ');
             return (object) [

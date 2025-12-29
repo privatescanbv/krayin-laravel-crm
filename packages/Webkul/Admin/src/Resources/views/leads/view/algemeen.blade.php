@@ -3,14 +3,6 @@
 @endphp
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
-    <!-- Stages Navigation -->
-    <!-- @ include ('admin::leads.view.stages') -->
-
-    {{-- <div
-        class="rounded-lg border border-neutral-border bg-neutral-muted p-6 text-sm text-gray-500 text-white dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-        notes:
-        - Wat als persoon meerdere telefoonnummers of e-mailadressen heeft? zo laten en alleen defaults tonen?
-    </div> --}}
 
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between gap-4">
@@ -30,17 +22,19 @@
             </div>
         </div>
     </div>
+
+    <!-- Stages Navigation -->
+    @include ('admin::leads.view.stages')
+
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between">
             <div class="direction-row flex items-center break-all">
 
-            <read-more
-    :text='@json($lead->description ?? "")'
-    :lines="5"
-/>
-
+                <read-more
+                    :text='@json($lead->description ?? "")'
+                    :lines="5"
+                />
             </div>
-
         </div>
     </div>
     <x-adminc::leads.compact-overview :lead="$lead" />

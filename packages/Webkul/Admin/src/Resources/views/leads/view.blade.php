@@ -34,17 +34,6 @@
                                 ]);
                             @endphp
                         @endif
-
-                        {!! view_render_event('admin.leads.view.tags.before', ['lead' => $lead]) !!}
-
-                        <!-- Tags -->
-                        {{-- <x-admin::tags
-                            :attach-endpoint="route('admin.leads.tags.attach', $lead->id)"
-                            :detach-endpoint="route('admin.leads.tags.detach', $lead->id)"
-                            :added-tags="$lead->tags"
-                        /> --}}
-
-                        {!! view_render_event('admin.leads.view.tags.after', ['lead' => $lead]) !!}
                     </div>
 
                     {!! view_render_event('admin.leads.view.title.before', ['lead' => $lead]) !!}
@@ -113,25 +102,8 @@
                         {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                     </div>
                 </div>
-
-                @if ($lead->hasContactPerson())
-                    <x-adminc::persons.card :person="$lead->contactPerson" show_actions="false" />
-                @endif
             </div>
             <div class="flex flex-col gap-1.5 border-none border-gray-200 p-4 dark:border-gray-800">
-
-                <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
-                    @{{ "Status change dropdown" }}
-                </div>
-{{--                <v-entity-selector--}}
-{{--                    name="Stage"--}}
-{{--                    label="Status"--}}
-{{--                    placeholder="Selecteer Stage..."--}}
-{{--                    search-route="/admin/stages/search"--}}
-{{--                    :multiple="false"--}}
-{{--                    :items="[]"--}}
-{{--                />--}}
-
                 <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
                     {{ ($lead->has_diagnosis_form ?? false) ? 'Aawezig': 'Niet aanwezig' }}
                 </div>
@@ -218,6 +190,7 @@
 
         <!-- Middle Panel -->
         <div class="flex w-full flex-col gap-4">
+
             <div v-if="leadDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::leads.view.algemeen', ['lead' => $lead])
             </div>

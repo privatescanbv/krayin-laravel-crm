@@ -5,5 +5,4 @@
     view-button-text="Bekijk persoon"
     :show-status-badge="false"
     :show-actions="$show_actions ?? true"
-    :age="$person->age"
 />

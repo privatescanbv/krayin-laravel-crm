@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Contact;
 
+use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Repositories\OrganizationRepository;
@@ -131,7 +132,7 @@ class PersonDataGrid extends DataGrid
                     return '-';
                 }
 
-                $birthDate = \Carbon\Carbon::parse($row->date_of_birth);
+                $birthDate = Carbon::parse($row->date_of_birth);
                 $age = $birthDate->age;
 
                 return $age . ' jaar';

@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Carbon; @endphp
 @props([
     'entity',
     'entityName' => 'entity',
@@ -8,7 +9,6 @@
     'showActions' => true,
     'age' => null
 ])
-
 <div class="relative">
     <!-- accent links -->
     {{-- <span class="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-indigo-600 dark:bg-indigo-500"></span> --}}
@@ -56,7 +56,7 @@
             <div
                class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                <span class="icon-calendar"></span>
-                <span class="text text-sm">geboortedatum laden met (xx jaar)</span>
+                <span class="text text-sm">{{ $entity->date_of_birth?->format('d-m-Y') }} ({{ $entity->age }} jaar)</span>
 
             </div>
 

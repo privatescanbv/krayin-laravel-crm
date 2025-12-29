@@ -123,12 +123,20 @@
                 <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
                     @{{ "Status change dropdown" }}
                 </div>
+{{--                <v-entity-selector--}}
+{{--                    name="Stage"--}}
+{{--                    label="Status"--}}
+{{--                    placeholder="Selecteer Stage..."--}}
+{{--                    search-route="/admin/stages/search"--}}
+{{--                    :multiple="false"--}}
+{{--                    :items="[]"--}}
+{{--                />--}}
 
                 <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
-                    @{{ "Diagnoseformulier ingevuld" }}
+                    {{ ($lead->has_diagnosis_form ?? false) ? 'Aawezig': 'Niet aanwezig' }}
                 </div>
                 <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
-                    @{{ "MRI Scan" }}
+                    {{ $lead->mri_status?->value ?? 'geen' }}
                 </div>
             </div>
 

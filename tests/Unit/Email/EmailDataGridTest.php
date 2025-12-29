@@ -35,8 +35,7 @@ test('query includes required select fields', function () {
         ->and($sql)->toContain('"emails"."created_at"')
         ->and($sql)->toContain('"emails"."parent_id"')
         ->and($sql)->toContain('"emails"."person_id"')
-        ->and($sql)->toContain('"emails"."lead_id"')
-        ->and($sql)->toContain('"emails"."activity_id"');
+        ->and($sql)->toContain('"emails"."lead_id"');
 });
 
 test('query includes required joins', function () {
@@ -52,8 +51,7 @@ test('query includes required joins', function () {
         ->and($sql)->toContain('left join "email_tags"')
         ->and($sql)->toContain('left join "tags"')
         ->and($sql)->toContain('left join "leads"')
-        ->and($sql)->toContain('left join "persons"')
-        ->and($sql)->toContain('left join "activities"');
+        ->and($sql)->toContain('left join "persons"');
 });
 
 test('query uses json contains for folder filtering', function () {

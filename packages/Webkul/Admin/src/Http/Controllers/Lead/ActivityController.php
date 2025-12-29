@@ -122,7 +122,6 @@ class ActivityController extends Controller
     public function index($id)
     {
             $activities = $this->activityRepository
-                ->with('emails')
                 ->where('lead_id', $id)
                 ->get();
 
@@ -130,7 +129,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Add email as activities
      */
     public function concatEmailAsActivities($leadId, $activities)
     {

@@ -342,7 +342,7 @@ class SalesLeadController extends Controller
     public function activities($id)
     {
         // Get activities related to this Sales (not paginated, same as lead activities)
-        $query = Activity::where('sales_lead_id', $id)->with('emails');
+        $query = Activity::where('sales_lead_id', $id);
 
         // Optional filter for efficiency: is_done=0 (open) or 1 (done)
         if (request()->has('is_done')) {

@@ -78,20 +78,12 @@
             <!-- Actions (same as lead, except file add) executed on related lead via popup -->
             <div class="p-4 border-b border-gray-200 dark:border-gray-800">
                 <div id="activity-view-actions" class="flex flex-wrap gap-2">
-                    @if ($activity->lead && bouncer()->hasPermission('mail.compose'))
-                        <x-admin::activities.actions.mail
-                            :entity="$activity->lead"
-                            entity-control-name="lead_id"
-                            :activity-id="$activity->id"
-                        />
-                    @endif
 
                     @if ($activity->lead && bouncer()->hasPermission('activities.create'))
                         <x-admin::activities.actions.note :entity="$activity->lead" entity-control-name="lead_id"/>
                         <x-admin::activities.actions.activity :entity="$activity->lead" entity-control-name="lead_id"/>
                     @endif
                 </div>
-
 
                 <!-- Activity Relations -->
                 @if($activity->lead || $activity->salesLead || $activity->clinic)

@@ -4,6 +4,7 @@
             attachmentDownload: '{{ route('admin.mail.attachment_download') }}',
             delete: '{{ route('admin.mail.delete', ':id') }}',
             move: '{{ route('admin.mail.move', ':id') }}',
+            updateStatus: '{{ route('admin.mail.update_status', ':id') }}',
             index: '{{ route('admin.mail.index', ['route' => 'FOLDER_NAME']) }}',
         };
     </script>
@@ -225,6 +226,15 @@
 
                             <i class="icon-folder text-2xl"></i>
                         </label>
+
+                        <label
+                            class="flex cursor-pointer items-center gap-2 text-brandColor"
+                            @click="emailAction('mark_as_unread')"
+                        >
+                            Markeren als ongelezen
+
+                            <i class="icon-mail text-2xl"></i>
+                        </label>
                     </div>
                 </template>
 
@@ -257,6 +267,7 @@
                         attachmentDownload: '',
                         delete: '',
                         move: '',
+                        updateStatus: '',
                         index: '',
                     },
                 };
@@ -278,6 +289,8 @@
                 emailAction(type) {
                     if (type == 'move') {
                         this.showMoveModal();
+                    } else if (type == 'mark_as_unread') {
+                        this.markAsUnread();
                     } else if (type != 'delete') {
                         this.$emit('on-email-action', {type, email: this.email});
                     } else {
@@ -297,6 +310,23 @@
                             }
                         });
                     }
+                },
+
+                markAsUnread() {
+                    this.$emitter.emit('add-flash', { type: 'info', message: 'Markeren als ongelezen...' });
+
+                    this.$axios.put(this.routes.updateStatus.replace(':id', this.email.id), {
+                        is_read: 0
+                    })
+                    .then ((response) => {
+                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                        // Redirect to index (inbox) because viewing an unread email usually marks it as read again
+                        window.location.href = this.routes.index.replace('FOLDER_NAME', 'inbox');
+                    })
+                    .catch ((error) => {
+                         this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                    });
                 },
 
                 showMoveModal() {

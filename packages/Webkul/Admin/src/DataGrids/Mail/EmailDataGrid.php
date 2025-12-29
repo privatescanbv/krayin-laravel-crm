@@ -5,12 +5,7 @@ namespace Webkul\Admin\DataGrids\Mail;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
-use Throwable;
-use Webkul\Activity\Models\Activity;
-use Webkul\Contact\Models\Person;
 use Webkul\DataGrid\DataGrid;
-use Webkul\Email\Repositories\EmailRepository;
-use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Repositories\TagRepository;
 
 class EmailDataGrid extends DataGrid
@@ -47,7 +42,6 @@ class EmailDataGrid extends DataGrid
                 'emails.person_id',
                 'emails.lead_id',
                 'emails.sales_lead_id',
-                'emails.activity_id',
                 // Preload related entity names to avoid N+1 queries
                 // For leads: select individual name fields to construct name in closure
                 'leads.first_name as lead_first_name',
@@ -62,14 +56,12 @@ class EmailDataGrid extends DataGrid
                 'persons.married_name_prefix as person_married_name_prefix',
                 'persons.married_name as person_married_name',
                 DB::raw('salesleads.name as sales_name'),
-                'activities.title as activity_title',
                 // Aggregate tags and attachments
                 DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
                 DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
                 // Add entity information
                 DB::raw('CASE
                     WHEN emails.person_id IS NOT NULL THEN "person"
-                    WHEN emails.activity_id IS NOT NULL THEN "activity"
                     WHEN emails.lead_id IS NOT NULL THEN "lead"
                     WHEN emails.sales_lead_id IS NOT NULL THEN "sales"
                     ELSE "N/A"
@@ -82,13 +74,11 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('leads', 'emails.lead_id', '=', 'leads.id')
             ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
-            ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
             ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
             ->groupBy(
                 'emails.id',
                 'leads.first_name', 'leads.lastname_prefix', 'leads.last_name', 'leads.married_name_prefix', 'leads.married_name',
                 'persons.first_name', 'persons.lastname_prefix', 'persons.last_name', 'persons.married_name_prefix', 'persons.married_name',
-                'activities.title',
                 'emails.is_read',
                 'emails.created_at'
             )
@@ -204,7 +194,6 @@ class EmailDataGrid extends DataGrid
                 ['label' => 'Lead', 'value' => 'lead'],
                 ['label' => 'Persoon', 'value' => 'person'],
                 ['label' => 'Sales', 'value' => 'sales'],
-                ['label' => 'Activiteit', 'value' => 'activity'],
                 ['label' => 'N/A', 'value' => 'N/A'],
             ],
             'closure'    => function ($row) {
@@ -259,11 +248,6 @@ class EmailDataGrid extends DataGrid
                             $parts[] = '/ '.implode(' ', array_filter($marriedParts));
                         }
                         $display = !empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->person_id);
-                        $label = e($display);
-                        break;
-                    case 'activity':
-                        $route = route('admin.activities.view', $row->activity_id);
-                        $display = $row->activity_title ?: ('#'.$row->activity_id);
                         $label = e($display);
                         break;
                     case 'sales':

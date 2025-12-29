@@ -97,7 +97,6 @@ class ActivityController extends Controller
     public function index($id)
     {
         $activities = $this->activityRepository
-            ->with('emails')
             ->where('clinic_id', $id)
             ->get();
 

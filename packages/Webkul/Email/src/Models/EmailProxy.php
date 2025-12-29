@@ -11,5 +11,5 @@ class EmailProxy extends ModelProxy
      *
      * @var string
      */
-    protected $modelClass = \Webkul\Email\Models\Email::class;
+    protected $modelClass = Email::class;
 }

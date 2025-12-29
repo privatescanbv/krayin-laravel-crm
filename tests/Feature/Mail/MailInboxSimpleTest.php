@@ -81,7 +81,6 @@ test('email datagrid includes required joins', function () {
         'left join "tags"',
         'left join "leads"',
         'left join "persons"',
-        'left join "activities"',
     ];
 
     foreach ($requiredJoins as $join) {

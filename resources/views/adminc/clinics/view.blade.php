@@ -110,7 +110,6 @@
                     <template #activities>
                         <x-admin::activities
                             :endpoint="route('admin.clinics.activities.index', $clinic->id)"
-                            :activeType="'planned'"
                         />
                     </template>
 

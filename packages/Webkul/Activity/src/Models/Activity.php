@@ -12,7 +12,6 @@ use App\Enums\ActivityType;
 use App\Enums\ActivityStatus;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Models\PersonProxy;
-use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
 use Webkul\User\Models\GroupProxy;
@@ -116,14 +115,6 @@ class Activity extends Model implements ActivityContract
     public function clinic()
     {
         return $this->belongsTo(Clinic::class);
-    }
-
-    /**
-     * Get the emails associated with the activity.
-     */
-    public function emails()
-    {
-        return $this->hasMany(EmailProxy::modelClass(), 'activity_id');
     }
 
     /**

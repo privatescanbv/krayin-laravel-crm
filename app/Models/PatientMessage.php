@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PatientMessageSenderType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\User\Models\UserProxy;
 
@@ -38,6 +39,6 @@ class PatientMessage extends Model
 
     public function activity()
     {
-        return $this->belongsTo(\Webkul\Activity\Models\Activity::class, 'activity_id');
+        return $this->belongsTo(Activity::class, 'activity_id');
     }
 }

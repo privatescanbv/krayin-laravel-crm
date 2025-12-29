@@ -120,7 +120,7 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with('emails', 'lead', 'workflowLead', 'clinic')->findOrFail($id);
+        $activity = $this->activityRepository->with('lead', 'workflowLead', 'clinic')->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
@@ -219,7 +219,7 @@ class ActivityController extends Controller
      */
     public function edit(int $id): View
     {
-        $activity = $this->activityRepository->with('emails')->findOrFail($id);
+        $activity = $this->activityRepository->findOrFail($id);
 
         $groups = app(GroupRepository::class)->all();
 

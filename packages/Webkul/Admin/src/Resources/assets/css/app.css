@@ -153,6 +153,10 @@
         text-decoration: none !important;
     }
 
+    .icon-patient-message:before {
+        content: "\e90a"; /* zelfde glyph als .icon-message */
+    }
+
     .icon-image:before {
         content: "\e956";
     }

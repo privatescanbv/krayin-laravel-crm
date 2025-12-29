@@ -3,7 +3,6 @@
 namespace Webkul\Activity\Repositories;
 
 use App\Helpers\DatabaseHelper;
-use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -83,12 +82,7 @@ class ActivityRepository extends Repository
         return $activity;
     }
 
-    /**
-     * @param string $dateRange
-     * @param string|null $view
-     * @return mixed
-     */
-    public function getActivities($dateRange, $view = null)
+    public function getActivities(array $dateRange, ?string $view = null)
     {
         $query = $this->select(
             'activities.id',

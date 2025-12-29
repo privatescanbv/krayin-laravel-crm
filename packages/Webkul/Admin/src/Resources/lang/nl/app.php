@@ -158,7 +158,7 @@ return [
                 'by-user' => 'Door :user',
                 'calls' => 'Gesprekken',
                 'cc' => 'CC',
-                'change-log' => 'Wijzigingslog',
+                'change-log' => 'Logboek',
                 'delete' => 'Verwijderen',
                 'edit' => 'Bewerken',
                 'emails' => 'E-mails',

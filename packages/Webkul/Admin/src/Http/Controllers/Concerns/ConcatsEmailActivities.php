@@ -23,12 +23,14 @@ trait ConcatsEmailActivities
         }
 
         $mapped = $emails->map(function ($email) use ($user, $attachmentRepository) {
+            logger()->info('mapping mail '.$email->subject . ', is read ='.$email->is_read);
             return (object) [
                 'id'            => $email->id,
                 'parent_id'     => $email->parent_id,
                 'title'         => $email->subject,
                 'type'          => 'email',
                 'is_done'       => 1,
+                'is_read'       => $email->is_read,
                 'comment'       => $email->reply,
                 'schedule_from' => null,
                 'schedule_to'   => null,
@@ -53,7 +55,7 @@ trait ConcatsEmailActivities
                         'updated_at'          => $attachment->updated_at,
                     ];
                 })->toArray(),
-                'emailLinkedEntityType' => $email->activity_id ? 'activity' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))),
+                'emailLinkedEntityType' => ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))),
                 'created_at'    => $email->created_at,
                 'updated_at'    => $email->updated_at,
             ];

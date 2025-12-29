@@ -8,6 +8,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Gekoppelde
                 E-mails</h3>
             <div class="space-y-3">
+                {{--
                 @foreach($activity->emails as $email)
                     <div
                         class="flex items-start gap-3 p-3 rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
@@ -44,6 +45,7 @@
                         </div>
                     </div>
                 @endforeach
+                --}}
             </div>
         </div>
 

@@ -102,7 +102,7 @@ class EmailController extends Controller
     {
         try {
             $email = $this->emailRepository
-                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead', 'clinic'])
+                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'salesLead', 'clinic'])
                 ->findOrFail(request('id'));
 
             if (request('route') == 'draft') {
@@ -140,11 +140,6 @@ class EmailController extends Controller
 
         // Get all request data including activity_id if provided
         $data = request()->all();
-
-        // Ensure activity_id is included if provided
-        if (request()->has('activity_id')) {
-            $data['activity_id'] = request()->input('activity_id');
-        }
 
         $email = $this->emailRepository->create($data);
 
@@ -244,6 +239,29 @@ class EmailController extends Controller
         session()->flash('success', trans('admin::app.mail.update-success'));
 
         return redirect()->back();
+    }
+
+    /**
+     * Update the email status.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(int $id): JsonResponse
+    {
+        $this->validate(request(), [
+            'is_read' => 'required|boolean',
+        ]);
+
+        $email = $this->emailRepository->findOrFail($id);
+
+        $this->emailRepository->update([
+            'is_read' => request('is_read'),
+        ], $id);
+
+        return response()->json([
+            'message' => trans('admin::app.mail.update-success'),
+        ]);
     }
 
     /**
@@ -937,16 +955,16 @@ class EmailController extends Controller
     {
         // First interpolate variables in the template content
         $interpolatedContent = $this->interpolateTemplate($template->content, $variables);
-        
+
         // Create a temporary template object with interpolated content for the Blade view
         $templateWithInterpolatedContent = clone $template;
         $templateWithInterpolatedContent->content = $interpolatedContent;
-        
+
         // Render the Blade view with the interpolated content (not escaped)
         $htmlContent = \Illuminate\Support\Facades\View::make('adminc.emails.mail-template', [
             'template' => $templateWithInterpolatedContent,
         ])->render();
-        
+
         // Apply CSS inlining
         return $this->emailRenderingService->rendInlineCss($htmlContent);
     }
@@ -1117,4 +1135,3 @@ class EmailController extends Controller
         return null;
     }
 }
-

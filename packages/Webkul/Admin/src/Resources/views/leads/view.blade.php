@@ -149,7 +149,7 @@
                         :class="leadDetailSection === 'algemeen'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="leadDetailSection = 'algemeen'"
+                        @click="setSection('algemeen')"
                     >
                         Algemeen
                     </button>
@@ -160,7 +160,7 @@
                         :class="leadDetailSection === 'activiteiten'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="leadDetailSection = 'activiteiten'"
+                        @click="setSection('activiteiten')"
                     >
                         Activiteiten
                     </button>
@@ -171,7 +171,7 @@
                         :class="leadDetailSection === 'anamnese'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="leadDetailSection = 'anamnese'"
+                        @click="setSection('anamnese')"
                     >
                         Anamnese
                     </button>
@@ -182,7 +182,7 @@
                         :class="leadDetailSection === 'marketing'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                        @click="leadDetailSection = 'marketing'"
+                        @click="setSection('marketing')"
                     >
                         Marketing
                     </button>
@@ -378,6 +378,26 @@
                             isRightColumnCollapsed: true,
                         };
                     },
+
+                    mounted() {
+                        if (window.location.hash) {
+                            let hash = window.location.hash.substring(1); // Remove '#'
+
+                            // Valid sections
+                            const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing'];
+
+                            if (validSections.includes(hash)) {
+                                this.leadDetailSection = hash;
+                            }
+                        }
+                    },
+
+                    methods: {
+                        setSection(section) {
+                            this.leadDetailSection = section;
+                            window.location.hash = section;
+                        }
+                    }
                 });
             }
         });

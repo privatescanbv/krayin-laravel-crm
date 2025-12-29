@@ -160,7 +160,7 @@
                         >
                             <div class="flex flex-col gap-2">
                                 <div class="border-b dark:border-gray-800">
-                                    <!-- Activity Type -->
+                                    <!-- parent Type -->
                                     <x-admin::form.control-group.control
                                         type="hidden"
                                         name="parent_id"

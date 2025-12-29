@@ -3,6 +3,8 @@
 namespace Webkul\Email\Models;
 
 use App\Helpers\ValueNormalizer;
+use App\Models\Clinic;
+use App\Models\SalesLead;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Throwable;
@@ -72,7 +74,6 @@ class Email extends Model implements EmailContract
         'lead_id',
         'sales_lead_id',
         'clinic_id',
-        'activity_id',
         'created_at',
         'updated_at',
     ];
@@ -113,7 +114,7 @@ class Email extends Model implements EmailContract
      */
     public function salesLead()
     {
-        return $this->belongsTo(\App\Models\SalesLead::class, 'sales_lead_id');
+        return $this->belongsTo(SalesLead::class, 'sales_lead_id');
     }
 
     /**
@@ -121,7 +122,7 @@ class Email extends Model implements EmailContract
      */
     public function clinic()
     {
-        return $this->belongsTo(\App\Models\Clinic::class);
+        return $this->belongsTo(Clinic::class);
     }
 
     /**
@@ -154,14 +155,6 @@ class Email extends Model implements EmailContract
     public function attachments()
     {
         return $this->hasMany(AttachmentProxy::modelClass(), 'email_id');
-    }
-
-    /**
-     * Get the activity associated with this email.
-     */
-    public function activity()
-    {
-        return $this->belongsTo(Activity::class, 'activity_id');
     }
 
     /**

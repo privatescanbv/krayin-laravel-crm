@@ -19,6 +19,8 @@ Route::prefix('mail')->group(function () {
 
         Route::put('edit/{id}', 'update')->name('admin.mail.update');
 
+        Route::put('update-status/{id}', 'updateStatus')->name('admin.mail.update_status');
+
         Route::get('attachment-download/{id?}', 'download')->name('admin.mail.attachment_download');
 
         Route::post('mass-update', 'massUpdate')->name('admin.mail.mass_update');

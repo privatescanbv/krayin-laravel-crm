@@ -1,7 +1,7 @@
 @props([
     'endpoint',
     'emailDetachEndpoint' => null,
-    'activeType'          => 'all',
+    'activeType'          => 'action_needed',
     'types'               => null,
     'extraTypes'          => null,
 ])
@@ -40,13 +40,39 @@
             {!! view_render_event('admin.components.activities.content.before') !!}
 
             <div class="w-full rounded-md border bg-white dark:border-gray-800 dark:bg-gray-900">
-                <div class="flex gap-2 overflow-x-auto border-b border-gray-200 dark:border-gray-800">
+                <!-- Main Tabs -->
+                <div class="flex gap-4 overflow-x-auto border-b border-gray-200 px-4 dark:border-gray-800">
                     {!! view_render_event('admin.components.activities.content.types.before') !!}
 
+                    <!-- Action Needed Tab -->
+                    <div
+                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
+                        :class="selectedType == 'action_needed' ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
+                        @click="selectedType = 'action_needed'"
+                    >
+                        Actie nodig
+                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
+                            @{{ countActionNeeded }}
+                        </span>
+                    </div>
+
+                    <!-- Inbox Tab -->
+                    <div
+                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
+                        :class="selectedType == 'inbox' ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
+                        @click="selectedType = 'inbox'"
+                    >
+                        Inbox
+                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
+                            @{{ countInbox }}
+                        </span>
+                    </div>
+
+                    <!-- Other Tabs -->
                     <div
                         v-for="type in types"
-                        class="cursor-pointer px-3 py-2.5 text-sm font-medium dark:text-white"
-                        :class="{'border-brandColor border-b-2 !text-brandColor transition': selectedType == type.name }"
+                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
+                        :class="selectedType == type.name ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
                         @click="selectedType = type.name"
                     >
                         @{{ type.label }}
@@ -55,405 +81,112 @@
                     {!! view_render_event('admin.components.activities.content.types.after') !!}
                 </div>
 
-                <!-- Show Default Activities if selectedType not in extraTypes -->
-                <template v-if="! extraTypes.find(type => type.name == selectedType)">
-                    <div class="animate-[on-fade_0.5s_ease-in-out] p-4">
-                        {!! view_render_event('admin.components.activities.content.activity.list.before') !!}
+                <div class="p-4">
+                    <!-- Sub Tabs for All -->
+                    <div v-if="selectedType == 'all'" class="mb-4 flex gap-2 overflow-x-auto pb-2">
+                        <div
+                            class="cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                            :class="activityTypeFilter == 'all' ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600' : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
+                            @click="activityTypeFilter = 'all'"
+                        >
+                            @lang('admin::app.components.activities.index.all')
+                        </div>
 
-                        <!-- Activity List -->
-                        <div class="flex flex-col gap-4">
-                            {!! view_render_event('admin.components.activities.content.activity.item.before') !!}
+                        <div
+                            v-for="type in filterTypes.filter(t => t.name !== 'patient_message')"
+                            class="cursor-pointer whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                            :class="activityTypeFilter == type.name ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600' : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
+                            @click="activityTypeFilter = type.name"
+                        >
+                            @{{ type.label }}
+                        </div>
+                    </div>
 
-                            <!-- Activity Item -->
+                    <div v-if="selectedType == 'inbox'" class="mb-4 flex gap-2 overflow-x-auto pb-2">
+                        <div
+                            class="cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                            :class="activityTypeFilter == 'all' ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600' : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
+                            @click="activityTypeFilter = 'all'"
+                        >
+                            @lang('admin::app.components.activities.index.all')
+                        </div>
+
+                        <div class="flex gap-2 overflow-x-auto">
                             <div
-                                class="flex gap-2"
-                                v-for="(activity, index) in filteredActivities"
+                                class="cursor-pointer whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                                :class="activityTypeFilter === 'email'
+            ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600'
+            : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
+                                @click="activityTypeFilter = 'email'"
                             >
-                                {!! view_render_event('admin.components.activities.content.activity.item.icon.before') !!}
+                                E-mail
+                            </div>
 
-                                <!-- Activity Icon -->
+                            <div
+                                class="cursor-pointer whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                                :class="activityTypeFilter === 'patient_message'
+            ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600'
+            : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
+                                @click="activityTypeFilter = 'patient_message'"
+                            >
+                                Patientberichten
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Show Default Activities -->
+                    <template v-if="['action_needed', 'inbox', 'planned', 'all', 'system'].includes(selectedType)">
+                        <div class="animate-[on-fade_0.5s_ease-in-out]">
+                            {!! view_render_event('admin.components.activities.content.activity.list.before') !!}
+
+                            <!-- Activity List -->
+                            <div class="flex flex-col gap-4">
+                                {!! view_render_event('admin.components.activities.content.activity.item.before') !!}
+
+                                <!-- Activity Item -->
+                                @include('admin::components.activities.activity-item')
+
+                                {!! view_render_event('admin.components.activities.content.activity.item.after') !!}
+
+                                <!-- Empty Placeholder -->
                                 <div
-                                    class="mt-2 flex h-9 min-h-9 w-9 min-w-9 items-center justify-center rounded-full text-xl"
-                                    :class="typeClasses[activity.type] ?? typeClasses['default']"
+                                    class="grid justify-center justify-items-center gap-3.5 py-12"
+                                    v-if="! filteredActivities.length"
                                 >
-                                </div>
+                                    <img
+                                        class="dark:mix-blend-exclusion dark:invert"
+                                        :src="typeIllustrations[selectedType]?.image ?? typeIllustrations['all'].image"
+                                    >
 
-                                {!! view_render_event('admin.components.activities.content.activity.item.icon.after') !!}
-
-                                {!! view_render_event('admin.components.activities.content.activity.item.details.before') !!}
-
-                                <!-- Activity Details -->
-                                <div
-                                    class="flex w-full justify-between gap-4 rounded-md p-4"
-                                    :class="{'bg-neutral-bg dark:bg-gray-950': index % 2 != 0 }"
-                                >
-                                    <div class="flex flex-col gap-2">
-                                        {!! view_render_event('admin.components.activities.content.activity.item.title.before') !!}
-
-                                        <!-- Activity Title -->
-                                        <div
-                                            class="flex flex-col gap-1"
-                                            v-if="activity.title"
-                                        >
-                                            <template v-if="activity.type !== 'system'">
-                                                <a
-                                                    class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
-                                                    :class="{
-                                                        'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                        'text-status-expired-text dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from)
-                                                    }"
-                                                    :href="
-                                                        activity.type == 'email'
-                                                        ? ('{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id))
-                                                        : ('{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : ''))
-                                                    "
-                                                >
-                                                    @{{ activity.title }}
-                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-1 icon-tick text-status-active-text text-base" title="Afgerond"></span>
-                                                    <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
-                                                        <span class="icon-activity text-[10px]"></span>
-                                                    </span>
-                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'person'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-2 00" title="E-mail gekoppeld aan persoon">
-                                                        <span class="icon-contact text-[10px]"></span>
-                                                    </span>
-                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'" class="icon-activity text-xs text-activity-note-text ml-1" title="E-mail gekoppeld aan activiteit"></span>
-                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'" class="icon-activity text-xs text-activity-note-text ml-1" title="E-mail gekoppeld aan sales"></span>
-                                                    <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-activity-note-text ml-1" title="E-mail gekoppeld aan onbekend"></span>
-
-
-                                                    <!-- Status chip hidden per requirement -->
-                                                </a>
-                                                <div v-if="activity.schedule_from" class="text-sm" :class="{
-                                                    'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                    'text-status-expired-text dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from ),
-                                                    'text-gray-600 dark:text-gray-300': !(isToday(activity.schedule_from) || isPast(activity.schedule_from))
-                                                }">
-                                                    Ingepland vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
-                                                </div>
-                                            </template>
-
-                                            <template v-else>
-                                                <div class="flex flex-wrap items-center gap-1 font-medium dark:text-white">
-                                                    @{{ activity.title }}
-                                                </div>
-                                            </template>
-
-                                            <template v-if="activity.type == 'system' && activity.additional">
-                                                <p class="flex items-center gap-1">
-                                                    <span class="break-words">
-                                                        @{{ truncate(activity.additional?.old?.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')" , 60) }}
-                                                    </span>
-
-                                                    <span class="icon-stats-up rotate-90 text-xl"></span>
-
-                                                    <span class="break-words">
-                                                        @{{ truncate(activity.additional?.new?.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')" , 60) }}
-                                                    </span>
-                                                </p>
-
-                                                <p class="mt-1" v-if="activity.additional?.link">
-                                                    <a :href="activity.additional.link" class="text-activity-note-text hover:underline" target="_blank">
-                                                        @{{ activity.additional.link_label || 'Bekijk' }}
-                                                    </a>
-                                                </p>
-                                            </template>
-                                        </div>
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.title.after') !!}
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.description.before') !!}
-
-                                        <!-- Activity Description -->
-                                        <p
-                                            class="dark:text-white"
-                                            v-if="activity.comment"
-                                        >
-                                            <span v-if="activity.type === 'email'">
-                                                @{{ truncateHtml(activity.comment, 150) }}
-                                            </span>
-                                            <span v-else v-safe-html="activity.comment"></span>
+                                    <div class="flex flex-col items-center gap-2">
+                                        <p class="text-xl font-semibold dark:text-white">
+                                            @{{ typeIllustrations[selectedType]?.title ?? typeIllustrations['all'].title }}
                                         </p>
 
-                                        <!-- Call status summary/details -->
-                                        <template v-if="activity.type === 'call' && activity.call_statuses?.length">
-                                            <div class="mt-1 text-sm">
-                                                <div v-if="activity.call_statuses?.length" class="mb-1">
-                                                    <span class="font-medium flex items-center gap-1">Laatste: <call-status-icon :status="activity.call_statuses[activity.call_statuses.length - 1].status" size="w-4 h-4"></call-status-icon> @{{ getCallStatusLabel(activity.call_statuses[activity.call_statuses.length - 1].status) }} <span class="text-gray-500">(@{{ $admin.formatDate(activity.call_statuses[activity.call_statuses.length - 1].created_at, 'd MMM yyyy, hh:mm', timezone) }})</span></span>
-                                                </div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
-                                                    <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>
-                                                    <span class="px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800">Gesproken: @{{ activity.call_status_summary.spoken }}</span>
-                                                    <button type="button" class="text-activity-note-text hover:underline" @click="activity.__showCallDetails = !activity.__showCallDetails">@{{ activity.__showCallDetails ? 'Verberg' : 'Details' }}</button>
-                                                </div>
-                                                <div v-if="activity.__showCallDetails && activity.call_statuses?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
-                                                    <div v-for="cs in activity.call_statuses" :key="cs.created_at" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
-                                                        <div class="flex justify-between items-center">
-                                                            <div class="flex items-center gap-2">
-                                                                <call-status-icon :status="cs.status" size="w-4 h-4"></call-status-icon>
-                                                                <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
-                                                            </div>
-                                                            <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, hh:mm', timezone) }}</span>
-                                                        </div>
-                                                        <div v-if="cs.omschrijving" class="text-gray-600 dark:text-gray-300">@{{ cs.omschrijving }}</div>
-                                                        <div v-if="cs.creator" class="text-gray-500">door @{{ cs.creator.name }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                        <!-- Email summary/details -->
-                                        <template v-if="activity.emails && activity.emails.length > 0">
-                                            <div class="mt-1 text-sm">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-0.5 rounded bg-blue-100 text-activity-task-text dark:bg-blue-900 dark:text-blue-300">
-                                                        <span class="icon-mail text-xs mr-1"></span>
-                                                        @{{ activity.emails.length }} @{{ activity.emails.length === 1 ? 'e-mail' : 'e-mails' }}
-                                                    </span>
-                                                    <button type="button" class="text-activity-note-text hover:underline" @click="activity.__showEmailDetails = !activity.__showEmailDetails">@{{ activity.__showEmailDetails ? 'Verberg' : 'Details' }}</button>
-                                                </div>
-                                                <div v-if="activity.__showEmailDetails && activity.emails?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
-                                                    <div v-for="email in activity.emails" :key="email.id" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
-                                                        <div class="flex justify-between items-center">
-                                                            <div class="flex items-center gap-2">
-                                                                <span class="icon-mail text-activity-note-text text-xs"></span>
-                                                                <template v-if="email.lead_id || (email.additional && email.additional.__source === 'lead')">
-                                                                    <span class="ml-0.5 inline-flex items-center gap-1 text-[10px] px-1 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="Lead">
-                                                                        <span class="icon-activity text-[10px]"></span>
-                                                                        Lead
-                                                                    </span>
-                                                                </template>
-                                                                <template v-else-if="email.person_id || (email.additional && email.additional.__source === 'person')">
-                                                                    <span class="ml-0.5 inline-flex items-center gap-1 text-[10px] px-1 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="Persoon">
-                                                                        <span class="icon-contact text-[10px]"></span>
-                                                                        Persoon
-                                                                    </span>
-                                                                </template>
-                                                                <template v-else>
-                                                                    <span class="icon-activity text-[10px] text-activity-note-text" title="Activiteit"></span>
-                                                                </template>
-                                                                <span class="font-medium truncate max-w-[200px]" :title="email.subject || 'Geen onderwerp'">
-                                                                    @{{ email.subject || 'Geen onderwerp' }}
-                                                                    <span v-if="email && (email.is_read === 0 || email.is_read === false || email.is_read === '0')" class="inline-block h-1.5 w-1.5 rounded-full bg-sky-600 align-middle ml-1 dark:bg-white"></span>
-                                                                </span>
-                                                            </div>
-                                                            <span>@{{ $admin.formatDate(email.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>
-                                                        </div>
-                                                        <div class="flex items-center gap-2 mt-1">
-                                                            <a
-                                                                :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
-                                                                class="text-activity-note-text hover:underline text-xs"
-                                                                target="_blank"
-                                                            >
-                                                                E-mail bekijken
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.description.after') !!}
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.attachments.before') !!}
-
-                                        <!-- Attachments -->
-                                        <div
-                                            class="flex flex-wrap gap-2"
-                                            v-if="activity.files.length"
-                                        >
-                                            <a
-                                                :href="
-                                                    (file.is_email_attachment || activity.type === 'email')
-                                                    ? `{{ route('admin.mail.attachment_download', 'replaceID') }}`.replace('replaceID', file.id)
-                                                    : `{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id)
-                                                "
-                                                class="flex cursor-pointer items-center gap-1 rounded-md p-1.5"
-                                                target="_blank"
-                                                v-for="(file, index) in activity.files"
-                                            >
-                                                <span class="icon-attached-file text-xl"></span>
-
-                                                <span class="font-medium text-brandColor">
-                                                    @{{ file.name }}
-                                                </span>
-                                            </a>
-                                        </div>
-
-                                        <!-- Linked Emails -->
-                                        <div
-                                            class="flex flex-col gap-1 mt-2"
-                                            v-if="activity.emails && activity.emails.length > 0"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2"
-                                                v-for="email in activity.emails"
-                                                :key="email.id"
-                                            >
-                                                <span class="icon-mail text-status-active-text"></span>
-                                                <a
-                                                    :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
-                                                    class="text-sm text-status-active-text hover:underline"
-                                                    target="_blank"
-                                                >
-                                                    @{{ email.subject || 'E-Mail bekijken' }}
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.attachments.after') !!}
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.time_and_user.before') !!}
-
-                                        <!-- Activity Time and User -->
-                                        <div class="text-gray-500 dark:text-gray-300">
-                                            @{{ $admin.formatDate(activity.created_at, 'd MMM yyyy, h:mm A', timezone) }},
-
-                                            Toegewezen aan: @{{ activity.user?.name ?? '-' }}
-                                        </div>
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.time_and_user.after') !!}
+                                        <p class="text-gray-400 dark:text-gray-400">
+                                            @{{ typeIllustrations[selectedType]?.description ?? typeIllustrations['all'].description }}
+                                        </p>
                                     </div>
-
-                                    {!! view_render_event('admin.components.activities.content.activity.item.more_actions.before') !!}
-
-                                    <!-- Activity More Options -->
-                                    <template v-if="activity.type != 'system'">
-                                        {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.after') !!}
-
-                                        <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
-                                            <x-slot:toggle>
-                                                {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.toggle.before') !!}
-
-                                                <template v-if="! isUpdating[activity.id]">
-                                                    <button
-                                                        class="icon-more flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
-                                                    ></button>
-                                                </template>
-
-                                                <template v-else>
-                                                    <x-admin::spinner />
-                                                </template>
-
-                                                {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.toggle.after') !!}
-                                            </x-slot>
-
-                                            <x-slot:menu class="!min-w-40">
-                                                {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.menu_item.before') !!}
-
-                                                <template v-if="activity.type != 'email'">
-                                                    @if (bouncer()->hasPermission('activities.edit'))
-                                                        <x-admin::dropdown.menu.item
-                                                            v-if="! activity.is_done && ['call', 'meeting', 'task'].includes(activity.type)"
-                                                            @click="markAsDone(activity)"
-                                                        >
-                                                            <div class="flex items-center gap-2">
-                                                                <span class="icon-tick text-2xl"></span>
-
-                                                                @lang('admin::app.components.activities.index.mark-as-done')
-                                                            </div>
-                                                        </x-admin::dropdown.menu.item>
-
-                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'task'].includes(activity.type)">
-                                                            <a
-                                                                class="flex items-center gap-2"
-                                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : '')"
-                                                                target="_blank"
-                                                            >
-                                                                <span class="icon-edit text-2xl"></span>
-
-                                                                @lang('admin::app.components.activities.index.edit')
-                                                            </a>
-                                                        </x-admin::dropdown.menu.item>
-                                                    @endif
-
-                                                    @if (bouncer()->hasPermission('activities.delete'))
-                                                        <x-admin::dropdown.menu.item @click="remove(activity)">
-                                                            <div class="flex items-center gap-2">
-                                                                <span class="icon-delete text-2xl"></span>
-
-                                                                @lang('admin::app.components.activities.index.delete')
-                                                            </div>
-                                                        </x-admin::dropdown.menu.item>
-                                                    @endif
-                                                </template>
-
-                                                <template v-else>
-                                                    @if (bouncer()->hasPermission('mail.view'))
-                                                        <x-admin::dropdown.menu.item>
-                                                            <a
-                                                                :href="'{{ route('admin.mail.view', ['route' => 'replaceFolder', 'id' => 'replaceMailId']) }}'.replace('replaceFolder', activity.folder_name || 'inbox').replace('replaceMailId', activity.id)"
-                                                                class="flex items-center gap-2"
-                                                                target="_blank"
-                                                            >
-                                                                <span class="icon-eye text-2xl"></span>
-
-                                                                @lang('admin::app.components.activities.index.view')
-                                                            </a>
-                                                        </x-admin::dropdown.menu.item>
-                                                    @endif
-
-                                                    <x-admin::dropdown.menu.item @click="unlinkEmail(activity)">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="icon-attachment text-2xl"></span>
-
-                                                            @lang('admin::app.components.activities.index.unlink')
-                                                        </div>
-                                                    </x-admin::dropdown.menu.item>
-                                                </template>
-
-                                                {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.menu_item.after') !!}
-                                            </x-slot>
-                                        </x-admin::dropdown>
-
-                                        {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.after') !!}
-                                    </template>
-
-                                    {!! view_render_event('admin.components.activities.content.activity.item.more_actions.after') !!}
-                                </div>
-
-                                {!! view_render_event('admin.components.activities.content.activity.item.details.after') !!}
-                            </div>
-
-                            {!! view_render_event('admin.components.activities.content.activity.item.after') !!}
-
-                            <!-- Empty Placeholder -->
-                            <div
-                                class="grid justify-center justify-items-center gap-3.5 py-12"
-                                v-if="! filteredActivities.length"
-                            >
-                                <img
-                                    class="dark:mix-blend-exclusion dark:invert"
-                                    :src="typeIllustrations[selectedType]?.image ?? typeIllustrations['all'].image"
-                                >
-
-                                <div class="flex flex-col items-center gap-2">
-                                    <p class="text-xl font-semibold dark:text-white">
-                                        @{{ typeIllustrations[selectedType]?.title ?? typeIllustrations['all'].title }}
-                                    </p>
-
-                                    <p class="text-gray-400 dark:text-gray-400">
-                                        @{{ typeIllustrations[selectedType]?.description ?? typeIllustrations['all'].description }}
-                                    </p>
                                 </div>
                             </div>
+
+                            {!! view_render_event('admin.components.activities.content.activity.list.after') !!}
                         </div>
-
-                        {!! view_render_event('admin.components.activities.content.activity.list.after') !!}
-                    </div>
-                </template>
-
-                <template v-else>
-                    <template v-for="type in extraTypes">
-                        {!! view_render_event('admin.components.activities.content.activity.extra_types.before') !!}
-
-                        <div v-show="selectedType == type.name">
-                            <slot :name="type.name"></slot>
-                        </div>
-
-                        {!! view_render_event('admin.components.activities.content.activity.extra_types.after') !!}
                     </template>
-                </template>
+
+                    <template v-else>
+                        <template v-for="type in extraTypes">
+                            {!! view_render_event('admin.components.activities.content.activity.extra_types.before') !!}
+
+                            <div v-show="selectedType == type.name">
+                                <slot :name="type.name"></slot>
+                            </div>
+
+                            {!! view_render_event('admin.components.activities.content.activity.extra_types.after') !!}
+                        </template>
+                    </template>
+                </div>
             </div>
 
             {!! view_render_event('admin.components.activities.content.after') !!}
@@ -477,7 +210,7 @@
 
                 activeType: {
                     type: String,
-                    default: 'all',
+                    default: 'action_needed',
                 },
 
                 types: {
@@ -487,19 +220,28 @@
                             name: 'planned',
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
                         },
-                        @foreach (App\Enums\ActivityType::cases() as $type)
-                            {
-                                name: '{{ $type->value }}',
-                                label: '{{ $type->label() }}',
-                            },
-                        @endforeach
                         {
-                            name: 'email',
-                            label: "{{ trans('admin::app.components.activities.index.emails') }}",
-                        }, {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
+                        },
+                        {
+                            name: 'system',
+                            label: "{{ trans('admin::app.components.activities.index.change-log') }}",
                         }
+                    ],
+                },
+
+                filterTypes: {
+                    type: Array,
+                    default: [
+                        @foreach (App\Enums\ActivityType::cases() as $type)
+                            @if ($type !== App\Enums\ActivityType::SYSTEM)
+                                {
+                                    name: '{{ $type->value }}',
+                                    label: '{{ $type->label() }}',
+                                },
+                            @endif
+                        @endforeach
                     ],
                 },
 
@@ -520,8 +262,13 @@
 
                     selectedType: this.activeType,
 
+                    activityTypeFilter: 'all',
+
                     typeClasses: {
                         email: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
+                        email_unread: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
+                        patient_message: 'icon-patient-message bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
+                        patient_message_unread: 'icon-patient-message bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
                         note: 'icon-note bg-activity-note-bg text-activity-note-text dark:!text-activity-note-text',
                         call: 'icon-call bg-activity-call-bg text-activity-call-text dark:!text-cyan-800',
                         meeting: 'icon-activity bg-activity-task-bg text-activity-task-text dark:!text-activity-task-text',
@@ -537,49 +284,22 @@
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.all.title') }}",
                             description: "{{ trans('admin::app.components.activities.index.empty-placeholders.all.description') }}",
                         },
-
+                        // ... other illustrations preserved by Vue logic if unused, but good to have
+                        action_needed: {
+                            image: "{{ vite()->asset('images/empty-placeholders/activities.svg') }}",
+                            title: "Geen acties nodig",
+                            description: "Er zijn geen activiteiten die actie vereisen.",
+                        },
+                        inbox: {
+                            image: "{{ vite()->asset('images/empty-placeholders/emails.svg') }}",
+                            title: "Inbox is leeg",
+                            description: "Er zijn geen nieuwe berichten.",
+                        },
                         planned: {
                             image: "{{ vite()->asset('images/empty-placeholders/plans.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.planned.title') }}",
                             description: "{{ trans('admin::app.components.activities.index.empty-placeholders.planned.description') }}",
                         },
-
-                        note: {
-                            image: "{{ vite()->asset('images/empty-placeholders/notes.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.notes.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.notes.description') }}",
-                        },
-
-                        call: {
-                            image: "{{ vite()->asset('images/empty-placeholders/calls.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.calls.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.calls.description') }}",
-                        },
-
-                        meeting: {
-                            image: "{{ vite()->asset('images/empty-placeholders/meetings.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.meetings.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.meetings.description') }}",
-                        },
-
-                        task: {
-                            image: "{{ vite()->asset('images/empty-placeholders/lunches.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.tasks.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.tasks.description') }}",
-                        },
-
-                        file: {
-                            image: "{{ vite()->asset('images/empty-placeholders/files.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.files.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.files.description') }}",
-                        },
-
-                        email: {
-                            image: "{{ vite()->asset('images/empty-placeholders/emails.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.emails.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.emails.description') }}",
-                        },
-
                         system: {
                             image: "{{ vite()->asset('images/empty-placeholders/activities.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.system.title') }}",
@@ -589,27 +309,75 @@
 
                     timezone: "{{ config('app.timezone') }}",
 
-                    // Current page URL for return navigation after editing activities
                     returnUrl: (typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : ''),
                 }
             },
 
             computed: {
+                countActionNeeded() {
+                    return this.activities.filter(activity =>
+                        ! activity.is_done &&
+                        this.isPast(activity.schedule_from) &&
+                        ['call', 'meeting', 'task'].includes(activity.type)
+                    ).length;
+                },
+
+                countInbox() {
+                    return this.activities.filter(activity => ['email', 'patient_message'].includes(activity.type)).length;
+                },
+
                 filteredActivities() {
-                    if (this.selectedType == 'all') {
-                        return this.activities;
-                    } else if (this.selectedType == 'planned') {
+                    console.log('selectedType = '+this.selectedType + ', activityTypeFilter = ' + this.activityTypeFilter);
+                    // console.log(JSON.parse(JSON.stringify(this.activities)));
+                    if (this.selectedType == 'action_needed') {
+                         return this.activities
+                             .filter(activity => ! activity.is_done && this.isPast(activity.schedule_from))
+                            .sort((a, b) => {
+                                const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
+                                const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
+                                return aTime - bTime;
+                            });
+                    }
+
+                    if (this.selectedType === 'inbox' && this.activityTypeFilter === 'all') {
                         return this.activities
-                            .filter(activity => ! activity.is_done)
+                            .filter(activity => ['email', 'patient_message'].includes(activity.type))
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    } else if (this.selectedType === 'inbox') {
+                        return this.activities
+                            .filter(activity => activity.type === this.activityTypeFilter)
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    }
+
+                    if (this.selectedType == 'planned') {
+                        return this.activities
+                            .filter(activity => ! activity.is_done && !['email', 'patient_message'].includes(activity.type))
                             .slice()
                             .sort((a, b) => {
                                 const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
                                 const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
-                                return aTime - bTime; // earliest first
+                                return aTime - bTime;
                             });
                     }
 
-                    return this.activities.filter(activity => activity.type == this.selectedType);
+                    if (this.selectedType == 'system') {
+                        return this.activities.filter(activity => activity.type == 'system');
+                    }
+
+                    // Default case: 'all'
+                    let filtered = this.activities.filter(activity => activity.type !== 'system');
+
+                    // If 'all' tab, respect filter
+                    if (this.selectedType == 'all' && this.activityTypeFilter !== 'all') {
+                        console.log('filter all and filter on all = ' + this.activityTypeFilter);
+                        filtered = filtered.filter(activity => activity.type !== 'system' && activity.type === this.activityTypeFilter);
+                    } else if (this.selectedType != 'all' && !['action_needed', 'inbox', 'planned', 'system'].includes(this.selectedType)) {
+                         // Fallback for extraTypes
+                         console.log('filter fallback = ' + this.activityTypeFilter);
+                         filtered = filtered.filter(activity => activity.type == this.selectedType);
+                    }
+
+                    return filtered;
                 }
             },
 
@@ -628,7 +396,7 @@
             methods: {
                 get() {
                     this.isLoading = true;
-
+                    console.log('retrieve acti ' + this.endpoint);
                     this.$axios.get(this.endpoint)
                         .then(response => {
                             this.activities = response.data.data;
@@ -727,12 +495,10 @@
                 truncateHtml(html, maxLength = 150) {
                     if (!html) return '';
 
-                    // Create a temporary div to strip HTML tags
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     const textContent = tempDiv.textContent || tempDiv.innerText || '';
 
-                    // Truncate the text
                     if (textContent.length <= maxLength) {
                         return textContent;
                     }
@@ -749,6 +515,16 @@
                         return text;
                     }
                     return text.slice(0, maxLength - 1) + '…';
+                },
+
+                getTypeClass(activity) {
+                    let type = activity.type;
+
+                    if (['email', 'patient_message'].includes(type) && ! activity.is_read) {
+                        type += '_unread';
+                    }
+
+                    return this.typeClasses[type] ?? this.typeClasses['default'];
                 },
 
                 isToday(dateStr) {

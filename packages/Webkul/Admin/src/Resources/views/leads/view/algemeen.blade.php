@@ -30,6 +30,13 @@
             </div>
         </div>
     </div>
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex items-center justify-between">
+            <div class="direction-row flex items-center">
+                 {{ $lead->description }}
+            </div>
+        </div>
+    </div>
     <x-adminc::leads.compact-overview :lead="$lead" />
 
     <!-- Person Blocks Grid -->

@@ -277,6 +277,8 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_PROXY: "edge"
       KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_THEME_CACHE: "false"
+      KC_THEME_STATIC_MAX_AGE: "-1"
     entrypoint: >
       /bin/sh -c "
         exec /opt/keycloak/bin/kc.sh start

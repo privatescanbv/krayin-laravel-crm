@@ -74,7 +74,7 @@ $registerAuthenticatedApiRoutes = function () {
     // Person patient messages, by keycloak user id
     Route::get('patient/{id}/messages', [PersonActivityController::class, 'index']);
     Route::post('patient/{id}/messages', [PersonActivityController::class, 'store']);
-    Route::post('patient/{id}/messages/{messageId}', [PersonActivityController::class, 'markAsRead']);
+    Route::put('patient/{id}/messages/mark_as_read', [PersonActivityController::class, 'markAsRead']);
     Route::get('patient/{id}/activities/unread/count', [PatientMessageController::class, 'unreadCount']);
 };
 

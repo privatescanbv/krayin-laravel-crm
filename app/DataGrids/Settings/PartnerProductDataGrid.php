@@ -2,7 +2,6 @@
 
 namespace App\DataGrids\Settings;
 
-use App\Enums\Currency;
 use App\Enums\ProductReports;
 use App\Models\PartnerProduct;
 use App\Repositories\PartnerProductRepository;

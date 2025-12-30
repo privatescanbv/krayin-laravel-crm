@@ -36,6 +36,7 @@ class PartnerProductsMatchResourceType implements ValidationRule
         if ($mismatchedInResourceOfPartnerProducts->isNotEmpty()) {
             $names = $mismatchedInResourceOfPartnerProducts->map(function ($product) {
                 $typeName = $product->resourceType ? $product->resourceType->name : 'Geen';
+
                 return "{$product->name} (Type: {$typeName}, ID: {$product->resource_type_id} vs Required: {$this->resourceTypeId})";
             })->join(', ');
             $fail('admin::app.products.validation.partner-products-resource-type-mismatch')

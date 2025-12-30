@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\ActivityType;
+use App\Enums\PatientMessageSenderType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PatientMessageResource;
 use App\Models\PatientMessage;
@@ -41,7 +41,7 @@ class PersonActivityController extends Controller
         $messages = PatientMessage::query()
             ->where('person_id', $personId)
             ->with(['sender'])
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         return response()->json([
@@ -65,18 +65,15 @@ class PersonActivityController extends Controller
             }
             abort(404);
         }
-        $personId = $person->id;
-        $person = Person::findOrFail($personId);
-
+        logger()->info('request add post = '.print_r($request->all(), true));
         $validated = $request->validate([
-            'title'     => 'nullable|string|max:255',
-            'comment'   => 'required|string',
+            'body'   => 'required|string',
         ]);
 
-        $activity = DB::transaction(function () use ($validated, $person) {
+        $patientMessage = DB::transaction(function () use ($validated, $person) {
             $message = PatientMessage::create([
-                'sender_type'          => ActivityType::PATIENT_MESSAGE->value,
-                'body'                 => ($validated['title'] ?? 'New Message').' '.$validated['comment'],
+                'sender_type'          => PatientMessageSenderType::PATIENT->value,
+                'body'                 => $validated['body'],
                 'person_id'            => $person->id,
             ]);
 
@@ -88,14 +85,26 @@ class PersonActivityController extends Controller
             return $message;
         });
 
+        // Refresh to get activity_id set by observer
+        $patientMessage->refresh();
+
         return response()->json([
             'message' => 'Message created successfully.',
-            'data'    => new ActivityResource($activity->load('user', 'persons')),
+            'data'    => new ActivityResource($patientMessage->activity->load('user', 'persons')),
         ], 201);
     }
 
-    public function markAsRead(string $id, string $messageId)
+    /**
+     * Mark all messages as read by patient (not employee)
+     */
+    public function markAsRead(string $keycloakUserId)
     {
-        logger()->warning("please implement me. Marking message as read: {$messageId}");
+        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
+        if (is_null($person)) {
+            logger()->error('No support for mark messages as read for users without person association.');
+            abort(404);
+        }
+        PatientMessage::where('person_id', $person->id)
+            ->update(['is_read' => true]);
     }
 }

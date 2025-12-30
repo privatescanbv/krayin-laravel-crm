@@ -77,3 +77,34 @@ test('it_does_not_create_a_patient_message_for_other_activity_types', function (
     $patientMessage = PatientMessage::where('activity_id', $activity->id)->first();
     $this->assertNull($patientMessage);
 });
+
+test('it_allows_adding_message_via_api_as_patient', function () {
+    // Arrange
+    $keycloakUserId = 'test-keycloak-id-123';
+    $apiKey = 'test-api-key';
+
+    // Configure API key for the test
+    config(['api.keys' => [$apiKey]]);
+
+    // Create person with the keycloak ID
+    $person = Person::factory()->create([
+        'keycloak_user_id' => $keycloakUserId,
+    ]);
+
+    // Act
+    $response = $this->withHeaders([
+        'X-API-KEY' => $apiKey,
+    ])->postJson("/api/patient/{$keycloakUserId}/messages", [
+        'body' => 'Message from patient via API',
+    ]);
+
+    // Assert
+    $response->assertCreated();
+    $response->assertJson(['message' => 'Message created successfully.']);
+
+    $this->assertDatabaseHas('patient_messages', [
+        'person_id'   => $person->id,
+        'body'        => 'Message from patient via API',
+        'sender_type' => PatientMessageSenderType::PATIENT->value,
+    ]);
+});

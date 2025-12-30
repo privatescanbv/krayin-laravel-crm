@@ -1257,7 +1257,7 @@ class ProductSeeder extends BaseSeeder
                 'inkoopprijs'   => '150,00',
                 'verkoopprijs'  => '350,00',
                 'producttype'   => ProductTypeEnum::OVERIG,
-                'resourcetype'  => ResourceTypeEnum::OTHER,
+                'resourcetype'  => ResourceTypeEnum::CARDIOLOGIE,
                 'productgroep'  => 'Carotiden',
             ],
             [

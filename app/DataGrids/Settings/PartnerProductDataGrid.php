@@ -20,8 +20,6 @@ class PartnerProductDataGrid extends DataGrid
                 'partner_products.id',
                 'partner_products.name',
                 'partner_products.currency',
-                'partner_products.sales_price',
-                'partner_products.related_sales_price',
                 'partner_products.active',
                 'partner_products.reporting'
             );
@@ -66,45 +64,6 @@ class PartnerProductDataGrid extends DataGrid
                     ->find($row->id);
 
                 return $partnerProduct ? $partnerProductRepository->formatDisplayName($partnerProduct) : $row->name;
-            },
-        ]);
-
-        $this->addColumn([
-            'index'      => 'purchase_price',
-            'columnName' => 'partner_products.purchase_price',
-            'type'       => 'string',
-            'label'      => trans('admin::app.partner_products.index.datagrid.purchase_price'),
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-            'closure'    => function ($row) {
-                return Currency::formatMoney($row->currency, (float) $row->sales_price);
-            },
-        ]);
-
-        $this->addColumn([
-            'index'      => 'sales_price',
-            'columnName' => 'partner_products.sales_price',
-            'type'       => 'string',
-            'label'      => trans('admin::app.partner_products.index.datagrid.sales_price'),
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-            'closure'    => function ($row) {
-                return Currency::formatMoney($row->currency, (float) $row->sales_price);
-            },
-        ]);
-
-        $this->addColumn([
-            'index'      => 'related_sales_price',
-            'columnName' => 'partner_products.related_sales_price',
-            'type'       => 'string',
-            'label'      => trans('admin::app.partner_products.index.datagrid.related_sales_price'),
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-            'closure'    => function ($row) {
-                return $row->related_sales_price > 0 ? Currency::formatMoney($row->currency, (float) $row->related_sales_price) : '-';
             },
         ]);
 

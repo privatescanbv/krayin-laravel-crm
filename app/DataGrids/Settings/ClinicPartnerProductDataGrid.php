@@ -21,7 +21,6 @@ class ClinicPartnerProductDataGrid extends DataGrid
                 'partner_products.id',
                 'partner_products.name',
                 'partner_products.currency',
-                'partner_products.sales_price',
                 'partner_products.active',
                 'partner_products.duration'
             );
@@ -56,24 +55,6 @@ class ClinicPartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
-        ]);
-
-        $this->addColumn([
-            'index'      => 'sales_price',
-            'type'       => 'string',
-            'label'      => trans('admin::app.settings.clinics.view.partner-products.table.price'),
-            'searchable' => false,
-            'filterable' => true,
-            'sortable'   => true,
-            'closure'    => function ($row) {
-                if ($row->sales_price) {
-                    $currency = $row->currency ?? '€';
-
-                    return $currency.' '.number_format($row->sales_price, 2);
-                }
-
-                return '-';
-            },
         ]);
 
         $this->addColumn([

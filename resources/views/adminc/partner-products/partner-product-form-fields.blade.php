@@ -48,18 +48,21 @@
 <x-adminc::components.field
     type="textarea"
     name="description"
-    label="@lang('admin::app.partner_products.index.create.description')"
+    label="Omschrijving"
     value="{{ old('description', $partnerProduct->description ?? '') }}"
     :placeholder="trans('admin::app.partner_products.index.create.description')"
 />
-
-<div
-    class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-    {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
-</div>
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.partner_products.index.create.associated_product')
+    </x-admin::form.control-group.label>
+    <div
+        class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
+    </div>
+</x-admin::form.control-group>
 @endif
 
-<!-- Omschrijving en Omschrijving kliniek -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-adminc::components.field
         type="select"
@@ -83,29 +86,7 @@
     />
 </div>
 
-<!-- Valuta en Verkoopprijs -->
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-    <div></div>
-
-    <x-adminc::components.field
-        type="price"
-        name="sales_price"
-        value="{{ old('sales_price', $partnerProduct ? number_format($partnerProduct->sales_price, 2, ',', '') : '') }}"
-        rules="required"
-        :label="trans('admin::app.partner_products.index.create.sales_price')"
-        :placeholder="trans('admin::app.partner_products.index.create.sales_price')"
-    />
-</div>
-
-<!-- Gerelateerde verkoopprijs -->
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-    <x-adminc::components.field
-        type="price"
-        name="related_sales_price"
-        value="{{ old('related_sales_price', $partnerProduct ? number_format($partnerProduct->related_sales_price, 2, ',', '') : '') }}"
-        :label="trans('admin::app.partner_products.index.create.related_sales_price')"
-        :placeholder="trans('admin::app.partner_products.index.create.related_sales_price')"
-    />
+<div class="space-y-4">
 
     <!-- Kortingsinformatie -->
     <x-adminc::components.field
@@ -122,7 +103,7 @@
     type="switch"
     name="active"
     value="1"
-    :checked="(bool) old('is_active', $partnerProduct->active ?? true)"
+    :checked="(bool) old('active', $partnerProduct->active ?? true)"
     :label="trans('admin::app.partner_products.index.create.active')"
 />
 
@@ -149,8 +130,6 @@
 />
 
 <!-- Related Products -->
-
-
 <x-admin::form.control-group>
     @include('adminc.components.product-selector')
 
@@ -186,16 +165,19 @@
        @lang('admin::app.partner_products.index.create.related_products')
     </x-admin::form.control-group.label>
 
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.resource_type')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.error control-name="related_products"/>
 
 </x-admin::form.control-group>
 
 <!-- Reporting (moved below Related Products) -->
 <x-admin::form.control-group>
+
+{{--    <x-admin::form.control-group.label>--}}
+{{--        @lang('admin::app.partner_products.index.create.reporting')--}}
+{{--    </x-admin::form.control-group.label>--}}
+    <div class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        @lang('admin::app.partner_products.index.create.reporting')
+    </div>
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @php
             $selectedReporting = PartnerProduct::normalizeReporting(old('reporting', $partnerProduct->reporting ?? []));
@@ -216,9 +198,6 @@
             </div>
         @endforeach
     </div>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.reporting')
-    </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.error control-name="reporting"/>
 

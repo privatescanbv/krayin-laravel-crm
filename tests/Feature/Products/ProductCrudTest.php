@@ -462,3 +462,63 @@ test('can update product and remove all partner products', function () {
     expect($partnerProduct1->product_id)->toBeNull()
         ->and($partnerProduct2->product_id)->toBeNull();
 });
+
+test('validation error message details resource type mismatch with ids', function () {
+    $resourceType1 = ResourceType::factory()->create(['name' => 'Type A']);
+    $resourceType2 = ResourceType::factory()->create(['name' => 'Type B']);
+
+    $product = Product::factory()->create(['resource_type_id' => $resourceType1->id]);
+    $partnerProduct = PartnerProduct::factory()->create([
+        'name'             => 'Mismatched Product',
+        'resource_type_id' => $resourceType2->id,
+        'product_id'       => null,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType1->id,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+
+    $response->assertSessionHasErrors(['partner_products']);
+    $errors = session('errors');
+    $message = $errors->first('partner_products');
+
+    expect($message)->toContain('Mismatched Product')
+        ->toContain('Type: Type B')
+        ->toContain('ID: '.$resourceType2->id)
+        ->toContain('Required: '.$resourceType1->id);
+});
+
+test('validation error message details resource type without mismatch with ids', function () {
+    $resourceType1 = ResourceType::factory()->create(['name' => 'Type A']);
+
+    $product = Product::factory()->create(['resource_type_id' => $resourceType1->id]);
+    $partnerProduct = PartnerProduct::factory()->create([
+        'name'             => 'Mismatched Product',
+        'resource_type_id' => $resourceType1->id,
+        'product_id'       => null,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType1->id,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+});

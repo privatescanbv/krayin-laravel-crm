@@ -29,12 +29,15 @@ class PartnerProductsMatchResourceType implements ValidationRule
             ->whereNull('deleted_at')
             ->get(['id', 'name', 'resource_type_id']);
 
-        $mismatchedProducts = $partnerProducts->filter(function ($partnerProduct) {
+        $mismatchedInResourceOfPartnerProducts = $partnerProducts->filter(function ($partnerProduct) {
             return $partnerProduct->resource_type_id !== $this->resourceTypeId;
         });
 
-        if ($mismatchedProducts->isNotEmpty()) {
-            $names = $mismatchedProducts->pluck('name')->join(', ');
+        if ($mismatchedInResourceOfPartnerProducts->isNotEmpty()) {
+            $names = $mismatchedInResourceOfPartnerProducts->map(function ($product) {
+                $typeName = $product->resourceType ? $product->resourceType->name : 'Geen';
+                return "{$product->name} (Type: {$typeName}, ID: {$product->resource_type_id} vs Required: {$this->resourceTypeId})";
+            })->join(', ');
             $fail('admin::app.products.validation.partner-products-resource-type-mismatch')
                 ->translate(['products' => $names]);
         }

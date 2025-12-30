@@ -200,9 +200,6 @@ class PartnerProductController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
-        $request->merge([
-            'sales_price' => Currency::normalizePrice($request->input('sales_price')),
-        ]);
 
         // Normalize related_products to always be an array using RequestHelper
         $relatedProducts = RequestHelper::filterIntegerArray($request, 'related_products', []);
@@ -233,10 +230,9 @@ class PartnerProductController extends SimpleEntityController
 
     protected function validateUpdate(Request $request, int $id): void
     {
-        $request->merge([
-            'sales_price'         => Currency::normalizePrice($request->input('sales_price')),
-            'related_sales_price' => Currency::normalizePrice($request->input('related_sales_price')),
-        ]);
+        // removed from maintaining, but we want to keep the imported data here. so, don't touch it.
+        unset($request['sales_price']);
+        unset($request['related_sales_price']);
 
         // Normalize related_products to always be an array using RequestHelper
         $relatedProducts = RequestHelper::filterIntegerArray($request, 'related_products', []);
@@ -270,8 +266,6 @@ class PartnerProductController extends SimpleEntityController
         return [
             // base fields
             'currency'            => 'required|in:'.implode(',', Currency::codes()),
-            'sales_price'         => 'required|numeric|min:0',
-            'related_sales_price' => 'nullable|numeric|min:0',
             'name'                => 'required|string|max:255',
             'active'              => 'required|boolean',
             'description'         => 'nullable|string',
@@ -375,15 +369,6 @@ class PartnerProductController extends SimpleEntityController
 
         if (array_key_exists('product_id', $payload)) {
             $payload['product_id'] = $payload['product_id'] === '' ? null : $payload['product_id'];
-        }
-
-        if (array_key_exists('sales_price', $payload)) {
-            $payload['sales_price'] = Currency::normalizePrice($payload['sales_price']);
-        }
-
-        if (array_key_exists('related_sales_price', $payload)) {
-            $normalized = Currency::normalizePrice($payload['related_sales_price']);
-            $payload['related_sales_price'] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
         }
 
         // Normalize and calculate purchase price fields

@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\Settings\Clinic\ActivityController;
+use App\Http\Controllers\Admin\Settings\Clinic\EmailController;
+use App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController;
 use App\Http\Controllers\Admin\Settings\ClinicController;
 use App\Http\Controllers\Admin\Settings\DepartmentController;
 use App\Http\Controllers\Admin\Settings\ImportLogController;
@@ -66,19 +69,19 @@ Route::prefix('settings')->group(function () {
         Route::delete('{id}', 'destroy')->name('admin.clinics.delete');
 
         // Clinic Activities
-        Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\ActivityController::class)->prefix('{id}/activities')->group(function () {
+        Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
             Route::get('', 'index')->name('admin.clinics.activities.index');
             Route::post('', 'store')->name('admin.clinics.activities.store');
         });
 
         // Clinic Emails
-        Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\EmailController::class)->prefix('{id}/emails')->group(function () {
+        Route::controller(EmailController::class)->prefix('{id}/emails')->group(function () {
             Route::post('', 'store')->name('admin.clinics.emails.store');
             Route::delete('', 'detach')->name('admin.clinics.emails.detach');
         });
 
         // Clinic Partner Products
-        Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController::class)->prefix('{id}/partner-products')->group(function () {
+        Route::controller(PartnerProductController::class)->prefix('{id}/partner-products')->group(function () {
             Route::get('', 'index')->name('admin.clinics.partner_products.index');
             Route::delete('{partner_product_id}', 'destroy')->name('admin.clinics.partner_products.delete');
         });

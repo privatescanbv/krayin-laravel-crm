@@ -1,35 +1,8 @@
 <?php
 
-use App\Http\Controllers\Admin\Settings\ClinicController;
-use App\Http\Controllers\Admin\Settings\ImportLogController;
-use App\Http\Controllers\Admin\Settings\ImportRunController;
 use App\Http\Controllers\Admin\Settings\PartnerProductController;
-use Webkul\Admin\Http\Controllers\Settings\PartnerProducts\ActivityController as PartnerProductActivityController;
 use Illuminate\Support\Facades\Route;
-use Webkul\Admin\Http\Controllers\Settings\AttributeController;
-use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
-use Webkul\Admin\Http\Controllers\Settings\EmailTemplateController;
-use Webkul\Admin\Http\Controllers\Settings\GroupController;
-use Webkul\Admin\Http\Controllers\Settings\LocationController;
-use Webkul\Admin\Http\Controllers\Settings\Marketing\CampaignsController;
-use Webkul\Admin\Http\Controllers\Settings\Marketing\EventController;
-use Webkul\Admin\Http\Controllers\Settings\PipelineController;
-use Webkul\Admin\Http\Controllers\Settings\RoleController;
-use Webkul\Admin\Http\Controllers\Settings\SettingController;
-use Webkul\Admin\Http\Controllers\Settings\SourceController;
-use Webkul\Admin\Http\Controllers\Settings\TagController;
-use Webkul\Admin\Http\Controllers\Settings\TypeController;
-use Webkul\Admin\Http\Controllers\Settings\UserController;
-use Webkul\Admin\Http\Controllers\Settings\Warehouse\ActivityController;
-use Webkul\Admin\Http\Controllers\Settings\Warehouse\TagController as WarehouseTagController;
-use Webkul\Admin\Http\Controllers\Settings\Warehouse\WarehouseController;
-use Webkul\Admin\Http\Controllers\Settings\WebFormController;
-use Webkul\Admin\Http\Controllers\Settings\WebhookController;
-use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
-use App\Http\Controllers\Admin\Settings\ResourceController;
-use App\Http\Controllers\Admin\Settings\ResourceTypeController;
-use App\Http\Controllers\Admin\Settings\ShiftController;
-use App\Http\Controllers\Admin\Settings\ProductTypeController;
+use Webkul\Admin\Http\Controllers\Settings\PartnerProducts\ActivityController as PartnerProductActivityController;
 
 /**
  * Settings routes.

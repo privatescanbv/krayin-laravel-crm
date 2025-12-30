@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
 
+/**
+ * Note; sales prices only used as back-up. Use Product sales price
+ */
 class PartnerProduct extends BaseProduct
 {
     use SoftDeletes;

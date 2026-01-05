@@ -104,15 +104,23 @@
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col gap-1.5 border-none border-gray-200 p-4 dark:border-gray-800">
-                <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
-                    {{ ($lead->has_diagnosis_form ?? false) ? 'Aawezig': 'Niet aanwezig' }}
+            <div class="flex flex-row gap-1.5 border-none justify-between p-4 pb-2">
+                <div class="font-semibold">
+                    <label>Diagnoseformulier:</label>
                 </div>
-                <div class="inline-flex items-start justify-start rounded bg-neutral-border p-1 text-xs">
-                    {{ $lead->mri_status?->value ?? 'geen' }}
+                <div class="inline-flex items-start justify-start text-xs">
+                    {{ ($lead->has_diagnosis_form ?? false) ? 'Aawezig': 'Niet aanwezig' }}
                 </div>
             </div>
 
+            <div class="flex flex-row gap-1.5 border-none justify-between p-4 pt-2">
+                <div class="font-semibold">
+                    <label>MRI scans:</label>
+                </div>
+                <div class="inline-flex items-start justify-start text-xs">
+                    {{ $lead->mri_status?->value ?? 'geen' }}
+                </div>
+            </div>
 
             @php
                 $activitiesCount = app(ActivityController::class)->countOpen($lead->id)->getData()->data;

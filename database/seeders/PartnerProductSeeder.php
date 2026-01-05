@@ -97,7 +97,7 @@ class PartnerProductSeeder extends BaseSeeder
         if (! $clinic) {
             throw new Exception("Clinic not found for external_id: {$productData['clinic_external_id']}");
         }
-        $resourceType = ResourceType::where('name', $productData['resourcetype'])->first();
+        $resourceType = ResourceType::where('name', strtolower($productData['resourcetype']))->first();
         if (! $resourceType) {
             throw new Exception("Resource Type not found: {$productData['resourcetype']}");
         }

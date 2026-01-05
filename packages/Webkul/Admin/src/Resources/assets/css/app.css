@@ -822,3 +822,80 @@
         padding: 0;
     }
 }
+
+/* ================================
+   Contact panel – visitekaartje stijl
+   ================================ */
+
+/* Container */
+.contact-panel {
+    @apply mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm;
+}
+
+/* Basis rij */
+.contact-row {
+    @apply flex items-center gap-2 text-sm text-gray-700;
+}
+
+/* Klikbare rij (telefoon / mail) */
+.contact-link {
+    @apply flex items-center gap-2 text-sm text-gray-700 transition-colors;
+}
+
+.contact-link:hover {
+    @apply text-indigo-600;
+}
+
+/* Icoon container */
+.contact-icon {
+    @apply flex h-6 w-6 items-center justify-center rounded-md
+    border border-gray-200 bg-white
+    text-gray-500 shadow-sm;
+}
+
+/* Hover-effect op icoon (zonder group in CSS) */
+.contact-link:hover .contact-icon {
+    @apply text-indigo-600;
+}
+
+/* Waarde tekst */
+.contact-value {
+    @apply truncate;
+}
+
+/* Secundaire info (leeftijd / labels) */
+.contact-meta {
+    @apply text-gray-500;
+}
+
+/* Toggle knop overige gegevens */
+.contact-toggle {
+    @apply mt-2 flex items-center gap-2 text-xs font-medium
+    text-gray-600 transition-colors;
+}
+
+.contact-toggle:hover {
+    @apply text-indigo-600;
+}
+
+/* Uitklapbare sectie */
+.contact-extra {
+    @apply mt-2 space-y-1 border-t border-gray-200 pt-2 text-xs;
+}
+
+/* Secundaire contactregels */
+.contact-subrow {
+    @apply flex items-center gap-1.5 text-gray-700 transition-colors;
+}
+
+.contact-subrow:hover {
+    @apply text-indigo-600;
+}
+
+/* Label bij telefoon / email */
+.contact-label {
+    @apply text-gray-400;
+}
+/* ================================
+   END -- Contact panel – visitekaartje stijl
+   ================================ */

@@ -104,21 +104,29 @@
                     </div>
                 </div>
             </div>
-            <div class="flex flex-row gap-1.5 border-none justify-between p-4 pb-2">
-                <div class="font-semibold">
-                    <label>Diagnoseformulier:</label>
-                </div>
-                <div class="inline-flex items-start justify-start text-xs">
-                    {{ ($lead->has_diagnosis_form ?? false) ? 'Aawezig': 'Niet aanwezig' }}
-                </div>
-            </div>
+            <div class="flex flex-col border-t border-gray-200 dark:border-gray-800">
+                <div class="flex items-center gap-3 p-4">
+                    <span class="icon-file text-2xl text-gray-400"></span>
 
-            <div class="flex flex-row gap-1.5 border-none justify-between p-4 pt-2">
-                <div class="font-semibold">
-                    <label>MRI scans:</label>
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-gray-800 dark:text-white">Diagnoseformulier</span>
+
+                        <span class="text-xs {{ ($lead->has_diagnosis_form ?? false) ? 'text-green-600' : 'text-red-600' }}">
+                            {{ ($lead->has_diagnosis_form ?? false) ? 'Aanwezig' : 'Niet aanwezig' }}
+                        </span>
+                    </div>
                 </div>
-                <div class="inline-flex items-start justify-start text-xs">
-                    {{ $lead->mri_status?->value ?? 'geen' }}
+
+                <div class="flex items-center gap-3 p-4 pt-0">
+                    <span class="icon-file text-2xl text-gray-400"></span>
+
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-gray-800 dark:text-white">MRI scans</span>
+
+                        <span class="text-xs {{ ($lead->mri_status?->value ?? 'geen') !== 'geen' ? 'text-green-600' : 'text-red-600' }}">
+                            {{ $lead->mri_status?->value ?? 'geen' }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -126,42 +134,51 @@
                 $activitiesCount = app(ActivityController::class)->countOpen($lead->id)->getData()->data;
             @endphp
 
-                <!-- Vertical Navigation Menu -->
+            <!-- Vertical Navigation Menu -->
             <div class="border-t border-gray-200 p-4 dark:border-gray-800">
                 <nav class="flex flex-col gap-1 text-sm font-medium">
-                    <button type="button" class="rounded-md px-3 py-2 text-left transition"
+                    <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                             :class="leadDetailSection === 'algemeen'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                             @click="setSection('algemeen')"
                     >
+                        <span class="icon-user text-xl"></span>
                         Algemeen
                     </button>
 
-                    <button type="button" class="flex justify-between rounded-md px-3 py-2 text-left transition"
+                    <button type="button" class="flex justify-between items-center rounded-md px-3 py-2 text-left transition"
                             :class="leadDetailSection === 'activiteiten'
                             ?
                             'bg-brandColor text-white dark:bg-brandColor' :
                             'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                             @click="setSection('activiteiten')">
-                        Activiteiten <span class="text-white rounded bg-error p-1 -m-1">{{ $activitiesCount }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="icon-activity text-xl"></span>
+                            Activiteiten
+                        </div>
+                        <span class="flex items-center justify-center h-5 w-5 rounded text-xs font-semibold"
+                            :class="leadDetailSection === 'activiteiten' ? 'bg-error text-white' : 'bg-red-100 text-red-600'"
+                        >{{ $activitiesCount }}</span>
                     </button>
 
-                    <button type="button" class="rounded-md px-3 py-2 text-left transition"
+                    <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                             :class="leadDetailSection === 'anamnese'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                             @click="setSection('anamnese')"
                     >
+                        <span class="icon-file text-xl"></span>
                         Anamnese
                     </button>
 
-                    <button type="button" class="rounded-md px-3 py-2 text-left transition"
+                    <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                             :class="leadDetailSection === 'marketing'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                             @click="setSection('marketing')"
                     >
+                        <span class="icon-stats-up text-xl"></span>
                         Marketing
                     </button>
                 </nav>

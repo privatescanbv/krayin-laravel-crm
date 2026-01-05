@@ -63,30 +63,29 @@
                         }">
                         Vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
                     </div>
-                    <div class="flex flex-row gap-1" <span v-if="activity.is_done == 1 || activity.is_done === true"
-                        class="icon-tick ml-1 text-base text-status-active-text" title="Afgerond"></span>
+                    <div class="flex flex-row gap-1">
+                    <span v-if="activity.is_done == 1 || activity.is_done === true"
+                          class="icon-tick ml-1 text-base text-status-active-text" title="Afgerond"></span>
                         <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"
-                            class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
-                            title="E-mail gekoppeld aan lead">
+                              class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
+                              title="E-mail gekoppeld aan lead">
                             <span class="icon-activity text-[10px]"></span>
                         </span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'person'"
-                            class="dark:text-slate-2 00 ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800"
-                            title="E-mail gekoppeld aan persoon">
+                              class="dark:text-slate-2 00 ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800"
+                              title="E-mail gekoppeld aan persoon">
                             <span class="icon-contact text-[10px]"></span>
                         </span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'"
-                            class="icon-activity ml-1 text-xs text-activity-note-text"
-                            title="E-mail gekoppeld aan activiteit"></span>
+                              class="icon-activity ml-1 text-xs text-activity-note-text"
+                              title="E-mail gekoppeld aan activiteit"></span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'"
-                            class="icon-activity ml-1 text-xs text-activity-note-text"
-                            title="E-mail gekoppeld aan sales"></span>
+                              class="icon-activity ml-1 text-xs text-activity-note-text"
+                              title="E-mail gekoppeld aan sales"></span>
                         <span v-else-if="activity.type === 'email'"
-                            class="icon-activity ml-1 text-xs text-activity-note-text"
-                            title="E-mail gekoppeld aan onbekend"></span>
+                              class="icon-activity ml-1 text-xs text-activity-note-text"
+                              title="E-mail gekoppeld aan onbekend"></span>
                     </div>
-
-
                 </template>
 
                 <template v-else>

@@ -1,6 +1,5 @@
 @props([
     'anamnesis',
-    'person',
     'showCreatedDate' => false
 ])
 <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -10,12 +9,12 @@
         <div class="flex items-center justify-between mb-3">
             <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <i class="icon-activity text-blue-600"></i>
-                {{ $person->name }}
+                {{ $anamnesis->person->name }}
             </h3>
 
             <!-- Acties rechts -->
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.leads.sync-anamnesis-to-older-update', $person->id) }}"
+                <a href="{{ route('admin.leads.sync-anamnesis-to-older-update', $anamnesis->person->id) }}"
                    class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
                     Synchroniseer met oudere Anamneses
                 </a>

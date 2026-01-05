@@ -1,4 +1,4 @@
-@props(['anamnesis'])
+@props(['anamnesis', 'person'])
 
 <div class="w-full p-4">
     <h4 class="font-semibold dark:text-white mb-2">

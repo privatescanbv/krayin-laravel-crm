@@ -123,7 +123,8 @@
             class="flex-1"
             type="text"
             name="married_name"
-            :label="'Aangetrouwde achternaam'"
+            label="Aangetrouwde achternaam"
+            placeholder="Aangetrouwde achternaam"
             value="{{ $entity?->married_name ?? '' }}"
             :readonly="!$mayEditPersonFields"
         />

@@ -242,6 +242,7 @@ $salutationToGenderMapping = [
                                                 'married_name' => null,
                                                 'date_of_birth' => null,
                                                 'gender' => null,
+                                                'national_identification_number' => null,
                                             ];
                                             $__entityPrefill = (object) array_merge($__defaults, ($prefilledLeadPerson ?? []));
                                         @endphp
@@ -506,6 +507,7 @@ $salutationToGenderMapping = [
                             last_name: this.initialLeadPerson?.last_name || this.userDefaults.last_name || '',
                             married_name_prefix: this.initialLeadPerson?.married_name_prefix || this.userDefaults.married_name_prefix || '',
                             married_name: this.initialLeadPerson?.married_name || this.userDefaults.married_name || '',
+                            national_identification_number: this.initialLeadPerson?.national_identification_number || '',
                             email: (this.initialLeadPerson?.emails && this.initialLeadPerson.emails.length > 0)
                                 ? (this.initialLeadPerson.emails[0].value || '')
                                 : (this.userDefaults.email || ''),
@@ -725,6 +727,9 @@ $salutationToGenderMapping = [
                                 // normalized later by syncPersonalFieldsToForm
                                 this.formData.date_of_birth = firstPerson.date_of_birth;
                             }
+                            if (!this.formData.national_identification_number && firstPerson.national_identification_number) {
+                                this.formData.national_identification_number = firstPerson.national_identification_number;
+                            }
 
                             // Also populate email and phone if available and form fields are empty
                             if (!this.formData.email && firstPerson.emails && firstPerson.emails.length > 0) {
@@ -759,6 +764,7 @@ $salutationToGenderMapping = [
                             married_name: this.formData.married_name || firstPerson.married_name || '',
                             salutation: this.formData.salutation || (firstPerson.salutation && (firstPerson.salutation.value || firstPerson.salutation)) || '',
                             gender: this.formData.gender || (firstPerson.gender && (firstPerson.gender.value || firstPerson.gender)) || '',
+                            national_identification_number: this.formData.national_identification_number || firstPerson.national_identification_number || '',
                             date_of_birth: (() => {
                                 const val = this.formData.date_of_birth || firstPerson.date_of_birth || '';
                                 if (!val) return '';
@@ -905,6 +911,7 @@ $salutationToGenderMapping = [
                         if (!this.formData.married_name && p.married_name) this.formData.married_name = p.married_name;
                         if (!this.formData.salutation && (p.salutation || (p.salutation && p.salutation.value))) this.formData.salutation = (p.salutation && (p.salutation.value || p.salutation)) || '';
                         if (!this.formData.gender && (p.gender || (p.gender && p.gender.value))) this.formData.gender = (p.gender && (p.gender.value || p.gender)) || '';
+                        if (!this.formData.national_identification_number && p.national_identification_number) this.formData.national_identification_number = p.national_identification_number;
                         if (!this.formData.date_of_birth && p.date_of_birth) {
                             const raw = p.date_of_birth;
                             try {

@@ -23,17 +23,18 @@ class LeadValidationService
     public static function getValidationRules($request = null, bool $create = true): array
     {
         $rules = [
-            'first_name'          => 'required|string|max:255',
-            'last_name'           => 'required|string|max:255',
-            'description'         => 'nullable|string',
-            'salutation'          => ['nullable', new Enum(PersonSalutation::class)],
-            'mri_status'          => ['nullable', new Enum(MRIStatus::class)],
-            'initials'            => 'nullable|string|max:50',
-            'lastname_prefix'     => 'nullable|string|max:50',
-            'married_name'        => 'nullable|string|max:255',
-            'married_name_prefix' => 'nullable|string|max:50',
-            'gender'              => ['nullable', new Enum(PersonGender::class)],
-            'date_of_birth'       => ['nullable', new DateValidator],
+            'first_name'                     => 'required|string|max:255',
+            'last_name'                      => 'required|string|max:255',
+            'description'                    => 'nullable|string',
+            'salutation'                     => ['nullable', new Enum(PersonSalutation::class)],
+            'mri_status'                     => ['nullable', new Enum(MRIStatus::class)],
+            'initials'                       => 'nullable|string|max:50',
+            'lastname_prefix'                => 'nullable|string|max:50',
+            'married_name'                   => 'nullable|string|max:255',
+            'married_name_prefix'            => 'nullable|string|max:50',
+            'gender'                         => ['nullable', new Enum(PersonGender::class)],
+            'date_of_birth'                  => ['nullable', new DateValidator],
+            'national_identification_number' => 'nullable|string|max:255',
 
             // Contact information
             'emails'         => ['nullable', new ContactArrayValidator('email')],

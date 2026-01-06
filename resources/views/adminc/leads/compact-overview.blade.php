@@ -74,13 +74,6 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
                 label="Geboortedatum"
                 value="{{ $dateOfBirth }}"
                 readonly />
-
-            <x-adminc::components.field
-
-
-                label="Geboortedatum"
-                value="{{ $dateOfBirth }}"
-                readonly />
         </div>
 
         <!-- Column 2: ADRESGEGEVENS -->
@@ -150,7 +143,7 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
             <x-adminc::components.field
                 type="text"
                 label="Burgerservicenummer (BSN)"
-                value=""
+                value="{{ $lead->national_identification_number ?? '' }}"
                 placeholder="BSN nummer"
                 readonly />
         </div>

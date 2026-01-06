@@ -123,7 +123,7 @@
             class="flex-1"
             type="text"
             name="married_name"
-            :label="__('Married name')"
+            :label="'Aangetrouwde achternaam'"
             value="{{ $entity?->married_name ?? '' }}"
             :readonly="!$mayEditPersonFields"
         />
@@ -161,6 +161,16 @@
         @endforeach
     </x-adminc::components.field>
 
+    <!-- Burgerservicenummer (BSN) -->
+    <x-adminc::components.field
+        type="text"
+        name="national_identification_number"
+        label="Burgerservicenummer (BSN)"
+        value="{{ $entity?->national_identification_number ?? '' }}"
+        placeholder="BSN nummer"
+        :disabled="!$mayEditPersonFields"
+        :readonly="!$mayEditPersonFields"
+    />
     @if($showPortalFields)
         <!-- Portal activation toggle -->
         <x-adminc::components.field

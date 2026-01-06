@@ -94,6 +94,7 @@ class Person extends Model implements PersonContract
         'keycloak_user_id',
         'is_active',
         'password',
+        'national_identification_number',
     ];
 
     /**

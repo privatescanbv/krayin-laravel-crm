@@ -7,6 +7,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineType;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use BackedEnum;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -353,6 +354,7 @@ class LeadController extends Controller
                         'married_name' => $person->married_name,
                         'date_of_birth' => $person->date_of_birth,
                         'gender' => $person->gender,
+                        'national_identification_number' => $person->national_identification_number,
                         'emails' => is_array($person->emails) ? $person->emails : [],
                         'phones' => is_array($person->phones) ? $person->phones : [],
                     ];
@@ -503,7 +505,7 @@ class LeadController extends Controller
                 if (array_key_exists($enumKey, $data)) {
                     if ($data[$enumKey] === '' || $data[$enumKey] === '?') {
                         $data[$enumKey] = null;
-                    } elseif ($data[$enumKey] instanceof \BackedEnum) {
+                    } elseif ($data[$enumKey] instanceof BackedEnum) {
                         $data[$enumKey] = $data[$enumKey]->value;
                     }
                 }

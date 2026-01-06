@@ -92,6 +92,7 @@ class Lead extends Model implements LeadContract
         'updated_by',
         'mri_status',
         'has_diagnosis_form',
+        'national_identification_number',
     ];
 
     // No special handling for persons_count required anymore

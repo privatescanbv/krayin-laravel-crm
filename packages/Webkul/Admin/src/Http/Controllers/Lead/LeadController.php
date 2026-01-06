@@ -100,7 +100,8 @@ class LeadController extends Controller
         protected PersonRepository    $personRepository,
         protected AddressRepository   $addressRepository,
         protected PipelineCookieService $pipelineCookieService,
-        protected UserDefaultValueService $userDefaultValueService
+        protected UserDefaultValueService $userDefaultValueService,
+        private readonly ActivityRepository $activityRepository
     )
     {
         request()->request->add(['entity_type' => 'leads']);
@@ -786,51 +787,45 @@ class LeadController extends Controller
      */
     public function updateStage(int $leadId): JsonResponse
     {
+        logger()->debug('update Stage for lead '.$leadId, ['request ' => request()->all()]);
         $this->validate(request(), [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
             'lost_reason' => ['nullable', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
+        $closeOpenActivities = request()->has('close_open_activities') && request()->input('close_open_activities');
 
-        $data = [
-            'lead_pipeline_stage_id' => request()->input('lead_pipeline_stage_id'),
-        ];
-
-        // Add optional fields if provided
-        if (request()->has('lost_reason')) {
-            $data['lost_reason'] = request()->input('lost_reason');
-        }
-
-        if (request()->has('closed_at')) {
-            $data['closed_at'] = request()->input('closed_at');
-        }
-
-        // Optional flag to close open activities when changing stage
-        if (request()->has('close_open_activities')) {
-            $data['close_open_activities'] = (bool) request()->input('close_open_activities');
-        }
-
-        return $this->updateStageWithData($leadId, $data);
+        return $this->updateStageWithData(
+            $leadId,
+            request()->input('lead_pipeline_stage_id'),
+            $closeOpenActivities,
+            request()->input('lost_reason'),
+            request()->input('closed_at'));
     }
 
     /**
      * Update the lead stage with additional data.
      */
-    public function updateStageWithData(int $leadId, array $data): JsonResponse
+    public function updateStageWithData(
+        int $leadId,
+        string $leadPipelineStageId,
+        bool $closeOpenActivities,
+        ?string $lostReason,
+        ?string $closedAt
+    ): JsonResponse
     {
         $lead = $this->leadRepository->findOrFail($leadId);
 
         //validate if the stage exists in the pipeline
         $lead->pipeline->stages()
-            ->where('id', $data['lead_pipeline_stage_id'])
+            ->where('id', $leadPipelineStageId)
             ->firstOrFail();
 
         // Validate status transition if stage is being changed
-        if (isset($data['lead_pipeline_stage_id']) &&
-            $data['lead_pipeline_stage_id'] != $lead->lead_pipeline_stage_id) {
+        if ($leadPipelineStageId != $lead->lead_pipeline_stage_id) {
 
             try {
-                LeadStatusTransitionValidator::validateTransition($lead, $data['lead_pipeline_stage_id']);
+                LeadStatusTransitionValidator::validateTransition($lead,$leadPipelineStageId);
             } catch (ValidationException $e) {
                 return response()->json([
                     'message' => 'Status transitie validatie gefaald: '.$e->getMessage(),
@@ -841,7 +836,7 @@ class LeadController extends Controller
         Event::dispatch('lead.update.before', $leadId);
 
         // If requested, complete all open activities for this lead after successful update
-        if (!empty($data['close_open_activities'])) {
+        if ($closeOpenActivities) {
             try {
                 $this->completeAllOpenActivitiesForLead($leadId);
             } catch (Exception $e) {
@@ -851,8 +846,17 @@ class LeadController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+        } else {
+            logger()->info('Do not close all activities during stage update');
         }
-
+        $data = [];
+        $data['lead_pipeline_stage_id'] = $leadPipelineStageId;
+        if (!is_null($closedAt)) {
+            $data['closed_at'] = $closedAt;
+        }
+        if (!is_null($lostReason)) {
+            $data['lost_reason'] = $lostReason;
+        }
         // update state after closing activiteit, otherwise new activities will be closed
         $lead = $this->leadRepository->update(
             array_merge($data, ['entity_type' => 'leads']),
@@ -1479,15 +1483,14 @@ class LeadController extends Controller
      */
     private function completeAllOpenActivitiesForLead(int $leadId): void
     {
-        $activityRepository = app(ActivityRepository::class);
-
-        $openActivities = $activityRepository
+        $openActivities = $this->activityRepository
             ->where('lead_id', $leadId)
             ->where('is_done', 0)
             ->get();
 
         foreach ($openActivities as $activity) {
-            $activityRepository->update([
+            logger()->info('Auto closing activities for lead #' . $activity->id);
+            $this->activityRepository->update([
                 'is_done' => 1,
                 'status' => ActivityStatus::DONE->value,
             ], $activity->id);

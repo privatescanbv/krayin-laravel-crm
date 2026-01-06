@@ -144,7 +144,7 @@ class PersonDataGrid extends DataGrid
             'label'      => 'Duplicaten',
             'type'       => 'string',
             'sortable'   => false,
-            'filterable' => true,
+            'filterable' => false,
             'searchable' => false,
             'closure'    => function ($row) {
                 $duplicateIds = $this->duplicateCacheService->getCachedDuplicates($row->id);

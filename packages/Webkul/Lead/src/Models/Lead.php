@@ -98,6 +98,46 @@ class Lead extends Model implements LeadContract
     // No special handling for persons_count required anymore
 
     /**
+     * Capitalize first character of first name.
+     */
+    public function setFirstNameAttribute($value): void
+    {
+        $this->attributes['first_name'] = $value !== null ? Str::ucfirst($value) : null;
+    }
+
+    /**
+     * Capitalize first character of last name.
+     */
+    public function setLastNameAttribute($value): void
+    {
+        $this->attributes['last_name'] = $value !== null ? Str::ucfirst($value) : null;
+    }
+
+    /**
+     * Lowercase lastname prefix.
+     */
+    public function setLastnamePrefixAttribute($value): void
+    {
+        $this->attributes['lastname_prefix'] = $value !== null ? Str::lower($value) : null;
+    }
+
+    /**
+     * Capitalize first character of married name.
+     */
+    public function setMarriedNameAttribute($value): void
+    {
+        $this->attributes['married_name'] = $value !== null ? Str::ucfirst($value) : null;
+    }
+
+    /**
+     * Lowercase married name prefix.
+     */
+    public function setMarriedNamePrefixAttribute($value): void
+    {
+        $this->attributes['married_name_prefix'] = $value !== null ? Str::lower($value) : null;
+    }
+
+    /**
      * Normalize gender assignment to allow empty strings and enums.
      */
     public function setGenderAttribute($value): void

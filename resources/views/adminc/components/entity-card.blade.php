@@ -58,16 +58,17 @@
                         });
                     }
                 @endphp
+                @if($entity->date_of_birth)
                 <div class="contact-row">
-            <span class="contact-icon">
-                <span class="icon-calendar text-xs"></span>
-            </span>
+                    <span class="contact-icon">
+                        <span class="icon-calendar text-xs"></span>
+                    </span>
                     <span>
-                {{ $entity->date_of_birth?->format('d-m-Y') }}
-                <span class="contact-meta">({{ $entity->age }} jaar)</span>
-            </span>
+                        {{ $entity->date_of_birth?->format('d-m-Y') }}
+                        <span class="contact-meta">({{ $entity->age }} jaar)</span>
+                   </span>
                 </div>
-
+                @endif
                 @if ($defaultPhone)
                     <a href="tel:{{ $defaultPhone['value'] ?? '' }}" class="contact-link">
                <span class="contact-icon">

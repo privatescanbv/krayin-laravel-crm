@@ -90,7 +90,7 @@
                                     <tr class="border-b border-gray-200 dark:border-gray-700 text-left">
                                         <th class="p-3 w-16">ID</th>
                                         <th class="p-3">Naam</th>
-                                        <th class="p-3">Fase</th>
+                                        <th class="p-3">Status</th>
                                         <th class="p-3">Aangemaakt op</th>
                                         <th class="p-3">E-mail matches</th>
                                         <th class="p-3">Telefoon matches</th>
@@ -100,7 +100,7 @@
                                 </thead>
                                 <tbody>
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3">@{{ primaryLead.id }}</td>
+                                        <td class="p-3"><a :href="'{{ route('admin.leads.view', 'place_holder') }}'.replace('place_holder', primaryLead.id)">@{{ primaryLead.id }}</a></td>
                                         <td class="p-3 text-sm">@{{ primaryLead.first_name }} @{{ primaryLead.last_name }}</td>
                                         <td class="p-3 text-sm">@{{ primaryLead.stage?.name || '-' }}</td>
                                         <td class="p-3 text-sm">@{{ primaryLead.created_at || '-' }}</td>
@@ -112,7 +112,7 @@
                                         </td>
                                     </tr>
                                     <tr v-for="duplicate in duplicates" :key="'dup-row-' + duplicate.id" class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3">@{{ duplicate.id }}</td>
+                                        <td class="p-3"><a :href="'{{ route('admin.leads.view', 'place_holder') }}'.replace('place_holder', duplicate.id)">@{{ duplicate.id }}</a></td>
                                         <td class="p-3 text-sm">@{{ duplicate.first_name }} @{{ duplicate.last_name }}</td>
                                         <td class="p-3 text-sm">@{{ duplicate.stage?.name || '-' }}</td>
                                         <td class="p-3 text-sm">@{{ duplicate.created_at || '-' }}</td>

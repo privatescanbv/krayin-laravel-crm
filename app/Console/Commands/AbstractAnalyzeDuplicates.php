@@ -91,7 +91,6 @@ abstract class AbstractAnalyzeDuplicates extends Command
 
         // Get duplicates
         $duplicates = $this->findPotentialDuplicates($entity);
-
         // Optionally remove filters by recomputing naive matches
         if ($noFilter) {
             $duplicates = $this->computeNaiveDuplicates($entity, $entityEmails, $entityPhones);

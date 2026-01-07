@@ -4,27 +4,25 @@ namespace Webkul\Contact\Models;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\PatientMessage;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
-use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
-use Webkul\Lead\Models\LeadProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
-use App\Models\Address;
 
 class Person extends Model implements PersonContract
 {
@@ -96,6 +94,46 @@ class Person extends Model implements PersonContract
         'password',
         'national_identification_number',
     ];
+
+    /**
+     * Capitalize first character of first name.
+     */
+    public function setFirstNameAttribute($value): void
+    {
+        $this->attributes['first_name'] = $value !== null ? Str::ucfirst($value) : null;
+    }
+
+    /**
+     * Capitalize first character of last name.
+     */
+    public function setLastNameAttribute($value): void
+    {
+        $this->attributes['last_name'] = $value !== null ? Str::ucfirst($value) : null;
+    }
+
+    /**
+     * Lowercase lastname prefix.
+     */
+    public function setLastnamePrefixAttribute($value): void
+    {
+        $this->attributes['lastname_prefix'] = $value !== null ? Str::lower($value) : null;
+    }
+
+    /**
+     * Capitalize first character of married name.
+     */
+    public function setMarriedNameAttribute($value): void
+    {
+        $this->attributes['married_name'] = $value !== null ? Str::ucfirst($value) : null;
+    }
+
+    /**
+     * Lowercase married name prefix.
+     */
+    public function setMarriedNamePrefixAttribute($value): void
+    {
+        $this->attributes['married_name_prefix'] = $value !== null ? Str::lower($value) : null;
+    }
 
     /**
      * Normalize gender assignment to allow empty strings and enums.

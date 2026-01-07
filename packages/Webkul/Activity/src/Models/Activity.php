@@ -2,6 +2,7 @@
 
 namespace Webkul\Activity\Models;
 
+use App\Enums\PatientMessageSenderType;
 use App\Models\CallStatus;
 use App\Models\Clinic;
 use App\Models\PatientMessage;
@@ -142,13 +143,13 @@ class Activity extends Model implements ActivityContract
         return $this->belongsToMany(ProductProxy::modelClass(), 'product_activities');
     }
 
-    /**
-     * The Warehouse that belong to the activity.
-     */
-    public function warehouses()
-    {
-        return $this->belongsToMany(WarehouseProxy::modelClass(), 'warehouse_activities');
-    }
+//    /**
+//     * The Warehouse that belong to the activity.
+//     */
+//    public function warehouses()
+//    {
+//        return $this->belongsToMany(WarehouseProxy::modelClass(), 'warehouse_activities');
+//    }
 
     /**
      * Call statuses linked to this activity.
@@ -189,6 +190,7 @@ class Activity extends Model implements ActivityContract
         };
     }
 
+
     public function getPatientFromActivity(): ?Person
     {
         return $this->persons->first()
@@ -196,11 +198,29 @@ class Activity extends Model implements ActivityContract
             ?? $this->salesLead?->persons->first();
     }
 
+    public function getIsReadAttribute(): bool
+    {
+        if ($this->type === ActivityType::PATIENT_MESSAGE) {
+            // Check if there are any unread messages from PATIENT for this activity
+            // If any message is NOT read, the whole activity is unread.
+            // Assuming messages from staff are always read or don't count.
+            return ! $this->patientMessages()
+                ->where('is_read', false)
+                ->where('sender_type', PatientMessageSenderType::PATIENT)
+                ->exists();
+        }
+
+        return true;
+    }
+
+    /**
+     * Reopen activity, schedule for next 7 days.
+     */
     public function reOpen():Activity {
-        $activity = $this->replicate();
-        $activity->is_done = false;
-        $activity->schedule_from = Carbon::today();
-        $activity->schedule_to = Carbon::today()->addWeek();
-        return $activity;
+        $this->is_done = false;
+        $this->status = ActivityStatus::ACTIVE;
+        $this->schedule_from = Carbon::today();
+        $this->schedule_to = Carbon::today()->addWeek();
+        return $this;
     }
 }

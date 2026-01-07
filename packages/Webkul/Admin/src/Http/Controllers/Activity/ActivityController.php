@@ -3,9 +3,11 @@
 namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\ActivityStatus;
+use App\Enums\ActivityType;
 use App\Enums\WebhookType;
 use App\Models\CallStatus;
 use App\Models\Department;
+use App\Services\patientmessages\PatientMessageService;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Exception;
@@ -44,6 +46,7 @@ class ActivityController extends Controller
         protected AttributeRepository $attributeRepository,
         protected WebhookService $webhookService,
         protected ?ViewService $viewService = null,
+        private readonly PatientMessageService $patientMessageService
     ) {}
 
     /**
@@ -120,12 +123,16 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with('lead', 'workflowLead', 'clinic')->findOrFail($id);
+        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic'])->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
             ->orderByDesc('created_at')
             ->get();
+
+        if(ActivityType::PATIENT_MESSAGE->value == $activity->type?->value) {
+            $this->patientMessageService->markAllMessagesAsReadForEmployee($activity);
+        }
 
         return view('admin::activities.view', compact('activity', 'callStatuses'));
     }

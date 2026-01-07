@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PatientMessageResource;
 use App\Models\PatientMessage;
 use App\Services\Keycloak\KeycloakService;
+use App\Services\patientmessages\PatientMessageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,10 @@ use Webkul\Contact\Models\Person;
  */
 class PersonActivityController extends Controller
 {
-    public function __construct(private KeycloakService $keycloakService) {}
+    public function __construct(
+        private readonly KeycloakService $keycloakService,
+        private readonly PatientMessageService $patientMessageService,
+    ) {}
 
     /**
      * Get all patient messages for a person, grouped by thread.
@@ -104,7 +108,6 @@ class PersonActivityController extends Controller
             logger()->error('No support for mark messages as read for users without person association.');
             abort(404);
         }
-        PatientMessage::where('person_id', $person->id)
-            ->update(['is_read' => true]);
+        $this->patientMessageService->markAllMessagesReadForPatient($person);
     }
 }

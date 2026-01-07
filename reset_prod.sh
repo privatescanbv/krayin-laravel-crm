@@ -18,8 +18,8 @@ php artisan import:persons ${PERSON_LIMIT_ARG} &&
 php artisan keycloak:sync-users &&
 php artisan import:leads ${LEAD_LIMIT_ARG} &&
 php artisan import:email-attachment-files &&
-php artisan planning:create-test-data
-#php artisan import:send-report &&
+php artisan planning:create-test-data &&
+php artisan import:send-report
 
 
 

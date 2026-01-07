@@ -73,4 +73,10 @@ return [
         ],
     ],
 
+    'sugar' => [
+        'import' => [
+            'send_reports_emails' => 'mark.bulthuis@mbsoftware.nl,mark.klaucke@digi4you.nl,linda@privatescan.nl,mark@privatescan.nl',
+        ]
+    ]
+
 ];

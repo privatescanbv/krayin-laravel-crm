@@ -79,7 +79,6 @@ class PatientMessageController extends Controller
             'sender_id'   => auth()->id(),
             'body'        => request('body'),
             'activity_id' => $activity->id,
-            'is_read'     => request('is_read', true),
         ]);
 
         return redirect()->route('admin.activities.view', $activity->id);

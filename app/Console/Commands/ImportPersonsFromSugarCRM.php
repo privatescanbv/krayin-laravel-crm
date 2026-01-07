@@ -379,9 +379,9 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                     $record->voorletters_c ?? '',
                 ])));
                 $this->logError('Failed to import person', [
-                    'record_id' => $record->id ?? 'unknown',
+                    'record_id'          => $record->id ?? 'unknown',
                     'record_description' => $recordLabel,
-                    'error'     => $e->getMessage(),
+                    'error'              => $e->getMessage(),
                 ]);
                 if (count($firstErrors) < 5) {
                     $firstErrors[] = [

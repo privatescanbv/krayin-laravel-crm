@@ -35,6 +35,9 @@ class SendImportRunReport extends Command
         $importRunId = $this->option('import-run-id');
         $limit = $this->option('limit');
         $emailOption = $this->option('email');
+        if (empty($emailOption)) {
+            $emailOption = config('services.sugar.import.send_reports_emails');
+        }
 
         // Parse email addresses (support comma-separated list)
         $emails = array_map('trim', explode(',', $emailOption));

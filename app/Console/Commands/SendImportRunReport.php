@@ -18,7 +18,7 @@ class SendImportRunReport extends Command
     protected $signature = 'import:send-report
                             {--import-run-id= : Specific import run ID to report (defaults to all runs)}
                             {--limit= : Limit number of runs to include (defaults to all)}
-                            {--email=mark.bulthuis@mbsoftware.nl,mark.klaucke@digi4you.nl : Email address(es) to send report to (comma-separated)}';
+                            {--email= : Email address(es) to send report to (comma-separated)}';
 
     /**
      * The console command description.

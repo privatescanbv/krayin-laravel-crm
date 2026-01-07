@@ -45,8 +45,18 @@
                 </div>
             </div>
 
+
             <!-- Address Section -->
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+
+                <x-adminc::components.field
+                    type="text"
+                    name="name"
+                    value="{{ old('name', $entity->name ?? '') }}"
+                    rules="required|min:1|max:100"
+                    label="Bedrijfsnaam"
+                    placeholder="Bedrijfsnaam"
+                />
                 <div class="mb-4">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                         @lang('admin::app.contacts.organizations.create.address')

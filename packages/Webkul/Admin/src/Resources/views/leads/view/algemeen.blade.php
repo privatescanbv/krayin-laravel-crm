@@ -55,49 +55,52 @@
         @endforeach
 
         <!-- Insurance Block -->
+        @if($lead->hasOrganization())
+            @include('adminc::organisations.general_info', ['organisation' => $lead->organization])
+        @endif
 
-        {{-- <div class="overflow-hidden rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900"><!-- Header -->
-            <div
-                class="flex items-center justify-between border-brand bg-activity-note-bg px-4 py-3 dark:bg-orange-900/20">
-                <div class="flex items-center gap-3">
-                    <h4 class="text-base font-semibold  text-activity-note-text dark:text-white">Zorgverzekering</h4>
-                </div>
-            </div><!-- Content -->
-            <div class="space-y-4 p-4"><!-- Action Button and Status -->
-                <div class="flex items-center justify-between gap-4">
-                    -- status / notities --
-                </div>
-                <!-- Input Fields -->
-                <div class="space-y-4">
-                    <div class="relative mb-4 w-full"><input type="text" name="Naam verzekeraar"
-                            class="peer placeholder:text-transparent" readonly="" placeholder="Naam verzekeraar"
-                            value="Naam verzekeraar"><label
-                            class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">
-                            Naam verzekeraar </label><!----></div>
-                    <div class="relative mb-4 w-full"><input type="tel" name="Klantnummer"
-                            class="peer placeholder:text-transparent" readonly="" placeholder="Klantnummer"
-                            value="Klantnummer"><label
-                            class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">
-                            Klantnummer </label><!----></div>
-                    <div class="relative mb-4 w-full"><input type="email" name="Polisnummer"
-                            class="peer placeholder:text-transparent" readonly="" placeholder="Polisnummer"
-                            value="Polisnummer"><label
-                            class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">
-                            E-Polisnummer </label><!----></div>
-                    <div class="relative mb-4 w-full"><input type="email" name="Eigen Risico"
-                            class="peer placeholder:text-transparent" readonly="" placeholder="Eigen Risico"
-                            value="Eigen Risico"><label
-                            class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">
-                            Eigen Risico </label><!----></div>
-                </div>
-                <div class="mb-4 rounded-lg border border-status-active-border bg-status-active-bg p-3 ">
-                    <div class="flex items-center gap-2"><span
-                            class="icon-success text-lg text-status-active-text"></span><span
-                            class="text-sm font-medium text-status-active-text"> <strong>Verzekering geverifieerd</strong><br/>Laatste controle: -- date --</span></div>
-                </div>
+{{--        <div class="overflow-hidden rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900"><!-- Header -->--}}
+{{--           <div--}}
+{{--               class="flex items-center justify-between border-brand bg-activity-note-bg px-4 py-3 dark:bg-orange-900/20">--}}
+{{--               <div class="flex items-center gap-3">--}}
+{{--                   <h4 class="text-base font-semibold  text-activity-note-text dark:text-white">Zorgverzekering</h4>--}}
+{{--               </div>--}}
+{{--           </div><!-- Content -->--}}
+{{--           <div class="space-y-4 p-4"><!-- Action Button and Status -->--}}
+{{--               <div class="flex items-center justify-between gap-4">--}}
+{{--                   -- status / notities ----}}
+{{--               </div>--}}
+{{--               <!-- Input Fields -->--}}
+{{--               <div class="space-y-4">--}}
+{{--                   <div class="relative mb-4 w-full"><input type="text" name="Naam verzekeraar"--}}
+{{--                           class="peer placeholder:text-transparent" readonly="" placeholder="Naam verzekeraar"--}}
+{{--                           value="Naam verzekeraar"><label--}}
+{{--                           class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">--}}
+{{--                           Naam verzekeraar </label><!----></div>--}}
+{{--                   <div class="relative mb-4 w-full"><input type="tel" name="Klantnummer"--}}
+{{--                           class="peer placeholder:text-transparent" readonly="" placeholder="Klantnummer"--}}
+{{--                           value="Klantnummer"><label--}}
+{{--                           class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">--}}
+{{--                           Klantnummer </label><!----></div>--}}
+{{--                   <div class="relative mb-4 w-full"><input type="email" name="Polisnummer"--}}
+{{--                           class="peer placeholder:text-transparent" readonly="" placeholder="Polisnummer"--}}
+{{--                           value="Polisnummer"><label--}}
+{{--                           class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">--}}
+{{--                           E-Polisnummer </label><!----></div>--}}
+{{--                   <div class="relative mb-4 w-full"><input type="email" name="Eigen Risico"--}}
+{{--                           class="peer placeholder:text-transparent" readonly="" placeholder="Eigen Risico"--}}
+{{--                           value="Eigen Risico"><label--}}
+{{--                           class="pointer-events-none absolute left-0 top-4 z-10 ml-2 max-w-[80%] -translate-y-6 overflow-auto text-ellipsis bg-gradient-to-t from-neutral-bg to-white px-1 text-xs duration-100 ease-linear peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:bg-none peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500">--}}
+{{--                           Eigen Risico </label><!----></div>--}}
+{{--               </div>--}}
+{{--               <div class="mb-4 rounded-lg border border-status-active-border bg-status-active-bg p-3 ">--}}
+{{--                   <div class="flex items-center gap-2"><span--}}
+{{--                           class="icon-success text-lg text-status-active-text"></span><span--}}
+{{--                           class="text-sm font-medium text-status-active-text"> <strong>Verzekering geverifieerd</strong><br/>Laatste controle: -- date --</span></div>--}}
+{{--               </div>--}}
 
-            </div>
-        </div> --}}
-    </div>
+{{--           </div>--}}
+{{--       </div>--}}
+   </div>
 
 </div>

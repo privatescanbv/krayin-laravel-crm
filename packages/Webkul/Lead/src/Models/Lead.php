@@ -386,6 +386,10 @@ class Lead extends Model implements LeadContract
         return $this->belongsTo(Organization::class, 'organization_id');
     }
 
+    public function hasOrganization(): bool {
+        return !is_null($this->organization_id);
+    }
+
     /**
      * Get the contact person for this lead.
      */

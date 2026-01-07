@@ -31,98 +31,51 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
     <!-- Three Column Layout -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
         <!-- Column 1: IDENTITEIT -->
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="icon-contact text-xl text-blue-500"></span>
-                <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">IDENTITEIT</h4>
-            </div>
-
+        <x-adminc::leads.part.general-info-container
+            title="IDENTITEIT"
+            icon="icon-contact text-xl text-blue-500"
+        >
             <!-- Aanhef -->
             <x-adminc::components.field
-
-
                 label="Aanhef"
                 value="{{ $salutationLabel }}"
                 readonly />
 
             <!-- Voornaam -->
             <x-adminc::components.field
-
-
                 label="Voornaam"
                 value="{{ $lead->first_name ?? '' }}"
                 readonly />
 
-
             <x-adminc::components.field
-
-
                 label="Tussenvoegsel"
                 value="{{ $lead->lastname_prefix ?? '' }}"
                 readonly />
 
             <x-adminc::components.field
-
-
                 label="Achternaam"
                 value="{{ $lead->last_name ?? '' }}"
                 readonly />
 
             <x-adminc::components.field
-
-
                 label="Geboortedatum"
                 value="{{ $dateOfBirth }}"
                 readonly />
-        </div>
+        </x-adminc::leads.part.general-info-container>
 
         <!-- Column 2: ADRESGEGEVENS -->
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="icon-location text-xl text-status-active-text"></span>
-                <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">ADRESGEGEVENS</h4>
-            </div>
-
-            <!-- Straat en huisnummer -->
-            <x-adminc::components.field
-
-
-                label="Straat en huisnummer"
-                value="{{ $lead->address ? ($lead->address->street . ' ' . $lead->address->house_number . ($lead->address->house_number_suffix ? '-' . $lead->address->house_number_suffix : '')) : '' }}"
-                readonly />
-
-            <!-- Postcode -->
-            <x-adminc::components.field
-
-
-                label="Postcode"
-                value="{{ $lead->address->postal_code ?? '' }}"
-                readonly />
-
-            <!-- Woonplaats -->
-            <x-adminc::components.field
-
-
-                label="Woonplaats"
-                value="{{ $lead->address->city ?? '' }}"
-                readonly />
-
-            <!-- Land -->
-            <x-adminc::components.field
-
-
-                label="Land"
-                value="{{ $lead->address->country ?? '' }}"
-                readonly />
-        </div>
+        <x-adminc::leads.part.general-info-container
+            title="ADRESGEGEVENS"
+            icon="icon-location text-xl text-status-active-text"
+        >
+          <x-adminc::address.summarize_as_fields :address="$lead->address"/>
+        </x-adminc::leads.part.general-info-container>
 
         <!-- Column 3: CONTACT & IDENTIFICATIE -->
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="icon-call text-xl text-purple-500"></span>
-                <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">CONTACT & IDENTIFICATIE</h4>
-            </div>
-
+        <x-adminc::leads.part.general-info-container
+            title="CONTACT & IDENTIFICATIE"
+            icon="icon-call text-xl text-purple-500"
+        >
             <!-- Telefoonnummer -->
             <x-adminc::components.field
                 type="tel"
@@ -133,8 +86,6 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
             <!-- E-mailadres -->
             <x-adminc::components.field
                 type="email"
-
-
                 label="E-mailadres"
                 value="{{ $defaultEmail ?? '' }}"
                 readonly />
@@ -146,7 +97,7 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
                 value="{{ $lead->national_identification_number ?? '' }}"
                 placeholder="BSN nummer"
                 readonly />
-        </div>
+        </x-adminc::leads.part.general-info-container>
     </div>
 </div>
 

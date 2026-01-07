@@ -2,6 +2,7 @@
 
 namespace Webkul\Contact\Models;
 
+use App\Models\Address;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,8 +15,6 @@ use Webkul\User\Models\UserProxy;
 class Organization extends Model implements OrganizationContract
 {
     use CustomAttribute, HasFactory, HasAuditTrail;
-
-
 
     /**
      * The attributes that are mass assignable.
@@ -52,7 +51,7 @@ class Organization extends Model implements OrganizationContract
      */
     public function address()
     {
-        return $this->hasOne(\App\Models\Address::class, 'organization_id');
+        return $this->hasOne(Address::class, 'organization_id');
     }
 
     /**

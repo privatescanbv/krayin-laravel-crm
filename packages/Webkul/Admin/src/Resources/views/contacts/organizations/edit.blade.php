@@ -49,7 +49,15 @@
             <!-- Address Section -->
             <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
 
-                <x-adminc::components.address :entity={{  $organization }} />
+                <x-adminc::components.field
+                    type="text"
+                    name="name"
+                    value="{{ old('name', $organization->name ?? '') }}"
+                    rules="required|min:1|max:100"
+                    label="Bedrijfsnaam"
+                    placeholder="Bedrijfsnaam"
+                />
+                <x-adminc::components.address :entity="$organization" />
 
                 {!! view_render_event('admin.contacts.organizations.edit.form_controls.after') !!}
             </div>

@@ -58,7 +58,7 @@
                         });
                     }
                 @endphp
-                @if($entity->date_of_birth)
+                @if ($entity->date_of_birth)
                 <div class="contact-row">
                     <span class="contact-icon">
                         <span class="icon-calendar text-xs"></span>

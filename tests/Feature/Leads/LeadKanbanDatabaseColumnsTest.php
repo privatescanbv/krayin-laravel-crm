@@ -46,11 +46,11 @@ beforeEach(function () {
 test('kanban board loads without database column errors', function () {
     // Create a lead with all the necessary fields for name computation
     $lead = Lead::factory()->create([
-        'first_name'             => 'Jan',
-        'last_name'              => 'Jansen',
-        'lastname_prefix'        => 'van',
-        'married_name'           => 'de Vries',
-        'married_name_prefix'    => 'van',
+        'first_name'             => 'jan',
+        'last_name'              => 'jansen',
+        'lastname_prefix'        => 'Van',
+        'married_name'           => 'vries',
+        'married_name_prefix'    => 'van De',
         'lead_pipeline_id'       => $this->pipeline->id,
         'lead_pipeline_stage_id' => $this->stage->id,
         'user_id'                => $this->user->id,
@@ -371,8 +371,8 @@ test('lead model correctly computes name and rotten_days attributes', function (
         'first_name'             => 'Jan',
         'last_name'              => 'Jansen',
         'lastname_prefix'        => 'van',
-        'married_name'           => 'de Vries',
-        'married_name_prefix'    => 'van',
+        'married_name'           => 'Vries',
+        'married_name_prefix'    => 'van de',
         'lead_pipeline_id'       => $this->pipeline->id,
         'lead_pipeline_stage_id' => $this->stage->id,
         'user_id'                => $this->user->id,

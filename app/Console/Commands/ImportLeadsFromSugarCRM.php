@@ -773,10 +773,20 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             } catch (Exception $e) {
                 $errors++;
+                $recordLabel = trim(implode(' ', array_filter([
+                    $record->first_name,
+                    $record->tussenvoegsel_c ?? '',
+                    $record->last_name,
+                    $record->aang_tussenv_c ?? '',
+                    $record->meisjesnaam_c ?? '',
+                    $record->voorletters_c ?? '',
+                ])));
+
                 $this->logError('Failed to import lead', [
-                    'record_id' => $record->id ?? 'unknown',
-                    'error'     => $e->getMessage(),
-                    'trace'     => $e->getTraceAsString(),
+                    'record_id'          => $record->id ?? 'unknown',
+                    'record_description' => $recordLabel,
+                    'error'              => $e->getMessage(),
+                    'trace'              => $e->getTraceAsString(),
                 ]);
                 $this->bar->advance();
             }

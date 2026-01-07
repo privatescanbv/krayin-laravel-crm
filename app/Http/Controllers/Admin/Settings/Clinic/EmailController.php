@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin\Settings\Clinic;
 
 use Illuminate\Support\Facades\Event;
 use Webkul\Admin\Http\Controllers\Mail\EmailController as BaseEmailController;
-use Webkul\Admin\Http\Resources\ActivityResource;
 
 class EmailController extends BaseEmailController
 {
@@ -50,5 +49,4 @@ class EmailController extends BaseEmailController
             'message' => trans('admin::app.mail.update-success'),
         ]);
     }
-
 }

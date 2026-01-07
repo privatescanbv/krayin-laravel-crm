@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Support\Facades\Event;
 use Webkul\Admin\Http\Controllers\Mail\EmailController as BaseEmailController;
-use Webkul\Admin\Http\Resources\ActivityResource;
 
 class SalesLeadEmailController extends BaseEmailController
 {
@@ -45,5 +44,4 @@ class SalesLeadEmailController extends BaseEmailController
             'message' => trans('admin::app.mail.update-success'),
         ]);
     }
-
 }

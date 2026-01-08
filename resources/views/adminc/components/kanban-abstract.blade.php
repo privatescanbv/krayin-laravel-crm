@@ -77,14 +77,51 @@
                                 <div class="flex items-center justify-between">
 
                                     <div class="flex items-center gap-1">
-                                        <span
-                                            class="inline-flex items-center justify-center rounded p-1 bg-neutral-border text-xs">
-                                           @{{  "Sorteerdropdown"  }}
-                                        </span>
+
+                                        <button
+                                            @click.stop="toggleStageSort(stage)"
+                                            title="Sorteer"
+                                            class="
+                                                inline-flex
+                                                items-center
+                                                gap-1
+                                                px-1.5
+                                                py-0.5
+                                                rounded
+                                                bg-blue-800/30
+                                                hover:bg-blue-800/50
+                                                text-white
+                                                text-[10px]
+                                                leading-none
+                                                cursor-pointer
+                                            ">
+                                            <span>
+                                                @{{ isNewestFirst(stage) ? 'Nieuwste' : 'Oudste' }}
+                                            </span>
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="w-3 h-3"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path
+                                                    v-if="isNewestFirst(stage)"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M19 9l-7 7-7-7"
+                                                />
+                                                <path
+                                                    v-else
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M5 15l7-7 7 7"
+                                                />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
-
-
                             </div>
 
                             {!! view_render_event('admin.leads.index.kanban.content.stage.header.after') !!}
@@ -156,9 +193,6 @@
                                                 <div class="flex flex-col gap-0.5 min-w-0">
                                                    <span class="text-sm font-medium truncate">
                                                        @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
-                                                   </span>
-                                                    <span class="text-xs icon-calendar leading-normal">
-                                                           @{{ element.date_of_birth }} (@{{ element.age }} jaar)
                                                    </span>
                                                     <span class="text-xs leading-normal truncate"
                                                           v-if="element.has_multiple_persons">
@@ -474,6 +508,7 @@
                         wonLostLabel: 'Toon gewonnen/verloren',
                         currentStageUpdate: null,
                         scrollTimeouts: {},
+                        stageSorts: {},
                     };
                 },
 
@@ -504,6 +539,19 @@
                 },
 
                 methods: {
+                    isNewestFirst(stage) {
+                        return this.stageSorts[stage.id] !== 'created_at|asc'
+                    },
+
+                    toggleStageSort(stage) {
+                        this.stageSorts[stage.id] =
+                            this.isNewestFirst(stage)
+                                ? 'created_at|asc'
+                                : 'created_at|desc'
+
+                        this.refreshStage(stage)
+                    },
+
                     /**
                      * Format date to a more readable format
                      *
@@ -540,6 +588,13 @@
                      * @returns {void}
                      */
                     boot() {
+                        // Initialize defaults for all stages
+                        this.stages.forEach(stage => {
+                            if (!this.stageSorts[stage.id]) {
+                                this.stageSorts[stage.id] = 'created_at|desc';
+                            }
+                        });
+
                         let kanbans = this.getKanbans();
 
                         if (kanbans?.length) {
@@ -552,6 +607,10 @@
 
                                 if (typeof currentKanban.hideWonLost === 'boolean') {
                                     this.hideWonLost = currentKanban.hideWonLost;
+                                }
+
+                                if (currentKanban.stageSorts) {
+                                    this.stageSorts = currentKanban.stageSorts;
                                 }
 
                                 this.setWonLostButtonText();
@@ -633,6 +692,37 @@
                             })
                             .catch(error => {
                                 console.error('Error fetching leads:', error);
+                            });
+                    },
+
+                    /**
+                     * Refresh a specific stage with current sort options
+                     */
+                    refreshStage(stage) {
+                        const sortVal = this.stageSorts[stage.id] || 'created_at|desc';
+                        const [sort, order] = sortVal.split('|');
+
+                        this.updateKanbans();
+
+                        this.$axios
+                            .get("{{ route($RouteNameGetEntities) }}", {
+                                params: {
+                                    pipeline_id: "{{ $pipelineId }}",
+                                    pipeline_stage_id: stage.id,
+                                    sort: sort,
+                                    order: order,
+                                    exclude_won_lost: this.hideWonLost
+                                }
+                            })
+                            .then(response => {
+                                if (response && response.data) {
+                                    for (let [key, data] of Object.entries(response.data)) {
+                                        this.stageLeads[key] = data;
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error refreshing stage:', error);
                             });
                     },
 
@@ -893,12 +983,17 @@
                                 return;
                             }
 
+                            const sortVal = this.stageSorts[stage.id] || 'created_at|desc';
+                            const [sort, order] = sortVal.split('|');
+
                             this.append({
                                 pipeline_stage_id: stage.id,
                                 pipeline_id: stage.lead_pipeline_id,
                                 page: this.stageLeads[stage.sort_order].leads.meta
                                     .current_page + 1,
                                 limit: 10,
+                                sort: sort,
+                                order: order,
                             });
                         }, 150); // 150ms debounce
                     },
@@ -928,6 +1023,7 @@
                                             requestCount: ++kanban.requestCount,
                                             applied: this.applied,
                                             hideWonLost: this.hideWonLost,
+                                            stageSorts: this.stageSorts,
                                         };
                                     }
 
@@ -954,6 +1050,7 @@
                             requestCount: 0,
                             applied: this.applied,
                             hideWonLost: this.hideWonLost,
+                            stageSorts: this.stageSorts,
                         };
                     },
 

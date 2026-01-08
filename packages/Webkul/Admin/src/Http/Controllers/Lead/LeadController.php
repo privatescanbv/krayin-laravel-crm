@@ -232,7 +232,10 @@ class LeadController extends Controller
                 ->with([
                     'stage:id,code,name,sort_order,is_won,is_lost',
                 ])
-                ->orderBy('leads.created_at', 'desc')
+                ->orderBy(
+                    'leads.created_at',
+                    in_array(request('order'), ['asc', 'desc'], true) ? request('order') : 'desc'
+                )
                 ->paginate((int) request()->query('limit', 10));
                 // Set pipeline relation manually to prevent N+1 queries in getRottenDaysAttribute
                 $pipelineModel = new Pipeline([

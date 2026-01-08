@@ -74,7 +74,7 @@ class PipelineSeeder extends BaseSeeder
             ],
             [
                 'id' => $techBacklogPipelineId,
-                'name' => 'No Pipeline',
+                'name' => '-',
                 'is_default' => 0,
                 'type' => PipelineType::LEAD,
                 'created_at' => $now,

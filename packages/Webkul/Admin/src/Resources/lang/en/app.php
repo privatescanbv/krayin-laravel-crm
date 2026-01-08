@@ -1382,6 +1382,9 @@ return [
         ],
 
         'users' => [
+            'create-title' => 'Create User',
+            'edit-title'   => 'Edit User',
+
             'index' => [
                 'create-btn'          => 'Create User',
                 'create-success'      => 'User created successfully.',
@@ -1395,6 +1398,7 @@ return [
                 'title'               => 'Users',
                 'update-success'      => 'User updated successfully.',
                 'user-define-error'   => 'Can not delete system user.',
+                'cancel'              => 'Cancel',
                 'active'              => 'Active',
                 'inactive'            => 'Inactive',
 

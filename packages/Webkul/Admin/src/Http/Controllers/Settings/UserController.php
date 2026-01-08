@@ -26,6 +26,7 @@ use Webkul\User\Repositories\GroupRepository;
 use Webkul\User\Repositories\RoleRepository;
 use Webkul\User\Repositories\UserRepository;
 use Webkul\User\Models\UserDefaultValue;
+use Webkul\User\Models\User;
 
 class UserController extends Controller
 {
@@ -49,17 +50,24 @@ class UserController extends Controller
             return datagrid(UserDataGrid::class)->process();
         }
 
-        $roles = $this->roleRepository->all();
+        return view('admin::settings.users.index');
+    }
 
+    /**
+     * Show the form for creating a new user.
+     */
+    public function create(): View
+    {
+        $roles  = $this->roleRepository->all();
         $groups = $this->groupRepository->all();
 
-        return view('admin::settings.users.index', compact('roles', 'groups'));
+        return view('admin::settings.users.create', compact('roles', 'groups'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(): View|JsonResponse
+    public function store(): View|JsonResponse | RedirectResponse
     {
         try {
              $this->validate(request(), $this->getRequestValidationRules());
@@ -127,10 +135,18 @@ class UserController extends Controller
 
         Event::dispatch('settings.user.create.after', $admin);
 
-        return new JsonResponse([
-            'data'    => $admin,
-            'message' => trans('admin::app.settings.users.index.create-success'),
-        ]);
+        $message = trans('admin::app.settings.users.index.create-success');
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return new JsonResponse([
+                'data'    => $admin,
+                'message' => $message,
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.settings.users.index')
+            ->with('success', $message);
     }
 
     /**
@@ -146,11 +162,23 @@ class UserController extends Controller
             $settingsMap[$setting->key] = $setting->value;
         }
 
-        $data = $admin->toArray();
-        $data['user_default_values'] = $settingsMap;
+        if (request()->ajax() || request()->wantsJson()) {
+            $data = $admin->toArray();
+            $data['user_default_values'] = $settingsMap;
 
-        return new JsonResponse([
-            'data'   => $data,
+            return new JsonResponse([
+                'data' => $data,
+            ]);
+        }
+
+        $roles  = $this->roleRepository->all();
+        $groups = $this->groupRepository->all();
+
+        return view('admin::settings.users.edit', [
+            'user'        => $admin,
+            'roles'       => $roles,
+            'groups'      => $groups,
+            'settingsMap' => $settingsMap,
         ]);
     }
 
@@ -224,10 +252,18 @@ class UserController extends Controller
 
         Event::dispatch('settings.user.update.after', $admin);
 
-        return new JsonResponse([
-            'data'    => $admin,
-            'message' => trans('admin::app.settings.users.index.update-success'),
-        ]);
+        $message = trans('admin::app.settings.users.index.update-success');
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return new JsonResponse([
+                'data'    => $admin,
+                'message' => $message,
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.settings.users.index')
+            ->with('success', $message);
     }
 
     /**

@@ -20,13 +20,12 @@
                 <!-- Create button for User -->
                 @if (bouncer()->hasPermission('settings.user.users.create'))
                     <div class="flex items-center gap-x-2.5">
-                        <button
-                            type="button"
+                        <a
+                            href="{{ route('admin.settings.users.create') }}"
                             class="primary-button"
-                            @click="$refs.userSettings.openModal()"
                         >
                             @lang('admin::app.settings.users.index.create-btn')
-                        </button>
+                        </a>
                     </div>
                 @endif
 
@@ -124,7 +123,7 @@
 
                             <!-- Actions -->
                             <div class="flex justify-end">
-                                <a @click="editModal(record.actions.find(action => action.index === 'edit')?.url)">
+                                <a :href="record.actions.find(action => action.index === 'edit')?.url">
                                     <span
                                         :class="record.actions.find(action => action.index === 'edit')?.icon"
                                         class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
@@ -172,7 +171,7 @@
                                         v-if="available.actions.length"
                                     >
                                         <!-- Actions -->
-                                        <a @click="editModal(record.actions.find(action => action.index === 'edit')?.url)">
+                                        <a :href="record.actions.find(action => action.index === 'edit')?.url">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'edit')?.icon"
                                                 class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
@@ -207,399 +206,6 @@
 
             {!! view_render_event('admin.users.index.datagrid.after') !!}
 
-            <x-admin::form
-                v-slot="{ meta, values, errors, handleSubmit }"
-                as="div"
-                ref="modalForm"
-            >
-                <form
-                    @submit="handleSubmit($event, updateOrCreate)"
-                    ref="userForm"
-                >
-                    {!! view_render_event('admin.settings.users.index.form_controls.before') !!}
-
-                    <x-admin::modal ref="userUpdateAndCreateModal">
-                        <!-- Modal Header -->
-                        <x-slot:header>
-                            <p class="text-lg font-bold text-gray-800 dark:text-white">
-                                @{{
-                                    selectedType == 'create'
-                                    ? "@lang('admin::app.settings.users.index.create.title')"
-                                    : "@lang('admin::app.settings.users.index.edit.title')"
-                                }}
-                            </p>
-                        </x-slot>
-
-                        <!-- Modal Content -->
-                        <x-slot:content>
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                name="id"
-                                v-model="user.id"
-                            />
-
-                            {!! view_render_event('admin.settings.users.index.form.name.before') !!}
-
-                            <div class="flex gap-4">
-                                <!-- First Name -->
-                                <x-admin::form.control-group class="flex-1">
-
-
-                                    <x-admin::form.control-group.control
-                                        type="text"
-                                        id="first_name"
-                                        name="first_name"
-                                        rules="required"
-                                        v-model="user.first_name"
-                                        :label="trans('admin::app.settings.users.index.create.first-name')"
-                                        :placeholder="trans('admin::app.settings.users.index.create.first-name')"
-                                    />
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.first-name')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="first_name" />
-
-                                </x-admin::form.control-group>
-
-                                <!-- Last Name -->
-                                <x-admin::form.control-group class="flex-1">
-
-
-                                    <x-admin::form.control-group.control
-                                        type="text"
-                                        id="last_name"
-                                        name="last_name"
-                                        rules="required"
-                                        v-model="user.last_name"
-                                        :label="trans('admin::app.settings.users.index.create.last-name')"
-                                        :placeholder="trans('admin::app.settings.users.index.create.last-name')"
-                                    />
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.last-name')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="last_name" />
-
-                                </x-admin::form.control-group>
-                            </div>
-
-                            {!! view_render_event('admin.settings.users.index.form.name.after') !!}
-
-                            {!! view_render_event('admin.settings.users.index.form.email.before') !!}
-
-                            <!-- Email -->
-                            <x-admin::form.control-group>
-
-
-                                <x-admin::form.control-group.control
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    v-model="user.email"
-                                    rules="required"
-                                    :label="trans('admin::app.settings.users.index.create.email')"
-                                    :placeholder="trans('admin::app.settings.users.index.create.email')"
-                                />
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.users.index.create.email')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="email" />
-
-                            </x-admin::form.control-group>
-
-                            {!! view_render_event('admin.settings.users.index.form.email.after') !!}
-
-                            {!! view_render_event('admin.settings.users.index.form.password.before') !!}
-
-                            <div class="flex gap-4">
-                                <!-- Password -->
-                                <x-admin::form.control-group class="flex-1">
-
-
-                                    <x-admin::form.control-group.control
-                                        type="password"
-                                        id="password"
-                                        name="password"
-                                        ::rules="user.id ? '' : 'required|min:6'"
-                                        :label="trans('admin::app.settings.users.index.create.password')"
-                                        :placeholder="trans('admin::app.settings.users.index.create.password')"
-                                        ref="password"
-                                    />
-                                    <x-admin::form.control-group.label ::class="user.id ? '' : 'required'">
-                                        @lang('admin::app.settings.users.index.create.password')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="password" />
-
-                                </x-admin::form.control-group>
-
-                                <!-- Confirm Password -->
-                                <x-admin::form.control-group class="flex-1">
-                                    <x-admin::form.control-group.control
-                                        type="password"
-                                        id="confirm_password"
-                                        name="confirm_password"
-                                        ::rules="values.password ? 'confirmed:@password' : ''"
-                                        :label="trans('admin::app.settings.users.index.create.password')"
-                                        :placeholder="trans('admin::app.settings.users.index.create.confirm-password')"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.settings.users.index.create.confirm-password')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="confirm_password" />
-
-                                </x-admin::form.control-group>
-                            </div>
-
-                            {!! view_render_event('admin.settings.users.index.form.password.after') !!}
-
-                            {!! view_render_event('admin.settings.users.index.form.role_id.before') !!}
-
-                            <div class="flex gap-4">
-                                <!-- Role -->
-                                <x-admin::form.control-group class="flex-1">
-
-                                    <x-admin::form.control-group.control
-                                        type="select"
-                                        name="role_id"
-                                        rules="required"
-                                        v-model="user.role_id"
-                                        :label="trans('admin::app.settings.users.index.create.role')"
-                                    >
-                                        <option
-                                            v-for="role in roles"
-                                            :key="role.id"
-                                            :value="role.id"
-                                        >
-                                            @{{ role.name }}
-                                        </option>
-                                    </x-admin::form.control-group.control>
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.role')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="role_id" />
-
-                                </x-admin::form.control-group>
-
-                                <!-- Permission -->
-                                <x-admin::form.control-group class="flex-1">
-
-
-                                    <x-admin::form.control-group.control
-                                        type="select"
-                                        name="view_permission"
-                                        rules="required"
-                                        v-model="user.view_permission"
-                                        :label="trans('admin::app.settings.users.index.create.view-permission')"
-                                    >
-                                        <!-- Default Option -->
-                                        <option  value="global" selected>
-                                            @lang('admin::app.settings.users.index.create.global')
-                                        </option>
-
-                                        <option value="group">
-                                            @lang('admin::app.settings.users.index.create.group')
-                                        </option>
-
-                                        <option value="individual">
-                                            @lang('admin::app.settings.users.index.create.individual')
-                                        </option>
-                                    </x-admin::form.control-group.control>
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.settings.users.index.create.view-permission')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.error control-name="view_permission" />
-
-                                </x-admin::form.control-group>
-                            </div>
-
-                            {!! view_render_event('admin.settings.users.index.form.role_id.after') !!}
-
-                            {!! view_render_event('admin.settings.users.index.form.role_id.before') !!}
-
-                            <!-- Group -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    id="signature"
-                                    name="signature"
-                                    v-model="user.signature"
-                                    :label="trans('admin::app.settings.users.index.create.signature')"
-                                    :placeholder="trans('admin::app.settings.users.index.create.signature')"
-                                    :tinymce="true"
-                                    rows="4"
-                                />
-
-
-                                <v-field
-                                    name="groups[]"
-                                    :label="trans('admin::app.settings.users.index.create.group')"
-                                    multiple
-                                    v-model="user.groups"
-                                >
-                                    <select
-                                        name="groups[]"
-                                        class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                        :class="[errors['groups[]'] ? 'border !border-red-600 hover:border-red-600' : '']"
-                                        multiple
-                                        v-model="user.groups"
-                                    >
-                                        <option
-                                            v-for="group in groups"
-                                            :value="group.id"
-                                            :text="group.name"
-                                        >
-                                        </option>
-                                    </select>
-                                </v-field>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.users.index.create.group')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="signature" />
-
-                                <x-admin::form.control-group.error name="groups[]" />
-
-                            </x-admin::form.control-group>
-
-                            {!! view_render_event('admin.settings.users.index.form.role_id.after') !!}
-
-                            {!! view_render_event('admin.settings.users.index.form.status.before') !!}
-
-                            <!-- Status -->
-                            <x-admin::form.control-group>
-
-
-                                <input
-                                    type="hidden"
-                                    name="status"
-                                    :value="0"
-                                />
-
-                                <x-admin::form.control-group.control
-                                    type="switch"
-                                    name="status"
-                                    value="1"
-                                    :label="trans('admin::app.settings.users.index.create.status')"
-                                    ::checked="parseInt(user.status || 0)"
-                                />
-                                <x-admin::form.control-group.label for="status" switch>
-                                    @lang('admin::app.settings.users.index.create.status')
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
-
-                            {!! view_render_event('admin.settings.users.index.form.status.after') !!}
-
-                            {!! view_render_event('admin.settings.users.index.form.signature.before') !!}
-
-                            <!-- Signature -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.settings.users.index.create.signature')
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
-
-                            {!! view_render_event('admin.settings.users.index.form.signature.after') !!}
-
-                            <!-- User Default Field Values -->
-                            <div class="mt-4 rounded border border-gray-200 p-4 dark:border-gray-800">
-                                <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">Default veld waarden</div>
-
-                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="user_default_values[lead.department_id]"
-                                            v-model="user.user_default_values['lead.department_id']"
-                                            :label="'lead.department_id'"
-                                            :placeholder="'2'"
-                                        />
-                                        <x-admin::form.control-group.label>
-                                            Lead afdeling
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.department_id" />
-
-                                    </x-admin::form.control-group>
-
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="user_default_values[lead.lead_channel_id]"
-                                            v-model="user.user_default_values['lead.lead_channel_id']"
-                                            :label="'lead.lead_channel_id'"
-                                            :placeholder="'1'"
-                                        />
-                                        <x-admin::form.control-group.label>
-                                            Lead kanaal
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.lead_channel_id" />
-
-                                    </x-admin::form.control-group>
-
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="user_default_values[lead.lead_source_id]"
-                                            v-model="user.user_default_values['lead.lead_source_id']"
-                                            :label="'lead.lead_source_id'"
-                                            :placeholder="'6'"
-                                        />
-                                        <x-admin::form.control-group.label>
-                                            Lead bron
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.lead_source_id" />
-
-                                    </x-admin::form.control-group>
-
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="user_default_values[lead.type_id]"
-                                            v-model="user.user_default_values['lead.type_id']"
-                                            :label="'lead.type_id'"
-                                            :placeholder="'2'"
-                                        />
-                                        <x-admin::form.control-group.label>
-                                            Lead type
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="user_default_values.lead.type_id" />
-
-                                    </x-admin::form.control-group>
-                                </div>
-                            </div>
-                        </x-slot>
-
-                        <!-- Modal Footer -->
-                        <x-slot:footer>
-                            {!! view_render_event('admin.settings.users.index.modal.footer.save_button.before') !!}
-
-                            <!-- Save Button -->
-                            <x-admin::button
-                                button-type="submit"
-                                class="primary-button justify-center"
-                                :title="trans('admin::app.settings.users.index.create.save-btn')"
-                                ::loading="isProcessing"
-                                ::disabled="isProcessing"
-                            />
-
-                            {!! view_render_event('admin.settings.users.index.modal.footer.save_button.after') !!}
-                        </x-slot>
-                    </x-admin::modal>
-
-                    {!! view_render_event('admin.settings.users.index.form_controls.after') !!}
-                </form>
-            </x-admin::form>
         </script>
 
         <script type="module">
@@ -608,13 +214,6 @@
 
                 data() {
                     return {
-                        isProcessing: false,
-
-                        roles: @json($roles),
-
-                        groups:  @json($groups),
-
-                        user: { user_default_values: {} },
                     };
                 },
 
@@ -633,59 +232,9 @@
                         return count;
                     },
 
-                    selectedType() {
-                        return this.user.id ? 'edit' : 'create';
-                    },
                 },
 
                 methods: {
-                    openModal() {
-                        this.user = {
-                            groups: [],
-                            user_default_values: {},
-                        };
-
-                        this.$refs.userUpdateAndCreateModal.toggle();
-                    },
-
-                    updateOrCreate(params, {resetForm, setErrors}) {
-                        const userForm = new FormData(this.$refs.userForm);
-
-                        userForm.append('_method', params.id ? 'put' : 'post');
-
-                        this.isProcessing = true;
-
-                        this.$axios.post(params.id ? `{{ route('admin.settings.users.update', '') }}/${params.id}` : "{{ route('admin.settings.users.store') }}", userForm).then(response => {
-                            this.isProcessing = false;
-
-                            this.$refs.userUpdateAndCreateModal.toggle();
-
-                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-
-                            this.$refs.datagrid.get();
-
-                            resetForm();
-                        }).catch(error => {
-                            this.isProcessing = false;
-
-                            if (error.response.status === 422) {
-                                setErrors(error.response.data.errors);
-                                this.$emitter.emit('add-flash', { type: 'error', message: (error.response.data && error.response.data.message) ? error.response.data.message : 'Validatiefouten in het formulier.' });
-                            }
-                        });
-                    },
-
-                    editModal(url) {
-                        this.$axios.get(url)
-                            .then(response => {
-                                this.user = response.data.data;
-
-                                this.user.groups = this.user.groups.map(group => group.id);
-
-                                this.$refs.userUpdateAndCreateModal.toggle();
-                            })
-                            .catch(error => {});
-                    },
                 },
             });
         </script>

@@ -95,7 +95,6 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
                 type="text"
                 label="Burgerservicenummer (BSN)"
                 value="{{ $lead->national_identification_number ?? '' }}"
-                placeholder="BSN nummer"
                 readonly />
         </x-adminc::leads.part.general-info-container>
     </div>

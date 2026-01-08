@@ -1161,6 +1161,9 @@ return [
        ],
 
         'users' => [
+            'create-title' => 'Gebruiker aanmaken',
+            'edit-title'   => 'Gebruiker bewerken',
+
             'index' => [
                 'create-btn' => 'Gebruiker aanmaken',
                 'create-success' => 'Gebruiker succesvol aangemaakt.',
@@ -1174,6 +1177,7 @@ return [
                 'title' => 'Gebruikers',
                 'update-success' => 'Gebruiker succesvol bijgewerkt.',
                 'user-define-error' => 'Systeemgebruiker kan niet worden verwijderd.',
+                'cancel' => 'Annuleren',
                 'active' => 'Actief',
                 'inactive' => 'Inactief',
 

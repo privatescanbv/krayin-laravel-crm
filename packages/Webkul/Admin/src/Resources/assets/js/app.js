@@ -96,6 +96,37 @@ window.app = createApp({
 });
 
 /**
+ * Keep a lightweight `trans()` available in Vue templates.
+ * Many Blade-driven Vue templates use bindings like `:label="trans('admin::app...')"`
+ * which compile to `_ctx.trans(...)`.
+ */
+app.config.globalProperties.trans = (key, replacements = {}) => {
+    const k = typeof key === "string" ? key : String(key ?? "");
+
+    try {
+        const fn =
+            typeof window !== "undefined"
+                ? (typeof window.trans === "function" ? window.trans : (typeof window.__ === "function" ? window.__ : null))
+                : null;
+
+        const out = fn ? fn(k, replacements) : k;
+
+        // Fallback replacement if the delegated translator didn't handle it.
+        if (out && replacements && typeof replacements === "object") {
+            let str = String(out);
+            for (const [rk, rv] of Object.entries(replacements)) {
+                str = str.replaceAll(`:${rk}`, String(rv));
+            }
+            return str;
+        }
+
+        return out;
+    } catch (e) {
+        return k;
+    }
+};
+
+/**
  * Global plugins registration.
  */
 import Admin from "./plugins/admin";

@@ -105,6 +105,48 @@ class PersonController extends Controller
     }
 
     /**
+     * Searches on first name and last name
+     * Created for suggestions in edit lead.
+     * @param mixed $lead
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function findPersonsBasedOnLead(mixed $lead): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    {
+        $leadFirstName = trim($lead->first_name ?? '');
+        $leadLastName = trim($lead->last_name ?? '');
+
+        // Search persons with the same first + last name as this lead.
+        // Keep permission filtering consistent with the regular search() endpoint.
+        if ($leadFirstName === '' || $leadLastName === '') {
+            $result = PersonResource::collection(collect());
+        } else {
+            $repository = $this->personRepository->with(['address']);
+
+            $repository->scopeQuery(function ($query) use ($leadFirstName, $leadLastName) {
+                if ($leadFirstName !== '') {
+                    $query->whereRaw('LOWER(first_name) = ?', [mb_strtolower($leadFirstName)]);
+                }
+
+                if ($leadLastName !== '') {
+                    $lowerLast = mb_strtolower($leadLastName);
+
+                    $query->where(function ($q) use ($lowerLast) {
+                        $q->whereRaw('LOWER(last_name) = ?', [$lowerLast])
+                            ->orWhereRaw('LOWER(married_name) = ?', [$lowerLast]);
+                    });
+                }
+
+                return $query->limit(30);
+            });
+
+            $this->applyPermissionFilter($repository);
+
+            $result = PersonResource::collection($repository->all());
+        }
+        return $result;
+    }
+
+    /**
      * Get search configuration for persons.
      */
     protected function getSearchConfig(): array
@@ -322,30 +364,37 @@ class PersonController extends Controller
      */
     public function search(): JsonResource|JsonResponse
     {
-        // Use performAdvancedSearch for normalization and standard search handling
-        // Email detection and multi-token search are now handled in HasAdvancedSearch
-        $result = $this->performAdvancedSearch(
-            repository: $this->personRepository,
-            getFieldsSearchable: fn() => $this->personRepository->getFieldsSearchable(),
-            eagerLoadRelations: ['address'],
-            getResults: function ($repository, $emailTerms = [], $phoneTerms = []) {
-                // Always apply RequestCriteria (with normalized search/searchFields)
-                $repository->pushCriteria(app(RequestCriteria::class));
+        $leadId = request()->get('lead_id');
+        if ($leadId) {
+            $lead = $this->leadRepository->with(['address'])->findOrFail($leadId);
 
-                // Apply email/phone search after RequestCriteria but before permission filter
-                // This ensures email/phone search is combined with OR to name search
-                if (!empty($emailTerms) || !empty($phoneTerms)) {
-                    $this->applyEmailPhoneSearch($repository, $emailTerms, $phoneTerms);
-                }
+            $result = $this->findPersonsBasedOnLead($lead);
+        } else {
+            // Use performAdvancedSearch for normalization and standard search handling
+            // Email detection and multi-token search are now handled in HasAdvancedSearch
+            $result = $this->performAdvancedSearch(
+                repository: $this->personRepository,
+                getFieldsSearchable: fn() => $this->personRepository->getFieldsSearchable(),
+                eagerLoadRelations: ['address'],
+                getResults: function ($repository, $emailTerms = [], $phoneTerms = []) {
+                    // Always apply RequestCriteria (with normalized search/searchFields)
+                    $repository->pushCriteria(app(RequestCriteria::class));
 
-                // Apply permission filter via a Criteria so it composes with existing scopeQuery
-                $this->applyPermissionFilter($repository);
+                    // Apply email/phone search after RequestCriteria but before permission filter
+                    // This ensures email/phone search is combined with OR to name search
+                    if (!empty($emailTerms) || !empty($phoneTerms)) {
+                        $this->applyEmailPhoneSearch($repository, $emailTerms, $phoneTerms);
+                    }
 
-                return $repository->all();
-            },
-            resourceClass: PersonResource::class,
-            queryParams: request()->query->all()
-        );
+                    // Apply permission filter via a Criteria so it composes with existing scopeQuery
+                    $this->applyPermissionFilter($repository);
+
+                    return $repository->all();
+                },
+                resourceClass: PersonResource::class,
+                queryParams: request()->query->all()
+            );
+        }
 
         // If result is a JsonResponse (error), return it immediately
         if ($result instanceof JsonResponse) {
@@ -356,11 +405,8 @@ class PersonController extends Controller
         $persons = $result->collection;
 
         // Check if we need to calculate match scores against a lead
-        $leadId = request()->get('lead_id');
         if ($leadId) {
             try {
-                $lead = app(LeadRepository::class)->with(['address'])->findOrFail($leadId);
-
                 // Calculate match scores for each person
                 // Note: $persons contains PersonResource objects, we need to get the underlying Person model
                 $personsWithScores = $persons->map(function ($personResource) use ($lead) {

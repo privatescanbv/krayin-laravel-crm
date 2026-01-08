@@ -74,25 +74,25 @@
                             </template>
                         </div>
 
-                        <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.sales.length">
-                                <a
-                                    :href="`{{ route('admin.sales-leads.index') }}?search=${encodeURIComponent(params.search)}&searchFields=${encodeURIComponent(params.searchFields)}&searchJoin=or`"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-sales')`.replace(':query', searchTerm).replace(':count', searchedResults.sales.length) }}
-                                </a>
-                            </template>
+{{--                        <div class="flex border-t p-3 dark:border-gray-800">--}}
+{{--                            <template v-if="searchedResults.sales.length">--}}
+{{--                                <a--}}
+{{--                                    :href="`{{ route('admin.sales-leads.index') }}?search=${encodeURIComponent(params.search)}&searchFields=${encodeURIComponent(params.searchFields)}&searchJoin=or`"--}}
+{{--                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"--}}
+{{--                                >--}}
+{{--                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-sales')`.replace(':query', searchTerm).replace(':count', searchedResults.sales.length) }}--}}
+{{--                                </a>--}}
+{{--                            </template>--}}
 
-                            <template v-else>
-                                <a
-                                    href="{{ route('admin.sales-leads.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-sales')
-                                </a>
-                            </template>
-                        </div>
+{{--                            <template v-else>--}}
+{{--                                <a--}}
+{{--                                    href="{{ route('admin.sales-leads.index') }}"--}}
+{{--                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"--}}
+{{--                                >--}}
+{{--                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-sales')--}}
+{{--                                </a>--}}
+{{--                            </template>--}}
+{{--                        </div>--}}
                     </template>
                 </template>
 
@@ -144,25 +144,25 @@
                             </template>
                         </div>
 
-                        <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.leads.length">
-                               <a
-                                    :href="`{{ route('admin.leads.index') }}?search=${encodeURIComponent(params.search)}&searchFields=${encodeURIComponent(params.searchFields)}&searchJoin=or`"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-leads')`.replace(':query', searchTerm).replace(':count', searchedResults.leads.length) }}
-                                </a>
-                            </template>
+{{--                        <div class="flex border-t p-3 dark:border-gray-800">--}}
+{{--                            <template v-if="searchedResults.leads.length">--}}
+{{--                               <a--}}
+{{--                                    :href="`{{ route('admin.leads.index') }}?search=${encodeURIComponent(params.search)}&searchFields=${encodeURIComponent(params.searchFields)}&searchJoin=or`"--}}
+{{--                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"--}}
+{{--                                >--}}
+{{--                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-leads')`.replace(':query', searchTerm).replace(':count', searchedResults.leads.length) }}--}}
+{{--                                </a>--}}
+{{--                            </template>--}}
 
-                            <template v-else>
-                                <a
-                                    href="{{ route('admin.leads.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-leads')
-                                </a>
-                            </template>
-                        </div>
+{{--                            <template v-else>--}}
+{{--                                <a--}}
+{{--                                    href="{{ route('admin.leads.index') }}"--}}
+{{--                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"--}}
+{{--                                >--}}
+{{--                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-leads')--}}
+{{--                                </a>--}}
+{{--                            </template>--}}
+{{--                        </div>--}}
                     </template>
                 </template>
 
@@ -325,7 +325,7 @@
             methods: {
                 search(endpoint) {
                     const url = endpoint || (this.tabs[this.activeTab] ? this.tabs[this.activeTab].endpoint : null);
-                    
+
                     if (this.searchTerm.length <= 1) {
                         this.searchedResults[this.activeTab] = [];
 
@@ -380,7 +380,7 @@
 
                     const looksLikePhone = this.isPhoneNumber(newTerm);
                     const looksLikeEmail = this.isEmail(newTerm);
-                    
+
                     if (looksLikePhone) {
                         // For phone-like terms, restrict search to phone-only per tab to avoid AND with name
                         const digits = (newTerm || '').replace(/\D/g, '');

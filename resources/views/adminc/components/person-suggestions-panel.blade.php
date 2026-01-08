@@ -1,6 +1,6 @@
 <div class="flex items-center justify-between mb-2">
     <p class="text-sm font-semibold text-activity-task-text dark:text-blue-100">Mogelijke matches gevonden</p>
-    <button type="button" class="text-xs text-blue-700 underline" @click="clearSuggestions">verberg</button>
+{{--    <button type="button" class="text-xs text-blue-700 underline" @click="clearSuggestions">verberg</button>--}}
   </div>
   <ul class="space-y-2 max-h-[420px] overflow-auto pr-1">
     <li v-for="s in suggestions" :key="'sug-'+(s.id||s.unique_id)" class="flex items-center justify-between gap-3">

@@ -35,10 +35,10 @@ test('lead can have a contact person', function () {
         'user_id'                => $this->user->id,
     ]);
 
-    expect($lead->contactPerson)->not->toBeNull();
-    expect($lead->contactPerson->id)->toBe($person->id);
-    expect($lead->contactPerson->first_name)->toBe('John');
-    expect($lead->contactPerson->last_name)->toBe('Doe');
+    expect($lead->contactPerson)->not->toBeNull()
+        ->and($lead->contactPerson->id)->toBe($person->id)
+        ->and($lead->contactPerson->first_name)->toBe('John')
+        ->and($lead->contactPerson->last_name)->toBe('Doe');
 });
 
 test('lead contact person can be null', function () {
@@ -97,9 +97,9 @@ test('lead contact person can be different from linked persons', function () {
     // Attach a different person to the lead
     $lead->persons()->attach($linkedPerson->id);
 
-    expect($lead->contactPerson->id)->toBe($contactPerson->id);
-    expect($lead->persons->first()->id)->toBe($linkedPerson->id);
-    expect($lead->contactPerson->id)->not->toBe($lead->persons->first()->id);
+    expect($lead->contactPerson->id)->toBe($contactPerson->id)
+        ->and($lead->persons->first()->id)->toBe($linkedPerson->id)
+        ->and($lead->contactPerson->id)->not->toBe($lead->persons->first()->id);
 });
 
 test('lead contact person can be the same as linked person', function () {
@@ -118,7 +118,7 @@ test('lead contact person can be the same as linked person', function () {
     // Attach the same person to the lead
     $lead->persons()->attach($person->id);
 
-    expect($lead->contactPerson->id)->toBe($person->id);
-    expect($lead->persons->first()->id)->toBe($person->id);
-    expect($lead->contactPerson->id)->toBe($lead->persons->first()->id);
+    expect($lead->contactPerson->id)->toBe($person->id)
+        ->and($lead->persons->first()->id)->toBe($person->id)
+        ->and($lead->contactPerson->id)->toBe($lead->persons->first()->id);
 });

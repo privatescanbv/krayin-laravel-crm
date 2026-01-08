@@ -10,6 +10,7 @@ enum ActivityType: string
     case SYSTEM = 'system';
     case NOTE = 'note';
     case FILE = 'file';
+    case EMAIL = 'email';
     case PATIENT_MESSAGE = 'patient_message';
 
     /**
@@ -17,7 +18,7 @@ enum ActivityType: string
      */
     public static function userSelectable(): array
     {
-        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::FILE], true));
+        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::FILE, self::EMAIL], true));
     }
 
     public function label(): string
@@ -29,6 +30,7 @@ enum ActivityType: string
             self::SYSTEM          => trans('admin::app.components.activities.index.change-log'),
             self::NOTE            => trans('admin::app.components.activities.index.notes'),
             self::FILE            => trans('admin::app.components.activities.index.files'),
+            self::EMAIL           => trans('admin::app.components.activities.index.emails'),
             self::PATIENT_MESSAGE => 'Patient Messages',
         };
     }
@@ -38,6 +40,6 @@ enum ActivityType: string
      */
     public function isUserSelectable(): bool
     {
-        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE, self::PATIENT_MESSAGE], true);
+        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE, self::EMAIL, self::PATIENT_MESSAGE], true);
     }
 }

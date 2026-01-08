@@ -2,6 +2,8 @@
 
 namespace App\Services\Mail;
 
+use App\Enums\ActivityStatus;
+use App\Enums\ActivityType;
 use App\Models\EmailLog;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -177,7 +179,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             $emailData['person_id'] = $person->id;
 
             // Try to find associated lead through lead_persons table
-            $lead = $person->leads()->first();
+            $lead = $person->leads->first();
             if ($lead) {
                 $emailData['lead_id'] = $lead->id;
             }
@@ -209,11 +211,11 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             $activityData = [
                 'title'         => 'E-mail ontvangen: '.($emailData['subject'] ?: 'Geen onderwerp'),
                 'comment'       => 'E-mail ontvangen via '.$this->getProcessorName(),
-                'type'          => 'email',
+                'type'          => ActivityType::EMAIL,
                 'schedule_from' => $emailData['created_at'] ?? now(),
                 'schedule_to'   => $emailData['created_at'] ?? now(),
-                'is_completed'  => true,
-                'completed_at'  => $emailData['created_at'] ?? now(),
+                'is_done'       => true,
+                'status'        => ActivityStatus::DONE,
             ];
 
             if (isset($emailData['lead_id'])) {

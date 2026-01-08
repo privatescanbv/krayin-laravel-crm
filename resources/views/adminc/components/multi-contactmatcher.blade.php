@@ -1,5 +1,25 @@
 {!! view_render_event('admin.leads.multi_contactmatcher.before') !!}
 
+@php
+    /**
+     * IMPORTANT: `date_of_birth` is a DATE-only field.
+     * When a Laravel `date` cast is JSON-serialized, it can become an ISO datetime in UTC
+     * (e.g. `1980-12-27T23:00:00.000000Z` for Europe/Amsterdam midnight), which causes
+     * an off-by-one day when clients take the first 10 chars.
+     *
+     * Force a stable `Y-m-d` string here so the frontend can treat it as date-only.
+     */
+    $leadForContactMatcher = $lead ?? new stdClass();
+
+    if ($lead ?? null) {
+        $leadForContactMatcher = $lead->toArray();
+
+        if (! empty($lead->date_of_birth)) {
+            $leadForContactMatcher['date_of_birth'] = $lead->date_of_birth->format('Y-m-d');
+        }
+    }
+@endphp
+
 <div class="panel bg-activity-note-bg border border-activity-note-border rounded-lg p-4 mb-4">
     <div class="panel-header mb-3">
         <div class="mt-2 text-xs text-blue-500">
@@ -26,7 +46,7 @@
     </div>
 
     <v-multi-contact-matcher
-        :lead='@json($lead ?? new stdClass())'
+        :lead='@json($leadForContactMatcher)'
         :existing-persons='@json($persons ?? [])'
     ></v-multi-contact-matcher>
 </div>
@@ -497,16 +517,36 @@
                     if (/^\d{2}-\d{2}-\d{4}$/.test(value)) {
                         return value;
                     }
-                    // ISO 8601 -> take date part
-                    const isoDate = (String(value).match(/^(\d{4}-\d{2}-\d{2})/) || [])[1];
-                    const datePart = isoDate || String(value);
-                    const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    const s = String(value).trim();
+
+                    // Date-only (YYYY-MM-DD)
+                    const dateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (dateOnly) {
+                        return `${dateOnly[3]}-${dateOnly[2]}-${dateOnly[1]}`;
+                    }
+
+                    // Datetime (ISO or with time) -> parse and format using LOCAL date parts
+                    if (/^\d{4}-\d{2}-\d{2}[T\s]/.test(s)) {
+                        try {
+                            const d = new Date(s);
+                            if (!isNaN(d.getTime())) {
+                                const dd = String(d.getDate()).padStart(2, '0');
+                                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                const yyyy = d.getFullYear();
+                                return `${dd}-${mm}-${yyyy}`;
+                            }
+                        } catch (e) {}
+                    }
+
+                    // ISO-ish fallback: take date part only
+                    const isoDate = (s.match(/^(\d{4}-\d{2}-\d{2})/) || [])[1];
+                    const m = (isoDate || s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
                     if (m) {
                         return `${m[3]}-${m[2]}-${m[1]}`;
                     }
                     // Fallback parse
                     try {
-                        const d = new Date(value);
+                        const d = new Date(s);
                         if (!isNaN(d.getTime())) {
                             const dd = String(d.getDate()).padStart(2, '0');
                             const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -522,20 +562,27 @@
                           return '';
                       }
 
-                      // Accept already normalized ISO date strings
-                      const isoMatch = String(value).match(/^\s*(\d{4})-(\d{2})-(\d{2})/);
-                      if (isoMatch) {
-                          return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+                      const s = String(value).trim();
+
+                      // Date-only already normalized: YYYY-MM-DD
+                      const dateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                      if (dateOnly) {
+                          return `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}`;
                       }
 
                       // Convert Dutch format (dd-mm-yyyy) to ISO
-                      const dutchMatch = String(value).match(/^(\d{2})-(\d{2})-(\d{4})$/);
+                      const dutchMatch = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
                       if (dutchMatch) {
                           return `${dutchMatch[3]}-${dutchMatch[2]}-${dutchMatch[1]}`;
                       }
 
                       try {
-                          const date = new Date(value);
+                          /**
+                           * For datetimes like `1980-12-27T23:00:00.000000Z` (UTC),
+                           * we MUST parse and then use LOCAL date parts, otherwise we
+                           * can end up one day off when taking the raw date prefix.
+                           */
+                          const date = new Date(s);
                           if (!isNaN(date.getTime())) {
                               const year = date.getFullYear();
                               const month = String(date.getMonth() + 1).padStart(2, '0');

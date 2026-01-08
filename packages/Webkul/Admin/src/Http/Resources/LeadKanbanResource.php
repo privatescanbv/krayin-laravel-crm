@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use BackedEnum;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -24,6 +25,9 @@ class LeadKanbanResource extends JsonResource
      */
     public function toArray($request): array
     {
+        $gender = $this->gender;
+        $genderValue = $gender instanceof BackedEnum ? $gender->value : $gender;
+
         return [
             'id'                   => $this->id,
             'name'                 => $this->name,
@@ -38,6 +42,7 @@ class LeadKanbanResource extends JsonResource
 
             // Personal information needed on kanban cards (optimized subset)
             'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
+            'gender'               => $genderValue,
             'age'                  => $this->age,
             'ageOfBirthInFormat'   => $this->ageOfBirthInFormat,
 

@@ -71,7 +71,7 @@ class PersonRepository extends Repository
      *
      * @return \Webkul\Contact\Contracts\Person
      */
-    public function create(array $data)
+    public function create(array $data): Person
     {
         $data = $this->sanitizeRequestedPersonData($data);
 
@@ -123,7 +123,7 @@ class PersonRepository extends Repository
      *
      * @return \Webkul\Contact\Contracts\Person
      */
-    public function update(array $data, $id, $attributes = [])
+    public function update(array $data, $id, $attributes = []): Person
     {
         $data = $this->sanitizeRequestedPersonData($data);
 

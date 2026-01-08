@@ -19,11 +19,11 @@ class SalesLeadLookupResource extends JsonResource
             'id'                   => $this->id,
             'name'                 => $this->name,
             'description'          => $this->description,
-            
+
             // Minimal relationship data - only IDs and names, no nested relationships
             'pipeline_stage_id'    => $this->pipeline_stage_id,
             'stage'                => $this->when(
-                $this->relationLoaded('pipelineStage'),
+                $this->relationLoaded('stage'),
                 fn() => $this->pipelineStage ? [
                     'id'   => $this->pipelineStage->id,
                     'name' => $this->pipelineStage->name,
@@ -37,7 +37,7 @@ class SalesLeadLookupResource extends JsonResource
                     'name' => $this->user->name,
                 ] : null
             ),
-            
+
             // Other IDs for reference
             'contact_person_id'    => $this->contact_person_id,
         ];

@@ -40,7 +40,7 @@ class SalesLeadObserver
                 Event::dispatch('sale.update_stage.after', $salesLead);
                 $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
             }
-            if ($salesLead->pipelineStage->is_lost) {
+            if ($salesLead->stage->is_lost) {
                 $this->salesToLostAction->execute($salesLead);
             }
         }
@@ -51,7 +51,7 @@ class SalesLeadObserver
 
         $this->webhookService->sendWebhook([
             'entity_id'      => $salesLead->id,
-            'status'         => $salesLead->pipelineStage?->code,
+            'status'         => $salesLead->stage?->code,
             'source_code'    => $salesLead->lead?->source?->name,
             'source_code_id' => $salesLead->lead?->source?->id,
             'department'     => $salesLead->lead?->department?->name,

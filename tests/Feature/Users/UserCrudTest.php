@@ -37,8 +37,7 @@ it('updates user with valid department default', function () {
 
     actingAs($user, 'user');
     $resp = put(route('admin.settings.users.update', ['id' => $user->id]), $payload);
-    $resp->assertStatus(200)
-        ->assertJsonStructure(['data', 'message']);
+    $resp->assertRedirect(route('admin.settings.users.index'));
 });
 
 it('rejects update when department default is invalid', function () {

@@ -24,7 +24,7 @@ class LeadAndSalesService
     public function findOpenByPerson(int $personId): array
     {
         // 1. Find open sales (pipeline stage not won/lost) linked to this person
-        $sales = SalesLead::whereHas('pipelineStage', function ($query) {
+        $sales = SalesLead::whereHas('stage', function ($query) {
             $query->where('is_won', false)
                 ->where('is_lost', false);
         })

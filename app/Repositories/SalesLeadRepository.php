@@ -11,7 +11,6 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Lead\Models\Lead;
@@ -48,7 +47,7 @@ class SalesLeadRepository extends Repository
     {
         try {
             // Check if there's already a SalesLead for this lead
-            $existingSalesLead = SalesLead::where('lead_id', $lead->id)->with('pipelineStage')->first();
+            $existingSalesLead = SalesLead::where('lead_id', $lead->id)->with('stage')->first();
 
             if ($existingSalesLead) {
                 // Check if the existing SalesLead is in a non-won/lost stage
@@ -123,7 +122,7 @@ class SalesLeadRepository extends Repository
     private function existsSalesLeadInNotWonOrLoss(int $leadId): bool
     {
         return SalesLead::where('lead_id', $leadId)
-            ->whereHas('pipelineStage', function ($query) {
+            ->whereHas('stage', function ($query) {
                 $query->where('is_won', false)
                     ->where('is_lost', false);
             })

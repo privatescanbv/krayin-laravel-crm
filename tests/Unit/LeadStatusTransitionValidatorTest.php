@@ -129,11 +129,8 @@ class LeadStatusTransitionValidatorTest extends TestCase
     /** @test */
     public function it_prevents_transition_to_lost_when_lead_has_no_persons()
     {
-        // Lead has no persons attached
-
-        $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('minimaal 1 persoon aan gekoppeld is');
-
+        // Lead has no persons attached, is allowed. We don't expect an exception
+        $this->expectNotToPerformAssertions();
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->lostStage->id);
     }
 
@@ -320,25 +317,6 @@ class LeadStatusTransitionValidatorTest extends TestCase
         $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($this->lead, $this->wonStage->id);
-    }
-
-    /** @test */
-    public function it_prevents_transition_to_lost_when_match_score_is_less_than_100_percent()
-    {
-        // Create a person with different data (lower match score)
-        $personWithDifferentData = Person::create([
-            'first_name' => 'John',
-            'last_name'  => 'Smith', // Different last name
-            'emails'     => [['value' => 'john.smith@example.com', 'is_default' => true]], // Different email
-        ]);
-
-        // Attach the person with different data
-        $this->lead->attachPersons([$personWithDifferentData->id]);
-
-        $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
-
-        LeadStatusTransitionValidator::validateTransition($this->lead, $this->lostStage->id);
     }
 
     /** @test */

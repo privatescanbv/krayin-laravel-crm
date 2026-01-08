@@ -33,12 +33,15 @@
 
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Huidige Waarde <br>
-                        <span class="text-gray-400 font-normal">{{ $anamnesis->created_at->format('d-m-Y H:i') }}</span>
+                        <span class="text-gray-400 font-normal">
+                            <a href="{{ route('admin.anamnesis.edit', $anamnesis->id) }}">{{ $anamnesis->created_at->format('d-m-Y H:i') }}</a></span>
                     </th>
 
                     @foreach ($olderAnamnises as $oldAnamnesis)
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <a href="{{ route('admin.anamnesis.edit', $oldAnamnesis->id) }}">
                             {{ $oldAnamnesis->created_at->format('d-m-Y H:i') }}
+                            </a>
                         </th>
                     @endforeach
                 </tr>

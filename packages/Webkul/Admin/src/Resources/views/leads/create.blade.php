@@ -217,8 +217,12 @@ $salutationToGenderMapping = [
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M5 13l4 4L19 7"></path>
                                         </svg>
-                                        <span class="font-medium text-green-800">Contactpersonen gekoppeld:</span>
+                                        <span class="font-medium text-green-800">Vooraf ingevuld vanuit persoon:</span>
                                         <span class="text-green-700">@{{ joinedPersonNames }}</span>
+
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-700"><i>Kies een suggestie om deze persoon te koppelen aan de lead.</i></span>
                                     </div>
                                 </div>
                             </div>
@@ -575,6 +579,7 @@ $salutationToGenderMapping = [
                                 this.fetchSuggestions();
                             }
                         });
+
                     }
 
                     // If prefilled persons exist, sync into the matcher and prefill fields
@@ -621,6 +626,11 @@ $salutationToGenderMapping = [
                                 // Auto-set gender if not already set
                                 this.autoSetGenderFromSalutation(newSalutation);
                             });
+                        }
+
+                        // call initial suggestion, when creating lead from person
+                        if(this.hasSelectedPersons) {
+                            this.onFieldBlur();
                         }
                     });
                 },

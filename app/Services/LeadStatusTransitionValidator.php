@@ -188,10 +188,10 @@ class LeadStatusTransitionValidator
         // Add validation for transitions to "gewonnen" and "verloren" statuses
         self::addTransitionsRule(
             '*', // Any stage can transition to won/lost
-            ['won', 'lost', 'won-hernia', 'lost-hernia'],
+            ['won', 'won-hernia'],
             [
                 'custom_validation' => function (Lead $lead) {
-                    return self::validateWonLostTransition($lead);
+                    return self::validateWonTransition($lead);
                 },
             ]
         );
@@ -218,7 +218,7 @@ class LeadStatusTransitionValidator
      * Requires at least 1 person (contact person or linked persons).
      * Requires that at least one person (contact person or linked) has a 100% match score.
      */
-    private static function validateWonLostTransition(Lead $lead): array
+    private static function validateWonTransition(Lead $lead): array
     {
         $errors = [];
 

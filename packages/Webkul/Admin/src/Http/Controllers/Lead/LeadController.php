@@ -333,6 +333,9 @@ class LeadController extends Controller
                     $prefilledPersons[] = [
                         'id' => $person->id,
                         'name' => $person->name,
+                        'gender' => $person->gender,
+                        'salutation' => $person->salutation,
+                        'national_identification_number' => $person->national_identification_number,
                         'first_name' => $person->first_name,
                         'last_name' => $person->last_name,
                         'lastname_prefix' => $person->lastname_prefix,

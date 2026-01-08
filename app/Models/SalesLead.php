@@ -14,6 +14,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
+use Webkul\Lead\Models\StageProxy;
 
 // Quote entity removed
 
@@ -59,11 +60,11 @@ class SalesLead extends Model
     ];
 
     /**
-     * Get the pipeline stage associated with the workflow.
+     * Get the pipeline stage that owns the lead.
      */
-    public function pipelineStage()
+    public function stage()
     {
-        return $this->belongsTo(Stage::class, 'pipeline_stage_id');
+        return $this->belongsTo(StageProxy::modelClass(), 'pipeline_stage_id');
     }
 
     /**

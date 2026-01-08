@@ -88,7 +88,7 @@ class SalesLeadController extends Controller
                 continue;
             }
 
-            $query = SalesLead::with(['pipelineStage', 'lead', 'user', 'orders'])
+            $query = SalesLead::with(['stage', 'lead', 'user', 'orders'])
                 ->where('pipeline_stage_id', $stage->id);
             $salesLeads = $query->get();
 
@@ -100,10 +100,10 @@ class SalesLeadController extends Controller
                     'name'              => $salesLead->name,
                     'description'       => $salesLead->description,
                     'pipeline_stage_id' => $salesLead->pipeline_stage_id,
-                    'pipeline_stage'    => $salesLead->pipelineStage ? [
-                        'id'   => $salesLead->pipelineStage->id,
-                        'name' => $salesLead->pipelineStage->name,
-                        'code' => $salesLead->pipelineStage->code,
+                    'pipeline_stage'    => $salesLead->stage ? [
+                        'id'   => $salesLead->stage->id,
+                        'name' => $salesLead->stage->name,
+                        'code' => $salesLead->stage->code,
                     ] : null,
                     'lead' => $salesLead->lead ? [
                         'id'     => $salesLead->lead->id,
@@ -217,7 +217,7 @@ class SalesLeadController extends Controller
     public function view($id)
     {
         // First load the Sales to check if it has a lead_id
-        $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user', 'lead'])->findOrFail($id);
+        $salesLead = SalesLead::with(['stage.pipeline.stages', 'user', 'lead'])->findOrFail($id);
 
         // If there's no related lead_id, return 404
         if (! $salesLead->lead_id) {
@@ -300,14 +300,14 @@ class SalesLeadController extends Controller
         $salesLead = SalesLead::findOrFail($id);
 
         // Find the lost stage for this Sales's pipeline (relations required)
-        $pipelineStage = $salesLead->pipelineStage;
-        if (! $pipelineStage) {
+        $stage = $salesLead->stage;
+        if (! $stage) {
             return response()->json([
                 'message' => 'Sales heeft geen pipeline stage.',
             ], 422);
         }
 
-        $pipeline = $pipelineStage->pipeline;
+        $pipeline = $stage->pipeline;
         if (! $pipeline) {
             return response()->json([
                 'message' => 'Pipeline niet gevonden voor de huidige stage.',
@@ -451,7 +451,7 @@ class SalesLeadController extends Controller
         return $this->performAdvancedSearch(
             repository: $this->salesLeadRepository,
             getFieldsSearchable: fn () => $this->salesLeadRepository->getFieldsSearchable(),
-            eagerLoadRelations: ['pipelineStage', 'user'],
+            eagerLoadRelations: ['stage', 'user'],
             getResults: function ($repository) {
                 // Always apply RequestCriteria (with normalized search/searchFields)
                 $repository->pushCriteria(app(RequestCriteria::class));
@@ -471,7 +471,7 @@ class SalesLeadController extends Controller
      */
     public function debug($id)
     {
-        $salesLead = SalesLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['stage', 'lead', 'user'])->findOrFail($id);
 
         $person = $salesLead->persons()->first();
 

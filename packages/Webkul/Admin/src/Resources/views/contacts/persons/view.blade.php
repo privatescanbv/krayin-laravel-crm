@@ -23,6 +23,8 @@
 
                 {!! view_render_event('admin.contact.persons.view.tags.before', ['person' => $person]) !!}
 
+                <x-adminc::persons.card :person="$person" show_actions="false"/>
+
                 <!-- Duplicate Detection -->
                 @if (($duplicateCount ?? 0) > 0)
                     <div
@@ -45,11 +47,11 @@
                 @endif
 
                 <!-- Tags -->
-                <x-admin::tags
-                    :attach-endpoint="route('admin.contacts.persons.tags.attach', $person->id)"
-                    :detach-endpoint="route('admin.contacts.persons.tags.detach', $person->id)"
-                    :added-tags="$person->tags"
-                />
+{{--                <x-admin::tags--}}
+{{--                    :attach-endpoint="route('admin.contacts.persons.tags.attach', $person->id)"--}}
+{{--                    :detach-endpoint="route('admin.contacts.persons.tags.detach', $person->id)"--}}
+{{--                    :added-tags="$person->tags"--}}
+{{--                />--}}
 
                 {!! view_render_event('admin.contact.persons.view.tags.after', ['person' => $person]) !!}
 
@@ -127,8 +129,6 @@
                 </div>
             </div>
 
-{{--            @include('admin::contacts.persons.common.card', ['person' => $person, 'show_actions' => false])--}}
-            <x-adminc::persons.card :person="$person" show_actions="false"/>
 
             <x-adminc::persons.compact-overview :person="$person"/>
 

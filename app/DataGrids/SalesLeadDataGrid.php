@@ -11,7 +11,7 @@ class SalesLeadDataGrid extends DataGrid
     public function prepareQueryBuilder()
     {
         $queryBuilder = SalesLead::query()
-            ->with(['pipelineStage', 'lead', 'user']);
+            ->with(['stage', 'lead', 'user']);
 
         // Filter by pipeline if pipeline_id is provided
         if (request('pipeline_id')) {

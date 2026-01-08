@@ -15,15 +15,16 @@
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumb's -->
                 <div class="flex items-center justify-between">
-                test
                     <x-admin::breadcrumbs
                         name="sales-leads.view"
                         :entity="$salesLead"
                     />
                 </div>
 
+                <x-adminc::sales_leads.card :sales="$salesLead" show_actions="false" />
+
                 <div class="mb-2">
-                    @if (($days = $lead->rotten_days) > 0)
+                    @if (($days = $salesLead->rotten_days) > 0)
                         @php
                             $lead->tags->prepend([
                                 'name'  => '<span class="icon-rotten text-base"></span>' . trans('admin::app.leads.view.rotten-days', ['days' => $days]),
@@ -67,7 +68,7 @@
 
                 <!-- No Open Activities Warning for sales -->
                 @php
-                    $isWonOrLost = ($salesLead->pipelineStage->is_won ?? false) || ($salesLead->pipelineStage->is_lost ?? false);
+                    $isWonOrLost = ($salesLead->stage->is_won ?? false) || ($salesLead->stage->is_lost ?? false);
                 @endphp
                 @if (($salesLead->open_activities_count ?? 0) === 0 && ! $isWonOrLost)
                     <div
@@ -128,8 +129,6 @@
                 </div>
             </div>
 
-            <x-adminc::persons.card :person="$salesLead->getContactPersonOrFirstPerson()" show_actions="false" />
-
             <!-- Lead Overview (compact overview with all information) -->
             <x-adminc::sales_leads.view.compact-overview :salesLead="$salesLead" :lead="$lead"/>
 
@@ -156,8 +155,8 @@
         <div class="flex w-full flex-col gap-4 rounded-lg">
             <!-- Stages Navigation -->
             @include('admin::leads.view.stages',[
-                'overridePipeline' => $salesLead->pipelineStage->pipeline ?? $lead->pipeline,
-                'overrideStage' => $salesLead->pipelineStage ?? $lead->stage,
+                'overridePipeline' => $salesLead->stage->pipeline ?? $lead->pipeline,
+                'overrideStage' => $salesLead->stage ?? $lead->stage,
                 'overrideUpdateUrl' => route('admin.sales-leads.stage.update', $salesLead->id),
                 'salesLead' => $salesLead,
             ])

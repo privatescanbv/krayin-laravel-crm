@@ -210,7 +210,7 @@ class UserSeeder extends Seeder
                 'lead.department_id' => '2',
                 'lead.lead_channel_id' => '1',
                 'lead.lead_source_id' => '6',
-                'lead.lead_type_id' => '2',
+                'lead.lead_type_id' => '1',
             ];
 
             // Override for Mark Bulthuis

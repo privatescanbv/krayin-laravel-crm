@@ -21,7 +21,6 @@
                     </div>
 
                     <!-- Lead Person info's -->
-
                     <x-adminc::leads.card :lead="$lead" show_actions="false"/>
 
                     <div class="mb-2">

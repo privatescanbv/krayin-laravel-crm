@@ -19,7 +19,11 @@
             <!-- Header sectie: naam + status -->
             <div class="mb-3">
                 <div class="flex items-center justify-between gap-2">
-                    <h3 class="text-md font-bold text-gray-900 dark:text-gray-100 truncate">
+                    <h3 class="flex items-center gap-1 text-md font-bold text-gray-900 dark:text-gray-100 truncate">
+                        <x-adminc::components.gender-icon
+                            :gender="$entity->gender ?? null"
+                            sizeClass="w-4 h-4"
+                        />
                         {{ $entity->name }} @if ($age)
                             <span class="font-normal text-gray-500 dark:text-gray-400">({{ $age }} jaar)</span>
                         @endif

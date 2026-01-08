@@ -372,6 +372,7 @@
                               initials: this.lead.initials || '',
                               gender: this.lead.gender || '',
                               salutation: this.lead.salutation || '',
+                              national_identification_number: this.lead.national_identification_number || '',
                               emails: this.lead.emails || [],
                               phones: this.lead.phones || []
                           };
@@ -386,7 +387,7 @@
 
                          const response = await axios.post('/admin/contacts/persons/create', personData);
 
-                                                 if (response.data && response.data.data) {
+                         if (response.data && response.data.data) {
                             const newPerson = response.data.data;
 
                             // Add to selected persons

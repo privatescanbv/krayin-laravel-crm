@@ -35,28 +35,48 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
             title="IDENTITEIT"
             icon="icon-contact text-xl text-blue-500"
         >
-            <!-- Aanhef -->
-            <x-adminc::components.field
-                label="Aanhef"
-                value="{{ $salutationLabel }}"
-                readonly />
-
-            <!-- Voornaam -->
-            <x-adminc::components.field
-                label="Voornaam"
-                value="{{ $lead->first_name ?? '' }}"
-                readonly />
-
-            <x-adminc::components.field
-                label="Tussenvoegsel"
-                value="{{ $lead->lastname_prefix ?? '' }}"
-                readonly />
-
-            <x-adminc::components.field
-                label="Achternaam"
-                value="{{ $lead->last_name ?? '' }}"
-                readonly />
-
+            <div class="grid grid-cols-5 gap-3">
+                <div class="col-span-2">
+                    <x-adminc::components.field
+                        label="Aanhef"
+                        value="{{ $salutationLabel }}"
+                        readonly />
+                </div>
+                <div class="col-span-3">
+                    <x-adminc::components.field
+                        label="Voornaam"
+                        value="{{ $lead->first_name ?? '' }}"
+                        readonly />
+                </div>
+            </div>
+            <div class="grid grid-cols-5 gap-3">
+                <div class="col-span-2">
+                    <x-adminc::components.field
+                    label="Tussenvoegsel"
+                    value="{{ $lead->lastname_prefix ?? '' }}"
+                    readonly />
+                </div>
+                <div class="col-span-3">
+                    <x-adminc::components.field
+                        label="Achternaam"
+                        value="{{ $lead->last_name ?? '' }}"
+                        readonly />
+                </div>
+            </div>
+            <div class="grid grid-cols-5 gap-3">
+                <div class="col-span-2">
+                    <x-adminc::components.field
+                        label="Tussenvoegsel"
+                        value="{{ $lead->married_name_prefix ?? '' }}"
+                        readonly />
+                </div>
+                <div class="col-span-3">
+                    <x-adminc::components.field
+                        label="Aangetrouwde achternaam"
+                        value="{{ $lead->married_name ?? '' }}"
+                        readonly />
+                    </div>
+                </div>
             <x-adminc::components.field
                 label="Geboortedatum"
                 value="{{ $dateOfBirth }}"

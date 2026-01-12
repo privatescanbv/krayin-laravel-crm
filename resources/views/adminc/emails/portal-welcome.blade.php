@@ -6,43 +6,48 @@
 @extends('adminc.layouts.mail')
 
 @section('title')
-    Welkom bij in het patiënt portaal
+    Uitnodiging Privatescan Portaal
 @endsection
 
 @section('content')
     <p>
+        Regel uw zorgzaken nu makkelijk en betrouwbaar online via www.privatescan.nl.
+    </p>
+    <p>
         Beste {{ $name !== '' ? e($name) : 'patiënt' }},
     </p>
 
-    <p>
-        Voor u is een account aangemaakt voor het
-        Privatescan patiëntportaal. Met dit portaal kunt u uw afspraken en onderzoeken
-        veilig online bekijken.
-    </p>
+    <p>Privatescan nodigt u van harte uit om uw eigen gezondheidsportaal te openen. Hierin kunt u online zelf:</p>
+
+    <ul>
+        <li>uw medisch dossier inzien,</li>
+        <li>uitslagen en afspraken inzien,</li>
+        <li>vragen stellen,</li>
+        <li>wijzigingen in uw gegevens (woonadres, e-mailadres en/of telefoonnummer) doorgeven.</li>
+    </ul>
+
+    <p><strong>Hoe opent u een gezondheidsportaal op Privatescan.nl?</strong></p>
+
+    <ol>
+        <li>Ga naar <a href="{{ $loginUrl }}" target="_blank" rel="noopener">{{ $loginUrl }}</a>.</li>
+        <li>Klik op de knop <strong>Inloggen</strong> op de hoofdpagina.</li>
+        <li>Log in met uw gegevens.</li>
+        <li>Logt u voor de eerste keer in? Dan wordt u gevraagd het contract met uw zorgverlener digitaal te ondertekenen.</li>
+    </ol>
 
     <p>
-        <strong>Tijdelijk wachtwoord</strong><br>
-        Uw tijdelijke wachtwoord is: <strong>{{ e($temporaryPassword) }}</strong>
+        De eerste keer kunt u inloggen met dit tijdelijke wachtwoord, die u daarna aanpast naar een eigen wachtwoord.
+        <strong>Tijdelijk wachtwoord</strong><br>:
+        <strong>{{ e($temporaryPassword) }}</strong>
     </p>
 
-    <p>
-        <strong>Inloggen en wachtwoord wijzigen</strong><br>
-        Klik op de onderstaande link om in te loggen. Na het inloggen wordt u gevraagd
-        om uw wachtwoord te wijzigen:
-    </p>
+    <p>Dankzij deze akkoordverklaring bent u ervan verzekerd dat de uitwisseling van uw gegevens met Privatescan/Herniapoli zorgvuldig en betrouwbaar is geregeld.</p>
 
-    <p>
-        <a href="{{ $loginUrl }}" style="color: #0e90d9;">
-            Client portaal inloggen
-        </a>
-    </p>
+    <p><strong>Heeft u vragen?</strong><br>
+        U kunt op de ondersteuningspagina veelgestelde vragen en instructievideo’s raadplegen via
+        <a href="https://www.privatescan.nl" target="_blank" rel="noopener">www.privatescan.nl</a>.
+        Daarnaast kunt u telefonisch contact met ons opnemen.</p>
 
-    <p>
-        Bewaar uw nieuwe wachtwoord zorgvuldig en deel dit niet met anderen.
-    </p>
-
-    <p>
-        Met vriendelijke groet,<br>
-        Privatescan
-    </p>
+    <p>Met vriendelijke groet,<br>
+        Privatescan / Herniapoli</p>
 @endsection

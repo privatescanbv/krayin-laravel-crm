@@ -157,8 +157,7 @@ class EmailTemplateSeeder extends Seeder
                 'content'    => '<p>Geachte heer {{ $persoon_achternaam }},</p>
 
     <p>
-        Hierbij bevestig ik de afspraak/afspraken voor het laten uitvoeren van medische onderzoeken:
-        {{ $afspraken_tabel }}
+        Hierbij bevestig ik de afspraak/afspraken voor het laten uitvoeren van medische onderzoeken {{ $afspraken_tabel }}
     </p>
 
     <p>
@@ -223,31 +222,22 @@ class EmailTemplateSeeder extends Seeder
                 'type'        => EmailTemplateType::GVL->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
-                'subject'     => 'Informatie over uw aanvraag',
+                'subject'     => 'GVL staat klaar',
                 'created_at'  => $now,
                 'updated_at'  => $now,
-                'content'    => '<p>Geachte heer/mevrouw {{ $lastname }},</p>
+                'content'    => '<p>Geachte client,</p>
 
     <p>
-        Graag willen wij u informeren over uw aanvraag bij Privatescan. Om uw aanvraag verder te kunnen verwerken, hebben wij enkele gegevens van u nodig.
+        Privatescan / Herniapoli heeft een <a href="{{ $gvl_form_link }}" target="_blank" style="color: #2563eb; text-decoration: underline;">document</a> voor u klaargezet in uw portaal. Deze is van belang voor uw onderzoek, zodat de arts zich alvast kan voorbereiden op uw komst.
     </p>
-
+    <p>Graag zien wij deze uiterlijk {{ $gvl_deadline }} voor 10.00 uur retour.</p>
     <p>
         U kunt deze gegevens invullen via het onderstaande GVL-formulier. Dit formulier helpt ons om een beter beeld te krijgen van uw situatie en om u de best mogelijke zorg te kunnen bieden.
     </p>
-
-    <p>
-        <strong>GVL-formulier:</strong><br>
-        Graag hier invullen <a href="{{ $gvl_form_link }}" target="_blank" style="color: #2563eb; text-decoration: underline;">
-            hier
-        </a>
-    </p>
-
     <p>
         Mocht u vragen hebben of hulp nodig hebben bij het invullen van het formulier, neem dan gerust contact met ons op.
     </p>
-
-    <p><br></p>',
+    <p>Privatescan / Herniapoli</p>',
             ],
         ]);
     }

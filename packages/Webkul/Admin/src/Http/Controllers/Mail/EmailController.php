@@ -884,6 +884,7 @@ class EmailController extends Controller
             $gvlFormLink = $this->resolveGvlFormLink($personId, $leadId);
             if ($gvlFormLink) {
                 $variables['gvl_form_link'] = $gvlFormLink;
+                $variables['gvl_deadline'] = now()->addWeek()->format('d-m-Y');
             }
         }
 

@@ -66,7 +66,7 @@
 
                     <x-admin::modal
                         ref="mailActivityModal"
-                        position="bottom-right"
+                        position="center"
                         @toggle="removeTinyMCE"
                     >
                         <x-slot:header>

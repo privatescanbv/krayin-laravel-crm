@@ -28,8 +28,14 @@ module.exports = {
         extend: {
             colors: {
                 // Dynamic brand hook (CSS variable)
-                brandColor: "#11518f",
+                brandColor: "#033B4A",
 
+                fontFamily: {
+                    icon: ["icomoon"],
+                },
+                orange: {
+                    600: "#F17836",
+                },
                 // Brand object: keeps dynamic var + explicit brand palettes
                 brand: {
                     DEFAULT: "var(--brand-color)",
@@ -38,12 +44,16 @@ module.exports = {
                     strong: "var(--brand-color)",
 
                     privatescan: {
-                        main: "#11518f",  // primary
-                        accent: "#f37835", // accent
+                        main: "#033B4A",  // primary
+                        hover: "#2187ab",  // primary
+                        accent: "#F08377", // accent
+                        accenthover: "#d8756b", // accent
                     },
                     herniapoli: {
-                        main: "#033b4a",  // primary
-                        accent: "#45ccc5", // accent
+                        main: "#F08377",  // primary
+                        accent: "#033B4A", // accent
+                        // main: "#033b4a",  // primary
+                        // accent: "#45ccc5", // accent
                     },
                 },
 
@@ -186,9 +196,8 @@ module.exports = {
             boxShadow: {
                 xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
             },
-fontFamily: {
-                inter: ["Inter", "system-ui", "sans-serif"],
-                icon: ["icomoon"],
+            fontFamily: {
+                sans: ["saira", "Helvetica", "system-ui", "sans-serif" ],
             },
 
             fontSize: {

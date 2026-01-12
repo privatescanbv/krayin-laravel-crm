@@ -45,7 +45,7 @@
 
                     <x-admin::modal
                         ref="noteActivityModal"
-                        position="bottom-right"
+                        position="center"
                     >
                         <x-slot:header>
                             {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.header.title.before') !!}

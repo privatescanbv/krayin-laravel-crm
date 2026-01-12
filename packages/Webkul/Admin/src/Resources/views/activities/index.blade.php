@@ -211,7 +211,7 @@
                                         <!-- Assign to Me Button -->
                                         <button
                                             v-if="!record.user_id"
-                                            class="ml-2 px-2 py-1 rounded bg-brand-herniapoli-main text-white text-xs hover:text-activity-note-text transition-colors"
+                                            class="ml-2 px-2 py-1 rounded bg-brand-privatescan-main text-white text-xs hover:bg-brand-privatescan-hover transition-colors"
                                             @click="assignToMe(record)"
                                             title="Aan mij toekennen"
                                         >
@@ -221,7 +221,7 @@
                                         <!-- Takeover Button -->
                                         <button
                                             v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
-                                            class="ml-2 px-2 py-1 rounded bg-orange-500 text-white text-xs hover:bg-orange-600 transition-colors"
+                                            class="ml-2 px-2 py-1 rounded bg-brand-privatescan-accent text-white text-xs hover:bg-brand-privatescan-accenthover transition-colors"
                                             @click="takeoverActivity(record)"
                                             :title="'Overnemen van ' + (record.user && record.user.name ? record.user.name : 'onbekend')"
                                         >
@@ -231,7 +231,7 @@
                                         <!-- Unassign Button -->
                                         <button
                                             v-if="record.user_id == {{ auth()->guard('user')->id() ?? 'null' }}"
-                                            class="ml-2 px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600 transition-colors"
+                                            class="ml-2 px-2 py-1 rounded bg-brand-privatescan-accent text-white text-xs hover:bg-brand-privatescan-accenthover transition-colors"
                                             @click="unassignActivity(record)"
                                             title="Ontkoppelen - maak beschikbaar voor anderen"
                                         >

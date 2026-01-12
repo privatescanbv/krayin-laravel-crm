@@ -47,7 +47,7 @@
 
                     <x-admin::modal
                         ref="activityModal"
-                        position="bottom-right"
+                        position="center"
                     >
                         <x-slot:header>
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.before') !!}

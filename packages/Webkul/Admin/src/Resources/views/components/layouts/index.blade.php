@@ -42,6 +42,9 @@
     >
 
     @stack('meta')
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Saira:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
     {{
         vite()->set(['src/Resources/assets/css/app.css', 'src/Resources/assets/js/app.js'])
@@ -75,7 +78,7 @@
     @endif
 
     @php
-        $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0E90D9';
+        $brandColor = '#FF0000';//core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0E90D9';
     @endphp
 
     @stack('styles')

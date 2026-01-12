@@ -418,7 +418,7 @@
                 >
                     <x-admin::modal
                         ref="toggleComposeModal"
-                        position="bottom-right"
+                        position="center"
                         size="large"
                         @toggle="removeTinyMCE"
                     >

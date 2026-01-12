@@ -45,7 +45,7 @@
 
                     <x-admin::modal
                         ref="fileActivityModal"
-                        position="bottom-right"
+                        position="center"
                     >
                         <x-slot:header>
                             {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.header.title.before') !!}

@@ -105,7 +105,7 @@ enum PipelineStage: string
 
             // Hernia Lead
             self::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA   => 'Nieuwe aanvraag, kwalificeren',
-            self::KLANT_ADVISEREN_START_HERNIA          => 'Klant adviseren, geen MRI / contact / tel-en-tel',
+            self::KLANT_ADVISEREN_START_HERNIA          => 'Klant adviseren, geen MRI / Overige',
             self::KLANT_ADVISEREN_WILL_MRI_HERNIA       => 'Klant adviseren, wenst of heeft MRI',
             self::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA => 'Wachten op klant, MRI wordt opgestuurd',
             self::KLANT_ADVISEREN_MRI_BINNEN_HERNIA     => 'Klant adviseren, MRI is binnen',

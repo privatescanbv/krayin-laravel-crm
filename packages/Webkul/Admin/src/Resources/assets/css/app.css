@@ -20,7 +20,7 @@
     }
 
     html {
-        @apply font-inter text-neutral-text bg-neutral-bg antialiased;
+        @apply font-sans text-neutral-text bg-neutral-bg antialiased;
     }
 
     body {

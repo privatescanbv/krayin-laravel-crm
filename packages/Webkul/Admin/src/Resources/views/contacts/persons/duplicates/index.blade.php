@@ -151,7 +151,14 @@
                                                     class="mb-2"
                                                 />
                                                 <span class="text-sm font-medium">Primaire Persoon</span>
-                                                <span class="text-xs text-gray-500">ID: @{{ primaryPerson.id }}</span>
+                                                <span class="text-xs text-gray-500">ID:
+                                                   <a
+                                                       :href="`{{ route('admin.contacts.persons.view', ['id' => '___ID___']) }}`
+                                                            .replace('___ID___', primaryPerson.id)"
+                                                   >
+                                                        @{{ primaryPerson.id }}
+                                                    </a>
+                                                </span>
                                             </div>
                                         </th>
                                         <th
@@ -167,7 +174,14 @@
                                                     class="mb-2"
                                                 />
                                                 <span class="text-sm font-medium">Duplicaat</span>
-                                                <span class="text-xs text-gray-500">ID: @{{ duplicate.id }}</span>
+                                                <span class="text-xs text-gray-500">ID:
+                                                    <a
+                                                        :href="`{{ route('admin.contacts.persons.view', ['id' => '___ID___']) }}`
+                                                            .replace('___ID___', duplicate.id)"
+                                                    >
+                                                        @{{ duplicate.id }}
+                                                    </a>
+                                                </span>
                                             </div>
                                         </th>
                                     </tr>

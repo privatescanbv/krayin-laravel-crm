@@ -364,8 +364,9 @@ class PersonController extends Controller
      */
     public function search(): JsonResource|JsonResponse
     {
-        $leadId = request()->get('lead_id');
-        if ($leadId) {
+        $leadId = null;
+        if (request()->has('lead_id')) {
+            $leadId = request()->get('lead_id');
             $lead = $this->leadRepository->with(['address'])->findOrFail($leadId);
 
             $result = $this->findPersonsBasedOnLead($lead);
@@ -405,7 +406,7 @@ class PersonController extends Controller
         $persons = $result->collection;
 
         // Check if we need to calculate match scores against a lead
-        if ($leadId) {
+        if (!is_null($leadId)) {
             try {
                 // Calculate match scores for each person
                 // Note: $persons contains PersonResource objects, we need to get the underlying Person model

@@ -8,6 +8,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Prettus\Repository\Contracts\CriteriaInterface;
+use Prettus\Repository\Contracts\RepositoryInterface;
 use Throwable;
 
 trait HasAdvancedSearch
@@ -65,7 +67,7 @@ trait HasAdvancedSearch
         $limit = isset($queryParams['limit']) ? (int) $queryParams['limit'] : 10;
 
         // Validate query length (Bad Request when > 25 characters)
-        if (!empty($query) && mb_strlen($query) > 25) {
+        if (!empty($query) && mb_strlen($query) > 50) {
             return response()->json([
                 'message' => 'Search term exceeds maximum length of 25 characters.',
             ], 400);
@@ -127,7 +129,7 @@ trait HasAdvancedSearch
             // Plain text search without field tokens - convert to name search
             $rawSearchTerm = trim((string) $search);
             $tokens = preg_split('/\s+/', $rawSearchTerm, -1, PREG_SPLIT_NO_EMPTY);
-            
+
             if (count($tokens) > 1) {
                 // Multi-token: apply tokenized AND-of-ORs
                 $this->applyMultiTokenSearch($repository, $tokens, $config['name_fields']);
@@ -202,9 +204,9 @@ trait HasAdvancedSearch
         // Apply limit
         if (method_exists($repository, 'pushCriteria')) {
             // Apply limit via Criteria to compose with other filters
-            $limitCriteria = new class($limit) implements \Prettus\Repository\Contracts\CriteriaInterface {
+            $limitCriteria = new class($limit) implements CriteriaInterface {
                 public function __construct(private int $limit) {}
-                public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                public function apply($model, RepositoryInterface $repository)
                 {
                     return $model->limit($this->limit);
                 }
@@ -425,9 +427,9 @@ trait HasAdvancedSearch
             // Repository pattern: use Criteria so it composes with other filters
             // Use orWhere to combine with name search (OR, not AND)
             // This ensures the email/phone search is combined with OR to the name search from RequestCriteria
-            $emailPhoneCriteria = new class($emailTerms, $phoneTerms) implements \Prettus\Repository\Contracts\CriteriaInterface {
+            $emailPhoneCriteria = new class($emailTerms, $phoneTerms) implements CriteriaInterface {
                 public function __construct(private array $emailTerms, private array $phoneTerms) {}
-                public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                public function apply($model, RepositoryInterface $repository)
                 {
                     // Use orWhere to combine with name search from RequestCriteria
                     return $model->orWhere(function ($qb) {
@@ -478,9 +480,9 @@ trait HasAdvancedSearch
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             if (method_exists($repository, 'pushCriteria')) {
                 // Repository pattern: use Criteria so it composes with other filters
-                $permissionCriteria = new class($userIds) implements \Prettus\Repository\Contracts\CriteriaInterface {
+                $permissionCriteria = new class($userIds) implements CriteriaInterface {
                     public function __construct(private array $userIds) {}
-                    public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                    public function apply($model, RepositoryInterface $repository)
                     {
                         return $model->whereIn('user_id', $this->userIds);
                     }
@@ -495,7 +497,7 @@ trait HasAdvancedSearch
 
     /**
      * Sanitize search string by removing invalid field tokens and converting them to plain text search.
-     * 
+     *
      * @return array [sanitizedSearch, sanitizedSearchFields]
      */
     protected function sanitizeInvalidSearchFields(array $fieldsSearchable, string $search, string $searchFields): array
@@ -598,7 +600,6 @@ trait HasAdvancedSearch
                 ], 400);
             }
         }
-
         return null;
     }
 
@@ -608,9 +609,9 @@ trait HasAdvancedSearch
     protected function applyMultiTokenSearch(mixed $repository, array $tokens, array $nameFields): void
     {
         if (method_exists($repository, 'pushCriteria')) {
-            $multiTokenCriteria = new class($tokens, $nameFields) implements \Prettus\Repository\Contracts\CriteriaInterface {
+            $multiTokenCriteria = new class($tokens, $nameFields) implements CriteriaInterface {
                 public function __construct(private array $tokens, private array $nameFields) {}
-                public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                public function apply($model, RepositoryInterface $repository)
                 {
                     return $model->where(function ($qb) {
                         foreach ($this->tokens as $token) {

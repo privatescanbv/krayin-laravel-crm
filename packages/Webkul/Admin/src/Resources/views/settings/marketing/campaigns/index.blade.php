@@ -260,12 +260,8 @@
                                         ::value="campaign.subject"
                                     />
 
-                                    </x-admin::form.control-group>
-
                                     <!-- Event -->
                                     <x-admin::form.control-group>
-
-
                                         <x-admin::form.control-group.control
                                             type="select"
                                             class="cursor-pointer"

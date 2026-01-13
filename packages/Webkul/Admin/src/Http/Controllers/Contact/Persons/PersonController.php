@@ -630,7 +630,7 @@ class PersonController extends Controller
                         'label' => $label,
                         'lead_value' => $this->formatValueForDisplay($leadValue, $field),
                         'person_value' => $this->formatValueForDisplay($personValue, $field),
-                        'type' => $this->getFieldType($field)
+                        'type' => $this->getFieldType($field, $leadValue, $personValue)
                     ];
                 }
             }

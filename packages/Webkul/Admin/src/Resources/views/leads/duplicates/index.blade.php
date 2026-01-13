@@ -25,8 +25,8 @@
                 :primary-lead="{{ json_encode($leadData) }}"
                 :duplicates="{{ json_encode($duplicatesData) }}"
                 merge-url="{{ route('admin.leads.duplicates.merge', $lead->id) }}"
+                false-positive-url="{{ route('admin.leads.duplicates.false_positive', $lead->id) }}"
                 redirect-url="{{ route('admin.leads.view', $lead->id) }}"
-                csrf-token="{{ csrf_token() }}"
             >
                 <!-- Loading State -->
                 <div class="flex items-center justify-center p-8">
@@ -311,6 +311,13 @@
                                         Annuleren
                                     </a>
                                     <button
+                                        @click="markAsFalsePositive"
+                                        :disabled="selectedLeads.length < 2 || isLoading"
+                                        class="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Markeren als geen duplicaat
+                                    </button>
+                                    <button
                                         @click="mergeLeads"
                                         :disabled="selectedLeads.length < 2 || isLoading"
                                         class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -330,7 +337,7 @@
         <script type="module">
             app.component('v-duplicates-manager', {
                 template: '#v-duplicates-manager-template',
-                props: ['primaryLead', 'duplicates', 'mergeUrl', 'redirectUrl', 'csrfToken'],
+                props: ['primaryLead', 'duplicates', 'mergeUrl', 'falsePositiveUrl', 'redirectUrl'],
                 data() {
                     return {
                         selectedLeads: [this.primaryLead.id], // Primary lead is always selected
@@ -541,46 +548,54 @@
 
                         try {
                             const duplicateIds = this.selectedLeads.filter(id => id !== this.primaryLead.id);
-
-                            // Get CSRF token
-                            let csrfToken = this.csrfToken;
-                            if (!csrfToken) {
-                                const metaToken = document.querySelector('meta[name="csrf-token"]');
-                                if (metaToken) {
-                                    csrfToken = metaToken.getAttribute('content');
-                                } else {
-                                    const formToken = document.querySelector('#csrf-form input[name="_token"]');
-                                    if (formToken) {
-                                        csrfToken = formToken.value;
-                                    }
-                                }
-                            }
-
-                            const response = await fetch(this.mergeUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken,
-                                    'Accept': 'application/json',
-                                },
-                                body: JSON.stringify({
+                            const result = await window.privatescan.runJsonAction(
+                                this.mergeUrl,
+                                {
                                     primary_lead_id: this.primaryLead.id,
                                     duplicate_lead_ids: duplicateIds,
                                     field_mappings: this.fieldMappings,
-                                }),
-                            });
+                                },
+                                {
+                                    successMessage: 'Leads succesvol samengevoegd!',
+                                    onSuccess: 'redirect',
+                                    redirectUrl: this.redirectUrl,
+                                    errorPrefix: 'Samenvoegen mislukt.',
+                                }
+                            );
 
-                            const result = await response.json();
-
-                            if (response.ok) {
-                                alert('Leads succesvol samengevoegd!');
-                                window.location.href = this.redirectUrl;
-                            } else {
-                                throw new Error(result.message || 'Er is een fout opgetreden bij het samenvoegen.');
+                            if (!result.ok) {
+                                return;
                             }
-                        } catch (error) {
-                            console.error('Merge error:', error);
-                            alert('Er is een fout opgetreden: ' + error.message);
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    },
+
+                    async markAsFalsePositive() {
+                        if (this.selectedLeads.length < 2) {
+                            alert('Selecteer ten minste twee leads om te markeren als geen duplicaat.');
+                            return;
+                        }
+
+                        this.isLoading = true;
+
+                        try {
+                            const result = await window.privatescan.runJsonAction(
+                                this.falsePositiveUrl,
+                                {
+                                    entity_ids: this.selectedLeads,
+                                },
+                                {
+                                    confirmText: 'Weet je zeker dat je de geselecteerde leads wilt markeren als geen duplicaat? Ze worden daarna niet meer als duplicaat getoond.',
+                                    successMessage: 'Gemarkeerd als geen duplicaat.',
+                                    onSuccess: 'reload',
+                                    errorPrefix: 'Markeren als geen duplicaat mislukt.',
+                                }
+                            );
+
+                            if (!result.ok) {
+                                return;
+                            }
                         } finally {
                             this.isLoading = false;
                         }

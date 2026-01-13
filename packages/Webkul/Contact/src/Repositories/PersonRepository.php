@@ -2,13 +2,15 @@
 
 namespace Webkul\Contact\Repositories;
 
+use App\Enums\DuplicateEntityType;
 use App\Models\Address;
+use App\Services\Concerns\JsonDuplicateMatcher;
+use App\Services\DuplicateFalsePositiveService;
 use Exception;
 use Illuminate\Container\Container;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\FacadesDB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Validator;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -16,13 +18,11 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Contracts\Person;
 use Webkul\Core\Eloquent\Repository;
-use Carbon\Carbon;
-use App\Services\Concerns\JsonDuplicateMatcher;
-use Webkul\Lead\Contracts\Lead;
 
 class PersonRepository extends Repository
 {
     use JsonDuplicateMatcher;
+
     /**
      * Searchable fields.
      */
@@ -51,6 +51,7 @@ class PersonRepository extends Repository
         protected AttributeRepository $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
         protected OrganizationRepository $organizationRepository,
+        private readonly DuplicateFalsePositiveService $falsePositiveService,
         Container $container
     ) {
         parent::__construct($container);
@@ -304,7 +305,19 @@ class PersonRepository extends Repository
     {
         try {
             // Use direct method to avoid circular dependency
-            return $this->findPotentialDuplicatesDirectly($person);
+            $duplicates = $this->findPotentialDuplicatesDirectly($person);
+
+            if ($duplicates->isEmpty()) {
+                return collect();
+            }
+
+            $filteredIds = $this->falsePositiveService->filterCandidateIdsForPrimary(
+                DuplicateEntityType::PERSON,
+                (int) $person->id,
+                $duplicates->pluck('id')
+            );
+
+            return $duplicates->whereIn('id', $filteredIds->all())->values();
         } catch (Exception $e) {
             Log::error('Error in person duplicate detection: ' . $e->getMessage());
             return collect();
@@ -320,7 +333,7 @@ class PersonRepository extends Repository
     public function hasPotentialDuplicates($person): bool
     {
         try {
-            return $this->findPotentialDuplicatesDirectly($person)->isNotEmpty();
+            return $this->findPotentialDuplicates($person)->isNotEmpty();
         } catch (Exception $e) {
             Log::error('Error checking person duplicates: ' . $e->getMessage());
             return false;

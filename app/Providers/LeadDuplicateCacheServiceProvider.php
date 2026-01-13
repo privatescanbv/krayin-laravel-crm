@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\DuplicateFalsePositiveService;
 use App\Services\LeadDuplicateCacheService;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +18,8 @@ class LeadDuplicateCacheServiceProvider extends ServiceProvider
     {
         $this->app->singleton(LeadDuplicateCacheService::class, function ($app) {
             return new LeadDuplicateCacheService(
-                $app->make(LeadRepository::class)
+                $app->make(LeadRepository::class),
+                $app->make(DuplicateFalsePositiveService::class)
             );
         });
     }

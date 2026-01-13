@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Enums\DuplicateEntityType;
+use App\Services\DuplicateFalsePositiveService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -18,7 +20,8 @@ class DuplicateController extends Controller
      * Create a new controller instance.
      */
     public function __construct(
-        protected PersonRepository $personRepository
+        protected PersonRepository $personRepository,
+        protected DuplicateFalsePositiveService $falsePositiveService
     ) {
     }
 
@@ -107,6 +110,46 @@ class DuplicateController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to merge persons: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark selected persons as "not a duplicate" (false positive) for duplicate detection.
+     */
+    public function markFalsePositive(int $personId): JsonResponse
+    {
+        $this->validate(request(), [
+            'entity_ids' => 'required|array|min:2',
+            'entity_ids.*' => 'integer|distinct|exists:persons,id',
+        ]);
+
+        $entityIds = array_map('intval', request('entity_ids', []));
+
+        // Ensure the selection is anchored to the current person page (prevents cross-entity misuse from UI).
+        if (! in_array($personId, $entityIds, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'De selectie moet de primaire persoon bevatten.',
+            ], 422);
+        }
+
+        try {
+            $pairs = $this->falsePositiveService->storeForEntities(
+                DuplicateEntityType::PERSON,
+                $entityIds,
+                null
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Geselecteerde personen gemarkeerd als geen duplicaat.',
+                'pairs'   => $pairs,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Opslaan false positive mislukt: ' . $e->getMessage(),
             ], 500);
         }
     }

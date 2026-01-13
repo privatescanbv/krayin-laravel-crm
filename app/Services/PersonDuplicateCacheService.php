@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DuplicateEntityType;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -14,7 +15,8 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
     private const CACHE_TTL = 3600; // 1 hour (shorter for testing)
 
     public function __construct(
-        private PersonRepository $personRepository
+        private PersonRepository $personRepository,
+        private DuplicateFalsePositiveService $falsePositiveService
     ) {
         parent::__construct('person_duplicates:', self::CACHE_TTL);
     }
@@ -24,7 +26,7 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
      */
     public function getCachedDuplicates(int $personId): Collection
     {
-        return $this->rememberIdsUsing($personId, function (int $id) {
+        $duplicateIds = $this->rememberIdsUsing($personId, function (int $id) {
             $person = $this->personRepository->find($id);
             if (! $person) {
                 return collect();
@@ -32,6 +34,13 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
 
             return $this->personRepository->findPotentialDuplicatesDirectly($person)->pluck('id');
         });
+
+        // Always apply false-positive filtering at read-time (so new markings take effect immediately).
+        return $this->falsePositiveService->filterCandidateIdsForPrimary(
+            DuplicateEntityType::PERSON,
+            $personId,
+            $duplicateIds
+        );
     }
 
     /**
@@ -62,7 +71,7 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
      */
     public function hasCachedDuplicates(int $personId): bool
     {
-        return $this->hasCachedIds($personId);
+        return $this->getCachedDuplicates($personId)->isNotEmpty();
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\DuplicateEntityType;
+use App\Services\DuplicateFalsePositiveService;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -112,4 +114,34 @@ test('it returns empty collection when no duplicate persons exist', function () 
     $duplicates = $this->personRepository->findPotentialDuplicates($p);
 
     expect($duplicates->count())->toBe(0);
+});
+
+test('it hides duplicates when marked as false positive', function () {
+    $p1 = Person::factory()->create([
+        'first_name' => 'False',
+        'last_name'  => 'Positive',
+        'emails'     => [
+            ['value' => 'fp.person@example.com', 'label' => 'work'],
+        ],
+    ]);
+
+    $p2 = Person::factory()->create([
+        'first_name' => 'Other',
+        'last_name'  => 'Person',
+        'emails'     => [
+            ['value' => 'fp.person@example.com', 'label' => 'home'],
+        ],
+    ]);
+
+    // Sanity check: duplicates exist before marking
+    $duplicatesBefore = $this->personRepository->findPotentialDuplicates($p1);
+    expect($duplicatesBefore->pluck('id')->all())->toContain($p2->id);
+
+    app(DuplicateFalsePositiveService::class)->storeForEntities(
+        DuplicateEntityType::PERSON,
+        [$p1->id, $p2->id]
+    );
+
+    $duplicatesAfter = $this->personRepository->findPotentialDuplicates($p1);
+    expect($duplicatesAfter->count())->toBe(0);
 });

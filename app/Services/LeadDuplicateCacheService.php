@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DuplicateEntityType;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -13,7 +14,8 @@ class LeadDuplicateCacheService extends AbstractDuplicateCacheService
     private const CACHE_TTL = 3600; // 1 hour (shorter for testing)
 
     public function __construct(
-        private LeadRepository $leadRepository
+        private LeadRepository $leadRepository,
+        private DuplicateFalsePositiveService $falsePositiveService
     ) {
         parent::__construct('lead_duplicates:', self::CACHE_TTL);
     }
@@ -23,7 +25,7 @@ class LeadDuplicateCacheService extends AbstractDuplicateCacheService
      */
     public function getCachedDuplicates(int $leadId): Collection
     {
-        return $this->rememberIdsUsing($leadId, function (int $id) {
+        $duplicateIds = $this->rememberIdsUsing($leadId, function (int $id) {
             $lead = $this->leadRepository->find($id);
             if (! $lead) {
                 return collect();
@@ -31,6 +33,13 @@ class LeadDuplicateCacheService extends AbstractDuplicateCacheService
 
             return $this->leadRepository->findPotentialDuplicatesDirectly($lead)->pluck('id');
         });
+
+        // Always apply false-positive filtering at read-time (so new markings take effect immediately).
+        return $this->falsePositiveService->filterCandidateIdsForPrimary(
+            DuplicateEntityType::LEAD,
+            $leadId,
+            $duplicateIds
+        );
     }
 
     /**
@@ -61,7 +70,7 @@ class LeadDuplicateCacheService extends AbstractDuplicateCacheService
      */
     public function hasCachedDuplicates(int $leadId): bool
     {
-        return $this->hasCachedIds($leadId);
+        return $this->getCachedDuplicates($leadId)->isNotEmpty();
     }
 
     /**

@@ -251,6 +251,55 @@ if (typeof window !== 'undefined') {
     }
 
     /**
+     * Helper voor "confirm + POST JSON + success feedback + redirect/reload".
+     *
+     * opts:
+     * - confirmText: string|null
+     * - successMessage: string|null (fallback als response.data.message ontbreekt)
+     * - onSuccess: 'reload' | 'redirect' | null
+     * - redirectUrl: string|null (alleen bij onSuccess='redirect')
+     * - okStatuses: number[] (default [200])
+     * - errorPrefix: string
+     */
+    if (!window.privatescan.runJsonAction) {
+        window.privatescan.runJsonAction = async (url, payload = {}, opts = {}) => {
+            const {
+                confirmText = null,
+                successMessage = null,
+                onSuccess = null,
+                redirectUrl = null,
+                okStatuses = [200],
+                errorPrefix = 'Er is een fout opgetreden.',
+            } = opts;
+
+            if (confirmText && !window.confirm(confirmText)) {
+                return { ok: false, status: 0, data: null, cancelled: true };
+            }
+
+            const result = await window.privatescan.ajaxJson(url, payload, {
+                method: 'POST',
+                okStatuses,
+                errorPrefix,
+            });
+
+            if (result.ok) {
+                const msg = result?.data?.message || successMessage;
+                if (msg) {
+                    alert(msg);
+                }
+
+                if (onSuccess === 'reload') {
+                    window.location.reload();
+                } else if (onSuccess === 'redirect' && redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            }
+
+            return result;
+        };
+    }
+
+    /**
      * Convenience helper voor GVL-formulieren: accepteert 200 én 422 als "ok".
      */
     if (!window.privatescan.ensureGvlForm) {

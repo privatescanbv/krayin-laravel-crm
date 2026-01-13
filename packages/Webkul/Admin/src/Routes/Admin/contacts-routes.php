@@ -71,6 +71,8 @@ Route::prefix('contacts')->group(function () {
             Route::get('get', 'getDuplicates')->name('admin.contacts.persons.duplicates.get');
 
             Route::post('merge', 'merge')->name('admin.contacts.persons.duplicates.merge');
+
+            Route::post('false-positive', 'markFalsePositive')->name('admin.contacts.persons.duplicates.false_positive');
         });
     });
 

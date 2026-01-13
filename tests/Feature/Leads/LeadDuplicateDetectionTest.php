@@ -3,7 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\ContactLabel;
-use App\Models\Address;
+use App\Enums\DuplicateEntityType;
+use App\Services\DuplicateFalsePositiveService;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -477,4 +478,38 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     $this->assertNotContains($oldActiveLead->id, $duplicateIds, 'Should not find old active lead');
 
     $this->assertTrue($this->leadRepository->hasPotentialDuplicates($mainLead));
+});
+
+test('it hides lead duplicates when marked as false positive (even with cache)', function () {
+    $lead1 = Lead::factory()->create([
+        'first_name' => 'False',
+        'last_name'  => 'Positive',
+        'emails'     => [
+            ['value' => 'fp.lead@example.com', 'label' => ContactLabel::Eigen->value],
+        ],
+    ]);
+
+    $lead2 = Lead::factory()->create([
+        'first_name' => 'Other',
+        'last_name'  => 'Lead',
+        'emails'     => [
+            ['value' => 'fp.lead@example.com', 'label' => ContactLabel::Relatie->value],
+        ],
+    ]);
+
+    // Prime cache / baseline behavior
+    $duplicatesBefore = $this->leadRepository->findPotentialDuplicates($lead1);
+    $this->assertCount(1, $duplicatesBefore);
+    $this->assertEquals($lead2->id, $duplicatesBefore->first()->id);
+
+    app(DuplicateFalsePositiveService::class)->storeForEntities(
+        DuplicateEntityType::LEAD,
+        [$lead1->id, $lead2->id]
+    );
+
+    // Must now be filtered out, even if ids are cached
+    $duplicatesAfter = $this->leadRepository->findPotentialDuplicates($lead1);
+    $this->assertCount(0, $duplicatesAfter);
+    $this->assertFalse($this->leadRepository->hasPotentialDuplicates($lead1));
+    $this->assertEquals(0, $lead1->getPotentialDuplicatesCount());
 });

@@ -80,6 +80,8 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
         Route::post('merge', 'merge')->name('admin.leads.duplicates.merge');
 
+        Route::post('false-positive', 'markFalsePositive')->name('admin.leads.duplicates.false_positive');
+
         Route::get('debug', 'debug')->name('admin.leads.duplicates.debug');
     });
 });

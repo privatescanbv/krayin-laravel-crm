@@ -9,8 +9,11 @@ trait Comparable
     /**
      * Get the field type for proper display handling.
      */
-    protected function getFieldType(string $field): string
+    protected function getFieldType(string $field, $oldValue, $newValue): string
     {
+        if ($oldValue === '1' || $newValue === '1' || is_bool($oldValue) || is_bool($newValue)) {
+            return 'boolean';
+        }
         if (in_array($field, ['emails', 'phones'])) {
             return 'array';
         }

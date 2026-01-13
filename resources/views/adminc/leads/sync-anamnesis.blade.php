@@ -52,15 +52,15 @@
                     foreach($matchBreakdown as $res) {
                         if(isset($res['field_differences'])) {
                             foreach($res['field_differences'] as $f => $d) {
-                                $allDiffFields[$f] = $d['label'];
+                                $allDiffFields[$f] = [$d['label'], $d['type']];
                             }
                         }
                     }
                 @endphp
 
-                @foreach ($allDiffFields as $field => $label)
+                @foreach ($allDiffFields as $field => $labelAndType)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td class="px-4 py-4 font-medium text-gray-900 dark:text-white">{{ $label }}</td>
+                        <td class="px-4 py-4 font-medium text-gray-900 dark:text-white">{{ $labelAndType[0] }}</td>
 
                         {{-- Nieuwste waarde (Current) --}}
                         <td class="px-4 py-4">
@@ -72,7 +72,13 @@
                                     checked
                                     class="text-activity-note-text border-gray-300 focus:ring-blue-500"
                                 >
-                                <span class="text-sm text-gray-900 dark:text-white">{{ $anamnesis->$field }}</span>
+                                <span class="text-sm text-gray-900 dark:text-white">
+                                   @if ($labelAndType[1]=== 'boolean')
+                                        {{ filter_var($anamnesis->$field , FILTER_VALIDATE_BOOLEAN) ? 'Waar' : 'Onwaar' }}
+                                    @else
+                                        {{ $anamnesis->$field }}
+                                    @endif
+                                </span>
                             </label>
                         </td>
 
@@ -82,7 +88,6 @@
                                 @php
                                     $diff = $matchBreakdown[$oldAnamnesis->id]['field_differences'][$field] ?? null;
                                 @endphp
-
                                 @if ($diff)
                                     <label class="inline-flex items-center gap-2 cursor-pointer">
                                         <input
@@ -91,7 +96,13 @@
                                             value="{{ $oldAnamnesis->id }}"
                                             class="text-activity-note-text border-gray-300 focus:ring-blue-500"
                                         >
-                                        <span class="text-sm text-gray-600 dark:text-gray-300">{{ $diff['old_value'] }}</span>
+                                        <span class="text-sm text-gray-600 dark:text-gray-300">
+                                            @if ($diff['type'] === 'boolean')
+                                                {{ filter_var($diff['old_value'] , FILTER_VALIDATE_BOOLEAN) ? 'Waar' : 'Onwaar' }}
+                                            @else
+                                                {{ $diff['old_value'] }}
+                                            @endif
+                                        </span>
                                     </label>
                                 @else
                                     <em class="text-gray-400 text-xs">Geen verschil</em>

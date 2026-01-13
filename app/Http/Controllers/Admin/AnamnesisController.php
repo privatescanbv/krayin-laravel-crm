@@ -367,6 +367,7 @@ class AnamnesisController extends Controller
         }
         $olderAnamnises = Anamnesis::where('id', '!=', $lastAnamnesis->id)
             ->where('person_id', $personId)
+            ->where('deleted', 0)
             ->orderBy('created_at', 'desc')
             ->with('lead')
             ->get();
@@ -591,28 +592,7 @@ class AnamnesisController extends Controller
      */
     private function buildAnamnesisMatchBreakdown(Anamnesis $anamnesis, Collection $olderAnamnese): array
     {
-        $comparableFields = [
-            'description'             => 'description',
-            'height'                  => 'Lengte',
-            'weight'                  => 'Gewicht',
-            'metals'                  => 'Metaalimplantaten',
-            'glaucoma'                => 'Glaucoom',
-            'claustrophobia'          => 'Claustrofobie',
-            'heart_surgery'           => 'Hartoperatie',
-            'implant'                 => 'Implantaat',
-            'surgeries'               => 'Operaties',
-            'hereditary_heart'        => 'Erfelijke hartproblemen',
-            'hereditary_vascular'     => 'Erfelijke vaatproblemen',
-            'hereditary_tumors'       => 'Erfelijke tumoren',
-            'allergies'               => 'Allergieën',
-            'back_problems'           => 'Rugproblemen',
-            'heart_problems'          => 'Hartproblemen',
-            'smoking'                 => 'Roken',
-            'diabetes'                => 'Diabetes',
-            'spijsverteringsklachten' => 'Spijsverteringsklachten',
-            'digestive_problems'      => 'Spijsverteringsproblemen',
-        ];
-
+        $comparableFields = Anamnesis::getFieldsToCompare();
         $results = [];
 
         foreach ($olderAnamnese as $oldAnamnesis) {
@@ -620,12 +600,12 @@ class AnamnesisController extends Controller
             $matchingFields = 0;
             $fieldDifferences = [];
 
-            foreach ($comparableFields as $field => $label) {
+            foreach ($comparableFields as $field => $labelKey) {
+                $label = __($labelKey);
                 $newValue = $anamnesis->$field ?? '';
                 $oldValue = $oldAnamnesis->$field ?? null;
 
                 $totalFields++;
-
                 $isMatch = $this->valuesMatch($newValue, $oldValue, $field, 'anamnesis');
 
                 if ($isMatch) {
@@ -635,11 +615,10 @@ class AnamnesisController extends Controller
                         'label'     => $label,
                         'new_value' => $this->formatValueForDisplay($newValue, $field),
                         'old_value' => $this->formatValueForDisplay($oldValue, $field),
-                        'type'      => $this->getFieldType($field),
+                        'type'      => $this->getFieldType($field, $oldValue, $newValue),
                     ];
                 }
             }
-
             $percentage = $totalFields > 0 ? ($matchingFields / $totalFields) * 100 : 0;
             $resultKey = $oldAnamnesis->id;
 

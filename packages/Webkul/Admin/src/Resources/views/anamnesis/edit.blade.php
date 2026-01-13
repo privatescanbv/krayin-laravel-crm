@@ -75,7 +75,7 @@
                             <x-adminc::components.field
                                 type="text"
                                 name="name"
-                                label="Naam"
+                                label="{{ __('admin::app.anamnesis.fields.name') }}"
                                 :value="$anamnesis->name"
                                 placeholder="Anamnesis naam"
                             />
@@ -85,7 +85,7 @@
                             <x-adminc::components.field
                                 type="textarea"
                                 name="description"
-                                label="Beschrijving"
+                                label="{{ __('admin::app.anamnesis.fields.description') }}"
                                 :value="$anamnesis->description"
                                 placeholder="Beschrijving"
                                 rows="3"
@@ -108,7 +108,7 @@
                             <x-adminc::components.field
                                 type="textarea"
                                 name="comment_clinic"
-                                label="Kliniek opmerkingen"
+                                label="{{ __('admin::app.anamnesis.fields.comment_clinic') }}"
                                 :value="$anamnesis->comment_clinic"
                                 placeholder="Kliniek opmerkingen"
                                 rows="3"
@@ -125,7 +125,7 @@
                                 <x-adminc::components.field
                                     type="number"
                                     name="height"
-                                    label="Lengte (cm)"
+                                    label="{{ __('admin::app.anamnesis.fields.height') }}"
                                     :value="$anamnesis->height"
                                     placeholder="180"
                                     onchange="updateBMI()"
@@ -136,7 +136,7 @@
                                 <x-adminc::components.field
                                     type="number"
                                     name="weight"
-                                    label="Gewicht (kg)"
+                                    label="{{ __('admin::app.anamnesis.fields.weight') }}"
                                     :value="$anamnesis->weight"
                                     placeholder="70"
                                     onchange="updateBMI()"
@@ -163,7 +163,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="metals"
-                                    label="Heeft u metaal in uw lichaam?"
+                                    label="{{ __('admin::app.anamnesis.fields.metals') }}"
                                     :value="$anamnesis->metals"
                                     rules="required"
                                     comment-field="metals"
@@ -173,7 +173,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="metals_notes"
-                                        label="Toelichting metalen"
+                                        label="{{ __('admin::app.anamnesis.fields.metals_notes') }}"
                                         :value="$anamnesis->metals_notes"
                                         placeholder="Toelichting metalen"
                                     />
@@ -184,7 +184,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="medications"
-                                    label="Gebruikt u Metformine?"
+                                    label="{{ __('admin::app.anamnesis.fields.medications') }}"
                                     :value="$anamnesis->medications"
                                     rules="required"
                                     comment-field="medications"
@@ -194,7 +194,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="medications_notes"
-                                        label="Toelichting medicijnen"
+                                        label="{{ __('admin::app.anamnesis.fields.medications_notes') }}"
                                         :value="$anamnesis->medications_notes"
                                         placeholder="Toelichting medicijnen"
                                     />
@@ -205,7 +205,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="glaucoma"
-                                    label="Heeft u glaucoom?"
+                                    label="{{ __('admin::app.anamnesis.fields.glaucoma') }}"
                                     :value="$anamnesis->glaucoma"
                                     rules="required"
                                     comment-field="glaucoma"
@@ -215,7 +215,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="glaucoma_notes"
-                                        label="Toelichting glaucoom"
+                                        label="{{ __('admin::app.anamnesis.fields.glaucoma_notes') }}"
                                         :value="$anamnesis->glaucoma_notes"
                                         placeholder="Toelichting glaucoom"
                                     />
@@ -226,7 +226,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="claustrophobia"
-                                    label="Bent u claustrofobisch?"
+                                    label="{{ __('admin::app.anamnesis.fields.claustrophobia') }}"
                                     :value="$anamnesis->claustrophobia"
                                     rules="required"
                                 />
@@ -236,7 +236,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="dormicum"
-                                    label="Wenst u een rustgevend middel?"
+                                    label="{{ __('admin::app.anamnesis.fields.dormicum') }}"
                                     :value="$anamnesis->dormicum"
                                     rules="required"
                                 />
@@ -246,7 +246,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="heart_surgery"
-                                    label="Heeft u ooit een hartkatheterisatie gehad?"
+                                    label="{{ __('admin::app.anamnesis.fields.heart_surgery') }}"
                                     :value="$anamnesis->heart_surgery"
                                     rules="required"
                                     comment-field="heart_surgery"
@@ -256,7 +256,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="heart_surgery_notes"
-                                        label="Toelichting hart operatie"
+                                        label="{{ __('admin::app.anamnesis.fields.heart_surgery_notes') }}"
                                         :value="$anamnesis->heart_surgery_notes"
                                         placeholder="Toelichting hart operatie"
                                     />
@@ -267,7 +267,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="implant"
-                                    label="Draagt u een implantaat?"
+                                    label="{{ __('admin::app.anamnesis.fields.implant') }}"
                                     :value="$anamnesis->implant"
                                     rules="required"
                                     comment-field="implant"
@@ -277,7 +277,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="implant_notes"
-                                        label="Toelichting implantaat"
+                                        label="{{ __('admin::app.anamnesis.fields.implant_notes') }}"
                                         :value="$anamnesis->implant_notes"
                                         placeholder="Toelichting implantaat"
                                     />
@@ -288,7 +288,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="surgeries"
-                                    label="Heeft u in het verleden operaties gehad?"
+                                    label="{{ __('admin::app.anamnesis.fields.surgeries') }}"
                                     :value="$anamnesis->surgeries"
                                     rules="required"
                                     comment-field="surgeries"
@@ -298,7 +298,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="surgeries_notes"
-                                        label="Toelichting operaties"
+                                        label="{{ __('admin::app.anamnesis.fields.surgeries_notes') }}"
                                         :value="$anamnesis->surgeries_notes"
                                         placeholder="Toelichting operaties"
                                     />
@@ -309,7 +309,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="heart_problems"
-                                    label="Heeft u hartproblemen?"
+                                    label="{{ __('admin::app.anamnesis.fields.heart_problems') }}"
                                     :value="$anamnesis->heart_problems"
                                     rules="required"
                                     comment-field="heart_problems"
@@ -319,7 +319,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="heart_problems_notes"
-                                        label="Toelichting hartklachten"
+                                        label="{{ __('admin::app.anamnesis.fields.heart_problems_notes') }}"
                                         :value="$anamnesis->heart_problems_notes"
                                         placeholder="Toelichting hartklachten"
                                     />
@@ -330,7 +330,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="back_problems"
-                                    label="Kunt u langere tijd stil liggen op uw rug?"
+                                    label="{{ __('admin::app.anamnesis.fields.back_problems') }}"
                                     :value="$anamnesis->back_problems"
                                     rules="required"
                                     comment-field="back_problems"
@@ -340,7 +340,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="back_problems_notes"
-                                        label="Toelichting rugklachten"
+                                        label="{{ __('admin::app.anamnesis.fields.back_problems_notes') }}"
                                         :value="$anamnesis->back_problems_notes"
                                         placeholder="Toelichting rugklachten"
                                     />
@@ -351,7 +351,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="allergies"
-                                    label="Heeft u allergieën?"
+                                    label="{{ __('admin::app.anamnesis.fields.allergies') }}"
                                     :value="$anamnesis->allergies"
                                     rules="required"
                                     comment-field="allergies"
@@ -361,7 +361,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="allergies_notes"
-                                        label="Toelichting allergie"
+                                        label="{{ __('admin::app.anamnesis.fields.allergies_notes') }}"
                                         :value="$anamnesis->allergies_notes"
                                         placeholder="Toelichting allergie"
                                     />
@@ -372,7 +372,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="digestive_problems"
-                                    label="Heeft u spijsverteringsklachten"
+                                    label="{{ __('admin::app.anamnesis.fields.digestive_problems') }}"
                                     :value="$anamnesis->digestive_problems"
                                     rules="required"
                                     comment-field="digestive_problems"
@@ -382,7 +382,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="digestive_problems_notes"
-                                        label="Toelichting spijsvertering"
+                                        label="{{ __('admin::app.anamnesis.fields.digestive_problems_notes') }}"
                                         :value="$anamnesis->digestive_problems_notes"
                                         placeholder="Toelichting spijsvertering"
                                     />
@@ -403,7 +403,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="hereditary_heart"
-                                    label="Hartafwijking?"
+                                    label="{{ __('admin::app.anamnesis.fields.hereditary_heart') }}"
                                     :value="$anamnesis->hereditary_heart"
                                     rules="required"
                                     comment-field="hereditary_heart"
@@ -413,7 +413,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="hereditary_heart_notes"
-                                        label="Toelichting hart erfelijk"
+                                        label="{{ __('admin::app.anamnesis.fields.hereditary_heart_notes') }}"
                                         :value="$anamnesis->hereditary_heart_notes"
                                         placeholder="Toelichting hart erfelijk"
                                     />
@@ -424,7 +424,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="hereditary_vascular"
-                                    label="Komt / kwam er in naaste familie hart- en/of vaatziekten voor?"
+                                    label="{{ __('admin::app.anamnesis.fields.hereditary_vascular') }}"
                                     :value="$anamnesis->hereditary_vascular"
                                     rules="required"
                                     comment-field="hereditary_vascular"
@@ -434,7 +434,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="hereditary_vascular_notes"
-                                        label="Toelichting vaat erfelijk"
+                                        label="{{ __('admin::app.anamnesis.fields.hereditary_vascular_notes') }}"
                                         :value="$anamnesis->hereditary_vascular_notes"
                                         placeholder="Toelichting vaat erfelijk"
                                     />
@@ -445,7 +445,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="hereditary_tumors"
-                                    label="Komt / kwam er in de naaste familie kanker voor?"
+                                    label="{{ __('admin::app.anamnesis.fields.hereditary_tumors') }}"
                                     :value="$anamnesis->hereditary_tumors"
                                     rules="required"
                                     comment-field="hereditary_tumors"
@@ -455,7 +455,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="hereditary_tumors_notes"
-                                        label="Toelichting tumoren erfelijk"
+                                        label="{{ __('admin::app.anamnesis.fields.hereditary_tumors_notes') }}"
                                         :value="$anamnesis->hereditary_tumors_notes"
                                         placeholder="Toelichting tumoren erfelijk"
                                     />
@@ -466,7 +466,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="smoking"
-                                    label="Rookt u?"
+                                    label="{{ __('admin::app.anamnesis.fields.smoking') }}"
                                     :value="$anamnesis->smoking"
                                     rules="required"
                                     comment-field="smoking"
@@ -476,7 +476,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="smoking_notes"
-                                        label="Toelichting roken"
+                                        label="{{ __('admin::app.anamnesis.fields.smoking_notes') }}"
                                         :value="$anamnesis->smoking_notes"
                                         placeholder="Toelichting roken"
                                     />
@@ -487,7 +487,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="diabetes"
-                                    label="Heeft u diabetes?"
+                                    label="{{ __('admin::app.anamnesis.fields.diabetes') }}"
                                     :value="$anamnesis->diabetes"
                                     rules="required"
                                     comment-field="diabetes"
@@ -497,7 +497,7 @@
                                     <x-adminc::components.field
                                         type="text"
                                         name="diabetes_notes"
-                                        label="Toelichting diabetes"
+                                        label="{{ __('admin::app.anamnesis.fields.diabetes_notes') }}"
                                         :value="$anamnesis->diabetes_notes"
                                         placeholder="Toelichting diabetes"
                                     />
@@ -508,7 +508,7 @@
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
                                     name="active"
-                                    label="Beweegt u regelmatig?"
+                                    label="{{ __('admin::app.anamnesis.fields.active') }}"
                                     :value="$anamnesis->active"
                                     rules="required"
                                 />
@@ -519,7 +519,7 @@
                                 <x-adminc::components.field
                                     type="text"
                                     name="heart_attack_risk"
-                                    label="Risico hartinfarct"
+                                    label="{{ __('admin::app.anamnesis.fields.heart_attack_risk') }}"
                                     :value="$anamnesis->heart_attack_risk"
                                     placeholder="Risico hartinfarct"
                                 />
@@ -538,7 +538,7 @@
                                 <x-adminc::components.field
                                     type="text"
                                     name="remarks"
-                                    label="Opmerking"
+                                    label="{{ __('admin::app.anamnesis.fields.remarks') }}"
                                     :value="$anamnesis->remarks"
                                     placeholder="Algemene opmerking"
                                 />
@@ -548,7 +548,7 @@
                                 <x-adminc::components.field
                                     type="textarea"
                                     name="advice_notes"
-                                    label="Advies"
+                                    label="{{ __('admin::app.anamnesis.fields.advice_notes') }}"
                                     :value="$anamnesis->advice_notes"
                                     placeholder="Advies voor patiënt"
                                     rows="3"

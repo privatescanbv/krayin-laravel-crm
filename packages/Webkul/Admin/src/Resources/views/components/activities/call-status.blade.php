@@ -55,7 +55,7 @@
                 <p class="text-[11px] text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
             </div>
 
-            <button type="button" id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="w-full text-activity-note-text hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <button id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="w-full primary-button">
                 <i class="icon-plus mr-2"></i>Toevoegen
             </button>
         </form>

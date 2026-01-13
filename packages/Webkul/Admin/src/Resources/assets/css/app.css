@@ -148,6 +148,23 @@
 }
 
 @layer components {
+
+    .toggle-group {
+        @apply inline-flex rounded-md overflow-hidden border border-neutral-border;
+    }
+
+    .toggle-btn {
+        @apply px-3 py-1 text-sm font-semibold border-0 rounded-none;
+    }
+
+    .toggle-btn--active {
+        @apply bg-brandColor text-white;
+    }
+
+    .toggle-btn--inactive {
+        @apply bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:hover:opacity-80;
+    }
+
     nav.pipeline-nav a.active {
         color: var(--privatescan-accent) !important;
         text-decoration: none !important;

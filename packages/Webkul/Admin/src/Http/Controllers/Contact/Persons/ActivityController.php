@@ -39,7 +39,9 @@ class ActivityController extends Controller
             ->where('person_activities.person_id', $id)
             ->get();
 
-        return ActivityResource::collection($this->concatEmailAsActivities($id, $activities));
+        return ActivityResource::collection(
+            $this->concatEmailActivitiesFor('person', (int) $id, $activities, $this->attachmentRepository)
+        );
     }
 
     /**
@@ -47,8 +49,6 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($personId, $activities)
     {
-        $leadIds = Person::findOrFail($personId)->leads->pluck('id')->toArray();
-        $emails = Email::forPersonThread($personId, $leadIds)->get();
-        return $this->concatEmails($activities, $emails, $this->attachmentRepository);
+        return $this->concatEmailActivitiesFor('person', (int) $personId, $activities, $this->attachmentRepository);
     }
 }

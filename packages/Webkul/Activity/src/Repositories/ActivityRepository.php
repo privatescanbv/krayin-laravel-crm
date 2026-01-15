@@ -251,6 +251,7 @@ class ActivityRepository extends Repository
             ->where('is_done', 0)
             ->count();
         $unreadEmail = Email::where($relationKey, $entityId)
+            ->where('is_read', 0)
             ->count();
         return response()->json([
             'data' => $count + $unreadEmail,

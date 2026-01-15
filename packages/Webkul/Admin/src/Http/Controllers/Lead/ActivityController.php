@@ -125,7 +125,9 @@ class ActivityController extends Controller
                 ->where('lead_id', $leadId)
                 ->get();
 
-        return ActivityResource::collection($this->concatEmailAsActivities($leadId, $activities));
+        return ActivityResource::collection(
+            $this->concatEmailActivitiesFor('lead', (int) $leadId, $activities, $this->attachmentRepository)
+        );
     }
 
     public function countOpen(string $leadId)
@@ -146,7 +148,6 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($leadId, $activities)
     {
-        $emails = Email::forLeadThread($leadId)->get();
-        return $this->concatEmails($activities, $emails, $this->attachmentRepository);
+        return $this->concatEmailActivitiesFor('lead', (int) $leadId, $activities, $this->attachmentRepository);
     }
 }

@@ -3,14 +3,47 @@
 namespace Webkul\Admin\Http\Controllers\Concerns;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\User\Models\User;
 use Webkul\Email\Models\Folder;
+use Webkul\Contact\Models\Person;
 
 trait ConcatsEmailActivities
 {
+    /**
+     * Fetch thread emails for a supported entity type.
+     *
+     * Supported:
+     * - lead
+     * - sales
+     * - clinic
+     * - person (includes person's leads)
+     */
+    protected function getEmailsForEntityThread(string $entityType, int $entityId): Collection
+    {
+        return match ($entityType) {
+            'lead'   => Email::forLeadThread($entityId)->get(),
+            'sales'  => Email::forSalesLeadThread($entityId)->get(),
+            'clinic' => Email::forClinicThread($entityId)->get(),
+            'person' => (function () use ($entityId) {
+                $leadIds = Person::findOrFail($entityId)->leads->pluck('id')->toArray();
+                return Email::forPersonThread($entityId, $leadIds)->get();
+            })(),
+            default  => collect(),
+        };
+    }
+
+    /**
+     * Convenience: concatenate "email activities" for an entity type into an existing activities collection.
+     */
+    protected function concatEmailActivitiesFor(string $entityType, int $entityId, Collection $activities, AttachmentRepository $attachmentRepository): Collection
+    {
+        $emails = $this->getEmailsForEntityThread($entityType, $entityId);
+
+        return $this->concatEmails($activities, $emails, $attachmentRepository);
+    }
+
     /**
      * Map raw email rows into activity-like objects and concatenate with given activities.
      */

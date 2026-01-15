@@ -400,6 +400,20 @@ class Email extends Model implements EmailContract
             ->orWhere('clinic_id', $clinicId);
     }
 
+    /**
+     * Scope: all emails (parents + replies) for a given sales lead.
+     */
+    public function scopeForSalesLeadThread(Builder $query, int $salesLeadId): Builder
+    {
+        $parentEmails = static::query()
+            ->select('id')
+            ->where('sales_lead_id', $salesLeadId);
+
+        return $query
+            ->whereIn('parent_id', $parentEmails)
+            ->orWhere('sales_lead_id', $salesLeadId);
+    }
+
     public function scopeForPersonThread(Builder $query, int $personId, array $leadIds): Builder
     {
         // Subquery: parents that belong to the lead
@@ -417,6 +431,12 @@ class Email extends Model implements EmailContract
     public function scopeForLeadThreadAndUnread(Builder $query, int $leadId): Builder
     {
         return self::forLeadThread($leadId)
+            ->where('is_read', 0);
+    }
+
+    public function scopeForSalesLeadThreadAndUnread(Builder $query, int $salesLeadId): Builder
+    {
+        return self::forSalesLeadThread($salesLeadId)
             ->where('is_read', 0);
     }
 

@@ -16,6 +16,10 @@ class ActivityResource extends JsonResource
      */
     public function toArray($request): array
     {
+        // Using data_get avoids "Undefined property" when this resource wraps stdClass objects
+        // (e.g., merged collections that include email-activity pseudo objects).
+        $isRead = data_get($this->resource, 'is_read', 1);
+
         $data = [
             'id'              => $this->id,
             'parent_id'       => $this->parent_id ?? null,
@@ -28,7 +32,7 @@ class ActivityResource extends JsonResource
             'schedule_from'   => $this->schedule_from,
             'schedule_to'     => $this->schedule_to,
             'is_done'         => (int) $this->is_done,
-            'is_read'         => $this->is_read,
+            'is_read'         => $isRead,
             'user'            => $this->user ? new UserResource($this->user) : null,
             'user_id'         => $this->user_id ?? null,
             'lead_id'         => $this->lead_id ?? null,

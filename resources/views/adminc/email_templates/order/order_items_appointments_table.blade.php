@@ -7,7 +7,7 @@
                 <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Persoon</th>
                 <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Onderzoek</th>
                 <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Datum</th>
-                <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Tijd</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Aankomst tijd</th>
                 <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Locatie</th>
                 <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; color: #111827;">Adres</th>
             </tr>
@@ -25,9 +25,6 @@
                         <td style="padding: 12px; border: 1px solid #d1d5db; color: #374151;">{{ $appointment['date'] }}</td>
                         <td style="padding: 12px; border: 1px solid #d1d5db; color: #374151;">
                             {{ $appointment['time_from'] }}
-                            @if ($appointment['time_to'])
-                                - {{ $appointment['time_to'] }}
-                            @endif
                         </td>
                         <td style="padding: 12px; border: 1px solid #d1d5db; color: #374151;">{{ $appointment['clinic_name'] }}</td>
                         <td style="padding: 12px; border: 1px solid #d1d5db; color: #374151;">{{ $appointment['address'] }}</td>

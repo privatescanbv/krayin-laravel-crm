@@ -20,17 +20,18 @@ use Illuminate\Validation\Rules\Enum;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\SalesLeadLookupResource;
-use Webkul\Email\Models\Email as EmailModel;
+use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\PipelineRepository;
 
 class SalesLeadController extends Controller
 {
-    use HasAdvancedSearch;
+    use ConcatsEmailActivities, HasAdvancedSearch;
 
     private bool $enableDebugLogging = false;
 
@@ -39,6 +40,7 @@ class SalesLeadController extends Controller
         private readonly PipelineRepository $pipelineRepository,
         private readonly PipelineCookieService $pipelineCookieService,
         private readonly ActivityRepository $activityRepository,
+        private readonly AttachmentRepository $attachmentRepository,
     ) {}
 
     public function index(Request $request)
@@ -355,47 +357,8 @@ class SalesLeadController extends Controller
 
         $activities = $query->get();
 
-        // Also include standalone emails linked directly to this Sales
-        $emails = EmailModel::where('sales_lead_id', $id)
-            ->with('attachments')
-            ->get();
-
-        $emailActivities = $emails->map(function ($email) {
-            return (object) [
-                'id'                    => $email->id,
-                'parent_id'             => $email->parent_id,
-                'title'                 => $email->subject,
-                'type'                  => 'email',
-                'emailLinkedEntityType' => 'sales',
-                'is_done'               => 1,
-                'comment'               => $email->reply,
-                'schedule_from'         => null,
-                'schedule_to'           => null,
-                'user'                  => auth()->guard('user')->user(),
-                'user_id'               => auth()->guard('user')->id(),
-                'group'                 => null,
-                'participants'          => [],
-                'location'              => null,
-                'additional'            => json_encode([
-                    'folders' => $email->folders,
-                    'from'    => $email->from,
-                    'to'      => $email->reply_to,
-                    'cc'      => $email->cc,
-                    'bcc'     => $email->bcc,
-                ]),
-                'files'         => $email->attachments->map(function ($attachment) {
-                    return (object) [
-                        'name' => $attachment->name,
-                        'url'  => $attachment->path,
-                    ];
-                })->toArray(),
-                'created_at'    => $email->created_at,
-                'updated_at'    => $email->updated_at,
-            ];
-        });
-
-        // Merge and return as a single collection
-        $merged = $emailActivities->concat($activities);
+        // Concat emails as activity-like objects through the shared, centralized mapping.
+        $merged = $this->concatEmailActivitiesFor('sales', (int) $id, $activities, $this->attachmentRepository);
 
         return ActivityResource::collection($merged);
     }

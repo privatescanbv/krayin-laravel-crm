@@ -8,7 +8,6 @@ use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
-use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -100,7 +99,9 @@ class ActivityController extends Controller
             ->where('clinic_id', $id)
             ->get();
 
-        return ActivityResource::collection($this->concatEmailAsActivities($id, $activities));
+        return ActivityResource::collection(
+            $this->concatEmailActivitiesFor('clinic', (int) $id, $activities, $this->attachmentRepository)
+        );
     }
 
     /**
@@ -108,8 +109,6 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($clinicId, $activities)
     {
-        $emails = Email::forClinicThread($clinicId)->get();
-
-        return $this->concatEmails($activities, $emails, $this->attachmentRepository);
+        return $this->concatEmailActivitiesFor('clinic', (int) $clinicId, $activities, $this->attachmentRepository);
     }
 }

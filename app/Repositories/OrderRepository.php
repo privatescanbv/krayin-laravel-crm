@@ -186,7 +186,7 @@ class OrderRepository extends Repository
                 $address = $resourceOrderItem->resource?->clinic?->address;
 
                 $appointmentsByPerson[$personId]['appointments'][] = [
-                    'product_name'  => $item->product->name ?? 'Onbekend product',
+                    'product_name'  => $item->product->description ?? $item->product->name ?? 'Onbekend product',
                     'date'          => $this->formatDutchDate($resourceOrderItem->from),
                     'time_from'     => Carbon::parse($resourceOrderItem->from)->format('H:i'),
                     'time_to'       => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,

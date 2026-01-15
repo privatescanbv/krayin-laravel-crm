@@ -190,6 +190,10 @@
         content: "\e94d";
     }
 
+    .icon-anamnesis:before {
+        content: "\e902";
+    }
+
     .icon-error:before {
         content: "\e951";
     }
@@ -205,13 +209,12 @@
     .icon-warning:before {
         content: "\e954";
     }
-
-    .icon-stats-down:before {
-        content: "\e94d";
+    .icon-stats:before {
+        content: "\e91b"; /* bar chart / stats */
     }
 
-    .icon-stats-up:before {
-        content: "\e94f";
+    .icon-order:before {
+        content: "\e94e"; /* document / list */
     }
 
     .icon-attribute:before {

@@ -5,9 +5,12 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use ValueError;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
@@ -248,6 +251,8 @@ class SalesLead extends Model
                 'person_id'    => $personId,
             ]);
         }
+
+        $this->createMissingAnamnesis($personIds);
     }
 
     /**
@@ -308,5 +313,68 @@ class SalesLead extends Model
     public function getDepartment(): Department
     {
         return $this->lead->department;
+    }
+
+    /**
+     * Anamnesis records linked directly to this sales lead (via anamnesis.sales_id).
+     */
+    public function anamnesisRecords()
+    {
+        return $this->hasMany(Anamnesis::class, 'sales_id');
+    }
+
+    /**
+     * Get the anamnesis records associated with the lead.
+     */
+    public function getAnamnesisAttribute()
+    {
+        try {
+            return Anamnesis::query()
+                ->where('sales_id', $this->id)
+                ->when(
+                    ! empty($this->lead_id),
+                    fn ($query) => $query->orWhere('lead_id', $this->lead_id)
+                )
+                ->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load anamnesis for sales', ['sales_id' => $this->id, 'error' => $e->getMessage()]);
+
+            return collect();
+        }
+    }
+
+    /**
+     * Create missing anamnesis records for this sales lead and the given person IDs.
+     * Uses firstOrCreate to prevent duplicates.
+     */
+    private function createMissingAnamnesis(array $personIds): void
+    {
+        $existingPersonIds = $this->lead->persons
+            ->pluck('id')
+            ->all();
+        $missingPersonIds = array_diff($personIds, $existingPersonIds);
+        foreach ($missingPersonIds as $personId) {
+            $personName = Person::findOrFail($personId)->name;
+            try {
+                Anamnesis::firstOrCreate(
+                    [
+                        'sales_id'  => $this->id,
+                        'person_id' => $personId,
+                    ],
+                    [
+                        'id'         => (string) Str::uuid(),
+                        'name'       => 'Anamnesis voor '.$personName,
+                        'created_by' => auth()->id() ?? $this->user_id ?? 1,
+                        'updated_by' => auth()->id() ?? $this->user_id ?? 1,
+                    ]
+                );
+            } catch (Exception $e) {
+                Log::error('Failed to create anamnesis for saleslead-person combination', [
+                    'sales_id'  => $this->id,
+                    'person_id' => $personId,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

@@ -15,6 +15,14 @@ enum OrderStatus: string
         return self::APPROVED;
     }
 
+    public static function getCloseStatuses(): array
+    {
+        return [
+            self::APPROVED->value,
+            self::REJECTED->value,
+        ];
+    }
+
     public function label(): string
     {
         return match ($this) {

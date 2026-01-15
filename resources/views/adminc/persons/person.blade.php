@@ -73,18 +73,6 @@
 
                 $hasPortalAccount = !empty($person->keycloak_user_id);
                 $canSendInfoMail = $defaultEmail && $hasPortalAccount;
-
-                // Get anamnesis for this person-lead combination
-                $personAnamnesis = null;
-                $anamnesisId = null;
-                try {
-                    $personAnamnesis = $lead->findAnamnesisByPersonId($person->id);
-                    if ($personAnamnesis && !empty($personAnamnesis->gvl_form_link)) {
-                        $anamnesisId = $personAnamnesis->id;
-                    }
-                } catch (ModelNotFoundException $e) {
-                    $personAnamnesis = null;
-                }
             @endphp
 
             <div class="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center gap-3 flex-wrap">

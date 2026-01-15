@@ -37,7 +37,8 @@ class SalesLeadController extends Controller
     public function __construct(
         private readonly SalesLeadRepository $salesLeadRepository,
         private readonly PipelineRepository $pipelineRepository,
-        private readonly PipelineCookieService $pipelineCookieService
+        private readonly PipelineCookieService $pipelineCookieService,
+        private readonly ActivityRepository $activityRepository,
     ) {}
 
     public function index(Request $request)
@@ -217,7 +218,7 @@ class SalesLeadController extends Controller
     public function view($id)
     {
         // First load the Sales to check if it has a lead_id
-        $salesLead = SalesLead::with(['stage.pipeline.stages', 'user', 'lead'])->findOrFail($id);
+        $salesLead = SalesLead::with(['stage.pipeline.stages', 'user', 'lead', 'persons'])->findOrFail($id);
 
         // If there's no related lead_id, return 404
         if (! $salesLead->lead_id) {
@@ -254,12 +255,14 @@ class SalesLeadController extends Controller
                 'is_default' => true,
             ];
         }
+        $activitiesCount = $this->activityRepository->countOpen($lead)->getData()->data;
 
         return view('adminc.sales_leads.view', [
-            'salesLead'    => $salesLead,
-            'lead'         => $lead,
-            'orders'       => $orders,
-            'emails'       => $emails,
+            'salesLead'      => $salesLead,
+            'lead'           => $lead,
+            'orders'         => $orders,
+            'emails'         => $emails,
+            'activitiesCount'=> $activitiesCount,
         ]);
     }
 

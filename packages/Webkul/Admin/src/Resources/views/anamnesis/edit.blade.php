@@ -1,7 +1,7 @@
 <x-admin::layouts>
     <!-- Page Title -->
     <x-slot:title>
-        Anamnesis bewerken - {{ $anamnesis->lead->title }}
+        Anamnesis bewerken - {{ $anamnesis->label }}
     </x-slot>
 
     <!-- Edit Anamnesis Form -->
@@ -15,13 +15,19 @@
                 class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-x-2.5">
-                        <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-activity-note-text hover:underline">
-                            ← Terug naar Lead
-                        </a>
+                        @if($anamnesis->lead_id)
+                            <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-activity-note-text hover:underline">
+                                ← Terug naar Lead
+                            </a>
+                        @else
+                            <a href="{{ route('admin.sales-leads.view', $anamnesis->sales_id) }}" class="text-activity-note-text hover:underline">
+                                ← Terug naar Sales
+                            </a>
+                        @endif
                     </div>
 
                     <div class="text-xl font-bold dark:text-white">
-                        Anamnesis bewerken - {{ $anamnesis->lead->title }}
+                        Anamnesis bewerken - {{ $anamnesis->label }}
                     </div>
                 </div>
 

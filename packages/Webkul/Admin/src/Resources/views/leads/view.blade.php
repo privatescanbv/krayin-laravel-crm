@@ -129,59 +129,7 @@
                 </div>
             </div>
 
-            @php
-                $activitiesCount = app(ActivityController::class)->countOpen($lead->id)->getData()->data;
-            @endphp
-
-            <!-- Vertical Navigation Menu -->
-            <div class="border-t border-gray-200 p-4 dark:border-gray-800">
-                <nav class="flex flex-col gap-1 text-sm font-medium">
-                    <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
-                            :class="leadDetailSection === 'algemeen'
-                            ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                            @click="setSection('algemeen')"
-                    >
-                        <span class="icon-user text-xl"></span>
-                        Algemeen
-                    </button>
-
-                    <button type="button" class="flex justify-between items-center rounded-md px-3 py-2 text-left transition"
-                            :class="leadDetailSection === 'activiteiten'
-                            ?
-                            'bg-brandColor text-white dark:bg-brandColor' :
-                            'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                            @click="setSection('activiteiten')">
-                        <div class="flex items-center gap-2">
-                            <span class="icon-activity text-xl"></span>
-                            Activiteiten
-                        </div>
-                        <span class="flex items-center justify-center h-5 w-5 rounded text-xs font-semibold"
-                            :class="leadDetailSection === 'activiteiten' ? 'bg-error text-white' : 'bg-red-100 text-red-600'"
-                        >{{ $activitiesCount }}</span>
-                    </button>
-
-                    <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
-                            :class="leadDetailSection === 'anamnese'
-                            ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                            @click="setSection('anamnese')"
-                    >
-                        <span class="icon-file text-xl"></span>
-                        Anamnese
-                    </button>
-
-                    <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
-                            :class="leadDetailSection === 'marketing'
-                            ? 'bg-brandColor text-white dark:bg-brandColor'
-                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
-                            @click="setSection('marketing')"
-                    >
-                        <span class="icon-stats-up text-xl"></span>
-                        Marketing
-                    </button>
-                </nav>
-            </div>
+            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount"/>
 
             <!-- Footer with creation and modification dates -->
             <div
@@ -223,7 +171,7 @@
             </div>
 
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('admin::leads.view.anamnese', ['lead' => $lead])
+                @include('admin::leads.view.anamnese', ['anamneses' => $lead->anamnesis, 'persons' => $lead->persons])
             </div>
 
             <div v-else-if="leadDetailSection === 'marketing'" class="flex w-full flex-col gap-4 rounded-lg">

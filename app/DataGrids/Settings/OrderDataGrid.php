@@ -2,6 +2,7 @@
 
 namespace App\DataGrids\Settings;
 
+use App\Enums\OrderStatus;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -19,6 +20,39 @@ class OrderDataGrid extends DataGrid
             );
 
         $this->addFilter('id', 'orders.id');
+
+        /**
+         * Optional context filters (used when embedding this datagrid in other screens).
+         */
+        if ($salesLeadId = request('sales_lead_id')) {
+            $queryBuilder->where('orders.sales_lead_id', (int) $salesLeadId);
+        }
+
+        /**
+         * Optional status bucket filter:
+         * - open: active/in-progress orders
+         * - completed: finished/closed orders
+         */
+        $statusBucket = request('status_bucket');
+        if ($statusBucket === 'open') {
+            $queryBuilder->whereNotIn('orders.status', OrderStatus::getCloseStatuses());
+        } elseif ($statusBucket === 'completed') {
+            $queryBuilder->whereIn('orders.status', OrderStatus::getCloseStatuses());
+        }
+
+        /**
+         * Prefer open/in-progress orders first. Datagrid may add an additional default orderBy later.
+         */
+        $queryBuilder->orderByRaw("
+            CASE orders.status
+                WHEN 'new' THEN 0
+                WHEN 'planned' THEN 1
+                WHEN 'sent' THEN 2
+                WHEN 'rejected' THEN 3
+                WHEN 'approved' THEN 4
+                ELSE 99
+            END ASC
+        ");
 
         return $queryBuilder;
     }
@@ -47,18 +81,31 @@ class OrderDataGrid extends DataGrid
             'index'      => 'total_price',
             'type'       => 'float',
             'label'      => 'Totale prijs',
-            'searchable' => true,
-            'filterable' => true,
+            'searchable' => false,
+            'filterable' => false,
             'sortable'   => true,
         ]);
 
         $this->addColumn([
-            'index'      => 'status',
-            'type'       => 'string',
-            'label'      => 'Status',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
+            'index'              => 'status',
+            'label'              => 'Status',
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => collect(OrderStatus::cases())
+                ->map(function (OrderStatus $orderStatus) {
+                    return [
+                        'value' => $orderStatus->value,
+                        'label' => $orderStatus->label(),
+                    ];
+                })
+                ->values()
+                ->all(),
+            'closure' => function ($row) {
+                return OrderStatus::tryFrom($row->status)?->label() ?? $row->status;
+            },
         ]);
     }
 

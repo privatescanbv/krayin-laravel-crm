@@ -1,3 +1,7 @@
+@props([
+    'lead',
+    'showViewLink'=>false
+])
 @php
 // Get default email and phone
 $defaultEmail = $lead->findDefaultEmail();
@@ -23,6 +27,14 @@ $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">Lead gegevens</h3>
         </div>
         <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            @if ($showViewLink)
+                <a href="{{ route('admin.leads.view', $lead->id) }}"
+                   class="flex items-center gap-2">
+                    <span class="icon-eye text-2xl"></span>
+
+                    @lang('admin::app.components.activities.index.view')
+                </a>
+            @endif
             <span class="icon-calendar text-base"></span>
             <span>Laatst bijgewerkt: {{ $lead->updated_at->format('d M Y') }}</span>
         </div>

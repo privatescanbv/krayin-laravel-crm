@@ -337,3 +337,7 @@ include::keycloak-setup.adoc[]
 
 include::logging-setup.adoc[]
 
+8. Iconen kiezen
+
+Iconen worden nu uit het font geladen (icomoon.woff).
+Upload deze file in link:https://fontdrop.info/#/?darkmode=true[https://fontdrop.info], zie content code om te gebruiken in app.css (zie b.v. icon-stats)

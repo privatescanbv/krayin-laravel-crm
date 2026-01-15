@@ -12,6 +12,7 @@ use Webkul\Activity\Services\ViewService;
 use Webkul\Core\Eloquent\Repository;
 use App\Enums\ActivityType;
 use App\Models\SalesLead;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 
 class ActivityRepository extends Repository
@@ -229,5 +230,23 @@ class ActivityRepository extends Repository
             ]);
             return null;
         }
+    }
+
+    public function countOpen(Object $entity)
+    {
+        $relationKey = '';
+        if($entity instanceof Lead) {
+            $relationKey = 'lead_id';
+        }
+        $entityId = $entity->id;
+        $count = $this
+            ->where($relationKey, $entityId)
+            ->where('is_done', 0)
+            ->count();
+        $unreadEmail = Email::forLeadThreadAndUnread($entityId)
+            ->count();
+        return response()->json([
+            'data' => $count + $unreadEmail,
+        ]);
     }
 }

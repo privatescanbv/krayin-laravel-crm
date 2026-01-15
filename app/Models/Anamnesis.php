@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
@@ -69,6 +71,7 @@ class Anamnesis extends Model
         'active',
         'advice_notes',
         'lead_id',
+        'sales_id',
         'person_id',
         'gvl_form_link',
         'created_by',
@@ -98,6 +101,9 @@ class Anamnesis extends Model
         'spijsverteringsklachten' => 'boolean',
         'digestive_problems'      => 'boolean',
         'active'                  => 'boolean',
+        'lead_id'                 => 'integer',
+        'sales_id'                => 'integer',
+        'person_id'               => 'integer',
         'created_by'              => 'integer',
         'updated_by'              => 'integer',
     ];
@@ -151,14 +157,46 @@ class Anamnesis extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $model) {
+            // Enforce: sales_id OR lead_id must be filled.
+            if (empty($model->sales_id) && empty($model->lead_id)) {
+                throw ValidationException::withMessages([
+                    'sales_id' => ['sales_id of lead_id moet gevuld zijn.'],
+                    'lead_id'  => ['sales_id of lead_id moet gevuld zijn.'],
+                ]);
+            }
+
+            // Light sanity validation (avoid silent invalid references)
+            $salesLeadTable = (new SalesLead)->getTable();
+            $leadTable = (new Lead)->getTable();
+
+            Validator::make($model->attributesToArray(), [
+                'sales_id' => ['nullable', 'integer', "exists:{$salesLeadTable},id"],
+                'lead_id'  => ['nullable', 'integer', "exists:{$leadTable},id"],
+            ])->validate();
+        });
+    }
+
     // Relaties
     public function lead()
     {
         return $this->belongsTo(Lead::class, 'lead_id');
     }
 
+    public function sales()
+    {
+        return $this->belongsTo(SalesLead::class, 'sales_id');
+    }
+
     public function person()
     {
         return $this->belongsTo(Person::class, 'person_id');
+    }
+
+    public function getLabelAttribute(): string
+    {
+        return $this->lead?->title ?? $this->sales?->name ?? 'Onbekend';
     }
 }

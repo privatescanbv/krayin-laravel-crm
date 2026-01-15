@@ -656,8 +656,12 @@ class LeadController extends Controller
             $routeParams = $lastPipelineId ? ['pipeline_id' => $lastPipelineId] : [];
             return redirect()->route('admin.leads.index', $routeParams);
         }
+        $activitiesCount = $this->activityRepository->countOpen($lead)->getData()->data;
 
-        return view('admin::leads.view', compact('lead'));
+        return view('admin::leads.view', [
+            'lead' => $lead,
+            'activitiesCount' => $activitiesCount
+        ]);
     }
 
     /**

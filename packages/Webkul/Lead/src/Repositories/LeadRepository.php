@@ -178,10 +178,7 @@ class LeadRepository extends Repository
         if (empty($data['organization_id']) || !is_numeric($data['organization_id'])) {
             $data['organization_id'] = null;
         }
-
         $lead = parent::create(array_merge([
-            'lead_pipeline_id' => 1,
-            'lead_pipeline_stage_id' => 1,
             'user_id' => auth()->id() ?? 1,
         ], $data));
 

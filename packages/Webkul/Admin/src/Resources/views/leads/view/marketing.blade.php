@@ -12,6 +12,7 @@ $formattedDate = $createdDate->format('d') . ' ' . $monthNames[(int)$createdDate
 $requestType = $lead->type->name ?? 'Onbekend';
 $leadSource = $lead->source->name ?? 'Onbekend';
 $campaign = $lead->channel->name ?? 'Onbekend';
+$departementName = $lead->department->name ?? 'Onbekend';
 
 // Check if lead is qualified (has stage and not lost/won, or has certain status)
 $isQualified = $lead->stage && !$lead->closed_at;
@@ -129,6 +130,22 @@ $hasActiveCampaign = $lead->channel !== null;
                     class="mb-1"
                     label="Campagne"
                     value="{{ $campaign }}"
+                    readonly />
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                        <span class="icon-grid text-lg text-status-active-text dark:text-green-400"></span>
+                    </div>
+                    <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">AFDELING</h4>
+                </div>
+
+                <!-- Campagne -->
+                <x-adminc::components.field
+                    class="mb-1"
+                    label="Campagne"
+                    value="{{ $departementName }}"
                     readonly />
             </div>
         </div>

@@ -170,7 +170,8 @@ class LeadObserver
         }
 
         $expectedPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
-        if ($lead->department->name == 'Hernia') {
+        // Department names are stored as enum values (e.g. "Herniapoli"), so avoid hard-coded labels.
+        if ($lead->department->isHernia()) {
             $expectedPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
         }
 

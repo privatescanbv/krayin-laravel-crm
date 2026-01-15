@@ -406,7 +406,9 @@ $salutationToGenderMapping = [
                                             'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
                                             'lead_type_id' => $userDefaults['lead_type_id'] ?? 1,
                                         ],
-                                        'useVueModel' => false,
+                                        // Important: the create form submit handler overrides FormData with `formData.*`,
+                                        // so these selects must be bound to `formData` to reflect user changes.
+                                        'useVueModel' => true,
                                     ])
 
                                     <!-- Description -->

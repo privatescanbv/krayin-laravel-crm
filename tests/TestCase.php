@@ -49,6 +49,10 @@ abstract class TestCase extends BaseTestCase
         config(['mail.graph.mailbox' => null]);
         config(['mail.graph.sender_domain' => null]);
 
+        // Telescope: hard-disable during tests (avoids DB connection attempts to the default mysql telescope storage)
+        config(['telescope.enabled' => false]);
+        config(['telescope.storage.database.connection' => 'sqlite']);
+
         // Disable email sending during tests - use 'array' driver which stores emails in memory
         config(['mail.default' => 'array']);
 

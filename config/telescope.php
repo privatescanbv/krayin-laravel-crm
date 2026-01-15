@@ -59,7 +59,8 @@ return [
 
     'storage' => [
         'database' => [
-            'connection' => env('TELESCOPE_DB_CONNECTION', 'mysql'),
+            // Default to the app DB connection (so tests using sqlite don't try to hit mysql_crm)
+            'connection' => env('TELESCOPE_DB_CONNECTION', env('DB_CONNECTION', 'mysql')),
             'chunk'      => 1000,
         ],
     ],

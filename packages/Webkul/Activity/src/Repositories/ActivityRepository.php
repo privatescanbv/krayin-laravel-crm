@@ -3,9 +3,11 @@
 namespace Webkul\Activity\Repositories;
 
 use App\Helpers\DatabaseHelper;
+use App\Models\Clinic;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Services\ViewService;
@@ -234,16 +236,21 @@ class ActivityRepository extends Repository
 
     public function countOpen(Object $entity)
     {
-        $relationKey = '';
         if($entity instanceof Lead) {
             $relationKey = 'lead_id';
+        } else if($entity instanceof Clinic) {
+            $relationKey = 'clinic_id';
+        } else if($entity instanceof SalesLead) {
+            $relationKey = 'sales_lead_id';
+        } else {
+            throw new InvalidArgumentException('Unsupported entity type for counting open activities.'.get_class($entity));
         }
         $entityId = $entity->id;
         $count = $this
             ->where($relationKey, $entityId)
             ->where('is_done', 0)
             ->count();
-        $unreadEmail = Email::forLeadThreadAndUnread($entityId)
+        $unreadEmail = Email::where($relationKey, $entityId)
             ->count();
         return response()->json([
             'data' => $count + $unreadEmail,

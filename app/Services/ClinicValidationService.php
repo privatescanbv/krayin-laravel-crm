@@ -19,6 +19,9 @@ class ClinicValidationService
                 ? 'required|max:100|unique:clinics,name,'.$id
                 : 'required|unique:clinics,name|max:100',
 
+            // Optional description
+            'description' => 'nullable|string|max:2000',
+
             // Active status
             'is_active' => 'nullable|boolean',
 

@@ -1,219 +1,250 @@
+@php use Webkul\Admin\Http\Controllers\clinic\ActivityController; @endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $clinic->name }}
-    </x-slot:title>
+    </x-slot>
 
     <!-- Content -->
-    <div class="flex gap-4 max-lg:flex-wrap">
+    <div class="relative flex flex-col gap-4 pt-3 max-lg:flex-wrap lg:grid"
+         :class="isRightColumnCollapsed ? 'lg:grid-cols-[394px,minmax(0,1fr),0px]' : 'lg:grid-cols-[394px,minmax(0,1fr),280px]'">
         <!-- Left Panel -->
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
-            <!-- Clinic Information -->
-            <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
-                <!-- Breadcrumbs and Actions -->
-                <div class="flex items-center justify-between">
-                    <div class="flex justify-start max-lg:hidden">
-                        <div class="flex items-center gap-x-3.5">
-                            <a href="{{ route('admin.settings.index') }}" class="text-gray-600 dark:text-gray-300">
-                                @lang('admin::app.layouts.settings')
-                            </a>
-                            <span class="text-gray-400">/</span>
-                            <a href="{{ route('admin.clinics.index') }}" class="text-gray-600 dark:text-gray-300">
-                                @lang('admin::app.layouts.clinics')
-                            </a>
-                            <span class="text-gray-400">/</span>
-                            <span class="text-gray-800 dark:text-white">{{ $clinic->name }}</span>
-                        </div>
+        {!! view_render_event('admin.clinics.view.left.before', ['clinic' => $clinic]) !!}
+
+        <div
+            class="flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900 max-lg:min-w-full max-lg:max-w-full lg:sticky lg:top-[73px] [&>div:last-child]:border-b-0">
+            <div class="flex flex-1 flex-col">
+                <!-- clinic Information -->
+                <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
+                    <!-- Breadcrumb's -->
+                    <div class="flex items-center justify-between">
+                        <x-admin::breadcrumbs name="settings.clinics.view" :entity="$clinic"/>
                     </div>
-                </div>
 
-                <!-- Title -->
-                <div class="mb-2 flex flex-col gap-0.5">
-                    <h3 class="break-words text-lg font-bold dark:text-white">
-                        {{ $clinic->name }}
-                    </h3>
-                </div>
+                    <!-- clinic Person info's -->
+                    <x-adminc::clinics.card :clinic="$clinic" show_actions="false"/>
 
-                <!-- Action Buttons -->
-                <div class="flex flex-wrap gap-2">
-                    <!-- Mail Activity Action -->
-                    <x-admin::activities.actions.mail
-                        :entity="$clinic"
-                        entity-control-name="clinic_id"
-                    />
+                    <!-- Activity Actions -->
+                    <div class="flex flex-wrap gap-2">
+                        {!! view_render_event('admin.clinics.view.actions.before', ['clinic' => $clinic]) !!}
 
-                    <!-- File Activity Action -->
-                    <x-admin::activities.actions.file
-                        :entity="$clinic"
-                        entity-control-name="clinic_id"
-                    />
+                        @if (bouncer()->hasPermission('mail.compose'))
+                            <!-- Mail Activity Action -->
+                            <x-admin::activities.actions.mail :entity="$clinic" entity-control-name="clinic_id"/>
+                        @endif
 
-                    <!-- Note Activity Action -->
-                    <x-admin::activities.actions.note
-                        :entity="$clinic"
-                        entity-control-name="clinic_id"
-                    />
+                        @if (bouncer()->hasPermission('activities.create'))
+                            <!-- File Activity Action -->
+                            <x-admin::activities.actions.file :entity="$clinic" entity-control-name="clinic_id"/>
 
-                    <!-- Activity Action -->
-                    <x-admin::activities.actions.activity
-                        :entity="$clinic"
-                        entity-control-name="clinic_id"
-                    />
+                            <!-- Note Activity Action -->
+                            <x-admin::activities.actions.note :entity="$clinic" entity-control-name="clinic_id"/>
 
-                    @if (bouncer()->hasPermission('settings.clinics.edit'))
-                        <a
-                            href="{{ route('admin.clinics.edit', $clinic->id) }}"
-                            class="secondary-button"
-                            title="@lang('admin::app.settings.clinics.view.edit-btn')"
-                        >
-                            <i class="icon-edit text-xs"></i>
-                            @lang('admin::app.settings.clinics.view.edit-btn')
-                        </a>
-                    @endif
+                            <!-- Activity Action -->
+                            <x-admin::activities.actions.activity :entity="$clinic" entity-control-name="clinic_id"/>
+                        @endif
+
+                        {!! view_render_event('admin.clinics.view.actions.after', ['clinic' => $clinic]) !!}
+                    </div>
                 </div>
             </div>
 
-            <!-- Clinic Attributes -->
-            <x:adminc::clinics.partials.attributes :clinic="$clinic"/>
+            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" :showOrder="false" :showAnamnesis="false" :showMarketing="false"/>
 
             <!-- Footer with creation and modification dates -->
-            <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
-                @if ($clinic->creator)
+            <div
+                class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                <!-- Suite CRM link -->
+                @if (!empty($clinic->sugar_link))
                     <div class="flex justify-between">
-                        <span>@lang('admin::app.settings.clinics.view.created-by'):</span>
-                        <span>{{ $clinic->creator->name }}</span>
+                        <span>Sugar Link:</span>
+                        <span>
+                            <a href="{{ $clinic->sugar_link }}" target="_blank">{{ $clinic->external_id }}</a>
+                        </span>
                     </div>
                 @endif
+
                 <div class="flex justify-between">
-                    <span>@lang('admin::app.settings.clinics.view.created-at'):</span>
-                    <span>{{ $clinic->created_at->format('d-m-Y H:i') }}</span>
+                    <span>Aangemaakt:</span>
+                    <span>{{ $clinic->created_at->format('d-m-Y') }}</span>
                 </div>
-                @if ($clinic->updater)
-                    <div class="flex justify-between">
-                        <span>@lang('admin::app.settings.clinics.view.updated-by'):</span>
-                        <span>{{ $clinic->updater->name }}</span>
-                    </div>
-                @endif
                 <div class="flex justify-between">
-                    <span>@lang('admin::app.settings.clinics.view.updated-at'):</span>
-                    <span>{{ $clinic->updated_at->format('d-m-Y H:i') }}</span>
+                    <span>Laatst gewijzigd:</span>
+                    <span>{{ $clinic->updated_at->format('d-m-Y') }}</span>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel with Tabs -->
-        <div class="flex w-full flex-col gap-4 rounded-lg">
-            <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
-                <v-clinic-tabs>
-                    <!-- Tab Navigation will be rendered by Vue -->
+        {!! view_render_event('admin.clinics.view.left.after', ['clinic' => $clinic]) !!}
 
-                    <!-- Activities Tab Content -->
-                    <template #activities>
-                        <x-admin::activities
-                            :endpoint="route('admin.clinics.activities.index', $clinic->id)"
-                        />
-                    </template>
+        {!! view_render_event('admin.clinics.view.right.before', ['clinic' => $clinic]) !!}
 
-                    <!-- Overview Tab Content -->
-                    <template #overview>
-                        <x-adminc::clinics.partials.overview :clinic="$clinic"/>
-                    </template>
+        <!-- Middle Panel -->
+        <div class="flex w-full flex-col gap-4">
 
-                    <!-- Partner Products Tab Content -->
-                    <template #partner-products>
-                        <x-adminc::clinics.partials.partner-products :clinic="$clinic"/>
-                    </template>
+            <div v-if="clinicDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc::clinics.partials.tab-general', ['clinic' => $clinic])
+            </div>
 
-                    <!-- Resources Tab Content -->
-                    <template #resources>
-                        <x-adminc::clinics.partials.resources :clinic="$clinic"/>
-                    </template>
-
-                    <!-- Audit Trail Tab Content -->
-                    <template #audit-trail>
-                        <x-adminc::clinics.partials.audit-trail :clinic="$clinic"/>
-                    </template>
-                </v-clinic-tabs>
+            <div v-else-if="clinicDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('admin::activities.partials.tab-activities', ['entityId' => $clinic->id, 'entityType' => 'clinics'])
             </div>
         </div>
+
+        <!-- Right Panel Container -->
+        <div class="relative overflow-visible transition-all duration-300 ease-in-out">
+
+            <button type="button"
+                    class="absolute top-0 z-50 flex h-8 w-8 -translate-x-full items-center justify-center rounded-l-lg border border-r-0 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    @click="isRightColumnCollapsed = !isRightColumnCollapsed"
+                    :class="isRightColumnCollapsed ? 'left-4 ' : '-right-12'" title="Toggle rechterkolom">
+                <i class="text-xl transition-transform duration-200"
+                   :class="isRightColumnCollapsed ? 'icon-left-arrow' : 'icon-right-arrow'"></i>
+            </button>
+
+            <div
+                class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                :class="isRightColumnCollapsed ? 'translate-x-full opacity-0 pointer-events-none overflow-hidden' :
+                    'translate-x-0 opacity-100'">
+                @include('admin::leads.view.right_panel', ['clinic' => $clinic])
+            </div>
+        </div>
+
+        {!! view_render_event('admin.clinics.view.right.after', ['clinic' => $clinic]) !!}
     </div>
 
-    @pushOnce('scripts')
-        <script type="text/x-template" id="v-clinic-tabs-template">
-            <div>
-                <!-- Tabs Navigation -->
-                <div class="border-b border-gray-200 dark:border-gray-800">
-                    <div class="flex gap-4 px-4">
-                        <button
-                            @click="activeTab = 'activities'"
-                            :class="activeTab === 'activities' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                            class="py-3 text-sm font-medium transition"
-                        >
-                            @lang('admin::app.settings.clinics.view.tabs.activities')
-                        </button>
-                        <button
-                            @click="activeTab = 'overview'"
-                            :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                            class="py-3 text-sm font-medium transition"
-                        >
-                            @lang('admin::app.settings.clinics.view.tabs.overview')
-                        </button>
-                        <button
-                            @click="activeTab = 'partner-products'"
-                            :class="activeTab === 'partner-products' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                            class="py-3 text-sm font-medium transition"
-                        >
-                            @lang('admin::app.settings.clinics.view.tabs.partner-products')
-                        </button>
-                        <button
-                            @click="activeTab = 'resources'"
-                            :class="activeTab === 'resources' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                            class="py-3 text-sm font-medium transition"
-                        >
-                            @lang('admin::app.settings.clinics.view.tabs.resources')
-                        </button>
-                        <button
-                            @click="activeTab = 'audit-trail'"
-                            :class="activeTab === 'audit-trail' ? 'border-b-2 border-blue-600 text-activity-note-text dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                            class="py-3 text-sm font-medium transition"
-                        >
-                            @lang('admin::app.settings.clinics.view.tabs.audit-trail')
-                        </button>
-                    </div>
-                </div>
+    @pushOnce('scripts', 'clinic-view-delete-action')
+        <script type="text/x-template" id="v-clinic-delete-template">
+            <button
+                type="button"
+                class="secondary-button border border-red-100 text-status-expired-text hover:border-error hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+                :class="{ 'opacity-50 pointer-events-none': isDeleting }"
+                :disabled="isDeleting"
+                @click="confirmDelete"
+            >
+                <span class="icon-delete text-base"></span>
 
-                <!-- Tab Content Slots -->
-                <div>
-                    <div v-show="activeTab === 'activities'">
-                        <slot name="activities"></slot>
-                    </div>
-
-                    <div v-show="activeTab === 'overview'">
-                        <slot name="overview"></slot>
-                    </div>
-
-                    <div v-show="activeTab === 'partner-products'">
-                        <slot name="partner-products"></slot>
-                    </div>
-
-                    <div v-show="activeTab === 'resources'">
-                        <slot name="resources"></slot>
-                    </div>
-
-                    <div v-show="activeTab === 'audit-trail'">
-                        <slot name="audit-trail"></slot>
-                    </div>
-                </div>
-            </div>
+                <span>@lang('admin::app.clinics.view.delete-btn')</span>
+            </button>
         </script>
 
         <script type="module">
-            app.component('v-clinic-tabs', {
-                template: '#v-clinic-tabs-template',
+            app.component('v-clinic-delete', {
+                template: '#v-clinic-delete-template',
+
+                props: {
+                    deleteUrl: {
+                        type: String,
+                        required: true,
+                    },
+                    redirectUrl: {
+                        type: String,
+                        required: true,
+                    },
+                    clinicName: {
+                        type: String,
+                        default: '',
+                    },
+                },
 
                 data() {
                     return {
-                        activeTab: 'activities'
+                        isDeleting: false,
+
+                        translations: {
+                            title: @json(__('admin::app.clinics.view.delete-confirm.title')),
+                            messageTemplate: @json(__('admin::app.clinics.view.delete-confirm.message')),
+                            confirm: @json(__('admin::app.clinics.view.delete-confirm.confirm')),
+                            cancel: @json(__('admin::app.clinics.view.delete-confirm.cancel')),
+                            failed: @json(__('admin::app.clinics.view.delete-failed')),
+                        },
                     };
+                },
+
+                methods: {
+                    confirmDelete() {
+                        if (this.isDeleting) {
+                            return;
+                        }
+
+                        this.$emitter.emit('open-confirm-modal', {
+                            title: this.translations.title,
+                            message: this.translations.messageTemplate.replace(':name', this.clinicName ? this
+                                .clinicName : ''),
+                            options: {
+                                btnDisagree: this.translations.cancel,
+                                btnAgree: this.translations.confirm,
+                            },
+                            agree: () => {
+                                this.isDeleting = true;
+
+                                this.$axios.delete(this.deleteUrl)
+                                    .then((response) => {
+                                        this.$emitter.emit('add-flash', {
+                                            type: 'success',
+                                            message: response.data.message
+                                        });
+
+                                        window.location.href = this.redirectUrl;
+                                    })
+                                    .catch((error) => {
+                                        let message = this.translations.failed;
+
+                                        if (error && error.response && error.response.data && error
+                                            .response.data.message) {
+                                            message = error.response.data.message;
+                                        }
+
+                                        this.$emitter.emit('add-flash', {
+                                            type: 'error',
+                                            message
+                                        });
+                                    })
+                                    .finally(() => {
+                                        this.isDeleting = false;
+                                    });
+                            },
+                            disagree: () => {
+                                this.isDeleting = false;
+                            },
+                        });
+                    },
+                },
+            });
+        </script>
+    @endPushOnce
+
+    @pushOnce('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof app !== 'undefined') {
+                    app.mixin({
+                        data() {
+                            return {
+                                clinicDetailSection: 'algemeen',
+                                isRightColumnCollapsed: true,
+                            };
+                        },
+
+                        mounted() {
+                            if (window.location.hash) {
+                                let hash = window.location.hash.substring(1); // Remove '#'
+
+                                // Valid sections
+                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing'];
+
+                                if (validSections.includes(hash)) {
+                                    this.clinicDetailSection = hash;
+                                }
+                            }
+                        },
+
+                        methods: {
+                            setSection(section) {
+                                this.clinicDetailSection = section;
+                                window.location.hash = section;
+                            }
+                        }
+                    });
                 }
             });
         </script>

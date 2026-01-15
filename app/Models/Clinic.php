@@ -6,6 +6,7 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Models\Activity;
+use Webkul\Email\Models\Email;
 
 class Clinic extends Model
 {
@@ -17,6 +18,7 @@ class Clinic extends Model
         'external_id',
         'is_active',
         'name',
+        'description',
         'registration_form_clinic_name',
         'website_url',
         'order_confirmation_note',
@@ -57,6 +59,6 @@ class Clinic extends Model
 
     public function emails()
     {
-        return $this->hasMany(\Webkul\Email\Models\Email::class);
+        return $this->hasMany(Email::class);
     }
 }

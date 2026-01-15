@@ -22,6 +22,15 @@
     />
 
     <x-adminc::components.field
+        type="textarea"
+        name="description"
+        value="{{ old('description', $clinic->description ?? '') }}"
+        rules="max:2000"
+        label="Omschrijving"
+        placeholder="Optionele omschrijving van de kliniek"
+    />
+
+    <x-adminc::components.field
         type="text"
         name="registration_form_clinic_name"
         value="{{ old('registration_form_clinic_name', $clinic->registration_form_clinic_name ?? '') }}"

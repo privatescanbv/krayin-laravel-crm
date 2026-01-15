@@ -1,6 +1,8 @@
 @props([
     'activitiesCount',
     'showOrders' => false,
+    'showMarketing' => true,
+    'showAnamnesis' => true,
 ])
 <!-- Vertical Navigation Menu -->
 <div class="border-t border-gray-200 p-4 dark:border-gray-800">
@@ -29,7 +31,7 @@
                   :class="leadDetailSection === 'activiteiten' ? 'bg-error text-white' : 'bg-red-100 text-red-600'"
             >{{ $activitiesCount }}</span>
         </button>
-
+        @if($showAnamnesis)
         <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                 :class="leadDetailSection === 'anamnese'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
@@ -39,7 +41,7 @@
             <span class="icon-anamnesis text-xl"></span>
             Anamnese
         </button>
-
+        @endif
         @if ($showOrders)
             <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                     :class="leadDetailSection === 'orders'
@@ -51,7 +53,7 @@
                 Orders
             </button>
         @endif
-
+        @if($showMarketing)
         <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                 :class="leadDetailSection === 'marketing'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
@@ -61,5 +63,6 @@
             <span class="icon-stats text-xl"></span>
             Marketing
         </button>
+        @endif
     </nav>
 </div>

@@ -10,12 +10,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
+use Webkul\Activity\Repositories\ActivityRepository;
 
 class ClinicController extends SimpleEntityController
 {
     use NormalizesContactFields;
 
-    public function __construct(protected ClinicRepository $clinicRepository)
+    public function __construct(
+        protected ClinicRepository $clinicRepository,
+        private readonly ActivityRepository $activityRepository,
+    )
     {
         parent::__construct($clinicRepository);
 
@@ -51,8 +55,11 @@ class ClinicController extends SimpleEntityController
     public function view(int $id)
     {
         $clinic = $this->clinicRepository->with(['address', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
-
-        return view('adminc.clinics.view', ['clinic' => $clinic]);
+        $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
+        return view('adminc.clinics.view', [
+            'clinic' => $clinic,
+            'activitiesCount' => $activitiesCount
+        ]);
     }
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse

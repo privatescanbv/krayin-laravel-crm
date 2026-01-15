@@ -128,7 +128,7 @@
             </div>
 
             <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('admin::leads.view.activiteiten', ['lead' => $lead])
+                @include('admin::activities.partials.tab-activities', ['entityId' => $salesLead->id, 'entityType' => 'sales-leads'])
             </div>
 
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">

@@ -255,7 +255,7 @@ class SalesLeadController extends Controller
                 'is_default' => true,
             ];
         }
-        $activitiesCount = $this->activityRepository->countOpen($lead)->getData()->data;
+        $activitiesCount = $this->activityRepository->countOpen($salesLead)->getData()->data;
 
         return view('adminc.sales_leads.view', [
             'salesLead'      => $salesLead,

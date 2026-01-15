@@ -48,7 +48,14 @@
                 </div>
             </div>
 
-            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" :showOrder="false" :showAnamnesis="false" :showMarketing="false"/>
+            <x-adminc::components.entity-navigation-menu
+                :activitiesCount="$activitiesCount"
+                :showOrders="false"
+                :showAnamnesis="false"
+                :showMarketing="false"
+                :showPartnerProducts="true"
+                :showResources="true"
+            />
 
             <!-- Footer with creation and modification dates -->
             <div
@@ -81,12 +88,20 @@
         <!-- Middle Panel -->
         <div class="flex w-full flex-col gap-4">
 
-            <div v-if="clinicDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
+            <div v-if="leadDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('adminc::clinics.partials.tab-general', ['clinic' => $clinic])
             </div>
 
-            <div v-else-if="clinicDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
+            <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::activities.partials.tab-activities', ['entityId' => $clinic->id, 'entityType' => 'clinics'])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'partner-products'" class="flex w-full flex-col gap-4 rounded-lg">
+                <x-adminc::clinics.partials.partner-products :clinic="$clinic"/>
+            </div>
+
+            <div v-else-if="leadDetailSection === 'resources'" class="flex w-full flex-col gap-4 rounded-lg">
+                <x-adminc::clinics.partials.resources :clinic="$clinic"/>
             </div>
         </div>
 
@@ -220,7 +235,7 @@
                     app.mixin({
                         data() {
                             return {
-                                clinicDetailSection: 'algemeen',
+                                leadDetailSection: 'algemeen',
                                 isRightColumnCollapsed: true,
                             };
                         },
@@ -230,17 +245,17 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing'];
+                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources'];
 
                                 if (validSections.includes(hash)) {
-                                    this.clinicDetailSection = hash;
+                                    this.leadDetailSection = hash;
                                 }
                             }
                         },
 
                         methods: {
                             setSection(section) {
-                                this.clinicDetailSection = section;
+                                this.leadDetailSection = section;
                                 window.location.hash = section;
                             }
                         }

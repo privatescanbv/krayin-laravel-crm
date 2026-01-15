@@ -3,6 +3,8 @@
     'showOrders' => false,
     'showMarketing' => true,
     'showAnamnesis' => true,
+    'showPartnerProducts' => false,
+    'showResources' => false,
 ])
 <!-- Vertical Navigation Menu -->
 <div class="border-t border-gray-200 p-4 dark:border-gray-800">
@@ -31,7 +33,32 @@
                   :class="leadDetailSection === 'activiteiten' ? 'bg-error text-white' : 'bg-red-100 text-red-600'"
             >{{ $activitiesCount }}</span>
         </button>
-        @if($showAnamnesis)
+
+        @if ($showPartnerProducts)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'partner-products'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('partner-products')"
+            >
+                <span class="icon-product text-xl"></span>
+                Partner Producten
+            </button>
+        @endif
+
+        @if ($showResources)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'resources'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('resources')"
+            >
+                <span class="icon-setting text-xl"></span>
+                Resources
+            </button>
+        @endif
+
+        @if ($showAnamnesis)
         <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                 :class="leadDetailSection === 'anamnese'
                             ? 'bg-brandColor text-white dark:bg-brandColor'
@@ -53,7 +80,7 @@
                 Orders
             </button>
         @endif
-        @if($showMarketing)
+        @if ($showMarketing)
         <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                 :class="leadDetailSection === 'marketing'
                             ? 'bg-brandColor text-white dark:bg-brandColor'

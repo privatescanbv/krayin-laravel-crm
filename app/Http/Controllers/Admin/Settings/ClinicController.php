@@ -19,8 +19,7 @@ class ClinicController extends SimpleEntityController
     public function __construct(
         protected ClinicRepository $clinicRepository,
         private readonly ActivityRepository $activityRepository,
-    )
-    {
+    ) {
         parent::__construct($clinicRepository);
 
         $this->entityName = 'clinic';
@@ -56,9 +55,10 @@ class ClinicController extends SimpleEntityController
     {
         $clinic = $this->clinicRepository->with(['address', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
+
         return view('adminc.clinics.view', [
-            'clinic' => $clinic,
-            'activitiesCount' => $activitiesCount
+            'clinic'          => $clinic,
+            'activitiesCount' => $activitiesCount,
         ]);
     }
 

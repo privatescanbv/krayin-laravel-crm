@@ -15,10 +15,8 @@ use App\Enums\ActivityStatus;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Lead\Models\LeadProxy;
-use Webkul\Product\Models\ProductProxy;
 use Webkul\User\Models\GroupProxy;
 use Webkul\User\Models\UserProxy;
-use Webkul\Warehouse\Models\WarehouseProxy;
 
 class Activity extends Model implements ActivityContract
 {

@@ -116,7 +116,7 @@
                     >
                         <div class="flex flex-col gap-1">
                             <p class="text-base font-semibold dark:text-white">
-                                Persoons gegevens
+                                Persoonsgegevens
                             </p>
                         </div>
 

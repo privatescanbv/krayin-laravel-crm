@@ -96,16 +96,6 @@ class ProductController extends SimpleEntityController
     }
 
     /**
-     * Show the form for viewing the specified resource.
-     */
-    public function view(int $id): View
-    {
-        $product = $this->repository->findOrFail($id);
-
-        return view('admin::products.view', compact('product'));
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Request $request, int $id): View|JsonResponse

@@ -223,15 +223,6 @@ class ProductDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('products.view')) {
-            $this->addAction([
-                'index'  => 'view',
-                'icon'   => 'icon-eye',
-                'title'  => trans('admin::app.products.index.datagrid.view'),
-                'method' => 'GET',
-                'url'    => fn ($row) => route('admin.products.view', $row->id),
-            ]);
-        }
 
         if (bouncer()->hasPermission('products.edit')) {
             $this->addAction([

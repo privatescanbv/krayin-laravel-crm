@@ -14,8 +14,6 @@ Route::group(['middleware' => ['user']], function () {
 
         Route::post('create', 'store')->name('admin.products.store');
 
-        Route::get('view/{id}', 'view')->name('admin.products.view');
-
         Route::get('edit/{id}', 'edit')->name('admin.products.edit');
 
         Route::put('edit/{id}', 'update')->name('admin.products.update');

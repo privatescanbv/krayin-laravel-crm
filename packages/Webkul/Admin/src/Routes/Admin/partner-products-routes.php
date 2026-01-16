@@ -15,7 +15,6 @@ Route::prefix('partner-products')->group(function () {
         Route::get('', 'index')->name('admin.partner_products.index');
         Route::get('create', 'create')->name('admin.partner_products.create');
         Route::post('create', 'store')->name('admin.partner_products.store');
-        Route::get('view/{id}', 'view')->name('admin.partner_products.view');
         Route::get('edit/{id}', 'edit')->name('admin.partner_products.edit');
         Route::put('edit/{id}', 'update')->name('admin.partner_products.update');
         Route::delete('', 'destroy')->name('admin.partner_products.delete');

@@ -38,15 +38,6 @@ class PartnerProductController extends SimpleEntityController
         $this->permissionPrefix = 'partner_products';
     }
 
-    public function view(int $id): View
-    {
-        $partnerProduct = $this->partnerProductRepository->findOrFail($id);
-
-        return view('adminc.partner-products.view', [
-            'partner_product' => $partnerProduct,
-        ]);
-    }
-
     public function search(Request $request): JsonResponse
     {
         $query = $request->input('query', '');

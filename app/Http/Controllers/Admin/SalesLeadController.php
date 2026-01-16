@@ -12,12 +12,14 @@ use App\Models\Order;
 use App\Models\SalesLead;
 use App\Repositories\SalesLeadRepository;
 use App\Services\PipelineCookieService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
@@ -27,6 +29,7 @@ use Webkul\Admin\Http\Resources\SalesLeadLookupResource;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\StageProxy;
 use Webkul\Lead\Repositories\PipelineRepository;
 
 class SalesLeadController extends Controller
@@ -50,11 +53,15 @@ class SalesLeadController extends Controller
 
         $stages = $pipeline->stages->map(function ($stage) {
             return [
-                'id'          => $stage->id,
-                'name'        => $stage->name,
-                'description' => $stage->description,
-                'sort_order'  => $stage->sort_order,
-                'leads'       => [
+                'id'               => $stage->id,
+                'code'             => $stage->code,
+                'name'             => $stage->name,
+                'description'      => $stage->description,
+                'sort_order'       => $stage->sort_order,
+                'lead_pipeline_id' => $stage->lead_pipeline_id,
+                'is_won'           => (bool) $stage->is_won,
+                'is_lost'          => (bool) $stage->is_lost,
+                'leads'            => [
                     'data' => [],
                     'meta' => [
                         'total'        => 0,
@@ -98,17 +105,23 @@ class SalesLeadController extends Controller
             $salesLeads = $salesLeads->map(function ($salesLead) {
                 $person = $salesLead->persons()->first();
 
+                $stagePayload = $salesLead->stage ? [
+                    'id'      => $salesLead->stage->id,
+                    'name'    => $salesLead->stage->name,
+                    'code'    => $salesLead->stage->code,
+                    'is_won'  => (bool) $salesLead->stage->is_won,
+                    'is_lost' => (bool) $salesLead->stage->is_lost,
+                ] : null;
+
                 return [
                     'id'                => $salesLead->id,
                     'name'              => $salesLead->name,
                     'description'       => $salesLead->description,
                     'pipeline_stage_id' => $salesLead->pipeline_stage_id,
-                    'pipeline_stage'    => $salesLead->stage ? [
-                        'id'   => $salesLead->stage->id,
-                        'name' => $salesLead->stage->name,
-                        'code' => $salesLead->stage->code,
-                    ] : null,
-                    'lead' => $salesLead->lead ? [
+                    // Keep legacy key, but also provide `stage` for parity with Lead payloads consumed by the kanban.
+                    'pipeline_stage'    => $stagePayload,
+                    'stage'             => $stagePayload,
+                    'lead'              => $salesLead->lead ? [
                         'id'     => $salesLead->lead->id,
                         'title'  => $salesLead->lead->title,
                         'person' => $person ? [
@@ -147,11 +160,15 @@ class SalesLeadController extends Controller
             });
 
             $data[$stage->sort_order] = [
-                'id'          => $stage->id,
-                'name'        => $stage->name,
-                'description' => $stage->description,
-                'sort_order'  => $stage->sort_order,
-                'leads'       => [
+                'id'               => $stage->id,
+                'code'             => $stage->code,
+                'name'             => $stage->name,
+                'description'      => $stage->description,
+                'sort_order'       => $stage->sort_order,
+                'lead_pipeline_id' => $stage->lead_pipeline_id,
+                'is_won'           => (bool) $stage->is_won,
+                'is_lost'          => (bool) $stage->is_lost,
+                'leads'            => [
                     'data' => $salesLeads,
                     'meta' => [
                         'total'        => $salesLeads->count(),
@@ -272,9 +289,12 @@ class SalesLeadController extends Controller
     {
         request()->validate([
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+            'lost_reason'            => ['nullable', new Enum(LostReason::class)],
+            'closed_at'              => 'nullable',
         ]);
 
         $salesLead = SalesLead::findOrFail($id);
+        $targetStage = StageProxy::findOrFail((int) request('lead_pipeline_stage_id'));
 
         // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
@@ -282,10 +302,40 @@ class SalesLeadController extends Controller
                 ->where('is_done', 0)
                 ->update(['is_done' => 1]);
         }
-        // update state after closing activiteit, otherwise new activities will be closed
-        $salesLead->update([
-            'pipeline_stage_id' => request('lead_pipeline_stage_id'),
-        ]);
+
+        $attributes = [
+            // update state after closing activiteit, otherwise new activities will be closed
+            'pipeline_stage_id' => $targetStage->id,
+        ];
+
+        // If stage is being set to won/lost, persist closed_at (default to now if omitted)
+        if ($targetStage->is_won || $targetStage->is_lost) {
+            $closedAt = request('closed_at');
+
+            if ($closedAt) {
+                // Frontend sends nl-NL date string (d-m-Y). Be tolerant and fallback to Carbon parse.
+                try {
+                    $attributes['closed_at'] = Carbon::createFromFormat('d-m-Y', $closedAt)->startOfDay();
+                } catch (Throwable $e) {
+                    $attributes['closed_at'] = Carbon::parse($closedAt);
+                }
+            } else {
+                $attributes['closed_at'] = now();
+            }
+        }
+
+        // If stage is being set to lost, require + persist lost_reason. Otherwise clear it.
+        if ($targetStage->is_lost) {
+            request()->validate([
+                'lost_reason' => ['required', new Enum(LostReason::class)],
+            ]);
+
+            $attributes['lost_reason'] = request('lost_reason');
+        } else {
+            $attributes['lost_reason'] = null;
+        }
+
+        $salesLead->update($attributes);
 
         return response()->json([
             'message' => 'Sales stage updated successfully.',

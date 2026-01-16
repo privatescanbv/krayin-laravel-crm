@@ -5,18 +5,17 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
+use BackedEnum;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use ValueError;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
-use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\StageProxy;
 
 // Quote entity removed
@@ -60,6 +59,7 @@ class SalesLead extends Model
         'created_by'    => 'integer',
         'updated_by'    => 'integer',
         'closed_at'     => 'date',
+        'lost_reason'   => LostReason::class,
     ];
 
     /**
@@ -194,17 +194,27 @@ class SalesLead extends Model
      */
     public function getLostReasonLabelAttribute(): ?string
     {
-        if (! $this->lost_reason) {
-            return null;
+        return $this->lost_reason?->label() ?? null;
+    }
+
+    /**
+     * Normalize lost reason assignment to allow empty strings and enums.
+     */
+    public function setLostReasonAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['lost_reason'] = null;
+
+            return;
         }
 
-        try {
-            $lostReason = LostReason::from($this->lost_reason);
+        if ($value instanceof BackedEnum) {
+            $this->attributes['lost_reason'] = $value->value;
 
-            return $lostReason->label();
-        } catch (ValueError $e) {
-            return $this->lost_reason;
+            return;
         }
+
+        $this->attributes['lost_reason'] = $value;
     }
 
     /**

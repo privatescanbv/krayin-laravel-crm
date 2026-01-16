@@ -56,6 +56,16 @@ class Stage extends Model implements StageContract
         return $this->hasMany(LeadProxy::modelClass(), 'lead_pipeline_stage_id');
     }
 
+    public function isLost(): bool
+    {
+        return (bool) $this->is_lost;
+    }
+
+    public function isWon(): bool
+    {
+        return (bool) $this->is_won;
+    }
+
     public static function newFactory()
     {
         return \Database\Factories\StageFactory::new();

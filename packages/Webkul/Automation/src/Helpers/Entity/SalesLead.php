@@ -34,17 +34,19 @@ class SalesLead extends AbstractEntity
      * @return void
      */
     public function __construct(
-        protected AttributeRepository      $attributeRepository,
-        protected EmailTemplateRepository  $emailTemplateRepository,
-        protected SalesLeadRepository      $salesRepository,
-        protected ActivityRepository       $activityRepository,
-        protected PersonRepository         $personRepository,
-        protected TagRepository            $tagRepository,
-        protected WebhookRepository        $webhookRepository,
-        protected WebhookService           $webhookService,
-        protected AttributeValueRepository $attributeValueRepository,
+        protected AttributeRepository                       $attributeRepository,
+        protected EmailTemplateRepository                   $emailTemplateRepository,
+        protected SalesLeadRepository                       $salesRepository,
+        protected ActivityRepository                        $activityRepository,
+        protected PersonRepository                          $personRepository,
+        protected TagRepository                             $tagRepository,
+        protected WebhookRepository                         $webhookRepository,
+        protected WebhookService                            $webhookService,
+        protected AttributeValueRepository                  $attributeValueRepository,
         private readonly CreateActivityForLeadOrSalesAction $createActivityForLeadOrSalesAction,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Listing of the entities.
@@ -64,26 +66,26 @@ class SalesLead extends AbstractEntity
         $pipelines = Pipeline::all()
             ->pluck('name', 'id');
         $stages = collect(PipelineStage::cases())->map(function ($stage) use ($pipelines) {
-            if($pipelines->has($stage->pipeline())) {
-            return [
-                'id'   => (string) $stage->id(),
-                'name' => $pipelines[$stage->pipeline()] . ' | ' . $stage->name(),
-            ];
+            if ($pipelines->has($stage->pipeline())) {
+                return [
+                    'id' => (string)$stage->id(),
+                    'name' => $pipelines[$stage->pipeline()] . ' | ' . $stage->name(),
+                ];
             }
             return [];
         });
         $attributes = [
             [
-                'id'          => 'pipeline_stage_id',
-                'type'        => 'select',
-                'name'        => 'Status code',
+                'id' => 'pipeline_stage_id',
+                'type' => 'select',
+                'name' => 'Status code',
                 'lookup_type' => null,
-                'options'     => $stages,
+                'options' => $stages,
             ],
             [
-                'id'          => 'description',
-                'type'        => 'text',
-                'name'        => 'Omschrijving'
+                'id' => 'description',
+                'type' => 'text',
+                'name' => 'Omschrijving'
             ]
         ];
         return array_merge($attributes, parent::getAttributes($entityType, $skipAttributes));
@@ -100,32 +102,32 @@ class SalesLead extends AbstractEntity
 
         return [
             [
-                'id'         => 'update_sales',
-                'name'       => trans('admin::app.settings.workflows.helpers.update-lead'),
+                'id' => 'update_sales',
+                'name' => trans('admin::app.settings.workflows.helpers.update-lead'),
                 'attributes' => $this->getAttributes('sales'),
             ], [
-                'id'         => 'update_person',
-                'name'       => trans('admin::app.settings.workflows.helpers.update-person'),
+                'id' => 'update_person',
+                'name' => trans('admin::app.settings.workflows.helpers.update-person'),
                 'attributes' => $this->getAttributes('persons'),
             ], [
-                'id'      => 'send_email_to_person',
-                'name'    => trans('admin::app.settings.workflows.helpers.send-email-to-person'),
+                'id' => 'send_email_to_person',
+                'name' => trans('admin::app.settings.workflows.helpers.send-email-to-person'),
                 'options' => $emailTemplates,
             ], [
-                'id'      => 'send_email_to_sales_owner',
-                'name'    => trans('admin::app.settings.workflows.helpers.send-email-to-sales-owner'),
+                'id' => 'send_email_to_sales_owner',
+                'name' => trans('admin::app.settings.workflows.helpers.send-email-to-sales-owner'),
                 'options' => $emailTemplates,
             ], [
-                'id'   => 'add_note_as_activity',
+                'id' => 'add_note_as_activity',
                 'name' => trans('admin::app.settings.workflows.helpers.add-note-as-activity'),
             ], [
-                'id'      => 'trigger_webhook',
-                'name'    => trans('admin::app.settings.workflows.helpers.add-webhook'),
+                'id' => 'trigger_webhook',
+                'name' => trans('admin::app.settings.workflows.helpers.add-webhook'),
                 'options' => $webhooksOptions,
             ],
             [
-                'id'      => 'create_activity',
-                'name'    => 'Activiteit aanmaken',
+                'id' => 'create_activity',
+                'name' => 'Activiteit aanmaken',
                 'attributes' => [
                     [
                         'id' => 'title',
@@ -177,7 +179,7 @@ class SalesLead extends AbstractEntity
                             ]
                         );
                     } catch (DuplicateException $e) {
-                        logger()->error('Could not automatically add activity for lead, duplication',$e);
+                        logger()->error('Could not automatically add activity for lead, duplication', ['error' => $e->getMessage()]);
                     }
                     break;
                 case 'update_sales':
@@ -193,16 +195,16 @@ class SalesLead extends AbstractEntity
                             'new_value' => $newValue,
                         ]);
 
-                    $sales = $this->salesRepository->update(
-                        [
-                            'entity_type'        => 'leads',
-                            $action['attribute'] => $action['value'],
-                        ],
-                        $sales->id,
-                        [$action['attribute']]
-                    );
+                        $sales = $this->salesRepository->update(
+                            [
+                                'entity_type' => 'leads',
+                                $action['attribute'] => $action['value'],
+                            ],
+                            $sales->id,
+                            [$action['attribute']]
+                        );
 
-                    Event::dispatch('lead.workflows.after', $sales);
+                        Event::dispatch('lead.workflows.after', $sales);
                     } else {
                         Log::info('Skipping sales update - no change detected', [
                             'sales_id' => $sales->id,
@@ -215,7 +217,7 @@ class SalesLead extends AbstractEntity
 
                 case 'update_person':
                     $this->personRepository->update([
-                        'entity_type'        => 'persons',
+                        'entity_type' => 'persons',
                         $action['attribute'] => $action['value'],
                     ], $sales->person_id);
 
@@ -224,7 +226,7 @@ class SalesLead extends AbstractEntity
                 case 'send_email_to_person':
                     $emailTemplate = $this->emailTemplateRepository->find($action['value']);
 
-                    if (! $emailTemplate) {
+                    if (!$emailTemplate) {
                         break;
                     }
 
@@ -237,9 +239,9 @@ class SalesLead extends AbstractEntity
 
                         if (!empty($emailAddresses)) {
                             Mail::queue(new Common([
-                                'to'      => $emailAddresses,
+                                'to' => $emailAddresses,
                                 'subject' => $this->replacePlaceholders($sales, $emailTemplate->subject),
-                                'body'    => $this->replacePlaceholders($sales, $emailTemplate->content),
+                                'body' => $this->replacePlaceholders($sales, $emailTemplate->content),
                             ]));
                         }
                     } catch (Exception $e) {
@@ -250,15 +252,15 @@ class SalesLead extends AbstractEntity
                 case 'send_email_to_sales_owner':
                     $emailTemplate = $this->emailTemplateRepository->find($action['value']);
 
-                    if (! $emailTemplate) {
+                    if (!$emailTemplate) {
                         break;
                     }
 
                     try {
                         Mail::queue(new Common([
-                            'to'      => $sales->user->email,
+                            'to' => $sales->user->email,
                             'subject' => $this->replacePlaceholders($sales, $emailTemplate->subject),
-                            'body'    => $this->replacePlaceholders($sales, $emailTemplate->content),
+                            'body' => $this->replacePlaceholders($sales, $emailTemplate->content),
                         ]));
                     } catch (Exception $e) {
                     }
@@ -267,7 +269,7 @@ class SalesLead extends AbstractEntity
 
                 case 'add_note_as_activity':
                     $activity = $this->activityRepository->create([
-                        'type'    => 'note',
+                        'type' => 'note',
                         'comment' => $action['value'],
                         'is_done' => 1,
                         'user_id' => auth()->guard('user')->user()->id,

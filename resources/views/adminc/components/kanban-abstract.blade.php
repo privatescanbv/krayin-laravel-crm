@@ -256,7 +256,7 @@
                                         <!-- Lost Reason (only for lost status) -->
                                         <div
                                             class="text-[10px] text-red-700 dark:text-red-400 mt-1"
-                                            v-if="element?.stage?.code && String(element.stage.code).toLowerCase().startsWith('lost') && element.lost_reason_label"
+                                            v-if="isLostStage(getElementStage(element)) && element.lost_reason_label"
                                         >
                                             <span class="font-medium">Verliesreden:</span>
                                             @{{ element.lost_reason_label }}
@@ -323,12 +323,7 @@
                                                 <!-- No Open Activities Warning -->
                                                 <div
                                                     class="group relative flex items-center gap-1"
-                                                    v-if="element.open_activities_count === 0 && !(
-                                                        element?.stage?.code && (
-                                                            String(element.stage.code).toLowerCase().startsWith('lost') ||
-                                                            String(element.stage.code).toLowerCase().startsWith('won')
-                                                        )
-                                                    )"
+                                                    v-if="element.open_activities_count === 0 && !isWonOrLost(getElementStage(element))"
                                                 >
                                                     <span
                                                         class="icon-warning cursor-default text-xs text-status-expired-text"></span>
@@ -512,6 +507,7 @@
                         stageLeads: {},
 
                         isLoading: true,
+                        entityType: @json($type),
 
                         tagTextColor: {
                             '#FEE2E2': '#DC2626',
@@ -556,6 +552,38 @@
                 },
 
                 methods: {
+                    getElementStage(element) {
+                        return element?.stage || element?.pipeline_stage || null;
+                    },
+
+                    isWonStage(stage) {
+                        if (!stage) {
+                            return false;
+                        }
+
+                        if (stage.is_won === true || stage.is_won === 1 || stage.is_won === '1') {
+                            return true;
+                        }
+
+                        return !!(stage?.code && String(stage.code).toLowerCase().startsWith('won'));
+                    },
+
+                    isLostStage(stage) {
+                        if (!stage) {
+                            return false;
+                        }
+
+                        if (stage.is_lost === true || stage.is_lost === 1 || stage.is_lost === '1') {
+                            return true;
+                        }
+
+                        return !!(stage?.code && String(stage.code).toLowerCase().startsWith('lost'));
+                    },
+
+                    isWonOrLost(stage) {
+                        return this.isWonStage(stage) || this.isLostStage(stage);
+                    },
+
                     isNewestFirst(stage) {
                         return this.stageSorts[stage.id] !== 'created_at|asc'
                     },
@@ -827,8 +855,8 @@
                             return;
                         }
 
-                        // Check if moving to any lost stage (e.g., 'lost', 'lost-hernia')
-                        if (stage.code && String(stage.code).toLowerCase().startsWith('lost')) {
+                        // Check if moving to any lost stage
+                        if (this.isLostStage(stage)) {
                             this.showLostModal(stage, event.added.element);
                             return;
                         }
@@ -924,7 +952,7 @@
 
                             if (openCount > 0) {
                                 const message = await window.buildOpenActivitiesConfirmMessage(this
-                                    .$axios, lead.id, openCount, 'lead');
+                                    .$axios, lead.id, openCount, this.entityType === 'sales' ? 'sales' : 'lead');
                                 const confirmClose = await new Promise((resolve) => {
                                     resolve(window.confirm(message));
                                 });
@@ -952,9 +980,24 @@
                      * Get lead name for display
                      */
                     getLeadName(lead) {
+                        if (!lead) {
+                            return 'Onbekende lead/Sales';
+                        }
+
+                        if (lead.name) {
+                            return String(lead.name);
+                        }
+
+                        if (lead.title) {
+                            return String(lead.title);
+                        }
+
                         const firstName = lead.first_name || '';
                         const lastName = lead.last_name || '';
-                        return (firstName + ' ' + lastName).trim() || 'Onbekende lead/Sales';
+
+                        const full = (firstName + ' ' + lastName).trim();
+
+                        return full || 'Onbekende lead/Sales';
                     },
 
                     /**

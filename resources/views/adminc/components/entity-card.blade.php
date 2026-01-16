@@ -56,7 +56,7 @@
                     @endif
                 </div>
             </div>
-            @if ($entityName=='lead' && $stage && $stage->is_lost)
+            @if ($stage && $stage->is_lost)
                 <div class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
                     <span class="font-medium">Lost reason:</span> {{ $lostReason }}
                 </div>

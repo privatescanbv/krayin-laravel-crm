@@ -1,7 +1,5 @@
 <?php
 
-use App\Actions\Persons\CreatePortalAccountAction;
-use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ContactLabel;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
@@ -17,7 +15,6 @@ use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
-use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
@@ -25,13 +22,7 @@ beforeEach(function () {
     $this->personRepository = app(PersonRepository::class);
     $this->attributeRepository = app(AttributeRepository::class);
     $this->attributeValueRepository = app(AttributeValueRepository::class);
-    $this->controller = new PersonController(
-        $this->personRepository,
-        app(LeadRepository::class),
-        $this->attributeRepository,
-        app(CreatePortalAccountAction::class),
-        app(DeletePortalAccountAction::class)
-    );
+    $this->controller = app(PersonController::class);
 
     Person::query()->delete();
 
@@ -670,13 +661,7 @@ test('subset email match is treated as match (lead email present in person email
         'phones' => [],
     ]);
 
-    $score = (new PersonController(
-        app(PersonRepository::class),
-        app(LeadRepository::class),
-        app(AttributeRepository::class),
-        app(CreatePortalAccountAction::class),
-        app(DeletePortalAccountAction::class)
-    ))->calculateMatchScore($lead, $person);
+    $score = app(PersonController::class)->calculateMatchScore($lead, $person);
 
     // Since all lead contact values are present in person (subset), treat as full match for those fields
     expect($score)->toBeGreaterThanOrEqual(100.0);
@@ -707,13 +692,7 @@ test('subset phone match is treated as match (lead phone present in person phone
         ],
     ]);
 
-    $score = (new PersonController(
-        app(PersonRepository::class),
-        app(LeadRepository::class),
-        app(AttributeRepository::class),
-        app(CreatePortalAccountAction::class),
-        app(DeletePortalAccountAction::class)
-    ))->calculateMatchScore($lead, $person);
+    $score = app(PersonController::class)->calculateMatchScore($lead, $person);
 
     // Only phone matches; total should be < 100 but > 5
     expect($score)->toBeGreaterThanOrEqual(100.0);

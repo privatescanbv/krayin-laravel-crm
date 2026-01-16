@@ -195,12 +195,26 @@
         <div class="flex-1">
             <!-- Diagnoseformulier aanwezig? -->
 
-            <x-adminc::components.field
-                type="switch"
-                name="has_diagnosis_form"
-                label="Diagnoseformulier aanwezig?"
-                value="{{ $has_diagnosis_form ?? '' }}"
-                 />
+            @php
+                $hasDiagnosisForm = (int) $val('has_diagnosis_form', 0);
+            @endphp
+
+            @if ($hasDiagnosisForm)
+                <x-adminc::components.field
+                    type="switch"
+                    name="has_diagnosis_form"
+                    label="Diagnoseformulier aanwezig?"
+                    value="1"
+                    checked="checked"
+                />
+            @else
+                <x-adminc::components.field
+                    type="switch"
+                    name="has_diagnosis_form"
+                    label="Diagnoseformulier aanwezig?"
+                    value="1"
+                />
+            @endif
 
 
             <!-- <x-admin::form.control-group class="mt-2">

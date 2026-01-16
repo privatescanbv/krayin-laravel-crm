@@ -256,13 +256,22 @@
         @break
 
     @case('switch')
+        @php
+            $rawValue = $attributes->get('value');
+            $switchValue = ($rawValue === null || $rawValue === '') ? '1' : (string) $rawValue;
+        @endphp
+
+        {{-- Ensure boolean switches always submit a value (0 when unchecked, 1 when checked) --}}
+        <input type="hidden" name="{{ $name }}" value="0" />
+
         <label class="relative inline-flex cursor-pointer items-center">
             <v-field
                 type="checkbox"
                 class="hidden"
                 v-slot="{ field }"
-                {{ $attributes->only(['name', ':name', 'value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key']) }}
+                {{ $attributes->only(['name', ':name', 'value', ':value', 'v-model', 'rules', ':rules', 'label', ':label', 'key', ':key'])->except(['value', ':value']) }}
                 name="{{ $name }}"
+                value="{{ $switchValue }}"
             >
                 <input
                     type="checkbox"
@@ -270,7 +279,8 @@
                     id="{{ $name }}"
                     class="peer sr-only"
                     v-bind="field"
-                    {{ $attributes->except(['v-model', 'rules', ':rules', 'label', ':label', 'key', ':key']) }}
+                    value="{{ $switchValue }}"
+                    {{ $attributes->except(['v-model', 'rules', ':rules', 'label', ':label', 'key', ':key', 'value', ':value']) }}
                 />
 
                 <v-checked-handler
@@ -340,7 +350,9 @@
             props: ['field', 'checked'],
 
             mounted() {
-                if (this.checked == '') {
+                // Only force-initialize checked when the attribute is actually present/truthy.
+                // Note: for HTML boolean attributes, absence is the only reliable "false".
+                if (this.checked === '' || this.checked === null || this.checked === undefined || this.checked === false) {
                     return;
                 }
 

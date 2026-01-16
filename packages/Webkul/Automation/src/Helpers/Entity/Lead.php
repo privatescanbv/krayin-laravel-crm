@@ -168,7 +168,7 @@ class Lead extends AbstractEntity
                             ]
                         );
                     } catch (DuplicateException $e) {
-                        logger()->error('Could not automatically add activity for lead, duplication',$e);
+                        logger()->error('Could not automatically add activity for lead, duplication',['error'=>$e->getMessage()]);
                     }
                     break;
                 case 'update_lead':

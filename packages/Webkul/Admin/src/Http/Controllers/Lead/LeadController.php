@@ -152,6 +152,7 @@ class LeadController extends Controller
         // Get effective pipeline ID (URL parameter takes precedence over cookie)
         $pipeline = $this->pipelineCookieService
             ->getPipeline(PipelineType::LEAD, request()->query('pipeline_id'));
+        /** @var \Webkul\Lead\Models\Pipeline $pipeline */
 
         // Check if we should exclude won/lost stages for performance optimization
         $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
@@ -432,49 +433,28 @@ class LeadController extends Controller
     public function store(LeadForm $request): RedirectResponse|JsonResponse
     {
         try {
-            // Normalize contact arrays before validation
-            $this->normalizeContactArrays($request);
+            $this->normalizeContactFields($request);
+            $this->validateLeadRequest($request, true);
 
-            // Validate with custom rules including email/phone requirement
-            $this->validate($request, LeadValidationService::getWebValidationRules($request));
-
-            // Additional rule now embedded in LeadValidationService rules
-
-            [$lead, $leadPipelineId] = $this->storeLead($request);
+            [$lead] = $this->storeLead($request);
 
             // Check if we should redirect to sync page after creation
-            $shouldSync = $this->shouldRedirectToSync($lead);
-            if ($shouldSync) {
+            if ($this->shouldRedirectToSync($lead)) {
                 $person = $lead->persons()->first();
-                if (request()->ajax()) {
-                    return response()->json([
-                        'message'  => trans('admin::app.leads.create-success'),
-                        'redirect' => route('admin.leads.sync-lead-to-person', [
-                            'leadId' => $lead->id,
-                            'personId' => $person->id
-                        ]),
-                    ]);
-                }
 
-                session()->flash('success', trans('admin::app.leads.create-success'));
-                return redirect()->route('admin.leads.sync-lead-to-person', [
-                    'leadId' => $lead->id,
-                    'personId' => $person->id
-                ]);
+                return $this->respondSuccess(
+                    message: trans('admin::app.leads.create-success'),
+                    redirectRoute: 'admin.leads.sync-lead-to-person',
+                    redirectParams: ['leadId' => $lead->id, 'personId' => $person->id],
+                );
             }
-
-            // If this is an AJAX request, respond with JSON containing redirect target
-            if (request()->ajax()) {
-                return response()->json([
-                    'message'  => trans('admin::app.leads.create-success'),
-                    'redirect' => route('admin.leads.view', $lead->id),
-                ]);
-            }
-
-            session()->flash('success', trans('admin::app.leads.create-success'));
 
             // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
-            return redirect()->route('admin.leads.view', $lead->id);
+            return $this->respondSuccess(
+                message: trans('admin::app.leads.create-success'),
+                redirectRoute: 'admin.leads.view',
+                redirectParams: [$lead->id],
+            );
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(
@@ -498,67 +478,13 @@ class LeadController extends Controller
     {
             Event::dispatch('lead.create.before');
 
-            $data = $request->all();
+            $data = $this->prepareLeadDataForUpsert($request, true);
 
-            // Normalize empty strings and placeholders to null for foreign keys and enums
-            foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {
-                if (array_key_exists($nullableKey, $data)) {
-                    if ($data[$nullableKey] === '' || $data[$nullableKey] === '?' || $data[$nullableKey] === null) {
-                        $data[$nullableKey] = null;
-                    }
-                }
-            }
-            foreach (['salutation', 'gender', 'mri_status'] as $enumKey) {
-                if (array_key_exists($enumKey, $data)) {
-                    if ($data[$enumKey] === '' || $data[$enumKey] === '?') {
-                        $data[$enumKey] = null;
-                    } elseif ($data[$enumKey] instanceof BackedEnum) {
-                        $data[$enumKey] = $data[$enumKey]->value;
-                    }
-                }
-            }
-
-            // Handle empty date field
-            if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
-                $data['date_of_birth'] = null;
-            }
-
-            // Contact normalization is now handled by normalizeContactFields() in create() method
+            // Contact normalization is now handled by normalizeContactFields()
             // Used by Krayin to process AI generated leads by file
             $data['status'] = 0;
 
-            if (isset($data['lead_pipeline_stage_id'])) {
-                $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
-
-                // If pipeline_id is also provided, validate that stage belongs to pipeline
-                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
-                    throw new InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
-                }
-
-                $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
-            } else {
-                // Determine pipeline based on department_id if provided
-                $pipeline = null;
-
-                if (isset($data['department_id'])) {
-                    if ($data['department_id'] == Department::findHerniaId()) {
-                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
-                    } elseif ($data['department_id'] == Department::findPrivateScanId()) {
-                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
-                    }
-                }
-
-                // Fall back to default pipeline if not found
-                if (!$pipeline) {
-                    $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
-                }
-
-                $stage = $pipeline->stages()->first();
-
-                $data['lead_pipeline_id'] = $pipeline->id;
-
-                $data['lead_pipeline_stage_id'] = $stage->id;
-            }
+            $stage = $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: false);
 
             if ($stage->is_won || $stage->is_lost) {
                 $data['closed_at'] = Carbon::now();
@@ -652,7 +578,7 @@ class LeadController extends Controller
             && !in_array($lead->user_id, $userIds)
         ) {
             // Get last selected pipeline from cookie to preserve selection
-            $lastPipelineId = $this->pipelineCookieService->getPipeline(PipelineType::LEAD)->id;
+            $lastPipelineId = $this->pipelineCookieService->getPipeline(PipelineType::LEAD, null)->id;
             $routeParams = $lastPipelineId ? ['pipeline_id' => $lastPipelineId] : [];
             return redirect()->route('admin.leads.index', $routeParams);
         }
@@ -669,76 +595,24 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
-        // Normalize contact fields before validation
         $this->normalizeContactFields($request);
 
         try {
-            try {
-                $validationRules = LeadValidationService::getWebValidationRules($request, false);
-                $validationRules['contact_person_id_display'] = 'nullable|string';
-                $this->validate($request, $validationRules);
-            } catch (ValidationException $exception) {
-                // for missing error displaying in the UI
-                logger()->warning('Validation error during lead update', ['errors' => $exception->errors()]);
-                throw $exception;
-            }
-            // Additional rule now embedded in LeadValidationService rules
+            $this->validateLeadRequest($request, false);
             Event::dispatch('lead.update.before', $id);
 
-            $data = $request->all();
+            $data = $this->prepareLeadDataForUpsert($request, false);
 
-            // Handle contact_person_id - if empty but display has value, use display value
-            if (isset($data['contact_person_id_display']) && !empty($data['contact_person_id_display'])) {
-                $data['contact_person_id'] = $data['contact_person_id_display'];
-                unset($data['contact_person_id_display']); // Remove the display field
-            }
-
-            // Handle contact_person_id - convert empty string to null
-            if (isset($data['contact_person_id']) && (empty($data['contact_person_id']) || $data['contact_person_id'] === '0')) {
-                $data['contact_person_id'] = null;
-            }
-
-            // Handle empty date field
-            if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
-                $data['date_of_birth'] = null;
-            }
-
-            // Contact normalization is now handled by normalizeContactFields() in update() method
-
-            if (isset($data['lead_pipeline_stage_id'])) {
-                $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
-
-                // If pipeline_id is also provided, validate that stage belongs to pipeline
-                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
-                    throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
-                }
-
-                $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
-            } else {
-                // Determine pipeline based on department_id if provided
-                $pipeline = null;
-
-                if (isset($data['department_id'])) {
-                    if ($data['department_id'] == Department::findHerniaId()) {
-                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
-                    } elseif ($data['department_id'] == Department::findPrivateScanId()) {
-                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
-                    }
-                }
-
-                // Fall back to default pipeline if not found
-                if (!$pipeline) {
-                    $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
-                }
-
-                $stage = $pipeline->stages()->first();
-
-                $data['lead_pipeline_id'] = $pipeline->id;
-
-                $data['lead_pipeline_stage_id'] = $stage->id;
+            // Requirement: on update, department determines the correct pipeline (and a compatible stage).
+            if (array_key_exists('department_id', $data) && $data['department_id'] !== null && $data['department_id'] !== '') {
+                $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: true);
+            } elseif (array_key_exists('lead_pipeline_stage_id', $data)) {
+                // Backwards compatible: when stage is provided, infer pipeline from that stage.
+                $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: false);
             }
 
             $lead = $this->leadRepository->update($data, $id);
+            /** @var \Webkul\Lead\Models\Lead $lead */
 
             // Validate and persist address if provided on lead update
             try {
@@ -755,33 +629,20 @@ class LeadController extends Controller
             $shouldSync = $this->shouldRedirectToSync($lead);
             if ($shouldSync) {
                 $person = $lead->persons()->first();
-                if (request()->ajax()) {
-                    return response()->json([
-                        'message'  => trans('admin::app.leads.update-success'),
-                        'redirect' => route('admin.leads.sync-lead-to-person', [
-                            'leadId' => $lead->id,
-                            'personId' => $person->id
-                        ]),
-                    ]);
-                }
 
-                session()->flash('success', trans('admin::app.leads.update-success'));
-                return redirect()->route('admin.leads.sync-lead-to-person', [
-                    'leadId' => $lead->id,
-                    'personId' => $person->id
-                ]);
+                return $this->respondSuccess(
+                    message: trans('admin::app.leads.update-success'),
+                    redirectRoute: 'admin.leads.sync-lead-to-person',
+                    redirectParams: ['leadId' => $lead->id, 'personId' => $person->id],
+                );
             }
 
-            if (request()->ajax()) {
-                return response()->json([
-                    'message'  => trans('admin::app.leads.update-success'),
-                    'redirect' => route('admin.leads.view', $lead->id),
-                ]);
-            }
-
-            session()->flash('success', trans('admin::app.leads.update-success'));
             // After edit: go to lead view page
-            return redirect()->route('admin.leads.view', $lead->id);
+            return $this->respondSuccess(
+                message: trans('admin::app.leads.update-success'),
+                redirectRoute: 'admin.leads.view',
+                redirectParams: [$lead->id],
+            );
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(
@@ -1327,6 +1188,7 @@ class LeadController extends Controller
             }
 
             $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
+            /** @var \Webkul\Lead\Models\Pipeline $pipeline */
 
             $stage = $pipeline->stages()->first();
 
@@ -1433,6 +1295,7 @@ class LeadController extends Controller
 
         // Get first stage if no specific stage was requested
         if (!$defaultStageId && $pipeline) {
+            /** @var \Webkul\Lead\Models\Pipeline $pipeline */
             $defaultStageId = $pipeline->stages()->first()->id ?? null;
         }
 
@@ -1602,5 +1465,185 @@ class LeadController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Validate LeadForm using LeadValidationService and add controller-specific rules.
+     */
+    private function validateLeadRequest(LeadForm $request, bool $isCreate): void
+    {
+        try {
+            $rules = LeadValidationService::getWebValidationRules($request, $isCreate);
+
+            // UI-only field used to carry contact person value in some forms
+            $rules['contact_person_id_display'] = 'nullable|string';
+
+            $this->validate($request, $rules);
+        } catch (ValidationException $exception) {
+            // Helps when UI doesn't show errors due to missing logging/visibility
+            logger()->warning('Validation error during lead '.($isCreate ? 'create' : 'update'), [
+                'errors' => $exception->errors(),
+            ]);
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Prepare request data for create/update (normalization and UI field mapping).
+     */
+    private function prepareLeadDataForUpsert(LeadForm $request, bool $isCreate): array
+    {
+        $data = $request->all();
+
+        // Handle contact_person_id - if empty but display has value, use display value
+        if (isset($data['contact_person_id_display']) && $data['contact_person_id_display'] !== '') {
+            $data['contact_person_id'] = $data['contact_person_id_display'];
+        }
+        unset($data['contact_person_id_display']);
+
+        // Handle contact_person_id - convert empty string / '0' to null
+        if (array_key_exists('contact_person_id', $data) && (empty($data['contact_person_id']) || $data['contact_person_id'] === '0')) {
+            $data['contact_person_id'] = null;
+        }
+
+        // Handle empty date field
+        if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
+            $data['date_of_birth'] = null;
+        }
+
+        // Normalize empty strings and placeholders to null for foreign keys and enums
+        foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {
+            if (array_key_exists($nullableKey, $data) && ($data[$nullableKey] === '' || $data[$nullableKey] === '?' || $data[$nullableKey] === null)) {
+                $data[$nullableKey] = null;
+            }
+        }
+        foreach (['salutation', 'gender', 'mri_status'] as $enumKey) {
+            if (!array_key_exists($enumKey, $data)) {
+                continue;
+            }
+
+            if ($data[$enumKey] === '' || $data[$enumKey] === '?') {
+                $data[$enumKey] = null;
+            } elseif ($data[$enumKey] instanceof BackedEnum) {
+                $data[$enumKey] = $data[$enumKey]->value;
+            }
+        }
+
+        // Ensure department_id is consistently typed or null
+        if (array_key_exists('department_id', $data) && ($data['department_id'] === '' || $data['department_id'] === null)) {
+            $data['department_id'] = null;
+        }
+
+        // Create-only fields could be handled here if needed in the future
+        return $data;
+    }
+
+    /**
+     * Apply pipeline + stage selection rules and mutate $data accordingly.
+     *
+     * - When $departmentDeterminesPipeline=true, department dictates pipeline. Stage will be kept only
+     *   if it belongs to that pipeline; otherwise we pick the first stage of that pipeline.
+     * - Otherwise, when stage is provided we infer pipeline from stage; else we fall back to
+     *   department mapping or default pipeline.
+     */
+    private function applyPipelineAndStageSelection(array &$data, bool $departmentDeterminesPipeline): \Webkul\Lead\Models\Stage
+    {
+        $stage = null;
+        $pipeline = null;
+        /** @var \Webkul\Lead\Models\Pipeline|null $pipeline */
+
+        if ($departmentDeterminesPipeline) {
+            $departmentId = isset($data['department_id']) ? (int) $data['department_id'] : null;
+            $pipeline = $departmentId ? $this->getPipelineForDepartmentId($departmentId) : null;
+
+            if (!$pipeline) {
+                $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
+            }
+            /** @var \Webkul\Lead\Models\Pipeline $pipeline */
+
+            // If stage is provided, keep it only when it belongs to the department-driven pipeline.
+            if (isset($data['lead_pipeline_stage_id'])) {
+                $candidate = $this->stageRepository->find($data['lead_pipeline_stage_id']);
+                if ($candidate && (int) $candidate->lead_pipeline_id === (int) $pipeline->id) {
+                    $stage = $candidate;
+                }
+            }
+
+            if (!$stage) {
+                $stage = $pipeline->stages()->first();
+            }
+
+            $data['lead_pipeline_id'] = $pipeline->id;
+            $data['lead_pipeline_stage_id'] = $stage->id;
+
+            return $stage;
+        }
+
+        // Default behavior: stage overrides pipeline; otherwise pipeline is determined by department/default.
+        if (isset($data['lead_pipeline_stage_id'])) {
+            $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
+
+            // If pipeline_id is also provided, validate that stage belongs to pipeline
+            if (isset($data['lead_pipeline_id']) && (int) $stage->lead_pipeline_id !== (int) $data['lead_pipeline_id']) {
+                throw new InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+            }
+
+            $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
+
+            return $stage;
+        }
+
+        // Determine pipeline based on department_id if provided
+        if (isset($data['department_id']) && $data['department_id'] !== null) {
+            $pipeline = $this->getPipelineForDepartmentId((int) $data['department_id']);
+        }
+
+        // Fall back to default pipeline if not found
+        if (!$pipeline) {
+            $pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
+        }
+        /** @var \Webkul\Lead\Models\Pipeline $pipeline */
+
+        $stage = $pipeline->stages()->first();
+
+        $data['lead_pipeline_id'] = $pipeline->id;
+        $data['lead_pipeline_stage_id'] = $stage->id;
+
+        return $stage;
+    }
+
+    private function getPipelineForDepartmentId(int $departmentId): ?Pipeline
+    {
+        if ($departmentId === Department::findHerniaId()) {
+            return $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+        }
+
+        if ($departmentId === Department::findPrivateScanId()) {
+            return $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+        }
+
+        throw new Exception('Invalid department id: '.$departmentId);
+    }
+
+    /**
+     * Standard success responder for AJAX vs HTML requests.
+     *
+     * @param string $message Fully translated message.
+     * @param string $redirectRoute Route name.
+     * @param array $redirectParams Route parameters.
+     */
+    private function respondSuccess(string $message, string $redirectRoute, array $redirectParams = []): RedirectResponse|JsonResponse
+    {
+        if (request()->ajax()) {
+            return response()->json([
+                'message' => $message,
+                'redirect' => route($redirectRoute, $redirectParams),
+            ]);
+        }
+
+        session()->flash('success', $message);
+
+        return redirect()->route($redirectRoute, $redirectParams);
     }
 }

@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
     protected static function getUserPasswords(): array
     {
         return [
+            'robschwankhuizen@gmail.com' => '8H5jc!e123',
             'mark.bulthuis@privatescan.nl' => '8AAZ5jc%e&AF',
             'mark.klaucke@privatescan.nl' => '8AAZ5jc%e&Ad',
             'linda@privatescan.nl' => '8AAZ5jc%e&3d',

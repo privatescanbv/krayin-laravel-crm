@@ -5,9 +5,10 @@
     'viewRoute' => '#',
     'viewButtonText' => 'Bekijk',
     'showStatusBadge' => false,
-    'statusBadgeText' => null,
     'showActions' => true,
-    'age' => null
+    'age' => null,
+    'stage' => null,
+    'lostReason' => null,
 ])
 <div class="relative">
     <!-- accent links -->
@@ -29,16 +30,37 @@
                         @endif
                     </h3>
 
-                    @if ($showStatusBadge && $statusBadgeText)
-                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold tracking-wide
-                             bg-indigo-50 text-indigo-700 border border-indigo-100
-                             dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800">
-                  {{ $statusBadgeText }}
-                </span>
+                    @if ($showStatusBadge)
+                        <span
+                            @class([
+                                'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold tracking-wide border',
+
+                                // LOST
+                                'bg-red-50 text-red-700 border-red-200
+                                 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+                                    => $stage && $stage->is_lost,
+
+                                // WON
+                                'bg-green-50 text-green-700 border-green-200
+                                 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+                                    => $stage && $stage->is_won,
+
+                                // DEFAULT
+                                'bg-indigo-50 text-indigo-700 border-indigo-100
+                                 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800'
+                                    => ! $stage || (! $stage->is_lost && ! $stage->is_won),
+                            ])
+                        >
+                            {{ $stage?->name ?? 'Geen status' }}
+                        </span>
                     @endif
                 </div>
             </div>
-
+            @if ($entityName=='lead' && $stage && $stage->is_lost)
+                <div class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
+                    <span class="font-medium">Lost reason:</span> {{ $lostReason }}
+                </div>
+            @endif
             <!-- Contact gegevens panel -->
             <div class="contact-panel flex flex-col gap-2">
 

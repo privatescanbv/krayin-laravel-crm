@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Throwable;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -50,6 +51,7 @@ class PersonController extends Controller
         private readonly AttributeRepository $attributeRepository,
         private readonly CreatePortalAccountAction $createPortalAccountAction,
         private readonly DeletePortalAccountAction $deletePortalAccountAction,
+        private readonly ActivityRepository $activityRepository,
     )
     {
         request()->request->add(['entity_type' => 'persons']);
@@ -269,12 +271,13 @@ class PersonController extends Controller
 
         // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)
         $duplicateCount = $this->personRepository->findPotentialDuplicates($person)->count();
-
+        $activitiesCount = $this->activityRepository->countOpen($person)->getData()->data;
 
         return view('admin::contacts.persons.view', [
             'person'          => $person,
             'duplicateCount'  => $duplicateCount,
             'sortedLeads'     => $sortedLeads,
+            'activitiesCount' => $activitiesCount,
         ]);
     }
 

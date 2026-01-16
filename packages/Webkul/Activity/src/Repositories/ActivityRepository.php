@@ -11,6 +11,7 @@ use InvalidArgumentException;
 use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Services\ViewService;
+use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
 use App\Enums\ActivityType;
 use App\Models\SalesLead;
@@ -242,6 +243,14 @@ class ActivityRepository extends Repository
             $relationKey = 'clinic_id';
         } else if($entity instanceof SalesLead) {
             $relationKey = 'sales_lead_id';
+        } else if($entity instanceof Person) {
+            $count = $entity->activities->where('is_done', 0)->count();
+            $unreadEmail = Email::where('person_id', $entity->id)
+                ->where('is_read', 0)
+                ->count();
+            return response()->json([
+                'data' => $count + $unreadEmail,
+            ]);
         } else {
             throw new InvalidArgumentException('Unsupported entity type for counting open activities.'.get_class($entity));
         }

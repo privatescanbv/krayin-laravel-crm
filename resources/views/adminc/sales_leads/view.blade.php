@@ -124,7 +124,7 @@
         <div class="flex w-full flex-col gap-4">
 
             <div v-if="leadDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('admin::sales.view.algemeen', ['sales' => $salesLead])
+                @include('admin::sales.view.tab-general', ['sales' => $salesLead])
             </div>
 
             <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">

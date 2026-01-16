@@ -1,3 +1,7 @@
+@props([
+    'person',
+    'lead' => null
+])
 @php
     // Person block used in lead detail view
     use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -28,10 +32,12 @@
             </div>
         </div>
 
-        <!-- Match Score -->
-        <div>
-            <v-match-score person-id="{{ $person->id }}" lead-id="{{ $lead->id }}"></v-match-score>
-        </div>
+        @if (!is_null($lead))
+            <!-- Match Score -->
+            <div>
+                <v-match-score person-id="{{ $person->id }}" lead-id="{{ $lead->id }}"></v-match-score>
+            </div>
+        @endif
 
         <!-- Input Fields -->
         <div class="space-y-4">
@@ -76,6 +82,7 @@
             @endphp
 
             <div class="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center gap-3 flex-wrap">
+                @if (!is_null($lead))
                 <x-adminc::persons.person-lead-actions
                     :person="$person"
                     :entity="$lead"
@@ -86,6 +93,18 @@
                     :show-anamnesis="true"
                     :detach-route="null"
                 />
+                @else
+                    <x-adminc::persons.person-lead-actions
+                        :person="$person"
+                        :entity="$person"
+                        :entity-id="$person->id"
+                        :is-lead="false"
+                        :is-sales-lead="false"
+                        :show-sync-link="false"
+                        :show-anamnesis="false"
+                        :detach-route="null"
+                    />
+                @endif
             </div>
         @endif
     </div>

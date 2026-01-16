@@ -14,6 +14,5 @@
     :view-route="$entityViewURL"
     view-button-text="Bekijk clinic"
     :show-status-badge="false"
-    :status-badge-text="'Geen status'"
     :show-actions="$show_actions ?? true"
 />

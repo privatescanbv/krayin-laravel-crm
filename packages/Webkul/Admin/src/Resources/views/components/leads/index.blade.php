@@ -1,27 +1,39 @@
-@props(['leads'])
+@props(['person'])
 
-<div class="w-full p-4">
-    <h4 class="font-semibold dark:text-white mb-2">
-        @lang('admin::app.contacts.persons.view.linked-leads')
-    </h4>
-    @if($leads && $leads->count())
-        <ul class="flex flex-col gap-1">
-            @foreach($leads as $lead)
-                <li class="flex flex-col gap-1">
-                    <div class="flex items-center justify-between">
-                        <a 
-                            href="{{ route('admin.leads.view', $lead->id) }}" 
-                            class="text-brandColor hover:underline"
-                        >
-                            {{ $lead->name ?? 'Lead #' . $lead->id }}
-                        </a>
-                        <span class="text-xs text-gray-500">{{ $lead->created_at->format('d-m-Y') }}</span>
-                    </div>
-                    <span class="text-xs text-gray-500 ml-0">{{ $lead->stage->name ?? '' }}</span>
-                </li>
-            @endforeach
-        </ul>
-    @else
-        <span class="text-gray-500">@lang('Geen leads gevonden')</span>
-    @endif
-</div> 
+<div class="flex w-full flex-col gap-4">
+    <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex flex-col gap-1">
+            <div class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Leads
+            </div>
+
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+                Openstaande leads staan bovenaan. Afgeronde (gewonnen / verloren) leads staan onder “Afgerond”.
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-lg border bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+        <div class="px-2 pb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Open / lopend
+        </div>
+
+        <x-admin::datagrid
+            :src="route('admin.contacts.persons.leads.index', ['id' => $person->id, 'status_bucket' => 'open'])"
+            ref="personLeadsOpenGrid"
+        />
+    </div>
+
+    <details class="rounded-lg border bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+        <summary class="cursor-pointer select-none px-2 pb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Afgerond (gewonnen / verloren)
+        </summary>
+
+        <div class="opacity-70">
+            <x-admin::datagrid
+                :src="route('admin.contacts.persons.leads.index', ['id' => $person->id, 'status_bucket' => 'completed'])"
+                ref="personLeadsCompletedGrid"
+            />
+        </div>
+    </details>
+</div>

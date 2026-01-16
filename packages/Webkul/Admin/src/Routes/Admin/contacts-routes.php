@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\Settings\Clinic\EmailController;
+use App\Http\Controllers\Admin\Contacts\PersonLeadsController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Contact\OrganizationController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\ActivityController;
@@ -45,12 +47,22 @@ Route::prefix('contacts')->group(function () {
         Route::post('mass-destroy', 'massDestroy')->name('admin.contacts.persons.mass_delete');
 
         /**
+         * Leads datagrid (embedded in person view).
+         */
+        Route::get('{id}/leads', [PersonLeadsController::class, 'index'])->name('admin.contacts.persons.leads.index');
+
+        /**
          * Tag routes.
          */
         Route::controller(TagController::class)->prefix('{id}/tags')->group(function () {
             Route::post('', 'attach')->name('admin.contacts.persons.tags.attach');
 
             Route::delete('', 'detach')->name('admin.contacts.persons.tags.detach');
+        });
+        // Persons Emails
+        Route::controller(EmailController::class)->prefix('{id}/emails')->group(function () {
+            Route::post('', 'store')->name('admin.contacts.persons.emails.store');
+            Route::delete('', 'detach')->name('admin.contacts.persons.emails.detach');
         });
 
         /**

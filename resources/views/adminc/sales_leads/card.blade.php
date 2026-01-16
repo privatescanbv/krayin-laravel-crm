@@ -20,6 +20,7 @@
         :view-route="$entityViewURL"
         view-button-text="Bekijk lead"
         :show-status-badge="true"
-        :status-badge-text="$sales->stage->name ?? 'Geen status'"
         :show-actions="$show_actions ?? true"
+        :stage="$sales->stage"
+        :lost-reason="$sales->lost_reason"
 />

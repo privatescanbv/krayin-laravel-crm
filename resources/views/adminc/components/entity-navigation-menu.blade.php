@@ -5,6 +5,8 @@
     'showAnamnesis' => true,
     'showPartnerProducts' => false,
     'showResources' => false,
+    'showLeads' => false,
+    'showSales' => false,
 ])
 <!-- Vertical Navigation Menu -->
 <div class="border-t border-gray-200 p-4 dark:border-gray-800">
@@ -90,6 +92,28 @@
             <span class="icon-stats text-xl"></span>
             Marketing
         </button>
+        @endif
+        @if ($showLeads)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'leads'
+                            ? 'bg-brandColor text-white dark:bg-brandColor'
+                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('leads')"
+            >
+                <span class="icon-stats text-xl"></span>
+                Leads
+            </button>
+        @endif
+        @if ($showSales)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'sales'
+                            ? 'bg-brandColor text-white dark:bg-brandColor'
+                            : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('sales')"
+            >
+                <span class="icon-stats text-xl"></span>
+                Sales
+            </button>
         @endif
     </nav>
 </div>

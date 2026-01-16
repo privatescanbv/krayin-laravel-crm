@@ -28,6 +28,43 @@ class MicrosoftGraphMailTransport implements TransportInterface
     }
 
     /**
+     * Check if an email address matches any of the allowed patterns
+     */
+    public static function matchesAnyPattern(string $emailAddress, array $patterns): bool
+    {
+        foreach ($patterns as $pattern) {
+            if (self::matchesPattern($emailAddress, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if an email address matches a wildcard pattern
+     *
+     * Supports patterns like:
+     *
+     * - *@privatescan.nl (matches any user at privatescan.nl)
+     * - user@privatescan.nl (exact match)
+     *
+     * - *@*.privatescan.nl (matches any subdomain)
+     */
+    public static function matchesPattern(string $email, string $pattern): bool
+    {
+        // Convert wildcard pattern to regex
+        // Escape special regex characters except *
+        $regexPattern = preg_quote($pattern, '/');
+        // Replace \* with .* (match any characters)
+        $regexPattern = str_replace('\\*', '.*', $regexPattern);
+        // Anchor to start and end for exact matching
+        $regexPattern = '/^'.$regexPattern.'$/i';
+
+        return (bool) preg_match($regexPattern, $email);
+    }
+
+    /**
      * Send the message
      */
     public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
@@ -297,43 +334,6 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 '. Allowed patterns: '.implode(', ', $patterns)
             );
         }
-    }
-
-    /**
-     * Check if an email address matches any of the allowed patterns
-     */
-    protected function matchesAnyPattern(string $emailAddress, array $patterns): bool
-    {
-        foreach ($patterns as $pattern) {
-            if ($this->matchesPattern($emailAddress, $pattern)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if an email address matches a wildcard pattern
-     *
-     * Supports patterns like:
-     *
-     * - *@privatescan.nl (matches any user at privatescan.nl)
-     * - user@privatescan.nl (exact match)
-     *
-     * - *@*.privatescan.nl (matches any subdomain)
-     */
-    protected function matchesPattern(string $emailAddress, string $pattern): bool
-    {
-        // Convert wildcard pattern to regex
-        // Escape special regex characters except *
-        $regexPattern = preg_quote($pattern, '/');
-        // Replace \* with .* (match any characters)
-        $regexPattern = str_replace('\\*', '.*', $regexPattern);
-        // Anchor to start and end for exact matching
-        $regexPattern = '/^'.$regexPattern.'$/i';
-
-        return (bool) preg_match($regexPattern, $emailAddress);
     }
 
     /**

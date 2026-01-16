@@ -1,3 +1,9 @@
+@props([
+    'overridePipeline',
+    'overrideStage',
+    'overrideUpdateUrl',
+    'salesLead' => null
+])
 @php
     // Allow override of pipeline and current stage for sales leads
     $displayPipeline = $overridePipeline ?? $lead->pipeline;

@@ -10,7 +10,6 @@
     $age = null;
     if(!is_null($person)) {
         $entity = $person;
-        $entityName = 'person';
         $entityViewURL = route('admin.contacts.persons.view', $entity->id);
     }
 @endphp
@@ -20,6 +19,7 @@
         :view-route="$entityViewURL"
         view-button-text="Bekijk lead"
         :show-status-badge="true"
-        :status-badge-text="$lead->stage->name ?? 'Geen status'"
         :show-actions="$show_actions ?? true"
+        :stage="$lead->stage"
+        :lost-reason="$lead->lost_reason"
 />

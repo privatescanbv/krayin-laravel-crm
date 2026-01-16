@@ -30,8 +30,6 @@ use Webkul\Tag\Models\Tag;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
-use Webkul\Warehouse\Models\Location;
-use Webkul\Warehouse\Models\Warehouse;
 use Webkul\WebForm\Models\WebForm;
 
 /**
@@ -343,27 +341,6 @@ function createTestDataForRoutes(): array
         ['user_id' => User::first()->id, 'color' => '#0000FF']
     );
 
-    // Warehouse - create if doesn't exist
-    $data['warehouse'] = Warehouse::firstOrCreate(
-        ['name' => 'Test Warehouse'],
-        [
-            'contact_name'    => 'Test Contact',
-            'contact_emails'  => json_encode([['value' => 'test@warehouse.com', 'label' => 'work']]),
-            'contact_numbers' => json_encode([['value' => '0612345678', 'label' => 'work']]),
-            'contact_address' => json_encode([
-                'address'  => 'Test Street 1',
-                'city'     => 'Test City',
-                'state'    => 'Test State',
-                'country'  => 'NL',
-                'postcode' => '1234AB',
-            ]),
-        ]
-    );
-    $data['location'] = Location::firstOrCreate(
-        ['name' => 'Test Location'],
-        ['warehouse_id' => $data['warehouse']->id]
-    );
-
     // Email template - create directly
     $data['email_template'] = EmailTemplate::firstOrCreate(
         ['name' => 'Test Template'],
@@ -539,8 +516,6 @@ function resolveParameterValue(string $param, array $testData): mixed
         'personId'     => 'person',
         'leadId'       => 'lead',
         'pipeline_id'  => 'pipeline',
-        'warehouse_id' => 'warehouse',
-        'warehouseId'  => 'warehouse',
         'product_id'   => 'product',
         // 'quote_id' mapping removed
         'resourceId'   => 'resource',

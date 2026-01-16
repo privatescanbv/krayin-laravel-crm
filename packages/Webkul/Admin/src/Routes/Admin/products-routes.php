@@ -22,18 +22,9 @@ Route::group(['middleware' => ['user']], function () {
 
         Route::get('{id}/name', 'getNameById')->name('admin.products.name_by_id');
 
-        // Route disabled: warehouses view is no longer supported
-        // Route::get('{id}/warehouses', 'warehouses')->name('admin.products.warehouses');
-
-        Route::post('{id}/inventories/{warehouseId?}', 'storeInventories')->name('admin.products.inventories.store');
-
         Route::delete('{id}', 'destroy')->name('admin.products.delete');
 
         Route::post('mass-destroy', 'massDestroy')->name('admin.products.mass_delete');
-
-        Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
-            Route::get('', 'index')->name('admin.products.activities.index');
-        });
 
         Route::controller(TagController::class)->prefix('{id}/tags')->group(function () {
             Route::post('', 'attach')->name('admin.products.tags.attach');

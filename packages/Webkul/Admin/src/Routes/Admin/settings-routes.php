@@ -363,52 +363,6 @@ Route::prefix('settings')->group(function () {
     });
 
     /**
-     * Warehouses Routes. DISABLED FOR NOW
-     */
-//    Route::controller(WarehouseController::class)->prefix('warehouses')->group(function () {
-//        Route::put('edit/{id}', 'update')->name('admin.settings.warehouses.update');
-//
-//        Route::get('', 'index')->name('admin.settings.warehouses.index');
-//
-//        Route::get('search', 'search')->name('admin.settings.warehouses.search');
-//
-//        Route::get('{id}/products', 'products')->name('admin.settings.warehouses.products.index');
-//
-//        Route::get('create', 'create')->name('admin.settings.warehouses.create');
-//
-//        Route::post('create', 'store')->name('admin.settings.warehouses.store');
-//
-//        Route::get('view/{id}', 'view')->name('admin.settings.warehouses.view');
-//
-//        Route::get('edit/{id?}', 'edit')->name('admin.settings.warehouses.edit');
-//
-//        Route::delete('{id}', 'destroy')->name('admin.settings.warehouses.delete');
-//
-//        Route::controller(WarehouseTagController::class)->prefix('{id}/tags')->group(function () {
-//            Route::post('', 'attach')->name('admin.settings.warehouses.tags.attach');
-//
-//            Route::delete('', 'detach')->name('admin.settings.warehouses.tags.detach');
-//        });
-//
-//        Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
-//            Route::get('', 'index')->name('admin.settings.warehouse.activities.index');
-//        });
-//    });
-
-    /**
-     * Warehouses Location Routes.
-     */
-    Route::controller(LocationController::class)->prefix('locations')->group(function () {
-        Route::get('search', 'search')->name('admin.settings.locations.search');
-
-        Route::post('create', 'store')->name('admin.settings.locations.store');
-
-        Route::put('edit/{id}', 'update')->name('admin.settings.locations.update');
-
-        Route::delete('{id}', 'destroy')->name('admin.settings.locations.delete');
-    });
-
-    /**
      * Email Templates Routes.
      */
     Route::controller(EmailTemplateController::class)->prefix('email-templates')->group(function () {

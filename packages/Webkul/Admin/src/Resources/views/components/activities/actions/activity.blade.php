@@ -2,6 +2,7 @@
 @props([
     'entity'            => null,
     'entityControlName' => null,
+    'allowedTypes'      => ActivityType::userSelectable(),
 ])
 
 <!-- Activity Button -->
@@ -231,13 +232,8 @@
                 return {
                     isStoring: false,
 
-                    selectedType: {
-                        label: "{{ ActivityType::CALL->label() }}",
-                        value: 'call'
-                    },
-
                     availableTypes: [
-                            @foreach(ActivityType::userSelectable() as $type)
+                        @foreach($allowedTypes as $type)
                         {
                             label: "{{ $type->label() }}",
                             value: '{{ $type->value }}'
@@ -253,6 +249,9 @@
                 // Auto-select group based on lead's department
                 if (this.entity && this.entityControlName === 'lead_id' && this.entity.department_id) {
                     this.setDefaultGroupFromDepartment();
+                }
+                if (this.availableTypes.length > 0) {
+                    this.selectedType = this.availableTypes[0];
                 }
             },
 

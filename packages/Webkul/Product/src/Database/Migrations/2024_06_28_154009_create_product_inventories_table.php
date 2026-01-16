@@ -19,12 +19,6 @@ return new class extends Migration
             $table->integer('product_id')->unsigned();
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
 
-            $table->integer('warehouse_id')->unsigned()->nullable();
-            $table->foreign('warehouse_id')->references('id')->on('warehouses')->onDelete('cascade');
-
-            $table->integer('warehouse_location_id')->unsigned()->nullable();
-            $table->foreign('warehouse_location_id')->references('id')->on('warehouse_locations')->onDelete('SET NULL');
-
             $table->timestamps();
         });
     }

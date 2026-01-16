@@ -20,9 +20,4 @@ return [
         'name'       => 'admin::app.products.index.title',
         'repository' => 'Webkul\Product\Repositories\ProductRepository',
     ],
-
-    'warehouses'      => [
-        'name'       => 'admin::app.settings.warehouses.index.title',
-        'repository' => 'Webkul\Warehouse\Repositories\WarehouseRepository',
-    ],
 ];

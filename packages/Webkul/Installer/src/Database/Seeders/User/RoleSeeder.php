@@ -45,7 +45,6 @@ class RoleSeeder extends Seeder
                 'products.create',
                 'products.edit',
                 'products.delete',
-                'products.view',
                 'productgroups',
                 'productgroups.create',
                 'productgroups.edit',

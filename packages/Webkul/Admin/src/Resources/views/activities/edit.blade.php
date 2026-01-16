@@ -234,21 +234,13 @@
                                            class="text-activity-note-text hover:text-activity-task-text underline">
                                             {{ $relatedEntity->name ?? $relatedEntity->title ?? 'Onbekende lead' }}
                                         </a>
-                                    @elseif($relatedEntityName === 'Person')
-                                        <a href="{{ route('admin.contacts.persons.view', $relatedEntity->id) }}"
+                                    @elseif($relatedEntityName === 'Sales_lead')
+                                        <a href="{{ route('admin.sales-lead.view', $relatedEntity->id) }}"
                                            class="text-activity-note-text hover:text-activity-task-text underline">
-                                            {{ $relatedEntity->name ?? 'Onbekende persoon' }}
+                                            {{ $relatedEntity->name ?? 'Onbekende sales' }}
                                         </a>
-                                    @elseif($relatedEntityName === 'Product')
-                                        <a href="{{ route('admin.products.view', $relatedEntity->id) }}"
-                                           class="text-activity-note-text hover:text-activity-task-text underline">
-                                            {{ $relatedEntity->name ?? 'Onbekend product' }}
-                                        </a>
-                                    @elseif($relatedEntityName === 'Warehouse')
-                                        <a href="{{ route('admin.warehouses.view', $relatedEntity->id) }}"
-                                           class="text-activity-note-text hover:text-activity-task-text underline">
-                                            {{ $relatedEntity->name ?? 'Onbekende warehouse' }}
-                                        </a>
+                                    @else
+                                        Onbekende entiteit type: {{ $relatedEntityName }}
                                     @endif
                                 </span>
                             </div>

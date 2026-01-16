@@ -136,22 +136,6 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * The leads that belong to the activity.
-     */
-    public function products()
-    {
-        return $this->belongsToMany(ProductProxy::modelClass(), 'product_activities');
-    }
-
-//    /**
-//     * The Warehouse that belong to the activity.
-//     */
-//    public function warehouses()
-//    {
-//        return $this->belongsToMany(WarehouseProxy::modelClass(), 'warehouse_activities');
-//    }
-
-    /**
      * Call statuses linked to this activity.
      */
     public function callStatuses()

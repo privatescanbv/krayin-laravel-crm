@@ -24,27 +24,33 @@
                     <x-adminc::persons.card :person="$person" show_actions="false"/>
 
                     <!-- Activity Actions -->
+{{--                     Disable all create activities for now, maybe we remove the complete activies for persons in the future. Only patient message for now--}}
                     <div class="flex flex-wrap gap-2">
                         {!! view_render_event('admin.persons.view.actions.before', ['person' => $person]) !!}
 
-                        @if (bouncer()->hasPermission('mail.compose'))
-                            <!-- Mail Activity Action -->
-                            <x-admin::activities.actions.mail :entity="$person" entity-control-name="person_id"/>
-                        @endif
+{{--                        @if (bouncer()->hasPermission('mail.compose'))--}}
+{{--                            <!-- Mail Activity Action -->--}}
+{{--                            <x-admin::activities.actions.mail :entity="$person" entity-control-name="person_id"/>--}}
+{{--                        @endif--}}
 
-                        @if (bouncer()->hasPermission('activities.create'))
-                            <!-- File Activity Action -->
-                            <x-admin::activities.actions.file :entity="$person" entity-control-name="person_id"/>
+{{--                        @if (bouncer()->hasPermission('activities.create'))--}}
+{{--                            <!-- File Activity Action -->--}}
+{{--                            <x-admin::activities.actions.file :entity="$person" entity-control-name="person_id"/>--}}
 
-                            <!-- Note Activity Action -->
-                            <x-admin::activities.actions.note :entity="$person" entity-control-name="person_id"/>
+{{--                            <!-- Note Activity Action -->--}}
+{{--                            <x-admin::activities.actions.note :entity="$person" entity-control-name="person_id"/>--}}
 
-                            <!-- Activity Action -->
-                            <x-admin::activities.actions.activity :entity="$person" entity-control-name="person_id"/>
-                        @endif
+{{--                            <!-- Activity Action -->--}}
+{{--                            <x-admin::activities.actions.activity :entity="$person" entity-control-name="person_id"/>--}}
+{{--                        @endif--}}
 
                         {!! view_render_event('admin.persons.view.actions.after', ['person' => $person]) !!}
+                        @if (bouncer()->hasPermission('activities.create'))
+                            <x-admin::activities.actions.activity :entity="$person" entity-control-name="person_id" :allowed-types="[App\Enums\ActivityType::PATIENT_MESSAGE]"/>
+                        @endif
                     </div>
+
+
                 </div>
             </div>
 

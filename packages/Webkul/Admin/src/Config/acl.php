@@ -185,11 +185,6 @@ return [
         'route' => ['admin.products.delete', 'admin.products.mass_delete'],
         'sort'  => 3,
     ], [
-        'key'   => 'products.view',
-        'name'  => 'admin::app.acl.view',
-        'route' => 'admin.products.view',
-        'sort'  => 3,
-    ], [
         'key'   => 'productgroups.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.productgroups.create', 'admin.productgroups.store'],

@@ -178,12 +178,6 @@ Breadcrumbs::for('products.create', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.products.create.title'), route('admin.products.create'));
 });
 
-// Dashboard > Products > View Product
-Breadcrumbs::for('products.view', function (BreadcrumbTrail $trail, $product) {
-    $trail->parent('products');
-    $trail->push('#'.$product->id, route('admin.products.view', $product->id));
-});
-
 // Dashboard > Products > Edit Product
 Breadcrumbs::for('products.edit', function (BreadcrumbTrail $trail, $product) {
     $trail->parent('products');
@@ -278,12 +272,6 @@ Breadcrumbs::for('partner_products', function (BreadcrumbTrail $trail) {
 Breadcrumbs::for('partner_products.create', function (BreadcrumbTrail $trail) {
     $trail->parent('partner_products');
     $trail->push(trans('admin::app.partner_products.index.create.title'), route('admin.partner_products.create'));
-});
-
-// Settings > Partner Products > View
-Breadcrumbs::for('partner_products.view', function (BreadcrumbTrail $trail, $entity) {
-    $trail->parent('partner_products');
-    $trail->push('#'.$entity->id, route('admin.partner_products.view', $entity->id));
 });
 
 // Settings > Partner Products > Edit

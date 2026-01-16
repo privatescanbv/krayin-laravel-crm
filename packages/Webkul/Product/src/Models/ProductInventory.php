@@ -20,8 +20,6 @@ class ProductInventory extends Model implements ProductInventoryContract
         'in_stock',
         'allocated',
         'product_id',
-        'warehouse_id',
-        'warehouse_location_id',
     ];
 
     /**

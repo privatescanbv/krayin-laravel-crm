@@ -77,14 +77,6 @@ class Product extends Model implements ProductContract
     }
 
     /**
-     * Get the activities.
-     */
-    public function activities()
-    {
-        return $this->belongsToMany(ActivityProxy::modelClass(), 'product_activities');
-    }
-
-    /**
      * Get the product group that owns the product.
      */
     public function productGroup(): BelongsTo

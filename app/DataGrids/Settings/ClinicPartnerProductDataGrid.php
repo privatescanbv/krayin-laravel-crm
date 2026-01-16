@@ -92,15 +92,6 @@ class ClinicPartnerProductDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('partner_products.view')) {
-            $this->addAction([
-                'index'  => 'view',
-                'icon'   => 'icon-eye',
-                'title'  => trans('admin::app.settings.clinics.view.partner-products.table.view'),
-                'method' => 'GET',
-                'url'    => fn ($row) => route('admin.partner_products.view', $row->id),
-            ]);
-        }
         if (bouncer()->hasPermission('partner_products.edit')) {
             $this->addAction([
                 'index'  => 'edit',

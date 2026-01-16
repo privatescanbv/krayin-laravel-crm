@@ -24,9 +24,5 @@ Route::prefix('partner-products')->group(function () {
         Route::get('template-product/{id}', 'getTemplateProduct')->name('admin.partner_products.template_product');
         Route::get('template-products', 'getTemplateProducts')->name('admin.partner_products.template_products');
         Route::get('template-product/{id}', 'getTemplateProduct')->name('admin.partner_products.template_product');
-
-        Route::controller(PartnerProductActivityController::class)->prefix('{id}/activities')->group(function () {
-            Route::get('', 'index')->name('admin.partner_products.activities.index');
-        });
     });
 });

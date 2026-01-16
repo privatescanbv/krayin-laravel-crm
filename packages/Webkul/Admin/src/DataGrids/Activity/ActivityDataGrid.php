@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\Traits\ProvideDropdownOptions;
+use Webkul\Automation\Helpers\Entity\SalesLead;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Models\Lead;
 use Webkul\Contact\Models\Person;
@@ -32,8 +33,6 @@ class ActivityDataGrid extends DataGrid
                 'groups.name as group_name',
                 // Also select related entity names where possible
                 'persons.name as person_name',
-                'products.name as product_name',
-                'warehouses.name as warehouse_name',
                 // Cross-DB days until deadline: use different SQL per driver
                 DB::raw((function () {
                     $driver = DB::connection()->getDriverName();
@@ -51,15 +50,11 @@ class ActivityDataGrid extends DataGrid
                 DB::raw('CASE
                     WHEN activities.lead_id IS NOT NULL THEN "lead"
                     WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN "person"
-                    WHEN EXISTS (SELECT 1 FROM product_activities WHERE activity_id = activities.id LIMIT 1) THEN "product"
-                    WHEN EXISTS (SELECT 1 FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1) THEN "warehouse"
                     ELSE NULL
                 END as entity_type'),
                 DB::raw('CASE
                     WHEN activities.lead_id IS NOT NULL THEN activities.lead_id
                     WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT person_id FROM person_activities WHERE activity_id = activities.id LIMIT 1)
-                    WHEN EXISTS (SELECT 1 FROM product_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT product_id FROM product_activities WHERE activity_id = activities.id LIMIT 1)
-                    WHEN EXISTS (SELECT 1 FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT warehouse_id FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1)
                     ELSE NULL
                 END as entity_id')
             )
@@ -70,10 +65,6 @@ class ActivityDataGrid extends DataGrid
             // Joins to fetch display names for related entities
             ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
             ->leftJoin('persons', 'person_activities.person_id', '=', 'persons.id')
-            ->leftJoin('product_activities', 'activities.id', '=', 'product_activities.activity_id')
-            ->leftJoin('products', 'product_activities.product_id', '=', 'products.id')
-            ->leftJoin('warehouse_activities', 'activities.id', '=', 'warehouse_activities.activity_id')
-            ->leftJoin('warehouses', 'warehouse_activities.warehouse_id', '=', 'warehouses.id')
             ->whereIn('type', ['call', 'meeting','task', ActivityType::PATIENT_MESSAGE->value])
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
@@ -233,9 +224,8 @@ class ActivityDataGrid extends DataGrid
             'filterable_options' => [
                 ['label' => 'Alles', 'value' => ''],
                 ['label' => 'Lead', 'value' => 'lead'],
+                ['label' => 'Sales', 'value' => 'sales_lead'],
                 ['label' => 'Person', 'value' => 'person'],
-                ['label' => 'Product', 'value' => 'product'],
-                ['label' => 'Warehouse', 'value' => 'warehouse'],
             ],
             'closure'    => function ($row) {
                 if (!$row->entity_type || !$row->entity_id) {
@@ -258,6 +248,18 @@ class ActivityDataGrid extends DataGrid
                         }
                         $label = e($display);
                         break;
+                    case 'sales_lead':
+                        $route = route('admin.sales-lead.view', $row->entity_id);
+                        // Try to resolve lead name via model accessor; fallback to #ID
+                        try {
+                            $sales = SalesLead::find($row->entity_id);
+                            $display = $sales ? ($sales->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
+                        } catch (Throwable $e) {
+                            logger()->warning('Unable to locate sales entity id '.$row->entity_id . ', '. $e->getMessage());
+                            $display = '#'.$row->entity_id;
+                        }
+                        $label = e($display);
+                        break;
                     case 'person':
                         $route = route('admin.contacts.persons.view', $row->entity_id);
                         // Try to resolve person name via model accessor; fallback to #ID
@@ -269,16 +271,6 @@ class ActivityDataGrid extends DataGrid
                             $display = '#'.$row->entity_id;
                         }
                         $label = e($display);
-                        break;
-                    case 'product':
-                        $route = route('admin.products.view', $row->entity_id);
-                        $display = $row->product_name ?: ('#'.$row->entity_id);
-                        $label = e($display);
-                        break;
-                    case 'warehouse':
-                        $route = route('admin.warehouses.view', $row->entity_id);
-                        $display = $row->warehouse_name ?: ('#'.$row->entity_id);
-                        $label = e($display) . '"';
                         break;
                     default:
                         return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";

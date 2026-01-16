@@ -289,30 +289,4 @@ trait ProvideDropdownOptions
         ];
     }
 
-    /**
-     * Get organization dropdown options.
-     */
-    public function getWarehouseDropdownOptions(): array
-    {
-        $options = app(\Webkul\Warehouse\Repositories\WarehouseRepository::class)
-            ->get(['id as value', 'name as label'])
-            ->map(function ($item, $key) {
-                $item->disabled = false;
-
-                $item->selected = false;
-
-                return $item;
-            })
-            ->toArray();
-
-        return [
-            [
-                'label'    => __('admin::app.common.select-warehouse'),
-                'value'    => '',
-                'disabled' => true,
-                'selected' => true,
-            ],
-            ...$options,
-        ];
-    }
 }

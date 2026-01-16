@@ -43,17 +43,6 @@ return [
         'name'         => 'Persons',
         'repository'   => 'Webkul\Contact\Repositories\PersonRepository',
     ],
-
-    'warehouses' => [
-        'name'         => 'Warehouses',
-        'repository'   => 'Webkul\Warehouse\Repositories\WarehouseRepository',
-    ],
-
-    'locations' => [
-        'name'         => 'Locations',
-        'repository'   => 'Webkul\Warehouse\Repositories\LocationRepository',
-    ],
-
     'partner_products' => [
         'name'         => 'Partner Products',
         'repository'   => 'App\Repositories\PartnerProductRepository',

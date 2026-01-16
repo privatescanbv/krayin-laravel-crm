@@ -77,54 +77,10 @@
             class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Actions (same as lead, except file add) executed on related lead via popup -->
             <div class="p-4 border-b border-gray-200 dark:border-gray-800">
-                <div id="activity-view-actions" class="flex flex-wrap gap-2">
 
-                    @if ($activity->lead && bouncer()->hasPermission('activities.create'))
-                        <x-admin::activities.actions.note :entity="$activity->lead" entity-control-name="lead_id"/>
-                        <x-admin::activities.actions.activity :entity="$activity->lead" entity-control-name="lead_id"/>
-                    @endif
-                </div>
 
                 <!-- Activity Relations -->
-                    <div class="flex flex-wrap gap-2 mt-2">
-                        @if($activity->lead)
-                            <a href="{{ route('admin.leads.view', $activity->lead->id) }}"
-                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-blue-100 text-activity-task-text hover:bg-activity-task-bg dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800">
-                                <span class="icon-lead mr-1"></span>
-                                {{ $activity->lead->name }}
-                            </a>
-                        @elseif($activity->salesLead)
-                            <a href="{{ route('admin.sales-leads.view', $activity->salesLead->id) }}"
-                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-activity-email-bg dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
-                                <span class="icon-sales-lead mr-1"></span>
-                                {{ $activity->salesLead->name }}
-                            </a>
-                        @elseif($activity->clinic)
-                            <a href="{{ route('admin.clinics.view', $activity->clinic->id) }}"
-                               class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800">
-                                <span class="icon-clinic mr-1"></span>
-                                {{ $activity->clinic->name ?? '#' . $activity->clinic->id }}
-                            </a>
-                        @elseif(!$activity->persons->isEmpty())
-                            @foreach($activity->persons as $person)
-                                <a href="{{ route('admin.contacts.persons.view', $person->id) }}"
-                                   class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800">
-                                    <span class="icon-clinic mr-1"></span>
-                                    {{ $person->name ?? '#' . $person->id }}
-                                </a>
-                            @endforeach
-                        @elseif(!$activity->products->isEmpty())
-                            @foreach($activity->products as $product)
-                                <a href="{{ route('admin.products.view', $product->id) }}"
-                                   class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800">
-                                    <span class="icon-clinic mr-1"></span>
-                                    {{ $product->name ?? '#' . $product->id }}
-                                </a>
-                            @endforeach
-                        @else
-                            Relatie onbekend
-                        @endif
-                    </div>
+                   @include('admin::activities.partials.relation_display', ['activity' => $activity])
             </div>
 
             <!-- Compact details -->

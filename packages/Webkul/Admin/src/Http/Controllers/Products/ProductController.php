@@ -192,11 +192,6 @@ class ProductController extends SimpleEntityController
     }
 
     /**
-     * Returns product inventories grouped by warehouse.
-     */
-    // Warehouses endpoint removed (not supported)
-
-    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse

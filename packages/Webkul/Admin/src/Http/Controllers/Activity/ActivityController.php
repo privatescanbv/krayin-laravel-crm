@@ -241,17 +241,13 @@ class ActivityController extends Controller
         if ($activity->lead_id) {
             $relatedEntity = $activity->lead;
             $relatedEntityName = 'Lead';
+        }elseif ($activity->sales_lead_id) {
+            $relatedEntity = $activity->salesLead;
+            $relatedEntityName = 'Sales';
         } elseif ($activity->persons()->count() > 0) {
             $relatedEntity = $activity->persons()->first();
             $relatedEntityName = 'Person';
-        } elseif ($activity->products()->count() > 0) {
-            $relatedEntity = $activity->products()->first();
-            $relatedEntityName = 'Product';
-        } elseif ($activity->warehouses()->count() > 0) {
-            $relatedEntity = $activity->warehouses()->first();
-            $relatedEntityName = 'Warehouse';
         }
-
         $user = auth()->guard('user')->user();
         $canTakeover = $user->hasPermission('activities.takeover');
 

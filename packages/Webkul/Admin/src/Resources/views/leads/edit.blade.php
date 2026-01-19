@@ -40,11 +40,27 @@
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.leads.edit.form_buttons.before') !!}
 
+                        <input
+                            type="hidden"
+                            id="lead_submit_action"
+                            name="submit_action"
+                            value=""
+                        />
+
                         <button
                             type="submit"
                             class="primary-button"
+                            onclick="document.getElementById('lead_submit_action') && (document.getElementById('lead_submit_action').value = '');"
                         >
                             @lang('admin::app.leads.edit.save-btn')
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="secondary-button"
+                            onclick="document.getElementById('lead_submit_action') && (document.getElementById('lead_submit_action').value = 'apply');"
+                        >
+                            Toepassen
                         </button>
 
                         {!! view_render_event('admin.leads.edit.form_buttons.after') !!}

@@ -2,7 +2,7 @@
 <!-- Straat en huisnummer -->
 <x-adminc::components.field
     label="Straat en huisnummer"
-    value="{{ $address ? ($address->street . ' ' . $address->house_number . ($address->house_number_suffix ? '-' . $address->house_number_suffix : '')) : '' }}"
+    value="{{ $address ? ($address->street . ' ' . $address->house_number . ($address->house_number_suffix ? ' ' . $address->house_number_suffix : '')) : '' }}"
     readonly />
 
 <!-- Postcode -->

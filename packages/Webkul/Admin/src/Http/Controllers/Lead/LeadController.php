@@ -637,10 +637,14 @@ class LeadController extends Controller
                 );
             }
 
-            // After edit: go to lead view page
+            // If user clicked "Toepassen": stay on edit page; otherwise go to lead view page.
+            $redirectRoute = request()->input('submit_action') === 'apply'
+                ? 'admin.leads.edit'
+                : 'admin.leads.view';
+
             return $this->respondSuccess(
                 message: trans('admin::app.leads.update-success'),
-                redirectRoute: 'admin.leads.view',
+                redirectRoute: $redirectRoute,
                 redirectParams: [$lead->id],
             );
         } catch (InvalidArgumentException $e) {

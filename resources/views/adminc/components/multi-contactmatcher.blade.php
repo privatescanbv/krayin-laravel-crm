@@ -159,12 +159,17 @@
                             </div>
                             <button
                                 @click="createPersonFromLead"
-                                :disabled="isCreatingPerson"
+                                :disabled="isCreatingPerson || isLeadDirty"
                                 class="text-yellow-600 hover:text-status-on_hold-text bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
-                                :class="{ 'opacity-50 cursor-not-allowed': isCreatingPerson }"
+                                :class="{ 'opacity-50 cursor-not-allowed': (isCreatingPerson || isLeadDirty) }"
+                                :title="isLeadDirty ? 'Sla de lead eerst op om de nieuwste gegevens te gebruiken.' : ''"
                             >
                                 {{ isCreatingPerson ? 'Aanmaken...' : 'Contact aanmaken' }}
                             </button>
+                        </div>
+
+                        <div v-if="isLeadDirty" class="mt-2 text-xs text-yellow-800">
+                            Lead is aangepast maar nog niet opgeslagen. Sla eerst op om de nieuwste gegevens te gebruiken.
                         </div>
                     </div>
                 </div>
@@ -206,23 +211,45 @@
 
             props: ['lead', 'existingPersons'],
 
-                         data() {
-                 return {
-                     search: '',
-                     suggestions: [],
-                     selectedPersons: [...(this.existingPersons || [])],
-                     searchTimeout: null,
-                     isSearching: false,
-                     isCreatingPerson: false,
-                 };
-             },
+            data() {
+                return {
+                    search: '',
+                    suggestions: [],
+                    selectedPersons: [...(this.existingPersons || [])],
+                    searchTimeout: null,
+                    isSearching: false,
+                    isCreatingPerson: false,
+
+                    // If the surrounding lead form has unsaved changes, prevent creating a person
+                    // from stale server-rendered lead props (avoid confusing “old values”).
+                    isLeadDirty: false,
+                    _formEl: null,
+                    _onFormDirty: null,
+                };
+            },
 
             mounted() {
                 // Expose for external integrations (e.g., edit lead auto-suggest linking)
                 window.multiContactMatcher = this;
 
+                // Mark as dirty on any input/change inside the surrounding form
+                this._formEl = this.$el?.closest?.('form');
+
+                if (this._formEl) {
+                    this._onFormDirty = () => { this.isLeadDirty = true; };
+                    this._formEl.addEventListener('input', this._onFormDirty, true);
+                    this._formEl.addEventListener('change', this._onFormDirty, true);
+                }
+
                 // Calculate match scores for existing persons
                 this.calculateExistingMatchScores();
+            },
+
+            beforeUnmount() {
+                if (this._formEl && this._onFormDirty) {
+                    this._formEl.removeEventListener('input', this._onFormDirty, true);
+                    this._formEl.removeEventListener('change', this._onFormDirty, true);
+                }
             },
 
             methods: {
@@ -344,6 +371,11 @@
 
                 async createPersonFromLead() {
                      if (!this.lead || this.isCreatingPerson) {
+                         return;
+                     }
+
+                     if (this.isLeadDirty) {
+                         alert('Sla de lead eerst op; anders wordt het contact gemaakt met oude (opgeslagen) lead-gegevens.');
                          return;
                      }
 

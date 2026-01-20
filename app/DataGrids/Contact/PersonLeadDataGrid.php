@@ -28,6 +28,7 @@ class PersonLeadDataGrid extends DataGrid
             ->leftJoin('salesleads', 'salesleads.lead_id', '=', 'leads.id')
             ->leftJoin('lead_pipeline_stages as sales_stages', 'salesleads.pipeline_stage_id', '=', 'sales_stages.id')
             ->where('lead_persons.person_id', $personId)
+            ->Orwhere('leads.contact_person_id', $personId)
             ->groupBy('leads.id', 'salesleads.id', 'lead_stages.id', 'sales_stages.id');
 
         /**

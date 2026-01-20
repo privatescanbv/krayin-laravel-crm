@@ -22,8 +22,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: mbulthuis
+          password: ${{ secrets.GHCR_PAT }}
 
       # for building frontend, will be copied to docker later
       - name: Setup Node.js

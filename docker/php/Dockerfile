@@ -16,6 +16,10 @@ RUN mv /build/certs /certs
 RUN ./build.sh ${APP_ENV}
 
 FROM ghcr.io/mbulthuis/mbsoftware/php:8.3-fpm-bullseye
+ARG APP_ENV=production
+ARG WWWGROUP=1000
+ARG WWWUSER=1000
+ENV APP_ENV=${APP_ENV}
 
 # --- Add Yarn + NodeJS (for frontend builds or tooling) - for Vite server
 RUN if [ "$APP_ENV" = "local" ]; then \

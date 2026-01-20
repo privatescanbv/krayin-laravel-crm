@@ -8,6 +8,7 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use App\Traits\HasDefaultContactInfo;
 use BackedEnum;
 use Carbon\Carbon;
 use Exception;
@@ -33,7 +34,7 @@ use App\Services\LeadStatusTransitionValidator;
 
 class Lead extends Model implements LeadContract
 {
-    use LogsActivity, HasFactory;
+    use HasDefaultContactInfo, HasFactory, LogsActivity;
 
     protected $casts = [
         'closed_at'           => 'datetime',
@@ -494,47 +495,7 @@ class Lead extends Model implements LeadContract
         return $allPersons;
     }
 
-    /**
-     * Find the default email address from the emails array
-     */
-    public function findDefaultEmail(): ?string
-    {
-        if (empty($this->emails)) {
-            return null;
-        }
-
-        // First, try to find an email marked as default
-        foreach ($this->emails as $email) {
-            if (isset($email['is_default']) && ($email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1')) {
-                return $email['value'] ?? null;
-            }
-        }
-
-        // If no default is found, return the first email's value
-        return $this->emails[0]['value'] ?? null;
-    }
-
-    /**
-     * Find the default phone number from the phones array
-     */
-    public function findDefaultPhone(): ?string
-    {
-        if (empty($this->phones)) {
-            return null;
-        }
-
-        // First, try to find a phone marked as default
-        foreach ($this->phones as $phone) {
-            if (isset($phone['is_default']) && ($phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1')) {
-                return $phone['value'] ?? null;
-            }
-        }
-
-        // If no default is found, return the first phone's value
-        return $this->phones[0]['value'] ?? null;
-    }
-
-    public function getOpenActivitiesCountAttribute():int
+    public function getOpenActivitiesCountAttribute(): int
     {
         return $this->activities()->where('is_done', 0)->count();
     }

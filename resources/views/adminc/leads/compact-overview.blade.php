@@ -5,10 +5,7 @@
 @php
 // Get default email and phone
 $defaultEmail = $lead->findDefaultEmail();
-$defaultPhone = null;
-if ($lead->phones && is_array($lead->phones) && count($lead->phones) > 0) {
-$defaultPhone = $lead->phones[0]['value'] ?? null;
-}
+$defaultPhone =  $lead->findDefaultPhone();
 
 // Format date of birth
 $dateOfBirth = $lead->date_of_birth ? $lead->date_of_birth->format('d-m-Y') : '';

@@ -4,10 +4,7 @@
 @php
 // Get default email and phone
 $defaultEmail = $person->findDefaultEmail();
-$defaultPhone = null;
-if ($person->phones && is_array($person->phones) && count($person->phones) > 0) {
-$defaultPhone = $person->phones[0]['value'] ?? null;
-}
+$defaultPhone = $person->findDefaultPhone();
 
 // Format date of birth
 $dateOfBirth = $person->date_of_birth ? $person->date_of_birth->format('d-m-Y') : '';

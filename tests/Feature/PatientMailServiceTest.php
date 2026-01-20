@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\SalesLead;
 use App\Services\Mail\PatientMailService;
 use Database\Seeders\TestSeeder;
+use Exception;
 use Illuminate\Support\Facades\View;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
@@ -120,7 +121,7 @@ test('mailPatient throws exception when person has no email address', function (
         (string) $lead->id,
         null,
         null
-    ))->toThrow(\Exception::class, 'No default email found for person');
+    ))->toThrow(Exception::class, 'No default email found for Person ID 1');
 
     $emailRecord = Email::where('person_id', $person->id)->first();
     expect($emailRecord)->toBeNull();

@@ -269,11 +269,15 @@
                 async fetchSuggestions(query) {
                     this.isSearching = true;
                     try {
+                        console.log('[fetchSuggestions] query:', query, 'leadId:', this.lead?.id);
                         const results = await (window.adminc && window.adminc.fetchPersons
                             ? window.adminc.fetchPersons(query, { leadId: this.lead && this.lead.id })
                             : []);
 
-                        this.suggestions = (results || []).filter(person => !this.isPersonSelected(person.id));
+                        console.log('[fetchSuggestions] results:', results, 'type:', typeof results, 'isArray:', Array.isArray(results));
+                        const filtered = (results || []).filter(person => !this.isPersonSelected(person.id));
+                        console.log('[fetchSuggestions] filtered:', filtered.length, 'selectedPersons:', this.selectedPersons.length);
+                        this.suggestions = filtered;
                     } catch (e) {
                         console.error('Zoekopdracht mislukt:', e);
                         this.suggestions = [];

@@ -43,7 +43,9 @@
                 }
 
                 const response = await axios.get('/admin/contacts/persons/search', { params });
-                return (response && response.data && (response.data.data || response.data)) || [];
+                const result = response?.data?.data ?? response?.data ?? [];
+                console.log('[fetchPersons] response.data:', response?.data, 'result:', result);
+                return Array.isArray(result) ? result : [];
             };
         }
     </script>

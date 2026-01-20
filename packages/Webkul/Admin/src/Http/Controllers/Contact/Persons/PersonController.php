@@ -373,11 +373,19 @@ class PersonController extends Controller
      */
     public function search(): JsonResource|JsonResponse
     {
-        $leadId = null;
-        if (request()->has('lead_id')) {
-            $leadId = request()->get('lead_id');
-            $lead = $this->leadRepository->with(['address'])->findOrFail($leadId);
+        $leadId = request()->get('lead_id');
+        $lead = null;
 
+        if ($leadId) {
+            $lead = $this->leadRepository->with(['address'])->findOrFail($leadId);
+        }
+
+        // Check if there's a search query (search, query, or searchFields parameter)
+        $hasSearchQuery = request()->filled('search') || request()->filled('query') || request()->filled('searchFields');
+
+        // Only use findPersonsBasedOnLead when NO search query is present (auto-matching mode)
+        // When user types a search query, use performAdvancedSearch and add match scores later
+        if ($lead && !$hasSearchQuery) {
             $result = $this->findPersonsBasedOnLead($lead);
         } else {
             // Use performAdvancedSearch for normalization and standard search handling
@@ -415,7 +423,7 @@ class PersonController extends Controller
         $persons = $result->collection;
 
         // Check if we need to calculate match scores against a lead
-        if (!is_null($leadId)) {
+        if ($lead) {
             try {
                 // Calculate match scores for each person
                 // Note: $persons contains PersonResource objects, we need to get the underlying Person model
@@ -456,7 +464,7 @@ class PersonController extends Controller
                 // If lead not found or error in scoring, return regular results
                 logger()->warning('Could not calculate match scores for search', [
                     'lead_id' => $leadId,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

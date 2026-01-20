@@ -29,7 +29,8 @@ namespace UiTests.Steps
         public async Task WhenIGoToStep2WithoutSelectingAPerson()
         {
             // Single-step form: just ensure the form is visible
-            await Assertions.Expect(_driver.Page.GetByText("Lead gegevens")).ToBeVisibleAsync();
+            // Use Exact = true to avoid matching checkbox labels containing "lead gegevens"
+            await Assertions.Expect(_driver.Page.GetByText("Lead gegevens", new() { Exact = true })).ToBeVisibleAsync();
         }
 
         [When(@"I select the first person suggestion for query ""(.*)""")]
@@ -56,7 +57,8 @@ namespace UiTests.Steps
         public async Task WhenIGoToStep2()
         {
             // Single-step: form should already be present
-            await Assertions.Expect(_driver.Page.GetByText("Lead gegevens")).ToBeVisibleAsync();
+            // Use Exact = true to avoid matching checkbox labels containing "lead gegevens"
+            await Assertions.Expect(_driver.Page.GetByText("Lead gegevens", new() { Exact = true })).ToBeVisibleAsync();
         }
 
         [When("I fill the required lead fields")]

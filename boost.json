@@ -1,0 +1,14 @@
+{
+    "agents": [
+        "copilot",
+        "cursor"
+    ],
+    "editors": [
+        "cursor",
+        "phpstorm"
+    ],
+    "guidelines": [
+        "tightenco/duster"
+    ],
+    "sail": true
+}

@@ -15,26 +15,7 @@ RUN rm -rf flows
 RUN mv /build/certs /certs
 RUN ./build.sh ${APP_ENV}
 
-FROM docker.io/php:8.3-fpm-bullseye
-ARG APP_ENV=production
-ARG WWWGROUP=1000
-ARG WWWUSER=1000
-ENV APP_ENV=${APP_ENV}
-WORKDIR /usr/share/nginx/html
-
-RUN set -eux; \
-  apt-get update && apt-get install -y \
-    gnupg g++ procps openssl git unzip zlib1g-dev libzip-dev libfreetype6-dev \
-    libpng-dev libjpeg-dev libicu-dev libonig-dev libxslt1-dev acl cron nginx \
-    libssh2-1-dev libssh2-1 jq graphviz iputils-ping lsb-release wget vim supervisor \
-    default-mysql-client \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install the MySQL client from Debian repositories
-RUN apt-get update \
-    && apt-get install -y default-mysql-client \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM ghcr.io/mbulthuis/mbsoftware/php:8.3-fpm-bullseye
 
 # --- Add Yarn + NodeJS (for frontend builds or tooling) - for Vite server
 RUN if [ "$APP_ENV" = "local" ]; then \
@@ -44,24 +25,8 @@ RUN if [ "$APP_ENV" = "local" ]; then \
       corepack prepare yarn@stable --activate && \
       apt-get clean && \
       rm -rf /var/lib/apt/lists/*; \
-    fi
-
-# Install PHP Redis using PECL
-RUN pecl install redis \
-    && docker-php-ext-enable redis
-
-RUN if [ "$APP_ENV" = "local" ]; then \
       pecl install xdebug && docker-php-ext-enable xdebug; \
     fi
-
-RUN pecl install ssh2-1.3.1
-
-# Install additional PHP extensions
-RUN docker-php-ext-install \
-        pdo pdo_mysql zip xsl gd intl opcache exif mbstring soap pcntl bcmath calendar
-RUN docker-php-ext-configure gd --with-jpeg --with-freetype
-RUN docker-php-ext-enable ssh2
-
 
 # Kopieer alleen het nodige uit de Node build stage
 COPY --from=vite /build/artisan ./

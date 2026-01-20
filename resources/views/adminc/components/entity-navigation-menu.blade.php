@@ -7,6 +7,7 @@
     'showResources' => false,
     'showLeads' => false,
     'showSales' => false,
+    'showPatientMessages' => false,
 ])
 <!-- Vertical Navigation Menu -->
 <div class="border-t border-gray-200 p-4 dark:border-gray-800">
@@ -20,6 +21,18 @@
             <span class="icon-user text-xl"></span>
             Algemeen
         </button>
+
+        @if ($showPatientMessages)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'patient-berichten'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-600 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-800'"
+                    @click="setSection('patient-berichten')"
+            >
+                <span class="icon-patient-message text-xl"></span>
+                Patientberichten
+            </button>
+        @endif
 
         <button type="button" class="flex justify-between items-center rounded-md px-3 py-2 text-left transition"
                 :class="leadDetailSection === 'activiteiten'

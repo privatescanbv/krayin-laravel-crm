@@ -12,6 +12,10 @@ class CreatePatientMessageFromActivityAction
 {
     public function handle(Activity $activity, string $action, ?Person $person = null): void
     {
+        if ((($activity->additional ?? [])['skip_patient_message_creation'] ?? false)) {
+            return;
+        }
+
         // Check if it's a patient message type
         if ($activity->type !== ActivityType::PATIENT_MESSAGE) {
             return;

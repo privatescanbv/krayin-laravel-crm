@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Actions\Persons\CreatePortalAccountAction;
 use App\Actions\Persons\DeletePortalAccountAction;
+use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
 use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
@@ -272,12 +273,17 @@ class PersonController extends Controller
         // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)
         $duplicateCount = $this->personRepository->findPotentialDuplicates($person)->count();
         $activitiesCount = $this->activityRepository->countOpen($person)->getData()->data;
+        $patientMessageActivity = $person->activities()
+            ->where('type', ActivityType::PATIENT_MESSAGE->value)
+            ->orderByDesc('updated_at')
+            ->first();
 
         return view('admin::contacts.persons.view', [
             'person'          => $person,
             'duplicateCount'  => $duplicateCount,
             'sortedLeads'     => $sortedLeads,
             'activitiesCount' => $activitiesCount,
+            'patientMessageActivity' => $patientMessageActivity,
         ]);
     }
 

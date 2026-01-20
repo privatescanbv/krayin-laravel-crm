@@ -2,7 +2,9 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Enums\ActivityType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
@@ -42,6 +44,43 @@ class ActivityController extends Controller
         return ActivityResource::collection(
             $this->concatEmailActivitiesFor('person', (int) $id, $activities, $this->attachmentRepository)
         );
+    }
+
+    /**
+     * Start a patient message chat for a person.
+     */
+    public function store(int $id): RedirectResponse
+    {
+        if (! bouncer()->hasPermission('activities.create')) {
+            abort(403);
+        }
+
+        $person = Person::query()->findOrFail($id);
+        $existingActivity = $person->activities()
+            ->where('type', ActivityType::PATIENT_MESSAGE->value)
+            ->orderByDesc('updated_at')
+            ->first();
+
+        if ($existingActivity) {
+            return redirect()->to(route('admin.contacts.persons.view', $person->id) . '#patient-berichten');
+        }
+
+        $activity = $this->activityRepository->create([
+            'type'          => ActivityType::PATIENT_MESSAGE->value,
+            'title'         => 'Berichten patiënt portaal',
+            'comment'       => null,
+            'user_id'       => auth()->guard('user')->id(),
+            'schedule_from' => now(),
+            'schedule_to'   => now(),
+            'is_done'       => 0,
+            'additional'    => [
+                'skip_patient_message_creation' => true,
+            ],
+        ]);
+
+        $activity->persons()->syncWithoutDetaching([$person->id]);
+
+        return redirect()->to(route('admin.contacts.persons.view', $person->id) . '#patient-berichten');
     }
 
     /**

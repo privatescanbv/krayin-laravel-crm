@@ -22,35 +22,6 @@
 
                     <!-- person Person info's -->
                     <x-adminc::persons.card :person="$person" show_actions="false"/>
-
-                    <!-- Activity Actions -->
-{{--                     Disable all create activities for now, maybe we remove the complete activies for persons in the future. Only patient message for now--}}
-                    <div class="flex flex-wrap gap-2">
-                        {!! view_render_event('admin.persons.view.actions.before', ['person' => $person]) !!}
-
-{{--                        @if (bouncer()->hasPermission('mail.compose'))--}}
-{{--                            <!-- Mail Activity Action -->--}}
-{{--                            <x-admin::activities.actions.mail :entity="$person" entity-control-name="person_id"/>--}}
-{{--                        @endif--}}
-
-{{--                        @if (bouncer()->hasPermission('activities.create'))--}}
-{{--                            <!-- File Activity Action -->--}}
-{{--                            <x-admin::activities.actions.file :entity="$person" entity-control-name="person_id"/>--}}
-
-{{--                            <!-- Note Activity Action -->--}}
-{{--                            <x-admin::activities.actions.note :entity="$person" entity-control-name="person_id"/>--}}
-
-{{--                            <!-- Activity Action -->--}}
-{{--                            <x-admin::activities.actions.activity :entity="$person" entity-control-name="person_id"/>--}}
-{{--                        @endif--}}
-
-                        {!! view_render_event('admin.persons.view.actions.after', ['person' => $person]) !!}
-                        @if (bouncer()->hasPermission('activities.create'))
-                            <x-admin::activities.actions.activity :entity="$person" entity-control-name="person_id" :allowed-types="[App\Enums\ActivityType::PATIENT_MESSAGE]"/>
-                        @endif
-                    </div>
-
-
                 </div>
             </div>
 
@@ -63,6 +34,7 @@
                 :showResources="false"
                 :showLeads="true"
                 :showSales="false"
+                :showPatientMessages="true"
             />
 
             <!-- Footer with creation and modification dates -->
@@ -98,6 +70,10 @@
 
             <div v-if="leadDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('adminc::persons.partials.tab-general', ['person' => $person])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'patient-berichten'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc::persons.partials.tab-patient-messages', ['person' => $person, 'patientMessageActivity' => $patientMessageActivity])
             </div>
 
             <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
@@ -252,7 +228,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'leads', 'partner-products', 'resources'];
+                                const validSections = ['algemeen', 'patient-berichten', 'activiteiten', 'anamnese', 'leads', 'partner-products', 'resources'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

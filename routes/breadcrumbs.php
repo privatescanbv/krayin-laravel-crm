@@ -501,7 +501,6 @@ Breadcrumbs::for('settings.web_forms.edit', function (BreadcrumbTrail $trail, $w
     $trail->push(trans('admin::app.settings.webforms.edit.title'), route('admin.settings.web_forms.edit', $webForm->id));
 });
 
-
 // Settings > Resource Types
 Breadcrumbs::for('settings.resource_types', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

@@ -70,6 +70,7 @@ Route::prefix('contacts')->group(function () {
          */
         Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
             Route::get('', 'index')->name('admin.contacts.persons.activities.index');
+            Route::post('', 'store')->name('admin.contacts.persons.activities.store');
         });
 
         /**

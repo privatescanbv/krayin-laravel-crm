@@ -275,6 +275,18 @@ $salutationToGenderMapping = [
                                         </p>
                                     </div>
 
+                                    <!-- Create person from lead data (create flow only) -->
+                                    <div class="mt-4">
+                                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                            <input
+                                                type="checkbox"
+                                                class="cursor-pointer"
+                                                v-model="formData.create_person_from_lead"
+                                            />
+                                            <span>Tevens persoon aanmaken met deze lead gegevens en koppelen</span>
+                                        </label>
+                                    </div>
+
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
@@ -523,6 +535,9 @@ $salutationToGenderMapping = [
                                     // Contact person selector binding
                                     contact_person_id: null,
                                     contact_person_label: '',
+
+                                    // Create person from lead data (create flow only)
+                                    create_person_from_lead: false,
                         },
                         hasSelectedPersons: false,
                         joinedPersonNames: '',
@@ -963,6 +978,9 @@ $salutationToGenderMapping = [
                                     formData.set(key, this.formData[key]);
                                 }
                             });
+
+                            // Ensure checkbox is always submitted as 0/1
+                            formData.set('create_person_from_lead', this.formData.create_person_from_lead ? '1' : '0');
 
                             // Ensure selected person is submitted if chosen
                             if (this.selectedPersonId) {

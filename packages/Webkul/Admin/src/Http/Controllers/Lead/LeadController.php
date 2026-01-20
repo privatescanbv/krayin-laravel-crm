@@ -436,25 +436,48 @@ class LeadController extends Controller
             $this->normalizeContactFields($request);
             $this->validateLeadRequest($request, true);
 
-            [$lead] = $this->storeLead($request);
+            return DB::transaction(function () use ($request) {
+                /**
+                 * Create flow helper: optionally create a new person from the entered lead data
+                 * and link it to the lead on first save.
+                 *
+                 * This mirrors the manual "Contact aanmaken" action from the lead edit flow
+                 * (multi-contactmatcher), but runs server-side during lead creation.
+                 */
+                if ($request->boolean('create_person_from_lead')) {
+                    $existingPersonIds = array_values(array_filter((array) $request->input('person_ids', [])));
 
-            // Check if we should redirect to sync page after creation
-            if ($this->shouldRedirectToSync($lead)) {
-                $person = $lead->persons()->first();
+                    // Only auto-create when no person has been selected yet (avoid accidental duplicates).
+                    if (count($existingPersonIds) === 0) {
+                        $personPayload = $this->buildPersonPayloadFromLeadRequest($request);
+                        /** @var \Webkul\Contact\Models\Person $person */
+                        $person = $this->personRepository->create($personPayload);
 
+                        // Link this person to the lead on create (lead->persons relation).
+                        $request->merge(['person_ids' => [$person->id]]);
+                    }
+                }
+
+                [$lead] = $this->storeLead($request);
+
+                // Check if we should redirect to sync page after creation
+                if ($this->shouldRedirectToSync($lead)) {
+                    $person = $lead->persons()->first();
+
+                    return $this->respondSuccess(
+                        message: trans('admin::app.leads.create-success'),
+                        redirectRoute: 'admin.leads.sync-lead-to-person',
+                        redirectParams: ['leadId' => $lead->id, 'personId' => $person->id],
+                    );
+                }
+
+                // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
                 return $this->respondSuccess(
                     message: trans('admin::app.leads.create-success'),
-                    redirectRoute: 'admin.leads.sync-lead-to-person',
-                    redirectParams: ['leadId' => $lead->id, 'personId' => $person->id],
+                    redirectRoute: 'admin.leads.view',
+                    redirectParams: [$lead->id],
                 );
-            }
-
-            // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
-            return $this->respondSuccess(
-                message: trans('admin::app.leads.create-success'),
-                redirectRoute: 'admin.leads.view',
-                redirectParams: [$lead->id],
-            );
+            });
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(
@@ -467,6 +490,93 @@ class LeadController extends Controller
 
             return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Build a person payload from the current lead create request.
+     * Keeps field selection and address rules aligned with the lead edit "Contact aanmaken" action.
+     *
+     * @throws \InvalidArgumentException when insufficient data is present to create a person.
+     */
+    private function buildPersonPayloadFromLeadRequest(LeadForm $request): array
+    {
+        $firstName = trim((string) $request->input('first_name', ''));
+        $lastName = trim((string) $request->input('last_name', ''));
+
+        $emails = $request->input('emails', []);
+        $phones = $request->input('phones', []);
+
+        $emails = is_array($emails) ? $emails : [];
+        $phones = is_array($phones) ? $phones : [];
+
+        $hasName = ($firstName !== '' || $lastName !== '');
+        $hasEmail = collect($emails)->contains(function ($e) {
+            return is_array($e) && trim((string) ($e['value'] ?? '')) !== '';
+        });
+
+        if (! $hasName && ! $hasEmail) {
+            throw new InvalidArgumentException('Kan geen persoon aanmaken: naam of e-mail is vereist.');
+        }
+
+        $payload = [
+            'entity_type' => 'persons',
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'lastname_prefix' => (string) $request->input('lastname_prefix', ''),
+            'married_name' => (string) $request->input('married_name', ''),
+            'married_name_prefix' => (string) $request->input('married_name_prefix', ''),
+            'initials' => (string) $request->input('initials', ''),
+            'gender' => (string) $request->input('gender', ''),
+            'salutation' => (string) $request->input('salutation', ''),
+            'national_identification_number' => (string) $request->input('national_identification_number', ''),
+            'emails' => $emails,
+            'phones' => $phones,
+        ];
+
+        $dob = trim((string) $request->input('date_of_birth', ''));
+        if ($dob !== '') {
+            $payload['date_of_birth'] = $dob;
+        } else {
+            $payload['date_of_birth'] = null;
+        }
+
+        $addressPayload = $this->buildPersonAddressPayloadFromLeadRequest($request);
+        if ($addressPayload !== null) {
+            $payload['address'] = $addressPayload;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Address rules match the edit-flow "Contact aanmaken" action:
+     * only include address when at least house_number + postal_code are present.
+     */
+    private function buildPersonAddressPayloadFromLeadRequest(LeadForm $request): ?array
+    {
+        $address = $request->input('address', []);
+        if (! is_array($address)) {
+            return null;
+        }
+
+        $toString = static fn ($val) => ($val === null || $val === false) ? '' : trim((string) $val);
+
+        $payload = [
+            'street' => $toString($address['street'] ?? ''),
+            'house_number' => $toString($address['house_number'] ?? ''),
+            'house_number_suffix' => $toString($address['house_number_suffix'] ?? ''),
+            'postal_code' => $toString($address['postal_code'] ?? ''),
+            'city' => $toString($address['city'] ?? ''),
+            'state' => $toString($address['state'] ?? ''),
+            'country' => $toString($address['country'] ?? ''),
+        ];
+
+        // Address creation requires at least house number and postal code.
+        if ($payload['house_number'] === '' || $payload['postal_code'] === '') {
+            return null;
+        }
+
+        return $payload;
     }
 
     /**
@@ -1499,6 +1609,9 @@ class LeadController extends Controller
     private function prepareLeadDataForUpsert(LeadForm $request, bool $isCreate): array
     {
         $data = $request->all();
+
+        // UI-only create flag; never persist on lead.
+        unset($data['create_person_from_lead']);
 
         // Handle contact_person_id - if empty but display has value, use display value
         if (isset($data['contact_person_id_display']) && $data['contact_person_id_display'] !== '') {

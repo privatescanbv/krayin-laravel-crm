@@ -109,6 +109,8 @@ De applicatie integreert met:
 * PDF parser voor factuur extractie
 * Mail service voor notificaties
 
+link:/admin/apidocs[CRM api documentatie]
+
 ==== Kernmodules
 
 Het systeem bestaat uit de volgende hoofdmodules:

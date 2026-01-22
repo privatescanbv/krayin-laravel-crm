@@ -4,7 +4,10 @@ namespace Webkul\Lead\Http\Controllers\Api;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\ContactLabel;
+use App\Http\Requests\Api\HerniaCreateLeadRequest;
+use App\Http\Requests\Api\PrivatescanCreateLeadRequest;
 use App\Models\Department;
+use App\Services\InboundLeads\InboundLeadPayloadMapper;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +39,8 @@ class LeadController extends Controller
         protected LeadRepository           $leadRepository,
         protected AdminLeadController      $leadService,
         protected AttributeRepository      $attributeRepository,
-        protected AttributeValueRepository $attributeValueRepository
+        protected AttributeValueRepository $attributeValueRepository,
+        protected InboundLeadPayloadMapper $inboundLeadPayloadMapper
     )
     {
         request()->request->add(['entity_type' => 'leads']);
@@ -49,23 +53,62 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): JsonResponse
     {
-        // TODO replace with auth()-> id
+        return $this->storeFromLeadForm($request);
+    }
+
+    /**
+     * Create a Hernia lead from the inbound (Gravity Forms) payload schema.
+     */
+    public function storeHernia(HerniaCreateLeadRequest $inbound): JsonResponse
+    {
+        $mapped = $this->inboundLeadPayloadMapper->mapHernia($inbound->validated());
+
+        $leadForm = LeadForm::createFrom($inbound);
+        $leadForm->setContainer(app());
+        $leadForm->replace($mapped);
+
+        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId());
+    }
+
+    /**
+     * Create a Privatescan lead from the inbound (Web-to-person) payload schema.
+     */
+    public function storePrivatescan(PrivatescanCreateLeadRequest $inbound): JsonResponse
+    {
+        $mapped = $this->inboundLeadPayloadMapper->mapPrivatescan($inbound->validated());
+
+        $leadForm = LeadForm::createFrom($inbound);
+        $leadForm->setContainer(app());
+        $leadForm->replace($mapped);
+
+        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findPrivateScanId());
+    }
+
+    /**
+     * Shared lead-create implementation for API endpoints.
+     */
+    private function storeFromLeadForm(LeadForm $request, ?int $forceDepartmentId = null): JsonResponse
+    {
+        // TODO replace with auth()->id
         $currentUserId = User::query()->first()?->id;
 
         try {
-            $departmentId = Department::findPrivateScanId();
+            $departmentId = $forceDepartmentId ?? Department::findPrivateScanId();
 
-            // Check if lead type exists and is "Operatie"
-            if (isset($request['lead_type_id'])) {
-                $leadType = Type::query()->where('id', $request['lead_type_id'])->first();
-                if ($leadType && $leadType->name == 'Operatie') {
-                    $departmentId = Department::findHerniaId();
+            if ($forceDepartmentId === null) {
+                // Backwards compatible: infer Hernia department when lead type is "Operatie"
+                if (isset($request['lead_type_id'])) {
+                    $leadType = Type::query()->where('id', $request['lead_type_id'])->first();
+                    if ($leadType && $leadType->name == 'Operatie') {
+                        $departmentId = Department::findHerniaId();
+                    }
                 }
             }
         } catch (ModelNotFoundException $e) {
-            Log::error('Could not find departments by name Hernia ', [
+            Log::error('Could not find departments', [
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json([
                 'message' => 'Internal server error, department not found',
                 'data' => [],
@@ -76,7 +119,7 @@ class LeadController extends Controller
         $request->merge([
             'user_id' => $currentUserId,
             'status' => 1,
-            'department_id' => $departmentId
+            'department_id' => $departmentId,
         ]);
 
         // Default anamnesis flags to "no" (false) for API if not provided
@@ -122,16 +165,18 @@ class LeadController extends Controller
         // Create lead with person_id
         $leadData = $request->all();
 
-        // Set the data via the request
+        // Set the data via the global request (required by AdminLeadController internals)
         foreach ($leadData as $key => $value) {
             request()->request->add([$key => $value]);
         }
         request()->request->add(['entity_type' => 'leads']);
-        //we need pipeline changes, to trigger n8n. Lead should never be left on this pipeline stage.
+
+        // We need pipeline changes to trigger n8n. Lead should never be left on this pipeline stage.
         $request['lead_pipeline_stage_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value;
         $request['lead_pipeline_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
+
         try {
-            [$lead, $leadPipelineId] = $this->leadService->storeLead($request);
+            [$lead] = $this->leadService->storeLead($request);
         } catch (InvalidArgumentException $e) {
             return response()->json([
                 'message' => 'Lead creation failed.',
@@ -140,14 +185,16 @@ class LeadController extends Controller
         } catch (Exception $e) {
             Log::error('Could not store lead ', [
                 'error' => $e->getMessage(),
-                'data' => $request,
+                'data' => $request->all(),
                 'trace' => $e->getTrace(),
             ]);
+
             return response()->json([
                 'message' => 'Internal server error, could not store lead',
                 'data' => [],
             ], 500);
         }
+
         return response()->json([
             'message' => 'Lead created successfully.',
             'data' => ['id' => $lead->id],

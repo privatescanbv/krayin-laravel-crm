@@ -17,6 +17,7 @@ Stappen voor de eerste keer:
  * run sail artisan key:generate (niet zeker, probeer eerst zonder. Als je dit doet, vergeet .env niet aan te passen (APP_KEY).
  * run sail artisan migrate --seed of met reset.sh (inclusief data import)
  * voeg toe aan je host file (etc/hosts):
+ * API documentatie maken, run: sail artisan scribe:generate
 
 [source,bash]
 ----

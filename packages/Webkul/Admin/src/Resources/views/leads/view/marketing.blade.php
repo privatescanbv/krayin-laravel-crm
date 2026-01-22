@@ -144,7 +144,7 @@ $hasActiveCampaign = $lead->channel !== null;
                 <!-- Campagne -->
                 <x-adminc::components.field
                     class="mb-1"
-                    label="Campagne"
+                    label="Afdeling"
                     value="{{ $departementName }}"
                     readonly />
             </div>

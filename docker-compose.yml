@@ -60,6 +60,15 @@ services:
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.domains[0].main=crm.local.privatescan.nl
       - traefik.http.routers.crm.service=crm-svc
+      # === APIDOCS ROUTER (afgeschermd) ===
+      - traefik.http.routers.crm-apidocs.rule=PathPrefix("/admin/apidocs")
+      - traefik.http.routers.crm-apidocs.entrypoints=https
+      - traefik.http.routers.crm-apidocs.tls=true
+      - traefik.http.routers.crm-apidocs.priority=100
+      - traefik.http.routers.crm-apidocs.service=crm-svc
+      - traefik.http.routers.crm-apidocs.middlewares=crm-apidocs-auth
+      # === BASIC AUTH MIDDLEWARE ===
+      - traefik.http.middlewares.crm-apidocs-auth.basicauth.users=apidocs:$2y$05$.oq21zUni1RtZmPDIux4EucYk3wlu3Tya65E2Nn7Am5FFjiKSWA/6
       - traefik.http.services.crm-svc.loadbalancer.server.port=80
       # Middleware: expliciete headers doorgeven
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https

@@ -28,6 +28,8 @@ $registerAuthenticatedApiRoutes = function () {
     // Lead routes
     Route::prefix('leads')->group(function () {
         // Removed index route - too heavy, use /admin/leads/get for kanban instead
+        Route::post('hernia', [LeadController::class, 'storeHernia']);
+        Route::post('privatescan', [LeadController::class, 'storePrivatescan']);
         Route::post('/', [LeadController::class, 'store']);
         Route::get('{id}', [LeadController::class, 'show']);
         Route::put('{id}', [LeadController::class, 'update']);

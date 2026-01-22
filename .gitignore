@@ -22,7 +22,10 @@ npm-debug.log
 /public/js
 /public/hot
 /public/storage
-/public/vendor
+# Ignore all public vendor assets EXCEPT Scribe docs assets.
+/public/vendor/*
+!/public/vendor/scribe/
+!/public/vendor/scribe/**
 /public/admin/build
 /public/webform
 /public/installer

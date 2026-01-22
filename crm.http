@@ -14,6 +14,55 @@ Content-Type: application/json
     "tags": ["crm", "n8n"]
 }
 
+
+
+### create lead (privatescan)
+POST https://{{ URL }}/api/leads/privatescan
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}
+
+{
+    "lead_source": "architecto",
+    "kanaal_c": "architecto",
+    "soort_aanvraag_c": "preventie",
+    "first_name": "architecto",
+    "last_name": "architecto",
+    "email": "zbailey@example.net",
+    "phone": "architecto",
+    "description": "Eius et animi quos velit et.",
+    "url": "http://www.ernser.org/harum-mollitia-modi-deserunt-aut-ab-provident-perspiciatis-quo.html",
+    "section": "architecto",
+    "select_verzoek": "architecto",
+    "select_interesse": "architecto",
+    "campaign_id": "architecto"
+}
+
+
+### create lead (hernia)
+POST https://{{ URL }}/api/leads/hernia
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}
+
+{
+    "campaign_id": "architecto",
+    "lead_source": "architecto",
+    "kanaal_c": "architecto",
+    "soort_aanvraag_c": "architecto",
+    "salutation": "architecto",
+    "first_name": "architecto",
+    "last_name": "architecto",
+    "birthdate": "2026-01-22",
+    "email1": "zbailey@example.net",
+    "phone_mobile": "architecto",
+    "primary_huisnr_c": "architecto",
+    "primary_huisnr_toevoeging_c": "architecto",
+    "primary_address_postalcode": "architecto",
+    "description": "Eius et animi quos velit et."
+}
+
+
 ### create workflow lead
 POST http://localhost:8000/api/sales-leads
 Content-Type: application/json

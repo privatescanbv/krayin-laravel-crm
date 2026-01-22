@@ -15,6 +15,7 @@
         "enshrined/svg-sanitize": "^0.21.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "khaled.alshamaa/ar-php": "^6.3",
+        "knuckleswtf/scribe": "^5.6",
         "konekt/concord": "^1.10",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.2",

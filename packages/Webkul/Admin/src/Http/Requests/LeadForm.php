@@ -21,9 +21,16 @@ class LeadForm extends FormRequest
      * @return void
      */
     public function __construct(
-        protected AttributeRepository $attributeRepository,
-        protected AttributeValueRepository $attributeValueRepository
-    ) {}
+        protected ?AttributeRepository $attributeRepository = null,
+        protected ?AttributeValueRepository $attributeValueRepository = null
+    ) {
+        parent::__construct();
+
+        // Scribe (and some tooling) may instantiate FormRequests without using the container,
+        // so ensure dependencies are available even when constructor args are omitted.
+        $this->attributeRepository ??= app(AttributeRepository::class);
+        $this->attributeValueRepository ??= app(AttributeValueRepository::class);
+    }
 
     /**
      * Determine if the product is authorized to make this request.

@@ -1,0 +1,71 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "WebToPersonCapturePayload",
+    "type": "object",
+    "properties": {
+        "salutation": {
+            "type": ["string", "boolean"],
+            "enum": ["Mr.", "Mrs.", false],
+            "description": "Converted from form value (Dhr → Mr., else Mrs.)"
+        },
+        "first_name": {
+            "type": "string"
+        },
+        "last_name": {
+            "type": "string"
+        },
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+        "phone": {
+            "type": "string"
+        },
+        "lead_source": {
+            "type": "string",
+            "description": "Default: privatescannl, overwritten by socialLead cookie"
+        },
+        "kanaal_c": {
+            "type": "string",
+            "description": "website or socialmedia"
+        },
+        "soort_aanvraag_c": {
+            "type": "string",
+            "enum": ["preventie"]
+        },
+        "assigned_user_id": {
+            "type": ["string", "boolean"],
+            "description": "Always false in this implementation"
+        },
+        "description": {
+            "type": "string",
+            "description": "Appended with url, section and request details"
+        },
+        "url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "section": {
+            "type": "string"
+        },
+        "select_verzoek": {
+            "type": "string"
+        },
+        "select_interesse": {
+            "type": "string"
+        },
+        "personen": {
+            "type": ["string", "integer"]
+        },
+        "campaign_id": {
+            "type": "string",
+            "description": "Set from socialLead cookie utm_id"
+        }
+    },
+    "required": [
+        "lead_source",
+        "kanaal_c",
+        "soort_aanvraag_c"
+    ],
+    "additionalProperties": true
+}

@@ -1,0 +1,84 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "GravityFormsWebToLeadPayload",
+    "type": "object",
+    "properties": {
+        "campaign_id": {
+            "type": "string",
+            "description": "Campaign ID from cookie or Gravity Form field"
+        },
+        "lead_source": {
+            "type": "string"
+        },
+        "kanaal_c": {
+            "type": "string"
+        },
+        "soort_aanvraag_c": {
+            "type": "string"
+        },
+        "salutation": {
+            "type": "string",
+            "description": "Only used in Diagnose Formulier"
+        },
+        "first_name": {
+            "type": "string"
+        },
+        "last_name": {
+            "type": "string"
+        },
+        "birthdate": {
+            "type": "string",
+            "format": "date",
+            "description": "YYYY-MM-DD (Diagnose Formulier only)"
+        },
+        "email1": {
+            "type": "string",
+            "format": "email"
+        },
+        "phone_mobile": {
+            "type": "string"
+        },
+        "primary_huisnr_c": {
+            "type": "string",
+            "description": "Diagnose Formulier only"
+        },
+        "primary_huisnr_toevoeging_c": {
+            "type": "string",
+            "description": "Diagnose Formulier only"
+        },
+        "primary_address_postalcode": {
+            "type": "string",
+            "description": "Diagnose Formulier only"
+        },
+        "description": {
+            "type": "string",
+            "description": "Free text, sometimes auto-generated"
+        }
+    },
+    "required": [
+        "campaign_id",
+        "lead_source",
+        "kanaal_c",
+        "soort_aanvraag_c",
+        "first_name",
+        "last_name",
+        "email1"
+    ],
+    "additionalProperties": false,
+    "allOf": [
+        {
+            "if": {
+                "required": [
+                    "birthdate"
+                ]
+            },
+            "then": {
+                "required": [
+                    "salutation",
+                    "primary_huisnr_c",
+                    "primary_address_postalcode"
+                ]
+            }
+        }
+    ]
+}

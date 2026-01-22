@@ -1,5 +1,6 @@
 <?php
 
+use Database\Seeders\CampaignSeeder;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
@@ -7,6 +8,7 @@ use Webkul\Lead\Models\Lead;
 beforeEach(function () {
     $this->seed(TestSeeder::class);
     $this->seed(LeadChannelSeeder::class);
+    $this->seed(CampaignSeeder::class);
 
     // API lead creation picks the first user as "current user"
     makeUser();
@@ -30,7 +32,7 @@ test('POST api/leads/privatescan creates a lead', function () {
         'select_verzoek'   => 'Bel mij terug',
         'select_interesse' => 'Preventiescan',
         'personen'         => 2,
-        'campaign_id'      => 'utm-ps-001',
+        'campaign_id'      => '69b238c0-e630-b733-2bb3-4fd85ff554da',
     ];
 
     $res = $this->postJson('/api/leads/privatescan', $payload);

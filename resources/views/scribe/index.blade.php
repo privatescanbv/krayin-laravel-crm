@@ -192,7 +192,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"campaign_id\": \"architecto\",
+    \"campaign_id\": \"69b238c0-e630-b733-2bb3-4fd85ff554da\",
     \"lead_source\": \"Herniapoli.nl\",
     \"kanaal_c\": \"website\",
     \"soort_aanvraag_c\": \"operatie\",
@@ -222,7 +222,7 @@ const headers = {
 };
 
 let body = {
-    "campaign_id": "architecto",
+    "campaign_id": "69b238c0-e630-b733-2bb3-4fd85ff554da",
     "lead_source": "Herniapoli.nl",
     "kanaal_c": "website",
     "soort_aanvraag_c": "operatie",
@@ -352,10 +352,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="campaign_id"                data-endpoint="POSTapi-leads-hernia"
-               value="architecto"
+               value="69b238c0-e630-b733-2bb3-4fd85ff554da"
                data-component="body">
     <br>
-<p>Example: <code>architecto</code></p>
+<p>Marketing campaign external id (UUID). Dit is <strong>niet</strong> de numerieke database id, maar <code>marketing_campaigns.external_id</code> (model: <code>Webkul\Marketing\Models\Campaign</code>). The <code>external_id</code> of an existing record in the marketing_campaigns table. Example: <code>69b238c0-e630-b733-2bb3-4fd85ff554da</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>lead_source</code></b>&nbsp;&nbsp;
@@ -547,7 +547,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"section\": \"architecto\",
     \"select_verzoek\": \"architecto\",
     \"select_interesse\": \"architecto\",
-    \"campaign_id\": \"architecto\"
+    \"campaign_id\": \"69b238c0-e630-b733-2bb3-4fd85ff554da\"
 }"
 </code></pre></div>
 
@@ -577,7 +577,7 @@ let body = {
     "section": "architecto",
     "select_verzoek": "architecto",
     "select_interesse": "architecto",
-    "campaign_id": "architecto"
+    "campaign_id": "69b238c0-e630-b733-2bb3-4fd85ff554da"
 };
 
 fetch(url, {
@@ -876,10 +876,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="campaign_id"                data-endpoint="POSTapi-leads-privatescan"
-               value="architecto"
+               value="69b238c0-e630-b733-2bb3-4fd85ff554da"
                data-component="body">
     <br>
-<p>Example: <code>architecto</code></p>
+<p>Marketing campaign external id (UUID). Dit is <strong>niet</strong> de numerieke database id, maar <code>marketing_campaigns.external_id</code> (model: <code>Webkul\Marketing\Models\Campaign</code>). Wordt vaak gezet vanuit een cookie/UTM id. The <code>external_id</code> of an existing record in the marketing_campaigns table. Example: <code>69b238c0-e630-b733-2bb3-4fd85ff554da</code></p>
         </div>
         </form>
 
@@ -2757,8 +2757,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-01-22 13:29:36\",
-    \"schedule_to\": \"2026-01-22 13:29:36\"
+    \"schedule_from\": \"2026-01-22 15:00:13\",
+    \"schedule_to\": \"2026-01-22 15:00:13\"
 }"
 </code></pre></div>
 
@@ -2779,8 +2779,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-01-22 13:29:36",
-    "schedule_to": "2026-01-22 13:29:36"
+    "schedule_from": "2026-01-22 15:00:13",
+    "schedule_to": "2026-01-22 15:00:13"
 };
 
 fetch(url, {
@@ -2959,10 +2959,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-01-22 13:29:36"
+               value="2026-01-22 15:00:13"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 13:29:36</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 15:00:13</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -2971,10 +2971,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-01-22 13:29:36"
+               value="2026-01-22 15:00:13"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 13:29:36</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 15:00:13</code></p>
         </div>
         </form>
 

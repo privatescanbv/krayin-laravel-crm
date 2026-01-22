@@ -1,5 +1,6 @@
 <?php
 
+use Database\Seeders\CampaignSeeder;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
@@ -7,6 +8,7 @@ use Webkul\Lead\Models\Lead;
 beforeEach(function () {
     $this->seed(TestSeeder::class);
     $this->seed(LeadChannelSeeder::class);
+    $this->seed(CampaignSeeder::class);
 
     // API lead creation picks the first user as "current user"
     makeUser();
@@ -17,7 +19,7 @@ beforeEach(function () {
 
 test('POST api/leads/hernia creates a lead', function () {
     $payload = [
-        'campaign_id'                 => 'utm-123',
+        'campaign_id'                 => '69b238c0-e630-b733-2bb3-4fd85ff554da',
         'lead_source'                 => 'Herniapoli.nl',
         'kanaal_c'                    => 'website',
         'soort_aanvraag_c'            => 'operatie',
@@ -52,7 +54,7 @@ test('POST api/leads/hernia creates a lead', function () {
 
 test('POST api/leads/hernia rejects unknown properties (additionalProperties=false)', function () {
     $payload = [
-        'campaign_id'      => 'utm-123',
+        'campaign_id'      => '69b238c0-e630-b733-2bb3-4fd85ff554da',
         'lead_source'      => 'Herniapoli.nl',
         'kanaal_c'         => 'website',
         'soort_aanvraag_c' => 'operatie',

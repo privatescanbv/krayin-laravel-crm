@@ -435,6 +435,16 @@ Breadcrumbs::for('settings.marketing.campaigns', function (BreadcrumbTrail $trai
     $trail->push(trans('admin::app.settings.marketing.campaigns.index.title'), route('admin.settings.marketing.campaigns.index'));
 });
 
+Breadcrumbs::for('settings.marketing.campaigns.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.marketing.campaigns');
+    $trail->push('', route('admin.settings.marketing.campaigns.create'));
+});
+
+Breadcrumbs::for('settings.marketing.campaigns.edit', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.marketing.campaigns');
+    $trail->push('', route('admin.settings.marketing.campaigns.create'));
+});
+
 // Settings > Workflows
 Breadcrumbs::for('settings.workflows', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

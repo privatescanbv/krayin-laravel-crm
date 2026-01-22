@@ -5,7 +5,7 @@
     "properties": {
         "campaign_id": {
             "type": "string",
-            "description": "Campaign ID from cookie or Gravity Form field"
+            "description": "Marketing campaign external id (UUID). This is marketing_campaigns.external_id (not the numeric database id)."
         },
         "lead_source": {
             "type": "string"

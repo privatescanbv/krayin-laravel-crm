@@ -53,7 +53,8 @@ class PrivatescanCreateLeadRequest extends FormRequest
             'select_verzoek'   => ['nullable', 'string'],
             'select_interesse' => ['nullable', 'string'],
             'personen'         => ['nullable'],
-            'campaign_id'      => ['nullable', 'string'],
+            // NOTE: despite the name, this is the external_id of a Marketing Campaign (marketing_campaigns.external_id)
+            'campaign_id'      => ['nullable', 'string', 'exists:marketing_campaigns,external_id'],
         ];
     }
 
@@ -82,6 +83,10 @@ class PrivatescanCreateLeadRequest extends FormRequest
             'phone' => [
                 'description' => 'Telefoonnummer. Wordt genormaliseerd naar E.164 (bv 0612345678 → +31612345678) vóór validatie.',
                 'example'     => '0611111111',
+            ],
+            'campaign_id' => [
+                'description' => 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\\Marketing\\Models\\Campaign`). Wordt vaak gezet vanuit een cookie/UTM id.',
+                'example'     => '69b238c0-e630-b733-2bb3-4fd85ff554da',
             ],
         ];
     }

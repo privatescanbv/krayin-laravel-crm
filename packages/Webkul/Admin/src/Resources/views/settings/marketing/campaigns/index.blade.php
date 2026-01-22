@@ -31,7 +31,7 @@
                         <button
                             type="button"
                             class="primary-button"
-                            @click="$refs.marketingCampaigns.actionType = 'create';$refs.marketingCampaigns.toggleModal()"
+                            @click="$refs.marketingCampaigns.openCreateModal()"
                         >
                             @lang('admin::app.settings.marketing.campaigns.index.create-btn')
                         </button>
@@ -209,6 +209,7 @@
                     <x-admin::form
                         v-slot="{ meta, errors, handleSubmit }"
                         as="div"
+                        ref="campaignVeeForm"
                     >
                         <form
                             @submit="handleSubmit($event, createOrUpdate)"
@@ -238,7 +239,6 @@
                                     <x-admin::form.control-group.control
                                         type="hidden"
                                         name="id"
-                                        ::value="campaign.id"
                                     />
 
                                     <x-adminc::components.field
@@ -247,7 +247,6 @@
                                         id="name"
                                         :label="trans('admin::app.settings.marketing.campaigns.index.create.name')"
                                         rules="required"
-                                        ::value="campaign.name"
                                     />
 
                                     <!-- Subject -->
@@ -257,7 +256,6 @@
                                         id="subject"
                                         :label="trans('admin::app.settings.marketing.campaigns.index.create.subject')"
                                         rules="required"
-                                        ::value="campaign.subject"
                                     />
 
                                     <!-- Event -->
@@ -267,10 +265,13 @@
                                             class="cursor-pointer"
                                             name="marketing_event_id"
                                             id="marketing_event_id"
-                                            rules="required"
                                             ::value="campaign.marketing_event_id"
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.event')"
                                         >
+                                            <option value="">
+                                                --
+                                            </option>
+
                                             <option
                                                 v-for="event in events"
                                                 v-text="event.name"
@@ -278,7 +279,6 @@
                                             ></option>
                                         </x-admin::form.control-group.control>
                                         <x-admin::form.control-group.label
-                                            class="required"
                                             for="marketing_event_id"
                                         >
                                             @lang('admin::app.settings.marketing.campaigns.index.create.event')
@@ -297,10 +297,13 @@
                                             class="cursor-pointer"
                                             name="marketing_template_id"
                                             id="marketing_template_id"
-                                            rules="required"
                                             ::value="campaign.marketing_template_id"
                                             :label="trans('admin::app.settings.marketing.campaigns.index.create.email-template')"
                                         >
+                                            <option value="">
+                                                --
+                                            </option>
+
                                             <option
                                                 v-for="template in emailTemplates"
                                                 v-text="template.name"
@@ -308,7 +311,6 @@
                                             ></option>
                                         </x-admin::form.control-group.control>
                                         <x-admin::form.control-group.label
-                                            class="required"
                                             for="marketing_template_id"
                                         >
                                             @lang('admin::app.settings.marketing.campaigns.index.create.email-template')
@@ -470,11 +472,31 @@
                                 this.$refs.datagrid.get();
 
                                 this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                                resetForm();
+                                this.campaign = {};
                             })
                             .catch(error => {
                                 setErrors(error.response.data?.errors);
                             })
                             .finally(() => this.isStoring = false);
+                    },
+
+                    openCreateModal() {
+                        this.actionType = 'create';
+                        this.campaign = {};
+
+                        // Ensure VeeValidate form fields are cleared (otherwise previous edit values can stick around).
+                        this.$refs.campaignVeeForm?.setValues({
+                            id: '',
+                            name: '',
+                            subject: '',
+                            marketing_event_id: '',
+                            marketing_template_id: '',
+                            status: 0,
+                        });
+
+                        this.toggleModal();
                     },
 
                     /**
@@ -486,6 +508,9 @@
                         this.$axios.get(`{{ route('admin.settings.marketing.campaigns.edit', '') }}/${record.id}`)
                             .then(response => {
                                 this.campaign = response.data.data;
+
+                                // VeeValidate fields are driven by form state; binding :value on inputs won't update them.
+                                this.$refs.campaignVeeForm?.setValues(response.data.data);
 
                                 this.toggleModal();
                             })

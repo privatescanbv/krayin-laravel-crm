@@ -59,7 +59,7 @@
         },
         "campaign_id": {
             "type": "string",
-            "description": "Set from socialLead cookie utm_id"
+            "description": "Marketing campaign external id (UUID). This is marketing_campaigns.external_id (not the numeric database id). Often set from a cookie/UTM id."
         }
     },
     "required": [

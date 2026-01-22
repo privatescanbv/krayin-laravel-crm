@@ -15,7 +15,8 @@ class HerniaCreateLeadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'campaign_id'      => ['required', 'string'],
+            // NOTE: despite the name, this is the external_id of a Marketing Campaign (marketing_campaigns.external_id)
+            'campaign_id'      => ['required', 'string', 'exists:marketing_campaigns,external_id'],
             'lead_source'      => ['required', 'string'],
             'kanaal_c'         => ['required', 'string'],
             'soort_aanvraag_c' => ['required', 'string'],
@@ -41,6 +42,10 @@ class HerniaCreateLeadRequest extends FormRequest
     public function bodyParameters(): array
     {
         return [
+            'campaign_id' => [
+                'description' => 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\\Marketing\\Models\\Campaign`).',
+                'example'     => '69b238c0-e630-b733-2bb3-4fd85ff554da',
+            ],
             'lead_source' => [
                 'description' => 'Broncode (string) die gemapt wordt naar lead_source_id. Zelfde mapping als in `InboundLeadPayloadMapper::mapLeadSourceId()`. Bij geen match: default naar "Anders" (lead_source_id=32).',
                 'example'     => 'Herniapoli.nl',

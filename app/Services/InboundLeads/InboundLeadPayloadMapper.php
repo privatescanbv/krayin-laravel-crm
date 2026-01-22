@@ -92,7 +92,7 @@ class InboundLeadPayloadMapper
         $append('Verzoek', $payload['select_verzoek'] ?? null);
         $append('Interesse', $payload['select_interesse'] ?? null);
         $append('Personen', $payload['personen'] ?? null);
-        $append('Campaign ID', $payload['campaign_id'] ?? null);
+        $append('Campaign external_id', $payload['campaign_id'] ?? null);
 
         if (empty($parts)) {
             return null;

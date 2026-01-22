@@ -17,7 +17,7 @@ use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
 use Webkul\Admin\Http\Controllers\Settings\EmailTemplateController;
 use Webkul\Admin\Http\Controllers\Settings\GroupController;
 use Webkul\Admin\Http\Controllers\Settings\LocationController;
-use Webkul\Admin\Http\Controllers\Settings\Marketing\CampaignsController;
+use App\Http\Controllers\Admin\Settings\MarketingCampaignController;
 use Webkul\Admin\Http\Controllers\Settings\Marketing\EventController;
 use Webkul\Admin\Http\Controllers\Settings\PipelineController;
 use Webkul\Admin\Http\Controllers\Settings\RoleController;
@@ -414,18 +414,14 @@ Route::prefix('settings')->group(function () {
             Route::post('mass-destroy', 'massDestroy')->name('admin.settings.marketing.events.mass_delete');
         });
 
-        Route::controller(CampaignsController::class)->prefix('campaigns')->group(function () {
+        Route::controller(MarketingCampaignController::class)->prefix('campaigns')->group(function () {
             Route::get('', 'index')->name('admin.settings.marketing.campaigns.index');
 
-            Route::get('events', 'getEvents')->name('admin.settings.marketing.campaigns.events');
+            Route::get('create', 'create')->name('admin.settings.marketing.campaigns.create');
+            Route::post('create', 'store')->name('admin.settings.marketing.campaigns.store');
 
-            Route::get('email-templates', 'getEmailTemplates')->name('admin.settings.marketing.campaigns.email-templates');
-
-            Route::post('', 'store')->name('admin.settings.marketing.campaigns.store');
-
-            Route::get('{id}', 'show')->name('admin.settings.marketing.campaigns.edit');
-
-            Route::put('{id}', 'update')->name('admin.settings.marketing.campaigns.update');
+            Route::get('edit/{id}', 'edit')->name('admin.settings.marketing.campaigns.edit');
+            Route::put('edit/{id}', 'update')->name('admin.settings.marketing.campaigns.update');
 
             Route::delete('{id}', 'destroy')->name('admin.settings.marketing.campaigns.delete');
 

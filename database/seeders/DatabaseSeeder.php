@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ProductGroupSeeder::class);
         $this->call(ResourceSeeder::class);
         $this->call(ProductSeeder::class);
+        $this->call(CampaignSeeder::class);
         $this->call(PartnerProductSeeder::class);
         $this->call(WorkflowSeeder::class);
     }

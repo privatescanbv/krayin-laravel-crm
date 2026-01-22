@@ -22,11 +22,23 @@ class Campaign extends Model implements CampaignContract
      */
     protected $fillable = [
         'name',
+        'external_id',
         'subject',
         'status',
+        'type',
+        'mail_to',
         'marketing_template_id',
         'marketing_event_id',
         'spooling',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'external_id' => 'string',
     ];
 
     /**

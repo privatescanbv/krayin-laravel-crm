@@ -26,9 +26,9 @@
                 this.$nextTick(() => {
                     this.syncWithKanban();
                 });
-
                 // CLICK LISTENER toevoegen aan checkbox
-                const $inputWinLost = document.querySelector('input[name="winlost"]');
+                const $inputWinLost = [...document.querySelectorAll('input[name="winlost"]')]
+                    .find(el => el.type !== 'hidden');
                 if ($inputWinLost) {
                     $inputWinLost.addEventListener('click', () => {
                         this.toggle();

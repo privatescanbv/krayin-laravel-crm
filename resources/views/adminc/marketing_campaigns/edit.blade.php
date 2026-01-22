@@ -72,6 +72,14 @@
                 </x-adminc::components.field>
 
                 <x-adminc::components.field
+                    type="text"
+                    name="external_id"
+                    value="{{ old('external_id', $campaign->external_id) }}"
+                    rules="min:1|max:255"
+                    label="Extern ID"
+                    placeholder="Extern ID"
+                />
+                <x-adminc::components.field
                     type="switch"
                     name="status"
                     value="1"

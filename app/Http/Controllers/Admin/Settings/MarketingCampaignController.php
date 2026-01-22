@@ -41,13 +41,7 @@ class MarketingCampaignController extends Controller
 
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $validatedData = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'subject'               => 'required|string|max:255',
-            'marketing_template_id' => 'nullable|exists:email_templates,id',
-            'marketing_event_id'    => 'nullable|exists:marketing_events,id',
-            'status'                => 'sometimes|boolean',
-        ]);
+        $validatedData = $request->validate($this->getValidationRules());
 
         // HTML <select> posts empty string for "no selection"; normalize to NULL for FK columns.
         foreach (['marketing_template_id', 'marketing_event_id'] as $key) {
@@ -91,13 +85,7 @@ class MarketingCampaignController extends Controller
 
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
-        $validatedData = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'subject'               => 'required|string|max:255',
-            'marketing_template_id' => 'nullable|exists:email_templates,id',
-            'marketing_event_id'    => 'nullable|exists:marketing_events,id',
-            'status'                => 'sometimes|boolean',
-        ]);
+        $validatedData = $request->validate($this->getValidationRules());
 
         // HTML <select> posts empty string for "no selection"; normalize to NULL for FK columns.
         foreach (['marketing_template_id', 'marketing_event_id'] as $key) {
@@ -162,5 +150,19 @@ class MarketingCampaignController extends Controller
         return response()->json([
             'message' => trans('admin::app.settings.marketing.campaigns.index.mass-delete-success'),
         ]);
+    }
+
+
+
+    private function getValidationRules(): array
+    {
+        return [
+            'name'                  => 'required|string|max:255',
+            'subject'               => 'required|string|max:255',
+            'marketing_template_id' => 'nullable|exists:email_templates,id',
+            'marketing_event_id'    => 'nullable|exists:marketing_events,id',
+            'external_id'          => 'nullable|string|max:255',
+            'status'                => 'sometimes|boolean',
+        ];
     }
 }

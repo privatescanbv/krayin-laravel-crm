@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-    
+
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-    
+
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -171,7 +171,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="endpoints">Endpoints</h1>
 
-    
+
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -247,7 +247,20 @@ fetch(url, {
 </span>
 
 <span id="example-responses-POSTapi-leads-hernia">
-</span>
+            <blockquote>
+            <p>Example response (201):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Lead created successfully.&quot;,
+    &quot;lead_id&quot;: 123,
+    &quot;data&quot;: {
+        &quot;id&quot;: 123
+    }
+}</code>
+ </pre>
+    </span>
 <span id="execution-results-POSTapi-leads-hernia" hidden>
     <blockquote>Received response<span
                 id="execution-response-status-POSTapi-leads-hernia"></span>:
@@ -576,7 +589,20 @@ fetch(url, {
 </span>
 
 <span id="example-responses-POSTapi-leads-privatescan">
-</span>
+            <blockquote>
+            <p>Example response (201):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Lead created successfully.&quot;,
+    &quot;lead_id&quot;: 123,
+    &quot;data&quot;: {
+        &quot;id&quot;: 123
+    }
+}</code>
+ </pre>
+    </span>
 <span id="execution-results-POSTapi-leads-privatescan" hidden>
     <blockquote>Received response<span
                 id="execution-response-status-POSTapi-leads-privatescan"></span>:
@@ -897,7 +923,20 @@ fetch(url, {
 </span>
 
 <span id="example-responses-POSTapi-leads">
-</span>
+            <blockquote>
+            <p>Example response (201):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Lead created successfully.&quot;,
+    &quot;lead_id&quot;: 123,
+    &quot;data&quot;: {
+        &quot;id&quot;: 123
+    }
+}</code>
+ </pre>
+    </span>
 <span id="execution-results-POSTapi-leads" hidden>
     <blockquote>Received response<span
                 id="execution-response-status-POSTapi-leads"></span>:
@@ -1045,7 +1084,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 52
+x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -2065,7 +2104,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 51
+x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -2221,7 +2260,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 50
+x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -2588,7 +2627,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 49
+x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -2718,8 +2757,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-01-22 11:59:58\",
-    \"schedule_to\": \"2026-01-22 11:59:58\"
+    \"schedule_from\": \"2026-01-22 13:29:36\",
+    \"schedule_to\": \"2026-01-22 13:29:36\"
 }"
 </code></pre></div>
 
@@ -2740,8 +2779,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-01-22 11:59:58",
-    "schedule_to": "2026-01-22 11:59:58"
+    "schedule_from": "2026-01-22 13:29:36",
+    "schedule_to": "2026-01-22 13:29:36"
 };
 
 fetch(url, {
@@ -2920,10 +2959,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-01-22 11:59:58"
+               value="2026-01-22 13:29:36"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 11:59:58</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 13:29:36</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -2932,10 +2971,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-01-22 11:59:58"
+               value="2026-01-22 13:29:36"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 11:59:58</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-22 13:29:36</code></p>
         </div>
         </form>
 
@@ -3320,7 +3359,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 48
+x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -3476,7 +3515,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 47
+x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -3930,7 +3969,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 46
+x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -4037,9 +4076,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
-            
 
-        
+
+
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

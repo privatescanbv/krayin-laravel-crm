@@ -65,23 +65,23 @@ class PrivatescanCreateLeadRequest extends FormRequest
         return [
             'lead_source' => [
                 'description' => 'Broncode (string) die gemapt wordt naar lead_source_id. Ondersteunde waarden o.a.: bodyscannl, privatescannl, mriscannl, ccsvionlinenl, ccsvionlinecom, bodyscan.nl, privatescan.nl, mri-scan.nl, ccsvi-online.nl, ccsvi-online.com, google zoeken, adwords, krant telegraaf, krant spits, krant regionaal, krant overige dagbladen, krant redactioneel, magazine dito, magazine humo belgie, dokterdokter.nl, vrouw.nl, dito-magazine.nl, groupdeal.nl, marktplaats, zorgplanet.nl, linkpartner, youtube, linkedin, twitter, facebook, rtl business class, nieuwsbrief, bestaande klant, zakenrelatie, vrienden, familie, kennissen, collega, anders, wegener webshop, herniapoli.nl. Bij geen match: default naar "Anders" (lead_source_id=32).',
-                'example' => 'privatescannl',
+                'example'     => 'privatescannl',
             ],
             'kanaal_c' => [
                 'description' => 'Kanaal (string) die gemapt wordt naar lead_channel_id. Ondersteunde waarden: telefoon, website, email (of e-mail), tel-en-tel, agenten, partners, social media (of socialmedia), webshop, campagne. Bij geen match: default naar Website (lead_channel_id=2).',
-                'example' => 'website',
+                'example'     => 'website',
             ],
             'soort_aanvraag_c' => [
                 'description' => 'Type aanvraag. Voor deze endpoint alleen "preventie" (wordt lead_type_id=1). Bij geen match: default naar Overig (lead_type_id=4).',
-                'example' => 'preventie',
+                'example'     => 'preventie',
             ],
             'salutation' => [
                 'description' => 'Enum-achtige waarde. Toegestane waarden: "Mr.", "Mrs." of false. Mapping: "Mr." → "Dhr.", "Mrs." → "Mevr.". Bij false/null: geen aanspreekvorm (salutation wordt leeg).',
-                'example' => 'Mr.',
+                'example'     => 'Mr.',
             ],
             'phone' => [
                 'description' => 'Telefoonnummer. Wordt genormaliseerd naar E.164 (bv 0612345678 → +31612345678) vóór validatie.',
-                'example' => '0611111111',
+                'example'     => '0611111111',
             ],
         ];
     }

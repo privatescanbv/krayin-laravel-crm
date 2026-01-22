@@ -37,10 +37,11 @@ test('POST api/leads/privatescan creates a lead', function () {
 
     $res->assertStatus(201)
         ->assertJsonPath('message', 'Lead created successfully.')
-        ->assertJsonStructure(['data' => ['id']]);
+        ->assertJsonStructure(['lead_id', 'data' => ['id']]);
 
     $leadId = $res->json('data.id');
     expect($leadId)->not->toBeNull();
+    expect($res->json('lead_id'))->toBe($leadId);
 
     $lead = Lead::find($leadId);
     expect($lead)->not->toBeNull()

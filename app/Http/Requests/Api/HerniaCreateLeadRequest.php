@@ -43,31 +43,31 @@ class HerniaCreateLeadRequest extends FormRequest
         return [
             'lead_source' => [
                 'description' => 'Broncode (string) die gemapt wordt naar lead_source_id. Zelfde mapping als in `InboundLeadPayloadMapper::mapLeadSourceId()`. Bij geen match: default naar "Anders" (lead_source_id=32).',
-                'example' => 'Herniapoli.nl',
+                'example'     => 'Herniapoli.nl',
             ],
             'kanaal_c' => [
                 'description' => 'Kanaal (string) die gemapt wordt naar lead_channel_id. Ondersteunde waarden: telefoon, website, email (of e-mail), tel-en-tel, agenten, partners, social media (of socialmedia), webshop, campagne. Bij geen match: default naar Website (lead_channel_id=2).',
-                'example' => 'website',
+                'example'     => 'website',
             ],
             'soort_aanvraag_c' => [
                 'description' => 'Type aanvraag (string) die gemapt wordt naar lead_type_id. Ondersteunde waarden: preventie (1), gericht (2), operatie (3), overig (4). Bij geen match: default naar Overig (lead_type_id=4).',
-                'example' => 'operatie',
+                'example'     => 'operatie',
             ],
             'salutation' => [
                 'description' => 'Enum-achtige waarde. Toegestane waarden: "Dhr.", "Mevr." (ook "Mr."/"Mrs." wordt geaccepteerd en omgezet). Bij geen match: validatie faalt (422) omdat de lead-validatie alleen "Dhr."/"Mevr." accepteert.',
-                'example' => 'Dhr.',
+                'example'     => 'Dhr.',
             ],
             'phone_mobile' => [
                 'description' => 'Telefoonnummer. Wordt genormaliseerd naar E.164 (bv 0612345678 → +31612345678) vóór validatie.',
-                'example' => '0612345678',
+                'example'     => '0612345678',
             ],
             'primary_huisnr_c' => [
                 'description' => 'Huisnummer (optioneel).',
-                'example' => '12',
+                'example'     => '12',
             ],
             'primary_address_postalcode' => [
                 'description' => 'Postcode (optioneel).',
-                'example' => '1234AB',
+                'example'     => '1234AB',
             ],
         ];
     }

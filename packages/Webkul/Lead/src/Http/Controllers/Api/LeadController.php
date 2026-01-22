@@ -50,6 +50,8 @@ class LeadController extends Controller
 
     /**
      * Store a newly created lead in storage.
+     *
+     * @response 201 {"message":"Lead created successfully.","lead_id":123,"data":{"id":123}}
      */
     public function store(LeadForm $request): JsonResponse
     {
@@ -58,6 +60,8 @@ class LeadController extends Controller
 
     /**
      * Create a Hernia lead from the inbound (Gravity Forms) payload schema.
+     *
+     * @response 201 {"message":"Lead created successfully.","lead_id":123,"data":{"id":123}}
      */
     public function storeHernia(HerniaCreateLeadRequest $inbound): JsonResponse
     {
@@ -72,6 +76,8 @@ class LeadController extends Controller
 
     /**
      * Create a Privatescan lead from the inbound (Web-to-person) payload schema.
+     *
+     * @response 201 {"message":"Lead created successfully.","lead_id":123,"data":{"id":123}}
      */
     public function storePrivatescan(PrivatescanCreateLeadRequest $inbound): JsonResponse
     {
@@ -197,6 +203,8 @@ class LeadController extends Controller
 
         return response()->json([
             'message' => 'Lead created successfully.',
+            // Keep original structure for backwards compatibility, but also expose lead_id as top-level field.
+            'lead_id' => $lead->id,
             'data' => ['id' => $lead->id],
         ], 201);
     }

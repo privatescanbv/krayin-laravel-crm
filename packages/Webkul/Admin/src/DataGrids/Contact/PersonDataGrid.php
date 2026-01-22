@@ -49,6 +49,42 @@ class PersonDataGrid extends DataGrid
             $queryBuilder->whereIn('persons.user_id', $userIds);
         }
 
+        /**
+         * Soft deletes: hide deleted persons by default.
+         *
+         * We handle the filter manually (and remove it from request filters) because
+         * the generic filter engine only supports simple comparisons, not NULL checks.
+         */
+        $requestedFilters = request()->input('filters', []);
+
+        $trashedValues = $requestedFilters['trashed'] ?? null;
+        $trashedValues = is_array($trashedValues) ? $trashedValues : [$trashedValues];
+        $trashedValues = array_values(array_filter($trashedValues, static fn ($v) => $v !== null && $v !== ''));
+
+        // Default: only non-deleted, unless user explicitly selects otherwise.
+        if (! array_key_exists('trashed', $requestedFilters) || empty($trashedValues) || in_array('without', $trashedValues, true)) {
+            $queryBuilder->whereNull('persons.deleted_at');
+        } elseif (in_array('only', $trashedValues, true)) {
+            $queryBuilder->whereNotNull('persons.deleted_at');
+        } elseif (in_array('with', $trashedValues, true)) {
+            // include both deleted + non-deleted (no constraint)
+        } else {
+            // Unknown value: keep safe default behavior.
+            $queryBuilder->whereNull('persons.deleted_at');
+        }
+
+        // Remove this custom filter so the datagrid core won't try to apply it as an equality filter.
+        unset($requestedFilters['trashed']);
+
+        // Update request with cleaned filters (avoid validation errors when filters becomes empty).
+        $originalFilters = request()->input('filters');
+        if (! empty($requestedFilters)) {
+            request()->merge(['filters' => $requestedFilters]);
+        } elseif ($originalFilters !== null) {
+            request()->request->remove('filters');
+            request()->query->remove('filters');
+        }
+
         $this->addFilter('id', 'persons.id');
         $this->addFilter('person_name', DB::raw("CONCAT_WS(' ',
             NULLIF(persons.first_name, ''),
@@ -81,6 +117,22 @@ class PersonDataGrid extends DataGrid
             'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'              => 'trashed',
+            'label'              => 'Verwijderd',
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => false,
+            'filterable'         => true,
+            'visibility'         => false, // filter-only
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'Niet verwijderd', 'value' => 'without'],
+                ['label' => 'Inclusief verwijderd', 'value' => 'with'],
+                ['label' => 'Alleen verwijderd', 'value' => 'only'],
+            ],
         ]);
 
         $this->addColumn([

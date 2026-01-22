@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,7 +35,7 @@ use App\Services\LeadStatusTransitionValidator;
 
 class Lead extends Model implements LeadContract
 {
-    use HasDefaultContactInfo, HasFactory, LogsActivity;
+    use HasDefaultContactInfo, HasFactory, LogsActivity, SoftDeletes;
 
     protected $casts = [
         'closed_at'           => 'datetime',

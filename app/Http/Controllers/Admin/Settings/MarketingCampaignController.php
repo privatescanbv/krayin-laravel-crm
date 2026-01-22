@@ -152,8 +152,6 @@ class MarketingCampaignController extends Controller
         ]);
     }
 
-
-
     private function getValidationRules(): array
     {
         return [
@@ -161,7 +159,7 @@ class MarketingCampaignController extends Controller
             'subject'               => 'required|string|max:255',
             'marketing_template_id' => 'nullable|exists:email_templates,id',
             'marketing_event_id'    => 'nullable|exists:marketing_events,id',
-            'external_id'          => 'nullable|string|max:255',
+            'external_id'           => 'nullable|string|max:255',
             'status'                => 'sometimes|boolean',
         ];
     }

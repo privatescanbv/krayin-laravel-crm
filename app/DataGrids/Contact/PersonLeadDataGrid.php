@@ -11,6 +11,8 @@ class PersonLeadDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $personId = (int) (request('person_id') ?: request()->route('id'));
+        $statusBucket = request('status_bucket');
+        $onlyShowStageInProgress = $statusBucket === 'open';
 
         $queryBuilder = DB::table('leads')
             ->addSelect(
@@ -27,21 +29,18 @@ class PersonLeadDataGrid extends DataGrid
             ->leftJoin('lead_pipeline_stages as lead_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_stages.id')
             ->leftJoin('salesleads', 'salesleads.lead_id', '=', 'leads.id')
             ->leftJoin('lead_pipeline_stages as sales_stages', 'salesleads.pipeline_stage_id', '=', 'sales_stages.id')
-            ->where('lead_persons.person_id', $personId)
-            ->Orwhere('leads.contact_person_id', $personId)
-            ->groupBy('leads.id', 'salesleads.id', 'lead_stages.id', 'sales_stages.id');
+            ->where(function ($q) use ($personId) {
+                $q->where('lead_persons.person_id', $personId)
+                    ->orWhere('leads.contact_person_id', $personId);
+            })
+            ->whereNull('leads.deleted_at')
+            ->distinct();
 
-        /**
-         * Optional bucket filter:
-         * - open: stage not won and not lost
-         * - completed: stage won or lost
-         */
-        $statusBucket = request('status_bucket');
-        if ($statusBucket === 'open') {
+        if ($onlyShowStageInProgress) {
             $queryBuilder
                 ->whereRaw('COALESCE(sales_stages.is_won, lead_stages.is_won, 0) = 0')
                 ->whereRaw('COALESCE(sales_stages.is_lost, lead_stages.is_lost, 0) = 0');
-        } elseif ($statusBucket === 'completed') {
+        } else {
             $queryBuilder->whereRaw(
                 '(COALESCE(sales_stages.is_won, lead_stages.is_won, 0) = 1 OR COALESCE(sales_stages.is_lost, lead_stages.is_lost, 0) = 1)'
             );

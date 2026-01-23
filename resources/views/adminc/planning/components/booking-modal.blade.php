@@ -11,7 +11,7 @@
                     type="select"
                     name="order_item_id"
                     label="Orderitem (Nog niet ingeplande items staan bovenaan)"
-                    v-model.number="form.order_item_id"
+                    v-model="form.order_item_id"
                     class="w-full"
                 >
                     <option value="">Selecteer orderitem</option>

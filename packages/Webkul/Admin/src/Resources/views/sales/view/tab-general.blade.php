@@ -11,8 +11,9 @@
             <div class="direction-row flex items-center gap-4">
                 @if (bouncer()->hasPermission('sales-leads.edit'))
                     <a href="{{ route('admin.sales-leads.edit', $sales->id) }}"
-                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text"><
-                            class="icon-edit text-base"><span>Bewerk sales</span></a>
+                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                        <span class="icon-edit text-base"></span><span>Bewerk sales</span>
+                    </a>
                 @endif
 
                 @if (bouncer()->hasPermission('sales-leads.delete'))

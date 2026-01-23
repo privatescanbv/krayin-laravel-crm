@@ -10,8 +10,9 @@
             <div class="direction-row flex items-center gap-4">
                 @if (bouncer()->hasPermission('clinics.edit'))
                     <a href="{{ route('admin.clinics.edit', $clinic->id) }}"
-                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text"><span
-                            class="icon-edit text-base"></span><span>Bewerk kliniek</span></></a>
+                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                        <span class="icon-edit text-base"></span><span>Bewerk kliniek</span>
+                    </a>
                 @endif
 
                 @if (bouncer()->hasPermission('clinics.delete'))

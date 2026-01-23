@@ -28,6 +28,7 @@ class UserSeeder extends Seeder
             'wout@privatescan.nl' => '8EEZ5jc%e&Ad',
             'lars@privatescan.nl' => '8A4Z5jc%d3Ad',
             'frank@privatescan.nl' => '8A115dc@d3Ad',
+            'nihad@nime.dev' => '8A144dc@d1Ab',
         ];
     }
 
@@ -179,6 +180,18 @@ class UserSeeder extends Seeder
                 'group_id' => null,
                 'signature' => $this->signatureTemplate('Rob', 'Schwankhuizen', 'robschwankhuizen@gmail.com'),
             ],
+            [
+                'first_name' => 'Nihad',
+                'last_name' => 'Mehmedovic',
+                'email' => 'nihad@nime.dev',
+                'password' => $passwords['nihad@nime.dev'],
+                'status' => 1,
+                'role_id' => 1,
+                'view_permission' => 'global',
+                'group_id' => null,
+                'signature' => $this->signatureTemplate('Nihad', 'Mehmedovic', 'nihad@nime.dev'),
+            ],
+
         ];
 
         // Create users and assign to groups

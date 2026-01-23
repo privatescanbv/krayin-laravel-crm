@@ -168,6 +168,17 @@ class UserSeeder extends Seeder
                 'group_id' => null,
                 'signature' => $this->signatureTemplate('Frank', 'Hefti', 'frank@privatescan.nl'),
             ],
+            [
+                'first_name' => 'Rob',
+                'last_name' => 'Schwankhuizen',
+                'email' => 'robschwankhuizen@gmail.com',
+                'password' => $passwords['robschwankhuizen@gmail.com'],
+                'status' => 1,
+                'role_id' => 1,
+                'view_permission' => 'global',
+                'group_id' => null,
+                'signature' => $this->signatureTemplate('Rob', 'Schwankhuizen', 'robschwankhuizen@gmail.com'),
+            ],
         ];
 
         // Create users and assign to groups

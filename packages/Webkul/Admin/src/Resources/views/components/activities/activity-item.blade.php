@@ -1,3 +1,19 @@
+@php
+    use App\Enums\ActivityType;
+
+    $canBeMarkedAsDoneTypes = array_map(
+        fn (ActivityType $type) => $type->value,
+        ActivityType::canBeMarkedAsDone()
+    );
+
+    // Vue template sits inside an HTML attribute; we must avoid injecting double quotes.
+    // Build a JS array literal with single-quoted strings: ['call','task',...]
+    $canBeMarkedAsDoneTypesJs = '[' . implode(',', array_map(
+        fn (string $value) => "'" . str_replace("'", "\\'", $value) . "'",
+        $canBeMarkedAsDoneTypes
+    )) . ']';
+@endphp
+
 <div class="flex gap-2" v-for="(activity, index) in filteredActivities" :key="activity.id">
     {!! view_render_event('admin.components.activities.content.activity.item.icon.before') !!}
 
@@ -217,7 +233,7 @@
                     <template v-if="activity.type != 'email'">
                         @if (bouncer()->hasPermission('activities.edit'))
                             <x-admin::dropdown.menu.item
-                                v-if="! activity.is_done && ['call', 'meeting', 'task'].includes(activity.type)"
+                                v-if="! activity.is_done && {!! $canBeMarkedAsDoneTypesJs !!}.includes(activity.type)"
                                 @click="markAsDone(activity)">
                                 <div class="flex items-center gap-2">
                                     <span class="icon-tick text-2xl"></span>
@@ -226,11 +242,10 @@
                                 </div>
                             </x-admin::dropdown.menu.item>
 
-                            <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'task'].includes(activity.type)">
+                            <x-admin::dropdown.menu.item>
                                 <a class="flex items-center gap-2"
                                     :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity
-                                        .id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : '')"
-                                    target="_blank">
+                                        .id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : '')">
                                     <span class="icon-edit text-2xl"></span>
 
                                     @lang('admin::app.components.activities.index.edit')

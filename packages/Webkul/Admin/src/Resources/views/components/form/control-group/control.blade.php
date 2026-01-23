@@ -141,7 +141,6 @@
                     v-bind="field"
                     :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
                     {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
-                    autocomplete="off"
                     placeholder="dd-mm-yyyy"
                 />
             </x-admin::flat-picker.date>
@@ -161,7 +160,6 @@
                     v-bind="field"
                     :class="[errors.length ? '!border-red-600 focus:!border-red-600 focus:!ring-red-600' : '']"
                     {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => '']) }}
-                    autocomplete="off"
                 >
             </x-admin::flat-picker.datetime>
         </v-field>

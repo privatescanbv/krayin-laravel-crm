@@ -192,7 +192,6 @@
             label="Patiëntportaal wachtwoord"
             value=""
             placeholder="Laat leeg om niet te wijzigen"
-            autocomplete="new-password"
             :readonly="!$mayEditPersonFields"
         />
 

@@ -148,7 +148,7 @@
                     <div v-if="lead && lead.id && (lead.first_name || lead.last_name || lead.emails || lead.phones) && selectedPersons.length === 0" class="mt-4 p-3 border rounded bg-status-on_hold-bg border-status-on_hold-border">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="font-semibold text-sm text-status-on_hold-text">Contact aanmaken van lead gegevens</div>
+                                <div class="font-semibold text-sm text-status-on_hold-text">Persoon aanmaken van lead gegevens</div>
                                 <div class="text-sm text-yellow-700">
                                     <span v-if="lead.first_name || lead.last_name">
                                         {{ (lead.first_name || '') + ' ' + (lead.last_name || '') }}

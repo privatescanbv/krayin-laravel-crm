@@ -9,11 +9,13 @@
     'labelClass' => '',
     'focus' => false,
     'focus' => null,
+    'autocomplete' => false,
+    'errorName' => null,
 ])
 
 @php
     // Bepaal control name (voor errors) en label tekst
-    $controlName = $name ?: \Illuminate\Support\Str::slug($label, '_');
+    $controlName = $errorName ?: ($name ?: \Illuminate\Support\Str::slug($label, '_'));
     $labelText = $label ?: $name;
 
     // Required class uit rules halen als die nog niet expliciet is gezet.
@@ -35,6 +37,7 @@
         :readonly="$readonly"
         :rules="$rules"
         :autofocus="$resolvedFocus"
+        :autocomplete="$autocomplete ? 'on' : 'off'"
         {{-- Geef alle extra attributen (zoals v-model, autocomplete, etc.) door aan de onderliggende control --}}
         {{ $attributes->except(['label', 'name', 'value', 'readonly', 'type', 'class', 'rules', 'labelClass']) }}
     >

@@ -32,39 +32,31 @@
         <div class="flex flex-wrap md:flex-nowrap gap-3">
             <!-- Postal Code -->
             <div class="flex-1 min-w-[150px]">
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="{{ $namePrefix ?? 'address' }}[postal_code]"
-                        :value="old('address.postal_code', $entity?->address?->postal_code ?? '')"
-                        placeholder="1234 AB"
-                        id="{{ $addressId }}_postal_code"
-                        :readonly="isset($readonly) && $readonly"
-                    />
-                    <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="address.postal_code"/>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="{{ $namePrefix ?? 'address' }}[postal_code]"
+                    error-name="address.postal_code"
+                    label="Postcode"
+                    value="{{ old('address.postal_code', $entity?->address?->postal_code ?? '') }}"
+                    placeholder="1234 AB"
+                    id="{{ $addressId }}_postal_code"
+                    :readonly="isset($readonly) && $readonly"
+                />
             </div>
 
             <!-- House Number -->
             <div class="flex-1 min-w-[150px]">
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="{{ $namePrefix ?? 'address' }}[house_number]"
-                        :value="old('address.house_number', $entity?->address?->house_number ?? '')"
-                        placeholder="123"
-                        id="{{ $addressId }}_house_number"
-                        :disabled="isset($readonly) && $readonly"
-                        :readonly="isset($readonly) && $readonly"
-                    />
-                    <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.error control-name="address.house_number"/>
-
-                </x-admin::form.control-group>
+                <x-adminc::components.field
+                    type="text"
+                    name="{{ $namePrefix ?? 'address' }}[house_number]"
+                    error-name="address.house_number"
+                    label="Huisnummer"
+                    value="{{ old('address.house_number', $entity?->address?->house_number ?? '') }}"
+                    placeholder="123"
+                    id="{{ $addressId }}_house_number"
+                    :disabled="isset($readonly) && $readonly"
+                    :readonly="isset($readonly) && $readonly"
+                />
             </div>
 
             <!-- Lookup button -->
@@ -88,94 +80,65 @@
     <!-- Address Details -->
     <div class="grid grid-cols-2 gap-4">
         <!-- Street -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="text"
-                name="{{ $namePrefix ?? 'address' }}[street]"
-                :value="old('address.street', $entity?->address?->street ?? '')"
-                placeholder="Straatnaam"
-                id="{{ $addressId }}_street"
-                :readonly="isset($readonly) && $readonly"
-            />
-            <x-admin::form.control-group.label>
-                Straat
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="address.street"/>
-
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            type="text"
+            name="{{ $namePrefix ?? 'address' }}[street]"
+            error-name="address.street"
+            label="Straat"
+            value="{{ old('address.street', $entity?->address?->street ?? '') }}"
+            placeholder="Straatnaam"
+            id="{{ $addressId }}_street"
+            :readonly="isset($readonly) && $readonly"
+        />
 
         <!-- House Number Suffix -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="text"
-                name="{{ $namePrefix ?? 'address' }}[house_number_suffix]"
-                :value="old('address.house_number_suffix', $entity?->address?->house_number_suffix ?? '')"
-                placeholder="A, 1e verdieping, etc."
-                id="{{ $addressId }}_house_number_suffix"
-                :readonly="isset($readonly) && $readonly"
-            />
-            <x-admin::form.control-group.label>
-                Toevoeging
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
-
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            type="text"
+            name="{{ $namePrefix ?? 'address' }}[house_number_suffix]"
+            error-name="address.house_number_suffix"
+            label="Toevoeging"
+            value="{{ old('address.house_number_suffix', $entity?->address?->house_number_suffix ?? '') }}"
+            placeholder="A, 1e verdieping, etc."
+            id="{{ $addressId }}_house_number_suffix"
+            :readonly="isset($readonly) && $readonly"
+        />
 
         <!-- City -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="text"
-                name="{{ $namePrefix ?? 'address' }}[city]"
-                :value="old('address.city', $entity?->address?->city ?? '')"
-                placeholder="Amsterdam"
-                id="{{ $addressId }}_city"
-                :readonly="isset($readonly) && $readonly"
-            />
-            <x-admin::form.control-group.label>
-                Stad
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="address.city"/>
-
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            type="text"
+            name="{{ $namePrefix ?? 'address' }}[city]"
+            error-name="address.city"
+            label="Stad"
+            value="{{ old('address.city', $entity?->address?->city ?? '') }}"
+            placeholder="Amsterdam"
+            id="{{ $addressId }}_city"
+            :readonly="isset($readonly) && $readonly"
+        />
 
         <!-- State -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.control
-                type="text"
-                name="{{ $namePrefix ?? 'address' }}[state]"
-                :value="old('address.state', $entity?->address?->state ?? '')"
-                placeholder="Noord-Holland"
-                id="{{ $addressId }}_state"
-                :readonly="isset($readonly) && $readonly"
-            />
-            <x-admin::form.control-group.label>
-                Provincie
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="address.state"/>
-
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            type="text"
+            name="{{ $namePrefix ?? 'address' }}[state]"
+            error-name="address.state"
+            label="Provincie"
+            value="{{ old('address.state', $entity?->address?->state ?? '') }}"
+            placeholder="Noord-Holland"
+            id="{{ $addressId }}_state"
+            :readonly="isset($readonly) && $readonly"
+        />
 
         <!-- Country -->
-        <x-admin::form.control-group class="col-span-2">
-            <x-admin::form.control-group.control
-                type="text"
-                name="{{ $namePrefix ?? 'address' }}[country]"
-                :value="old('address.country', $entity?->address?->country ?? '')"
-                placeholder="Nederland"
-                id="{{ $addressId }}_country"
-                :readonly="isset($readonly) && $readonly"
-            />
-            <x-admin::form.control-group.label>
-                Land
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.error control-name="address.country"/>
-
-        </x-admin::form.control-group>
+        <x-adminc::components.field
+            class="col-span-2"
+            type="text"
+            name="{{ $namePrefix ?? 'address' }}[country]"
+            error-name="address.country"
+            label="Land"
+            value="{{ old('address.country', $entity?->address?->country ?? '') }}"
+            placeholder="Nederland"
+            id="{{ $addressId }}_country"
+            :readonly="isset($readonly) && $readonly"
+        />
     </div>
 
     <v-address-preview

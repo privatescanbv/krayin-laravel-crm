@@ -137,7 +137,10 @@ class SessionController extends Controller
             'email' => auth()->guard('user')->user()?->email,
         ]);
         $user = auth()->guard('user')->user();
-        $isSSOUser = $user && !empty($user->keycloak_user_id) && config('services.keycloak.client_id');
+
+        // check if user logged in via SSO
+        $isSSOUser = session('auth_source', 'local') == 'keycloak';
+        session()->forget('auth_source');
 
         $userId = $user?->id;
 

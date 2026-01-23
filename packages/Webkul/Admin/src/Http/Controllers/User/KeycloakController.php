@@ -66,6 +66,9 @@ class KeycloakController extends Controller
             if (! $user) {
                 return redirect()->route('admin.session.create');
             }
+            session([
+                'auth_source' => 'keycloak',
+            ]);
 
             return $this->loginUser($user);
         } catch (Exception $e) {

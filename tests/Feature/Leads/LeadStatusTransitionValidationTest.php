@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PipelineStage;
 use App\Services\LeadStatusTransitionValidator;
+use Database\Seeders\TestSeeder;
 use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -9,34 +11,18 @@ use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     // Reset validator defaults and rules between tests
     LeadStatusTransitionValidator::reset();
     // Ensure an authenticated user exists to satisfy activity/user FKs
     test()->user = User::factory()->create();
     test()->actingAs(test()->user);
+
     // Create a test pipeline
-    test()->pipeline = Pipeline::create([
-        'name'       => 'Test Pipeline',
-        'is_default' => 1,
-        'type'       => 'lead',
-    ]);
+    test()->pipeline = Pipeline::whereType('lead')->firstOrFail();
 
-    // Create test stages
-    test()->startStage = Stage::create([
-        'code'             => 'nieuwe-aanvraag-kwalificeren',
-        'name'             => 'Nieuwe aanvraag',
-        'probability'      => 100,
-        'sort_order'       => 1,
-        'lead_pipeline_id' => test()->pipeline->id,
-    ]);
-
-    test()->followUpStage = Stage::create([
-        'code'             => 'klant-adviseren-start',
-        'name'             => 'Klant adviseren start',
-        'probability'      => 100,
-        'sort_order'       => 2,
-        'lead_pipeline_id' => test()->pipeline->id,
-    ]);
+    test()->startStage = Stage::whereCode(PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN)->firstOrFail();
+    test()->followUpStage = Stage::whereCode(PipelineStage::KLANT_ADVISEREN_START)->firstOrFail();
 
     // Create a test lead
     test()->lead = Lead::create([
@@ -47,20 +33,10 @@ beforeEach(function () {
         'user_id'                => test()->user->id,
     ]);
 
-    // Configure the validation rules
-    LeadStatusTransitionValidator::addTransitionRule(
-        'klant-adviseren-start',
-        'klant-adviseren-opvolgen',
-        [
-            'min_persons' => 1,
-            'message'     => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
-        ]
-    );
-
     // Configure validation rule for first stage transition (align with defaults)
     LeadStatusTransitionValidator::addTransitionRule(
-        'nieuwe-aanvraag-kwalificeren',
-        'klant-adviseren-start',
+        PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
+        PipelineStage::KLANT_ADVISEREN_START,
         [
             'min_persons'     => 1,
             'required_fields' => ['first_name', 'last_name'],
@@ -74,7 +50,6 @@ test('it blocks transition when no persons are attached', function () {
     expect(test()->lead->persons()->count())->toBe(0)
         ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
         ->toThrow(ValidationException::class);
-
     // Attempt to transition should fail
 });
 

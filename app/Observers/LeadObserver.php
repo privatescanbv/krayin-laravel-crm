@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\Actions\Leads\LeadToLostAction;
-use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
 use App\Repositories\SalesLeadRepository;
@@ -47,16 +46,6 @@ class LeadObserver
             $newStageCode = Stage::find($lead->lead_pipeline_stage_id)?->code;
 
             Event::dispatch('lead.update_stage.after', $lead);
-            // If changing to 'klant_adviseren' stage
-            if ($newStageCode === LeadPipelineStageDefaults::ADVICE->value) {
-                // Check if person_id is set
-                if (! $lead->person_id) {
-                    Log::warning('Cannot update lead: missing person_id for advice stage', [
-                        'lead_id' => $lead->id,
-                    ]);
-                    throw new HttpException(422, 'Contactpersoon is verplicht in de status "Klant adviseren"');
-                }
-            }
 
             // If changing to any 'lost' stage, check if lost_reason is provided
             if ($newStageCode && Stage::find($lead->lead_pipeline_stage_id)?->is_lost) {

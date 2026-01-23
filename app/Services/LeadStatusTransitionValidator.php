@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PipelineStage;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -104,16 +105,23 @@ class LeadStatusTransitionValidator
     /**
      * Voeg een nieuwe transitie validatie regel toe.
      */
-    public static function addTransitionRule(string $fromStageCode, string $toStageCode, array $rules): void
+    public static function addTransitionRule(PipelineStage $fromStageCode, PipelineStage $toStageCode, array $rules): void
     {
-        $transitionKey = $fromStageCode.'->'.$toStageCode;
+        $transitionKey = $fromStageCode->value.'->'.$toStageCode->value;
         self::$transitionRules[$transitionKey] = $rules;
     }
 
-    public static function addTransitionsRule(string $fromStageCode, array $toStageCodes, array $rules): void
+    public static function addTransitionsRule(PipelineStage $fromStageCode, array $toStageCodes, array $rules): void
     {
         foreach ($toStageCodes as $toStageCode) {
             self::addTransitionRule($fromStageCode, $toStageCode, $rules);
+        }
+    }
+
+    public static function addTransitionsRules(array $fromStageCodes, array $toStageCodes, array $rules): void
+    {
+        foreach ($fromStageCodes as $fromStageCode) {
+            self::addTransitionsRule($fromStageCode, $toStageCodes, $rules);
         }
     }
 
@@ -158,37 +166,23 @@ class LeadStatusTransitionValidator
             return;
         }
 
-        // Privatescan: nieuwe-aanvraag-kwalificeren -> klant-adviseren-start
-        self::addTransitionRule(
-            'nieuwe-aanvraag-kwalificeren',
-            'klant-adviseren-start',
+        self::addTransitionsRules(
             [
-                'min_persons'     => 1,
-                'required_fields' => ['first_name', 'last_name'],
-                'message'         => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
-            ]
-        );
-
-        // Hernia: nieuwe-aanvraag-kwalificeren-hernia -> meerdere klant-adviseren-* doelen
-        self::addTransitionsRule(
-            'nieuwe-aanvraag-kwalificeren-hernia',
-            [
-                'klant-adviseren-start-hernia',
-                'klant-adviseren-will-mri-hernia',
-                'klant-adviseren-wachten-op-mri-hernia',
+                PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
+                PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA,
             ],
+            PipelineStage::allStageAfterNewExcludingLost(),
             [
                 'min_persons'     => 1,
                 'required_fields' => ['first_name', 'last_name'],
                 'message'         => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
             ]
-
         );
 
         // Add validation for transitions to "gewonnen" and "verloren" statuses
-        self::addTransitionsRule(
-            '*', // Any stage can transition to won/lost
-            ['won', 'won-hernia'],
+        self::addTransitionsRules(
+            PipelineStage::allStageExcludingWon(), // Any stage can transition to won/lost
+            PipelineStage::allStageWon(),
             [
                 'custom_validation' => function (Lead $lead) {
                     return self::validateWonTransition($lead);

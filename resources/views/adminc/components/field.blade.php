@@ -33,7 +33,7 @@
     <x-admin::form.control-group.control
         type="{{ $type }}"
         name="{{ $name ?: $label }}"
-        value="{{ $value }}"
+        value="{{ html_entity_decode($value ?? '', ENT_QUOTES, 'UTF-8') }}"
         label="{{ $labelText }}"
         :readonly="$readonly"
         :rules="$rules"

@@ -323,7 +323,8 @@
 
                         lead: {
                             id: {{ $lead->id }},
-                            title: "{{ addslashes($lead->name) }}"
+                            // IMPORTANT: use JSON encoding in <script> context to avoid HTML entity escaping.
+                            title: @json($lead->name),
                             // Simplified lead data to avoid JSON parsing errors
                         },
                         hasPersons: {{ $lead->persons->count() > 0 ? 'true' : 'false' }},

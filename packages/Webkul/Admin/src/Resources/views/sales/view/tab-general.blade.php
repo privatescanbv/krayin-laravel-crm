@@ -18,7 +18,7 @@
 
                 @if (bouncer()->hasPermission('sales-leads.delete'))
                     <v-sales-delete delete-url="{{ route('admin.sales-leads.delete', $sales->id) }}"
-                        redirect-url="{{ route('admin.sales-leads.index') }}" sales-name="{{ $sales->name }}"></v-sales-delete>
+                        redirect-url="{{ route('admin.sales-leads.index') }}" :sales-name='@json($sales->name)'></v-sales-delete>
                 @endif
             </div>
         </div>

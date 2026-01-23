@@ -10,7 +10,7 @@
         <span class="relative inline-block w-full">
             <slot></slot>
 
-            <i ref="calendarIcon" class="icon-calendar pointer-events-none absolute top-1/2 -translate-y-1/2 text-2xl text-gray-400 ltr:right-2 rtl:left-2"></i>
+            <i ref="calendarIcon" class="icon-calendar absolute top-1/2 -translate-y-1/2 cursor-pointer text-2xl text-gray-400 ltr:right-2 rtl:left-2"></i>
         </span>
     </script>
 
@@ -45,6 +45,22 @@
                 let options = this.setOptions();
 
                 this.activate(options);
+
+                // Keep behavior consistent with date picker: click icon opens picker.
+                this.$nextTick(() => {
+                    if (this.$refs.calendarIcon) {
+                        this.$refs.calendarIcon.addEventListener('click', () => {
+                            if (this.datepicker) {
+                                this.datepicker.open();
+                            }
+                        });
+                    }
+
+                    // Set initial value if provided
+                    if (this.value) {
+                        this.datepicker?.setDate?.(this.value);
+                    }
+                });
             },
 
             methods: {
@@ -67,7 +83,7 @@
 
                         onChange: function(selectedDates, dateStr, instance) {
                             self.$emit("onChange", dateStr);
-                        }
+                        },
                     };
                 },
 
@@ -75,6 +91,28 @@
                     let element = this.$el.getElementsByTagName("input")[0];
 
                     this.datepicker = new Flatpickr(element, options);
+
+                    /**
+                     * Flatpickr renders the visible input as `altInput` (type="text") and
+                     * hides the original input (type="hidden"). Browser autofill targets
+                     * the visible input, so we must disable autocomplete there as well.
+                     */
+                    const applyNoAutofillAttrs = (input) => {
+                        if (! input) return;
+
+                        input.setAttribute('autocomplete', 'off');
+                        input.setAttribute('autocorrect', 'off');
+                        input.setAttribute('autocapitalize', 'off');
+                        input.setAttribute('spellcheck', 'false');
+
+                        // Common password manager hints (harmless for browsers).
+                        input.setAttribute('data-lpignore', 'true');
+                        input.setAttribute('data-1p-ignore', 'true');
+                        input.setAttribute('data-form-type', 'other');
+                    };
+
+                    applyNoAutofillAttrs(element);
+                    applyNoAutofillAttrs(this.datepicker?.altInput);
                 },
 
                 clear: function() {

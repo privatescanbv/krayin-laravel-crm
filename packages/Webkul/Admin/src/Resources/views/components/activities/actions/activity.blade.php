@@ -168,22 +168,6 @@
                                     />
                                 </div>
 
-                                {{--                            <!-- Location -->--}}
-                                {{--                            <x-admin::form.control-group class="!mb-0">--}}
-                                {{----}}
-
-                                {{--                                <x-admin::form.control-group.control--}}
-                                {{--                                    type="text"--}}
-                                {{--                                    name="location"--}}
-                                {{--                                />--}}
-                                {{--{{--
-                                {{--
-                                {{--                                <x-admin::form.control-group.label>--}}
-                                {{--                                    @lang('admin::app.components.activities.actions.activity.location')--}}
-                                {{--                                </x-admin::form.control-group.label>
-
-                                {{--                            </x-admin::form.control-group>--}}
-
                                 {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
                                 </x-slot>
 

@@ -25,7 +25,8 @@
     }
     $isGroupedControl = in_array($type, ['group', 'radio-group'], true);
 
-    $resolvedFocus = !$readonly && $focus;
+    $resolvedFocus = $type != 'hidden' && !$readonly && $focus;
+    $resolvedAutoComplete = $autocomplete && $type != 'hidden' && !$readonly;
 @endphp
 
 <x-admin::form.control-group class="{{ $class }}">
@@ -37,9 +38,9 @@
         :readonly="$readonly"
         :rules="$rules"
         :autofocus="$resolvedFocus"
-        :autocomplete="$autocomplete ? 'on' : 'off'"
-        {{-- Geef alle extra attributen (zoals v-model, autocomplete, etc.) door aan de onderliggende control --}}
-        {{ $attributes->except(['label', 'name', 'value', 'readonly', 'type', 'class', 'rules', 'labelClass']) }}
+        :autocomplete="$resolvedAutoComplete ? 'on' : 'off'"
+        {{-- Geef alle extra attributen (zoals v-model, , etc.) door aan de onderliggende control --}}
+        {{ $attributes->except(['label', 'name', 'value', 'readonly', 'type', 'class', 'rules', 'labelClass', 'autocomplete']) }}
     >
         {{-- Doorlaat slot zodat select/textarea/options gebruikt kunnen worden --}}
         {{ $slot }}

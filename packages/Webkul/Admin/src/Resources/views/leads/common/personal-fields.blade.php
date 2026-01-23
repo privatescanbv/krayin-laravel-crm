@@ -43,6 +43,7 @@
             value="{{ $current }}"
             :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
+            focus
         >
             <option value="">{{ __('Selecteer aanhef') }}</option>
 

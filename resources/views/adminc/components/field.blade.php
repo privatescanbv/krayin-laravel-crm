@@ -7,6 +7,8 @@
     'class' => '',
     'rules' => null,
     'labelClass' => '',
+    'focus' => false,
+    'focus' => null,
 ])
 
 @php
@@ -20,6 +22,8 @@
         $computedLabelClass = 'required';
     }
     $isGroupedControl = in_array($type, ['group', 'radio-group'], true);
+
+    $resolvedFocus = !$readonly && $focus;
 @endphp
 
 <x-admin::form.control-group class="{{ $class }}">
@@ -30,6 +34,7 @@
         label="{{ $labelText }}"
         :readonly="$readonly"
         :rules="$rules"
+        :autofocus="$resolvedFocus"
         {{-- Geef alle extra attributen (zoals v-model, autocomplete, etc.) door aan de onderliggende control --}}
         {{ $attributes->except(['label', 'name', 'value', 'readonly', 'type', 'class', 'rules', 'labelClass']) }}
     >

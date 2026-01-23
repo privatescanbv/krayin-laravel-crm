@@ -39,14 +39,6 @@
                         @enderror
                     </div>
 
-                    <!-- Lead Selection -->
-                    <div>
-                        <label for="lead_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Lead
-                        </label>
-                        todo - toon lead link ?
-                    </div>
-
                     <!-- Description -->
                     <div class="md:col-span-2">
                         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">

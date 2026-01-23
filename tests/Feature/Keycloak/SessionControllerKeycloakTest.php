@@ -37,8 +37,32 @@ it('redirects SSO user to Keycloak logout on logout', function () {
         'role_id'          => $this->role->id,
         'status'           => 1,
     ]);
-
     $response = $this->actingAs($user, 'user')
+        ->withSession([
+            'auth_source' => 'keycloak',
+        ])
+        ->delete(route('admin.session.destroy'));
+
+    $response->assertStatus(302);
+    $location = $response->headers->get('Location');
+    expect($location)->toContain('test-keycloak.local:9999')
+        ->and($location)->toContain('/protocol/openid-connect/logout')
+        ->and($location)->toContain('client_id=crm-app')
+        ->and(auth()->guard('user')->user())->toBeNull();
+});
+
+it('redirects SSO user to Keycloak logout on logout within ', function () {
+    $user = createUser([
+        'email'            => 'sso-logout@example.com',
+        'keycloak_user_id' => 'keycloak-user-123',
+        'role_id'          => $this->role->id,
+        'status'           => 1,
+    ]);
+    //    session('auth_source', 'keycloak');
+    $response = $this->actingAs($user, 'user')
+        ->withSession([
+            'auth_source' => 'keycloak',
+        ])
         ->delete(route('admin.session.destroy'));
 
     $response->assertStatus(302);

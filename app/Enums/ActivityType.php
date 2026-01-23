@@ -21,6 +21,17 @@ enum ActivityType: string
         return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::FILE, self::EMAIL], true));
     }
 
+    public static function canBeMarkedAsDone(): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $stage) => ! in_array($stage, [
+                self::MEETING,
+                self::NOTE,
+            ], true)
+        ));
+    }
+
     public function label(): string
     {
         return match ($this) {
@@ -41,15 +52,5 @@ enum ActivityType: string
     public function isUserSelectable(): bool
     {
         return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE, self::EMAIL, self::PATIENT_MESSAGE], true);
-    }
-
-    public static function canBeMarkedAsDone(): array {
-        return array_values(array_filter(
-            self::cases(),
-            fn (self $stage) => ! in_array($stage, [
-                    self::MEETING,
-                    self::NOTE,
-                ], true)
-        ));
     }
 }

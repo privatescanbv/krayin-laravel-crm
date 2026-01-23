@@ -9,7 +9,7 @@ test('WorkflowSeeder creates a workflow for each PipelineStage case except LOST 
 
     $expectedStages = array_values(array_filter(
         PipelineStage::cases(),
-        fn (PipelineStage $stage) => !$stage->isWon() && !$stage->isLost()  && $stage != PipelineStage::NO_PIPELINE
+        fn (PipelineStage $stage) => ! $stage->isWon() && ! $stage->isLost() && $stage != PipelineStage::NO_PIPELINE
     ));
 
     $workflows = DB::table('workflows')->get(['id', 'conditions']);

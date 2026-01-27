@@ -124,6 +124,59 @@ test('patient appointments endpoint returns planned/approved orders as appointme
     ]);
 });
 
+test('clinic is derived from first booking for patient when order is not combined', function () {
+    $keycloakId = 'kc-user-appointments-non-combined';
+    $patient = Person::factory()->create(['keycloak_user_id' => $keycloakId]);
+    $otherPerson = Person::factory()->create();
+
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach([$patient->id, $otherPerson->id]);
+
+    $clinicPatient = Clinic::factory()->create(['name' => 'Clinic Patient']);
+    $clinicOther = Clinic::factory()->create(['name' => 'Clinic Other']);
+    $resourcePatient = Resource::factory()->create(['clinic_id' => $clinicPatient->id]);
+    $resourceOther = Resource::factory()->create(['clinic_id' => $clinicOther->id]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'status'               => OrderStatus::PLANNED,
+        'combine_order'        => false,
+        'first_examination_at' => now()->addDay(),
+    ]);
+
+    // Earliest booking belongs to OTHER person; patient's booking is later.
+    $oiOther = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $otherPerson->id]);
+    $oiPatient = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $patient->id]);
+
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $oiOther->id,
+        'resource_id'  => $resourceOther->id,
+        'from'         => now()->addHours(1), // earliest overall, but not patient's
+        'to'           => now()->addHours(2),
+    ]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $oiPatient->id,
+        'resource_id'  => $resourcePatient->id,
+        'from'         => now()->addHours(2),
+        'to'           => now()->addHours(3),
+    ]);
+
+    // Force back to an API-visible state (order observers can recalculate status).
+    $order->refresh()->update(['status' => OrderStatus::PLANNED]);
+
+    $response = $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakId}/appointments");
+
+    $response->assertOk();
+    $response->assertJsonFragment([
+        'id'           => 'order-'.$order->id,
+        'patient_id'   => (string) $patient->id,
+        // Should pick patient's clinic, not the earliest overall clinic.
+        'clinic_id'    => (string) $clinicPatient->id,
+        'clinic_label' => $clinicPatient->label(),
+    ]);
+});
+
 test('patient appointments endpoint supports future/past filter', function () {
     $keycloakId = 'kc-user-appointments-2';
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakId]);

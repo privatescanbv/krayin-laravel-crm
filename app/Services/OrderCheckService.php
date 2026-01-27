@@ -15,11 +15,17 @@ class OrderCheckService
 {
     public function retrieveClinicFromOrder(Order $order, Person $patient): ?string
     {
-        // Get clinic id from the first planned appointment (ResourceOrderItem) for any OrderItem in this Order.
-        // "First" is determined by the earliest booking start (`from`).
         $firstBooking = ResourceOrderItem::query()
             ->with(['resource:id,clinic_id'])
-            ->whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))
+            ->whereHas('orderItem', function ($q) use ($order, $patient) {
+                $q->where('order_id', $order->id);
+
+                // Only restrict to the patient's order items when the order is explicitly NOT combined.
+                // (Treat null as "combined", since legacy rows may have null here.)
+                if ($order->combine_order === false) {
+                    $q->where('person_id', $patient->id);
+                }
+            })
             ->orderBy('from', 'asc')
             ->first();
 

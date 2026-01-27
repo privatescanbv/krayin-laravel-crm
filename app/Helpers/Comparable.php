@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 trait Comparable
 {
-    use ValueNormalizer;
+    use ValueNormalizerTrait;
 
     /**
      * Get the field type for proper display handling.

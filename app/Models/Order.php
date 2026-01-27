@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Helpers\ValueNormalizer;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +48,14 @@ class Order extends Model
             'sales_lead_id'        => 'required|integer|exists:salesleads,id',
             'combine_order'        => 'boolean',
         ];
+    }
+
+    /**
+     * Normalize empty datetime input to NULL (see ValueNormalizer::nullableDateTime()).
+     */
+    public function setFirstExaminationAtAttribute(mixed $value): void
+    {
+        $this->attributes['first_examination_at'] = ValueNormalizer::nullableDateTime($value);
     }
 
     public function orderItems(): HasMany

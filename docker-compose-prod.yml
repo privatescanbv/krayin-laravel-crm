@@ -209,28 +209,36 @@ services:
     labels:
       - traefik.enable=true
       # Patient portal router
-      - traefik.http.routers.patient-rtr.rule=Host("patient.dev.privatescan.nl")
-      - traefik.http.routers.patient-rtr.tls=true
-      - traefik.http.routers.patient-rtr.tls.domains[0].main=patient.dev.privatescan.nl
-      - traefik.http.routers.patient-rtr.entrypoints=https
-      - traefik.http.routers.patient-rtr.service=formsdev-svc
-      - traefik.http.routers.patient-rtr.middlewares=patient-forward-headers
+      - traefik.http.routers.patient.rule=Host("patient.dev.privatescan.nl")
+      - traefik.http.routers.patient.entrypoints=https
+      - traefik.http.routers.patient.tls=true
+      - traefik.http.routers.patient.tls.certresolver=myresolver
+      - traefik.http.services.patient.loadbalancer.server.port=80
+
+#      - traefik.http.routers.patient-rtr.rule=Host("patient.dev.privatescan.nl")
+#      - traefik.http.routers.patient-rtr.tls=true
+#      - traefik.http.routers.patient-rtr.tls.certresolver=myresolver
+#      - traefik.http.routers.patient-rtr.tls.domains[0].main=patient.dev.privatescan.nl
+#      - traefik.http.routers.patient-rtr.entrypoints=https
+#      - traefik.http.routers.patient-rtr.service=formsdev-svc
+#      - traefik.http.routers.patient-rtr.middlewares=patient-forward-headers
       # Clinic portal router
-      - traefik.http.routers.clinic-rtr.rule=Host("clinic.dev.privatescan.nl")
-      - traefik.http.routers.clinic-rtr.tls=true
-      - traefik.http.routers.clinic-rtr.tls.domains[0].main=clinic,dev.privatescan.nl
-      - traefik.http.routers.clinic-rtr.entrypoints=https
-      - traefik.http.routers.clinic-rtr.service=formsdev-svc
-      - traefik.http.routers.clinic-rtr.middlewares=clinic-forward-headers
+#      - traefik.http.routers.clinic-rtr.rule=Host("clinic.dev.privatescan.nl")
+#      - traefik.http.routers.clinic-rtr.tls=true
+#      - traefik.http.routers.clinic-rtr.tls.certresolver=myresolver
+#      - traefik.http.routers.clinic-rtr.tls.domains[0].main=clinic.dev.privatescan.nl
+#      - traefik.http.routers.clinic-rtr.entrypoints=https
+#      - traefik.http.routers.clinic-rtr.service=formsdev-svc
+#      - traefik.http.routers.clinic-rtr.middlewares=clinic-forward-headers
       # Service
-      - traefik.http.services.formsdev-svc.loadbalancer.server.port=80
+#      - traefik.http.services.formsdev-svc.loadbalancer.server.port=80
       # Middlewares
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.dev.privatescan.nl
-      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Host=clinic.dev.privatescan.nl
+#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Host=clinic.dev.privatescan.nl
       - traefik.docker.network=public
       - logging=promtail
     networks:

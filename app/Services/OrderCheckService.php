@@ -5,11 +5,29 @@ namespace App\Services;
 use App\Enums\ProductReports;
 use App\Models\Order;
 use App\Models\OrderCheck;
+use App\Models\OrderItem;
 use App\Models\PartnerProduct;
+use App\Models\ResourceOrderItem;
 use Illuminate\Support\Collection;
+use Webkul\Contact\Models\Person;
 
 class OrderCheckService
 {
+    public function retrieveClinicFromOrder(Order $order, Person $patient): ?string
+    {
+        // Get clinic id from the first planned appointment (ResourceOrderItem) for any OrderItem in this Order.
+        // "First" is determined by the earliest booking start (`from`).
+        $firstBooking = ResourceOrderItem::query()
+            ->with(['resource:id,clinic_id'])
+            ->whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))
+            ->orderBy('from', 'asc')
+            ->first();
+
+        $clinicId = $firstBooking?->resource?->clinic_id;
+
+        return $clinicId !== null ? (string) $clinicId : null;
+    }
+
     /**
      * Update order checks based on partner product relations
      */

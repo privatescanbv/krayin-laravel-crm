@@ -61,4 +61,9 @@ class Clinic extends Model
     {
         return $this->hasMany(Email::class);
     }
+
+    public function label(): string
+    {
+        return $this->name.' |'.$this->address?->formatAddress();
+    }
 }

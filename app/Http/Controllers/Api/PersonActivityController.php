@@ -100,14 +100,29 @@ class PersonActivityController extends Controller
 
     /**
      * Mark all messages as read by patient (not employee)
+     *
+     * @group Patient messages
+     *
+     * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+     *
+     * @response 200 scenario="Success" {"message":"Messages marked as read.","data":{"marked_count":3}}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
-    public function markAsRead(string $keycloakUserId)
+    public function markAsRead(string $keycloakUserId): JsonResponse
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
         if (is_null($person)) {
             logger()->error('No support for mark messages as read for users without person association.');
             abort(404);
         }
-        $this->patientMessageService->markAllMessagesReadForPatient($person);
+
+        $markedCount = $this->patientMessageService->markAllMessagesReadForPatient($person);
+
+        return response()->json([
+            'message' => 'Messages marked as read.',
+            'data'    => [
+                'marked_count' => $markedCount,
+            ],
+        ]);
     }
 }

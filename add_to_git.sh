@@ -8,6 +8,7 @@ app
 database
 config
 tests
+routes
 "
 
 for dir in $DIRS; do

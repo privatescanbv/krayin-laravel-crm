@@ -23,9 +23,9 @@ class PatientMessageService
     /**
      * Called from patient
      */
-    public function markAllMessagesReadForPatient(Person $person): void
+    public function markAllMessagesReadForPatient(Person $person): int
     {
-        PatientMessage::query()
+        return PatientMessage::query()
             ->where('person_id', $person->id)
             ->whereNot('sender_type', PatientMessageSenderType::PATIENT)
             ->update(['is_read' => true]);

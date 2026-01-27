@@ -93,32 +93,11 @@
         </a>
     @endif
 
-    @if (empty($person->keycloak_user_id))
-        <form
-            method="POST"
-            action="{{ route('admin.contacts.persons.portal.create', $person->id) }}"
-            onsubmit="return confirm('Portal account aanmaken voor {{ $person->name }}?')"
-            style="display: inline;">
-            @csrf
-            @if ($returnUrl)
-                <input type="hidden" name="return_url" value="{{ $returnUrl }}">
-            @endif
-            <button type="submit" class="icon-user rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-activity-note-text hover:text-blue-700" title="Patiëntportaal account aanmaken"></button>
-        </form>
-    @else
-        <form
-            method="POST"
-            action="{{ route('admin.contacts.persons.portal.delete', $person->id) }}"
-            onsubmit="return confirm('Portal account verwijderen voor {{ $person->name }}?')"
-            style="display: inline;">
-            @csrf
-            @method('DELETE')
-            @if ($returnUrl)
-                <input type="hidden" name="return_url" value="{{ $returnUrl }}">
-            @endif
-            <button type="submit" class="icon-cross-large rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-status-expired-text hover:text-red-700" title="Patiëntportaal account intrekken"></button>
-        </form>
-    @endif
+    @include('adminc.persons.partials.patientportal-button' , [
+        'person' => $person,
+        'presentLarge' => false,
+        'returnUrl' => $returnUrl,
+    ])
     @if ($detachRoute)
         <button
             type="button"

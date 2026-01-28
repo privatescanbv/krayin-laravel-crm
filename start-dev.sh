@@ -62,3 +62,5 @@ else
     echo "🎉 Containers opnieuw gestart (geen lokale Vite-devservers gestart)."
 fi
 
+# Not exactly the right place, but we don't have ci for this. So generate it here, to minimize human error of forgetting it.
+./vendor/bin/sail artisan scribe:generate

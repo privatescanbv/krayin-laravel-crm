@@ -88,7 +88,7 @@ test('deleting portal account with reason creates audit activity', function () {
         ->first();
 
     expect($activity)->not->toBeNull()
-        ->and($activity->comment)->toBe('Patiënt wil geen toegang meer')
+        ->and($activity->comment)->toBe('Op verzoek van patiënt: Patiënt wil geen toegang meer')
         ->and($activity->additional['revocation_reason'])->toBe('op_verzoek_patient')
         ->and($activity->additional['revocation_reason_label'])->toBe('Op verzoek van patiënt');
 });

@@ -36,6 +36,8 @@ return [
         'view' => 'Bekijken',
         'print' => 'Afdrukken',
         'delete' => 'Verwijderen',
+        'portal-create' => 'Portaal account aanmaken',
+        'portal-delete' => 'Portaal account intrekken',
         'takeover' => 'Overnemen',
         'export' => 'Exporteren',
         'mass-delete' => 'Bulk verwijderen',

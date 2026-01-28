@@ -68,6 +68,7 @@ class RoleSeeder extends Seeder
                 'contacts.persons.edit',
                 'contacts.persons.delete',
                 'contacts.persons.view',
+                'contacts.persons.portal-create',
                 'contacts.organizations',
                 'contacts.organizations.create',
                 'contacts.organizations.edit',

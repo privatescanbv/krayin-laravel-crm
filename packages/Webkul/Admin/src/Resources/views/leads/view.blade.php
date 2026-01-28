@@ -103,6 +103,7 @@
                     </div>
                 </div>
             </div>
+            @if($lead->has_diagnosis_form || $lead->mri_status)
             <div class="flex flex-col border-t border-gray-200 dark:border-gray-800">
                 <div class="flex items-center gap-3 p-4">
                     <span class="icon-file text-2xl text-gray-400"></span>
@@ -128,7 +129,7 @@
                     </div>
                 </div>
             </div>
-
+            @endif
             <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount"/>
 
             <!-- Footer with creation and modification dates -->

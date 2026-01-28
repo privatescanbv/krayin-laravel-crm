@@ -150,6 +150,16 @@ return [
         'route' => 'admin.contacts.persons.view',
         'sort'  => 5,
     ], [
+        'key'   => 'contacts.persons.portal-create',
+        'name'  => 'admin::app.acl.portal-create',
+        'route' => 'admin.contacts.persons.portal.create',
+        'sort'  => 6,
+    ], [
+        'key'   => 'contacts.persons.portal-delete',
+        'name'  => 'admin::app.acl.portal-delete',
+        'route' => 'admin.contacts.persons.portal.delete',
+        'sort'  => 7,
+    ], [
         'key'   => 'contacts.organizations',
         'name'  => 'admin::app.acl.organizations',
         'route' => 'admin.contacts.organizations.index',

@@ -14,6 +14,7 @@ use Webkul\Activity\Services\ViewService;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
 use App\Enums\ActivityType;
+use App\Enums\PortalRevocationReason;
 use App\Models\SalesLead;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
@@ -230,6 +231,53 @@ class ActivityRepository extends Repository
                 'sales_lead_id' => $salesLead->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Create a system activity when a patient portal account is revoked.
+     */
+    public function createSystemActivityForPortalRevocation(
+        Person $person,
+        PortalRevocationReason $reason,
+        ?string $comment = null
+    ): ?Activity {
+        try {
+            $reasonText = $reason->label();
+            if ($comment) {
+                $reasonText .= ': ' . $comment;
+            }
+
+            $activity = $this->create([
+                'type' => ActivityType::SYSTEM,
+                'title' => 'Patiëntportaal account ingetrokken',
+                'comment' => $reasonText,
+                'is_done' => 1,
+                'user_id' => auth()->check() ? auth()->id() : null,
+                'person_id' => $person->id,
+                'additional' => [
+                    'old' => ['label' => 'Actief'],
+                    'new' => ['label' => 'Ingetrokken'],
+                    'revocation_reason' => $reason->value,
+                    'revocation_reason_label' => $reason->label(),
+                    'revocation_comment' => $comment,
+                    'person' => [
+                        'id' => $person->id,
+                        'name' => $person->name,
+                    ],
+                ],
+            ]);
+
+            $activity->persons()->attach($person->id);
+
+            return $activity;
+        } catch (Throwable $e) {
+            Log::error('Failed to create system activity for portal revocation', [
+                'person_id' => $person->id,
+                'reason' => $reason->value,
+                'error' => $e->getMessage(),
             ]);
             return null;
         }

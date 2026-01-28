@@ -6,6 +6,7 @@ use App\Actions\Persons\CreatePortalAccountAction;
 use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
+use App\Enums\PortalRevocationReason;
 use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
@@ -77,7 +78,11 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->findOrFail($id);
 
-        $result = $this->deletePortalAccountAction->execute($person);
+        $reasonValue = request()->input('revocation_reason');
+        $reason = $reasonValue ? PortalRevocationReason::tryFrom($reasonValue) : null;
+        $comment = request()->input('revocation_comment');
+
+        $result = $this->deletePortalAccountAction->execute($person, $reason, $comment);
 
         return $this->portalResponse($result, $person);
     }

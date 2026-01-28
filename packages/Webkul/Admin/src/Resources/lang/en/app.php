@@ -37,6 +37,8 @@ return [
         'view'            => 'View',
         'print'           => 'Print',
         'delete'          => 'Delete',
+        'portal-create'   => 'Create Portal Account',
+        'portal-delete'   => 'Revoke Portal Account',
         'export'          => 'Export',
         'mass-delete'     => 'Mass Delete',
         'data-transfer'   => 'Data Transfer',

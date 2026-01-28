@@ -64,7 +64,7 @@ X-API-KEY: {{API_KEY}}
 
 
 ### create workflow lead
-POST http://localhost:8000/api/sales-leads
+POST http://{{ URL }}/api/sales-leads
 Content-Type: application/json
 
 {
@@ -72,19 +72,24 @@ Content-Type: application/json
 }
 
 ### find activities by lead
-GET http://localhost:8000/api/leads/238/activities
+GET http://{{ URL }}/api/leads/238/activities
 Content-Type: application/json
 
 
 ### get lead by id
-GET http://localhost:8000/api/leads/238
+GET http://{{ URL }}/api/leads/238
 Content-Type: application/json
 
 ### zoek contact persons
-GET http://localhost:8000/admin/contacts/persons/search
+GET http://{{ URL }}/admin/contacts/persons/search
 Content-Type: application/json
 
 {
     "first_name": "John"
 }
 
+### get person info
+GET https://{{ URL }}/api/keycloak/persons/39cdb90c-b41e-4126-b271-daafaa29f982
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}

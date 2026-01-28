@@ -111,6 +111,8 @@ De applicatie integreert met:
 
 link:/admin/apidocs[CRM api documentatie]
 
+link:https://patient.dev.privatescan.nl/apidocs[ApiDocs Patient portaal]
+
 ==== Kernmodules
 
 Het systeem bestaat uit de volgende hoofdmodules:

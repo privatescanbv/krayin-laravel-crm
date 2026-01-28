@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-
+    
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-
+    
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -122,9 +122,6 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-keycloak-webhooks">
                                 <a href="#endpoints-POSTapi-keycloak-webhooks">POST api/keycloak/webhooks</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-keycloak-persons--keycloakUserId-">
-                                <a href="#endpoints-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</a>
-                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-patient--id--messages">
                                 <a href="#endpoints-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</a>
                             </li>
@@ -133,6 +130,16 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-patient--id--activities-unread-count">
                                 <a href="#endpoints-GETapi-patient--id--activities-unread-count">Get the count of unread messages for a specific person.</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-keycloak" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="keycloak">
+                    <a href="#keycloak">Keycloak</a>
+                </li>
+                                    <ul id="tocify-subheader-keycloak" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="keycloak-GETapi-keycloak-persons--keycloakUserId-">
+                                <a href="#keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -165,7 +172,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: January 27, 2026</li>
+        <li>Last updated: January 28, 2026</li>
     </ul>
 </div>
 
@@ -188,7 +195,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="endpoints">Endpoints</h1>
 
-
+    
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -216,7 +223,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-01-27\",
+    \"birthdate\": \"2026-01-28\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -246,7 +253,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-01-27",
+    "birthdate": "2026-01-28",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -453,10 +460,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-01-27"
+               value="2026-01-28"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-01-27</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-01-28</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -2609,7 +2616,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
+    --get "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -2617,7 +2624,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
 );
 
 const headers = {
@@ -2744,10 +2751,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="GETapi-sales-leads--id--activities"
-               value="1"
+               value="16"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>1</code></p>
+<p>The ID of the sales lead. Example: <code>16</code></p>
             </div>
                     </form>
 
@@ -2765,7 +2772,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -2774,15 +2781,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-01-27 14:56:26\",
-    \"schedule_to\": \"2026-01-27 14:56:26\"
+    \"schedule_from\": \"2026-01-28 20:36:17\",
+    \"schedule_to\": \"2026-01-28 20:36:17\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
 );
 
 const headers = {
@@ -2796,8 +2803,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-01-27 14:56:26",
-    "schedule_to": "2026-01-27 14:56:26"
+    "schedule_from": "2026-01-28 20:36:17",
+    "schedule_to": "2026-01-28 20:36:17"
 };
 
 fetch(url, {
@@ -2901,10 +2908,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="1"
+               value="16"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>1</code></p>
+<p>The ID of the sales lead. Example: <code>16</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
@@ -2976,10 +2983,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-01-27 14:56:26"
+               value="2026-01-28 20:36:17"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-27 14:56:26</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-28 20:36:17</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -2988,10 +2995,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-01-27 14:56:26"
+               value="2026-01-28 20:36:17"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-27 14:56:26</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-01-28 20:36:17</code></p>
         </div>
         </form>
 
@@ -3327,162 +3334,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                         </form>
 
-                    <h2 id="endpoints-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-<p>GET /api/keycloak/persons/{keycloakUserId}</p>
-
-<span id="example-requests-GETapi-keycloak-persons--keycloakUserId-">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/keycloak/persons/architecto" \
-    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/keycloak/persons/architecto"
-);
-
-const headers = {
-    "X-API-KEY": "{YOUR_AUTH_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-keycloak-persons--keycloakUserId-">
-            <blockquote>
-            <p>Example response (401):</p>
-        </blockquote>
-                <details class="annotation">
-            <summary style="cursor: pointer;">
-                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
-            </summary>
-            <pre><code class="language-http">cache-control: no-cache, private
-content-type: application/json
-x-ratelimit-limit: 60
-x-ratelimit-remaining: 55
- </code></pre></details>         <pre>
-
-<code class="language-json" style="max-height: 300px;">{
-    &quot;error&quot;: &quot;Invalid API key&quot;,
-    &quot;message&quot;: &quot;The provided API key is not valid&quot;
-}</code>
- </pre>
-    </span>
-<span id="execution-results-GETapi-keycloak-persons--keycloakUserId-" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-keycloak-persons--keycloakUserId-"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-keycloak-persons--keycloakUserId-"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-keycloak-persons--keycloakUserId-" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-keycloak-persons--keycloakUserId-">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-keycloak-persons--keycloakUserId-" data-method="GET"
-      data-path="api/keycloak/persons/{keycloakUserId}"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-keycloak-persons--keycloakUserId-', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-keycloak-persons--keycloakUserId-"
-                    onclick="tryItOut('GETapi-keycloak-persons--keycloakUserId-');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-keycloak-persons--keycloakUserId-"
-                    onclick="cancelTryOut('GETapi-keycloak-persons--keycloakUserId-');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-keycloak-persons--keycloakUserId-"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/keycloak/persons/{keycloakUserId}</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
-               value="{YOUR_AUTH_KEY}"
-               data-component="header">
-    <br>
-<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
-                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="keycloakUserId"                data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
-               value="architecto"
-               data-component="url">
-    <br>
-<p>Example: <code>architecto</code></p>
-            </div>
-                    </form>
-
                     <h2 id="endpoints-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
 <p>
@@ -3532,7 +3383,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 54
+x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -3848,7 +3699,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 53
+x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -3955,9 +3806,176 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+                <h1 id="keycloak">Keycloak</h1>
+
+    
+
+                                <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Deze endpoint accepteert <strong>geen</strong> request body (geen JSON). Gebruik alleen de <code>keycloakUserId</code> in de URL.</p>
+
+<span id="example-requests-GETapi-keycloak-persons--keycloakUserId-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/keycloak/persons/11111111-2222-3333-4444-555555555555" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/keycloak/persons/11111111-2222-3333-4444-555555555555"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-keycloak-persons--keycloakUserId-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;data&quot;: {
+        &quot;person_id&quot;: 123,
+        &quot;user_id&quot;: 456,
+        &quot;keycloak_user_id&quot;: &quot;11111111-2222-3333-4444-555555555555&quot;,
+        &quot;is_active&quot;: true
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Geen persoon gevonden voor opgegeven Keycloak user id.&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-keycloak-persons--keycloakUserId-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-keycloak-persons--keycloakUserId-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-keycloak-persons--keycloakUserId-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-keycloak-persons--keycloakUserId-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-keycloak-persons--keycloakUserId-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-keycloak-persons--keycloakUserId-" data-method="GET"
+      data-path="api/keycloak/persons/{keycloakUserId}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-keycloak-persons--keycloakUserId-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-keycloak-persons--keycloakUserId-"
+                    onclick="tryItOut('GETapi-keycloak-persons--keycloakUserId-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-keycloak-persons--keycloakUserId-"
+                    onclick="cancelTryOut('GETapi-keycloak-persons--keycloakUserId-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-keycloak-persons--keycloakUserId-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/keycloak/persons/{keycloakUserId}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-keycloak-persons--keycloakUserId-"
+               value="11111111-2222-3333-4444-555555555555"
+               data-component="url">
+    <br>
+<p>De Keycloak user ID (UUID). Example: <code>11111111-2222-3333-4444-555555555555</code></p>
+            </div>
+                    </form>
+
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-
+    
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
 
@@ -4160,7 +4178,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-
+    
 
                                 <h2 id="patient-messages-PUTapi-patient--id--messages-mark_as_read">Mark all messages as read by patient (not employee)</h2>
 
@@ -4321,9 +4339,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+            
 
-
-
+        
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

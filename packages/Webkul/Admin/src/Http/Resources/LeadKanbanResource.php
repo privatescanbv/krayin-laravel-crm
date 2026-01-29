@@ -27,6 +27,7 @@ class LeadKanbanResource extends JsonResource
     {
         $gender = $this->gender;
         $genderValue = $gender instanceof BackedEnum ? $gender->value : $gender;
+        $duplicatesCount = $this->getPotentialDuplicatesCount();
 
         return [
             'id'                   => $this->id,
@@ -57,8 +58,8 @@ class LeadKanbanResource extends JsonResource
             // include unread emails from direct and nested activity emails when available
             'unread_emails_count'  => (int) ($this->open_email_count_query ?? $this->resource->getUnreadEmailsCountNestedAttribute() ?? $this->unread_emails_count ?? 0),
             'days_until_due_date'  => null,
-            'has_duplicates'       => false,
-            'duplicates_count'     => 0,
+            'has_duplicates'       => $duplicatesCount > 0,
+            'duplicates_count'     => $duplicatesCount,
         ];
     }
 }

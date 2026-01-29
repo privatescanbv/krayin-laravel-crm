@@ -6,6 +6,9 @@ use App\Enums\DuplicateEntityType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin IdeHelperDuplicateFalsePositive
+ */
 class DuplicateFalsePositive extends Model
 {
     use HasAuditTrail;

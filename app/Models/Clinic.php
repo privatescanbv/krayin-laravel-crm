@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 
+/**
+ * @mixin IdeHelperClinic
+ */
 class Clinic extends Model
 {
     use HasAuditTrail, HasFactory;

@@ -6,6 +6,9 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin IdeHelperProductType
+ */
 class ProductType extends Model
 {
     use HasAuditTrail, HasFactory;

@@ -6,6 +6,9 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin IdeHelperImportRun
+ */
 class ImportRun extends Model
 {
     use HasAuditTrail, HasFactory;

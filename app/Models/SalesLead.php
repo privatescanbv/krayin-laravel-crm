@@ -20,6 +20,9 @@ use Webkul\Lead\Models\StageProxy;
 
 // Quote entity removed
 
+/**
+ * @mixin IdeHelperSalesLead
+ */
 class SalesLead extends Model
 {
     use HasAuditTrail, HasFactory;

@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\Group;
 
+/**
+ * @mixin IdeHelperDepartment
+ */
 class Department extends Model
 {
     use HasFactory;

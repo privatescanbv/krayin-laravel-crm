@@ -11,6 +11,8 @@ use Webkul\Product\Models\Product;
 
 /**
  * Note; sales prices only used as back-up. Use Product sales price
+ *
+ * @mixin IdeHelperPartnerProduct
  */
 class PartnerProduct extends BaseProduct
 {

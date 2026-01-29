@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Models\Address;
 use App\Repositories\ClinicRepository;
 use App\Services\ClinicValidationService;
 use Illuminate\Http\JsonResponse;
@@ -35,6 +36,12 @@ class ClinicController extends SimpleEntityController
     {
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
+        $this->handleAddress($request);
+        $address = $this->handleAddress($request);
+
+        $request->merge([
+            'address_id' => $address?->id,
+        ]);
 
         return parent::store($request);
     }
@@ -44,8 +51,11 @@ class ClinicController extends SimpleEntityController
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
 
+        $address = $this->handleAddress($request);
+
         $request->merge([
-            'is_active' => $request->boolean('is_active', false),
+            'is_active'  => $request->boolean('is_active', false),
+            'address_id' => $address?->id,
         ]);
 
         return parent::update($request, $id);
@@ -53,7 +63,9 @@ class ClinicController extends SimpleEntityController
 
     public function view(int $id)
     {
-        $clinic = $this->clinicRepository->with(['address', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
+        $clinic = $this->clinicRepository->with([
+            'address', 'resources.resourceType', 'creator', 'updater',
+        ])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
 
         return view('adminc.clinics.view', [
@@ -64,7 +76,7 @@ class ClinicController extends SimpleEntityController
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse
     {
-        if (! $id) {
+        if (!$id) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => $this->getDeleteFailedMessage(),
@@ -130,5 +142,22 @@ class ClinicController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return trans('admin::app.settings.clinics.index.delete-failed');
+    }
+
+    private function handleAddress(Request $request): ?Address
+    {
+        $addressData = $request->get('address', []);
+
+        if (!empty($addressData) && is_array($addressData)) {
+            return Address::updateOrCreate(
+                [
+                    'postal_code'  => $addressData['postal_code'] ?? null,
+                    'house_number' => $addressData['house_number'] ?? null,
+                ],
+                $addressData
+            );
+        }
+
+        return null;
     }
 }

@@ -10,6 +10,9 @@ use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
+/**
+ * @mixin IdeHelperAnamnesis
+ */
 class Anamnesis extends Model
 {
     use HasAuditTrail, HasFactory;

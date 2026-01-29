@@ -7,6 +7,9 @@ use App\Traits\HasAuditTrail;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperShift
+ */
 class Shift extends BaseModel
 {
     use HasAuditTrail, HasFactory;

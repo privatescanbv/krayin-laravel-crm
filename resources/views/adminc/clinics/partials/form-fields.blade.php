@@ -80,5 +80,5 @@
         </h3>
     </div>
 
-    <x-adminc::components.address :entity="$clinic->addresss ?? null"/>
+    <x-adminc::components.address :entity="$clinic"/>
 </div>

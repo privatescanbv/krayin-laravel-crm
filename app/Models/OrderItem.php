@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
+/**
+ * @mixin IdeHelperOrderItem
+ */
 class OrderItem extends Model
 {
     use HasAuditTrail, HasFactory;

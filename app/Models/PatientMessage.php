@@ -9,6 +9,9 @@ use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\User\Models\UserProxy;
 
+/**
+ * @mixin IdeHelperPatientMessage
+ */
 class PatientMessage extends Model
 {
     use HasFactory;

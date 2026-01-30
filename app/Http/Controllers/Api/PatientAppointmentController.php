@@ -75,6 +75,8 @@ class PatientAppointmentController extends Controller
                 'id'              => 'order-'.$order->id,
                 'patient_id'      => (string) $person->id,
                 'practitioner_id' => null,
+                'clinic_id'       => $clinic ? (string) $clinic->id : null,
+                'clinic_label'    => $clinic ? $clinic->label() : null,
                 'clinic'          => $clinicData,
                 'start_at'        => $order->first_examination_at->toIso8601String(),
                 'end_at'          => null,

@@ -111,6 +111,13 @@ class OrderDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
+        $this->addAction([
+            'index'  => 'view',
+            'icon'   => 'icon-eye',
+            'title'  => 'Bekijken',
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.orders.view', $row->id),
+        ]);
         if (bouncer()->hasPermission('orders.edit')) {
             $this->addAction([
                 'index'  => 'edit',

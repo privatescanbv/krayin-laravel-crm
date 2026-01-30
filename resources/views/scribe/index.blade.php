@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-    
+
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-    
+
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -195,7 +195,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="endpoints">Endpoints</h1>
 
-    
+
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -3808,7 +3808,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-    
+
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -3975,7 +3975,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-    
+
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
 
@@ -4178,7 +4178,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-    
+
 
                                 <h2 id="patient-messages-PUTapi-patient--id--messages-mark_as_read">Mark all messages as read by patient (not employee)</h2>
 
@@ -4339,9 +4339,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
-            
 
-        
+
+
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

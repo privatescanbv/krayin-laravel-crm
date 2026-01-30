@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Activity\Models\Activity;
 
 /**
  * @mixin IdeHelperOrder
@@ -79,5 +80,10 @@ class Order extends Model
     public function orderChecks(): HasMany
     {
         return $this->hasMany(OrderCheck::class);
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Activity::class);
     }
 }

@@ -196,6 +196,15 @@ Breadcrumbs::for('orders.create', function (BreadcrumbTrail $trail) {
     $trail->push('Order aanmaken', route('admin.orders.create'));
 });
 
+// Orders > View
+Breadcrumbs::for('orders.view', function (BreadcrumbTrail $trail, $order) {
+    $trail->parent('orders');
+    if ($order->salesLead) {
+        $trail->push($order->salesLead->name, route('admin.sales-leads.view', $order->salesLead->id));
+    }
+    $trail->push('#'.$order->id, route('admin.orders.view', $order->id));
+});
+
 // Orders > Edit
 Breadcrumbs::for('orders.edit', function (BreadcrumbTrail $trail, $order) {
     $trail->parent('orders');

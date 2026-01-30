@@ -63,9 +63,9 @@ class Address extends BaseModel
 
         static::saving(function ($address) {
             // Ensure at least one of lead_id, person_id, or organization_id is set
-//            if (empty($address->lead_id) && empty($address->person_id) && empty($address->organization_id)) {
-//                throw new InvalidArgumentException('Either lead_id, person_id, or organization_id must be provided');
-//            }
+            //            if (empty($address->lead_id) && empty($address->person_id) && empty($address->organization_id)) {
+            //                throw new InvalidArgumentException('Either lead_id, person_id, or organization_id must be provided');
+            //            }
 
             // Ensure only one is set
             $setFields = array_filter([

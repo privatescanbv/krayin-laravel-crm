@@ -1,0 +1,134 @@
+@props(['order'])
+
+<div class="flex w-full flex-col gap-4 rounded-lg">
+
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div class="flex items-center justify-between gap-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Algemene informatie Order</h3>
+
+            <div class="direction-row flex items-center gap-4">
+                @if (bouncer()->hasPermission('orders.edit'))
+                    <a href="{{ route('admin.orders.edit', $order->id) }}"
+                       class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                        <span class="icon-edit text-base"></span><span>Bewerk order</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Card -->
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <h4 class="mb-4 font-semibold text-gray-800 dark:text-white">Order Details</h4>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Titel</span>
+                <span class="font-medium text-gray-800 dark:text-white">{{ $order->title }}</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Status</span>
+                @if($order->status)
+                    <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $order->status->getStatusClass() }}">
+                        {{ $order->status->label() }}
+                    </span>
+                @else
+                    <span class="text-gray-400">-</span>
+                @endif
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Totaalprijs</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    @if($order->total_price)
+                        &euro; {{ number_format($order->total_price, 2, ',', '.') }}
+                    @else
+                        -
+                    @endif
+                </span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->first_examination_at ? $order->first_examination_at->format('d-m-Y H:i') : '-' }}
+                </span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Gecombineerde order</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->combine_order ? 'Ja' : 'Nee' }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Lead Card -->
+    @if($order->salesLead)
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <h4 class="mb-4 font-semibold text-gray-800 dark:text-white">Gekoppelde Sales</h4>
+            <div class="flex items-center gap-4">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 dark:text-gray-400">Sales naam</span>
+                    <a href="{{ route('admin.sales-leads.view', $order->salesLead->id) }}"
+                       class="font-medium text-brandColor hover:underline">
+                        {{ $order->salesLead->name }}
+                    </a>
+                </div>
+                @if($order->salesLead->lead)
+                    <div class="flex flex-col">
+                        <span class="text-gray-500 dark:text-gray-400">Lead</span>
+                        <a href="{{ route('admin.leads.view', $order->salesLead->lead->id) }}"
+                           class="font-medium text-brandColor hover:underline">
+                            {{ $order->salesLead->lead->name }}
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    <!-- Order Items Card -->
+    @if($order->orderItems && $order->orderItems->count() > 0)
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <h4 class="mb-4 font-semibold text-gray-800 dark:text-white">Order Items</h4>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Product</th>
+                            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Persoon</th>
+                            <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Aantal</th>
+                            <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Prijs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($order->orderItems as $item)
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="px-2 py-2 text-gray-800 dark:text-white">
+                                    {{ $item->product?->name ?? '-' }}
+                                </td>
+                                <td class="px-2 py-2 text-gray-800 dark:text-white">
+                                    {{ $item->person?->name ?? '-' }}
+                                </td>
+                                <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
+                                    {{ $item->quantity }}
+                                </td>
+                                <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
+                                    &euro; {{ number_format($item->total_price ?? 0, 2, ',', '.') }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+    <!-- Persons Card -->
+    @if($order->salesLead && $order->salesLead->persons && $order->salesLead->persons->count() > 0)
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+            @foreach ($order->salesLead->persons as $person)
+                @include('adminc::persons.person', ['person' => $person])
+            @endforeach
+        </div>
+    @endif
+
+</div>

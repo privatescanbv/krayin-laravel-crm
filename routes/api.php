@@ -82,6 +82,8 @@ $registerAuthenticatedApiRoutes = function () {
 
     // Patient appointments (derived from Orders), by keycloak user id
     Route::get('patient/{id}/appointments', [PatientAppointmentController::class, 'index']);
+    // TODO implement document fetching
+    //    Route::get('patient/{id}/documents', [PatientAppointmentController::class, 'index']);
 };
 
 // All API routes are protected by ApiKeyAuth middleware, which supports:

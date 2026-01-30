@@ -5,6 +5,7 @@ namespace Webkul\Activity\Models;
 use App\Enums\PatientMessageSenderType;
 use App\Models\CallStatus;
 use App\Models\Clinic;
+use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
 use Carbon\Carbon;
@@ -69,6 +70,7 @@ class Activity extends Model implements ActivityContract
         'group_id',
         'lead_id',
         'sales_lead_id',
+        'order_id',
         'clinic_id',
         'external_id',
     ];
@@ -115,6 +117,14 @@ class Activity extends Model implements ActivityContract
     public function clinic()
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    /**
+     * Get the order that owns the activity.
+     */
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     /**

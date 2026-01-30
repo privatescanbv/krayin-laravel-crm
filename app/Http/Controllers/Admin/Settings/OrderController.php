@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -27,6 +28,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 use Webkul\Admin\Http\Controllers\Mail\EmailController;
+use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Product\Models\Product;
@@ -134,6 +136,35 @@ class OrderController extends SimpleEntityController
         return redirect()->route($this->indexRoute)->with('success', $this->getCreateSuccessMessage());
     }
 
+    public function view(int $id): View
+    {
+        $order = $this->orderRepository->with([
+            'salesLead.lead',
+            'salesLead.persons',
+            'salesLead.contactPerson',
+            'orderItems.product',
+            'orderItems.person',
+        ])->findOrFail($id);
+
+        $activitiesCount = $order->activities()->where('is_done', false)->count();
+
+        return view('admin::orders.view', ['order' => $order, 'activitiesCount' => $activitiesCount]);
+    }
+
+    public function activities(int $id): AnonymousResourceCollection
+    {
+        $order = $this->orderRepository->findOrFail($id);
+
+        $activities = $order->activities()->get();
+
+        return ActivityResource::collection($activities);
+    }
+
+    public function emailsDetach(int $id): JsonResponse
+    {
+        return response()->json(['message' => 'Not implemented for orders'], 501);
+    }
+
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
         $this->validateUpdate($request, $id);
@@ -209,8 +240,6 @@ class OrderController extends SimpleEntityController
                 OrderItem::destroy($itemsToDelete->toArray());
             }
         }
-
-        // GVL form link is now managed per person/anamnesis, not per order/salesLead
 
         Event::dispatch("{$this->entityName}.update.after", $order);
 

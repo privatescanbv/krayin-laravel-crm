@@ -28,7 +28,6 @@ class KeycloakUserController extends Controller
      *    "is_active": true
      *  }
      * }
-     *
      * @response 404 {
      *  "success": false,
      *  "message": "Geen persoon gevonden voor opgegeven Keycloak user id."
@@ -42,6 +41,7 @@ class KeycloakUserController extends Controller
             Log::warning('No person found by keycloak user id.', [
                 'keycloak_user_id' => $keycloakUserId,
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Geen persoon gevonden voor opgegeven Keycloak user id.',

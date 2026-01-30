@@ -76,7 +76,7 @@ class ClinicController extends SimpleEntityController
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse
     {
-        if (!$id) {
+        if (! $id) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => $this->getDeleteFailedMessage(),
@@ -148,7 +148,7 @@ class ClinicController extends SimpleEntityController
     {
         $addressData = $request->get('address', []);
 
-        if (!empty($addressData) && is_array($addressData)) {
+        if (! empty($addressData) && is_array($addressData)) {
             return Address::updateOrCreate(
                 [
                     'postal_code'  => $addressData['postal_code'] ?? null,

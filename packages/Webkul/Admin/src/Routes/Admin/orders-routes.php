@@ -13,6 +13,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('', 'index')->name('admin.orders.index');
     Route::get('create', 'create')->name('admin.orders.create');
     Route::post('create', 'store')->name('admin.orders.store');
+    Route::get('view/{id}', 'view')->name('admin.orders.view');
     Route::get('edit/{id}', 'edit')->name('admin.orders.edit');
     Route::put('edit/{id}', 'update')->name('admin.orders.update');
     Route::delete('', 'destroy')->name('admin.orders.delete');
@@ -34,6 +35,10 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');
     Route::put('{orderId}/checks/{checkId}', 'updateCheck')->name('admin.orders.checks.update');
     Route::delete('{orderId}/checks/{checkId}', 'destroyCheck')->name('admin.orders.checks.destroy');
+
+    // Order activities routes
+    Route::get('{id}/activities', 'activities')->name('admin.orders.activities.index');
+    Route::get('{id}/emails/detach', 'emailsDetach')->name('admin.orders.emails.detach');
 });
 
 /**

@@ -79,7 +79,7 @@ class PatientAppointmentController extends Controller
                 'start_at'        => $order->first_examination_at->toIso8601String(),
                 'end_at'          => null,
                 'timezone'        => $timezone,
-                'is_remote'       => true,
+                'is_remote'       => false,
                 'remote_url'      => null,
                 'created_at'      => $order->created_at->toIso8601String(),
                 'updated_at'      => $order->updated_at?->toIso8601String(),

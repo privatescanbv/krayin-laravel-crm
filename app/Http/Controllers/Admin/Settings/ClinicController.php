@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Http\Requests\Admin\Settings\StoreClinicRequest;
+use App\Http\Requests\Admin\Settings\UpdateClinicRequest;
 use App\Models\Address;
 use App\Repositories\ClinicRepository;
-use App\Services\ClinicValidationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,11 +37,18 @@ class ClinicController extends SimpleEntityController
     {
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
-        $this->handleAddress($request);
-        $address = $this->handleAddress($request);
+
+        $isPostalSameAsVisit = $request->boolean('is_postal_address_same_as_visit_address', false);
+
+        $visitAddress = $this->handleAddress($request, 'visit_address');
+        $postalAddress = $isPostalSameAsVisit
+            ? $visitAddress
+            : $this->handleAddress($request, 'postal_address');
 
         $request->merge([
-            'address_id' => $address?->id,
+            'visit_address_id'                        => $visitAddress?->id,
+            'postal_address_id'                       => $postalAddress?->id,
+            'is_postal_address_same_as_visit_address' => $isPostalSameAsVisit,
         ]);
 
         return parent::store($request);
@@ -51,11 +59,18 @@ class ClinicController extends SimpleEntityController
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
 
-        $address = $this->handleAddress($request);
+        $isPostalSameAsVisit = $request->boolean('is_postal_address_same_as_visit_address', false);
+
+        $visitAddress = $this->handleAddress($request, 'visit_address');
+        $postalAddress = $isPostalSameAsVisit
+            ? $visitAddress
+            : $this->handleAddress($request, 'postal_address');
 
         $request->merge([
-            'is_active'  => $request->boolean('is_active', false),
-            'address_id' => $address?->id,
+            'is_active'                               => $request->boolean('is_active', false),
+            'visit_address_id'                        => $visitAddress?->id,
+            'postal_address_id'                       => $postalAddress?->id,
+            'is_postal_address_same_as_visit_address' => $isPostalSameAsVisit,
         ]);
 
         return parent::update($request, $id);
@@ -64,7 +79,7 @@ class ClinicController extends SimpleEntityController
     public function view(int $id)
     {
         $clinic = $this->clinicRepository->with([
-            'address', 'resources.resourceType', 'creator', 'updater',
+            'visitAddress', 'postalAddress', 'resources.resourceType', 'creator', 'updater',
         ])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
 
@@ -109,12 +124,12 @@ class ClinicController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
-        $request->validate(ClinicValidationService::getCreateValidationRules());
+        $request->validate(StoreClinicRequest::rulesForCreate());
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
-        $request->validate(ClinicValidationService::getUpdateValidationRules($id));
+        $request->validate(UpdateClinicRequest::rulesForUpdate($id));
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array
@@ -144,9 +159,9 @@ class ClinicController extends SimpleEntityController
         return trans('admin::app.settings.clinics.index.delete-failed');
     }
 
-    private function handleAddress(Request $request): ?Address
+    private function handleAddress(Request $request, string $payloadKey = 'address'): ?Address
     {
-        $addressData = $request->get('address', []);
+        $addressData = $request->get($payloadKey, []);
 
         if (! empty($addressData) && is_array($addressData)) {
             return Address::updateOrCreate(

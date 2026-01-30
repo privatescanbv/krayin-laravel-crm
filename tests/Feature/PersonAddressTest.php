@@ -36,14 +36,16 @@ test('test_address_is_saved_when_creating_person', function () {
     $personRepository = app(PersonRepository::class);
     $person = $personRepository->create($personData);
 
-    // Assert
+    // Assert - person has address_id set
+    $this->assertNotNull($person->address_id);
     $this->assertDatabaseHas('persons', [
         'id'         => $person->id,
         'first_name' => 'Test Person',
+        'address_id' => $person->address_id,
     ]);
 
     $this->assertDatabaseHas('addresses', [
-        'person_id'           => $person->id,
+        'id'                  => $person->address_id,
         'street'              => 'Hoofdstraat',
         'house_number'        => '123',
         'house_number_suffix' => 'A',
@@ -99,14 +101,16 @@ test('test_address_is_updated_when_updating_person', function () {
     // Act
     $updatedPerson = $personRepository->update($updateData, $person->id);
 
-    // Assert
+    // Assert - person still has the same address_id
+    $this->assertNotNull($updatedPerson->address_id);
     $this->assertDatabaseHas('persons', [
         'id'         => $person->id,
         'first_name' => 'Updated Person',
+        'address_id' => $updatedPerson->address_id,
     ]);
 
     $this->assertDatabaseHas('addresses', [
-        'person_id'           => $person->id,
+        'id'                  => $updatedPerson->address_id,
         'street'              => 'Nieuwe Straat',
         'house_number'        => '789',
         'house_number_suffix' => 'B',
@@ -127,8 +131,9 @@ test('test_person_factory_with_address', function () {
     $person = Person::factory()->withAddress()->create();
 
     // Assert
+    $this->assertNotNull($person->address_id);
     $this->assertNotNull($person->address);
     $this->assertDatabaseHas('addresses', [
-        'person_id' => $person->id,
+        'id' => $person->address_id,
     ]);
 });

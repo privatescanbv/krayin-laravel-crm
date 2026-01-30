@@ -10,11 +10,10 @@ use Webkul\Admin\DataGrids\Contact\OrganizationDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
-use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\Http\Resources\OrganizationResource;
 use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Contact\Models\Organization;
-use App\Models\Address;
+use App\Repositories\AddressRepository;
 
 class OrganizationController extends Controller
 {
@@ -82,10 +81,7 @@ class OrganizationController extends Controller
 
         // Handle address creation
         if (isset($data['address']) && !empty(array_filter($data['address']))) {
-            $addressData = array_merge($data['address'], [
-                'organization_id' => $organization->id
-            ]);
-            Address::create($addressData);
+            app(AddressRepository::class)->upsertForEntity($organization, $data['address']);
         }
 
         Event::dispatch('contacts.organization.create.after', $organization);
@@ -153,7 +149,7 @@ class OrganizationController extends Controller
 
             // Handle address update
             if (isset($data['address'])) {
-                // Get fresh organization instance with address relationship
+                // Get fresh organization instance
                 $organization = $this->organizationRepository->find($id);
                 if (!$organization) {
                     if (request()->ajax()) {
@@ -164,25 +160,16 @@ class OrganizationController extends Controller
                     }
                     return redirect()->back()->with('error', 'Organization not found after update');
                 }
-                $existingAddress = $organization->address;
 
-            if (!empty(array_filter($data['address']))) {
-                $addressData = array_merge($data['address'], [
-                    'organization_id' => $organization->id
-                ]);
+                $addressRepository = app(AddressRepository::class);
 
-                if ($existingAddress && is_object($existingAddress)) {
-                    $existingAddress->update($addressData);
-                } else {
-                    // Delete any existing address first (in case of data inconsistency)
-                    Address::where('organization_id', $organization->id)->delete();
-                    Address::create($addressData);
+                if (!empty(array_filter($data['address']))) {
+                    $addressRepository->upsertForEntity($organization, $data['address']);
+                } else if ($organization->address_id) {
+                    // If address data is empty, delete existing address
+                    $addressRepository->deleteForEntity($organization);
                 }
-            } else if ($existingAddress && is_object($existingAddress)) {
-                // If address data is empty, delete existing address
-                $existingAddress->delete();
             }
-        }
 
             Event::dispatch('contacts.organization.update.after', $organization);
 
@@ -256,7 +243,7 @@ class OrganizationController extends Controller
     public function search()
     {
         $searchTerm = request('search');
-        
+
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $organizations = $this->organizationRepository
                 ->with(['address'])

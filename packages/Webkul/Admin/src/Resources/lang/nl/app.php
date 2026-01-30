@@ -1671,6 +1671,11 @@ return [
             ],
         ],
         'clinics' => [
+            'addresses' => [
+                'visit-address'        => 'Bezoekadres',
+                'postal-address'       => 'Postadres',
+                'postal-same-as-visit' => 'Postadres is gelijk aan bezoekadres',
+            ],
             'index' => [
                 'title' => 'Klinieken',
                 'create-btn' => 'Kliniek toevoegen',

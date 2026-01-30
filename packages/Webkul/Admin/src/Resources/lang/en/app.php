@@ -707,6 +707,11 @@ return [
         'title' => 'Settings',
 
         'clinics' => [
+            'addresses' => [
+                'visit-address'          => 'Visit address',
+                'postal-address'         => 'Postal address',
+                'postal-same-as-visit'   => 'Postal address is the same as visit address',
+            ],
             'index' => [
                 'title'           => 'Clinics',
                 'create-btn'      => 'Add Clinic',

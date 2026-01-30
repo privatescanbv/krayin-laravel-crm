@@ -19,14 +19,7 @@ test('it merges address from duplicate lead to primary lead', function () {
     ]);
 
     // Create duplicate lead with address
-    $duplicateLead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-    ]);
-
-    // Create address for duplicate lead
     $duplicateAddress = Address::create([
-        'lead_id'             => $duplicateLead->id,
         'street'              => 'Test Street',
         'house_number'        => '123',
         'house_number_suffix' => 'A',
@@ -36,9 +29,15 @@ test('it merges address from duplicate lead to primary lead', function () {
         'country'             => 'Test Country',
     ]);
 
+    $duplicateLead = Lead::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+        'address_id' => $duplicateAddress->id,
+    ]);
+
     // Verify initial state
-    $this->assertNull($primaryLead->fresh()->address);
-    $this->assertNotNull($duplicateLead->fresh()->address);
+    $this->assertNull($primaryLead->fresh()->address_id);
+    $this->assertNotNull($duplicateLead->fresh()->address_id);
 
     // Perform merge with address from duplicate lead
     $fieldMappings = [
@@ -51,7 +50,8 @@ test('it merges address from duplicate lead to primary lead', function () {
         $fieldMappings
     );
 
-    // Verify that primary lead now has the address from duplicate lead
+    // Verify that primary lead now has an address with the data from duplicate lead
+    $this->assertNotNull($mergedLead->address_id);
     $this->assertNotNull($mergedLead->address);
     $this->assertEquals('Test Street', $mergedLead->address->street);
     $this->assertEquals('123', $mergedLead->address->house_number);
@@ -70,13 +70,7 @@ test('it merges address from duplicate lead to primary lead', function () {
 
 test('it overwrites existing address when merging', function () {
     // Create primary lead with existing address
-    $primaryLead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-    ]);
-
-    Address::create([
-        'lead_id'      => $primaryLead->id,
+    $primaryAddress = Address::create([
         'street'       => 'Old Street',
         'house_number' => '456',
         'postal_code'  => '5678CD',
@@ -84,14 +78,14 @@ test('it overwrites existing address when merging', function () {
         'country'      => 'Old Country',
     ]);
 
-    // Create duplicate lead with different address
-    $duplicateLead = Lead::factory()->create([
+    $primaryLead = Lead::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
+        'address_id' => $primaryAddress->id,
     ]);
 
-    Address::create([
-        'lead_id'             => $duplicateLead->id,
+    // Create duplicate lead with different address
+    $duplicateAddress = Address::create([
         'street'              => 'New Street',
         'house_number'        => '789',
         'house_number_suffix' => 'B',
@@ -99,6 +93,12 @@ test('it overwrites existing address when merging', function () {
         'city'                => 'New City',
         'state'               => 'New State',
         'country'             => 'New Country',
+    ]);
+
+    $duplicateLead = Lead::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+        'address_id' => $duplicateAddress->id,
     ]);
 
     // Perform merge choosing address from duplicate lead
@@ -112,7 +112,8 @@ test('it overwrites existing address when merging', function () {
         $fieldMappings
     );
 
-    // Verify that primary lead's address is replaced with duplicate's address
+    // Verify that primary lead's address is updated with duplicate's address data
+    $this->assertNotNull($mergedLead->address_id);
     $this->assertNotNull($mergedLead->address);
     $this->assertEquals('New Street', $mergedLead->address->street);
     $this->assertEquals('789', $mergedLead->address->house_number);
@@ -125,13 +126,7 @@ test('it overwrites existing address when merging', function () {
 
 test('it keeps primary address when not specified in field mappings', function () {
     // Create primary lead with address
-    $primaryLead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-    ]);
-
-    Address::create([
-        'lead_id'      => $primaryLead->id,
+    $primaryAddress = Address::create([
         'street'       => 'Primary Street',
         'house_number' => '111',
         'postal_code'  => '1111AA',
@@ -139,19 +134,25 @@ test('it keeps primary address when not specified in field mappings', function (
         'country'      => 'Primary Country',
     ]);
 
-    // Create duplicate lead with different address
-    $duplicateLead = Lead::factory()->create([
+    $primaryLead = Lead::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
+        'address_id' => $primaryAddress->id,
     ]);
 
-    Address::create([
-        'lead_id'      => $duplicateLead->id,
+    // Create duplicate lead with different address
+    $duplicateAddress = Address::create([
         'street'       => 'Duplicate Street',
         'house_number' => '222',
         'postal_code'  => '2222BB',
         'city'         => 'Duplicate City',
         'country'      => 'Duplicate Country',
+    ]);
+
+    $duplicateLead = Lead::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+        'address_id' => $duplicateAddress->id,
     ]);
 
     // Perform merge without specifying address in field mappings
@@ -165,6 +166,7 @@ test('it keeps primary address when not specified in field mappings', function (
     );
 
     // Verify that primary lead keeps its original address
+    $this->assertNotNull($mergedLead->address_id);
     $this->assertNotNull($mergedLead->address);
     $this->assertEquals('Primary Street', $mergedLead->address->street);
     $this->assertEquals('111', $mergedLead->address->house_number);

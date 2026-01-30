@@ -114,7 +114,8 @@ class LeadFactory extends Factory
     public function withAddress(): static
     {
         return $this->afterCreating(function (Lead $lead) {
-            Address::factory()->forLead($lead)->create();
+            $address = Address::factory()->create();
+            $lead->update(['address_id' => $address->id]);
         });
     }
 

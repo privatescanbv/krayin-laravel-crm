@@ -26,6 +26,7 @@ class Organization extends Model implements OrganizationContract
         'user_id',
         'created_by',
         'updated_by',
+        'address_id',
     ];
 
     /**
@@ -51,7 +52,7 @@ class Organization extends Model implements OrganizationContract
      */
     public function address()
     {
-        return $this->hasOne(Address::class, 'organization_id');
+        return $this->belongsTo(Address::class);
     }
 
     /**

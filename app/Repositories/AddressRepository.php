@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Address;
 use Illuminate\Container\Container;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 use Webkul\Core\Eloquent\Repository;
@@ -29,31 +30,14 @@ class AddressRepository extends Repository
     }
 
     /**
-     * Validate and upsert an address for a given lead.
-     * - Validates against Address::$rules with lead_id
-     * - Updates existing address with provided filled fields, otherwise creates
-     * - Silently returns if no meaningful address fields are provided
+     * Validate and upsert an address for a given entity (Lead, Person, Organization).
+     * Creates or updates address and sets the address_id on the entity.
+     *
+     * @param  Model  $entity  The entity (Lead, Person, or Organization)
+     * @param  array  $addressData  The address data
+     * @return Address|null Returns the address if created/updated, null if skipped
      */
-    public function upsertForLead(int $leadId, array $addressData): void
-    {
-        $this->upsert('lead_id', $leadId, $addressData);
-    }
-
-    /**
-     * Validate and upsert an address for a given person.
-     * - Validates against Address::$rules with person_id
-     * - Updates existing address with provided filled fields, otherwise creates
-     * - Silently returns if no meaningful address fields are provided
-     */
-    public function upsertForPerson(int $personId, array $addressData): void
-    {
-        $this->upsert('person_id', $personId, $addressData);
-    }
-
-    /**
-     * Shared upsert implementation for lead/person owners.
-     */
-    private function upsert(string $ownerKey, int $ownerId, array $addressData): void
+    public function upsertForEntity(Model $entity, array $addressData): ?Address
     {
         // Filter to filled fields only for update behavior decision
         $filled = array_filter($addressData, function ($value) {
@@ -61,34 +45,48 @@ class AddressRepository extends Repository
         });
 
         if (empty($filled)) {
-            return;
+            return null;
         }
 
-        // Require minimum fields for a valid address payload; avoid validating on partials like only country
+        // Require minimum fields for a valid address payload
         $houseNumber = isset($addressData['house_number']) ? trim((string) $addressData['house_number']) : '';
         $postalCode = isset($addressData['postal_code']) ? trim((string) $addressData['postal_code']) : '';
         if ($houseNumber === '' || $postalCode === '') {
-            // Skip silently when required address parts are not provided
-            return;
+            return null;
         }
 
-        $payload = array_merge($addressData, [
-            $ownerKey => $ownerId,
-        ]);
-
-        $validator = Validator::make($payload, Address::$rules);
+        $validator = Validator::make($addressData, Address::$rules);
         if ($validator->fails()) {
             throw new InvalidArgumentException('Address validation failed: '.$validator->errors()->first());
         }
 
-        $existing = $this->findOneWhere([$ownerKey => $ownerId]);
-
-        if ($existing) {
+        // Check if entity already has an address
+        if ($entity->address_id && $existing = $this->find($entity->address_id)) {
+            // Update existing address
             $this->update($filled, $existing->id);
 
-            return;
+            return $existing->fresh();
         }
 
-        $this->create($payload);
+        // Create new address and link to entity
+        $address = $this->create($addressData);
+        $entity->address_id = $address->id;
+        $entity->save();
+
+        return $address;
+    }
+
+    /**
+     * Delete the address for an entity and clear the address_id.
+     *
+     * @param  Model  $entity  The entity (Lead, Person, or Organization)
+     */
+    public function deleteForEntity(Model $entity): void
+    {
+        if ($entity->address_id) {
+            $this->delete($entity->address_id);
+            $entity->address_id = null;
+            $entity->save();
+        }
     }
 }

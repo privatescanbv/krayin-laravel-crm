@@ -15,14 +15,11 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use App\Models\Address as LeadAddress;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Lead\Contracts\Lead;
-use Webkul\Lead\Models\Lead as LeadModel;
 
 class LeadRepository extends Repository
 {
@@ -185,14 +182,7 @@ class LeadRepository extends Repository
 
         // Handle address data for new leads
         if (isset($data['address']) && !empty($data['address'])) {
-            $addressData = $data['address'];
-            $hasAddressData = !empty(array_filter($addressData));
-
-            if ($hasAddressData) {
-                LeadAddress::create(array_merge($addressData, [
-                    'lead_id' => $lead->id,
-                ]));
-            }
+            app(AddressRepository::class)->upsertForEntity($lead, $data['address']);
         }
 
                 // Attach persons to the lead
@@ -280,12 +270,12 @@ class LeadRepository extends Repository
             $data['organization_id'] = null;
         }
 
+        $lead = parent::update($data, $id);
+
         // Handle address data using central AddressRepository (with validation)
         if (isset($data['address']) && is_array($data['address'])) {
-            app(AddressRepository::class)->upsertForLead($id, $data['address']);
+            app(AddressRepository::class)->upsertForEntity($lead, $data['address']);
         }
-
-        $lead = parent::update($data, $id);
 
 
                 // Sync persons to the lead
@@ -566,36 +556,19 @@ class LeadRepository extends Repository
 
         $sourceAddress = $sourceLead->address;
 
-        // Get or create address for primary lead
-        $primaryAddress = $primaryLead->address;
+        // Prepare address data from source
+        $addressData = [
+            'street' => $sourceAddress->street,
+            'house_number' => $sourceAddress->house_number,
+            'house_number_suffix' => $sourceAddress->house_number_suffix,
+            'postal_code' => $sourceAddress->postal_code,
+            'city' => $sourceAddress->city,
+            'state' => $sourceAddress->state,
+            'country' => $sourceAddress->country,
+        ];
 
-        if ($primaryAddress) {
-            // Update existing address with source address data
-            $primaryAddress->update([
-                'street' => $sourceAddress->street,
-                'house_number' => $sourceAddress->house_number,
-                'house_number_suffix' => $sourceAddress->house_number_suffix,
-                'postal_code' => $sourceAddress->postal_code,
-                'city' => $sourceAddress->city,
-                'state' => $sourceAddress->state,
-                'country' => $sourceAddress->country,
-                'updated_by' => auth()->id(),
-            ]);
-        } else {
-            // Create new address for primary lead
-            $primaryLead->address()->create([
-                'lead_id' => $primaryLead->id,
-                'street' => $sourceAddress->street,
-                'house_number' => $sourceAddress->house_number,
-                'house_number_suffix' => $sourceAddress->house_number_suffix,
-                'postal_code' => $sourceAddress->postal_code,
-                'city' => $sourceAddress->city,
-                'state' => $sourceAddress->state,
-                'country' => $sourceAddress->country,
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
-            ]);
-        }
+        // Use the AddressRepository to upsert the address for the primary lead
+        app(AddressRepository::class)->upsertForEntity($primaryLead, $addressData);
 
         Log::info('Address merged successfully', [
             'primary_lead_id' => $primaryLead->id,

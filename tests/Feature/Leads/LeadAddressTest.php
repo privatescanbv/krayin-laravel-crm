@@ -36,14 +36,16 @@ test('test_address_is_saved_when_creating_lead', function () {
     $leadRepository = app(LeadRepository::class);
     $lead = $leadRepository->create($leadData);
 
-    // Assert
+    // Assert - lead has address_id set
+    $this->assertNotNull($lead->address_id);
     $this->assertDatabaseHas('leads', [
         'id'            => $lead->id,
         'department_id' => 1,
+        'address_id'    => $lead->address_id,
     ]);
 
     $this->assertDatabaseHas('addresses', [
-        'lead_id'             => $lead->id,
+        'id'                  => $lead->address_id,
         'street'              => 'Hoofdstraat',
         'house_number'        => '123',
         'house_number_suffix' => 'A',
@@ -97,13 +99,15 @@ test('test_address_is_updated_when_updating_lead', function () {
     // Act
     $updatedLead = $leadRepository->update($updateData, $lead->id);
 
-    // Assert
+    // Assert - lead still has the same address_id
+    $this->assertNotNull($updatedLead->address_id);
     $this->assertDatabaseHas('leads', [
-        'id'    => $lead->id,
+        'id'         => $lead->id,
+        'address_id' => $updatedLead->address_id,
     ]);
 
     $this->assertDatabaseHas('addresses', [
-        'lead_id'             => $lead->id,
+        'id'                  => $updatedLead->address_id,
         'street'              => 'Nieuwe Straat',
         'house_number'        => '789',
         'house_number_suffix' => 'B',
@@ -124,8 +128,9 @@ test('test_lead_factory_with_address', function () {
     $lead = Lead::factory()->withAddress()->create();
 
     // Assert
+    $this->assertNotNull($lead->address_id);
     $this->assertNotNull($lead->address);
     $this->assertDatabaseHas('addresses', [
-        'lead_id' => $lead->id,
+        'id' => $lead->address_id,
     ]);
 });

@@ -3,7 +3,7 @@
 namespace Webkul\Contact\Repositories;
 
 use App\Enums\DuplicateEntityType;
-use App\Models\Address;
+use App\Repositories\AddressRepository;
 use App\Services\Concerns\JsonDuplicateMatcher;
 use App\Services\DuplicateFalsePositiveService;
 use Exception;
@@ -11,8 +11,6 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
-use Validator;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
@@ -92,28 +90,9 @@ class PersonRepository extends Repository
             'entity_id' => $person->id,
         ]));
 
-                // Handle address data for new persons
+        // Handle address data for new persons
         if (isset($data['address']) && !empty($data['address'])) {
-            $addressData = $data['address'];
-            // Check if there's any meaningful address data (not just empty strings)
-            $hasAddressData = !empty(array_filter($addressData, function($value) {
-                return !empty(trim($value));
-            }));
-
-            if ($hasAddressData) {
-                // Add person_id to address data for validation
-                $addressDataWithPersonId = array_merge($addressData, [
-                    'person_id' => $person->id,
-                ]);
-
-                // Validate address data
-                $validator = Validator::make($addressDataWithPersonId, Address::$rules);
-                if ($validator->fails()) {
-                    throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
-                }
-
-                Address::create($addressDataWithPersonId);
-            }
+            app(AddressRepository::class)->upsertForEntity($person, $data['address']);
         }
 
         return $person;
@@ -167,48 +146,7 @@ class PersonRepository extends Repository
 
         // Handle address data
         if (isset($data['address']) && !empty($data['address'])) {
-            $addressData = $data['address'];
-            // Check if there's any meaningful address data (not just empty strings)
-            $filledAddressData = array_filter($addressData, function($value) {
-                return !empty(trim($value));
-            });
-            $hasAddressData = !empty($filledAddressData);
-
-            Log::info('Address filtering debug:', [
-                'original_data' => $addressData,
-                'filled_data' => $filledAddressData,
-                'has_address_data' => $hasAddressData,
-            ]);
-            Log::info('Updating address ', [
-                'address' => $addressData,
-                'city_value' => $addressData['city'] ?? 'NOT_SET',
-                'city_isset' => isset($addressData['city']),
-                'city_empty' => empty($addressData['city'] ?? ''),
-                'city_trimmed' => trim($addressData['city'] ?? ''),
-            ]);
-            if ($hasAddressData) {
-                // Add person_id to address data for validation
-                $addressDataWithPersonId = array_merge($addressData, [
-                    'person_id' => $id,
-                ]);
-
-                // Validate address data
-                $validator = Validator::make($addressDataWithPersonId, Address::$rules);
-                if ($validator->fails()) {
-                    throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
-                }
-
-                // Check if person already has an address
-                $existingAddress = Address::where('person_id', $id)->first();
-
-                if ($existingAddress) {
-                    // Update existing address - only update filled fields
-                    $existingAddress->update($filledAddressData);
-                } else {
-                    // Create new address - use all data (including empty fields)
-                    Address::create($addressDataWithPersonId);
-                }
-            }
+            app(AddressRepository::class)->upsertForEntity($person, $data['address']);
         }
 
         return $person;
@@ -462,19 +400,19 @@ class PersonRepository extends Repository
 
         $duplicateAddress = $duplicatePerson->address;
 
-        if ($primaryPerson->address) {
-            // Update existing address
-            $primaryPerson->address->update($duplicateAddress->toArray());
-        } else {
-            // Create new address
-            $addressData = $duplicateAddress->toArray();
-            $addressData['person_id'] = $primaryPerson->id;
-            unset($addressData['id'], $addressData['created_at'], $addressData['updated_at']);
-            Address::create($addressData);
-        }
+        // Prepare address data from duplicate
+        $addressData = [
+            'street' => $duplicateAddress->street,
+            'house_number' => $duplicateAddress->house_number,
+            'house_number_suffix' => $duplicateAddress->house_number_suffix,
+            'postal_code' => $duplicateAddress->postal_code,
+            'city' => $duplicateAddress->city,
+            'state' => $duplicateAddress->state,
+            'country' => $duplicateAddress->country,
+        ];
 
-        // Delete the duplicate's address
-        $duplicateAddress->delete();
+        // Use the AddressRepository to upsert the address
+        app(AddressRepository::class)->upsertForEntity($primaryPerson, $addressData);
     }
 
     /**

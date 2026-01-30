@@ -143,15 +143,15 @@ test('imports person with emails, phones and address from sugarcrm sqlite stub',
 
     // Assert emails (primary or fallback exists)
 
-    // Assert address created
-    $address = Address::where('person_id', $person->id)->first();
-    expect($address)->not->toBeNull()
-        ->and($address->street)->toBe('Teststraat')
-        ->and($address->house_number)->toBe('12')
-        ->and($address->house_number_suffix)->toBe('B')
-        ->and($address->postal_code)->toBe('3000AA')
-        ->and($address->city)->toBe('Rotterdam')
-        ->and($address->country)->toBe('NL');
+    // Assert address created and linked via address_id
+    expect($person->address_id)->not->toBeNull()
+        ->and($person->address)->not->toBeNull()
+        ->and($person->address->street)->toBe('Teststraat')
+        ->and($person->address->house_number)->toBe('12')
+        ->and($person->address->house_number_suffix)->toBe('B')
+        ->and($person->address->postal_code)->toBe('3000AA')
+        ->and($person->address->city)->toBe('Rotterdam')
+        ->and($person->address->country)->toBe('NL');
 });
 
 test('imports person with primary and secondary emails ordered correctly', function () {

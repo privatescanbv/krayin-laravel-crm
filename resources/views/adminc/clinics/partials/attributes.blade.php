@@ -71,35 +71,79 @@
                     type="phone"
                 />
 
-                <!-- Address -->
-                @if ($clinic->address)
+                <!-- Visit Address -->
+                @if ($clinic->visitAddress)
                     <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
                         <div class="label dark:text-white">
-                            @lang('admin::app.settings.clinics.view.attributes.address')
+                            @lang('admin::app.settings.clinics.addresses.visit-address')
                         </div>
                         <div class="font-medium dark:text-white">
-                            @if (!empty($clinic->address->address_line_1))
-                                <div>{{ $clinic->address->address_line_1 }}</div>
+                            @if (!empty($clinic->visitAddress->address_line_1))
+                                <div>{{ $clinic->visitAddress->address_line_1 }}</div>
                             @endif
-                            @if (!empty($clinic->address->address_line_2))
-                                <div>{{ $clinic->address->address_line_2 }}</div>
+                            @if (!empty($clinic->visitAddress->address_line_2))
+                                <div>{{ $clinic->visitAddress->address_line_2 }}</div>
                             @endif
-                            @if (!empty($clinic->address->postal_code) || !empty($clinic->address->city))
+                            @if (!empty($clinic->visitAddress->postal_code) || !empty($clinic->visitAddress->city))
                                 <div>
-                                    @if (!empty($clinic->address->postal_code))
-                                        {{ $clinic->address->postal_code }}
+                                    @if (!empty($clinic->visitAddress->postal_code))
+                                        {{ $clinic->visitAddress->postal_code }}
                                     @endif
-                                    @if (!empty($clinic->address->city))
-                                        {{ $clinic->address->city }}
+                                    @if (!empty($clinic->visitAddress->city))
+                                        {{ $clinic->visitAddress->city }}
                                     @endif
                                 </div>
                             @endif
-                            @if (!empty($clinic->address->state))
-                                <div>{{ $clinic->address->state }}</div>
+                            @if (!empty($clinic->visitAddress->state))
+                                <div>{{ $clinic->visitAddress->state }}</div>
                             @endif
-                            @if (!empty($clinic->address->country))
-                                <div>{{ $clinic->address->country }}</div>
+                            @if (!empty($clinic->visitAddress->country))
+                                <div>{{ $clinic->visitAddress->country }}</div>
                             @endif
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Postal Address -->
+                @if (! $clinic->is_postal_address_same_as_visit_address && $clinic->postalAddress)
+                    <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
+                        <div class="label dark:text-white">
+                            @lang('admin::app.settings.clinics.addresses.postal-address')
+                        </div>
+                        <div class="font-medium dark:text-white">
+                            @if (!empty($clinic->postalAddress->address_line_1))
+                                <div>{{ $clinic->postalAddress->address_line_1 }}</div>
+                            @endif
+                            @if (!empty($clinic->postalAddress->address_line_2))
+                                <div>{{ $clinic->postalAddress->address_line_2 }}</div>
+                            @endif
+                            @if (!empty($clinic->postalAddress->postal_code) || !empty($clinic->postalAddress->city))
+                                <div>
+                                    @if (!empty($clinic->postalAddress->postal_code))
+                                        {{ $clinic->postalAddress->postal_code }}
+                                    @endif
+                                    @if (!empty($clinic->postalAddress->city))
+                                        {{ $clinic->postalAddress->city }}
+                                    @endif
+                                </div>
+                            @endif
+                            @if (!empty($clinic->postalAddress->state))
+                                <div>{{ $clinic->postalAddress->state }}</div>
+                            @endif
+                            @if (!empty($clinic->postalAddress->country))
+                                <div>{{ $clinic->postalAddress->country }}</div>
+                            @endif
+                        </div>
+                    </div>
+                @elseif ($clinic->is_postal_address_same_as_visit_address)
+                    <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
+                        <div class="label dark:text-white">
+                            @lang('admin::app.settings.clinics.addresses.postal-address')
+                        </div>
+                        <div class="font-medium dark:text-white">
+                            <span class="text-gray-500 dark:text-gray-400">
+                                @lang('admin::app.settings.clinics.addresses.postal-same-as-visit')
+                            </span>
                         </div>
                     </div>
                 @endif

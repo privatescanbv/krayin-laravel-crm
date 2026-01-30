@@ -5,9 +5,6 @@ namespace App\Models;
 use App\Support\PostcodeNormalizer;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use InvalidArgumentException;
-use Webkul\Contact\Models\Person;
-use Webkul\Lead\Models\Lead;
 
 /**
  * @mixin IdeHelperAddress
@@ -22,9 +19,6 @@ class Address extends BaseModel
      * @var array
      */
     public static $rules = [
-        'lead_id'             => 'required_without_all:person_id,organization_id|nullable|exists:leads,id',
-        'person_id'           => 'required_without_all:lead_id,organization_id|nullable|exists:persons,id',
-        'organization_id'     => 'required_without_all:lead_id,person_id|nullable|exists:organizations,id',
         'street'              => 'nullable|string|max:255',
         'house_number'        => 'required|string|max:50',
         'postal_code'         => 'required|string|max:20',
@@ -40,9 +34,6 @@ class Address extends BaseModel
      * @var array
      */
     protected $fillable = [
-        'lead_id',
-        'person_id',
-        'organization_id',
         'street',
         'house_number',
         'postal_code',
@@ -62,22 +53,6 @@ class Address extends BaseModel
         parent::boot();
 
         static::saving(function ($address) {
-            // Ensure at least one of lead_id, person_id, or organization_id is set
-//            if (empty($address->lead_id) && empty($address->person_id) && empty($address->organization_id)) {
-//                throw new InvalidArgumentException('Either lead_id, person_id, or organization_id must be provided');
-//            }
-
-            // Ensure only one is set
-            $setFields = array_filter([
-                $address->lead_id,
-                $address->person_id,
-                $address->organization_id,
-            ]);
-
-            if (count($setFields) > 1) {
-                throw new InvalidArgumentException('Cannot set multiple entity IDs (lead_id, person_id, organization_id)');
-            }
-
             // Normalize and trim incoming address fields
             foreach (['street', 'house_number', 'house_number_suffix', 'state', 'city', 'country'] as $field) {
                 if (isset($address->{$field}) && is_string($address->{$field})) {
@@ -90,30 +65,6 @@ class Address extends BaseModel
                 $address->postal_code = PostcodeNormalizer::normalize($address->postal_code);
             }
         });
-    }
-
-    /**
-     * Get the lead that owns the address.
-     */
-    public function lead()
-    {
-        return $this->belongsTo(Lead::class);
-    }
-
-    /**
-     * Get the person that owns the address.
-     */
-    public function person()
-    {
-        return $this->belongsTo(Person::class);
-    }
-
-    /**
-     * Get the organization that owns the address.
-     */
-    public function organization()
-    {
-        return $this->belongsTo(\Webkul\Contact\Models\Organization::class);
     }
 
     /**

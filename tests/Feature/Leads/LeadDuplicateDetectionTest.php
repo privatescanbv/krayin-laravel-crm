@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ContactLabel;
 use App\Enums\DuplicateEntityType;
+use App\Models\Address;
 use App\Services\DuplicateFalsePositiveService;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
@@ -132,6 +133,17 @@ test('it excludes self from duplicate detection', function () {
 });
 
 test('it detects duplicate leads with same name and address information', function () {
+    // Create address for first lead
+    $address1 = Address::create([
+        'street'              => 'Main Street',
+        'house_number'        => '123',
+        'house_number_suffix' => 'A',
+        'postal_code'         => '1234AB',
+        'city'                => 'Test City',
+        'state'               => 'Test State',
+        'country'             => 'Netherlands',
+    ]);
+
     // Create the first lead with address
     $lead1 = Lead::factory()->create([
         'first_name' => 'Sarah',
@@ -139,10 +151,11 @@ test('it detects duplicate leads with same name and address information', functi
         'emails'     => [
             ['value' => 'sarah.address1@example.com', 'label' => ContactLabel::Eigen->value],
         ],
+        'address_id' => $address1->id,
     ]);
 
-    // Create address for first lead
-    $lead1->address()->create([
+    // Create identical address for second lead
+    $address2 = Address::create([
         'street'              => 'Main Street',
         'house_number'        => '123',
         'house_number_suffix' => 'A',
@@ -159,17 +172,7 @@ test('it detects duplicate leads with same name and address information', functi
         'emails'     => [
             ['value' => 'sarah.address2@example.com', 'label' => ContactLabel::Relatie->value],
         ],
-    ]);
-
-    // Create identical address for second lead
-    $lead2->address()->create([
-        'street'              => 'Main Street',
-        'house_number'        => '123',
-        'house_number_suffix' => 'A',
-        'postal_code'         => '1234AB',
-        'city'                => 'Test City',
-        'state'               => 'Test State',
-        'country'             => 'Netherlands',
+        'address_id' => $address2->id,
     ]);
 
     // Test duplicate detection - should find duplicate based on name match

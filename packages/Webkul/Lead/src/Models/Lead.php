@@ -95,6 +95,7 @@ class Lead extends Model implements LeadContract
         'mri_status',
         'has_diagnosis_form',
         'national_identification_number',
+        'address_id',
     ];
 
     // No special handling for persons_count required anymore
@@ -401,7 +402,7 @@ class Lead extends Model implements LeadContract
      */
     public function address()
     {
-        return $this->hasOne(Address::class);
+        return $this->belongsTo(Address::class);
     }
 
     /**

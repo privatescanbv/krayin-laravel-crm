@@ -521,16 +521,16 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
         ->and($lead->married_name_prefix)->toBe('de')
         ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
 
-    // Address created and mapped
-    $address = Address::where('lead_id', $lead->id)->first();
-    expect($address)->not->toBeNull()
-        ->and($address->street)->toBe('Leadstraat')
-        ->and($address->house_number)->toBe('123')
-        ->and($address->house_number_suffix)->toBe('A')
-        ->and($address->postal_code)->toBe('3500AB')
-        ->and($address->city)->toBe('Utrecht')
-        ->and($address->state)->toBe('UT')
-        ->and($address->country)->toBe('NL');
+    // Address created and linked via address_id
+    expect($lead->address_id)->not->toBeNull()
+        ->and($lead->address)->not->toBeNull()
+        ->and($lead->address->street)->toBe('Leadstraat')
+        ->and($lead->address->house_number)->toBe('123')
+        ->and($lead->address->house_number_suffix)->toBe('A')
+        ->and($lead->address->postal_code)->toBe('3500AB')
+        ->and($lead->address->city)->toBe('Utrecht')
+        ->and($lead->address->state)->toBe('UT')
+        ->and($lead->address->country)->toBe('NL');
 });
 
 test('imports lead with multiple persons correctly', function () {

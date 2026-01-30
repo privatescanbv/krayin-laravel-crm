@@ -109,36 +109,87 @@
                 </div>
             @endif
 
-            @if ($clinic->address)
+            @if ($clinic->visitAddress || $clinic->postalAddress)
                 <div class="grid grid-cols-[200px_1fr] gap-2">
                     <span class="font-medium text-gray-600 dark:text-gray-400">
-                        @lang('admin::app.settings.clinics.view.overview.address'):
+                        @lang('admin::app.settings.clinics.addresses.visit-address'):
                     </span>
                     <div class="dark:text-white">
-                        @if (!empty($clinic->address->address_line_1))
-                            <div>{{ $clinic->address->address_line_1 }}</div>
-                        @endif
-                        @if (!empty($clinic->address->address_line_2))
-                            <div>{{ $clinic->address->address_line_2 }}</div>
-                        @endif
-                        @if (!empty($clinic->address->postal_code) || !empty($clinic->address->city))
-                            <div>
-                                @if (!empty($clinic->address->postal_code))
-                                    {{ $clinic->address->postal_code }}
-                                @endif
-                                @if (!empty($clinic->address->city))
-                                    {{ $clinic->address->city }}
-                                @endif
-                            </div>
-                        @endif
-                        @if (!empty($clinic->address->state))
-                            <div>{{ $clinic->address->state }}</div>
-                        @endif
-                        @if (!empty($clinic->address->country))
-                            <div>{{ $clinic->address->country }}</div>
+                        @if ($clinic->visitAddress)
+                            @if (!empty($clinic->visitAddress->address_line_1))
+                                <div>{{ $clinic->visitAddress->address_line_1 }}</div>
+                            @endif
+                            @if (!empty($clinic->visitAddress->address_line_2))
+                                <div>{{ $clinic->visitAddress->address_line_2 }}</div>
+                            @endif
+                            @if (!empty($clinic->visitAddress->postal_code) || !empty($clinic->visitAddress->city))
+                                <div>
+                                    @if (!empty($clinic->visitAddress->postal_code))
+                                        {{ $clinic->visitAddress->postal_code }}
+                                    @endif
+                                    @if (!empty($clinic->visitAddress->city))
+                                        {{ $clinic->visitAddress->city }}
+                                    @endif
+                                </div>
+                            @endif
+                            @if (!empty($clinic->visitAddress->state))
+                                <div>{{ $clinic->visitAddress->state }}</div>
+                            @endif
+                            @if (!empty($clinic->visitAddress->country))
+                                <div>{{ $clinic->visitAddress->country }}</div>
+                            @endif
+                        @else
+                            <span class="text-gray-500 dark:text-gray-400">-</span>
                         @endif
                     </div>
                 </div>
+
+                @if (! $clinic->is_postal_address_same_as_visit_address)
+                    <div class="grid grid-cols-[200px_1fr] gap-2">
+                        <span class="font-medium text-gray-600 dark:text-gray-400">
+                            @lang('admin::app.settings.clinics.addresses.postal-address'):
+                        </span>
+                        <div class="dark:text-white">
+                            @if ($clinic->postalAddress)
+                                @if (!empty($clinic->postalAddress->address_line_1))
+                                    <div>{{ $clinic->postalAddress->address_line_1 }}</div>
+                                @endif
+                                @if (!empty($clinic->postalAddress->address_line_2))
+                                    <div>{{ $clinic->postalAddress->address_line_2 }}</div>
+                                @endif
+                                @if (!empty($clinic->postalAddress->postal_code) || !empty($clinic->postalAddress->city))
+                                    <div>
+                                        @if (!empty($clinic->postalAddress->postal_code))
+                                            {{ $clinic->postalAddress->postal_code }}
+                                        @endif
+                                        @if (!empty($clinic->postalAddress->city))
+                                            {{ $clinic->postalAddress->city }}
+                                        @endif
+                                    </div>
+                                @endif
+                                @if (!empty($clinic->postalAddress->state))
+                                    <div>{{ $clinic->postalAddress->state }}</div>
+                                @endif
+                                @if (!empty($clinic->postalAddress->country))
+                                    <div>{{ $clinic->postalAddress->country }}</div>
+                                @endif
+                            @else
+                                <span class="text-gray-500 dark:text-gray-400">-</span>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    <div class="grid grid-cols-[200px_1fr] gap-2">
+                        <span class="font-medium text-gray-600 dark:text-gray-400">
+                            @lang('admin::app.settings.clinics.addresses.postal-address'):
+                        </span>
+                        <div class="dark:text-white">
+                            <span class="text-gray-500 dark:text-gray-400">
+                                @lang('admin::app.settings.clinics.addresses.postal-same-as-visit')
+                            </span>
+                        </div>
+                    </div>
+                @endif
             @endif
         </div>
     </div>

@@ -348,8 +348,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 
                 // Create/update primary address for person if present
                 if ($record->primary_huisnr_c && $record->primary_address_postalcode) {
-                    Address::create([
-                        'person_id'           => $person->id,
+                    $address = Address::create([
                         'street'              => $record->primary_address_street ?? null,
                         'house_number'        => $record->primary_huisnr_c,
                         'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
@@ -358,6 +357,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                         'city'                => $record->primary_address_city ?? null,
                         'country'             => $record->primary_address_country ?? null,
                     ]);
+                    $person->update(['address_id' => $address->id]);
                 }
                 // Note: PersonAttributeKeys enum values can be used here for additional attributes
                 // $attributeValueRepo->save([

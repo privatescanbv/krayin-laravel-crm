@@ -359,8 +359,17 @@ test('match algorithm includes date of birth and address in scoring', function (
     ]);
 
     // Create address for the lead
-    Address::create([
-        'lead_id'      => $lead->id,
+    $leadAddress = Address::create([
+        'street'       => 'Hoofdstraat',
+        'house_number' => '123',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012 AB',
+        'country'      => 'Netherlands',
+    ]);
+    $lead->update(['address_id' => $leadAddress->id]);
+
+    // Create address for perfect match person
+    $perfectMatchAddress = Address::create([
         'street'       => 'Hoofdstraat',
         'house_number' => '123',
         'city'         => 'Amsterdam',
@@ -375,16 +384,7 @@ test('match algorithm includes date of birth and address in scoring', function (
         'emails'          => [['value' => 'alice.johnson@example.com', 'label' => ContactLabel::Eigen->value]],
         'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'   => '1985-03-15',
-    ]);
-
-    // Create address for perfect match person
-    Address::create([
-        'person_id'    => $perfectMatchPerson->id,
-        'street'       => 'Hoofdstraat',
-        'house_number' => '123',
-        'city'         => 'Amsterdam',
-        'postal_code'  => '1012 AB',
-        'country'      => 'Netherlands',
+        'address_id'      => $perfectMatchAddress->id,
     ]);
 
     // Create person without date of birth and address (should have lower score)
@@ -396,6 +396,15 @@ test('match algorithm includes date of birth and address in scoring', function (
         // No date_of_birth and no address
     ]);
 
+    // Create address for different data person
+    $differentAddress = Address::create([
+        'street'       => 'Kerkstraat',     // Different street
+        'house_number' => '456',            // Different house number
+        'city'         => 'Utrecht',        // Different city
+        'postal_code'  => '3511 AB',        // Different postal code
+        'country'      => 'Netherlands',    // Same country
+    ]);
+
     // Create person with different date of birth and address (should have lower score)
     $differentDataPerson = Person::factory()->create([
         'first_name'      => 'Alice',
@@ -403,16 +412,7 @@ test('match algorithm includes date of birth and address in scoring', function (
         'emails'          => [['value' => 'alice.johnson@example.com', 'label' => ContactLabel::Eigen->value]],
         'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'   => '1990-06-20', // Different date
-    ]);
-
-    // Create address for different data person
-    Address::create([
-        'person_id'    => $differentDataPerson->id,
-        'street'       => 'Kerkstraat',     // Different street
-        'house_number' => '456',            // Different house number
-        'city'         => 'Utrecht',        // Different city
-        'postal_code'  => '3511 AB',        // Different postal code
-        'country'      => 'Netherlands',    // Same country
+        'address_id'      => $differentAddress->id,
     ]);
 
     // Load the address relationships
@@ -477,12 +477,21 @@ test('address matching works with partial postal code matches', function () {
     ]);
 
     // Create address for the lead
-    Address::create([
-        'lead_id'      => $lead->id,
+    $leadAddress = Address::create([
         'street'       => 'Damrak',
         'house_number' => '1',
         'city'         => 'Amsterdam',
         'postal_code'  => '1012JS', // Without space
+        'country'      => 'Netherlands',
+    ]);
+    $lead->update(['address_id' => $leadAddress->id]);
+
+    // Create address for exact match person
+    $exactMatchAddress = Address::create([
+        'street'       => 'Damrak',
+        'house_number' => '1',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012JS',
         'country'      => 'Netherlands',
     ]);
 
@@ -492,14 +501,15 @@ test('address matching works with partial postal code matches', function () {
         'last_name'       => 'Wilson',
         'emails'          => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
         'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
+        'address_id'      => $exactMatchAddress->id,
     ]);
 
-    Address::create([
-        'person_id'    => $exactMatchPerson->id,
+    // Create address for partial match person
+    $partialMatchAddress = Address::create([
         'street'       => 'Damrak',
         'house_number' => '1',
         'city'         => 'Amsterdam',
-        'postal_code'  => '1012JS',
+        'postal_code'  => '1012 JS', // With space - should still partially match
         'country'      => 'Netherlands',
     ]);
 
@@ -509,14 +519,15 @@ test('address matching works with partial postal code matches', function () {
         'last_name'       => 'Wilson',
         'emails'          => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
         'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
+        'address_id'      => $partialMatchAddress->id,
     ]);
 
-    Address::create([
-        'person_id'    => $partialMatchPerson->id,
-        'street'       => 'Damrak',
-        'house_number' => '1',
-        'city'         => 'Amsterdam',
-        'postal_code'  => '1012 JS', // With space - should still partially match
+    // Create address for different person
+    $differentAddress = Address::create([
+        'street'       => 'Kalverstraat',
+        'house_number' => '123',
+        'city'         => 'Utrecht',
+        'postal_code'  => '3511 AB',
         'country'      => 'Netherlands',
     ]);
 
@@ -526,15 +537,7 @@ test('address matching works with partial postal code matches', function () {
         'last_name'       => 'Wilson',
         'emails'          => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
         'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
-    ]);
-
-    Address::create([
-        'person_id'    => $differentAddressPerson->id,
-        'street'       => 'Kalverstraat',
-        'house_number' => '123',
-        'city'         => 'Utrecht',
-        'postal_code'  => '3511 AB',
-        'country'      => 'Netherlands',
+        'address_id'      => $differentAddress->id,
     ]);
 
     // Load address relationships
@@ -768,7 +771,8 @@ test('person created from fully populated lead yields perfect sync match', funct
         'country'             => 'Nederland',
     ];
 
-    Address::factory()->forLead($lead)->create($addressData);
+    $address = Address::factory()->create($addressData);
+    $lead->update(['address_id' => $address->id]);
 
     $lead->refresh();
     $lead->load('address');

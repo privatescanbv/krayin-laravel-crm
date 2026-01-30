@@ -28,24 +28,41 @@ class Clinic extends Model
         'order_confirmation_note',
         'emails',
         'phones',
-        'address_id',
+        'visit_address_id',
+        'postal_address_id',
+        'is_postal_address_same_as_visit_address',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
-        'emails'     => 'array',
-        'phones'     => 'array',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'is_active'                               => 'boolean',
+        'is_postal_address_same_as_visit_address' => 'boolean',
+        'emails'                                  => 'array',
+        'phones'                                  => 'array',
+        'created_by'                              => 'integer',
+        'updated_by'                              => 'integer',
     ];
 
-    protected $with = ['address'];
+    protected $with = ['visitAddress'];
 
-    public function address(): BelongsTo
+    public function visitAddress()
     {
-        return $this->belongsTo(Address::class);
+        return $this->belongsTo(Address::class, 'visit_address_id');
+    }
+
+    public function postalAddress()
+    {
+        return $this->belongsTo(Address::class, 'postal_address_id');
+    }
+
+    /**
+     * Backwards-compatible alias for the old single address relation.
+     * Treats the visit address as the primary address.
+     */
+    public function address()
+    {
+        return $this->visitAddress();
     }
 
     public function partnerProducts()
@@ -70,6 +87,6 @@ class Clinic extends Model
 
     public function label(): string
     {
-        return $this->name.' | '.$this->address?->formatAddress();
+        return $this->name.' | '.$this->visitAddress?->formatAddress();
     }
 }

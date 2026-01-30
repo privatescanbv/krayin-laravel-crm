@@ -15,7 +15,7 @@ class AddressResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            
+
             // Address fields
             'street' => $this->street,
             'house_number' => $this->house_number,
@@ -24,15 +24,10 @@ class AddressResource extends JsonResource
             'city' => $this->city,
             'state' => $this->state,
             'country' => $this->country,
-            
+
             // Computed attributes
             'full_address' => $this->full_address,
-            
-            // Relationship IDs
-            'lead_id' => $this->lead_id,
-            'person_id' => $this->person_id,
-            'organization_id' => $this->organization_id,
-            
+
             // Timestamps
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),

@@ -1223,7 +1223,7 @@ class PersonController extends Controller
             return;
         }
         // Use central repository to validate and upsert
-        app(AddressRepository::class)->upsertForPerson($person->id, $addressData);
+        app(AddressRepository::class)->upsertForEntity($person, $addressData);
     }
 
     /**
@@ -1235,7 +1235,7 @@ class PersonController extends Controller
             return;
         }
         // Use central repository to validate and upsert
-        app(AddressRepository::class)->upsertForLead($lead->id, $addressData);
+        app(AddressRepository::class)->upsertForEntity($lead, $addressData);
     }
 
     /**

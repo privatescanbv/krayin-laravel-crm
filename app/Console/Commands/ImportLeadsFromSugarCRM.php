@@ -689,8 +689,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                     // Create address for lead if present in SugarCRM
                     if (! empty($record->primary_address_postalcode) && ! empty($record->primary_huisnr_c)) {
-                        Address::create([
-                            'lead_id'             => $lead->id,
+                        $address = Address::create([
                             'street'              => $record->primary_address_street ?? null,
                             'house_number'        => $record->primary_huisnr_c,
                             'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
@@ -699,6 +698,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                             'city'                => $record->primary_address_city ?? null,
                             'country'             => $record->primary_address_country ?? null,
                         ]);
+                        $lead->update(['address_id' => $address->id]);
                     }
 
                     // Attach persons to lead using many-to-many relationship

@@ -1,8 +1,36 @@
 {!! view_render_event('admin.address.before') !!}
 
+@props([
+    'entity' => null,
+    /**
+     * Optional explicit Address model (overrides $entity?->address)
+     */
+    'address' => null,
+    /**
+     * Prefix for form input names. Example: "visit_address" -> visit_address[postal_code]
+     */
+    'namePrefix' => null,
+    /**
+     * Prefix for validation error keys / old() keys. Example: "visit_address" -> visit_address.postal_code
+     * Defaults to $namePrefix.
+     */
+    'errorNamePrefix' => null,
+    /**
+     * Unique id used for DOM element ids and lookup button.
+     */
+    'id' => null,
+    'hideTitle' => false,
+    'readonly' => false,
+])
+
 @php
     $addressId = $id ?? 'address';
     $readonlyAttributes = isset($readonly) && $readonly ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
+
+    $resolvedNamePrefix = $namePrefix ?: 'address';
+    $resolvedErrorNamePrefix = $errorNamePrefix ?: $resolvedNamePrefix;
+
+    $resolvedAddress = $address ?? $entity?->address;
 @endphp
 
 <div class="flex flex-col gap-4">
@@ -34,10 +62,10 @@
             <div class="flex-1 min-w-[150px]">
                 <x-adminc::components.field
                     type="text"
-                    name="{{ $namePrefix ?? 'address' }}[postal_code]"
-                    error-name="address.postal_code"
+                    name="{{ $resolvedNamePrefix }}[postal_code]"
+                    error-name="{{ $resolvedErrorNamePrefix }}.postal_code"
                     label="Postcode"
-                    value="{{ old('address.postal_code', $entity?->address?->postal_code ?? '') }}"
+                    value="{{ old($resolvedErrorNamePrefix.'.postal_code', $resolvedAddress?->postal_code ?? '') }}"
                     placeholder="1234 AB"
                     id="{{ $addressId }}_postal_code"
                     :readonly="isset($readonly) && $readonly"
@@ -48,10 +76,10 @@
             <div class="flex-1 min-w-[150px]">
                 <x-adminc::components.field
                     type="text"
-                    name="{{ $namePrefix ?? 'address' }}[house_number]"
-                    error-name="address.house_number"
+                    name="{{ $resolvedNamePrefix }}[house_number]"
+                    error-name="{{ $resolvedErrorNamePrefix }}.house_number"
                     label="Huisnummer"
-                    value="{{ old('address.house_number', $entity?->address?->house_number ?? '') }}"
+                    value="{{ old($resolvedErrorNamePrefix.'.house_number', $resolvedAddress?->house_number ?? '') }}"
                     placeholder="123"
                     id="{{ $addressId }}_house_number"
                     :disabled="isset($readonly) && $readonly"
@@ -82,10 +110,10 @@
         <!-- Street -->
         <x-adminc::components.field
             type="text"
-            name="{{ $namePrefix ?? 'address' }}[street]"
-            error-name="address.street"
+            name="{{ $resolvedNamePrefix }}[street]"
+            error-name="{{ $resolvedErrorNamePrefix }}.street"
             label="Straat"
-            value="{{ old('address.street', $entity?->address?->street ?? '') }}"
+            value="{{ old($resolvedErrorNamePrefix.'.street', $resolvedAddress?->street ?? '') }}"
             placeholder="Straatnaam"
             id="{{ $addressId }}_street"
             :readonly="isset($readonly) && $readonly"
@@ -94,10 +122,10 @@
         <!-- House Number Suffix -->
         <x-adminc::components.field
             type="text"
-            name="{{ $namePrefix ?? 'address' }}[house_number_suffix]"
-            error-name="address.house_number_suffix"
+            name="{{ $resolvedNamePrefix }}[house_number_suffix]"
+            error-name="{{ $resolvedErrorNamePrefix }}.house_number_suffix"
             label="Toevoeging"
-            value="{{ old('address.house_number_suffix', $entity?->address?->house_number_suffix ?? '') }}"
+            value="{{ old($resolvedErrorNamePrefix.'.house_number_suffix', $resolvedAddress?->house_number_suffix ?? '') }}"
             placeholder="A, 1e verdieping, etc."
             id="{{ $addressId }}_house_number_suffix"
             :readonly="isset($readonly) && $readonly"
@@ -106,10 +134,10 @@
         <!-- City -->
         <x-adminc::components.field
             type="text"
-            name="{{ $namePrefix ?? 'address' }}[city]"
-            error-name="address.city"
+            name="{{ $resolvedNamePrefix }}[city]"
+            error-name="{{ $resolvedErrorNamePrefix }}.city"
             label="Stad"
-            value="{{ old('address.city', $entity?->address?->city ?? '') }}"
+            value="{{ old($resolvedErrorNamePrefix.'.city', $resolvedAddress?->city ?? '') }}"
             placeholder="Amsterdam"
             id="{{ $addressId }}_city"
             :readonly="isset($readonly) && $readonly"
@@ -118,10 +146,10 @@
         <!-- State -->
         <x-adminc::components.field
             type="text"
-            name="{{ $namePrefix ?? 'address' }}[state]"
-            error-name="address.state"
+            name="{{ $resolvedNamePrefix }}[state]"
+            error-name="{{ $resolvedErrorNamePrefix }}.state"
             label="Provincie"
-            value="{{ old('address.state', $entity?->address?->state ?? '') }}"
+            value="{{ old($resolvedErrorNamePrefix.'.state', $resolvedAddress?->state ?? '') }}"
             placeholder="Noord-Holland"
             id="{{ $addressId }}_state"
             :readonly="isset($readonly) && $readonly"
@@ -131,10 +159,10 @@
         <x-adminc::components.field
             class="col-span-2"
             type="text"
-            name="{{ $namePrefix ?? 'address' }}[country]"
-            error-name="address.country"
+            name="{{ $resolvedNamePrefix }}[country]"
+            error-name="{{ $resolvedErrorNamePrefix }}.country"
             label="Land"
-            value="{{ old('address.country', $entity?->address?->country ?? '') }}"
+            value="{{ old($resolvedErrorNamePrefix.'.country', $resolvedAddress?->country ?? '') }}"
             placeholder="Nederland"
             id="{{ $addressId }}_country"
             :readonly="isset($readonly) && $readonly"
@@ -142,24 +170,26 @@
     </div>
 
     <v-address-preview
-        :address='@json($entity?->address ?? new stdClass())'
+        :address='@json($resolvedAddress ?? new stdClass())'
     ></v-address-preview>
 </div>
 
 {!! view_render_event('admin.address.after') !!}
 
+{{-- Per-instance config (must NOT be pushOnce; addresses can appear multiple times on one page) --}}
+<script>
+    window.addressComponents = window.addressComponents || {};
+    window.addressComponents['{{ $addressId }}'] = {
+        id: '{{ $addressId }}',
+        postalCodeId: '{{ $addressId }}_postal_code',
+        houseNumberId: '{{ $addressId }}_house_number',
+        streetId: '{{ $addressId }}_street',
+        cityId: '{{ $addressId }}_city',
+        stateId: '{{ $addressId }}_state'
+    };
+</script>
+
 @pushOnce('scripts')
-    <script>
-        window.addressComponents = window.addressComponents || {};
-        window.addressComponents['{{ $addressId }}'] = {
-            id: '{{ $addressId }}',
-            postalCodeId: '{{ $addressId }}_postal_code',
-            houseNumberId: '{{ $addressId }}_house_number',
-            streetId: '{{ $addressId }}_street',
-            cityId: '{{ $addressId }}_city',
-            stateId: '{{ $addressId }}_state'
-        };
-    </script>
 
     @verbatim
         <script type="text/x-template" id="v-address-preview-template">
@@ -221,20 +251,28 @@
                     e.preventDefault();
                     e.stopPropagation();
 
-                    const lookupBtn = e.target;
+                    const lookupBtn = e.currentTarget;
+
+                    // Ensure config exists (fallback)
+                    if (!window.addressComponents[addressId]) {
+                        window.addressComponents[addressId] = {
+                            id: addressId,
+                            postalCodeId: addressId + '_postal_code',
+                            houseNumberId: addressId + '_house_number',
+                            streetId: addressId + '_street',
+                            cityId: addressId + '_city',
+                            stateId: addressId + '_state',
+                        };
+                    }
+
                     const addressConfig = window.addressComponents[addressId];
 
-                    if (!addressConfig) {
-                        console.error('Address component config not found for:', addressId);
-                        return;
-                    }
-                    // Only target fields within this specific address component
-                    const addressContainer = lookupBtn.closest('.flex.flex-col.gap-4');
-                    const postcode = addressContainer.querySelector('#' + addressConfig.postalCodeId);
-                    const huisnummer = addressContainer.querySelector('#' + addressConfig.houseNumberId);
-                    const street = addressContainer.querySelector('#' + addressConfig.streetId);
-                    const city = addressContainer.querySelector('#' + addressConfig.cityId);
-                    const state = addressContainer.querySelector('#' + addressConfig.stateId);
+                    // IDs are unique per component, so global lookup is safe and more reliable than closest()-scoping.
+                    const postcode = document.getElementById(addressConfig.postalCodeId);
+                    const huisnummer = document.getElementById(addressConfig.houseNumberId);
+                    const street = document.getElementById(addressConfig.streetId);
+                    const city = document.getElementById(addressConfig.cityId);
+                    const state = document.getElementById(addressConfig.stateId);
 
                     if (!postcode || !huisnummer) {
                         alert('Adresvelden niet gevonden');
@@ -293,21 +331,25 @@
             }
         }
 
+        function initializeAllAddressLookupButtons() {
+            const allAddressButtons = document.querySelectorAll('button[id$="-lookup-btn"]');
+
+            allAddressButtons.forEach(function (button) {
+                if (button.hasAttribute('data-lookup-initialized')) {
+                    return;
+                }
+
+                const buttonId = button.id;
+                const addressId = buttonId.replace('-lookup-btn', '');
+                initializeAddressLookupButton(addressId);
+            });
+        }
+
         // Initialize on DOM ready
         document.addEventListener('DOMContentLoaded', function() {
             // Wait a bit for all elements to be loaded
             setTimeout(function() {
-                initializeAddressLookupButton('{{ $addressId }}');
-
-                // Also try to initialize any other address buttons that might exist
-                const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
-                allAddressButtons.forEach(function(button) {
-                    if (!button.hasAttribute('data-lookup-initialized')) {
-                        const buttonId = button.id;
-                        const addressId = buttonId.replace('-lookup-btn', '');
-                        initializeAddressLookupButton(addressId);
-                    }
-                });
+                initializeAllAddressLookupButtons();
             }, 100);
         });
 
@@ -334,28 +376,7 @@
 
         // Fallback: try to initialize all address buttons periodically
         setInterval(function() {
-            const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
-            allAddressButtons.forEach(function(button) {
-                if (!button.hasAttribute('data-lookup-initialized')) {
-                    const buttonId = button.id;
-                    const addressId = buttonId.replace('-lookup-btn', '');
-                    console.log('Fallback: Found uninitialized button:', buttonId, 'for address:', addressId);
-
-                    // Create config if it doesn't exist
-                    if (!window.addressComponents[addressId]) {
-                        window.addressComponents[addressId] = {
-                            id: addressId,
-                            postalCodeId: addressId + '_postal_code',
-                            houseNumberId: addressId + '_house_number',
-                            streetId: addressId + '_street',
-                            cityId: addressId + '_city',
-                            stateId: addressId + '_state'
-                        };
-                    }
-
-                    initializeAddressLookupButton(addressId);
-                }
-            });
+            initializeAllAddressLookupButtons();
         }, 1000);
     </script>
 @endPushOnce

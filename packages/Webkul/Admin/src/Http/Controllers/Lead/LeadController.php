@@ -604,7 +604,7 @@ class LeadController extends Controller
             // Validate and persist address if provided on lead create
             try {
                 if (isset($data['address']) && is_array($data['address'])) {
-                    $this->addressRepository->upsertForLead($lead->id, $data['address']);
+                    $this->addressRepository->upsertForEntity($lead, $data['address']);
                 }
             } catch (Exception $e) {
                 // Re-throw as InvalidArgumentException to align with request handling above
@@ -727,7 +727,7 @@ class LeadController extends Controller
             // Validate and persist address if provided on lead update
             try {
                 if (isset($data['address']) && is_array($data['address'])) {
-                    $this->addressRepository->upsertForLead($lead->id, $data['address']);
+                    $this->addressRepository->upsertForEntity($lead, $data['address']);
                 }
             } catch (Exception $e) {
                 throw new InvalidArgumentException($e->getMessage());

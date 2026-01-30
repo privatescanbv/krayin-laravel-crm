@@ -55,9 +55,10 @@ test('can create organization with address', function () {
         'name' => 'Test Organization',
     ]);
 
-    // Verify address is created
+    // Verify address is created and linked via address_id
     $organization = Organization::where('name', 'Test Organization')->first();
-    expect($organization->address)->not->toBeNull()
+    expect($organization->address_id)->not->toBeNull()
+        ->and($organization->address)->not->toBeNull()
         ->and($organization->address->postal_code)->toBe('1234AB')
         ->and($organization->address->house_number)->toBe('123')
         ->and($organization->address->street)->toBe('Teststraat')
@@ -98,8 +99,13 @@ test('can create organization via ajax', function () {
 
 test('can update organization with address', function () {
     $user = auth()->guard('user')->user();
-    $organization = Organization::factory()->create(['user_id' => $user->id]);
-    $address = Address::factory()->create(['organization_id' => $organization->id]);
+
+    // Create organization with address using the new relationship
+    $address = Address::factory()->create();
+    $organization = Organization::factory()->create([
+        'user_id'    => $user->id,
+        'address_id' => $address->id,
+    ]);
 
     $payload = [
         'name'    => 'Updated Organization',
@@ -127,7 +133,8 @@ test('can update organization with address', function () {
 
     // Verify address is updated
     $organization->refresh();
-    expect($organization->address)->not->toBeNull()
+    expect($organization->address_id)->not->toBeNull()
+        ->and($organization->address)->not->toBeNull()
         ->and($organization->address->postal_code)->toBe('9999ZZ')
         ->and($organization->address->house_number)->toBe('999')
         ->and($organization->address->street)->toBe('Updated Straat')
@@ -136,8 +143,13 @@ test('can update organization with address', function () {
 
 test('can update organization and remove address', function () {
     $user = auth()->guard('user')->user();
-    $organization = Organization::factory()->create(['user_id' => $user->id]);
-    $address = Address::factory()->create(['organization_id' => $organization->id]);
+
+    // Create organization with address using the new relationship
+    $address = Address::factory()->create();
+    $organization = Organization::factory()->create([
+        'user_id'    => $user->id,
+        'address_id' => $address->id,
+    ]);
 
     $payload = [
         'name'    => 'Organization Without Address',
@@ -164,7 +176,8 @@ test('can update organization and remove address', function () {
 
     // Verify address is removed
     $organization->refresh();
-    expect($organization->address)->toBeNull();
+    expect($organization->address_id)->toBeNull()
+        ->and($organization->address)->toBeNull();
 });
 
 test('can delete organization', function () {

@@ -95,6 +95,7 @@ class Person extends Model implements PersonContract
         'is_active',
         'password',
         'national_identification_number',
+        'address_id',
     ];
 
     /**
@@ -292,7 +293,7 @@ class Person extends Model implements PersonContract
      */
     public function address()
     {
-        return $this->hasOne(Address::class);
+        return $this->belongsTo(Address::class);
     }
 
     /**

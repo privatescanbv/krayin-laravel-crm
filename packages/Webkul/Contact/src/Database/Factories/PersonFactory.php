@@ -40,7 +40,8 @@ class PersonFactory extends Factory
     public function withAddress(): static
     {
         return $this->afterCreating(function (Person $person) {
-            Address::factory()->forPerson($person)->create();
+            $address = Address::factory()->create();
+            $person->update(['address_id' => $address->id]);
         });
     }
 

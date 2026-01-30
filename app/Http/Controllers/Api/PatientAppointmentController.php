@@ -63,20 +63,23 @@ class PatientAppointmentController extends Controller
 
         $appointments = $orders->map(function (Order $order) use ($person, $timezone) {
             $firstAppointmentInClinic = $this->orderCheckService->retrieveClinicFromOrder($order, $person);
-            $clinic = $firstAppointmentInClinic !== null
-                ? Clinic::find($firstAppointmentInClinic)
-                : null;
+            $clinic = $firstAppointmentInClinic !== null ? Clinic::with('address')->find($firstAppointmentInClinic) : null;
+
+            $clinicData = $clinic ? [
+                'id'      => $clinic->id,
+                'name'    => $clinic->name,
+                'address' => $clinic->address?->multiline_address,
+            ] : null;
 
             return [
                 'id'              => 'order-'.$order->id,
                 'patient_id'      => (string) $person->id,
                 'practitioner_id' => null,
-                'clinic_id'       => $firstAppointmentInClinic,
-                'clinic_label'    => $clinic?->label() ?? null,
+                'clinic'          => $clinicData,
                 'start_at'        => $order->first_examination_at->toIso8601String(),
                 'end_at'          => null,
                 'timezone'        => $timezone,
-                'is_remote'       => false,
+                'is_remote'       => true,
                 'remote_url'      => null,
                 'created_at'      => $order->created_at->toIso8601String(),
                 'updated_at'      => $order->updated_at?->toIso8601String(),

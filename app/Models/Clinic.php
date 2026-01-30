@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 
@@ -40,7 +41,9 @@ class Clinic extends Model
         'updated_by' => 'integer',
     ];
 
-    public function address()
+    protected $with = ['address'];
+
+    public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
     }
@@ -67,6 +70,6 @@ class Clinic extends Model
 
     public function label(): string
     {
-        return $this->name.' |'.$this->address?->formatAddress();
+        return $this->name.' | '.$this->address?->formatAddress();
     }
 }

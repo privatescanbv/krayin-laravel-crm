@@ -38,6 +38,7 @@ class AppointmentResource extends JsonResource
             'practitioner_id' => $this->resource['practitioner_id'] ?? null,
             'clinic_id'       => $this->resource['clinic_id'] ?? null,
             'clinic_label'    => $this->resource['clinic_label'] ?? null,
+            'clinic'          => $this->resource['clinic'] ?? null,
             'start_at'        => $this->resource['start_at'],
             'end_at'          => $this->resource['end_at'] ?? null,
             'timezone'        => $this->resource['timezone'] ?? null,

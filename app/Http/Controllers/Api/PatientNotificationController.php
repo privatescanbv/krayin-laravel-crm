@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientNotificationsIndexRequest;
-use App\Http\Resources\PatientNotificationsCollection;
+use App\Http\Resources\PatientNotificationsResponseResource;
+use App\Models\PatientNotification;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 
 class PatientNotificationController extends Controller
@@ -23,6 +23,22 @@ class PatientNotificationController extends Controller
      *
      * @queryParam page integer Page number. Example: 1
      * @queryParam per_page integer Items per page (max 10). Example: 10
+     *
+     * @responseField notifications object[] List of notifications.
+     * @responseField notifications[].id integer The notification ID.
+     * @responseField notifications[].type string The notification type.
+     * @responseField notifications[].dismissable boolean Whether the notification can be dismissed.
+     * @responseField notifications[].title string The notification title.
+     * @responseField notifications[].summary string The notification summary.
+     * @responseField notifications[].reference object Reference to related resource.
+     * @responseField notifications[].reference.type string The reference type (activity, gvl_form).
+     * @responseField notifications[].reference.id integer The referenced resource ID.
+     * @responseField notifications[].reference.url string Optional URL to the referenced resource.
+     * @responseField notifications[].created_at string ISO 8601 timestamp.
+     * @responseField meta object Pagination metadata.
+     * @responseField meta.current_page integer Current page number.
+     * @responseField meta.per_page integer Items per page.
+     * @responseField meta.total integer Total number of notifications.
      */
     public function index(PatientNotificationsIndexRequest $request, string $keycloakUserId): JsonResponse
     {
@@ -32,7 +48,7 @@ class PatientNotificationController extends Controller
             if (! is_null($user)) {
                 $perPage = (int) $request->validated('per_page', 10);
 
-                return PatientNotificationsCollection::empty($perPage)->response();
+                return PatientNotificationsResponseResource::empty($perPage)->response();
             }
 
             abort(404);
@@ -40,40 +56,40 @@ class PatientNotificationController extends Controller
 
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 10);
-        $page = (int) ($validated['page'] ?? 1);
 
-        // Temporary random data (no persistence yet)
-        $total = 42;
-        $offset = max(0, ($page - 1) * $perPage);
+        $now = Carbon::now();
 
-        $items = collect(range(1, $perPage))
-            ->map(function (int $i) use ($offset) {
-                $id = $offset + $i;
+        $paginator = PatientNotification::forPatient($person->id)
+            ->whereNull('dismissed_at')
+            ->where(function ($q) use ($now) {
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', $now);
+            })
+            ->orderByDesc('created_at')
+            ->paginate($perPage)
+            ->appends($request->query());
 
-                return [
-                    'id'          => $id,
-                    'type'        => 'document',
-                    'dismissable' => $id % 2 !== 0,
-                    'title'       => 'Document update #'.$id,
-                    'summary'     => ($id % 3 === 0) ? null : 'Er is een nieuw document beschikbaar.',
-                    'reference'   => [
-                        'type' => 'document',
-                        'id'   => 1000 + $id,
-                    ],
-                    'created_at' => Carbon::now()->subMinutes($id)->toISOString(),
-                    'read'       => $id % 4 === 0,
-                ];
+        // Update read_at when we "send" the notifications in this response.
+        $unreadIds = $paginator->getCollection()
+            ->filter(fn (PatientNotification $n) => is_null($n->read_at))
+            ->pluck('id')
+            ->values();
+
+        if ($unreadIds->isNotEmpty()) {
+            PatientNotification::forPatient($person->id)
+                ->whereIn('id', $unreadIds->all())
+                ->update([
+                    'read_at'    => $now,
+                ]);
+
+            $paginator->getCollection()->each(function (PatientNotification $n) use ($now) {
+                if (is_null($n->read_at)) {
+                    $n->read_at = $now;
+                }
             });
+        }
 
-        $paginator = new LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
-
-        return PatientNotificationsCollection::fromPaginator($paginator, $paginator->getCollection())->response();
+        return PatientNotificationsResponseResource::fromPaginator($paginator)->response();
     }
 
     /**
@@ -96,14 +112,29 @@ class PatientNotificationController extends Controller
             abort(404);
         }
 
-        // Temporary rule for random data: odd ids are dismissable
-        $dismissable = $notificationId % 2 !== 0;
+        if (is_null($person)) {
+            abort(404);
+        }
 
-        if (! $dismissable) {
+        /** @var PatientNotification $notification */
+        $notification = PatientNotification::query()
+            ->where('patient_id', (int) $person->id)
+            ->findOrFail($notificationId);
+
+        if (! $notification->dismissable) {
             return response()->json([
                 'message' => 'Only dismissable notifications can be marked as read.',
             ], 422);
         }
+
+        $now = Carbon::now();
+
+        // Use dismissed_at to mark as "read/dismissed".
+        $notification->dismissed_at = $now;
+        if (is_null($notification->read_at)) {
+            $notification->read_at = $now;
+        }
+        $notification->save();
 
         return response()->json(null, 204);
     }

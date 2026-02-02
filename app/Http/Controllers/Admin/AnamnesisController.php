@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\NotificationReferenceType;
+use App\Events\PatientNotifyEvent;
 use App\Helpers\Comparable;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
@@ -142,6 +144,18 @@ class AnamnesisController extends Controller
             // Reload the anamnesis to get updated gvl_form_link
             $anamnesis->refresh();
 
+            // Notify patient that GVL form is ready
+            PatientNotifyEvent::dispatch(
+                $anamnesis->person_id,
+                'gvl_form',
+                'GVL formulier beschikbaar',
+                'Er staat een gezondheidsverklaring voor u klaar om in te vullen.',
+                NotificationReferenceType::GVL_FORM,
+                $anamnesis->id,
+                false,
+                auth()->id()
+            );
+
             return response()->json([
                 'message'       => 'GVL formulier is gekoppeld.',
                 'gvl_form_link' => $formLink,
@@ -215,6 +229,18 @@ class AnamnesisController extends Controller
 
             // Reload the anamnesis to get updated gvl_form_link
             $anamnesis->refresh();
+
+            // Notify patient that GVL form is ready
+            PatientNotifyEvent::dispatch(
+                $anamnesis->person_id,
+                'gvl_form',
+                'GVL formulier beschikbaar',
+                'Er staat een gezondheidsverklaring voor u klaar om in te vullen.',
+                NotificationReferenceType::GVL_FORM,
+                $anamnesis->id,
+                false,
+                auth()->id()
+            );
 
             return response()->json([
                 'message'       => 'Anamnesis aangemaakt en GVL formulier gekoppeld.',

@@ -19,15 +19,17 @@ class PatientDocumentResource extends JsonResource
      * The resource is expected to be an array like:
      * - file: \Webkul\Activity\Models\File
      * - patient_id: int
+     * - group: string|null
      */
     public function toArray(Request $request): array
     {
-        /** @var array{file: ActivityFile, patient_id: int} $payload */
+        /** @var array{file: ActivityFile, patient_id: int, group?: string|null} $payload */
         $payload = is_array($this->resource) ? $this->resource : [];
 
         /** @var ActivityFile $file */
         $file = $payload['file'];
         $patientId = (int) ($payload['patient_id'] ?? 0);
+        $group = isset($payload['group']) ? (string) $payload['group'] : null;
         $keycloakUserId = (string) ($request->route('id') ?? '');
 
         $activity = $file->activity;
@@ -55,6 +57,7 @@ class PatientDocumentResource extends JsonResource
             'id'           => (int) $file->id,
             'patient_id'   => $patientId,
             'type'         => (string) $documentType,
+            'group'        => $group,
             'title'        => $title,
             'file_name'    => (string) $file->name,
             'mime_type'    => (string) $mimeType,

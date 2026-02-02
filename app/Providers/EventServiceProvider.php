@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\OrderMarkedAsSent;
+use App\Events\PatientNotifyEvent;
+use App\Listeners\CreatePatientNotification;
+use App\Listeners\StoreOrderConfirmationPdf;
 use App\Observers\SalesLeadListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -20,6 +24,12 @@ class EventServiceProvider extends ServiceProvider
         ],
         'lead.workflows.after' => [
             SalesLeadListener::class,
+        ],
+        OrderMarkedAsSent::class => [
+            StoreOrderConfirmationPdf::class,
+        ],
+        PatientNotifyEvent::class => [
+            CreatePatientNotification::class,
         ],
     ];
 

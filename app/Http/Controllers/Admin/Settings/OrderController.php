@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
+use App\Events\OrderMarkedAsSent;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
@@ -426,16 +427,6 @@ class OrderController extends SimpleEntityController
 
         $mailData = $this->orderMailService->buildMailData($order);
 
-        // Add attachments array to the response (supports multiple attachments)
-        $attachments = [
-            [
-                'url'      => route('admin.orders.confirmation.export-pdf', ['orderId' => $orderId]),
-                'filename' => 'order-bevestiging-'.$order->id.'-'.date('Y-m-d').'.pdf',
-            ],
-        ];
-
-        $mailData['attachments'] = $attachments;
-
         return response()->json($mailData);
     }
 
@@ -446,6 +437,9 @@ class OrderController extends SimpleEntityController
         $order->update([
             'status' => OrderStatus::SENT,
         ]);
+
+        // Dispatch event - listeners will handle PDF activity creation
+        OrderMarkedAsSent::dispatch($order, auth()->id());
 
         return response()->json([
             'message' => 'Orderstatus gezet op verstuurd.',

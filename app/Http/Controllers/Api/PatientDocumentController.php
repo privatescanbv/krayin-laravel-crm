@@ -6,6 +6,7 @@ use App\Enums\ActivityType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientDocumentsIndexRequest;
 use App\Http\Resources\PatientDocumentsCollection;
+use App\Models\Order;
 use App\Repositories\OrderRepository;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,7 @@ class PatientDocumentController extends Controller
      * @queryParam order_id integer Optional: limit documents to a single Order id. Example: 987
      * @queryParam type string Optional: document kind (stored in activity.additional.document_type). Example: report
      *
-     * @response 200 scenario="Success" {"data":[{"id":456,"patient_id":123,"type":"report","title":"MRI uitslag knie","file_name":"mri-knie-uitslag.pdf","mime_type":"application/pdf","size":245678,"download_url":"https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download","created_at":"2025-01-20T10:15:30Z"}],"meta":{"current_page":1,"per_page":15,"total":42}}
+     * @response 200 scenario="Success" {"data":[{"id":456,"patient_id":123,"type":"report","group":"Order MRI knie","title":"MRI uitslag knie","file_name":"mri-knie-uitslag.pdf","mime_type":"application/pdf","size":245678,"download_url":"https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download","created_at":"2025-01-20T10:15:30Z"}],"meta":{"current_page":1,"per_page":15,"total":42}}
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
@@ -67,14 +68,25 @@ class PatientDocumentController extends Controller
             return PatientDocumentsCollection::empty($perPage)->response();
         }
 
+        $orderTitlesById = Order::query()
+            ->whereIn('id', $orderIds)
+            ->pluck('title', 'id')
+            ->map(fn ($title) => (string) $title)
+            ->all();
+
         $paginator = $this->activityRepository
             ->paginateDocumentFilesForOrders($orderIds, $perPage, $documentTypeFilter)
             ->appends($request->query());
 
-        $documents = $paginator->getCollection()->map(function (ActivityFile $file) use ($person) {
+        $documents = $paginator->getCollection()->map(function (ActivityFile $file) use ($person, $orderTitlesById) {
+            $orderId = (int) ($file->activity?->order_id ?? 0);
+            $orderTitle = (string) ($orderTitlesById[$orderId] ?? '');
+            $group = trim('Order '.$orderTitle);
+
             return [
-                'file'            => $file,
-                'patient_id'      => (int) $person->id,
+                'file'       => $file,
+                'patient_id' => (int) $person->id,
+                'group'      => $group !== '' ? $group : null,
             ];
         });
 

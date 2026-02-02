@@ -17,6 +17,8 @@ use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
 use App\Observers\UserObserver;
 use App\Services\OrderCheckService;
+use App\Services\Storage\DocumentStorage;
+use App\Services\Storage\LaravelDocumentStorage;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
@@ -33,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(OrderCheckService::class);
+        $this->app->bind(DocumentStorage::class, LaravelDocumentStorage::class);
     }
 
     /**

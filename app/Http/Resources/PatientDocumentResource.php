@@ -41,7 +41,7 @@ class PatientDocumentResource extends JsonResource
         }
 
         try {
-            $size = (int) (Storage::size($file->path) ?? 0);
+            $size = Storage::size($file->path) ?? 0;
         } catch (Throwable) {
         }
 

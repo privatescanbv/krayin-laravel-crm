@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use App\Helpers\ValueNormalizer;
 use App\Traits\HasAuditTrail;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -97,5 +98,29 @@ class Order extends Model
         return $query->whereHas('salesLead.persons', function ($q) use ($person) {
             $q->whereKey($person->id);
         });
+    }
+
+    /**
+     * Scope orders that are eligible to be shown as appointments in the patient portal.
+     */
+    public function scopeAppointmentEligible(Builder $query): Builder
+    {
+        return $query
+            ->whereIn('status', [OrderStatus::PLANNED->value, OrderStatus::APPROVED->value])
+            ->whereNotNull('first_examination_at');
+    }
+
+    /**
+     * Scope appointment time filtering.
+     *
+     * @param  string|null  $filter  Allowed values: future, past.
+     */
+    public function scopeAppointmentTimeFilter(Builder $query, ?string $filter, Carbon $now): Builder
+    {
+        $filter = strtolower((string) $filter);
+
+        return $query
+            ->when($filter === 'future', fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
+            ->when($filter === 'past', fn (Builder $q) => $q->where('first_examination_at', '<', $now));
     }
 }

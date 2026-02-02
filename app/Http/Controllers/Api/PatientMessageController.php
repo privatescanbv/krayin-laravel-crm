@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\PatientMessageSenderType;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PatientUnreadCountsResource;
 use App\Models\PatientMessage;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
@@ -21,14 +22,13 @@ class PatientMessageController extends Controller
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
         if (! is_null($user)) {
-            return response()->json([
-                'message' => 'No messages for users without person association.',
-                'data'    => [
-                    'new_messages_count'     => 0,
-                    'new_appointments_count' => 0,
-                    'new_docs_count'         => 0,
-                ],
-            ], 200);
+            return (new PatientUnreadCountsResource([
+                'new_messages_count'     => 0,
+                'new_appointments_count' => 0,
+                'new_docs_count'         => 0,
+            ]))
+                ->additional(['message' => 'No messages for users without person association.'])
+                ->response();
         }
         if (is_null($person)) {
             abort(404, 'No person found for the given Keycloak user ID.');
@@ -40,14 +40,13 @@ class PatientMessageController extends Controller
             ->where('is_read', false)
             ->count();
 
-        return response()->json([
-            'message' => 'Counts retrieved successfully.',
-            'data'    => [
-                'new_messages_count'     => $messageCount,
-                'new_appointments_count' => 0,
-                'new_docs_count'         => 0,
-            ],
-        ], 200);
+        return (new PatientUnreadCountsResource([
+            'new_messages_count'     => $messageCount,
+            'new_appointments_count' => 0,
+            'new_docs_count'         => 0,
+        ]))
+            ->additional(['message' => 'Counts retrieved successfully.'])
+            ->response();
     }
 
     public function store(): RedirectResponse

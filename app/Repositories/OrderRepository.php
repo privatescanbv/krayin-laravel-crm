@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
 
@@ -85,6 +86,23 @@ class OrderRepository extends Repository
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
+    }
+
+    /**
+     * Paginate orders that are shown as patient appointments.
+     *
+     * @param  string|null  $filter  Allowed values: future, past.
+     */
+    public function paginatePatientAppointmentsForPerson(Person $person, int $perPage, ?string $filter = null, ?Carbon $now = null): LengthAwarePaginator
+    {
+        $now = $now ?: now();
+
+        return Order::query()
+            ->appointmentEligible()
+            ->forPerson($person)
+            ->appointmentTimeFilter($filter, $now)
+            ->orderBy('first_examination_at', 'asc')
+            ->paginate($perPage);
     }
 
     /**

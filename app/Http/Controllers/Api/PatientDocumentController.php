@@ -5,19 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Enums\ActivityType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientDocumentsIndexRequest;
-use App\Http\Resources\PatientDocumentResource;
+use App\Http\Resources\PatientDocumentsCollection;
 use App\Repositories\OrderRepository;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Models\File as ActivityFile;
+use Webkul\Activity\Repositories\ActivityRepository;
 
 class PatientDocumentController extends Controller
 {
     public function __construct(
         private readonly KeycloakService $keycloakService,
         private readonly OrderRepository $orderRepository,
+        private readonly ActivityRepository $activityRepository,
     ) {}
 
     /**
@@ -44,14 +46,7 @@ class PatientDocumentController extends Controller
             if (! is_null($user)) {
                 $perPage = (int) $request->validated('per_page', 15);
 
-                return response()->json([
-                    'data' => [],
-                    'meta' => [
-                        'current_page' => 1,
-                        'per_page'     => $perPage,
-                        'total'        => 0,
-                    ],
-                ]);
+                return PatientDocumentsCollection::empty($perPage)->response();
             }
 
             abort(404);
@@ -69,30 +64,12 @@ class PatientDocumentController extends Controller
         }
 
         if (empty($orderIds)) {
-            return response()->json([
-                'data' => [],
-                'meta' => [
-                    'current_page' => 1,
-                    'per_page'     => $perPage,
-                    'total'        => 0,
-                ],
-            ]);
+            return PatientDocumentsCollection::empty($perPage)->response();
         }
 
-        $query = ActivityFile::query()
-            ->with(['activity'])
-            ->whereHas('activity', function ($q) use ($orderIds, $documentTypeFilter) {
-                $q->where('type', ActivityType::FILE->value);
-
-                $q->whereIn('order_id', $orderIds);
-
-                if (is_string($documentTypeFilter) && $documentTypeFilter !== '') {
-                    $q->where('additional->document_type', $documentTypeFilter);
-                }
-            })
-            ->orderByDesc('created_at');
-
-        $paginator = $query->paginate($perPage)->appends($request->query());
+        $paginator = $this->activityRepository
+            ->paginateDocumentFilesForOrders($orderIds, $perPage, $documentTypeFilter)
+            ->appends($request->query());
 
         $documents = $paginator->getCollection()->map(function (ActivityFile $file) use ($person) {
             return [
@@ -101,14 +78,7 @@ class PatientDocumentController extends Controller
             ];
         });
 
-        return response()->json([
-            'data' => PatientDocumentResource::collection($documents),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'per_page'     => $paginator->perPage(),
-                'total'        => $paginator->total(),
-            ],
-        ]);
+        return PatientDocumentsCollection::fromPaginator($paginator, $documents)->response();
     }
 
     /**

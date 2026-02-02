@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\PatientMessageSenderType;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PatientMessageResource;
+use App\Http\Requests\Api\PatientMessagesIndexRequest;
+use App\Http\Resources\PatientMessagesCollection;
 use App\Models\PatientMessage;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\patientmessages\PatientMessageService;
@@ -26,31 +27,44 @@ class PersonActivityController extends Controller
 
     /**
      * Get all patient messages for a person, grouped by thread.
+     *
+     * @group Patient messages
+     *
+     * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+     *
+     * @queryParam page integer Page number. Example: 1
+     * @queryParam per_page integer Items per page (max 100). Example: 15
+     *
+     * @response 200 scenario="Success" {"data":[{"id":1,"person_id":123,"sender_type":"patient","sender_id":null,"body":"Hallo","is_read":false,"created_at":"2026-02-01T10:00:00+01:00","updated_at":"2026-02-01T10:00:00+01:00","sender":null,"sender_name":"Patient"}],"meta":{"current_page":1,"per_page":15,"total":42}}
+     * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
-    public function index(string $keycloakUserId): JsonResponse
+    public function index(PatientMessagesIndexRequest $request, string $keycloakUserId): JsonResponse
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
         if (is_null($person)) {
             if (! is_null($user)) {
+                $perPage = (int) $request->validated('per_page', 15);
+
                 // handle as no messages for users
-                return response()->json([
-                    'data' => [],
-                ]);
+                return PatientMessagesCollection::empty($perPage)->response();
             }
             abort(404);
         }
         $personId = $person->id;
         logger()->info("Fetching patient messages for person ID: {$personId}");
         // Get all patient messages linked to this person
-        $messages = PatientMessage::query()
-            ->where('person_id', $personId)
-            ->with(['sender'])
-            ->orderBy('created_at', 'asc')
-            ->get();
+        $validated = $request->validated();
+        $perPage = (int) ($validated['per_page'] ?? 15);
 
-        return response()->json([
-            'data' => PatientMessageResource::collection($messages),
-        ]);
+        $paginator = PatientMessage::query()
+            ->where('person_id', $personId)
+            ->with(['sender', 'person'])
+            ->orderBy('created_at', 'asc')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        return PatientMessagesCollection::fromPaginator($paginator, $paginator->getCollection())->response();
     }
 
     /**

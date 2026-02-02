@@ -5,11 +5,11 @@ namespace App\Services;
 use App\Helpers\ValueNormalizer;
 use App\Models\Anamnesis;
 use App\Models\Order;
+use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
 class OrderMailService
@@ -17,7 +17,7 @@ class OrderMailService
     public const TEMPLATE_NAME = 'order mail';
 
     public function __construct(
-        protected FormService $formService
+        private readonly CrmMailService $crmMailService
     ) {}
 
     public function buildMailData(Order $order): array
@@ -122,167 +122,35 @@ class OrderMailService
     }
 
     /**
-     * Create a form request via the forms API and return the form link.
-     * Uses existing link from anamnesis if available, otherwise creates new one and saves it.
+     * Send an order mail directly (outside the mail dialog).
      *
-     * @deprecated This method is deprecated. Use AnamnesisController methods instead.
-     * For mail attachments, use getAnamnesisGvlFormLinks() instead.
+     * This keeps Order-specific composition here, while all actual "store/send/folder"
+     * happens through the generic CrmMailService pipeline.
      */
-    public function createFormRequestAndGetLink(Order $order): string
+    public function sendOrderMailDirect(Order $order, ?string $recipientEmail = null): \Webkul\Email\Models\Email
     {
-        // Ensure salesLead is loaded
-        if (! $order->salesLead) {
-            $order->load('salesLead');
+        $mailData = $this->buildMailData($order);
+
+        $to = $recipientEmail ?: ($mailData['default_email'] ?? null);
+        if (! is_string($to) || trim($to) === '') {
+            throw new \RuntimeException('No recipient email available for order mail.');
         }
 
-        // Get first person from sales lead
-        $person = $this->getPersonForForm($order);
-        if (! $person || ! $order->salesLead->lead_id) {
-            throw new Exception('No person or lead found for order');
-        }
+        $order->loadMissing(['salesLead.lead.persons', 'salesLead.contactPerson']);
 
-        // Check if anamnesis already has a form link
-        $anamnesis = Anamnesis::where('lead_id', $order->salesLead->lead_id)
-            ->where('person_id', $person->id)
-            ->first();
+        $salesLeadId = $order->salesLead?->id;
+        $personId = $order->salesLead?->contactPerson?->id ?? $order->salesLead?->lead?->persons()?->first()?->id;
 
-        if ($anamnesis && ! empty($anamnesis->gvl_form_link)) {
-            Log::info('OrderMailService: Using existing GVL form link from anamnesis', [
-                'order_id'      => $order->id,
-                'anamnesis_id'  => $anamnesis->id,
-                'person_id'     => $person->id,
-                'form_link'     => $anamnesis->gvl_form_link,
-            ]);
-
-            return $anamnesis->gvl_form_link;
-        }
-
-        // gvl_form_link is empty, create new form request
-        Log::info('OrderMailService: gvl_form_link is empty, creating new form request', [
-            'order_id'       => $order->id,
-            'sales_lead_id'  => $order->salesLead?->id,
-            'has_sales_lead' => ! is_null($order->salesLead),
-        ]);
-
-        try {
-            Log::info('OrderMailService: Getting person for form', ['order_id' => $order->id]);
-            $person = $this->getPersonForForm($order);
-            if (! $person) {
-                Log::error('OrderMailService: No person found for order', [
-                    'order_id'           => $order->id,
-                    'has_sales_lead'     => ! is_null($order->salesLead),
-                    'has_contact_person' => ! is_null($order->salesLead?->contactPerson),
-                    'has_lead'           => ! is_null($order->salesLead?->lead),
-                ]);
-                throw new Exception('No person found for order');
-            }
-
-            Log::info('OrderMailService: Person found, building form data', [
-                'order_id'  => $order->id,
-                'person_id' => $person->id,
-            ]);
-
-            $result = $this->formService->createFormRequest($order, $person);
-            $response = $result['response'] ?? null;
-            $httpStatus = $result['status'] ?? null;
-
-            Log::info('OrderMailService: API response received', [
-                'order_id'           => $order->id,
-                'http_status'        => $httpStatus,
-                'has_response'       => ! is_null($response),
-                'response_has_id'    => $response && isset($response['data']['id']),
-                'response_structure' => $response ? ['has_data' => isset($response['data']), 'keys' => array_keys($response)] : null,
-            ]);
-
-            if (! $response || ! isset($response['data']['id'])) {
-                $errorMessage = 'Failed to create form request';
-                $errorDetails = [
-                    'order_id'         => $order->id,
-                    'http_status'      => $httpStatus,
-                    'response'         => $response,
-                    'response_keys'    => $response ? array_keys($response) : null,
-                    'response_message' => $response['message'] ?? null,
-                    'response_errors'  => $response['errors'] ?? null,
-                ];
-
-                Log::error('OrderMailService: Failed to create form request', $errorDetails);
-
-                // Build a more descriptive error message
-                if ($httpStatus === 200 && ! $response) {
-                    // Status 200 but no valid JSON response usually means authentication failed
-                    $errorMessage = 'Authentication failed: Forms API returned HTML login page instead of JSON. Please check FORMS_API_KEY configuration.';
-                } elseif ($response && isset($response['message'])) {
-                    $errorMessage .= ': '.$response['message'];
-                } elseif ($response && isset($response['errors'])) {
-                    $errorMessage .= ': '.json_encode($response['errors']);
-                } elseif (! $response) {
-                    $errorMessage .= ': API returned no response';
-                    if ($httpStatus) {
-                        $errorMessage .= " (HTTP {$httpStatus})";
-                    }
-                } else {
-                    $errorMessage .= ': Response missing form request ID';
-                }
-
-                throw new Exception($errorMessage);
-            }
-
-            $formRequestId = $response['data']['id'];
-            //            $frontendUrl = rtrim(config('services.portal.patient'), '/');
-            $formLink = $response['form_url'] ?? throw new Exception('Missing form_url in API response');
-            //            $formLink = str_replace('http://forms/', $frontendUrl.'/', $formLink);
-
-            // Save the link to the anamnesis (one-time save)
-            if ($anamnesis) {
-                Log::info('OrderMailService: Attempting to save GVL form link to anamnesis', [
-                    'order_id'              => $order->id,
-                    'anamnesis_id'          => $anamnesis->id,
-                    'person_id'             => $person->id,
-                    'form_request_id'       => $formRequestId,
-                    'form_link'             => $formLink,
-                    'current_gvl_form_link' => $anamnesis->gvl_form_link,
-                ]);
-
-                $anamnesis->gvl_form_link = $formLink;
-                $saved = $anamnesis->save();
-
-                if (! $saved) {
-                    Log::error('OrderMailService: Failed to save GVL form link to anamnesis', [
-                        'order_id'     => $order->id,
-                        'anamnesis_id' => $anamnesis->id,
-                        'form_link'    => $formLink,
-                    ]);
-                } else {
-                    Log::info('OrderMailService: GVL form link saved to anamnesis', [
-                        'order_id'        => $order->id,
-                        'anamnesis_id'    => $anamnesis->id,
-                        'form_request_id' => $formRequestId,
-                        'form_link'       => $formLink,
-                    ]);
-                }
-            } else {
-                Log::warning('OrderMailService: Cannot save GVL form link - no anamnesis found', [
-                    'order_id'  => $order->id,
-                    'person_id' => $person->id,
-                    'lead_id'   => $order->salesLead->lead_id,
-                ]);
-            }
-
-            return $formLink;
-        } catch (Exception $e) {
-            Log::error('OrderMailService: Exception creating form request', [
-                'order_id'       => $order->id,
-                'error'          => $e->getMessage(),
-                'file'           => $e->getFile(),
-                'line'           => $e->getLine(),
-                'trace'          => $e->getTraceAsString(),
-                'has_sales_lead' => ! is_null($order->salesLead),
-                'sales_lead_id'  => $order->salesLead?->id,
-            ]);
-
-            // Re-throw the exception to break the flow
-            throw $e;
-        }
+        return $this->crmMailService->createAndMaybeSend([
+            'subject'       => (string) ($mailData['subject'] ?? ''),
+            'reply'         => (string) ($mailData['body'] ?? ''),
+            'reply_to'      => [trim($to)],
+            'name'          => (string) ($order->salesLead?->name ?? 'Order mail'),
+            'source'        => 'system',
+            'user_type'     => 'user',
+            'sales_lead_id' => $salesLeadId,
+            'person_id'     => $personId,
+        ], false, EmailFolderEnum::SENT);
     }
 
     protected function ensureTemplateExists(): EmailTemplate
@@ -294,14 +162,6 @@ class OrderMailService
                 'content' => $this->defaultTemplateContent(),
             ]
         );
-
-        // Update template with latest content if it already existed
-        if ($template->wasRecentlyCreated === false) {
-            $template->update([
-                'subject' => 'Order {{ order_reference }} | {{ order_title }}',
-                'content' => $this->defaultTemplateContent(),
-            ]);
-        }
 
         return $template;
     }
@@ -320,15 +180,15 @@ HTML;
 
     protected function buildTemplateVariables(Order $order): array
     {
-        $formLink = $this->createFormRequestAndGetLink($order);
+        // Compose-only: do NOT create external form requests here.
+        // If a link already exists on anamnesis, include it; otherwise omit the section.
+        $formLink = $this->getExistingFormLink($order);
+        $formLinkSection = '';
 
-        Log::info('OrderMailService: Form link generated', [
-            'order_id'  => $order->id,
-            'form_link' => $formLink,
-        ]);
-
-        // Always show the form link section (link is now always returned)
-        $formLinkSection = '<p>Om uw order te kunnen verwerken, verzoeken wij u vriendelijk om <a href="'.e($formLink).'" style="color: #007bff; text-decoration: underline;">graag dit GVL formulier in te vullen</a>.</p>';
+        if (! empty($formLink)) {
+            $safeLink = e($formLink);
+            $formLinkSection = '<p>Om uw order te kunnen verwerken, verzoeken wij u vriendelijk om <a href="'.$safeLink.'" style="color: #007bff; text-decoration: underline;">graag dit GVL formulier in te vullen</a>.</p>';
+        }
 
         // Load order items with resource planner data
         $order->load([
@@ -350,9 +210,38 @@ HTML;
             'company_signature'      => e(config('app.name', 'Privatescan')),
             'default_email'          => $this->getDefaultEmail($order),
             'current_date'           => Carbon::now()->format('d-m-Y'),
-            'form_link'              => e($formLink),
+            'form_link'              => $formLink ? e($formLink) : '',
             'form_link_section'      => $formLinkSection,
         ];
+    }
+
+    /**
+     * Return an existing GVL form link from anamnesis, if available.
+     * This method has no side effects (no external API calls).
+     */
+    protected function getExistingFormLink(Order $order): ?string
+    {
+        // Ensure salesLead is loaded
+        if (! $order->salesLead) {
+            $order->load('salesLead');
+        }
+
+        $person = $this->getPersonForForm($order);
+        $leadId = $order->salesLead?->lead_id;
+
+        if (! $person || ! $leadId) {
+            return null;
+        }
+
+        $anamnesis = Anamnesis::where('lead_id', $leadId)
+            ->where('person_id', $person->id)
+            ->first();
+
+        if ($anamnesis && ! empty($anamnesis->gvl_form_link)) {
+            return $anamnesis->gvl_form_link;
+        }
+
+        return null;
     }
 
     protected function renderItemsTable(Order $order): string

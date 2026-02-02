@@ -8,6 +8,7 @@ enum EmailTemplateType: string
     case ALGEMEEN = 'algemeen';
     case ORDER = 'order';
     case GVL = 'gvl';
+    case PATIENT = 'patient';
 
     /**
      * Get all values as array
@@ -31,10 +32,11 @@ enum EmailTemplateType: string
     public function label(): string
     {
         return match ($this) {
-            self::LEAD     => 'Lead',
-            self::ALGEMEEN => 'Algemeen',
-            self::ORDER    => 'Order',
-            self::GVL      => 'GVL',
+            self::LEAD         => 'Lead',
+            self::ALGEMEEN     => 'Algemeen',
+            self::ORDER        => 'Order',
+            self::GVL          => 'GVL',
+            self::PATIENT      => 'Patient',
         };
     }
 }

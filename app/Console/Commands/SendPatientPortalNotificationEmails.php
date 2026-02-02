@@ -3,14 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Models\PatientNotification;
-use App\Services\Mail\EmailTemplateRenderingService;
-use App\Services\Mail\PatientMailService;
+use App\Services\Mail\CrmMailService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Contact\Models\Person;
-use Webkul\EmailTemplate\Models\EmailTemplate;
 
 class SendPatientPortalNotificationEmails extends Command
 {
@@ -19,25 +17,13 @@ class SendPatientPortalNotificationEmails extends Command
     protected $description = 'Send notification emails to patients when something is ready in the patient portal.';
 
     public function __construct(
-        private readonly PatientMailService $patientMailService,
-        private readonly EmailTemplateRenderingService $emailTemplateRenderingService
+        private readonly CrmMailService $crmMailService
     ) {
         parent::__construct();
     }
 
     public function handle(): int
     {
-        $template = EmailTemplate::query()
-            ->where('code', 'patient-portal-notification')
-            ->orWhere('name', 'patient-portal-notification')
-            ->first();
-
-        if (! $template) {
-            $this->error("Email template 'patient-portal-notification' not found.");
-
-            return Command::FAILURE;
-        }
-
         $patientIds = PatientNotification::forMailNotification()
             ->select('patient_id')
             ->distinct()
@@ -73,18 +59,12 @@ class SendPatientPortalNotificationEmails extends Command
             }
 
             try {
-                DB::transaction(function () use ($template, $person, $patientId, $portalUrl) {
-                    $rendered = $this->emailTemplateRenderingService->render($template, [
-                        'lastname'    => (string) ($person->last_name ?? ''),
-                        'portal_url'  => $portalUrl,
-                        'person'      => $person, // for optional nested access
+                DB::transaction(function () use ($person, $patientId, $portalUrl) {
+                    $this->crmMailService->sendToPersonTemplate($person, 'patient-portal-notification', [
+                        'lastname'   => (string) ($person->last_name ?? ''),
+                        'portal_url' => $portalUrl,
+                        'person'     => $person,
                     ]);
-
-                    $this->patientMailService->mailPatient(
-                        $person,
-                        $rendered['subject'],
-                        $rendered['html']
-                    );
 
                     PatientNotification::forPatient($patientId)
                         ->forMailNotification()

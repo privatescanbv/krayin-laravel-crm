@@ -17,7 +17,9 @@
 
         <p>Bedankt voor het invullen van het diagnose formulier. Binnen 1 tot 2 werkdagen nemen wij contact met je op
             voor een voorlopig adviesgesprek.
-            <br/>U kunt uw ingevulde formulier terug vinden in ons <link href="{{ $patientPortalUrl }}">patient portaal</link>.
+            <br>
+            U kunt uw ingevulde formulier terug vinden in ons
+            <a href="{{ $patientPortalUrl }}" target="_blank" rel="noopener">patiëntportaal</a>.
         </p>
 
         <p>Met vriendelijke groet,<br>

@@ -154,7 +154,7 @@ class EmailTemplateSeeder extends Seeder
                 'subject'     => 'Orderbevestiging - Ordernummer: {%order.id%}',
                 'created_at'  => $now,
                 'updated_at'  => $now,
-                'content'    => '<p>Geachte heer {{ $persoon_achternaam }},</p>
+                'content'    => '<p>Geachte heer {{ $lastname }},</p>
 
     <p>
         Hierbij bevestig ik de afspraak/afspraken voor het laten uitvoeren van medische onderzoeken {{ $afspraken_tabel }}
@@ -242,7 +242,7 @@ class EmailTemplateSeeder extends Seeder
                 'id'          => 8,
                 'name'        => 'Patiëntportaal notificatie',
                 'code'        => 'patient-portal-notification',
-                'type'        => EmailTemplateType::ALGEMEEN->value,
+                'type'        => EmailTemplateType::PATIENT->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
                 'subject'     => 'Nieuwe melding in uw patiëntportaal',

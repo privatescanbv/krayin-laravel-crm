@@ -30,6 +30,7 @@ use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Repositories\LeadRepository;
 use App\Models\SalesLead;
@@ -143,22 +144,9 @@ class EmailController extends Controller
         // Get all request data including activity_id if provided
         $data = request()->all();
 
-        $email = $this->emailRepository->create($data);
-
-        if (!request('is_draft')) {
-            try {
-                Mail::send(new Email($email));
-
-                // Get the 'sent' folder
-                $sentFolder = Folder::where('name', 'sent')->first();
-                if ($sentFolder) {
-                    $this->emailRepository->update([
-                        'folder_id' => $sentFolder->id,
-                    ], $email->id);
-                }
-            } catch (Exception $e) {
-            }
-        }
+        // Centralized mail flow (store + send) via App service.
+        $crmMailService = app(\App\Services\Mail\CrmMailService::class);
+        $email = $crmMailService->createAndMaybeSend($data, (bool) request('is_draft'), EmailFolderEnum::SENT);
 
         Event::dispatch('email.create.after', $email);
 
@@ -206,15 +194,9 @@ class EmailController extends Controller
 
         if (!is_null(request('is_draft')) && !request('is_draft')) {
             try {
-                Mail::send(new Email($email));
-
-                // Get the 'inbox' folder
-                $inboxFolder = Folder::where('name', 'inbox')->first();
-                if ($inboxFolder) {
-                    $this->emailRepository->update([
-                        'folder_id' => $inboxFolder->id,
-                    ], $email->id);
-                }
+                // Centralized send logic (folder behavior kept as-is: move to inbox).
+                $crmMailService = app(\App\Services\Mail\CrmMailService::class);
+                $crmMailService->sendEmail($email, EmailFolderEnum::INBOX);
             } catch (Exception $e) {
             }
         }
@@ -232,8 +214,14 @@ class EmailController extends Controller
         }
 
         if (request()->ajax()) {
+            /** @var mixed $emailForResource */
+            $emailForResource = $email;
+            if ($email instanceof \Illuminate\Database\Eloquent\Model) {
+                $emailForResource = $email->refresh();
+            }
+
             return response()->json([
-                'data' => new EmailResource($email->refresh()),
+                'data' => new EmailResource($emailForResource),
                 'message' => trans('admin::app.mail.update-success'),
             ]);
         }

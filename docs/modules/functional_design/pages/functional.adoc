@@ -147,6 +147,27 @@ Alle communicatie met patiënten zal voortaan uitsluitend via het CRM verlopen. 
 
 Medewerkers dienen *geen e-mails met patiënten meer te versturen via Outlook*. E-mails die buiten het CRM worden verstuurd, zijn niet zichtbaar in het systeem en kunnen daardoor niet worden meegenomen in het dossier of in workflow-automatisering. Dit kan technisch niet worden afgedwongen, maar het is van belang dat medewerkers dit actief naleven.
 
+==== Notificaties
+
+Binnen het systeem worden op vaste momenten automatisch notificaties aangemaakt. Dit gebeurt bijvoorbeeld wanneer:
+
+* een document (zoals een orderbevestiging) beschikbaar wordt gesteld;
+* nieuwe informatie klaarstaat voor de patiënt in het portaal.
+
+Deze notificaties zijn zichtbaar voor de patiënt in het patiëntenportaal, zodra de patiënt inlogt.
+
+Daarnaast ontvangt de patiënt dagelijks om 08:00 uur een e-mail, mits er nog ongeziene notificaties klaarstaan.
+
+Deze e-mail bevat:
+
+* een korte melding dat er nieuwe informatie beschikbaar is;
+
+* geen inhoudelijke medische of administratieve details;
+
+* een link naar het patiëntenportaal om de notificaties te bekijken.
+
+Op deze manier blijft alle inhoudelijke communicatie centraal beschikbaar in het CRM en het patiëntenportaal, terwijl patiënten toch actief worden geïnformeerd dat er nieuwe informatie voor hen klaarstaat.
+
 ==== E-mail koppeling aan activiteiten
 
 Activiteiten kunnen nu direct gekoppeld worden aan e-mails, vergelijkbaar met hoe e-mails gekoppeld zijn aan leads. Dit biedt de volgende functionaliteiten:

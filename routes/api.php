@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PatientAppointmentController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientMessageController;
 use App\Http\Controllers\Api\PatientNotificationController;
+use App\Http\Controllers\Api\PatientPreferenceController;
 use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
@@ -100,6 +101,12 @@ $registerAuthenticatedApiRoutes = function () {
                 ->name('api.patient.notifications.index');
             Route::post('notifications/{notificationId}/read', [PatientNotificationController::class, 'markAsRead'])
                 ->name('api.patient.notifications.read');
+
+            // Patient preferences
+            Route::get('preferences', [PatientPreferenceController::class, 'index'])
+                ->name('api.patient.preferences.index');
+            Route::put('preferences', [PatientPreferenceController::class, 'update'])
+                ->name('api.patient.preferences.update');
         });
 };
 

@@ -2,6 +2,8 @@
 
 namespace App\Services\Mail;
 
+use App\Enums\PersonPreferenceKey;
+use App\Models\PersonPreference;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
@@ -142,8 +144,24 @@ class CrmMailService
      *
      * @param  array{lead_id?: string|int|null, sales_lead_id?: string|int|null}  $links
      */
-    public function sendToPersonTemplate(Person $person, string $templateIdentifier, array $variables = [], array $links = []): EmailModel
+    public function sendToPersonTemplate(Person $person, string $templateIdentifier, array $variables = [], array $links = [], bool $isNotify = true): ?EmailModel
     {
+        if ($isNotify) {
+            $emailEnabled = PersonPreference::getValueForPerson(
+                $person->id,
+                PersonPreferenceKey::EMAIL_NOTIFICATIONS_ENABLED
+            );
+
+            if (! $emailEnabled) {
+                Log::info('Skipping email notification: person has disabled email notifications', [
+                    'person_id' => $person->id,
+                    'template'  => $templateIdentifier,
+                ]);
+
+                return null;
+            }
+        }
+
         $rendered = $this->renderTemplate($templateIdentifier, $variables);
 
         return $this->sendToPersonHtml(

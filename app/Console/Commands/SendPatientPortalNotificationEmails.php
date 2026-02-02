@@ -64,7 +64,7 @@ class SendPatientPortalNotificationEmails extends Command
                         'lastname'   => (string) ($person->last_name ?? ''),
                         'portal_url' => $portalUrl,
                         'person'     => $person,
-                    ]);
+                    ], isNotify: true);
 
                     PatientNotification::forPatient($patientId)
                         ->forMailNotification()

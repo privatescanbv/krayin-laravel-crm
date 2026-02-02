@@ -2,6 +2,4 @@
 
 namespace App\Http\Requests\Admin\Settings;
 
-class StoreClinicRequest extends ClinicRequest
-{
-}
+class StoreClinicRequest extends ClinicRequest {}

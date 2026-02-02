@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\PatientAppointmentController;
+use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientMessageController;
 use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
@@ -82,8 +83,12 @@ $registerAuthenticatedApiRoutes = function () {
 
     // Patient appointments (derived from Orders), by keycloak user id
     Route::get('patient/{id}/appointments', [PatientAppointmentController::class, 'index']);
-    // TODO implement document fetching
-    //    Route::get('patient/{id}/documents', [PatientAppointmentController::class, 'index']);
+
+    // Patient documents (derived from Orders -> Activities type=file)
+    Route::get('patient/{id}/documents', [PatientDocumentController::class, 'index'])
+        ->name('api.patient.documents.index');
+    Route::get('patient/{id}/documents/{documentId}/download', [PatientDocumentController::class, 'download'])
+        ->name('api.patient.documents.download');
 };
 
 // All API routes are protected by ApiKeyAuth middleware, which supports:

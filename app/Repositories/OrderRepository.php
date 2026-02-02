@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use Carbon\Carbon;
+use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
 
 class OrderRepository extends Repository
@@ -70,6 +71,20 @@ class OrderRepository extends Repository
         Order::where('sales_lead_id', $salesId)
             ->whereNot('status', OrderStatus::completedState())
             ->delete();
+    }
+
+    /**
+     * Get all order ids for a given patient (Person).
+     *
+     * @return array<int>
+     */
+    public function getIdsForPerson(Person $person): array
+    {
+        return Order::query()
+            ->forPerson($person)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     /**

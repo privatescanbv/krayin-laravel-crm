@@ -5,11 +5,13 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use App\Helpers\ValueNormalizer;
 use App\Traits\HasAuditTrail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Person;
 
 /**
  * @mixin IdeHelperOrder
@@ -85,5 +87,15 @@ class Order extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Scope orders that belong to a given patient (Person), via salesLead -> persons.
+     */
+    public function scopeForPerson(Builder $query, Person $person): Builder
+    {
+        return $query->whereHas('salesLead.persons', function ($q) use ($person) {
+            $q->whereKey($person->id);
+        });
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BouncerPermissionMiddleware;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\EnsureKeycloakPatientMatchesRoute;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
@@ -88,6 +89,7 @@ class Kernel extends HttpKernel
         'throttle'           => ThrottleRequests::class,
         'verified'           => EnsureEmailIsVerified::class,
         'api.key'            => ApiKeyAuth::class,
+        'patient.self'       => EnsureKeycloakPatientMatchesRoute::class,
         'bouncer.permission' => BouncerPermissionMiddleware::class,
     ];
 }

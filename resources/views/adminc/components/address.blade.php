@@ -176,19 +176,6 @@
 
 {!! view_render_event('admin.address.after') !!}
 
-{{-- Per-instance config (must NOT be pushOnce; addresses can appear multiple times on one page) --}}
-<script>
-    window.addressComponents = window.addressComponents || {};
-    window.addressComponents['{{ $addressId }}'] = {
-        id: '{{ $addressId }}',
-        postalCodeId: '{{ $addressId }}_postal_code',
-        houseNumberId: '{{ $addressId }}_house_number',
-        streetId: '{{ $addressId }}_street',
-        cityId: '{{ $addressId }}_city',
-        stateId: '{{ $addressId }}_state'
-    };
-</script>
-
 @pushOnce('scripts')
 
     @verbatim
@@ -239,6 +226,9 @@
     </script>
 
     <script>
+        // Global config store (multiple address components per page)
+        window.addressComponents = window.addressComponents || {};
+
         // Function to initialize address lookup button
         function initializeAddressLookupButton(addressId) {
             const buttonId = addressId + '-lookup-btn';

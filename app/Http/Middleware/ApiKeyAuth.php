@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as SocialiteUser;
 use Throwable;
 
 class ApiKeyAuth
@@ -51,7 +52,17 @@ class ApiKeyAuth
                     // only the fact that the token is accepted by Keycloak.
                     /** @var \Laravel\Socialite\Two\AbstractProvider $provider */
                     $provider = Socialite::driver('keycloak');
-                    $provider->userFromToken($accessToken);
+                    /** @var SocialiteUser $keycloakUser */
+                    $keycloakUser = $provider->userFromToken($accessToken);
+
+                    // Make the Keycloak subject available for downstream authorization checks.
+                    $keycloakUserId = method_exists($keycloakUser, 'getId')
+                        ? $keycloakUser->getId()
+                        : ($keycloakUser->id ?? null);
+
+                    if (is_string($keycloakUserId) && $keycloakUserId !== '') {
+                        $request->attributes->set('keycloak_token_sub', $keycloakUserId);
+                    }
 
                     Log::info('ApiKeyAuth: valid Keycloak bearer token accepted');
 

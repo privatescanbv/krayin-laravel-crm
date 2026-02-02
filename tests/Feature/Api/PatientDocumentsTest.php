@@ -3,6 +3,8 @@
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as SocialiteUser;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Models\File as ActivityFile;
 use Webkul\Contact\Models\Person;
@@ -87,4 +89,33 @@ it('returns paginated documents for a patient', function () {
 
     expect($response->json('data.0.download_url'))
         ->toContain("/api/patient/{$keycloakUserId}/documents/{$file->id}/download");
+});
+
+it('forbids accessing another patient documents with a keycloak token', function () {
+    // Ensure the middleware uses Keycloak (not API key).
+    config(['api.keys' => []]);
+
+    $tokenSubject = (string) Str::uuid();
+    $otherPatientKeycloakId = (string) Str::uuid();
+
+    $socialiteUser = new SocialiteUser;
+    $socialiteUser->setRaw(['sub' => $tokenSubject]);
+    $socialiteUser->map(['id' => $tokenSubject]);
+
+    $provider = Mockery::mock();
+    $provider->shouldReceive('userFromToken')->once()->andReturn($socialiteUser);
+    Socialite::shouldReceive('driver')->with('keycloak')->once()->andReturn($provider);
+
+    // The patient in the URL is NOT the token subject.
+    Person::factory()->create([
+        'keycloak_user_id' => $otherPatientKeycloakId,
+        'is_active'        => true,
+    ]);
+
+    $response = $this->getJson(
+        "/api/patient/{$otherPatientKeycloakId}/documents",
+        ['Authorization' => 'Bearer test-token']
+    );
+
+    $response->assertForbidden();
 });

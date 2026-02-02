@@ -75,20 +75,25 @@ $registerAuthenticatedApiRoutes = function () {
     Route::get('keycloak/persons/{keycloakUserId}', [KeycloakUserController::class, 'findPersonByKeycloakId'])
         ->name('api.keycloak.persons.findByKeycloakId');
 
-    // Person patient messages, by keycloak user id
-    Route::get('patient/{id}/messages', [PersonActivityController::class, 'index']);
-    Route::post('patient/{id}/messages', [PersonActivityController::class, 'store']);
-    Route::put('patient/{id}/messages/mark_as_read', [PersonActivityController::class, 'markAsRead']);
-    Route::get('patient/{id}/activities/unread/count', [PatientMessageController::class, 'unreadCount']);
+    // Patient routes (Keycloak Bearer token must match {id}; API key callers are service-to-service)
+    Route::prefix('patient/{id}')
+        ->middleware('patient.self:id')
+        ->group(function () {
+            // Person patient messages, by keycloak user id
+            Route::get('messages', [PersonActivityController::class, 'index']);
+            Route::post('messages', [PersonActivityController::class, 'store']);
+            Route::put('messages/mark_as_read', [PersonActivityController::class, 'markAsRead']);
+            Route::get('activities/unread/count', [PatientMessageController::class, 'unreadCount']);
 
-    // Patient appointments (derived from Orders), by keycloak user id
-    Route::get('patient/{id}/appointments', [PatientAppointmentController::class, 'index']);
+            // Patient appointments (derived from Orders), by keycloak user id
+            Route::get('appointments', [PatientAppointmentController::class, 'index']);
 
-    // Patient documents (derived from Orders -> Activities type=file)
-    Route::get('patient/{id}/documents', [PatientDocumentController::class, 'index'])
-        ->name('api.patient.documents.index');
-    Route::get('patient/{id}/documents/{documentId}/download', [PatientDocumentController::class, 'download'])
-        ->name('api.patient.documents.download');
+            // Patient documents (derived from Orders -> Activities type=file)
+            Route::get('documents', [PatientDocumentController::class, 'index'])
+                ->name('api.patient.documents.index');
+            Route::get('documents/{documentId}/download', [PatientDocumentController::class, 'download'])
+                ->name('api.patient.documents.download');
+        });
 };
 
 // All API routes are protected by ApiKeyAuth middleware, which supports:

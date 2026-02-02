@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\PatientAppointmentController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientMessageController;
+use App\Http\Controllers\Api\PatientNotificationController;
 use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
@@ -93,6 +94,12 @@ $registerAuthenticatedApiRoutes = function () {
                 ->name('api.patient.documents.index');
             Route::get('documents/{documentId}/download', [PatientDocumentController::class, 'download'])
                 ->name('api.patient.documents.download');
+
+            // Patient notifications
+            Route::get('notifications', [PatientNotificationController::class, 'index'])
+                ->name('api.patient.notifications.index');
+            Route::post('notifications/{notificationId}/read', [PatientNotificationController::class, 'markAsRead'])
+                ->name('api.patient.notifications.read');
         });
 };
 

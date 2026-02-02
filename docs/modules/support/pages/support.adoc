@@ -42,8 +42,22 @@ Contactgegevens zijn intern bekend. Alleen van toepassing zolang dit systeem nog
 === Afspraken
 
 * **Backups & herstelprocedures**
-Mogelijk bij IceHosting, nog geen definitieve afspraken over gemaakt.
-Dient te gebeuren, voordat wij live gaan
+
+De CRM-omgeving maakt gebruik van een centrale backupstrategie op VPS-niveau.
+
+* Backups worden uitgevoerd over de *gehele VPS* en omvatten:
+** databases
+** applicatiebestanden
+** gehoste documenten (zoals CRM-documenten en bijlagen)
+
+* Er wordt gebruikgemaakt van *incrementele backups*, waarbij alleen gewijzigde data sinds de vorige backup wordt opgeslagen.
+* Backups draaien op *dagelijkse basis*.
+* De *retentieperiode* bedraagt maximaal *7 dagen* (rolling window).
+* Herstel (restore) kan plaatsvinden op:
+** volledig VPS-niveau
+** of een specifieke momentopname binnen de beschikbare retentieperiode
+
+Deze aanpak zorgt voor een eenduidige en beheersbare herstelprocedure, waarbij data en documenten altijd consistent vanuit één bron worden hersteld.
 
 * **Monitoring & foutdetectie**
 Voor monitoring en foutanalyse zetten we Sentry in. Hiermee kunnen we technische issues vroegtijdig signaleren en gericht oplossen.
@@ -60,7 +74,7 @@ Na 2-3 dagen krijgen alle acties een foutmelding:
 
 ----
 could not append log.. invalid rights.
-Kon niet overnemen: The stream or file "/usr/share/nginx/html/storage/logs/laravel-2025-09-29.log" 
+Kon niet overnemen: The stream or file "/usr/share/nginx/html/storage/logs/laravel-2025-09-29.log"
 could not be opened in append mode: Failed to open stream: Permission denied
 ----
 
@@ -85,7 +99,7 @@ De volgende aanpassingen zijn doorgevoerd:
 
 3. **Docker startup script** (`.docker/start.sh`):
    - Toegevoegd: Automatische permissie fix bij elke container start
-   - Commando's: 
+   - Commando's:
      ```bash
      chown -R www-data:www-data /usr/share/nginx/html/storage
      chmod -R 775 /usr/share/nginx/html/storage

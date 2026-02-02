@@ -21,18 +21,12 @@ namespace App\Models{
  * @property string|null $state
  * @property string|null $city
  * @property string|null $country
- * @property int|null $lead_id
- * @property int|null $person_id
- * @property int|null $organization_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read mixed $full_address
- * @property-read \Webkul\Lead\Models\Lead|null $lead
- * @property-read \Webkul\Contact\Models\Organization|null $organization
- * @property-read \Webkul\Contact\Models\Person|null $person
  * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Database\Factories\AddressFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Address newModelQuery()
@@ -45,9 +39,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereHouseNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereHouseNumberSuffix($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Address whereLeadId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Address whereOrganizationId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Address wherePersonId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Address wherePostalCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereState($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereStreet($value)
@@ -229,26 +220,28 @@ namespace App\Models{
  * @property bool $is_active
  * @property \Illuminate\Database\Eloquent\Collection<int, \Webkul\Email\Models\Email> $emails
  * @property array|null $phones
- * @property int|null $address_id
+ * @property int|null $visit_address_id
+ * @property int|null $postal_address_id
+ * @property bool $is_postal_address_same_as_visit_address
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
  * @property-read int|null $activities_count
- * @property-read \App\Models\Address|null $address
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read int|null $emails_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PartnerProduct> $partnerProducts
  * @property-read int|null $partner_products_count
+ * @property-read \App\Models\Address|null $postalAddress
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Resource> $resources
  * @property-read int|null $resources_count
  * @property-read \Webkul\User\Models\User|null $updater
+ * @property-read \App\Models\Address|null $visitAddress
  * @method static \Database\Factories\ClinicFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic query()
- * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereAddressId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereDescription($value)
@@ -256,12 +249,15 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereIsPostalAddressSameAsVisitAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereOrderConfirmationNote($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic wherePhones($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clinic wherePostalAddressId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereRegistrationFormClinicName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereUpdatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereVisitAddressId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Clinic whereWebsiteUrl($value)
  * @mixin \Eloquent
  */
@@ -436,6 +432,8 @@ namespace App\Models{
  * @property int|null $updated_by
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderCheck> $orderChecks
  * @property-read int|null $order_checks_count
@@ -443,7 +441,10 @@ namespace App\Models{
  * @property-read int|null $order_items_count
  * @property-read \App\Models\SalesLead $salesLead
  * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentEligible()
+ * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentTimeFilter(?string $filter, \Carbon\Carbon $now)
  * @method static \Database\Factories\OrderFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|Order forPerson(\Webkul\Contact\Models\Person $person)
  * @method static \Illuminate\Database\Eloquent\Builder|Order newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Order newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Order query()
@@ -658,6 +659,55 @@ namespace App\Models{
  */
 	#[\AllowDynamicProperties]
 	class IdeHelperPatientMessage {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $patient_id
+ * @property string $type
+ * @property bool $dismissable
+ * @property string $title
+ * @property string|null $summary
+ * @property \App\Enums\NotificationReferenceType $reference_type
+ * @property int $reference_id
+ * @property \Illuminate\Support\Carbon|null $read_at
+ * @property \Illuminate\Support\Carbon|null $dismissed_at
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property \Illuminate\Support\Carbon|null $last_notified_by_email_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read \Webkul\Contact\Models\Person $patient
+ * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Database\Factories\PatientNotificationFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification forMailNotification()
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification forPatient(int $patientId)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification query()
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereDismissable($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereDismissedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereLastNotifiedByEmailAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification wherePatientId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereReadAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereReferenceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereReferenceType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereSummary($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereUpdatedBy($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperPatientNotification {}
 }
 
 namespace App\Models{

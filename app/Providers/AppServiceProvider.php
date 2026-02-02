@@ -19,9 +19,11 @@ use App\Observers\UserObserver;
 use App\Services\OrderCheckService;
 use App\Services\Storage\DocumentStorage;
 use App\Services\Storage\LaravelDocumentStorage;
+use App\Support\IdeHelper\SocialiteFacadeForIdeHelper;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Socialite\Socialite;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -34,6 +36,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Workaround for `ide-helper:generate` crashing on Socialite::fake() signature.
+        // Only active while running the ide-helper generation command.
+        if ($this->app->runningInConsole()) {
+            $argv = $_SERVER['argv'] ?? [];
+
+            if (in_array('ide-helper:generate', $argv, true)) {
+                // Avoid autoloading the real classes before aliasing.
+                if (! class_exists(Socialite::class, false)) {
+                    class_alias(SocialiteFacadeForIdeHelper::class, Socialite::class);
+                }
+
+                if (! class_exists(\Laravel\Socialite\Facades\Socialite::class, false)) {
+                    class_alias(SocialiteFacadeForIdeHelper::class, \Laravel\Socialite\Facades\Socialite::class);
+                }
+            }
+        }
+
         $this->app->singleton(OrderCheckService::class);
         $this->app->bind(DocumentStorage::class, LaravelDocumentStorage::class);
     }

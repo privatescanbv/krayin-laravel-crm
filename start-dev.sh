@@ -64,3 +64,9 @@ fi
 
 # Not exactly the right place, but we don't have ci for this. So generate it here, to minimize human error of forgetting it.
 ./vendor/bin/sail artisan scribe:generate
+
+./vendor/bin/sail composer dump-autoload
+
+# Keep model files clean: only write @mixin, put properties/methods in _ide_helper_models.php
+./vendor/bin/sail artisan ide-helper:models --write-mixin --reset --no-interaction
+./vendor/bin/sail artisan ide-helper:generate --no-interaction

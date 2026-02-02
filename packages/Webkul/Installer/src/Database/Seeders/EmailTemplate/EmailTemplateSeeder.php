@@ -238,6 +238,23 @@ class EmailTemplateSeeder extends Seeder
         Mocht u vragen hebben of hulp nodig hebben bij het invullen van het formulier, neem dan gerust contact met ons op.
     </p>
     <p>Privatescan / Herniapoli</p>',
+            ], [
+                'id'          => 8,
+                'name'        => 'Patiëntportaal notificatie',
+                'code'        => 'patient-portal-notification',
+                'type'        => EmailTemplateType::ALGEMEEN->value,
+                'language'    => EmailTemplateLanguage::NEDERLANDS->value,
+                'departments' => $allDepartments,
+                'subject'     => 'Nieuwe melding in uw patiëntportaal',
+                'created_at'  => $now,
+                'updated_at'  => $now,
+                'content'     => '<p>Geachte heer/mevrouw {{ $lastname }},</p>
+
+<p>Er staat een nieuwe melding voor u klaar in uw patiëntportaal. Om privacy-redenen vermelden we de inhoud niet per e-mail.</p>
+
+<p>U kunt inloggen via: <a href="{%portal_url%}" target="_blank" style="color: #2563eb; text-decoration: underline;">{%portal_url%}</a></p>
+
+<p>Met vriendelijke groet,<br>Privatescan</p>',
             ],
         ]);
     }

@@ -53,4 +53,11 @@ class PatientNotification extends Model
     {
         return $query->where('patient_id', $patientId);
     }
+
+    public function scopeForMailNotification($query)
+    {
+        return $query->whereNull('dismissed_at')
+            ->whereNull('last_notified_by_email_at');
+
+    }
 }

@@ -51,23 +51,6 @@ COPY --from=vite /build/database ./database
 COPY --from=vite /build/artisan ./artisan
 COPY --from=vite /build/packages ./packages
 
-# Create sail user and group (required for Laravel Sail)
-# Use same approach as Laravel Sail: create with fixed UID, adjust in start script
-# Handle case where WWWGROUP might be empty or non-numeric by using default 1000
-RUN set -eux; \
-    if [ -z "$WWWGROUP" ] || ! [ "$WWWGROUP" -eq "$WWWGROUP" ] 2>/dev/null; then \
-        WWWGROUP_VAL=1000; \
-    else \
-        WWWGROUP_VAL=$WWWGROUP; \
-    fi; \
-    groupadd --force -g $WWWGROUP_VAL sail; \
-    useradd -ms /bin/bash --no-user-group -g $WWWGROUP_VAL -u 1337 sail
-
-# Zorg dat Laravel zijn cache paths heeft vóór composer install. These steps are fixes for;php artisan package:discover --ansi
-RUN mkdir -p ./storage/framework/{cache,sessions,views,testing} \
-    && mkdir -p ./bootstrap/cache \
-    && chown -R www-data:www-data ./storage ./bootstrap/cache \
-    && chmod -R 775 ./storage ./bootstrap/cache
 ENV VIEW_COMPILED_PATH=/usr/share/nginx/html/storage/framework/views
 
 
@@ -88,9 +71,6 @@ COPY .docker/php/fpm-cloud.conf /usr/local/etc/php-fpm.d/zz-fpm.conf
 COPY  --from=vite /build/.docker/php/php.ini /usr/local/etc/php/conf.d/docker-php-config.ini
 COPY  --from=vite /build/.docker/nginx/templates/default.cloud.conf /etc/nginx/sites-enabled/default
 COPY  --from=vite /build/.docker/nginx/nginx.conf /etc/nginx/nginx.conf
-
-RUN mkdir -p /var/log/nginx /var/log/php-fpm /var/log/supervisor \
-    && chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
 
 # Ensure storage directories have correct permissions for log writing
 RUN mkdir -p /usr/share/nginx/html/storage/logs \
@@ -115,8 +95,6 @@ COPY --from=vite /build/docker-compose-prod.yml /docker/docker-compose.yml
 COPY --from=vite /build/.env.prod /docker/.env.prod
 COPY --from=vite /build/.env.keycloak.prod /docker/.env.keycloak.prod
 
-RUN mkdir -p ./storage && touch ./storage/installed
-
 COPY --from=vite /build/.docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY --from=vite /build/.docker/json-logger.sh /usr/share/nginx/html/.docker/json-logger.sh
 RUN chmod +x /usr/share/nginx/html/.docker/json-logger.sh
@@ -132,7 +110,10 @@ COPY --from=vite /build/reset_prod.sh ./reset_prod.sh
 
 
 COPY --from=vite /build/.docker/execute-folder-scripts.sh ./execute-folder-scripts.sh
+
+RUN /usr/local/bin/prepare-laravel-storage.sh
 RUN chmod 0755 ./execute-folder-scripts.sh
+RUN touch ./storage/installed
 
 RUN chmod +x /start.sh
 ENTRYPOINT ["/bin/bash", "/start.sh"]

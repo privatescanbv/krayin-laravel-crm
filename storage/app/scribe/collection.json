@@ -1,0 +1,1437 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "https:\/\/crm.local.privatescan.nl"
+        }
+    ],
+    "info": {
+        "name": "Privatescan CRM API Documentation",
+        "_postman_id": "e3e86ac4-01a6-4ff3-b506-f2dc71d1d517",
+        "description": "",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Endpoints",
+            "description": "",
+            "item": [
+                {
+                    "name": "Create a Hernia lead from the inbound (Gravity Forms) payload schema.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/hernia",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/hernia"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-02-04\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"message\":\"Lead created successfully.\",\"lead_id\":123,\"data\":{\"id\":123}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a Privatescan lead from the inbound (Web-to-person) payload schema.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/privatescan",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/privatescan"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"lead_source\":\"privatescannl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"preventie\",\"salutation\":\"Mr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"email\":\"zbailey@example.net\",\"phone\":\"0611111111\",\"description\":\"Eius et animi quos velit et.\",\"url\":\"http:\\\/\\\/www.ernser.org\\\/harum-mollitia-modi-deserunt-aut-ab-provident-perspiciatis-quo.html\",\"section\":\"architecto\",\"select_verzoek\":\"architecto\",\"select_interesse\":\"architecto\",\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"message\":\"Lead created successfully.\",\"lead_id\":123,\"data\":{\"id\":123}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Store a newly created lead in storage.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"message\":\"Lead created successfully.\",\"lead_id\":123,\"data\":{\"id\":123}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Display the specified lead.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "59"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Update the specified lead in storage.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[]"
+                        },
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update the pipeline stage of a lead.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id\/stage",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id\/stage",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"lead_pipeline_stage_id\":\"architecto\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH api\/leads\/{id}\/next_stage",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id\/next_stage",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id\/next_stage",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remove the specified lead from storage.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add a note to a lead.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:leadId\/notes",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:leadId\/notes",
+                            "variable": [
+                                {
+                                    "id": "leadId",
+                                    "key": "leadId",
+                                    "value": "architecto",
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Store a newly created activity in storage.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id\/activities",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id\/activities",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Display a listing of the resource.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:id\/activities",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:id\/activities",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "58"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Relations group < - > department is based on the same name.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/groups\/byDepartment\/:departmentName",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/groups\/byDepartment\/:departmentName",
+                            "variable": [
+                                {
+                                    "id": "departmentName",
+                                    "key": "departmentName",
+                                    "value": "architecto",
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "57"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Store a newly created workflow lead via API.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/sales-leads",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/sales-leads"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"b\",\"description\":\"Eius et animi quos velit et.\",\"lead_id\":\"architecto\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List activities for a sales lead.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/sales-leads\/:id\/activities",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/sales-leads\/:id\/activities",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "The ID of the sales lead."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "56"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Create an activity attached to a sales.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/sales-leads\/:id\/activities",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/sales-leads\/:id\/activities",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "The ID of the sales lead."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-04 08:29:03\",\"schedule_to\":\"2026-02-04 08:29:03\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT api\/webhooks\/event",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/webhooks\/event",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/webhooks\/event"
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"entity_type\":\"forms\",\"id\":\"architecto\",\"action\":\"STATUS_UPDATE\",\"status\":\"architecto\",\"url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/keycloak\/webhooks",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/keycloak\/webhooks",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/keycloak\/webhooks"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Store a new patient message or reply.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/messages",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/messages",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"body\":\"architecto\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get the count of unread messages for a specific person.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/activities\/unread\/count",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/activities\/unread\/count",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "architecto",
+                                    "description": "The ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "55"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Keycloak",
+            "description": "",
+            "item": [
+                {
+                    "name": "Haal person id op op basis van Keycloak user id.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/keycloak\/persons\/:keycloakUserId",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/keycloak\/persons\/:keycloakUserId",
+                            "variable": [
+                                {
+                                    "id": "keycloakUserId",
+                                    "key": "keycloakUserId",
+                                    "value": "11111111-2222-3333-4444-555555555555",
+                                    "description": "De Keycloak user ID (UUID)."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Deze endpoint accepteert **geen** request body (geen JSON). Gebruik alleen de `keycloakUserId` in de URL."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n \"success\": true,\n \"data\": {\n   \"person_id\": 123,\n   \"user_id\": 456,\n   \"keycloak_user_id\": \"11111111-2222-3333-4444-555555555555\",\n   \"is_active\": true\n }\n}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n \"success\": false,\n \"message\": \"Geen persoon gevonden voor opgegeven Keycloak user id.\"\n}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient appointments",
+            "description": "",
+            "item": [
+                {
+                    "name": "Get appointments for a patient (derived from Orders).",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/appointments",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15",
+                                    "description": "Items per page (max 100).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter",
+                                    "value": "future",
+                                    "description": "Filter appointments. Allowed values: future, past.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/appointments?page=1&per_page=15&filter=future",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":\"order-123\",\"patient_id\":\"1\",\"practitioner_id\":null,\"clinic_id\":null,\"clinic_label\":null,\"clinic\":{\"id\":1,\"name\":\"Example Clinic\",\"address\":\"Example street 1\\n1234 AB Amsterdam\"},\"start_at\":\"2026-01-27T10:00:00+01:00\",\"end_at\":null,\"timezone\":\"Europe\/Amsterdam\",\"is_remote\":false,\"remote_url\":null,\"created_at\":\"2026-01-20T09:00:00+01:00\",\"updated_at\":\"2026-01-20T09:00:00+01:00\"}],\"meta\":{\"current_page\":1,\"per_page\":15,\"total\":42}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[],\"meta\":{\"current_page\":1,\"per_page\":15,\"total\":0}}",
+                            "name": "Success (empty)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient documents",
+            "description": "",
+            "item": [
+                {
+                    "name": "Get all documents for a patient (derived from Orders -> Activities (type=file) -> activity_files).",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/documents",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15",
+                                    "description": "Items per page (max 100).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "order_id",
+                                    "value": "987",
+                                    "description": "Optional: limit documents to a single Order id.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "report",
+                                    "description": "Optional: document kind (stored in activity.additional.document_type).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/documents?page=1&per_page=15&order_id=987&type=report",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":456,\"patient_id\":123,\"type\":\"report\",\"group\":\"Order MRI knie\",\"title\":\"MRI uitslag knie\",\"file_name\":\"mri-knie-uitslag.pdf\",\"mime_type\":\"application\/pdf\",\"size\":245678,\"download_url\":\"https:\/\/api.example.com\/api\/patient\/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d\/documents\/456\/download\",\"created_at\":\"2025-01-20T10:15:30Z\"}],\"meta\":{\"current_page\":1,\"per_page\":15,\"total\":42}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[],\"meta\":{\"current_page\":1,\"per_page\":15,\"total\":0}}",
+                            "name": "Success (empty)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Download a patient document (activity file).",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/documents\/:documentId\/download",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/documents\/:documentId\/download",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                },
+                                {
+                                    "id": "documentId",
+                                    "key": "documentId",
+                                    "value": "456",
+                                    "description": "The activity_files id."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "54"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient messages",
+            "description": "",
+            "item": [
+                {
+                    "name": "Get all patient messages for a person, grouped by thread.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/messages",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15",
+                                    "description": "Items per page (max 100).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/messages?page=1&per_page=15",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":1,\"person_id\":123,\"sender_type\":\"patient\",\"sender_id\":null,\"body\":\"Hallo\",\"is_read\":false,\"created_at\":\"2026-02-01T10:00:00+01:00\",\"updated_at\":\"2026-02-01T10:00:00+01:00\",\"sender\":null,\"sender_name\":\"Patient\"}],\"meta\":{\"current_page\":1,\"per_page\":15,\"total\":42}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[],\"meta\":{\"current_page\":1,\"per_page\":15,\"total\":0}}",
+                            "name": "Success (empty)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Mark all messages as read by patient (not employee)",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/messages\/mark_as_read",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/messages\/mark_as_read",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\":\"Messages marked as read.\",\"data\":{\"marked_count\":3}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient notifications",
+            "description": "",
+            "item": [
+                {
+                    "name": "Get notifications for a patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/notifications",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10",
+                                    "description": "Items per page (max 10).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/notifications?page=1&per_page=10",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "53"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Mark a dismissable notification as read.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/notifications\/:notificationId\/read",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/notifications\/:notificationId\/read",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                },
+                                {
+                                    "id": "notificationId",
+                                    "key": "notificationId",
+                                    "value": "123",
+                                    "description": "The notification id."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"Only dismissable notifications can be marked as read.\"}",
+                            "name": "Not dismissable"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient preferences",
+            "description": "",
+            "item": [
+                {
+                    "name": "Get preferences for a patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/preferences",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/preferences",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "52"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Update preferences for a patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/preferences",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/preferences",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true}}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"preferences\": {\"email_notifications_enabled\": {\"value\": true, \"is_system_managed\": false}}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The given data was invalid.\"}",
+                            "name": "Validation error"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "apikey",
+        "apikey": [
+            {
+                "key": "in",
+                "value": "header",
+                "type": "string"
+            },
+            {
+                "key": "key",
+                "value": "X-API-KEY",
+                "type": "string"
+            }
+        ]
+    }
+}

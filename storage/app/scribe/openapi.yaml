@@ -1,0 +1,1907 @@
+openapi: 3.0.3
+info:
+  title: 'Privatescan CRM API Documentation'
+  description: ''
+  version: 1.0.0
+servers:
+  -
+    url: 'https://crm.local.privatescan.nl'
+tags:
+  -
+    name: Endpoints
+    description: ''
+  -
+    name: Keycloak
+    description: ''
+  -
+    name: 'Patient appointments'
+    description: ''
+  -
+    name: 'Patient documents'
+    description: ''
+  -
+    name: 'Patient messages'
+    description: ''
+  -
+    name: 'Patient notifications'
+    description: ''
+  -
+    name: 'Patient preferences'
+    description: ''
+components:
+  securitySchemes:
+    default:
+      type: apiKey
+      name: X-API-KEY
+      in: header
+      description: 'Send your API key in the <code>X-API-KEY</code> header (or authenticate with a Keycloak <code>Authorization: Bearer &lt;token&gt;</code> token).'
+security:
+  -
+    default: []
+paths:
+  /api/leads/hernia:
+    post:
+      summary: 'Create a Hernia lead from the inbound (Gravity Forms) payload schema.'
+      operationId: createAHerniaLeadFromTheInboundGravityFormsPayloadSchema
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Lead created successfully.'
+                  lead_id: 123
+                  data:
+                    id: 123
+                properties:
+                  message:
+                    type: string
+                    example: 'Lead created successfully.'
+                  lead_id:
+                    type: integer
+                    example: 123
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                campaign_id:
+                  type: string
+                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`). The <code>external_id</code> of an existing record in the marketing_campaigns table.'
+                  example: 69b238c0-e630-b733-2bb3-4fd85ff554da
+                lead_source:
+                  type: string
+                  description: 'Broncode (string) die gemapt wordt naar lead_source_id. Zelfde mapping als in `InboundLeadPayloadMapper::mapLeadSourceId()`. Bij geen match: default naar "Anders" (lead_source_id=32).'
+                  example: Herniapoli.nl
+                kanaal_c:
+                  type: string
+                  description: 'Kanaal (string) die gemapt wordt naar lead_channel_id. Ondersteunde waarden: telefoon, website, email (of e-mail), tel-en-tel, agenten, partners, social media (of socialmedia), webshop, campagne. Bij geen match: default naar Website (lead_channel_id=2).'
+                  example: website
+                soort_aanvraag_c:
+                  type: string
+                  description: 'Type aanvraag (string) die gemapt wordt naar lead_type_id. Ondersteunde waarden: preventie (1), gericht (2), operatie (3), overig (4). Bij geen match: default naar Overig (lead_type_id=4).'
+                  example: operatie
+                salutation:
+                  type: string
+                  description: 'Enum-achtige waarde. Toegestane waarden: "Dhr.", "Mevr." (ook "Mr."/"Mrs." wordt geaccepteerd en omgezet). Bij geen match: validatie faalt (422) omdat de lead-validatie alleen "Dhr."/"Mevr." accepteert.'
+                  example: Dhr.
+                  nullable: true
+                first_name:
+                  type: string
+                  description: ''
+                  example: architecto
+                last_name:
+                  type: string
+                  description: ''
+                  example: architecto
+                birthdate:
+                  type: string
+                  description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+                  example: '2026-02-04'
+                  nullable: true
+                email1:
+                  type: string
+                  description: 'Must be a valid email address.'
+                  example: zbailey@example.net
+                phone_mobile:
+                  type: string
+                  description: 'Telefoonnummer. Wordt genormaliseerd naar E.164 (bv 0612345678 → +31612345678) vóór validatie.'
+                  example: '0612345678'
+                  nullable: true
+                primary_huisnr_c:
+                  type: string
+                  description: 'Huisnummer (optioneel).'
+                  example: '12'
+                  nullable: true
+                primary_huisnr_toevoeging_c:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                primary_address_postalcode:
+                  type: string
+                  description: 'Postcode (optioneel).'
+                  example: 1234AB
+                  nullable: true
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                  nullable: true
+              required:
+                - campaign_id
+                - lead_source
+                - kanaal_c
+                - soort_aanvraag_c
+                - first_name
+                - last_name
+                - email1
+  /api/leads/privatescan:
+    post:
+      summary: 'Create a Privatescan lead from the inbound (Web-to-person) payload schema.'
+      operationId: createAPrivatescanLeadFromTheInboundWebToPersonPayloadSchema
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Lead created successfully.'
+                  lead_id: 123
+                  data:
+                    id: 123
+                properties:
+                  message:
+                    type: string
+                    example: 'Lead created successfully.'
+                  lead_id:
+                    type: integer
+                    example: 123
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lead_source:
+                  type: string
+                  description: 'Broncode (string) die gemapt wordt naar lead_source_id. Ondersteunde waarden o.a.: bodyscannl, privatescannl, mriscannl, ccsvionlinenl, ccsvionlinecom, bodyscan.nl, privatescan.nl, mri-scan.nl, ccsvi-online.nl, ccsvi-online.com, google zoeken, adwords, krant telegraaf, krant spits, krant regionaal, krant overige dagbladen, krant redactioneel, magazine dito, magazine humo belgie, dokterdokter.nl, vrouw.nl, dito-magazine.nl, groupdeal.nl, marktplaats, zorgplanet.nl, linkpartner, youtube, linkedin, twitter, facebook, rtl business class, nieuwsbrief, bestaande klant, zakenrelatie, vrienden, familie, kennissen, collega, anders, wegener webshop, herniapoli.nl. Bij geen match: default naar "Anders" (lead_source_id=32).'
+                  example: privatescannl
+                kanaal_c:
+                  type: string
+                  description: 'Kanaal (string) die gemapt wordt naar lead_channel_id. Ondersteunde waarden: telefoon, website, email (of e-mail), tel-en-tel, agenten, partners, social media (of socialmedia), webshop, campagne. Bij geen match: default naar Website (lead_channel_id=2).'
+                  example: website
+                soort_aanvraag_c:
+                  type: string
+                  description: 'Type aanvraag. Voor deze endpoint alleen "preventie" (wordt lead_type_id=1). Bij geen match: default naar Overig (lead_type_id=4).'
+                  example: preventie
+                  enum:
+                    - preventie
+                salutation:
+                  type: string
+                  description: 'Enum-achtige waarde. Toegestane waarden: "Mr.", "Mrs." of false. Mapping: "Mr." → "Dhr.", "Mrs." → "Mevr.". Bij false/null: geen aanspreekvorm (salutation wordt leeg).'
+                  example: Mr.
+                  nullable: true
+                first_name:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                last_name:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                email:
+                  type: string
+                  description: 'Must be a valid email address.'
+                  example: zbailey@example.net
+                  nullable: true
+                phone:
+                  type: string
+                  description: 'Telefoonnummer. Wordt genormaliseerd naar E.164 (bv 0612345678 → +31612345678) vóór validatie.'
+                  example: '0611111111'
+                  nullable: true
+                assigned_user_id:
+                  type: string
+                  description: ''
+                  example: null
+                  nullable: true
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                  nullable: true
+                url:
+                  type: string
+                  description: 'Must be a valid URL.'
+                  example: 'http://www.ernser.org/harum-mollitia-modi-deserunt-aut-ab-provident-perspiciatis-quo.html'
+                  nullable: true
+                section:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                select_verzoek:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                select_interesse:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                personen:
+                  type: string
+                  description: ''
+                  example: null
+                  nullable: true
+                campaign_id:
+                  type: string
+                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`). Wordt vaak gezet vanuit een cookie/UTM id. The <code>external_id</code> of an existing record in the marketing_campaigns table.'
+                  example: 69b238c0-e630-b733-2bb3-4fd85ff554da
+                  nullable: true
+              required:
+                - lead_source
+                - kanaal_c
+                - soort_aanvraag_c
+  /api/leads:
+    post:
+      summary: 'Store a newly created lead in storage.'
+      operationId: storeANewlyCreatedLeadInStorage
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Lead created successfully.'
+                  lead_id: 123
+                  data:
+                    id: 123
+                properties:
+                  message:
+                    type: string
+                    example: 'Lead created successfully.'
+                  lead_id:
+                    type: integer
+                    example: 123
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123
+      tags:
+        - Endpoints
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the users table.'
+                  example: null
+                  nullable: true
+  '/api/leads/{id}':
+    get:
+      summary: 'Display the specified lead.'
+      operationId: displayTheSpecifiedLead
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - Endpoints
+    put:
+      summary: 'Update the specified lead in storage.'
+      operationId: updateTheSpecifiedLeadInStorage
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the users table.'
+                  example: null
+                  nullable: true
+    delete:
+      summary: 'Remove the specified lead from storage.'
+      operationId: removeTheSpecifiedLeadFromStorage
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the lead.'
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/leads/{id}/stage':
+    patch:
+      summary: 'Update the pipeline stage of a lead.'
+      operationId: updateThePipelineStageOfALead
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lead_pipeline_stage_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the lead_pipeline_stages table.'
+                  example: architecto
+              required:
+                - lead_pipeline_stage_id
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the lead.'
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/leads/{id}/next_stage':
+    patch:
+      summary: ''
+      operationId: patchApiLeadsIdNext_stage
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the lead.'
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/leads/{leadId}/notes':
+    post:
+      summary: 'Add a note to a lead.'
+      operationId: addANoteToALead
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: leadId
+        description: ''
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/leads/{id}/activities':
+    post:
+      summary: 'Store a newly created activity in storage.'
+      operationId: storeANewlyCreatedActivityInStorage
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+    get:
+      summary: 'Display a listing of the resource.'
+      operationId: displayAListingOfTheResource
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the lead.'
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/groups/byDepartment/{departmentName}':
+    get:
+      summary: 'Relations group < - > department is based on the same name.'
+      operationId: relationsGroupDepartmentIsBasedOnTheSameName
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: departmentName
+        description: ''
+        example: architecto
+        required: true
+        schema:
+          type: string
+  /api/sales-leads:
+    post:
+      summary: 'Store a newly created workflow lead via API.'
+      operationId: storeANewlyCreatedWorkflowLeadViaAPI
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: b
+                  nullable: true
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                  nullable: true
+                pipeline_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the lead_pipelines table.'
+                  example: null
+                  nullable: true
+                pipeline_stage_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the lead_pipeline_stages table.'
+                  example: null
+                  nullable: true
+                lead_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the leads table.'
+                  example: architecto
+                user_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the users table.'
+                  example: null
+                  nullable: true
+              required:
+                - lead_id
+  '/api/sales-leads/{id}/activities':
+    get:
+      summary: 'List activities for a sales lead.'
+      operationId: listActivitiesForASalesLead
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - Endpoints
+    post:
+      summary: 'Create an activity attached to a sales.'
+      operationId: createAnActivityAttachedToASales
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: ''
+                  example: task
+                  enum:
+                    - task
+                    - meeting
+                    - call
+                    - note
+                    - file
+                title:
+                  type: string
+                  description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>.'
+                  example: architecto
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                  nullable: true
+                comment:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                user_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the users table.'
+                  example: null
+                  nullable: true
+                schedule_from:
+                  type: string
+                  description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
+                  example: '2026-02-04 08:29:03'
+                schedule_to:
+                  type: string
+                  description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
+                  example: '2026-02-04 08:29:03'
+              required:
+                - type
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the sales lead.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/webhooks/event:
+    put:
+      summary: ''
+      operationId: putApiWebhooksEvent
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entity_type:
+                  type: string
+                  description: ''
+                  example: forms
+                  enum:
+                    - forms
+                id:
+                  type: string
+                  description: ''
+                  example: architecto
+                action:
+                  type: string
+                  description: ''
+                  example: STATUS_UPDATE
+                  enum:
+                    - STATUS_UPDATE
+                status:
+                  type: string
+                  description: ''
+                  example: architecto
+                url:
+                  type: string
+                  description: ''
+                  example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
+              required:
+                - entity_type
+                - id
+                - action
+                - status
+                - url
+  /api/keycloak/webhooks:
+    post:
+      summary: ''
+      operationId: postApiKeycloakWebhooks
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+  '/api/patient/{id}/messages':
+    post:
+      summary: 'Store a new patient message or reply.'
+      operationId: storeANewPatientMessageOrReply
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  description: ''
+                  example: architecto
+              required:
+                - body
+    get:
+      summary: 'Get all patient messages for a person, grouped by thread.'
+      operationId: getAllPatientMessagesForAPersonGroupedByThread
+      description: ''
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'Page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Page number.'
+            example: 1
+        -
+          in: query
+          name: per_page
+          description: 'Items per page (max 100).'
+          example: 15
+          required: false
+          schema:
+            type: integer
+            description: 'Items per page (max 100).'
+            example: 15
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    description: Success
+                    type: object
+                    example:
+                      data:
+                        -
+                          id: 1
+                          person_id: 123
+                          sender_type: patient
+                          sender_id: null
+                          body: Hallo
+                          is_read: false
+                          created_at: '2026-02-01T10:00:00+01:00'
+                          updated_at: '2026-02-01T10:00:00+01:00'
+                          sender: null
+                          sender_name: Patient
+                      meta:
+                        current_page: 1
+                        per_page: 15
+                        total: 42
+                    properties:
+                      data:
+                        type: array
+                        example:
+                          -
+                            id: 1
+                            person_id: 123
+                            sender_type: patient
+                            sender_id: null
+                            body: Hallo
+                            is_read: false
+                            created_at: '2026-02-01T10:00:00+01:00'
+                            updated_at: '2026-02-01T10:00:00+01:00'
+                            sender: null
+                            sender_name: Patient
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            person_id:
+                              type: integer
+                              example: 123
+                            sender_type:
+                              type: string
+                              example: patient
+                            sender_id:
+                              type: string
+                              example: null
+                            body:
+                              type: string
+                              example: Hallo
+                            is_read:
+                              type: boolean
+                              example: false
+                            created_at:
+                              type: string
+                              example: '2026-02-01T10:00:00+01:00'
+                            updated_at:
+                              type: string
+                              example: '2026-02-01T10:00:00+01:00'
+                            sender:
+                              type: string
+                              example: null
+                            sender_name:
+                              type: string
+                              example: Patient
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 15
+                          total:
+                            type: integer
+                            example: 42
+                  -
+                    description: 'Success (empty)'
+                    type: object
+                    example:
+                      data: []
+                      meta:
+                        current_page: 1
+                        per_page: 15
+                        total: 0
+                    properties:
+                      data:
+                        type: array
+                        example: []
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 15
+                          total:
+                            type: integer
+                            example: 0
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient messages'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the patient.'
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/activities/unread/count':
+    get:
+      summary: 'Get the count of unread messages for a specific person.'
+      operationId: getTheCountOfUnreadMessagesForASpecificPerson
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the patient.'
+        example: architecto
+        required: true
+        schema:
+          type: string
+  '/api/keycloak/persons/{keycloakUserId}':
+    get:
+      summary: 'Haal person id op op basis van Keycloak user id.'
+      operationId: haalPersonIdOpOpBasisVanKeycloakUserId
+      description: 'Deze endpoint accepteert **geen** request body (geen JSON). Gebruik alleen de `keycloakUserId` in de URL.'
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    person_id: 123
+                    user_id: 456
+                    keycloak_user_id: 11111111-2222-3333-4444-555555555555
+                    is_active: true
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      person_id:
+                        type: integer
+                        example: 123
+                      user_id:
+                        type: integer
+                        example: 456
+                      keycloak_user_id:
+                        type: string
+                        example: 11111111-2222-3333-4444-555555555555
+                      is_active:
+                        type: boolean
+                        example: true
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Geen persoon gevonden voor opgegeven Keycloak user id.'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Geen persoon gevonden voor opgegeven Keycloak user id.'
+      tags:
+        - Keycloak
+    parameters:
+      -
+        in: path
+        name: keycloakUserId
+        description: 'De Keycloak user ID (UUID).'
+        example: 11111111-2222-3333-4444-555555555555
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/appointments':
+    get:
+      summary: 'Get appointments for a patient (derived from Orders).'
+      operationId: getAppointmentsForAPatientderivedFromOrders
+      description: ''
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'Page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Page number.'
+            example: 1
+        -
+          in: query
+          name: per_page
+          description: 'Items per page (max 100).'
+          example: 15
+          required: false
+          schema:
+            type: integer
+            description: 'Items per page (max 100).'
+            example: 15
+        -
+          in: query
+          name: filter
+          description: 'Filter appointments. Allowed values: future, past.'
+          example: future
+          required: false
+          schema:
+            type: string
+            description: 'Filter appointments. Allowed values: future, past.'
+            example: future
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    description: Success
+                    type: object
+                    example:
+                      data:
+                        -
+                          id: order-123
+                          patient_id: '1'
+                          practitioner_id: null
+                          clinic_id: null
+                          clinic_label: null
+                          clinic:
+                            id: 1
+                            name: 'Example Clinic'
+                            address: "Example street 1\n1234 AB Amsterdam"
+                          start_at: '2026-01-27T10:00:00+01:00'
+                          end_at: null
+                          timezone: Europe/Amsterdam
+                          is_remote: false
+                          remote_url: null
+                          created_at: '2026-01-20T09:00:00+01:00'
+                          updated_at: '2026-01-20T09:00:00+01:00'
+                      meta:
+                        current_page: 1
+                        per_page: 15
+                        total: 42
+                    properties:
+                      data:
+                        type: array
+                        example:
+                          -
+                            id: order-123
+                            patient_id: '1'
+                            practitioner_id: null
+                            clinic_id: null
+                            clinic_label: null
+                            clinic:
+                              id: 1
+                              name: 'Example Clinic'
+                              address: "Example street 1\n1234 AB Amsterdam"
+                            start_at: '2026-01-27T10:00:00+01:00'
+                            end_at: null
+                            timezone: Europe/Amsterdam
+                            is_remote: false
+                            remote_url: null
+                            created_at: '2026-01-20T09:00:00+01:00'
+                            updated_at: '2026-01-20T09:00:00+01:00'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: order-123
+                            patient_id:
+                              type: string
+                              example: '1'
+                            practitioner_id:
+                              type: string
+                              example: null
+                            clinic_id:
+                              type: string
+                              example: null
+                            clinic_label:
+                              type: string
+                              example: null
+                            clinic:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                name:
+                                  type: string
+                                  example: 'Example Clinic'
+                                address:
+                                  type: string
+                                  example: "Example street 1\n1234 AB Amsterdam"
+                            start_at:
+                              type: string
+                              example: '2026-01-27T10:00:00+01:00'
+                            end_at:
+                              type: string
+                              example: null
+                            timezone:
+                              type: string
+                              example: Europe/Amsterdam
+                            is_remote:
+                              type: boolean
+                              example: false
+                            remote_url:
+                              type: string
+                              example: null
+                            created_at:
+                              type: string
+                              example: '2026-01-20T09:00:00+01:00'
+                            updated_at:
+                              type: string
+                              example: '2026-01-20T09:00:00+01:00'
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 15
+                          total:
+                            type: integer
+                            example: 42
+                  -
+                    description: 'Success (empty)'
+                    type: object
+                    example:
+                      data: []
+                      meta:
+                        current_page: 1
+                        per_page: 15
+                        total: 0
+                    properties:
+                      data:
+                        type: array
+                        example: []
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 15
+                          total:
+                            type: integer
+                            example: 0
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient appointments'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/documents':
+    get:
+      summary: 'Get all documents for a patient (derived from Orders -> Activities (type=file) -> activity_files).'
+      operationId: getAllDocumentsForAPatientderivedFromOrdersActivitiestypefileActivityFiles
+      description: ''
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'Page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Page number.'
+            example: 1
+        -
+          in: query
+          name: per_page
+          description: 'Items per page (max 100).'
+          example: 15
+          required: false
+          schema:
+            type: integer
+            description: 'Items per page (max 100).'
+            example: 15
+        -
+          in: query
+          name: order_id
+          description: 'Optional: limit documents to a single Order id.'
+          example: 987
+          required: false
+          schema:
+            type: integer
+            description: 'Optional: limit documents to a single Order id.'
+            example: 987
+        -
+          in: query
+          name: type
+          description: 'Optional: document kind (stored in activity.additional.document_type).'
+          example: report
+          required: false
+          schema:
+            type: string
+            description: 'Optional: document kind (stored in activity.additional.document_type).'
+            example: report
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    description: Success
+                    type: object
+                    example:
+                      data:
+                        -
+                          id: 456
+                          patient_id: 123
+                          type: report
+                          group: 'Order MRI knie'
+                          title: 'MRI uitslag knie'
+                          file_name: mri-knie-uitslag.pdf
+                          mime_type: application/pdf
+                          size: 245678
+                          download_url: 'https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download'
+                          created_at: '2025-01-20T10:15:30Z'
+                      meta:
+                        current_page: 1
+                        per_page: 15
+                        total: 42
+                    properties:
+                      data:
+                        type: array
+                        example:
+                          -
+                            id: 456
+                            patient_id: 123
+                            type: report
+                            group: 'Order MRI knie'
+                            title: 'MRI uitslag knie'
+                            file_name: mri-knie-uitslag.pdf
+                            mime_type: application/pdf
+                            size: 245678
+                            download_url: 'https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download'
+                            created_at: '2025-01-20T10:15:30Z'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 456
+                            patient_id:
+                              type: integer
+                              example: 123
+                            type:
+                              type: string
+                              example: report
+                            group:
+                              type: string
+                              example: 'Order MRI knie'
+                            title:
+                              type: string
+                              example: 'MRI uitslag knie'
+                            file_name:
+                              type: string
+                              example: mri-knie-uitslag.pdf
+                            mime_type:
+                              type: string
+                              example: application/pdf
+                            size:
+                              type: integer
+                              example: 245678
+                            download_url:
+                              type: string
+                              example: 'https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download'
+                            created_at:
+                              type: string
+                              example: '2025-01-20T10:15:30Z'
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 15
+                          total:
+                            type: integer
+                            example: 42
+                  -
+                    description: 'Success (empty)'
+                    type: object
+                    example:
+                      data: []
+                      meta:
+                        current_page: 1
+                        per_page: 15
+                        total: 0
+                    properties:
+                      data:
+                        type: array
+                        example: []
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 15
+                          total:
+                            type: integer
+                            example: 0
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient documents'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/documents/{documentId}/download':
+    get:
+      summary: 'Download a patient document (activity file).'
+      operationId: downloadAPatientDocumentactivityFile
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient documents'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: documentId
+        description: 'The activity_files id.'
+        example: 456
+        required: true
+        schema:
+          type: integer
+  '/api/patient/{id}/messages/mark_as_read':
+    put:
+      summary: 'Mark all messages as read by patient (not employee)'
+      operationId: markAllMessagesAsReadByPatientnotEmployee
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Messages marked as read.'
+                  data:
+                    marked_count: 3
+                properties:
+                  message:
+                    type: string
+                    example: 'Messages marked as read.'
+                  data:
+                    type: object
+                    properties:
+                      marked_count:
+                        type: integer
+                        example: 3
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient messages'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/notifications':
+    get:
+      summary: 'Get notifications for a patient.'
+      operationId: getNotificationsForAPatient
+      description: ''
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'Page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Page number.'
+            example: 1
+        -
+          in: query
+          name: per_page
+          description: 'Items per page (max 10).'
+          example: 10
+          required: false
+          schema:
+            type: integer
+            description: 'Items per page (max 10).'
+            example: 10
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - 'Patient notifications'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/notifications/{notificationId}/read':
+    post:
+      summary: 'Mark a dismissable notification as read.'
+      operationId: markADismissableNotificationAsRead
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+        422:
+          description: 'Not dismissable'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Only dismissable notifications can be marked as read.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Only dismissable notifications can be marked as read.'
+      tags:
+        - 'Patient notifications'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: notificationId
+        description: 'The notification id.'
+        example: 123
+        required: true
+        schema:
+          type: integer
+  '/api/patient/{id}/preferences':
+    get:
+      summary: 'Get preferences for a patient.'
+      operationId: getPreferencesForAPatient
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: 'Invalid API key'
+                  message: 'The provided API key is not valid'
+                properties:
+                  error:
+                    type: string
+                    example: 'Invalid API key'
+                  message:
+                    type: string
+                    example: 'The provided API key is not valid'
+      tags:
+        - 'Patient preferences'
+    put:
+      summary: 'Update preferences for a patient.'
+      operationId: updatePreferencesForAPatient
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  preferences:
+                    email_notifications_enabled:
+                      value: true
+                      is_system_managed: false
+                properties:
+                  preferences:
+                    type: object
+                    properties:
+                      email_notifications_enabled:
+                        type: object
+                        properties:
+                          value:
+                            type: boolean
+                            example: true
+                          is_system_managed:
+                            type: boolean
+                            example: false
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The given data was invalid.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The given data was invalid.'
+      tags:
+        - 'Patient preferences'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferences:
+                  type: object
+                  description: 'Key-value map of preferences to update.'
+                  example:
+                    email_notifications_enabled: true
+                  properties:
+                    email_notifications_enabled:
+                      type: boolean
+                      description: 'Enable or disable email notifications.'
+                      example: true
+              required:
+                - preferences
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string

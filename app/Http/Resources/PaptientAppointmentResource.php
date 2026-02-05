@@ -35,7 +35,7 @@ class PaptientAppointmentResource extends JsonResource
             'start_at'        => $order->first_examination_at?->toIso8601String(),
             'end_at'          => null,
             'timezone'        => config('app.timezone'),
-            'is_remote'       => true,
+            'is_remote'       => false,
             'remote_url'      => $order->remote_url,
             'created_at'      => $order->created_at->toIso8601String(),
             'updated_at'      => $order->updated_at?->toIso8601String(),

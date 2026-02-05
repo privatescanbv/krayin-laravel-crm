@@ -15,7 +15,7 @@ RUN rm -rf flows
 RUN mv /build/certs /certs
 RUN ./build.sh ${APP_ENV}
 
-FROM ghcr.io/mbulthuis/mbsoftware/php:8.3-fpm-bullseye
+FROM ghcr.io/privatescanbv/dockerbase/php:8.3-fpm-bullseye
 ARG APP_ENV=production
 ARG WWWGROUP=1000
 ARG WWWUSER=1000

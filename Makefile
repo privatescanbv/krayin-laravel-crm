@@ -19,3 +19,8 @@ cli:
 qa-fix:
 	./vendor/bin/duster fix
 
+reset:
+	./reset_base.sh && $(SAIL) artisan planning:create-test-data
+
+test:
+	$(SAIL) artisan config:clear && $(SAIL) artisan test --parallel --colors=always

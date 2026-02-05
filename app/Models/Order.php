@@ -106,7 +106,7 @@ class Order extends Model
     public function scopeAppointmentEligible(Builder $query): Builder
     {
         return $query
-            ->whereIn('status', [OrderStatus::PLANNED->value, OrderStatus::APPROVED->value])
+            ->whereIn('status', [OrderStatus::PLANNED->value, OrderStatus::APPROVED->value, OrderStatus::SENT->value])
             ->whereNotNull('first_examination_at');
     }
 

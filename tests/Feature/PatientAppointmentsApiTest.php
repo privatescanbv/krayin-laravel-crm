@@ -101,7 +101,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
                 'id',
                 'patient_id',
                 'clinic_id',
-                'clinic_label',
+                'clinic_ref',
                 'start_at',
                 'is_remote',
                 'created_at',
@@ -113,14 +113,28 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         'id'           => 'order-'.$futureOrder->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicA->id,
-        'clinic_label' => $clinicA->label(),
+    ]);
+
+    $response->assertJsonFragment([
+        'clinic_ref' => [
+            'id'   => $clinicA->id,
+            'name' => $clinicA->name,
+            'address' => null,
+        ],
     ]);
 
     $response->assertJsonFragment([
         'id'           => 'order-'.$pastOrder->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicB->id,
-        'clinic_label' => $clinicB->label(),
+    ]);
+
+    $response->assertJsonFragment([
+        'clinic_ref' => [
+            'id'   => $clinicB->id,
+            'name' => $clinicB->name,
+            'address' => null,
+        ],
     ]);
 });
 
@@ -173,7 +187,13 @@ test('clinic is derived from first booking for patient when order is not combine
         'patient_id'   => (string) $patient->id,
         // Should pick patient's clinic, not the earliest overall clinic.
         'clinic_id'    => (string) $clinicPatient->id,
-        'clinic_label' => $clinicPatient->label(),
+    ]);
+    $response->assertJsonFragment([
+        'clinic_ref' => [
+            'id'   => $clinicPatient->id,
+            'name' => $clinicPatient->name,
+            'address' => null,
+        ],
     ]);
 });
 
@@ -237,7 +257,14 @@ test('patient appointments endpoint supports future/past filter', function () {
         'id'           => 'order-'.$futureOrder->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicFuture->id,
-        'clinic_label' => $clinicFuture->label(),
+    ]);
+
+    $futureResponse->assertJsonFragment([
+        'clinic_ref' => [
+            'id'   => $clinicFuture->id,
+            'name' => $clinicFuture->name,
+            'address' => null,
+        ],
     ]);
 
     $pastResponse = $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
@@ -249,6 +276,13 @@ test('patient appointments endpoint supports future/past filter', function () {
         'id'           => 'order-'.$pastOrder->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicPast->id,
-        'clinic_label' => $clinicPast->label(),
+    ]);
+
+    $pastResponse->assertJsonFragment([
+        'clinic_ref' => [
+            'id'   => $clinicPast->id,
+            'name' => $clinicPast->name,
+            'address' => null,
+        ],
     ]);
 });

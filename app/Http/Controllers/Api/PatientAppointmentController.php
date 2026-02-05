@@ -61,6 +61,7 @@ class PatientAppointmentController extends Controller
                 return [
                     'order'  => $order,
                     'clinic' => app(OrderCheckService::class)->retrieveClinicFromOrder($order, $person),
+                    'person' => $person,
                 ];
             })
         );

@@ -107,7 +107,7 @@ Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 ### get appointments for patient
-GET https://{{ URL }}/api/patient/de0d45da-a304-4ead-bb70-dc624915b46f/appointments
+GET https://{{ URL }}/api/patient/acfd9f3f-b710-4ec6-9a0d-539f99899a4c/appointments
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}

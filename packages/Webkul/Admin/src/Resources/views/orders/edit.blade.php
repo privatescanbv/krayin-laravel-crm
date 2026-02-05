@@ -70,12 +70,22 @@ use App\Models\SalesLead;
 
                     <button
                         type="button"
+                        class="secondary-button"
+                        id="order-view"
+                        data-redirect-to="{{ route('admin.orders.view', $orders->id) }}"
+                    >
+                        Bekijken
+                    </button>
+
+                    <button
+                        type="button"
                         class="primary-button"
                         id="order-edit-save"
                         data-redirect-to="{{ route('admin.orders.index') }}"
                     >
                         Opslaan
                     </button>
+
                 </div>
             </div>
 
@@ -361,7 +371,8 @@ use App\Models\SalesLead;
             // Use event delegation to handle Vue.js DOM changes
             document.addEventListener('click', async function (e) {
                 // Resource planner button: navigate directly without submitting form
-                if (e.target.id === 'order-edit-planner') {
+                if (e.target.id === 'order-edit-planner' ||
+                    e.target.id === 'order-view') {
                     e.preventDefault();
                     var target = e.target.getAttribute('data-redirect-to');
                     if (target) {

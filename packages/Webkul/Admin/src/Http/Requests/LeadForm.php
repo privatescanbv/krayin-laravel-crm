@@ -94,11 +94,9 @@ class LeadForm extends FormRequest
                 $validations[$attribute->code] = [$attribute->is_required ? 'required' : 'nullable'];
 
                 if ($attribute->type == 'text' && $attribute->validation) {
-                    array_push($validations[$attribute->code],
-                        $attribute->validation == 'decimal'
+                    $validations[$attribute->code][] = $attribute->validation == 'decimal'
                         ? new Decimal
-                        : $attribute->validation
-                    );
+                        : $attribute->validation;
                 }
 
                 if ($attribute->type == 'price') {
@@ -108,15 +106,14 @@ class LeadForm extends FormRequest
 
             // Enforce unique only for non-person attributes; allow duplicates for persons
             if ($attribute->is_unique) {
-                array_push($validations[in_array($attribute->type, ['email', 'phone'])
-                    ? $attribute->code.'.*.value'
-                    : $attribute->code
-                ], function ($field, $value, $fail) use ($attribute) {
+                $validations[in_array($attribute->type, ['email', 'phone'])
+                    ? $attribute->code . '.*.value'
+                    : $attribute->code][] = function ($field, $value, $fail) use ($attribute) {
                     // Skip uniqueness check for person entity_type
                     if ($attribute->entity_type === 'persons') {
                         return;
                     }
-                    if (! $this->attributeValueRepository->isValueUnique(
+                    if (!$this->attributeValueRepository->isValueUnique(
                         $this->id,
                         $attribute->entity_type,
                         $attribute,
@@ -125,7 +122,7 @@ class LeadForm extends FormRequest
                     ) {
                         $fail('The value has already been taken.');
                     }
-                });
+                };
             }
 
             $this->rules = array_merge($this->rules, $validations);
@@ -179,11 +176,9 @@ class LeadForm extends FormRequest
                     $validations[$attribute->code] = ['nullable'];
 
                     if ($attribute->type == 'text' && $attribute->validation) {
-                        array_push($validations[$attribute->code],
-                            $attribute->validation == 'decimal'
+                        $validations[$attribute->code][] = $attribute->validation == 'decimal'
                             ? new Decimal
-                            : $attribute->validation
-                        );
+                            : $attribute->validation;
                     }
 
                     if ($attribute->type == 'price') {
@@ -193,15 +188,14 @@ class LeadForm extends FormRequest
 
                 // Do NOT enforce uniqueness for person attributes; duplicates allowed and handled via merge flow
                 if ($attribute->is_unique) {
-                    array_push($validations[in_array($attribute->type, ['email', 'phone'])
-                        ? $attribute->code.'.*.value'
-                        : $attribute->code
-                    ], function ($field, $value, $fail) use ($attribute) {
+                    $validations[in_array($attribute->type, ['email', 'phone'])
+                        ? $attribute->code . '.*.value'
+                        : $attribute->code][] = function ($field, $value, $fail) use ($attribute) {
                         // Skip uniqueness check for person entity_type
                         if ($attribute->entity_type === 'persons') {
                             return;
                         }
-                        if (! $this->attributeValueRepository->isValueUnique(
+                        if (!$this->attributeValueRepository->isValueUnique(
                             request('person.id'),
                             $attribute->entity_type,
                             $attribute,
@@ -210,7 +204,7 @@ class LeadForm extends FormRequest
                         ) {
                             $fail('The value has already been taken.');
                         }
-                    });
+                    };
                 }
 
                 $this->rules = array_merge($this->rules, $validations);

@@ -123,7 +123,7 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic'])->findOrFail($id);
+        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'files'])->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
@@ -493,7 +493,32 @@ class ActivityController extends Controller
         try {
             $file = $this->fileRepository->findOrFail($id);
 
-            return Storage::download($file->path);
+            $candidateDisks = array_values(array_unique(array_filter([
+                config('filesystems.default'),
+                'public',
+                'local',
+            ])));
+
+            foreach ($candidateDisks as $disk) {
+                try {
+                    if (Storage::disk($disk)->exists($file->path)) {
+                        $downloadName = $file->name ?: basename($file->path);
+
+                        return Storage::disk($disk)->download($file->path, $downloadName);
+                    }
+                } catch (Exception $e) {
+                    // Ignore disk-specific errors and try the next disk.
+                    continue;
+                }
+            }
+
+            logger()->warning('Activity file download failed: file missing on disks', [
+                'activity_file_id' => $file->id,
+                'path'             => $file->path,
+                'disks_tried'       => $candidateDisks,
+            ]);
+
+            abort(404);
         } catch (Exception $exception) {
             abort(404);
         }

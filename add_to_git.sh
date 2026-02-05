@@ -9,6 +9,7 @@ database
 config
 tests
 routes
+packages
 "
 
 for dir in $DIRS; do

@@ -46,20 +46,20 @@ Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 {
-    "campaign_id": "architecto",
-    "lead_source": "architecto",
-    "kanaal_c": "architecto",
-    "soort_aanvraag_c": "architecto",
-    "salutation": "architecto",
-    "first_name": "architecto",
-    "last_name": "architecto",
-    "birthdate": "2026-01-22",
-    "email1": "zbailey@example.net",
-    "phone_mobile": "architecto",
-    "primary_huisnr_c": "architecto",
-    "primary_huisnr_toevoeging_c": "architecto",
-    "primary_address_postalcode": "architecto",
-    "description": "Eius et animi quos velit et."
+    "campaign_id": "81289196-5d51-817a-c8c5-5eb9419e4d9b",
+    "lead_source": "Herniapoli.nl",
+    "kanaal_c": "website",
+    "soort_aanvraag_c": "operatie",
+    "salutation": "",
+    "first_name": "",
+    "last_name": "BB",
+    "birthdate": "",
+    "email1": "mark@markyourmedia.nl",
+    "phone_mobile": "0742509558",
+    "primary_huisnr_c": "",
+    "primary_huisnr_toevoeging_c": "",
+    "primary_address_postalcode": "",
+    "description": "Test hernia"
 }
 
 

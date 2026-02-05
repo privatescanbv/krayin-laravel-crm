@@ -172,6 +172,8 @@
             @include('admin::activities.partials.call')
         @elseif($activity->type == ActivityType::PATIENT_MESSAGE)
             @include('admin::activities.partials.patient-message')
+        @elseif($activity->type == ActivityType::FILE)
+            @include('admin::activities.partials.file')
         @endif
     </div>
     @pushOnce('scripts')

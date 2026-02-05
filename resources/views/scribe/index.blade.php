@@ -140,6 +140,16 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-leads" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="leads">
+                    <a href="#leads">Leads</a>
+                </li>
+                                    <ul id="tocify-subheader-leads" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="leads-POSTapi-leads--leadId--forms">
+                                <a href="#leads-POSTapi-leads--leadId--forms">Add form submission to a lead.</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-patient-appointments" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="patient-appointments">
                     <a href="#patient-appointments">Patient appointments</a>
@@ -211,7 +221,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: February 4, 2026</li>
+        <li>Last updated: February 5, 2026</li>
     </ul>
 </div>
 
@@ -262,7 +272,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-02-04\",
+    \"birthdate\": \"2026-02-05\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -292,7 +302,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-02-04",
+    "birthdate": "2026-02-05",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -499,10 +509,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-02-04"
+               value="2026-02-05"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-04</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-05</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -2820,8 +2830,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-04 08:29:03\",
-    \"schedule_to\": \"2026-02-04 08:29:03\"
+    \"schedule_from\": \"2026-02-05 16:34:52\",
+    \"schedule_to\": \"2026-02-05 16:34:52\"
 }"
 </code></pre></div>
 
@@ -2842,8 +2852,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-04 08:29:03",
-    "schedule_to": "2026-02-04 08:29:03"
+    "schedule_from": "2026-02-05 16:34:52",
+    "schedule_to": "2026-02-05 16:34:52"
 };
 
 fetch(url, {
@@ -3022,10 +3032,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-04 08:29:03"
+               value="2026-02-05 16:34:52"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-04 08:29:03</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-05 16:34:52</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3034,10 +3044,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-04 08:29:03"
+               value="2026-02-05 16:34:52"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-04 08:29:03</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-05 16:34:52</code></p>
         </div>
         </form>
 
@@ -3855,6 +3865,234 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>De Keycloak user ID (UUID). Example: <code>11111111-2222-3333-4444-555555555555</code></p>
             </div>
                     </form>
+
+                <h1 id="leads">Leads</h1>
+
+    <p>APIs for managing leads</p>
+
+                                <h2 id="leads-POSTapi-leads--leadId--forms">Add form submission to a lead.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Stores form submission data (questions and answers) for a lead.
+The form data is logged for processing.</p>
+<p>The request body accepts dynamic keys where each key contains an array of [question, answer].</p>
+
+<span id="example-requests-POSTapi-leads--leadId--forms">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "https://crm.local.privatescan.nl/api/leads/123/forms" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"insurance_type\": [
+        \"What type of insurance do you have?\",
+        \"Private\"
+    ],
+    \"referral_source\": [
+        \"How did you hear about us?\",
+        \"Google\"
+    ]
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/leads/123/forms"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "insurance_type": [
+        "What type of insurance do you have?",
+        "Private"
+    ],
+    "referral_source": [
+        "How did you hear about us?",
+        "Google"
+    ]
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-leads--leadId--forms">
+            <blockquote>
+            <p>Example response (201, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Form submission received.&quot;,
+    &quot;lead_id&quot;: 123,
+    &quot;form_keys&quot;: [
+        &quot;insurance_type&quot;,
+        &quot;referral_source&quot;
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Lead not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Lead not found.&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Invalid form data format. Each key must contain an array with [question, answer].&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-leads--leadId--forms" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-leads--leadId--forms"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-leads--leadId--forms"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-leads--leadId--forms" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leads--leadId--forms">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-leads--leadId--forms" data-method="POST"
+      data-path="api/leads/{leadId}/forms"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-leads--leadId--forms', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-leads--leadId--forms"
+                    onclick="tryItOut('POSTapi-leads--leadId--forms');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-leads--leadId--forms"
+                    onclick="cancelTryOut('POSTapi-leads--leadId--forms');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-leads--leadId--forms"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/leads/{leadId}/forms</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="POSTapi-leads--leadId--forms"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-leads--leadId--forms"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-leads--leadId--forms"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>leadId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="leadId"                data-endpoint="POSTapi-leads--leadId--forms"
+               value="123"
+               data-component="url">
+    <br>
+<p>The ID of the lead. Example: <code>123</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>insurance_type</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="insurance_type[0]"                data-endpoint="POSTapi-leads--leadId--forms"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="insurance_type[1]"                data-endpoint="POSTapi-leads--leadId--forms"
+               data-component="body">
+    <br>
+<p>Example question/answer pair.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>referral_source</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="referral_source[0]"                data-endpoint="POSTapi-leads--leadId--forms"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="referral_source[1]"                data-endpoint="POSTapi-leads--leadId--forms"
+               data-component="body">
+    <br>
+<p>Example question/answer pair.</p>
+        </div>
+        </form>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 

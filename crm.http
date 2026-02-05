@@ -111,3 +111,20 @@ GET https://{{ URL }}/api/patient/acfd9f3f-b710-4ec6-9a0d-539f99899a4c/appointme
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
+
+### add herniapoli forms to lead
+POST https://{{ URL }}/api/leads/2000/forms
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}
+
+{
+    "insurance_type": [
+        "What type of insurance do you have?",
+        "Private"
+    ],
+    "referral_source": [
+        "How did you hear about us?",
+        "Google"
+    ]
+}

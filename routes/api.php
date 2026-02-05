@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
+use App\Http\Controllers\Api\LeadFormController;
 use App\Http\Controllers\Api\PatientAppointmentController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientMessageController;
@@ -46,6 +47,9 @@ $registerAuthenticatedApiRoutes = function () {
         // Lead activities
         Route::post('{id}/activities', [ActivityController::class, 'store'])->name('admin.leads.activities.store');
         Route::get('{id}/activities', [ActivityController::class, 'index']);
+
+        // Lead forms
+        Route::post('{leadId}/forms', [LeadFormController::class, 'store'])->name('api.leads.forms.store');
     });
 
     // Existing routes

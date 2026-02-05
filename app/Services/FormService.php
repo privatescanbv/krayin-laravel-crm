@@ -145,9 +145,9 @@ class FormService
 
             if ($result['status'] !== 200) {
                 Log::warning('FormService: Forms API error', [
-                    'form_id' => $formId,
-                    'delete_url' => $url,
-                    'status' => $result['status'],
+                    'form_id'       => $formId,
+                    'delete_url'    => $url,
+                    'status'        => $result['status'],
                     'response_json' => $result['json'],
                 ]);
             } else {

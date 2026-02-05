@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "e3e86ac4-01a6-4ff3-b506-f2dc71d1d517",
+        "_postman_id": "3365ae31-e193-4240-92a3-ea06c6bfa33c",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -41,7 +41,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-02-04\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\"}"
+                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-02-05\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\"}"
                         },
                         "description": ""
                     },
@@ -614,7 +614,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-04 08:29:03\",\"schedule_to\":\"2026-02-04 08:29:03\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-05 16:34:52\",\"schedule_to\":\"2026-02-05 16:34:52\"}"
                         },
                         "description": ""
                     },
@@ -815,6 +815,67 @@
                             "code": 404,
                             "body": "{\n \"success\": false,\n \"message\": \"Geen persoon gevonden voor opgegeven Keycloak user id.\"\n}",
                             "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Leads",
+            "description": "\nAPIs for managing leads",
+            "item": [
+                {
+                    "name": "Add form submission to a lead.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/:leadId\/forms",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/:leadId\/forms",
+                            "variable": [
+                                {
+                                    "id": "leadId",
+                                    "key": "leadId",
+                                    "value": "123",
+                                    "description": "The ID of the lead."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"insurance_type\":[\"What type of insurance do you have?\",\"Private\"],\"referral_source\":[\"How did you hear about us?\",\"Google\"]}"
+                        },
+                        "description": "Stores form submission data (questions and answers) for a lead.\nThe form data is logged for processing.\n\nThe request body accepts dynamic keys where each key contains an array of [question, answer]."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"message\":\"Form submission received.\",\"lead_id\":123,\"form_keys\":[\"insurance_type\",\"referral_source\"]}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Lead not found.\"}",
+                            "name": "Lead not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"Invalid form data format. Each key must contain an array with [question, answer].\"}",
+                            "name": "Validation error"
                         }
                     ]
                 }

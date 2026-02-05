@@ -32,6 +32,10 @@
         content="{{ url()->to('/') }}"
     >
     <meta
+        name="csrf-token"
+        content="{{ csrf_token() }}"
+    >
+    <meta
         name="currency"
         content="{{
             json_encode([

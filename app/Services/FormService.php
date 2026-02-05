@@ -139,26 +139,35 @@ class FormService
             'delete_url' => $url,
         ]);
 
-        $response = $this->makeRequest('delete', $url, ['form_id' => $formId, 'url' => $url]);
-        $result = $this->parseResponse($response, ['form_id' => $formId, 'url' => $url]);
+        try {
+            $response = $this->makeRequest('delete', $url, ['form_id' => $formId, 'url' => $url]);
+            $result = $this->parseResponse($response, ['form_id' => $formId, 'url' => $url]);
 
-        if ($result['status'] !== 200) {
-            Log::warning('FormService: Forms API error', [
-                'form_id'       => $formId,
-                'delete_url'    => $url,
-                'status'        => $result['status'],
-                'response_json' => $result['json'],
-            ]);
-        } else {
-            Log::info('FormService: Form deleted successfully', [
-                'form_id' => $formId,
-            ]);
+            if ($result['status'] !== 200) {
+                Log::warning('FormService: Forms API error', [
+                    'form_id' => $formId,
+                    'delete_url' => $url,
+                    'status' => $result['status'],
+                    'response_json' => $result['json'],
+                ]);
+            } else {
+                Log::info('FormService: Form deleted successfully', [
+                    'form_id' => $formId,
+                ]);
+            }
+
+            return [
+                'status'   => $result['status'],
+                'response' => $result['json'],
+            ];
+        } catch (Exception $exception) {
+            Log::error('Could not detach GVL from', ['error' => $exception->getMessage()]);
+
+            return [
+                'status'   => 400,
+                'response' => $exception->getMessage(),
+            ];
         }
-
-        return [
-            'status'   => $result['status'],
-            'response' => $result['json'],
-        ];
     }
 
     /**

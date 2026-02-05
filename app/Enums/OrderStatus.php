@@ -30,7 +30,7 @@ enum OrderStatus: string
             self::PLANNED   => 'Ingepland',
             self::SENT      => 'Verstuurd',
             self::APPROVED  => 'Akkoord',
-            self::REJECTED  => 'Afgewezen',
+            self::REJECTED  => 'Niet akkoord',
         };
     }
 

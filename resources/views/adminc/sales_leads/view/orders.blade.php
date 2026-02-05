@@ -37,7 +37,7 @@
 
     <details class="rounded-lg border bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
         <summary class="cursor-pointer select-none px-2 pb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Afgerond (akkoord / afgewezen)
+            Afgerond
         </summary>
 
         <div class="opacity-70">

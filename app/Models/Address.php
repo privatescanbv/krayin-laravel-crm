@@ -122,6 +122,33 @@ class Address extends BaseModel
         return implode(', ', $addressParts);
     }
 
+    public function getMultilineAddressAttribute(): string
+    {
+        $lines = [];
+
+        if ($this->street && $this->house_number) {
+            $houseNumber = $this->house_number;
+            if ($this->house_number_suffix) {
+                $houseNumber .= ' '.$this->house_number_suffix;
+            }
+            $lines[] = $this->street.' '.$houseNumber;
+        }
+
+        if ($this->postal_code && $this->city) {
+            $postalCode = $this->formatPostalCodeForDisplay($this->postal_code);
+            $lines[] = $postalCode.' '.$this->city;
+        }
+
+        if ($this->state || $this->country) {
+            $regionLine = trim(implode(' ', array_filter([$this->state, $this->country])));
+            if ($regionLine !== '') {
+                $lines[] = $regionLine;
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
     /**
      * Format stored postal codes for display. Keeps global support; only adds a space
      * for Dutch-style codes like 1234AB -> 1234 AB. Otherwise leaves as-is.

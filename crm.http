@@ -105,3 +105,9 @@ GET https://{{ URL }}/api/patient/4e162dae-4ea9-4b66-ae67-9ff1fb3f57ed/notificat
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
+
+### get appointments for patient
+GET https://{{ URL }}/api/patient/de0d45da-a304-4ead-bb70-dc624915b46f/appointments
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}

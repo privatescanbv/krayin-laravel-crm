@@ -4,19 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientAppointmentsIndexRequest;
-use App\Http\Resources\PatientAppointmentsCollection;
-use App\Models\Clinic;
-use App\Models\Order;
+use App\Http\Resources\PaptientAppointmentResource;
 use App\Repositories\OrderRepository;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\OrderCheckService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PatientAppointmentController extends Controller
 {
     public function __construct(
         private readonly KeycloakService $keycloakService,
-        private readonly OrderCheckService $orderCheckService,
         private readonly OrderRepository $orderRepository,
     ) {}
 
@@ -35,7 +32,7 @@ class PatientAppointmentController extends Controller
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
-    public function index(PatientAppointmentsIndexRequest $request, string $keycloakUserId): JsonResponse
+    public function index(PatientAppointmentsIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
 
@@ -44,7 +41,7 @@ class PatientAppointmentController extends Controller
                 $perPage = (int) $request->validated('per_page', 15);
 
                 // No appointments for users without person association.
-                return PatientAppointmentsCollection::empty($perPage)->response();
+                return PaptientAppointmentResource::collection($perPage);
             }
 
             abort(404);
@@ -55,39 +52,17 @@ class PatientAppointmentController extends Controller
         $filter = strtolower((string) ($validated['filter'] ?? ''));
         $now = now();
 
-        $paginator = $this->orderRepository
+        $appointments = $this->orderRepository
             ->paginatePatientAppointmentsForPerson($person, $perPage, $filter, $now)
             ->appends($request->query());
 
-        $timezone = config('app.timezone') ?: 'Europe/Amsterdam';
-
-        $appointments = $paginator->getCollection()->map(function (Order $order) use ($person, $timezone) {
-            $firstAppointmentInClinic = $this->orderCheckService->retrieveClinicFromOrder($order, $person);
-            $clinic = $firstAppointmentInClinic !== null ? Clinic::with('address')->find($firstAppointmentInClinic) : null;
-
-            $clinicData = $clinic ? [
-                'id'      => $clinic->id,
-                'name'    => $clinic->name,
-                'address' => $clinic->address?->multiline_address,
-            ] : null;
-
-            return [
-                'id'              => 'order-'.$order->id,
-                'patient_id'      => (string) $person->id,
-                'practitioner_id' => null,
-                'clinic_id'       => $clinic ? (string) $clinic->id : null,
-                'clinic_label'    => $clinic ? $clinic->label() : null,
-                'clinic'          => $clinicData,
-                'start_at'        => $order->first_examination_at->toIso8601String(),
-                'end_at'          => null,
-                'timezone'        => $timezone,
-                'is_remote'       => false,
-                'remote_url'      => null,
-                'created_at'      => $order->created_at->toIso8601String(),
-                'updated_at'      => $order->updated_at?->toIso8601String(),
-            ];
-        });
-
-        return PatientAppointmentsCollection::fromPaginator($paginator, $appointments)->response();
+        return PaptientAppointmentResource::collection(
+            $appointments->through(function ($order) use ($person) {
+                return [
+                    'order'  => $order,
+                    'clinic' => app(OrderCheckService::class)->retrieveClinicFromOrder($order, $person),
+                ];
+            })
+        );
     }
 }

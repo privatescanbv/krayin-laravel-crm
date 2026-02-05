@@ -117,8 +117,8 @@ test('patient appointments endpoint returns planned/approved orders as appointme
 
     $response->assertJsonFragment([
         'clinic_ref' => [
-            'id'   => $clinicA->id,
-            'name' => $clinicA->name,
+            'id'      => $clinicA->id,
+            'name'    => $clinicA->name,
             'address' => null,
         ],
     ]);
@@ -131,8 +131,8 @@ test('patient appointments endpoint returns planned/approved orders as appointme
 
     $response->assertJsonFragment([
         'clinic_ref' => [
-            'id'   => $clinicB->id,
-            'name' => $clinicB->name,
+            'id'      => $clinicB->id,
+            'name'    => $clinicB->name,
             'address' => null,
         ],
     ]);
@@ -190,8 +190,8 @@ test('clinic is derived from first booking for patient when order is not combine
     ]);
     $response->assertJsonFragment([
         'clinic_ref' => [
-            'id'   => $clinicPatient->id,
-            'name' => $clinicPatient->name,
+            'id'      => $clinicPatient->id,
+            'name'    => $clinicPatient->name,
             'address' => null,
         ],
     ]);
@@ -261,8 +261,8 @@ test('patient appointments endpoint supports future/past filter', function () {
 
     $futureResponse->assertJsonFragment([
         'clinic_ref' => [
-            'id'   => $clinicFuture->id,
-            'name' => $clinicFuture->name,
+            'id'      => $clinicFuture->id,
+            'name'    => $clinicFuture->name,
             'address' => null,
         ],
     ]);
@@ -280,8 +280,8 @@ test('patient appointments endpoint supports future/past filter', function () {
 
     $pastResponse->assertJsonFragment([
         'clinic_ref' => [
-            'id'   => $clinicPast->id,
-            'name' => $clinicPast->name,
+            'id'      => $clinicPast->id,
+            'name'    => $clinicPast->name,
             'address' => null,
         ],
     ]);

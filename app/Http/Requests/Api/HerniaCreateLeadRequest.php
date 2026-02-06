@@ -22,7 +22,8 @@ class HerniaCreateLeadRequest extends FormRequest
             'soort_aanvraag_c' => ['required', 'string'],
 
             'salutation'   => ['nullable', 'string'],
-            'first_name'   => ['required', 'string'],
+            // Allow empty/missing firstname; it will default to "Onbekend" during mapping.
+            'first_name'   => ['nullable', 'string'],
             'last_name'    => ['required', 'string'],
             'birthdate'    => ['nullable', 'date_format:Y-m-d'],
             'email1'       => ['required', 'email'],

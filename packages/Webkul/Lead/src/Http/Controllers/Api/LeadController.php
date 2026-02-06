@@ -27,6 +27,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Illuminate\Support\Facades\DB;
 use App\Services\LeadValidationService;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 class LeadController extends Controller
 {
@@ -71,7 +72,7 @@ class LeadController extends Controller
         $leadForm->setContainer(app());
         $leadForm->replace($mapped);
 
-        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId());
+        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId(), allowInvalidPhone: true);
     }
 
     /**
@@ -87,13 +88,13 @@ class LeadController extends Controller
         $leadForm->setContainer(app());
         $leadForm->replace($mapped);
 
-        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findPrivateScanId());
+        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findPrivateScanId(), allowInvalidPhone: true);
     }
 
     /**
      * Shared lead-create implementation for API endpoints.
      */
-    private function storeFromLeadForm(LeadForm $request, ?int $forceDepartmentId = null): JsonResponse
+    private function storeFromLeadForm(LeadForm $request, ?int $forceDepartmentId = null, bool $allowInvalidPhone = false): JsonResponse
     {
         // TODO replace with auth()->id
         $currentUserId = User::query()->first()?->id;
@@ -159,8 +160,46 @@ class LeadController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
+        // For inbound endpoints: always create a lead.
+        // - firstname empty -> default "Onbekend"
+        // - invalid phone -> move to description and omit from phones so it won't fail validation
+        $hasRemovedInvalidPhones = false;
+        $invalidPhones = [];
+
+        if (! isset($normalized['first_name']) || trim((string) $normalized['first_name']) === '') {
+            $normalized['first_name'] = 'Onbekend';
+        }
+        if ($allowInvalidPhone) {
+            $normalized = $request->all();
+
+            [$normalized, $invalidPhones] = $this->stripInvalidPhones($normalized);
+            $hasRemovedInvalidPhones = ! empty($invalidPhones);
+
+            if ($hasRemovedInvalidPhones) {
+                $normalized['description'] = $this->appendInvalidPhoneNote(
+                    $normalized['description'] ?? null,
+                    $invalidPhones
+                );
+            }
+
+            $request->replace($normalized);
+        }
+
         try {
-            $this->validate($request, LeadValidationService::getApiValidationRules($request));
+            $rules = LeadValidationService::getApiValidationRules($request);
+
+            // If the only provided contact was an invalid phone, we still want a lead.
+            // Remove the "at least one email or phone" constraint for this inbound call.
+            if ($allowInvalidPhone && $hasRemovedInvalidPhones && ! $this->hasAnyNonEmptyEmailOrPhone($request->all())) {
+                if (isset($rules['first_name']) && is_array($rules['first_name'])) {
+                    $rules['first_name'] = array_values(array_filter(
+                        $rules['first_name'],
+                        static fn ($rule) => ! ($rule instanceof \Closure)
+                    ));
+                }
+            }
+
+            $this->validate($request, $rules);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Lead creation failed.',
@@ -296,6 +335,93 @@ class LeadController extends Controller
             'message' => 'Lead stage updated successfully.',
             'data' => $lead,
         ]);
+    }
+
+    /**
+     * Remove invalid phone numbers from phones[] and return them for annotation.
+     *
+     * @return array{0: array, 1: array<int, string>} [payload, invalidPhones]
+     */
+    private function stripInvalidPhones(array $payload): array
+    {
+        if (empty($payload['phones']) || ! is_array($payload['phones'])) {
+            return [$payload, []];
+        }
+
+        $validator = new PhoneValidator();
+        $invalid = [];
+        $validPhones = [];
+
+        foreach ($payload['phones'] as $phone) {
+            if (! is_array($phone)) {
+                continue;
+            }
+
+            $value = isset($phone['value']) ? (string) $phone['value'] : '';
+            $trimmed = trim($value);
+
+            if ($trimmed === '') {
+                // Keep empty entries as-is; they'll be ignored by downstream validators
+                $validPhones[] = $phone;
+                continue;
+            }
+
+            $failed = false;
+            $validator->validate('phones.*.value', $trimmed, function () use (&$failed) {
+                $failed = true;
+            });
+
+            if ($failed) {
+                $invalid[] = $trimmed;
+                continue;
+            }
+
+            $validPhones[] = $phone;
+        }
+
+        $payload['phones'] = array_values($validPhones);
+
+        return [$payload, $invalid];
+    }
+
+    private function appendInvalidPhoneNote(?string $existingDescription, array $invalidPhones): string
+    {
+        $base = trim($existingDescription ?? '');
+        $invalidPhones = array_values(array_unique(array_filter(array_map('trim', $invalidPhones))));
+
+        $note = 'Ongeldig telefoonnummer aangeleverd: '.implode(', ', $invalidPhones)
+            .'. Medewerkers kunnen later kijken of ze hier iets van kunnen maken.';
+
+        if ($base === '') {
+            return $note;
+        }
+
+        return $base."\n\n".$note;
+    }
+
+    private function hasAnyNonEmptyEmailOrPhone(array $data): bool
+    {
+        $hasEmail = false;
+        if (! empty($data['emails']) && is_array($data['emails'])) {
+            foreach ($data['emails'] as $email) {
+                if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
+                    $hasEmail = true;
+                    break;
+                }
+            }
+        }
+
+        $hasPhone = false;
+        if (! empty($data['phones']) && is_array($data['phones'])) {
+            foreach ($data['phones'] as $phone) {
+                if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
+                    $hasPhone = true;
+                    break;
+                }
+            }
+        }
+
+        return $hasEmail || $hasPhone;
     }
 
     /**

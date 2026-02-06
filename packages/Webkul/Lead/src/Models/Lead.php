@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Casts\EncryptedString;
 use App\Enums\LostReason;
 use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
@@ -47,6 +48,7 @@ class Lead extends Model implements LeadContract
         'mri_status'          => MRIStatus::class,
         'lost_reason'         => LostReason::class,
         'has_diagnosis_form'  => 'boolean',
+        'national_identification_number' => EncryptedString::class,
     ];
 
     /**

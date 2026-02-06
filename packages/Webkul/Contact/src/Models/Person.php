@@ -2,6 +2,7 @@
 
 namespace Webkul\Contact\Models;
 
+use App\Casts\EncryptedString;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Address;
@@ -56,6 +57,7 @@ class Person extends Model implements PersonContract
         'gender'        => PersonGender::class,
         'salutation'    => PersonSalutation::class,
         'is_active'     => 'boolean',
+        'national_identification_number' => EncryptedString::class,
     ];
 
     /**

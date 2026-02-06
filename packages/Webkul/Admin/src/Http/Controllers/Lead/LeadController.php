@@ -179,6 +179,13 @@ class LeadController extends Controller
             ->groupBy('lead_pipeline_stage_id')
             ->pluck('total', 'lead_pipeline_stage_id');
 
+        // Create pipeline model once for manual relation setting (avoids N+1 in getRottenDaysAttribute)
+        $pipelineModel = new Pipeline([
+            'id' => $pipeline->id,
+            'rotten_days' => $pipeline->rotten_days,
+        ]);
+        $perPage = (int) request()->query('limit', 10);
+
         // Build response for each stage with per-stage pagination only when needed
         foreach ($stages as $stage) {
             // Key by stage ID to ensure all columns (including empty ones) render consistently
@@ -197,6 +204,8 @@ class LeadController extends Controller
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
                     $query->whereIn('leads.user_id', $userIds);
                 }
+                // Use simplePaginate to skip the redundant COUNT(*) query per stage.
+                // The total is already known from $totalsByStage above.
                 $paginator = $query->select([
                     'leads.id',
                     'leads.first_name',
@@ -215,10 +224,6 @@ class LeadController extends Controller
                     'leads.has_diagnosis_form',
                     DB::raw('COALESCE(open_activities.open_activity_count, 0) AS open_activities_count_query'),
                     DB::raw('COALESCE(open_emails.open_email_count, 0) AS open_email_count_query'),
-                ])->with([
-                    'stage:id,code,name,sort_order,is_won,is_lost',
-                    // Removed persons eager loading to prevent null pivot issues
-                    // Removed pipeline eager loading to prevent N+1 per stage
                 ])->leftJoin(DB::raw('(
                         SELECT lead_id, COUNT(*) AS open_activity_count
                         FROM activities
@@ -231,22 +236,19 @@ class LeadController extends Controller
                         WHERE is_read = 0
                         GROUP BY lead_id
                     ) AS open_emails'), 'open_emails.lead_id', '=', 'leads.id')
-                ->with([
-                    'stage:id,code,name,sort_order,is_won,is_lost',
-                ])
                 ->orderBy(
                     'leads.created_at',
                     in_array(request('order'), ['asc', 'desc'], true) ? request('order') : 'desc'
                 )
-                ->paginate((int) request()->query('limit', 10));
-                // Set pipeline relation manually to prevent N+1 queries in getRottenDaysAttribute
-                $pipelineModel = new Pipeline([
-                    'id' => $pipeline->id,
-                    'rotten_days' => $pipeline->rotten_days
-                ]);
+                ->paginate($perPage, ['*'], 'simplePaginate');
+
+                // Set pipeline and stage relations manually to prevent N+1 queries
                 foreach ($paginator->items() as $lead) {
                     $lead->setRelation('pipeline', $pipelineModel);
+                    $lead->setRelation('stage', $stage);
                 }
+
+                $lastPage = (int) ceil($totalForStage / max($perPage, 1));
 
                 $data[$stage->id]['leads'] = [
                     'data' => LeadKanbanResource::collection($paginator),
@@ -254,10 +256,10 @@ class LeadController extends Controller
                     'meta' => [
                         'current_page' => $paginator->currentPage(),
                         'from' => $paginator->firstItem(),
-                        'last_page' => $paginator->lastPage(),
+                        'last_page' => $lastPage,
                         'per_page' => $paginator->perPage(),
                         'to' => $paginator->lastItem(),
-                        'total' => $totalForStage, // use precomputed total
+                        'total' => $totalForStage,
                     ],
                 ];
             } else {

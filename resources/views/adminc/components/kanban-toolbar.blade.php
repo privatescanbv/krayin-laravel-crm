@@ -33,6 +33,10 @@
         @include('adminc::components.vue.wonlost-toggle')
     </div>
 
+    <div class="h-6 ml-2">
+        @include('adminc::components.vue.duplicates-toggle')
+    </div>
+
     <!-- LEFT: NAV BAR -->
     <nav class="pipeline-nav flex-shrink-0 border border-gray-200 bg-white rounded-md px-1 h-11 flex items-center">
         <div class="flex items-center space-x-[2px]">

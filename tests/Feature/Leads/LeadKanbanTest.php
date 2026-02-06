@@ -281,6 +281,72 @@ test('it uses pipeline cookie fallback', function () {
     $response->assertStatus(200);
 });
 
+test('it excludes duplicate detection by default for performance', function () {
+    // Arrange: Create a lead
+    Lead::factory()->create([
+        'first_name'             => 'Test',
+        'last_name'              => 'Lead',
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stages[0]->id,
+        'user_id'                => $this->adminUser->id,
+    ]);
+
+    // Act: Request without include_duplicates (default = off)
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($this->adminUser, 'user')
+        ->getJson("/admin/leads/get?pipeline_id={$this->pipeline->id}");
+
+    $queries = DB::getQueryLog();
+    DB::disableQueryLog();
+
+    $response->assertStatus(200);
+
+    $data = $response->json();
+    $leads = $data[$this->stages[0]->id]['leads']['data'];
+
+    if (! empty($leads)) {
+        // Assert: has_duplicates is false and duplicates_count is 0 when toggle is off
+        $this->assertFalse($leads[0]['has_duplicates']);
+        $this->assertEquals(0, $leads[0]['duplicates_count']);
+        $this->assertEquals(0, $leads[0]['duplicate']);
+    }
+
+    // Assert: No queries to duplicate_false_positives table (duplicates skipped)
+    $duplicateQueries = collect($queries)->filter(function ($query) {
+        return str_contains($query['query'], 'duplicate_false_positives');
+    });
+    $this->assertEquals(0, $duplicateQueries->count(), 'No duplicate queries should run when include_duplicates is off');
+});
+
+test('it includes duplicate detection when include_duplicates is true', function () {
+    // Arrange: Create a lead
+    Lead::factory()->create([
+        'first_name'             => 'Test',
+        'last_name'              => 'Lead',
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stages[0]->id,
+        'user_id'                => $this->adminUser->id,
+    ]);
+
+    // Act: Request with include_duplicates=true
+    $response = $this->actingAs($this->adminUser, 'user')
+        ->getJson("/admin/leads/get?pipeline_id={$this->pipeline->id}&include_duplicates=true");
+
+    $response->assertStatus(200);
+
+    $data = $response->json();
+    $leads = $data[$this->stages[0]->id]['leads']['data'];
+
+    if (! empty($leads)) {
+        // Assert: duplicate fields are present in the response
+        $this->assertArrayHasKey('has_duplicates', $leads[0]);
+        $this->assertArrayHasKey('duplicates_count', $leads[0]);
+        $this->assertArrayHasKey('duplicate', $leads[0]);
+        $this->assertEquals($leads[0]['duplicates_count'], $leads[0]['duplicate']);
+    }
+});
+
 test('it returns optimized response structure', function () {
     // Arrange: Create a lead
     $lead = Lead::factory()->create([

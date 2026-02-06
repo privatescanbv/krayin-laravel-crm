@@ -519,6 +519,7 @@
                         },
                         hideWonLost: true,
                         wonLostLabel: 'Toon gewonnen/verloren',
+                        showDuplicates: false,
                         currentStageUpdate: null,
                         scrollTimeouts: {},
                         stageSorts: {},
@@ -654,6 +655,10 @@
                                     this.hideWonLost = currentKanban.hideWonLost;
                                 }
 
+                                if (typeof currentKanban.showDuplicates === 'boolean') {
+                                    this.showDuplicates = currentKanban.showDuplicates;
+                                }
+
                                 if (currentKanban.stageSorts) {
                                     this.stageSorts = currentKanban.stageSorts;
                                 }
@@ -716,8 +721,8 @@
                             searchFields: '',
                             pipeline_id: "{{ $pipelineId }}",
                             limit: 10,
-                            exclude_won_lost: this
-                                .hideWonLost, // Performance optimization: exclude won/lost stages when hidden
+                            exclude_won_lost: this.hideWonLost,
+                            include_duplicates: this.showDuplicates,
                         };
 
                         return this.$axios
@@ -756,7 +761,8 @@
                                     pipeline_stage_id: stage.id,
                                     sort: sort,
                                     order: order,
-                                    exclude_won_lost: this.hideWonLost
+                                    exclude_won_lost: this.hideWonLost,
+                                    include_duplicates: this.showDuplicates,
                                 }
                             })
                             .then(response => {
@@ -817,6 +823,7 @@
                         const paramsWithExclude = {
                             ...params,
                             exclude_won_lost: this.hideWonLost,
+                            include_duplicates: this.showDuplicates,
                         };
 
                         this.get(paramsWithExclude)
@@ -1083,6 +1090,7 @@
                                             requestCount: ++kanban.requestCount,
                                             applied: this.applied,
                                             hideWonLost: this.hideWonLost,
+                                            showDuplicates: this.showDuplicates,
                                             stageSorts: this.stageSorts,
                                         };
                                     }
@@ -1110,6 +1118,7 @@
                             requestCount: 0,
                             applied: this.applied,
                             hideWonLost: this.hideWonLost,
+                            showDuplicates: this.showDuplicates,
                             stageSorts: this.stageSorts,
                         };
                     },
@@ -1190,6 +1199,31 @@
                      */
                     setWonLostButtonText() {
                         this.$emitter.emit('kanban-wonlost-updated', this.hideWonLost);
+                    },
+
+                    /**
+                     * Toggle duplicate detection and refetch data
+                     */
+                    toggleDuplicates() {
+                        this.showDuplicates = !this.showDuplicates;
+                        this.updateKanbans();
+                        this.$emitter.emit('kanban-duplicates-updated');
+
+                        this.stageLeads = {};
+                        this.get()
+                            .then(response => {
+                                if (response && response.data) {
+                                    for (let [sortOrder, data] of Object.entries(response.data)) {
+                                        this.stageLeads[sortOrder] = data;
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error toggling duplicates:', error);
+                                this.showDuplicates = !this.showDuplicates;
+                                this.updateKanbans();
+                                this.$emitter.emit('kanban-duplicates-updated');
+                            });
                     },
                 }
             });

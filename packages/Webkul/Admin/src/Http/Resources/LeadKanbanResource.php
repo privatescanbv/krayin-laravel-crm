@@ -27,7 +27,9 @@ class LeadKanbanResource extends JsonResource
     {
         $gender = $this->gender;
         $genderValue = $gender instanceof BackedEnum ? $gender->value : $gender;
-        $duplicatesCount = $this->getPotentialDuplicatesCount();
+
+        $includeDuplicates = filter_var($request->query('include_duplicates', false), FILTER_VALIDATE_BOOLEAN);
+        $duplicatesCount = $includeDuplicates ? $this->getPotentialDuplicatesCount() : 0;
 
         return [
             'id'                   => $this->id,
@@ -60,6 +62,8 @@ class LeadKanbanResource extends JsonResource
             'days_until_due_date'  => null,
             'has_duplicates'       => $duplicatesCount > 0,
             'duplicates_count'     => $duplicatesCount,
+            // Backwards/UX alias: when include_duplicates=false this is always 0
+            'duplicate'            => $duplicatesCount,
         ];
     }
 }

@@ -68,7 +68,7 @@ class LeadRepository extends Repository
     }
 
     /**
-     * Get the cache service instance.
+     * Get the cache service instance. Workaround because LeadDuplicateCacheService depends on this class
      */
     protected function getCacheService(): LeadDuplicateCacheService
     {

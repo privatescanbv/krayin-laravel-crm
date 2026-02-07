@@ -193,46 +193,20 @@
     </div>
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
-            <!-- Diagnoseformulier aanwezig? -->
+            <!-- Diagnoseformulier aanwezig? (read-only, derived from diagnosis_form_id) -->
 
             @php
-                $hasDiagnosisForm = (int) $val('has_diagnosis_form', 0);
+                $hasDiagnosisForm = (bool) $val('has_diagnosis_form', false);
             @endphp
 
-            @if ($hasDiagnosisForm)
-                <x-adminc::components.field
-                    type="switch"
-                    name="has_diagnosis_form"
-                    label="Diagnoseformulier aanwezig?"
-                    value="1"
-                    checked="checked"
-                />
-            @else
-                <x-adminc::components.field
-                    type="switch"
-                    name="has_diagnosis_form"
-                    label="Diagnoseformulier aanwezig?"
-                    value="1"
-                />
-            @endif
-
-
-            <!-- <x-admin::form.control-group class="mt-2">
+            <x-admin::form.control-group class="mt-2">
                 <x-admin::form.control-group.label static>
                     Diagnoseformulier aanwezig?
                 </x-admin::form.control-group.label>
-                <div class="flex items-center gap-2">
-                    <input type="hidden" name="has_diagnosis_form" value="0"/>
-                    <input
-                        type="checkbox"
-                        name="has_diagnosis_form"
-                        value="1"
-                        class="cursor-pointer"
-                    />
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
-                </div>
-
-            </x-admin::form.control-group> -->
+                <span class="text-sm {{ $hasDiagnosisForm ? 'text-green-600' : 'text-gray-400' }}">
+                    {{ $hasDiagnosisForm ? 'Ja' : 'Nee' }}
+                </span>
+            </x-admin::form.control-group>
         </div>
 
     </div>

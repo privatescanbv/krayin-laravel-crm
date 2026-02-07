@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\FormService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -15,6 +17,10 @@ use Webkul\Lead\Models\Lead;
  */
 class LeadFormController extends Controller
 {
+    public function __construct(
+        private readonly FormService $formService
+    ) {}
+
     /**
      * Add form submission to a lead.
      *
@@ -58,10 +64,48 @@ class LeadFormController extends Controller
             'form_data' => $formData,
         ]);
 
+        try {
+            $result = $this->formService->createDiagnosisFormForLead($lead, $formData);
+
+            if ($result['response'] === null) {
+                Log::error('LeadFormController: Patient portal returned error', [
+                    'lead_id' => $leadId,
+                    'status'  => $result['status'],
+                ]);
+
+                return response()->json([
+                    'message' => 'Failed to create diagnosis form on patient portal.',
+                    'lead_id' => $leadId,
+                ], 502);
+            }
+
+            $formId = $result['response']['data']['id'] ?? null;
+
+            $lead->update([
+                'diagnosis_form_id' => $formId,
+            ]);
+
+            Log::info('LeadFormController: Diagnosis form created and saved', [
+                'lead_id'           => $leadId,
+                'diagnosis_form_id' => $formId,
+            ]);
+        } catch (Exception $e) {
+            Log::error('LeadFormController: Failed to create diagnosis form', [
+                'lead_id' => $leadId,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to create diagnosis form: '.$e->getMessage(),
+                'lead_id' => $leadId,
+            ], 502);
+        }
+
         return response()->json([
-            'message'   => 'Form submission received.',
-            'lead_id'   => $leadId,
-            'form_keys' => array_keys($formData),
+            'message'           => 'Form submission received.',
+            'lead_id'           => $leadId,
+            'diagnosis_form_id' => $formId ?? null,
+            'form_keys'         => array_keys($formData),
         ], 201);
     }
 }

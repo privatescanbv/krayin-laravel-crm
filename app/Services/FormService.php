@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 
 /**
  * Patient form service, as GVL
@@ -121,6 +122,81 @@ class FormService
             'status'   => $result['status'],
             'response' => $result['json'],
         ];
+    }
+
+    /**
+     * Create a diagnosis form for a lead via the forms API.
+     *
+     * @param  array  $fields  Question/answer pairs from the form submission
+     * @return array{status: int, response: array|null}
+     *
+     * @throws Exception
+     */
+    public function createDiagnosisFormForLead(Lead $lead, array $fields): array
+    {
+
+        $email = $lead->findDefaultEmail();
+        if (! $email) {
+            throw new Exception('Lead has no email address.');
+        }
+
+        $formData = [
+            'lead_id'         => (string)$lead->id,
+            'firstname'       => $lead->first_name ?: 'Onbekend',
+            'lastname'        => $lead->last_name ?: 'Onbekend',
+            'fields'          => $fields,
+        ];
+
+        $url = $this->buildApiUrl('/api/leads/forms');
+
+        Log::info('FormService: Creating diagnosis form for lead', [
+            'lead_id'      => $lead->id,
+            'url'          => $url,
+            'request_body' => $formData,
+        ]);
+
+        $response = $this->makeRequest('post', $url, ['lead_id' => $lead->id, 'url' => $url], $formData);
+        $result = $this->parseResponse($response, ['lead_id' => $lead->id, 'url' => $url], true);
+
+        if ($result['is_html']) {
+            return [
+                'status'   => $result['status'],
+                'response' => null,
+            ];
+        }
+
+        if (! $response->successful()) {
+            return [
+                'status'   => $result['status'],
+                'response' => null,
+            ];
+        }
+
+        Log::info('FormService: Diagnosis form created for lead', [
+            'lead_id'       => $lead->id,
+            'status'        => $result['status'],
+            'has_data_key'  => isset($result['json']['data']),
+            'has_data_id'   => isset($result['json']['data']['id']),
+        ]);
+
+        return [
+            'status'   => $result['status'],
+            'response' => $result['json'],
+        ];
+    }
+
+    /**
+     * Download a form PDF via the forms API.
+     *
+     * @return Response The raw HTTP response from the forms API
+     *
+     * @throws Exception
+     */
+    public function downloadForm(int $formId): Response
+    {
+        $url = $this->buildApiUrl("/api/forms/{$formId}/download");
+
+        return $this->makeRequest('get', $url, ['form_id' => $formId, 'url' => $url]);
     }
 
     /**

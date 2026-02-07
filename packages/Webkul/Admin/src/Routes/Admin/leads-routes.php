@@ -52,6 +52,8 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::get('{id}/default-group', [ActivityController::class, 'getDefaultGroup'])->name('admin.leads.default-group');
 
+    Route::get('{id}/diagnosis-form/download', 'downloadDiagnosisForm')->name('admin.leads.diagnosis-form.download');
+
     Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
         Route::get('', 'index')->name('admin.leads.activities.index');
         Route::get('open/count', 'countOpen')->name('admin.leads.activities.open.count');

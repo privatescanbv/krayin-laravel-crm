@@ -44,7 +44,6 @@ class InboundLeadPayloadMapper
             'lead_source_id'     => $this->mapLeadSourceId($payload['lead_source'] ?? null),
             'lead_channel_id'    => $this->mapLeadChannelId($payload['kanaal_c'] ?? null),
             'lead_type_id'       => $this->mapLeadTypeId($payload['soort_aanvraag_c'] ?? null),
-            'has_diagnosis_form' => array_key_exists('birthdate', $payload) && $this->nullIfEmpty($payload['birthdate']) !== null,
             'address'            => $address ?: null,
         ], static fn ($v) => $v !== null);
     }

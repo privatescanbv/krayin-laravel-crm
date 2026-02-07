@@ -289,12 +289,32 @@ class ResourcePlanningMonitorController extends Controller
             $resourcesQuery->whereIn('id', array_map('intval', $resourceIds));
         }
 
-        // Include resources that are active on the requested date range based on their shifts
+        /**
+         * Include only resources that have at least one shift that overlaps the requested window.
+         *
+         * Important: the monitor should not surface resources whose availability is entirely in the past.
+         * When the requested window includes past days (e.g. "current week" while today is later in the week),
+         * we effectively treat the window start as "today" for the purpose of determining whether a shift is expired.
+         */
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
-        $resourcesQuery->whereHas('shifts', function ($q) use ($start) {
-            $q->where(function ($shiftQuery) use ($start) {
-                $shiftQuery->whereNull('period_end') // Infinite duration shifts
-                    ->orWhere('period_end', '>=', $start->format('Y-m-d')); // Shifts that haven't expired
+        $end = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
+
+        $today = CarbonImmutable::today();
+        $effectiveStart = $start->lt($today) ? $today : $start;
+
+        $resourcesQuery->whereHas('shifts', function ($q) use ($effectiveStart, $end) {
+            $q->where(function ($shiftQuery) use ($effectiveStart, $end) {
+                // Finite shifts: overlap the effective window (inclusive)
+                $shiftQuery->where(function ($finite) use ($effectiveStart, $end) {
+                    $finite->whereNotNull('period_end')
+                        ->whereDate('period_start', '<=', $end->toDateString())
+                        ->whereDate('period_end', '>=', $effectiveStart->toDateString());
+                })
+                // Infinite shifts: started on/before window end
+                    ->orWhere(function ($infinite) use ($end) {
+                        $infinite->whereNull('period_end')
+                            ->whereDate('period_start', '<=', $end->toDateString());
+                    });
             });
         });
 

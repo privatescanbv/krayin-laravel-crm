@@ -47,7 +47,6 @@ class Lead extends Model implements LeadContract
         'salutation'          => PersonSalutation::class,
         'mri_status'          => MRIStatus::class,
         'lost_reason'         => LostReason::class,
-        'has_diagnosis_form'  => 'boolean',
         'national_identification_number' => EncryptedString::class,
     ];
 
@@ -95,7 +94,7 @@ class Lead extends Model implements LeadContract
         'created_by',
         'updated_by',
         'mri_status',
-        'has_diagnosis_form',
+        'diagnosis_form_id',
         'national_identification_number',
         'address_id',
     ];
@@ -223,6 +222,11 @@ class Lead extends Model implements LeadContract
         return $this->mri_status?->label() ?? '-';
     }
 
+    public function getHasDiagnosisFormAttribute(): bool
+    {
+        return $this->diagnosis_form_id !== null;
+    }
+
     /**
      * Create a new factory instance for the model.
      *
@@ -294,6 +298,14 @@ class Lead extends Model implements LeadContract
         return $this->date_of_birth->age;
     }
 
+    public function getDiagnoseDownloadUrlAttribute(): ?string
+    {
+        if ($this->diagnosis_form_id) {
+            return route('admin.leads.diagnosis-form.download', $this->id);
+        }
+
+        return null;
+    }
     /**
      * Attach persons to this lead.
      */

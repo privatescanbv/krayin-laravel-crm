@@ -52,6 +52,7 @@ use App\Services\LeadValidationService;
 use App\Services\PipelineCookieService;
 use App\Services\LeadStatusTransitionValidator;
 use App\Repositories\AddressRepository;
+use App\Services\FormService;
 use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
@@ -221,7 +222,7 @@ class LeadController extends Controller
                     'leads.lead_pipeline_stage_id',
                     'leads.mri_status',
                     'leads.lost_reason',
-                    'leads.has_diagnosis_form',
+                    'leads.diagnosis_form_id',
                     DB::raw('COALESCE(open_activities.open_activity_count, 0) AS open_activities_count_query'),
                     DB::raw('COALESCE(open_emails.open_email_count, 0) AS open_email_count_query'),
                 ])->leftJoin(DB::raw('(
@@ -1764,5 +1765,38 @@ class LeadController extends Controller
         session()->flash('success', $message);
 
         return redirect()->route($redirectRoute, $redirectParams);
+    }
+
+    /**
+     * Proxy download of a diagnosis form PDF via the forms API.
+     */
+    public function downloadDiagnosisForm(int $id, FormService $formService)
+    {
+        $lead = $this->leadRepository->findOrFail($id);
+
+        if (! $lead->diagnosis_form_id) {
+            abort(404, 'Lead has no diagnosis form.');
+        }
+
+        try {
+            $response = $formService->downloadForm($lead->diagnosis_form_id);
+        } catch (Exception $e) {
+            Log::error('LeadController: Failed to download diagnosis form', [
+                'lead_id'           => $id,
+                'diagnosis_form_id' => $lead->diagnosis_form_id,
+                'error'             => $e->getMessage(),
+            ]);
+
+            abort(502, 'Could not download diagnosis form.');
+        }
+
+        if (! $response->successful()) {
+            abort($response->status(), 'Forms API returned an error.');
+        }
+
+        return response($response->body(), 200, [
+            'Content-Type'        => $response->header('Content-Type') ?: 'application/pdf',
+            'Content-Disposition' => $response->header('Content-Disposition') ?: 'attachment; filename="diagnosis-form-'.$lead->diagnosis_form_id.'.pdf"',
+        ]);
     }
 }

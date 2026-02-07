@@ -88,8 +88,6 @@ class LeadValidationService
             'address.state'               => 'nullable|string|max:255',
             'address.country'             => 'nullable|string|max:255',
 
-            // Flags
-            'has_diagnosis_form'          => 'nullable|boolean',
         ];
         if ($create) {
             // Anamnesis quick questions on lead form

@@ -112,7 +112,7 @@
                         <span class="font-semibold text-gray-800 dark:text-white">Diagnoseformulier</span>
 
                         <span class="text-xs {{ ($lead->has_diagnosis_form ?? false) ? 'text-green-600' : 'text-red-600' }}">
-                            {{ ($lead->has_diagnosis_form ?? false) ? 'Aanwezig' : 'Niet aanwezig' }}
+                            <a href="{{ ($lead->diagnose_download_url ?? '') }}" target="_blank">Download</a>
                         </span>
                     </div>
                 </div>

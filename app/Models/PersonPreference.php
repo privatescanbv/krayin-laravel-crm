@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Contact\Models\PersonProxy;
 
+/**
+ * @mixin IdeHelperPersonPreference
+ */
 class PersonPreference extends Model
 {
     use HasAuditTrail;

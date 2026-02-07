@@ -27,6 +27,7 @@ namespace App\Models{
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read mixed $full_address
+ * @property-read string $multiline_address
  * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Database\Factories\AddressFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Address newModelQuery()
@@ -708,6 +709,41 @@ namespace App\Models{
  */
 	#[\AllowDynamicProperties]
 	class IdeHelperPatientNotification {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $person_id
+ * @property string $key
+ * @property array $value
+ * @property string $value_type
+ * @property bool $is_system_managed
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read mixed|null $typed_value
+ * @property-read \Webkul\Contact\Models\Person $person
+ * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference query()
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereIsSystemManaged($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference wherePersonId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereUpdatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PersonPreference whereValueType($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperPersonPreference {}
 }
 
 namespace App\Models{

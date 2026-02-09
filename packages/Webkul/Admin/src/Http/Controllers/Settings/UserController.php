@@ -26,7 +26,6 @@ use Webkul\User\Repositories\GroupRepository;
 use Webkul\User\Repositories\RoleRepository;
 use Webkul\User\Repositories\UserRepository;
 use Webkul\User\Models\UserDefaultValue;
-use Webkul\User\Models\User;
 
 class UserController extends Controller
 {
@@ -129,7 +128,7 @@ class UserController extends Controller
 
         try {
             Mail::queue(new UserCreatedNotification($admin));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             report($e);
         }
 

@@ -2,6 +2,7 @@
 
 namespace Webkul\Installer\Database\Seeders\EmailTemplate;
 
+use App\Enums\EmailTemplateCode;
 use App\Enums\EmailTemplateType;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\Departments;
@@ -27,12 +28,13 @@ class EmailTemplateSeeder extends Seeder
 
         $defaultDepartments = json_encode([Departments::PRIVATESCAN->value]);
         $allDepartments = json_encode([Departments::PRIVATESCAN->value, Departments::HERNIA->value]);
+        $templateId = 1;
 
         DB::table('email_templates')->insert([
             [
-                'id'          => 1,
+                'id'          => $templateId++,
                 'name'        => trans('installer::app.seeders.email.activity-created', [], $defaultLocale),
-                'code'        => 'activity-created',
+                'code'        => EmailTemplateCode::ACTIVITY_CREATED->value,
                 'type'        => EmailTemplateType::ALGEMEEN->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
@@ -62,9 +64,9 @@ class EmailTemplateSeeder extends Seeder
                                     </tbody>
                                 </table>',
             ], [
-                'id'          => 2,
+                'id'          => $templateId++,
                 'name'        => trans('installer::app.seeders.email.activity-modified', [], $defaultLocale),
-                'code'        => 'activity-modified',
+                'code'        => EmailTemplateCode::ACTIVITY_MODIFIED->value,
                 'type'        => EmailTemplateType::ALGEMEEN->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
@@ -94,9 +96,9 @@ class EmailTemplateSeeder extends Seeder
                                     </tbody>
                                 </table>',
             ], [
-                'id'          => 3,
+                'id'          => $templateId++,
                 'name'        => 'reply',
-                'code'        => 'reply',
+                'code'        => EmailTemplateCode::REPLY->value,
                 'type'        => EmailTemplateType::ALGEMEEN->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
@@ -111,9 +113,9 @@ class EmailTemplateSeeder extends Seeder
 
     <p><br></p>',
             ], [
-                'id'          => 4,
+                'id'          => $templateId++,
                 'name'        => 'reply [de]',
-                'code'        => 'reply-de',
+                'code'        => EmailTemplateCode::REPLY_DE->value,
                 'type'        => EmailTemplateType::ALGEMEEN->value,
                 'language'    => EmailTemplateLanguage::DUITS->value,
                 'departments' => $allDepartments,
@@ -128,9 +130,9 @@ class EmailTemplateSeeder extends Seeder
 
     <p><br></p>',
             ], [
-                'id'          => 5,
+                'id'          => $templateId++,
                 'name'        => 'reply [en]',
-                'code'        => 'reply-en',
+                'code'        => EmailTemplateCode::REPLY_EN->value,
                 'type'        => EmailTemplateType::ALGEMEEN->value,
                 'language'    => EmailTemplateLanguage::ENGELS->value,
                 'departments' => $allDepartments,
@@ -145,9 +147,9 @@ class EmailTemplateSeeder extends Seeder
 
     <p><br></p>',
             ], [
-                'id'          => 6,
+                'id'          => $templateId++,
                 'name'        => 'Afspraak bevestiging',
-                'code'        => 'appointment-confirmation',
+                'code'        => EmailTemplateCode::APPOINTMENT_CONFIRMATION->value,
                 'type'        => EmailTemplateType::ORDER->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
@@ -216,9 +218,9 @@ class EmailTemplateSeeder extends Seeder
 
     <p><br></p>',
             ], [
-                'id'          => 7,
+                'id'          => $templateId++,
                 'name'        => 'Informatief met GVL',
-                'code'        => 'informatief-met-gvl',
+                'code'        => EmailTemplateCode::INFORMATIEF_MET_GVL->value,
                 'type'        => EmailTemplateType::GVL->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
@@ -239,9 +241,9 @@ class EmailTemplateSeeder extends Seeder
     </p>
     <p>Privatescan / Herniapoli</p>',
             ], [
-                'id'          => 8,
+                'id'          => $templateId++,
                 'name'        => 'Patiëntportaal notificatie',
-                'code'        => 'patient-portal-notification',
+                'code'        => EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION->value,
                 'type'        => EmailTemplateType::PATIENT->value,
                 'language'    => EmailTemplateLanguage::NEDERLANDS->value,
                 'departments' => $allDepartments,
@@ -255,7 +257,26 @@ class EmailTemplateSeeder extends Seeder
 <p>U kunt inloggen via: <a href="{%portal_url%}" target="_blank" style="color: #2563eb; text-decoration: underline;">{%portal_url%}</a></p>
 
 <p>Met vriendelijke groet,<br>Privatescan</p>',
-            ],
+            ], [
+                'id'          => $templateId++,
+                'name'        => 'Welkomsmail voor nieuwe gebruiker (medewerker)',
+                'code'        => EmailTemplateCode::CREATE_USER->value,
+                'type'        => EmailTemplateType::ALGEMEEN->value,
+                'language'    => EmailTemplateLanguage::NEDERLANDS->value,
+                'departments' => $allDepartments,
+                'subject'     => 'Welkom in ons CRM',
+                'created_at'  => $now,
+                'updated_at'  => $now,
+                'content'     => '<p>Beste {{ user.first_name }} {{ user.last_name }},</p>
+<p>Welkom! Er is een account voor je aangemaakt in ons CRM-systeem.</p>
+    <p>
+        Je kunt nu inloggen met de inloggegevens die je hebt ontvangen.<br>
+        Bewaar deze gegevens zorgvuldig.
+    </p>
+    <p>Heb je vragen of loop je ergens tegenaan, laat het gerust weten.</p>
+
+<p>Met vriendelijke groet,<br>Privatescan</p>',
+            ]
         ]);
     }
 }

@@ -126,8 +126,8 @@ Het email compose dialoog biedt verschillende functionaliteiten om het opstellen
 Het systeem ondersteunt herbruikbare email templates die kunnen worden geselecteerd vanuit de email composer. Templates maken het mogelijk om gestandaardiseerde berichten snel op te stellen.
 
 * **Template Selectie**: In de email composer kan een template worden geselecteerd uit een dropdown lijst
-* **Automatische Variabele Resolutie**: Templates ondersteunen server-side variabele resolutie (bijvoorbeeld `{{ $lastname }}`, `{{ $firstname }}`). Per entiteit type wordt dit dan resolved (denk bij lead aan 1. contact persoon, 2. eerste koppelde persoon, 3. lead data)
-* **Context-Aware**: Templates kunnen automatisch variabelen ophalen op basis van de gekoppelde lead, persoon of sales lead
+* **Automatische Variabele Resolutie**: Templates ondersteunen server-side variabele resolutie (bijvoorbeeld `{{ $lastname }}`, `{{ $firstname }}`). Per entiteit type wordt dit resolved (denk bij lead aan 1. contactpersoon, 2. eerste gekoppelde persoon, 3. lead data). Zie <<beschikbare-template-variabelen>> voor een compleet overzicht.
+* **Context-Aware**: Templates kunnen automatisch variabelen ophalen op basis van de gekoppelde lead, persoon, sales lead of order
 * **Default Templates**: Voor specifieke views (zoals lead view) kan een standaard template worden ingesteld die automatisch wordt geladen
 
 ===== Handtekening (Signature)
@@ -205,20 +205,131 @@ Voorbeeld template structuur:
 Het systeem scant automatisch de template directory en maakt alle beschikbare templates beschikbaar:
 
 * **Scan Proces**: Bij het openen van de email composer worden alle `.blade.php` bestanden in de root van de template directory gescand
-* **API Endpoint**: `GET /admin/mail/templates` retourneert een lijst van alle beschikbare templates
 * **Dynamische Lijst**: Nieuwe templates worden automatisch gedetecteerd zonder code wijzigingen
 * **Template Namen**: Bestandsnamen worden automatisch geformatteerd als leesbare labels (bijvoorbeeld `reply.blade.php` wordt "Reply")
 * **Subdirectories**: Templates kunnen worden georganiseerd in subdirectories voor betere structuur, maar voor automatische detectie moeten ze in de root directory staan of handmatig worden geregistreerd
 
 ===== Variabele Resolutie
 
-Templates ondersteunen server-side variabele resolutie voor dynamische content:
+Templates ondersteunen server-side variabele resolutie voor dynamische content.
+Variabelen worden automatisch ingevuld op basis van de gekoppelde entiteiten (lead, persoon, order, etc.).
 
-* **API Endpoint**: `GET /admin/mail/template-content` rendert een template met opgeloste variabelen
-* **Entity Context**: Templates kunnen variabelen ophalen op basis van `lead_id`, `person_id`, of `sales_lead_id`
-* **Beschikbare Variabelen**:
-** `$lastname` - Achternaam van de lead of persoon
-** etc
+* **Syntax**: `{{ variabele }}` of `{% variabele %}`
+* **Nested toegang**: `{{ lead.name }}`, `{{ order.id }}`, `{{ user.first_name }}`
+* **Rendering service**: `EmailTemplateRenderingService::renderForEntities()` -- kan ook buiten de email composer worden gebruikt (bijv. in notificaties)
+
+[[beschikbare-template-variabelen]]
+===== Beschikbare Template Variabelen
+
+De onderstaande tabel bevat alle variabelen die in email templates gebruikt kunnen worden.
+Variabelen worden gecombineerd wanneer meerdere entiteiten beschikbaar zijn (bijv. een email vanuit een order heeft ook toegang tot lead- en persoon-variabelen).
+
+[NOTE]
+====
+Single source of truth: `EmailTemplateRenderingService::SUPPORTED_VARIABLES` in `app/Services/Mail/EmailTemplateRenderingService.php`.
+Bij wijzigingen aan variabelen: pas de constant aan en werk deze tabel bij.
+====
+
+[cols="1,1,3"]
+|===
+| Entity | Variabele | Omschrijving
+
+| User
+| `{{ user.first_name }}`
+| Voornaam van de gebruiker
+
+| User
+| `{{ user.last_name }}`
+| Achternaam van de gebruiker
+
+| User
+| `{{ user.email }}`
+| E-mailadres van de gebruiker
+
+| User
+| `{{ user.* }}`
+| Nested toegang tot alle User attributen
+
+| Lead
+| `{{ lastname }}`
+| Achternaam: contactpersoon > eerste gekoppelde persoon > lead zelf
+
+| Lead
+| `{{ lead.* }}`
+| Nested toegang tot Lead attributen, bijv. `{{ lead.name }}`
+
+| Person
+| `{{ lastname }}`
+| Achternaam van de persoon
+
+| Person
+| `{{ gvl_form_link }}`
+| Link naar het GVL formulier (indien anamnesis beschikbaar)
+
+| Person
+| `{{ gvl_deadline }}`
+| Deadline GVL formulier (1 week vanaf nu, dd-mm-jjjj)
+
+| Person
+| `{{ person.* }}`
+| Nested toegang tot Person attributen, bijv. `{{ person.last_name }}`
+
+| Sales Lead
+| `{{ lastname }}`
+| Achternaam: contactpersoon of eerste gekoppelde persoon
+
+| Sales Lead
+| `{{ sales_lead.* }}`
+| Nested toegang tot alle SalesLead attributen
+
+| Order
+| `{{ order_reference }}`
+| Order ID als referentienummer
+
+| Order
+| `{{ order_title }}`
+| Titel van de order
+
+| Order
+| `{{ order_status }}`
+| Status van de order (leesbaar label)
+
+| Order
+| `{{ order_total }}`
+| Totaalbedrag van de order
+
+| Order
+| `{{ customer_name }}`
+| Klantnaam (via contactpersoon of lead)
+
+| Order
+| `{{ datum_afspraak }}`
+| Datum eerste afspraak (bijv. "15 januari 2025")
+
+| Order
+| `{{ tijd_afspraak }}`
+| Tijdstip eerste afspraak (bijv. "14:00")
+
+| Order
+| `{{ plaats_afspraak }}`
+| Locatie eerste afspraak (kliniek + adres)
+
+| Order
+| `{{ datum_bevestiging }}`
+| Bevestigingsdeadline (3 dagen voor afspraak)
+
+| Order
+| `{{ afspraken_tabel }}`
+| HTML tabel met alle afspraken gegroepeerd per persoon
+
+| Order
+| `{{ order_items_table }}`
+| HTML tabel met alle orderregels
+
+| Order
+| `{{ order.* }}`
+| Nested toegang tot Order attributen, bijv. `{{ order.id }}`
+|===
 
 ==== Belangrijke Noot
 

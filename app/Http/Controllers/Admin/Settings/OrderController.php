@@ -13,6 +13,7 @@ use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
 use App\Services\FormService;
+use App\Services\Mail\EmailTemplateRenderingService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
 use App\Services\OrderStatusService;
@@ -28,7 +29,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
-use Webkul\Admin\Http\Controllers\Mail\EmailController;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\EmailTemplate\Models\EmailTemplate;
@@ -45,7 +45,7 @@ class OrderController extends SimpleEntityController
         protected OrderStatusService $orderStatusService,
         protected SalesLeadRepository $salesLeadRepository,
         protected FormService $formService,
-        private EmailController $emailController
+        private EmailTemplateRenderingService $emailTemplateRenderingService
     ) {
         parent::__construct($orderRepository);
 
@@ -488,18 +488,16 @@ class OrderController extends SimpleEntityController
         }
 
         try {
-            // Use EmailController to render template with order entity
-
             // Build entities array with order
             $entities = [
                 'order' => $orderId,
             ];
 
             // Resolve variables from entities
-            $variables = $this->emailController->resolveTemplateVariablesFromEntities($entities);
+            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
 
             // Get template from database
-            $template = EmailTemplate::where('code', $templateIdentifier)
+            $template = EmailTemplate::byCode($templateIdentifier)
                 ->orWhere('name', $templateIdentifier)
                 ->first();
 
@@ -511,7 +509,7 @@ class OrderController extends SimpleEntityController
             }
 
             // Render template with layout
-            $content = $this->emailController->renderTemplateToHTML($template, $variables);
+            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
 
             return response()->json([
                 'data' => [

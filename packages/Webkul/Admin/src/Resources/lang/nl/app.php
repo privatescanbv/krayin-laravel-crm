@@ -2631,9 +2631,6 @@ return [
 
             'user' => [
                 'dear' => 'Beste :username',
-                'create-subject' => 'U bent toegevoegd als lid.',
-                'create-body' => 'Gefeliciteerd! U bent nu lid van onze team.',
-
                 'forget-password' => [
                     'subject' => 'Klant wachtwoord resetten',
                     'dear' => 'Beste :username',

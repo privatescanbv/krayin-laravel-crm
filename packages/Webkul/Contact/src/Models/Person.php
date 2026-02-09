@@ -80,7 +80,6 @@ class Person extends Model implements PersonContract
         'job_title',
         'user_id',
         'organization_id',
-        'unique_id',
         'external_id',
         'salutation',
         'first_name',

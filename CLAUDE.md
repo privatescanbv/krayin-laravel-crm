@@ -33,13 +33,13 @@ vendor/bin/sail artisan test
 ### Testing
 ```bash
 # All tests (Pest framework)
-php artisan test
+sail artisan test
 
 # Single test file
-php artisan test tests/Feature/ExampleTest.php
+sail artisan test tests/Feature/ExampleTest.php
 
 # Filter by test name
-php artisan test --filter=testName
+sail artisan test --filter=testName
 ```
 
 Tests use SQLite in-memory database. See `tests/Pest.php` for helper functions like `getDefaultAdmin()`, `actingAsSanctumAuthenticatedAdmin()`, and `makeUser()`.

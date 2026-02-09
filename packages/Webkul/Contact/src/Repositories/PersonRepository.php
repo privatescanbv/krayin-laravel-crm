@@ -201,14 +201,6 @@ class PersonRepository extends Repository
             $data['organization_id'] = null;
         }
 
-        $uniqueIdParts = array_filter([
-            $data['user_id'] ?? null,
-            $data['organization_id'] ?? null,
-            $data['emails'][0]['value'] ?? null,
-        ]);
-
-        $data['unique_id'] = implode('|', $uniqueIdParts);
-
         // Normalize portal activation flag (checkbox/switch can submit as on/1/true)
         $data['is_active'] = filter_var($data['is_active'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
@@ -219,15 +211,6 @@ class PersonRepository extends Repository
 
         if (isset($data['phones'])) {
             $data['phones'] = collect($data['phones'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
-
-            if (!empty($data['phones'])) {
-                $data['unique_id'] .= '|'.$data['phones'][0]['value'];
-            }
-        }
-
-        // If unique_id is empty after generation, set it to null to avoid duplicate key errors
-        if (empty($data['unique_id'])) {
-            $data['unique_id'] = null;
         }
 
         return $data;

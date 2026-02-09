@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Settings\Clinic;
 
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\Request;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -13,7 +14,7 @@ use Webkul\Email\Repositories\EmailRepository;
 
 class ActivityController extends Controller
 {
-    use ConcatsEmailActivities;
+    use ConcatsEmailActivities, HandlesReturnUrl;
 
     /**
      * Create a new controller instance.

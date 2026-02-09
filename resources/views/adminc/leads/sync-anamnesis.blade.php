@@ -2,12 +2,12 @@
     title="Anamnesis Gegevens Overnemen"
     :header-title="'Oudere Anamnesis overnemen voor ' . $person->name"
     header-description="Vergelijk en neem gegevens over van oudere anamneses."
-    :back-route="route('admin.leads.view', $lastLeadId)"
+    :back-route="request()->filled('return_url') ? request('return_url') : route('admin.leads.view', $lastLeadId)"
     :form-action="route('admin.leads.sync-anamnesis-update', $anamnesis->person_id)"
     form-id="sync-anamnesis-form"
     :match-score="$bestMatch ?? null"
     match-score-title="Beste Match Score"
-    :redirect-route="route('admin.leads.view', $lastLeadId)"
+    :redirect-route="request()->filled('return_url') ? request('return_url') : route('admin.leads.view', $lastLeadId)"
 >
     <x-slot:headerBefore>
         {!! view_render_event('admin.leads.sync_anamnesis.header.before', ['anamnesis' => $anamnesis]) !!}
@@ -16,6 +16,10 @@
     <x-slot:headerAfter>
         {!! view_render_event('admin.leads.sync_anamnesis.header.after', ['anamnesis' => $anamnesis]) !!}
     </x-slot>
+
+    @if (request()->filled('return_url'))
+        <input type="hidden" name="return_url" value="{{ request('return_url') }}" />
+    @endif
 
     <div class="box-shadow rounded bg-white dark:bg-gray-900">
         <div class="p-4 border-b border-gray-200 dark:border-gray-800">

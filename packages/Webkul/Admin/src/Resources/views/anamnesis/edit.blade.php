@@ -9,13 +9,21 @@
         :action="route('admin.anamnesis.update', $anamnesis->id)"
         method="PUT"
     >
+        @if (request()->filled('return_url'))
+            <input type="hidden" name="return_url" value="{{ request('return_url') }}" />
+        @endif
+
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
             <div
                 class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-x-2.5">
-                        @if($anamnesis->lead_id)
+                        @if (request()->filled('return_url'))
+                            <a href="{{ request('return_url') }}" class="text-activity-note-text hover:underline">
+                                ← Terug
+                            </a>
+                        @elseif ($anamnesis->lead_id)
                             <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-activity-note-text hover:underline">
                                 ← Terug naar Lead
                             </a>

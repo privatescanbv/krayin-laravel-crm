@@ -61,7 +61,7 @@ class Importer extends AbstractImporter
     /**
      * Permanent entity column.
      */
-    protected string $masterAttributeCode = 'unique_id';
+    protected string $masterAttributeCode = 'id';
 
     /**
      * Emails storage.
@@ -333,8 +333,6 @@ class Importer extends AbstractImporter
 
         foreach ($emails as $email) {
             $contactNumber = json_decode($rowData['contact_numbers'], true);
-
-            $rowData['unique_id'] = "{$rowData['user_id']}|{$rowData['organization_id']}|{$email}|{$contactNumber[0]['value']}";
 
             if ($this->isEmailExist($email)) {
                 $persons['update'][$email] = $rowData;

@@ -62,7 +62,6 @@ class PersonValidationService
 
             // System fields
             'entity_type' => 'nullable|string',
-            'unique_id'   => 'nullable|string|max:255',
         ];
     }
 

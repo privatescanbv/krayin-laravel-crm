@@ -141,7 +141,7 @@ class PersonKeycloakService
             'emailVerified' => true,
             'attributes'    => [
                 'person_id' => [(string) $person->id],
-                'unique_id' => [$person->unique_id ?? (string) Str::uuid()],
+                'unique_id' => [(string) $person->id],
             ],
         ];
     }

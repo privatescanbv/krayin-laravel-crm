@@ -14,13 +14,13 @@
 
             <!-- Acties rechts -->
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.leads.sync-anamnesis-to-older-update', $anamnesis->person->id) }}"
+                <a href="{{ route('admin.leads.sync-anamnesis-to-older-update', ['personId' => $anamnesis->person->id, 'return_url' => route('admin.leads.view', $anamnesis->lead_id) . '#anamnese']) }}"
                    class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
                     Synchroniseer met oudere Anamneses
                 </a>
 
                 <a
-                    href="{{ route('admin.anamnesis.edit', $anamnesis->id) }}"
+                    href="{{ route('admin.anamnesis.edit', ['id' => $anamnesis->id, 'return_url' => route('admin.leads.view', $anamnesis->lead_id) . '#anamnese']) }}"
                     class="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
                     title="Anamnese bewerken"
                 >

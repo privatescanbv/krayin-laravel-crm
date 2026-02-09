@@ -141,7 +141,7 @@ class FormService
         }
 
         $formData = [
-            'lead_id'         => (string)$lead->id,
+            'lead_id'         => (string) $lead->id,
             'firstname'       => $lead->first_name ?: 'Onbekend',
             'lastname'        => $lead->last_name ?: 'Onbekend',
             'fields'          => $fields,

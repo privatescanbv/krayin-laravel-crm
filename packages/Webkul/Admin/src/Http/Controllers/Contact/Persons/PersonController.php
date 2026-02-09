@@ -8,6 +8,7 @@ use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
 use App\Enums\PortalRevocationReason;
 use App\Helpers\Comparable;
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
 use App\Services\PersonValidationService;
@@ -39,7 +40,7 @@ use Webkul\Lead\Repositories\LeadRepository;
 
 class PersonController extends Controller
 {
-    use NormalizesContactFields, HasAdvancedSearch, Comparable;
+    use NormalizesContactFields, HasAdvancedSearch, Comparable, HandlesReturnUrl;
     private bool $enableLogging = false;
 
     /**
@@ -101,15 +102,8 @@ class PersonController extends Controller
         }
 
         $flashType = $result['success'] ? 'success' : 'error';
-        session()->flash($flashType, $message);
 
-        // Check if we have a return URL (from form field)
-        $returnUrl = request()->input('return_url');
-        if ($returnUrl && filter_var($returnUrl, FILTER_VALIDATE_URL)) {
-            return redirect($returnUrl);
-        }
-
-        return redirect()->route('admin.contacts.persons.view', $person->id);
+        return $this->redirectWithReturnUrl('admin.contacts.persons.view', [$person->id], $flashType, $message);
     }
 
     /**
@@ -220,11 +214,6 @@ class PersonController extends Controller
             $data['date_of_birth'] = null;
         }
 
-        // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
-        if (isset($data['unique_id']) && empty($data['unique_id'])) {
-            $data['unique_id'] = null;
-        }
-
         // Debug logging
         Log::info('Person create request data:', $data);
 
@@ -298,7 +287,7 @@ class PersonController extends Controller
     public function edit(int $id): View
     {
         $person = $this->personRepository->with('address')->findOrFail($id);
-        $returnUrl = request()->get('return_url');
+        $returnUrl = $this->resolveReturnUrl();
 
         return view('admin::contacts.persons.edit', compact('person', 'returnUrl'));
     }
@@ -346,11 +335,6 @@ class PersonController extends Controller
             $data['date_of_birth'] = null;
         }
 
-        // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
-        if (isset($data['unique_id']) && empty($data['unique_id'])) {
-            $data['unique_id'] = null;
-        }
-
         $person = $this->personRepository->update($data, $id);
 
         Event::dispatch('contacts.person.update.after', $person);
@@ -362,15 +346,7 @@ class PersonController extends Controller
             ], 200);
         }
 
-        session()->flash('success', trans('admin::app.contacts.persons.index.update-success'));
-
-        // Check if we have a return URL (from query parameter or form field)
-        $returnUrl = $request->get('return_url') ?? $request->input('return_url');
-        if ($returnUrl && filter_var($returnUrl, FILTER_VALIDATE_URL)) {
-            return redirect($returnUrl);
-        }
-
-        return redirect()->route('admin.contacts.persons.view', $id);
+        return $this->redirectWithReturnUrl('admin.contacts.persons.view', [$id], 'success', trans('admin::app.contacts.persons.index.update-success'));
     }
 
     /**

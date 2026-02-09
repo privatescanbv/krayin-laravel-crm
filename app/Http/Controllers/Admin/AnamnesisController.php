@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\NotificationReferenceType;
 use App\Events\PatientNotifyEvent;
 use App\Helpers\Comparable;
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
 use App\Services\FormService;
@@ -20,7 +21,7 @@ use Webkul\Lead\Repositories\LeadRepository;
 
 class AnamnesisController extends Controller
 {
-    use Comparable;
+    use Comparable, HandlesReturnUrl;
 
     /**
      * Create a new controller instance.
@@ -114,9 +115,7 @@ class AnamnesisController extends Controller
 
         $anamnesis->update($data);
 
-        session()->flash('success', 'Anamnese is aangepast.');
-
-        return redirect()->route('admin.leads.view', $anamnesis->lead_id);
+        return $this->redirectWithReturnUrl('admin.leads.view', [$anamnesis->lead_id], 'success', 'Anamnese is aangepast.');
     }
 
     public function attachGvlForm(Request $request, string $id): JsonResponse
@@ -465,14 +464,20 @@ class AnamnesisController extends Controller
         }
 
         if ($request->wantsJson()) {
+            $resolvedReturnUrl = $this->resolveReturnUrl();
+
             return response()->json([
                 'message'      => 'Anamnesis succesvol bijgewerkt.',
-                'redirect_url' => route('admin.leads.view', $anamnesis->lead_id),
+                'redirect_url' => $resolvedReturnUrl ?: route('admin.leads.view', $anamnesis->lead_id),
             ]);
         }
 
-        return redirect()->route('admin.leads.view', $anamnesis->lead_id)
-            ->with('success', 'Anamnesis succesvol bijgewerkt.');
+        return $this->redirectWithReturnUrl(
+            'admin.leads.view',
+            [$anamnesis->lead_id],
+            'success',
+            'Anamnesis succesvol bijgewerkt.'
+        );
     }
 
     /**

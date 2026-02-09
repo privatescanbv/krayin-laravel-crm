@@ -3,7 +3,7 @@
 {{--    <button type="button" class="text-xs text-blue-700 underline" @click="clearSuggestions">verberg</button>--}}
   </div>
   <ul class="space-y-2 max-h-[420px] overflow-auto pr-1">
-    <li v-for="s in suggestions" :key="'sug-'+(s.id||s.unique_id)" class="flex items-center justify-between gap-3">
+    <li v-for="s in suggestions" :key="'sug-'+s.id" class="flex items-center justify-between gap-3">
       <div class="min-w-0">
         <div class="text-sm font-medium dark:text-white truncate">@{{ s.name }}</div>
         <div class="text-xs text-gray-700 dark:text-gray-200 truncate" v-if="s.date_of_birth">@{{ formatDate(s.date_of_birth) }}</div>

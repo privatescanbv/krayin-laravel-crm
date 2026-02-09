@@ -5,6 +5,9 @@
 <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
     <div>
 @if ($anamnesis)
+    @php
+        $returnUrl = request()->fullUrlWithoutQuery(['return_url']).'#anamnese';
+    @endphp
     <div class="p-3 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <div class="flex items-center justify-between mb-3">
             <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -14,13 +17,13 @@
 
             <!-- Acties rechts -->
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.leads.sync-anamnesis-to-older-update', ['personId' => $anamnesis->person->id, 'return_url' => route('admin.leads.view', $anamnesis->lead_id) . '#anamnese']) }}"
+                <a href="{{ route('admin.leads.sync-anamnesis-to-older-update', ['personId' => $anamnesis->person->id, 'return_url' => $returnUrl]) }}"
                    class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
                     Synchroniseer met oudere Anamneses
                 </a>
 
                 <a
-                    href="{{ route('admin.anamnesis.edit', ['id' => $anamnesis->id, 'return_url' => route('admin.leads.view', $anamnesis->lead_id) . '#anamnese']) }}"
+                    href="{{ route('admin.anamnesis.edit', ['id' => $anamnesis->id, 'return_url' => $returnUrl]) }}"
                     class="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
                     title="Anamnese bewerken"
                 >

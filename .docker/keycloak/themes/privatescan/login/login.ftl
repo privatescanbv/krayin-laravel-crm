@@ -17,6 +17,16 @@
                 <span>Login op jouw persoonlijke account</span>
             </div>
 
+            <#if messagesPerField.existsError('username','password')>
+                <div class="alert-error" aria-live="polite">
+                    ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
+                </div>
+            <#elseif message?has_content && (message.type = 'error' || message.type = 'warning' || message.type = 'success' || message.type = 'info')>
+                <div class="alert-${message.type}" aria-live="polite">
+                    ${kcSanitize(message.summary)?no_esc}
+                </div>
+            </#if>
+
             <form id="kc-form-login"
                   action="${url.loginAction}"
                   method="post"
@@ -31,7 +41,8 @@
                          placeholder="Vul je e-mailadres in"
                          class="input_box"
                          autocomplete="username"
-                         autofocus />
+                         autofocus
+                         aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
                 </label>
 
                 <label class="pword">
@@ -41,7 +52,8 @@
                         name="password"
                         placeholder="Vul je wachtwoord in"
                         class="input_box"
-                        autocomplete="current-password"/>
+                        autocomplete="current-password"
+                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
 
                      <div class="icon">
                         <img

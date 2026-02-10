@@ -50,7 +50,7 @@ COPY --from=vite /build/docs ./docs
 COPY --from=vite /build/database ./database
 COPY --from=vite /build/artisan ./artisan
 COPY --from=vite /build/packages ./packages
-COPY --from=vite /build/storage/scribe ./storage/scribe
+COPY --from=vite /build/storage/app/scribe ./storage/app/scribe
 
 ENV VIEW_COMPILED_PATH=/usr/share/nginx/html/storage/framework/views
 

@@ -9,7 +9,6 @@ use App\Models\CallStatus;
 use App\Models\Department;
 use App\Services\patientmessages\PatientMessageService;
 use App\Services\WebhookService;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Event;
@@ -70,24 +69,9 @@ class ActivityController extends Controller
      */
     public function get(): JsonResponse
     {
-        if (! request()->has('view_type')) {
-            return datagrid(ActivityDataGrid::class)->process();
-        }
-
-        $startDate = request()->get('startDate')
-            ? Carbon::createFromTimeString(request()->get('startDate').' 00:00:01')
-            : Carbon::now()->startOfWeek()->format('Y-m-d H:i:s');
-
-        $endDate = request()->get('endDate')
-            ? Carbon::createFromTimeString(request()->get('endDate').' 23:59:59')
-            : Carbon::now()->endOfWeek()->format('Y-m-d H:i:s');
-
-        $view = request()->get('view');
-        $activities = $this->activityRepository->getActivities([$startDate, $endDate], $view)->toArray();
-
-        return response()->json([
-            'activities' => $activities,
-        ]);
+        // Calendar view was removed; always return datagrid payload.
+        // Intentionally ignore any `view_type` query param (e.g. `calendar`).
+        return datagrid(ActivityDataGrid::class)->process();
     }
 
     /**

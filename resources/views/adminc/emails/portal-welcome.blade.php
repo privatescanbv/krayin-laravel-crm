@@ -37,7 +37,7 @@
 
     <p>
         De eerste keer kunt u inloggen met dit tijdelijke wachtwoord, die u daarna aanpast naar een eigen wachtwoord.
-        <strong>Tijdelijk wachtwoord</strong><br>:
+        <strong>Tijdelijk wachtwoord</strong>:<br>
         <strong>{{ e($temporaryPassword) }}</strong>
     </p>
 

@@ -76,17 +76,6 @@ class PersonObserver
         $this->deletePortalAccount($person, 'deleted');
     }
 
-    protected function ensurePortalAccountOnCreate(Person $person): void
-    {
-        if (! $this->shouldManagePortal($person)) {
-            return;
-        }
-
-        if ($person->is_active && empty($person->keycloak_user_id)) {
-            $this->createPortalAccount($person, 'created');
-        }
-    }
-
     protected function handlePortalSyncOnUpdate(Person $person): void
     {
         if (! $this->shouldManagePortal($person)) {
@@ -100,13 +89,7 @@ class PersonObserver
         }
 
         if ($person->wasChanged('is_active')) {
-            if ($person->is_active) {
-                if ($person->keycloak_user_id) {
-                    $this->updatePortalAccount($person, ['is_active']);
-                } else {
-                    $this->createPortalAccount($person, 'reactivated');
-                }
-            } else {
+            if (! $person->is_active) {
                 $this->deletePortalAccount($person, 'deactivated');
             }
 
@@ -130,40 +113,6 @@ class PersonObserver
                 $this->updatePortalAccount($person, $portalFields);
             }
         }
-    }
-
-    protected function createPortalAccount(Person $person, string $reason): void
-    {
-        if (! $this->isKeycloakConfigured()) {
-            return;
-        }
-
-        $result = $this->personKeycloakService->create($person);
-
-        if (! $result['success']) {
-            Log::warning('Failed to create portal account for person', [
-                'person_id' => $person->id,
-                'reason'    => $reason,
-                'message'   => $result['message'] ?? null,
-            ]);
-
-            return;
-        }
-
-        if (! empty($result['keycloak_user_id'])) {
-            Person::withoutEvents(function () use ($person, $result) {
-                $person->forceFill([
-                    'keycloak_user_id' => $result['keycloak_user_id'],
-                    'is_active'        => true,
-                ])->save();
-            });
-        }
-
-        Log::info('Person portal account synced (create)', [
-            'person_id'        => $person->id,
-            'reason'           => $reason,
-            'keycloak_user_id' => $result['keycloak_user_id'] ?? null,
-        ]);
     }
 
     protected function updatePortalAccount(Person $person, array $changedFields): void
@@ -197,21 +146,25 @@ class PersonObserver
         $result = $this->personKeycloakService->delete($person);
 
         if (! $result['success']) {
-            Log::warning('Failed to delete portal account for person', [
+            Log::error('Failed to delete portal account for person', [
                 'person_id' => $person->id,
                 'reason'    => $reason,
                 'message'   => $result['message'] ?? null,
             ]);
-
-            return;
         }
 
-        Person::withoutEvents(function () use ($person) {
-            $person->forceFill([
-                'keycloak_user_id' => null,
-                'is_active'        => false,
-            ])->save();
-        });
+        // Use direct DB update to avoid dirty-state issues: during the
+        // `updated` event, $this->original has not yet been synced by
+        // finishSave(), so calling $person->save() here would re-persist
+        // every field from the original update (and any attributes leaked
+        // into $this->attributes by the CustomAttribute trait).
+        DB::table('persons')->where('id', $person->id)->update([
+            'keycloak_user_id' => null,
+            'is_active'        => false,
+        ]);
+
+        $person->keycloak_user_id = null;
+        $person->is_active = false;
 
         Log::info('Person portal account deleted', [
             'person_id' => $person->id,

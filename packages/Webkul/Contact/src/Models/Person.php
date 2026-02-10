@@ -376,6 +376,9 @@ class Person extends Model implements PersonContract
             $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
         }
 
+        if (!$this->is_active) {
+            $parts[] = '[Inactief]';
+        }
         return implode(' ', array_filter($parts));
     }
 

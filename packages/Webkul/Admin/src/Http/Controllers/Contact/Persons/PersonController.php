@@ -204,10 +204,8 @@ class PersonController extends Controller
             $data['gender'] = $data['gender']->value;
         }
 
-        // Filter out entity field if present
-        if (isset($data['entity'])) {
-            unset($data['entity']);
-        }
+        // Filter out non-column fields from the attribute system
+        unset($data['entity'], $data['attribute']);
 
         // Handle empty date fields
         if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
@@ -325,10 +323,8 @@ class PersonController extends Controller
             $data['gender'] = $data['gender']->value;
         }
 
-        // Filter out entity field if present
-        if (isset($data['entity'])) {
-            unset($data['entity']);
-        }
+        // Filter out non-column fields from the attribute system
+        unset($data['entity'], $data['attribute']);
 
         // Handle empty date fields
         if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {

@@ -43,10 +43,13 @@
                         class="input_box"
                         autocomplete="current-password"/>
 
-                    <div class="icon">
-                        <img src="${url.resourcesPath}/images/close_eye.svg"
-                             alt="Toon wachtwoord"
-                             class="eye-icon"/>
+                     <div class="icon">
+                        <img
+                            src="${url.resourcesPath}/images/close_eye.svg"
+                            class="eye-icon"
+                            data-target="password"
+                            alt="Toon wachtwoord"
+                            style="cursor:pointer;" />
                     </div>
                 </label>
 
@@ -93,5 +96,23 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.eye-icon').forEach(function (icon) {
+        icon.addEventListener('click', function () {
+            const input = document.getElementById(this.dataset.target);
+            if (!input) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.src = '${url.resourcesPath}/images/open_eye.svg';
+            } else {
+                input.type = 'password';
+                this.src = '${url.resourcesPath}/images/close_eye.svg';
+            }
+        });
+    });
+});
+</script>
 
 </@layout.registrationLayout>

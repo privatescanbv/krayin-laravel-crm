@@ -113,18 +113,412 @@ Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 ### add herniapoli forms to lead
-POST https://{{ URL }}/api/leads/2452/forms
+POST https://{{ URL }}/api/leads/1999/forms
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 {
-    "insurance_type": [
-        "What type of insurance do you have?",
-        "Private"
+    "heb_je_pijn_in_de_rug_uitstralend_naar_links": [
+        "Heb je pijn in de rug uitstralend naar links?",
+        "Ja"
     ],
-    "referral_source": [
-        "How did you hear about us?",
-        "Google"
+    "heb_je_pijn_in_de_linker_bil": [
+        "Heb je pijn in de linker bil?",
+        "Ja"
+    ],
+    "heb_je_pijn_in_het_linker_bovenbeen": [
+        "Heb je pijn in het linker bovenbeen?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_pijn_in_het_linker_bovenbeen": [
+        "Ja, waar heeft u pijn in het linker bovenbeen?",
+        [
+            "Voorkant",
+            "Achterkant",
+            "Binnenkant",
+            "Buitenkant"
+        ]
+    ],
+    "heb_je_pijn_in_het_linker_onderbeen": [
+        "Heb je pijn in het linker onderbeen?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_pijn_in_het_linker_onderbeen": [
+        "Ja, waar heeft u pijn in het linker onderbeen?",
+        [
+            "Voorkant",
+            "Achterkant",
+            "Binnenkant",
+            "Buitenkant"
+        ]
+    ],
+    "heb_je_pijn_in_de_linkervoet": [
+        "Heb je pijn in de linkervoet?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_pijn_in_de_linkervoet": [
+        "Ja, waar heeft u pijn in de linkervoet?",
+        [
+            "Hak",
+            "Wreef",
+            "Voetzool",
+            "Tenen"
+        ]
+    ],
+    "heb_je_tintelingen_dof_gevoel_in_het_linkerbeen": [
+        "Heb je tintelingen / dof gevoel in het linkerbeen?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_tintelingen_dof_gevoel_in_het_linkerbeen": [
+        "Ja, waar heeft u tintelingen / dof gevoel in het linkerbeen?",
+        [
+            "Bovenbeen",
+            "Onderbeen",
+            "Voet"
+        ]
+    ],
+    "heb_je_krachtverlies_in_het_linkerbeen": [
+        "Heb je krachtverlies in het linkerbeen?",
+        "Ja"
+    ],
+    "heb_je_pijn_in_de_rug_uitstralend_naar_rechts": [
+        "Heb je pijn in de rug uitstralend naar rechts?",
+        "Ja"
+    ],
+    "heb_je_pijn_in_de_rechter_bil": [
+        "Heb je pijn in de rechter bil?",
+        "Ja"
+    ],
+    "heb_je_pijn_in_het_rechter_bovenbeen": [
+        "Heb je pijn in het rechter bovenbeen?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_pijn_in_het_rechter_bovenbeen": [
+        "Ja, waar heeft u pijn in het rechter bovenbeen?",
+        [
+            "Voorkant",
+            "Achterkant",
+            "Binnenkant",
+            "Buitenkant"
+        ]
+    ],
+    "heb_je_pijn_in_het_rechter_onderbeen": [
+        "Heb je pijn in het rechter onderbeen?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_pijn_in_het_rechter_onderbeen": [
+        "Ja, waar heeft u pijn in het rechter onderbeen?",
+        [
+            "Voorkant",
+            "Achterkant",
+            "Binnenkant",
+            "Buitenkant"
+        ]
+    ],
+    "heb_je_pijn_in_de_rechtervoet": [
+        "Heb je pijn in de rechtervoet?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_pijn_in_de_rechtervoet": [
+        "Ja, waar heeft u pijn in de rechtervoet?",
+        [
+            "Hak",
+            "Wreef",
+            "Voetzool",
+            "Tenen"
+        ]
+    ],
+    "heb_je_tintelingen_dof_gevoel_in_het_rechterbeen": [
+        "Heb je tintelingen / dof gevoel in het rechterbeen?",
+        "Ja"
+    ],
+    "ja_waar_heeft_u_tintelingen_dof_gevoel_in_het_rechterbeen": [
+        "Ja, waar heeft u tintelingen / dof gevoel in het rechterbeen?",
+        [
+            "Bovenbeen",
+            "Onderbeen",
+            "Voet"
+        ]
+    ],
+    "heb_je_krachtverlies_in_het_rechterbeen": [
+        "Heb je krachtverlies in het rechterbeen?",
+        "Ja"
+    ],
+    "aantal": [
+        "Aantal",
+        4
+    ],
+    "periode": [
+        "Periode",
+        "Weken"
+    ],
+    "heb_je_meer_pijn_in_jouw_rug_of_beenbenen": [
+        "Heb je meer pijn in jouw rug of been/benen?",
+        "Rug"
+    ],
+    "kan_je_een_pijnscore_geven": [
+        "Kan je een pijnscore geven?",
+        6
+    ],
+    "in_welk_been_is_de_pijn_overheersend_indien_sprake_is_van_klacht": [
+        "In welk been is de pijn overheersend? (Indien sprake is van klachten in beide benen)",
+        [
+            "Rechterbeen",
+            "Linkerbeen",
+            "Beide benen gelijk"
+        ]
+    ],
+    "in_welke_situatie_heb_je_de_meeste_pijnklachten": [
+        "In welke situatie heb je de meeste pijnklachten?",
+        [
+            "Liggen",
+            "Zitten",
+            "Staan",
+            "Lopen"
+        ]
+    ],
+    "ben_je_eerder_aan_de_rug_geopereerd": [
+        "Ben je eerder aan de rug geopereerd?",
+        "Ja"
+    ],
+    "wanneer_en_welk_niveau_bijv_in_2019_op_l5_s1": [
+        "Wanneer en welk niveau? (Bijv. in 2019 op L5-S1)",
+        "3345"
+    ],
+    "heb_je_tot_nu_toe_behandelingen_ondergaan_tegen_jouw_rug_beenkla": [
+        "Heb je tot nu toe behandelingen ondergaan tegen jouw rug- beenklachten?",
+        "Ja"
+    ],
+    "ja_welke_behandelingen_heb_je_tot_nu_toe_ondergaan_tegen_jouw_ru": [
+        "Ja, Welke behandelingen heb je tot nu toe ondergaan tegen jouw rug- beenklachten?",
+        [
+            "Medicatie",
+            "Fysiotherapie",
+            "Chiropractie",
+            "Zenuwblokkade(s) (injectie)",
+            "Overige behandeling"
+        ]
+    ],
+    "ben_je_momenteel_onder_behandeling_of_staat_er_een_consult_afspr": [
+        "Ben je momenteel onder behandeling of staat er een consult afspraak ingepland bij een specialist?",
+        "Ja"
+    ],
+    "kan_je_ons_vertellen_wat_je_graag_wilt_dat_herniapoli_voor_je_ka": [
+        "Kan je ons vertellen wat je graag wilt dat Herniapoli voor je kan betekenen?",
+        "5353"
+    ],
+    "is_er_in_de_afgelopen_6_maanden_een_mri_scan_van_de_rug_gemaakt": [
+        "Is er in de afgelopen 6 maanden een MRI scan van de rug gemaakt?",
+        "Nee"
+    ],
+    "vul_hier_eventuele_toelichtingen_in": [
+        "Vul hier eventuele toelichtingen in.",
+        "test voor nieuwe crm"
+    ],
+    "ben_je_een_man_of_een_vrouw": [
+        "Ben je een man of een vrouw?",
+        "Mr."
+    ],
+    "wat_is_jouw_geboortedatum": [
+        "Wat is jouw geboortedatum?",
+        "1977-06-26"
+    ],
+    "voornaam": [
+        "Voornaam",
+        "Mark"
+    ],
+    "achternaam": [
+        "Achternaam",
+        "Pinkster"
+    ],
+    "telefoonnummer": [
+        "Telefoonnummer",
+        "0624629755"
+    ],
+    "e_mailadres": [
+        "E-mailadres",
+        "mark@markyourmedia.nl"
+    ],
+    "postcode": [
+        "Postcode",
+        "7553 LK"
+    ],
+    "huisnummer": [
+        "Huisnummer",
+        "40"
+    ],
+    "huisnummer_toevoeging": [
+        "Huisnummer Toevoeging",
+        "4"
+    ],
+    "wie_is_je_zorgverzekeraar": [
+        "Wie is je zorgverzekeraar?",
+        "De Friesland"
+    ]
+}
+
+
+### add herniapoli forms to lead 2
+POST https://{{ URL }}/api/leads/1999/forms
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}
+
+{
+    "heb_je_pijn_in_de_nek_uitstralend_naar_links": [
+        "Heb je pijn in de nek uitstralend naar links?",
+        "Nee"
+    ],
+    "heb_je_pijn_in_de_linker_schouder": [
+        "Heb je pijn in de linker schouder?",
+        "Nee"
+    ],
+    "heb_je_pijn_in_de_linker_arm": [
+        "Heb je pijn in de linker arm?",
+        "Nee"
+    ],
+    "heb_je_pijn_in_de_linker_hand": [
+        "Heb je pijn in de linker hand?",
+        "Nee"
+    ],
+    "heb_je_tintelingendof_gevoel_in_de_linkerarm": [
+        "Heb je tintelingen/dof gevoel in de linkerarm?",
+        "Nee"
+    ],
+    "heb_je_krachtverlies_in_de_linkerarm": [
+        "Heb je krachtverlies in de linkerarm?",
+        "Nee"
+    ],
+    "heb_je_pijn_in_de_nek_uitstralend_naar_rechts": [
+        "Heb je pijn in de nek uitstralend naar rechts?",
+        "Ja"
+    ],
+    "ja_waar_heb_je_pijn_in_nek_uitstralend_naar_rechts": [
+        "Ja, waar heb je pijn in nek uitstralend naar rechts?",
+        [
+            "Rechter nek achter"
+        ]
+    ],
+    "heb_je_pijn_in_de_rechter_schouder": [
+        "Heb je pijn in de rechter schouder?",
+        "Nee"
+    ],
+    "heb_je_pijn_in_de_rechter_arm": [
+        "Heb je pijn in de rechter arm?",
+        "Nee"
+    ],
+    "heb_je_pijn_in_de_rechter_hand": [
+        "Heb je pijn in de rechter hand?",
+        "Nee"
+    ],
+    "heb_je_tintelingendof_gevoel_in_de_rechterarm": [
+        "Heb je tintelingen/dof gevoel in de rechterarm?",
+        "Ja"
+    ],
+    "ja_waar_heb_je_tintelingendof_gevoel_in_de_rechterarm": [
+        "Ja, waar heb je tintelingen/dof gevoel in de rechterarm?",
+        [
+            "Bovenarm"
+        ]
+    ],
+    "heb_je_krachtverlies_in_de_rechterarm": [
+        "Heb je krachtverlies in de rechterarm?",
+        "Ja"
+    ],
+    "ja_waar_heb_je_krachtverlies_in_de_rechterarm": [
+        "Ja, waar heb je krachtverlies in de rechterarm?",
+        [
+            "Ik heb problemen met het strekken van mijn arm",
+            "Ik heb problemen met het tillen van mijn arm"
+        ]
+    ],
+    "aantal": [
+        "Aantal",
+        "2"
+    ],
+    "periode": [
+        "Periode",
+        "Jaren"
+    ],
+    "heb_je_meer_pijn_in_jouw_nek_schoudergebied_of_armen": [
+        "Heb je meer pijn in jouw nek, schoudergebied of arm(en)?",
+        "Nek"
+    ],
+    "aan_welke_kant_van_je_lichaam_is_de_pijn_overheersend": [
+        "Aan welke kant van je lichaam is de pijn overheersend?",
+        [
+            "Rechterkant"
+        ]
+    ],
+    "heb_je_een_loopstoornis": [
+        "Heb je een loopstoornis?",
+        "Nee"
+    ],
+    "heb_je_nog_andere_symptomen": [
+        "Heb je nog andere symptomen?",
+        [
+            "Verkrampte spieren in de nek/hals"
+        ]
+    ],
+    "ben_je_eerder_aan_de_nek_geopereerd": [
+        "Ben je eerder aan de nek geopereerd?",
+        "Nee"
+    ],
+    "heb_je_tot_nu_toe_behandelingen_ondergaan_tegen_jouw_nek_armklac": [
+        "Heb je tot nu toe behandelingen ondergaan tegen jouw nek-/armklachten?",
+        "Nee"
+    ],
+    "ben_je_momenteel_onder_behandeling_of_staat_er_een_consult_afspr": [
+        "Ben je momenteel onder behandeling of staat er een consult afspraak ingepland bij een specialist?",
+        "Nee"
+    ],
+    "kan_je_ons_vertellen_wat_je_graag_wilt_dat_herniapoli_voor_je_ka": [
+        "Kan je ons vertellen wat je graag wilt dat Herniapoli voor je kan betekenen?",
+        "Dit is een test voor het nieuwe crm"
+    ],
+    "is_er_in_de_afgelopen_6_maanden_een_mri_scan_van_je_nek_gemaakt": [
+        "Is er in de afgelopen 6 maanden een MRI scan van je nek gemaakt?",
+        "Nee"
+    ],
+    "vul_hier_eventuele_toelichtingen_in": [
+        "Vul hier eventuele toelichtingen in.",
+        "Hier de toelichting, lead verwijderen!!"
+    ],
+    "ben_je_een_man_of_een_vrouw": [
+        "Ben je een man of een vrouw?",
+        "Mr."
+    ],
+    "wat_is_jouw_geboortedatum": [
+        "Wat is jouw geboortedatum?",
+        "1969-02-13"
+    ],
+    "voornaam": [
+        "Voornaam",
+        "Mark"
+    ],
+    "achternaam": [
+        "Achternaam",
+        "Klaucke"
+    ],
+    "telefoonnummer": [
+        "Telefoonnummer",
+        "+31643019686"
+    ],
+    "e_mailadres": [
+        "E-mailadres",
+        "mark.klaucke@digi4you.nl"
+    ],
+    "postcode": [
+        "Postcode",
+        "7542 AT"
+    ],
+    "huisnummer": [
+        "Huisnummer",
+        "161"
+    ],
+    "zorgverzekeraar": [
+        "Zorgverzekeraar",
+        "ONVZ"
     ]
 }

@@ -1986,6 +1986,28 @@ class ProductSeeder extends BaseSeeder
                 'resourcetype'  => ResourceTypeEnum::MRI_SCANNER,
                 'productgroep'  => 'Ledematen',
             ],
+            [
+                'external_id'   => '1179',
+                'productnaam'   => 'Spondylodese Operatie',
+                'omschrijving'  => 'Spondylodese Operatie (verstijving meerdere niveaus)',
+                'valuta'        => 'EUR',
+                'inkoopprijs'   => '18686,00',
+                'verkoopprijs'  => '28000,00',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
+                'productgroep'  => 'TLIF',
+            ],
+            [
+                'external_id'   => '1180',
+                'productnaam'   => 'Discusprothese LWK 1 niveau',
+                'omschrijving'  => 'Discusprothese LWK 1 niveau',
+                'valuta'        => 'EUR',
+                'inkoopprijs'   => '12000,00',
+                'verkoopprijs'  => '24500,00',
+                'producttype'   => ProductTypeEnum::OPERATIONS,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
+                'productgroep'  => 'TLIF',
+            ],
         ];
 
         foreach ($rows as $row) {

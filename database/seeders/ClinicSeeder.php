@@ -48,26 +48,6 @@ class ClinicSeeder extends BaseSeeder
                 ],
                 'postal' => null,
             ],
-            '85e31add-d6bd-092c-f009-4e71fad20c0f' => [
-                'emails'                                  => [],
-                'phones'                                  => [],
-                'is_postal_address_same_as_visit_address' => false,
-                'visit'                                   => null,
-                'postal'                                  => null,
-            ],
-            '4006e894-d718-f009-4b65-4e71f864a02d' => [
-                'emails'                                  => [],
-                'phones'                                  => [],
-                'is_postal_address_same_as_visit_address' => true,
-                'visit'                                   => null,
-                'postal'                                  => [
-                    'street_and_number' => 'Ruddershove 10',
-                    'house_number'      => null,
-                    'postal_code'       => '8000',
-                    'city'              => 'Brugge',
-                    'country'           => null,
-                ],
-            ],
             'cd901e3d-8015-d910-5f64-5f36336bcfc8' => [
                 'emails'                                  => [],
                 'phones'                                  => ['+492117817950'],
@@ -331,7 +311,7 @@ class ClinicSeeder extends BaseSeeder
             ],
             [
                 'external_id'                   => 'cd901e3d-8015-d910-5f64-5f36336bcfc8',
-                'is_active'                     => false,
+                'is_active'                     => true,
                 'name'                          => 'Clinic Bel Etage',
                 'registration_form_clinic_name' => 'Bel Etage',
             ],
@@ -385,7 +365,7 @@ class ClinicSeeder extends BaseSeeder
             ],
             [
                 'external_id'                   => 'ccdb4356-923a-8408-1e4a-5cf91286a7c9',
-                'is_active'                     => false,
+                'is_active'                     => true,
                 'name'                          => 'Pradus Medical Center Düsseldorf',
                 'registration_form_clinic_name' => 'Pradus Dusseldorf',
             ],
@@ -421,7 +401,7 @@ class ClinicSeeder extends BaseSeeder
             ],
             [
                 'external_id'                   => '7a30fda1-5764-fb0a-12c7-63286b29f7f7',
-                'is_active'                     => false,
+                'is_active'                     => true,
                 'name'                          => 'Schön Klinik Düsseldorf',
                 'registration_form_clinic_name' => 'Schön Kliniek',
             ],

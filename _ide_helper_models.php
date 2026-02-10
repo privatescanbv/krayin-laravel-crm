@@ -427,7 +427,7 @@ namespace App\Models{
  * @property bool $combine_order
  * @property string $total_price
  * @property string|null $confirmation_letter_content
- * @property \App\Enums\OrderStatus $status
+ * @property int|null $pipeline_stage_id
  * @property \Illuminate\Support\Carbon|null $first_examination_at
  * @property int|null $created_by
  * @property int|null $updated_by
@@ -436,11 +436,13 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read int $open_activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderCheck> $orderChecks
  * @property-read int|null $order_checks_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderItem> $orderItems
  * @property-read int|null $order_items_count
  * @property-read \App\Models\SalesLead $salesLead
+ * @property-read \Webkul\Lead\Models\Stage|null $stage
  * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentEligible()
  * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentTimeFilter(?string $filter, \Carbon\Carbon $now)
@@ -455,8 +457,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereFirstExaminationAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Order wherePipelineStageId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereSalesLeadId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Order whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereTotalPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereUpdatedAt($value)
@@ -930,6 +932,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SalesLead newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SalesLead newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SalesLead query()
+ * @method static \Illuminate\Database\Eloquent\Builder|SalesLead resolveDepartment(int $salesId)
  * @method static \Illuminate\Database\Eloquent\Builder|SalesLead whereClosedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SalesLead whereContactPersonId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SalesLead whereCreatedAt($value)

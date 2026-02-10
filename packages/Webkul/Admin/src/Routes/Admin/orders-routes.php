@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\SalesLeadController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Settings\OrderController;
 use App\Http\Controllers\Admin\Settings\OrderItemController;
@@ -11,11 +12,13 @@ use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
  */
 Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('', 'index')->name('admin.orders.index');
+    Route::get('get', 'get')->name('admin.orders.get');
     Route::get('create', 'create')->name('admin.orders.create');
     Route::post('create', 'store')->name('admin.orders.store');
     Route::get('view/{id}', 'view')->name('admin.orders.view');
     Route::get('edit/{id}', 'edit')->name('admin.orders.edit');
     Route::put('edit/{id}', 'update')->name('admin.orders.update');
+    Route::put('{id}/stage', 'updateStage')->name('admin.orders.stage.update');
     Route::delete('', 'destroy')->name('admin.orders.delete');
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
     Route::post('{orderId}/gvl-form', 'attachGvlForm')->name('admin.orders.gvl-form.attach');

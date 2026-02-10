@@ -2,7 +2,6 @@
 
 namespace App\DataGrids\Settings;
 
-use App\Enums\OrderStatus;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -12,11 +11,16 @@ class OrderDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('orders')
+            ->leftJoin('lead_pipeline_stages', 'orders.pipeline_stage_id', '=', 'lead_pipeline_stages.id')
             ->addSelect(
                 'orders.id',
                 'orders.title',
                 'orders.total_price',
-                'orders.status'
+                'orders.pipeline_stage_id',
+                'lead_pipeline_stages.name as stage_name',
+                'lead_pipeline_stages.is_won',
+                'lead_pipeline_stages.is_lost',
+                'lead_pipeline_stages.sort_order as stage_sort_order'
             );
 
         $this->addFilter('id', 'orders.id');
@@ -30,29 +34,33 @@ class OrderDataGrid extends DataGrid
 
         /**
          * Optional status bucket filter:
-         * - open: active/in-progress orders
-         * - completed: finished/closed orders
+         * - open: active/in-progress orders (not won/lost)
+         * - completed: finished/closed orders (won or lost)
          */
         $statusBucket = request('status_bucket');
         if ($statusBucket === 'open') {
-            $queryBuilder->whereNotIn('orders.status', OrderStatus::getCloseStatuses());
+            $queryBuilder->where(function ($q) {
+                $q->where('lead_pipeline_stages.is_won', false)
+                    ->where('lead_pipeline_stages.is_lost', false);
+            })->orWhereNull('orders.pipeline_stage_id');
         } elseif ($statusBucket === 'completed') {
-            $queryBuilder->whereIn('orders.status', OrderStatus::getCloseStatuses());
+            $queryBuilder->where(function ($q) {
+                $q->where('lead_pipeline_stages.is_won', true)
+                    ->orWhere('lead_pipeline_stages.is_lost', true);
+            });
         }
 
         /**
-         * Prefer open/in-progress orders first. Datagrid may add an additional default orderBy later.
+         * Prefer open/in-progress orders first, by stage sort_order.
          */
-        $queryBuilder->orderByRaw("
-            CASE orders.status
-                WHEN 'new' THEN 0
-                WHEN 'planned' THEN 1
-                WHEN 'sent' THEN 2
-                WHEN 'rejected' THEN 3
-                WHEN 'approved' THEN 4
-                ELSE 99
-            END ASC
-        ");
+        $queryBuilder->orderByRaw('
+            CASE
+                WHEN lead_pipeline_stages.is_lost = 1 THEN 2
+                WHEN lead_pipeline_stages.is_won = 1 THEN 1
+                ELSE 0
+            END ASC,
+            COALESCE(lead_pipeline_stages.sort_order, 0) ASC
+        ');
 
         return $queryBuilder;
     }
@@ -87,24 +95,14 @@ class OrderDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'status',
-            'label'              => 'Status',
-            'type'               => 'string',
-            'searchable'         => false,
-            'sortable'           => true,
-            'filterable'         => true,
-            'filterable_type'    => 'dropdown',
-            'filterable_options' => collect(OrderStatus::cases())
-                ->map(function (OrderStatus $orderStatus) {
-                    return [
-                        'value' => $orderStatus->value,
-                        'label' => $orderStatus->label(),
-                    ];
-                })
-                ->values()
-                ->all(),
-            'closure' => function ($row) {
-                return OrderStatus::tryFrom($row->status)?->label() ?? $row->status;
+            'index'      => 'stage_name',
+            'label'      => 'Status',
+            'type'       => 'string',
+            'searchable' => false,
+            'sortable'   => true,
+            'filterable' => false,
+            'closure'    => function ($row) {
+                return $row->stage_name ?? 'Onbekend';
             },
         ]);
     }
@@ -137,5 +135,30 @@ class OrderDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.orders.delete', $row->id),
             ]);
         }
+    }
+
+    /**
+     * Map ambiguous sort keys to fully-qualified columns.
+     *
+     * The orders datagrid joins `lead_pipeline_stages`, so unqualified `id` (and similar)
+     * can become ambiguous in SQLite (tests) and some SQL modes.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        $column = $requestedSort['column'] ?? $this->sortColumn ?? $this->primaryColumn;
+
+        $columnMap = [
+            'id'          => 'orders.id',
+            'title'       => 'orders.title',
+            'total_price' => 'orders.total_price',
+            'stage_name'  => 'lead_pipeline_stages.name',
+        ];
+
+        $column = $columnMap[$column] ?? $column;
+
+        return $this->queryBuilder->orderBy(
+            $column,
+            $requestedSort['order'] ?? $this->sortOrder
+        );
     }
 }

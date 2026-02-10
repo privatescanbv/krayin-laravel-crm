@@ -32,23 +32,56 @@ enum PipelineStage: string
     // PRIVATESCAN SALES PIPELINE
     // ============================================================
 
-    case BESTELLING_VOORBEREIDEN = 'bestelling-voorbereiden';
-    case ORDER_VERZONDEN = 'order-verzonden';
-    case ORDER_CONFIRMED = 'order-confirmed';
-    case WAITING_FOR_EXECUTION = 'waiting-for-execution';
-    case WAITING_REPORTS = 'waiting-reports';
-    case REPORTS_RECEIVED = 'reports-received';
-    case ORDER_WON = 'order-won';
-    case ORDER_LOST = 'order-lost';
+    case SALES_IN_BEHANDELING = 'sales-in-behandeling';
+    case SALES_MET_SUCCES_AFGEROND = 'sales-met-succes-afgerond';
+    case SALES_NIET_SUCCESVOL_AFGEROND = 'sales-niet-succesvol-afgerond';
 
     // ============================================================
     // HERNIA SALES PIPELINE
     // ============================================================
 
-    case BESTELLING_VOORBEREIDEN_HERNIA = 'bestelling-voorbereiden-hernia';
-    case ORDER_VERZENDEN_HERNIA = 'order-verzenden-hernia';
-    case ORDER_LOST_HERNIA = 'order-lost-hernia';
-    case ORDER_WON_HERNIA = 'order-won-hernia';
+    case SALES_INTAKE_HERNIA = 'sales-intake-hernia';
+    case SALES_MRI_BEOORDELING_HERNIA = 'sales-mri-beoordeling-hernia';
+    case SALES_CASUS_BIJ_ARTS_HERNIA = 'sales-casus-bij-arts-hernia';
+    case SALES_BEOORDELING_GEREED_HERNIA = 'sales-beoordeling-gereed-hernia';
+    case SALES_WACHTEN_OP_PLANNING_HERNIA = 'sales-wachten-op-planning-hernia';
+    case SALES_INGEPLAND_HERNIA = 'sales-ingepland-hernia';
+    case SALES_PRE_OPERATIEF_HERNIA = 'sales-pre-operatief-hernia';
+    case SALES_OPNAME_HERNIA = 'sales-opname-hernia';
+    case SALES_OPERATIE_HERNIA = 'sales-operatie-hernia';
+    case SALES_HERSTEL_HERNIA = 'sales-herstel-hernia';
+    case SALES_NACONTROLE_HERNIA = 'sales-nacontrole-hernia';
+    case SALES_RESULTAAT_HERNIA = 'sales-resultaat-hernia';
+    case SALES_MET_SUCCES_AFGEROND_HERNIA = 'sales-met-succes-afgerond-hernia';
+    case SALES_NIET_SUCCESVOL_AFGEROND_HERNIA = 'sales-niet-succesvol-afgerond-hernia';
+
+    // ============================================================
+    // PRIVATESCAN ORDER PIPELINE
+    // ============================================================
+
+    case ORDER_VOORBEREIDEN = 'order-voorbereiden';
+    case ORDER_VERZONDEN = 'order-verzonden';
+    case ORDER_BEVESTIGD = 'order-bevestigd';
+    case ORDER_INGEPLAND = 'order-ingepland';
+    case ORDER_WACHTEN_UITVOERING = 'order-wachten-uitvoering';
+    case ORDER_UITGEVOERD = 'order-uitgevoerd';
+    case ORDER_RAPPORTEN_ONTVANGEN = 'order-rapporten-ontvangen';
+    case ORDER_GEWONNEN = 'order-gewonnen';
+    case ORDER_VERLOREN = 'order-verloren';
+
+    // ============================================================
+    // HERNIA ORDER PIPELINE
+    // ============================================================
+
+    case ORDER_VOORBEREIDEN_HERNIA = 'order-voorbereiden-hernia';
+    case ORDER_VERZONDEN_HERNIA = 'order-verzonden-hernia';
+    case ORDER_BEVESTIGD_HERNIA = 'order-bevestigd-hernia';
+    case ORDER_INGEPLAND_HERNIA = 'order-ingepland-hernia';
+    case ORDER_WACHTEN_UITVOERING_HERNIA = 'order-wachten-uitvoering-hernia';
+    case ORDER_UITGEVOERD_HERNIA = 'order-uitgevoerd-hernia';
+    case ORDER_RAPPORTEN_ONTVANGEN_HERNIA = 'order-rapporten-ontvangen-hernia';
+    case ORDER_GEWONNEN_HERNIA = 'order-gewonnen-hernia';
+    case ORDER_VERLOREN_HERNIA = 'order-verloren-hernia';
 
     // ============================================================
     // TECH PIPELINE
@@ -65,7 +98,7 @@ enum PipelineStage: string
      *   id:int,
      *   pipeline:int,
      *   label:string,
-     *   entity:'lead'|'sales'|'tech',
+     *   entity:'lead'|'sales'|'order'|'tech',
      *   status:'won'|'lost'|null
      * }>
      */
@@ -159,96 +192,261 @@ enum PipelineStage: string
         ],
 
         // Privatescan Sales
-        self::BESTELLING_VOORBEREIDEN->value => [
+        self::SALES_IN_BEHANDELING->value => [
             'id'       => 13,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Geadviseerd, order bevestigen',
+            'label'    => 'In behandeling',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::ORDER_VERZONDEN->value => [
+        self::SALES_MET_SUCCES_AFGEROND->value => [
             'id'       => 14,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Order verzonden',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::ORDER_CONFIRMED->value => [
-            'id'       => 15,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Order bevestigd',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::WAITING_FOR_EXECUTION->value => [
-            'id'       => 16,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Wachten op uitvoering',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::WAITING_REPORTS->value => [
-            'id'       => 17,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Uitgevoerd, wachten op rapporten',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::REPORTS_RECEIVED->value => [
-            'id'       => 18,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Rapporten ontvangen',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::ORDER_WON->value => [
-            'id'       => 19,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Klantproces beëindigd',
+            'label'    => 'Met succes afgerond',
             'entity'   => 'sales',
             'status'   => 'won',
         ],
-        self::ORDER_LOST->value => [
-            'id'       => 20,
+        self::SALES_NIET_SUCCESVOL_AFGEROND->value => [
+            'id'       => 15,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-            'label'    => 'Afgevoerd',
+            'label'    => 'Niet succesvol afgerond',
             'entity'   => 'sales',
             'status'   => 'lost',
         ],
 
         // Hernia Sales
-        self::BESTELLING_VOORBEREIDEN_HERNIA->value => [
+        self::SALES_INTAKE_HERNIA->value => [
+            'id'       => 16,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Intake',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_MRI_BEOORDELING_HERNIA->value => [
+            'id'       => 17,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'MRI beoordeling',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_CASUS_BIJ_ARTS_HERNIA->value => [
+            'id'       => 18,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Casus bij arts',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_BEOORDELING_GEREED_HERNIA->value => [
+            'id'       => 19,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Beoordeling gereed',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_WACHTEN_OP_PLANNING_HERNIA->value => [
+            'id'       => 20,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Wachten op planning',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_INGEPLAND_HERNIA->value => [
             'id'       => 21,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Bestelling voorbereiden',
+            'label'    => 'Ingepland',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::ORDER_VERZENDEN_HERNIA->value => [
+        self::SALES_PRE_OPERATIEF_HERNIA->value => [
             'id'       => 22,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Order is verzonden',
+            'label'    => 'Pre-operatief consult',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::ORDER_LOST_HERNIA->value => [
+        self::SALES_OPNAME_HERNIA->value => [
             'id'       => 23,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Verloren',
+            'label'    => 'Opname',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_OPERATIE_HERNIA->value => [
+            'id'       => 24,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Operatie',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_HERSTEL_HERNIA->value => [
+            'id'       => 25,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Herstel',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_NACONTROLE_HERNIA->value => [
+            'id'       => 26,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Nacontrole',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_RESULTAAT_HERNIA->value => [
+            'id'       => 27,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Resultaat',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_MET_SUCCES_AFGEROND_HERNIA->value => [
+            'id'       => 28,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Met succes afgerond',
+            'entity'   => 'sales',
+            'status'   => 'won',
+        ],
+        self::SALES_NIET_SUCCESVOL_AFGEROND_HERNIA->value => [
+            'id'       => 29,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Niet succesvol afgerond',
             'entity'   => 'sales',
             'status'   => 'lost',
         ],
-        self::ORDER_WON_HERNIA->value => [
-            'id'       => 24,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+
+        // Privatescan Orders
+        self::ORDER_VOORBEREIDEN->value => [
+            'id'       => 30,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Order voorbereiden',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_INGEPLAND->value => [
+            'id'       => 31,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Ingepland',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_VERZONDEN->value => [
+            'id'       => 32,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Order verzonden',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_BEVESTIGD->value => [
+            'id'       => 33,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Order bevestigd',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_WACHTEN_UITVOERING->value => [
+            'id'       => 34,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Wachten op uitvoering',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_UITGEVOERD->value => [
+            'id'       => 35,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Uitgevoerd, wachten op rapporten',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_RAPPORTEN_ONTVANGEN->value => [
+            'id'       => 36,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Rapporten ontvangen',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_GEWONNEN->value => [
+            'id'       => 37,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
             'label'    => 'Gewonnen',
-            'entity'   => 'sales',
+            'entity'   => 'order',
             'status'   => 'won',
+        ],
+        self::ORDER_VERLOREN->value => [
+            'id'       => 38,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+            'label'    => 'Verloren',
+            'entity'   => 'order',
+            'status'   => 'lost',
+        ],
+
+        // Hernia Orders
+        self::ORDER_VOORBEREIDEN_HERNIA->value => [
+            'id'       => 39,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Order voorbereiden',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_INGEPLAND_HERNIA->value => [
+            'id'       => 40,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Ingepland',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_VERZONDEN_HERNIA->value => [
+            'id'       => 41,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Order verzonden',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_BEVESTIGD_HERNIA->value => [
+            'id'       => 42,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Order bevestigd',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_WACHTEN_UITVOERING_HERNIA->value => [
+            'id'       => 43,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Wachten op uitvoering',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_UITGEVOERD_HERNIA->value => [
+            'id'       => 44,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Uitgevoerd, wachten op rapporten',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->value => [
+            'id'       => 45,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Rapporten ontvangen',
+            'entity'   => 'order',
+            'status'   => null,
+        ],
+        self::ORDER_GEWONNEN_HERNIA->value => [
+            'id'       => 46,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Gewonnen',
+            'entity'   => 'order',
+            'status'   => 'won',
+        ],
+        self::ORDER_VERLOREN_HERNIA->value => [
+            'id'       => 47,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
+            'label'    => 'Verloren',
+            'entity'   => 'order',
+            'status'   => 'lost',
         ],
 
         // Tech
         self::NO_PIPELINE->value => [
-            'id'       => 25,
+            'id'       => 48,
             'pipeline' => PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value,
             'label'    => 'No pipeline',
             'entity'   => 'tech',
@@ -324,11 +522,16 @@ enum PipelineStage: string
     }
 
     /**
-     * @return bool true if lead, otherwise sales
+     * @return bool true if lead, otherwise sales/order/tech
      */
     public function isLead(): bool
     {
         return $this->meta()['entity'] === 'lead';
+    }
+
+    public function isOrder(): bool
+    {
+        return $this->meta()['entity'] === 'order';
     }
 
     public function toArray(int $sortOrder): array
@@ -351,7 +554,7 @@ enum PipelineStage: string
      *   id:int,
      *   pipeline:int,
      *   label:string,
-     *   entity:'lead'|'sales'|'tech',
+     *   entity:'lead'|'sales'|'order'|'tech',
      *   status:'won'|'lost'|null
      * }
      */

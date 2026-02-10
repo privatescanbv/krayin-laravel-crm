@@ -1,7 +1,8 @@
 @php
-use App\Enums\OrderStatus;
 use App\Enums\EmailTemplateType;
+use App\Enums\PipelineStage;
 use App\Models\SalesLead;
+use Webkul\Lead\Models\Stage;
 @endphp
 <x-admin::layouts>
     <x-slot:title>
@@ -27,17 +28,25 @@ use App\Models\SalesLead;
                         <div class="text-xl font-bold dark:text-gray-300">
                             Order bewerken
                         </div>
-                        @if($orders->status)
+                        @if($orders->stage)
                             <span
-                                class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full {{ $orders->status->getStatusClass() }}">
-                                {{ $orders->status->label() }}
+                                class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                {{ $orders->stage->name }}
                             </span>
                         @endif
                     </div>
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
-                    @php $mailDisabled = $orders->status !== OrderStatus::PLANNED; @endphp
+                    @php
+                        $wachtenStageIds = [
+                            PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+                            PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
+                            PipelineStage::ORDER_INGEPLAND->id(),
+                            PipelineStage::ORDER_INGEPLAND_HERNIA->id(),
+                        ];
+                        $mailDisabled = !in_array($orders->pipeline_stage_id, $wachtenStageIds);
+                    @endphp
                     @if ($orders->sales_lead_id)
                         <button
                             type="button"
@@ -130,17 +139,22 @@ use App\Models\SalesLead;
 
                             </x-admin::form.control-group>
 
+                            @php
+                                $orderStages = $orders->stage
+                                    ? Stage::where('lead_pipeline_id', $orders->stage->lead_pipeline_id)->orderBy('sort_order')->get()
+                                    : collect();
+                            @endphp
                             <x-adminc::components.field
                                 type="select"
-                                name="status"
+                                name="pipeline_stage_id"
                                 label="Status"
-                                value="{{ $orders->status->value ?? '' }}"
+                                value="{{ $orders->pipeline_stage_id ?? '' }}"
                                 rules="required"
                             >
-                                @foreach(OrderStatus::cases() as $status)
+                                @foreach($orderStages as $stage)
                                     <option
-                                        value="{{ $status->value }}" {{ $orders->status === $status ? 'selected' : '' }}>
-                                        {{ $status->label() }}
+                                        value="{{ $stage->id }}" {{ $orders->pipeline_stage_id == $stage->id ? 'selected' : '' }}>
+                                        {{ $stage->name }}
                                     </option>
                                 @endforeach
                             </x-adminc::components.field>

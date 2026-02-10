@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\OrderStatus;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,13 +15,13 @@ class OrderRepository extends Repository
         return Order::class;
     }
 
-    public function createFromSalesLead(int $salesLeadId, string $salesLeadName): Order
+    public function createFromSalesLead(int $salesLeadId, string $salesLeadName, ?string $departmentName = null): Order
     {
         return $this->create(
-            ['title'            => 'Order voor '.$salesLeadName,
-                'total_price'   => 0.00,
-                'status'        => OrderStatus::NEW,
-                'sales_lead_id' => $salesLeadId]
+            ['title'                => 'Order voor '.$salesLeadName,
+                'total_price'       => 0.00,
+                'pipeline_stage_id' => Order::firstOrderStageId($departmentName),
+                'sales_lead_id'     => $salesLeadId]
         );
     }
 
@@ -48,7 +47,7 @@ class OrderRepository extends Repository
             'order'           => $order,
             'order_reference' => (string) $order->id,
             'order_title'     => $order->title ?? '',
-            'order_status'    => $order->status?->label() ?? '',
+            'order_status'    => $order->stage?->name ?? '',
             'order_total'     => $order->total_price ?? 0,
             'customer_name'   => $this->resolveCustomerName($order),
         ];
@@ -70,7 +69,7 @@ class OrderRepository extends Repository
     public function cleanUpFromLostSales(string $salesId): void
     {
         Order::where('sales_lead_id', $salesId)
-            ->whereNot('status', OrderStatus::completedState())
+            ->whereDoesntHave('stage', fn ($q) => $q->where('is_won', true))
             ->delete();
     }
 

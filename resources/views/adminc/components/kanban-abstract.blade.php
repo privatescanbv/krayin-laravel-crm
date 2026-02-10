@@ -11,6 +11,11 @@
         $routeNameViewEntity = 'admin.sales-leads.view';
         $RouteNameGetEntities = 'admin.sales-leads.get';
         $routeNameStageUpdate = 'admin.sales-leads.stage.update';
+    } elseif ($type === 'orders') {
+        $routeNameIndex = 'admin.orders.index';
+        $routeNameViewEntity = 'admin.orders.view';
+        $RouteNameGetEntities = 'admin.orders.get';
+        $routeNameStageUpdate = 'admin.orders.stage.update';
     } else {
         $routeNameIndex = 'admin.leads.index';
         $routeNameViewEntity = 'admin.leads.view';
@@ -181,6 +186,7 @@
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.before') !!}
 
                                     <a
+                                        v-if="entityType !== 'orders'"
                                         class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-neutral-border transition-shadow shadow-xs hover:z-10 hover:shadow-lg bg-white py-1 px-2 dark:border-gray-400 dark:bg-gray-400"
                                         :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
                                         style="min-height:unset;"
@@ -395,6 +401,61 @@
                                                             class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    <a
+                                        v-else
+                                        class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-neutral-border transition-shadow shadow-xs hover:z-10 hover:shadow-lg bg-white py-2 px-2 dark:border-gray-400 dark:bg-gray-400"
+                                        :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
+                                        style="min-height:unset;"
+                                    >
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex flex-col min-w-0 flex-1">
+                                                <div class="flex items-center gap-2 min-w-0">
+                                                    <span class="text-[10px] text-gray-500 whitespace-nowrap">
+                                                        #@{{ element.id }}
+                                                    </span>
+                                                    <span class="text-sm font-medium truncate min-w-0">
+                                                        @{{ element.title || ('Order #' + element.id) }}
+                                                    </span>
+                                                </div>
+
+                                                <span
+                                                    class="text-xs leading-normal text-gray-600 truncate"
+                                                    v-if="element.patient_name"
+                                                >
+                                                    @{{ element.patient_name }}
+                                                </span>
+                                                <span
+                                                    class="text-xs leading-normal text-gray-600 truncate"
+                                                    v-else-if="element.sales_lead && element.sales_lead.name"
+                                                >
+                                                    @{{ element.sales_lead.name }}
+                                                </span>
+                                            </div>
+
+                                            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                                <span class="text-[9px] text-gray-500 whitespace-nowrap">
+                                                    @{{ formatDate(element.created_at) }}
+                                                </span>
+
+                                                <span
+                                                    class="text-xs font-semibold text-gray-800"
+                                                    v-if="element.total_price !== null && element.total_price !== undefined"
+                                                >
+                                                    € @{{ Number(element.total_price).toFixed(2) }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between">
+                                            <div
+                                                class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400"
+                                            >
+                                                <span class="icon-activity text-xs"></span>
+                                                <span>@{{ element.open_activities_count || 0 }}</span>
                                             </div>
                                         </div>
                                     </a>
@@ -862,8 +923,8 @@
                             return;
                         }
 
-                        // Check if moving to any lost stage
-                        if (this.isLostStage(stage)) {
+                        // Check if moving to any lost stage (leads/sales require extra details)
+                        if (this.entityType !== 'orders' && this.isLostStage(stage)) {
                             this.showLostModal(stage, event.added.element);
                             return;
                         }
@@ -958,8 +1019,11 @@
                             const openCount = Number(lead.open_activities_count || 0);
 
                             if (openCount > 0) {
+                                const activityType = this.entityType === 'sales'
+                                    ? 'sales'
+                                    : (this.entityType === 'orders' ? 'order' : 'lead');
                                 const message = await window.buildOpenActivitiesConfirmMessage(this
-                                    .$axios, lead.id, openCount, this.entityType === 'sales' ? 'sales' : 'lead');
+                                    .$axios, lead.id, openCount, activityType);
                                 const confirmClose = await new Promise((resolve) => {
                                     resolve(window.confirm(message));
                                 });

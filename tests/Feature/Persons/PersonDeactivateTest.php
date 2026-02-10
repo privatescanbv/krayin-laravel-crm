@@ -71,12 +71,12 @@ test('deactivating person without keycloak still works', function () {
 
     /** @var Person $person */
     $person = Person::factory()->create([
-        'first_name' => 'Piet',
-        'last_name'  => 'Ansen',
-        'emails'     => [['value' => 'piet@example.com', 'label' => 'eigen', 'is_default' => true]],
-        'is_active'  => true,
+        'first_name'       => 'Piet',
+        'last_name'        => 'Ansen',
+        'emails'           => [['value' => 'piet@example.com', 'label' => 'eigen', 'is_default' => true]],
+        'is_active'        => true,
         'keycloak_user_id' => 'kc-existing-user',
-        'user_id'    => $this->user->id,
+        'user_id'          => $this->user->id,
     ]);
     $person->refresh();
     expect($person->keycloak_user_id)->toBe('kc-existing-user');

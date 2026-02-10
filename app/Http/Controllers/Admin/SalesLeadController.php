@@ -27,7 +27,6 @@ use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\SalesLeadLookupResource;
 use Webkul\Email\Repositories\AttachmentRepository;
-use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\StageProxy;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -150,10 +149,12 @@ class SalesLeadController extends Controller
                     'has_multiple_persons'  => $salesLead->hasMultiplePersons(),
                     'persons_count'         => $salesLead->persons_count,
                     'orders'                => $salesLead->orders->map(function ($order) {
+                        $status = $order->status;
+
                         return [
                             'id'           => $order->id,
-                            'status'       => $order->status->value,
-                            'status_label' => $order->status->label(),
+                            'status'       => $status?->value,
+                            'status_label' => $status?->label(),
                         ];
                     }),
                 ];
@@ -369,7 +370,7 @@ class SalesLeadController extends Controller
             ], 422);
         }
 
-        $lostStage = $pipeline->stages()->where('code', 'like', PipelineSeeder::STAGE_ORDER_LOST_PREFIX.'%')->first();
+        $lostStage = $pipeline->stages()->where('is_lost', true)->first();
 
         if (! $lostStage) {
             return response()->json([

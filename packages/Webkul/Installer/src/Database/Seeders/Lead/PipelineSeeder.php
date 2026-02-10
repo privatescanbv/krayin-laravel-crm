@@ -15,7 +15,6 @@ use Webkul\Lead\Models\Stage;
 
 class PipelineSeeder extends BaseSeeder
 {
-    const STAGE_ORDER_LOST_PREFIX = 'order-lost';
     /**
      * Seed the application's database.
      *
@@ -34,9 +33,9 @@ class PipelineSeeder extends BaseSeeder
         $herniaPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
         $privateScanSalesPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value;
         $herniaSalesPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value;
-
-        // should always be empty, used for new leads
-        $techBacklogPipelineId = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;;
+        $techBacklogPipelineId = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
+        $privateScanOrdersPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value;
+        $herniaOrdersPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value;
 
         // Insert pipelines with explicit IDs
         DB::table('lead_pipelines')->insert([
@@ -80,6 +79,22 @@ class PipelineSeeder extends BaseSeeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
+            [
+                'id' => $privateScanOrdersPipelineId,
+                'name' => 'Privatescan Orders',
+                'is_default' => 1,
+                'type' => PipelineType::ORDER,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id' => $herniaOrdersPipelineId,
+                'name' => 'Herniapoli Orders',
+                'is_default' => 0,
+                'type' => PipelineType::ORDER,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
         ]);
 
         $stageId = 0;
@@ -99,7 +114,7 @@ class PipelineSeeder extends BaseSeeder
         //check
         if($stageId != PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value)
         {
-            throw new Exception('Pipeline stage id is not valid: ' . $stageId);
+            throw new Exception('Pipeline stage id is not valid: ' . $stageId . ' (expected ' . PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value . ')');
         }
 
         DB::table('lead_pipeline_stages')->insert($stages);

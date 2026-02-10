@@ -3,25 +3,26 @@
     'overridePipeline',
     'overrideStage',
     'overrideUpdateUrl',
-    'salesLead' => null
+    'salesLead' => null,
+    'order' => null
 ])
 @php
-    // Allow override of pipeline and current stage for sales leads
-    $displayPipeline = $overridePipeline ?? $lead->pipeline;
-    $displayStage = $overrideStage ?? $lead->stage;
-    $updateUrl = $overrideUpdateUrl ?? route('admin.leads.stage.update', $lead->id);
     $isSalesLead = isset($salesLead);
+    $isOrder = isset($order);
+    $leadOrNull = $lead ?? null;
+
+    // Allow override of pipeline and current stage for sales leads / orders
+    $displayPipeline = $overridePipeline ?? $leadOrNull?->pipeline;
+    $displayStage = $overrideStage ?? $leadOrNull?->stage;
+    $updateUrl = $overrideUpdateUrl ?? ($leadOrNull ? route('admin.leads.stage.update', $leadOrNull->id) : '#');
 @endphp
 
     <!-- Stages Navigation -->
-{!! view_render_event('admin.leads.view.stages.before', ['lead' => $lead]) !!}
 
 <!-- Stages Vue Component -->
 <v-lead-stages>
     <x-admin::shimmer.leads.view.stages :count="$displayPipeline->stages->count() - 1"/>
 </v-lead-stages>
-
-{!! view_render_event('admin.leads.view.stages.after', ['lead' => $lead]) !!}
 
 @include('admin::leads.partials.open_activities_confirm_helper')
 
@@ -34,8 +35,6 @@
         >
             <!-- Stages Item -->
             <template v-for="stage in stages">
-                {!! view_render_event('admin.leads.view.stages.items.before', ['lead' => $lead]) !!}
-
                 <div
                     class="stage relative flex h-7 cursor-pointer items-center justify-center bg-white pl-7 pr-4 dark:bg-gray-900 ltr:first:rounded-l-lg rtl:first:rounded-r-lg"
                     :class="{
@@ -49,17 +48,11 @@
                         @{{ stage.name }}
                     </span>
                 </div>
-
-                {!! view_render_event('admin.leads.view.stages.items.after', ['lead' => $lead]) !!}
             </template>
-
-            {!! view_render_event('admin.leads.view.stages.items.dropdown.before', ['lead' => $lead]) !!}
 
             <!-- Won/Lost Stage Item -->
             <x-admin::dropdown position="bottom-right">
                 <x-slot:toggle>
-                    {!! view_render_event('admin.leads.view.stages.items.dropdown.toggle.before', ['lead' => $lead]) !!}
-
                     <div
                         class="relative flex h-7 min-w-24 cursor-pointer items-center justify-center rounded-r-lg bg-white pl-7 pr-4 dark:bg-gray-900"
                         :class="{
@@ -78,12 +71,9 @@
                         ></span>
                     </div>
 
-                    {!! view_render_event('admin.leads.view.stages.items.dropdown.toggle.after', ['lead' => $lead]) !!}
                     </x-slot>
 
                     <x-slot:menu>
-                        {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.before', ['lead' => $lead]) !!}
-
                         <x-admin::dropdown.menu.item
                             @click="openModal(this.stages.find(stage => isWonStage(stage)))"
                         >
@@ -96,13 +86,8 @@
                             @lang('admin::app.leads.view.stages.lost')
                         </x-admin::dropdown.menu.item>
 
-                        {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.after', ['lead' => $lead]) !!}
                         </x-slot>
             </x-admin::dropdown>
-
-            {!! view_render_event('admin.leads.view.stages.items.dropdown.after', ['lead' => $lead]) !!}
-
-            {!! view_render_event('admin.leads.view.stages.form_controls.before', ['lead' => $lead]) !!}
 
             <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
@@ -110,68 +95,65 @@
                 ref="stageUpdateForm"
             >
                 <form @submit="handleSubmit($event, handleFormSubmit)">
-                    {!! view_render_event('admin.leads.view.stages.form_controls.modal.before', ['lead' => $lead]) !!}
-
                     <x-admin::modal ref="stageUpdateModal">
                         <x-slot:header>
-                            {!! view_render_event('admin.leads.view.stages.form_controls.modal.header.before', ['lead' => $lead]) !!}
+                            {!! view_render_event('admin.leads.view.stages.form_controls.modal.header.before', ['lead' => $leadOrNull]) !!}
 
                             <h3 class="text-base font-semibold dark:text-white">
                                 @lang('admin::app.leads.view.stages.need-more-info')
                             </h3>
 
-                            {!! view_render_event('admin.leads.view.stages.form_controls.modal.header.after', ['lead' => $lead]) !!}
+                            {!! view_render_event('admin.leads.view.stages.form_controls.modal.header.after', ['lead' => $leadOrNull]) !!}
                             </x-slot>
 
                             <x-slot:content>
-                                {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $lead]) !!}
+                                {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $leadOrNull]) !!}
 
-                                <!-- Won Value - Removed lead_value field -->
-                                <template v-if="isWonStage(nextStage)">
-                                    <!-- Lead value field has been removed -->
-                                    <x-adminc::components.field
-                                        type="date"
-                                        name="closed_at"
-                                        v-model="nextStage.closed_at"
-                                        :label="trans('admin::app.leads.view.stages.closed-at')"
-                                    />
-                                </template>
+                                @if (! $isOrder)
+                                    <!-- Won Value - Removed lead_value field -->
+                                    <template v-if="isWonStage(nextStage)">
+                                        <!-- Lead value field has been removed -->
+                                        <x-adminc::components.field
+                                            type="date"
+                                            name="closed_at"
+                                            v-model="nextStage.closed_at"
+                                            :label="trans('admin::app.leads.view.stages.closed-at')"
+                                        />
+                                    </template>
 
-                                <!-- Lost Reason -->
-                                <template v-else-if="isLostStage(nextStage)">
-                                    <x-adminc::components.field
-                                        type="date"
-                                        name="closed_at"
-                                        v-model="nextStage.closed_at"
-                                        :label="trans('admin::app.leads.view.stages.closed-at')"
-                                    />
+                                    <!-- Lost Reason -->
+                                    <template v-else-if="isLostStage(nextStage)">
+                                        <x-adminc::components.field
+                                            type="date"
+                                            name="closed_at"
+                                            v-model="nextStage.closed_at"
+                                            :label="trans('admin::app.leads.view.stages.closed-at')"
+                                        />
 
-                                    <x-admin::form.control-group>
-                                        <select
-                                            name="lost_reason"
-                                            class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
-                                            v-model="nextStage.lost_reason"
-                                        >
-                                            <option value="">Selecteer reden...</option>
-                                            @foreach(LostReason::cases() as $reason)
-                                                <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
-                                            @endforeach
-                                        </select>
-                                        <x-admin::form.control-group.label>
-                                            @lang('admin::app.leads.view.stages.lost-reason')
-                                        </x-admin::form.control-group.label>
-                                    </x-admin::form.control-group>
-                                </template>
-                                <template v-else>
-                                    <!-- No extra fields required for regular stage transitions -->
-                                </template>
+                                        <x-admin::form.control-group>
+                                            <select
+                                                name="lost_reason"
+                                                class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                                v-model="nextStage.lost_reason"
+                                            >
+                                                <option value="">Selecteer reden...</option>
+                                                @foreach(LostReason::cases() as $reason)
+                                                    <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                                                @endforeach
+                                            </select>
+                                            <x-admin::form.control-group.label>
+                                                @lang('admin::app.leads.view.stages.lost-reason')
+                                            </x-admin::form.control-group.label>
+                                        </x-admin::form.control-group>
+                                    </template>
+                                    <template v-else>
+                                        <!-- No extra fields required for regular stage transitions -->
+                                    </template>
+                                @endif
 
-                                {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.after', ['lead' => $lead]) !!}
                                 </x-slot>
 
                                 <x-slot:footer>
-                                    {!! view_render_event('admin.leads.view.stages.form_controls.modal.footer.before', ['lead' => $lead]) !!}
-
                                     <button
                                         type="submit"
                                         class="primary-button"
@@ -179,15 +161,12 @@
                                         @lang('admin::app.leads.view.stages.save-btn')
                                     </button>
 
-                                    {!! view_render_event('admin.leads.view.stages.form_controls.modal.footer.after', ['lead' => $lead]) !!}
                                     </x-slot>
                     </x-admin::modal>
 
-                    {!! view_render_event('admin.leads.view.stages.form_controls.modal.after', ['lead' => $lead]) !!}
                 </form>
             </x-admin::form>
 
-            {!! view_render_event('admin.leads.view.stages.form_controls.after', ['lead' => $lead]) !!}
         </div>
     </script>
 
@@ -198,6 +177,8 @@
             data() {
                 return {
                     isUpdating: false,
+
+                    isOrderContext: {{ $isOrder ? 'true' : 'false' }},
 
                     currentStage: @json($displayStage),
 
@@ -249,6 +230,12 @@
 
                     this.nextStage = stage;
 
+                    // For orders, skip the modal and update directly (no closed_at / lost_reason)
+                    if (this.isOrderContext) {
+                        this.update(stage);
+                        return;
+                    }
+
                     // Default 'Gesloten op' (closed_at) to today in d-m-YYYY (nl-NL)
                     // - when transitioning to any 'lost*' stage
                     // - when transitioning to any 'won*' stage
@@ -266,12 +253,13 @@
                         'lead_pipeline_stage_id': this.nextStage.id
                     };
 
-                    if (this.isWonStage(this.nextStage)) {
-                        params.closed_at = this.nextStage.closed_at;
-                    } else if (this.isLostStage(this.nextStage)) {
-                        params.lost_reason = this.nextStage.lost_reason;
-
-                        params.closed_at = this.nextStage.closed_at;
+                    if (!this.isOrderContext) {
+                        if (this.isWonStage(this.nextStage)) {
+                            params.closed_at = this.nextStage.closed_at;
+                        } else if (this.isLostStage(this.nextStage)) {
+                            params.lost_reason = this.nextStage.lost_reason;
+                            params.closed_at = this.nextStage.closed_at;
+                        }
                     }
 
                     this.update(this.nextStage, params);
@@ -308,11 +296,18 @@
                     };
 
                     try {
-                        // Compute open activities depending on context (lead vs sales lead)
+                        // Compute open activities depending on context (lead vs sales lead vs order)
                         let openCount;
                         let entityIdForConfirm;
                         let confirmOptions;
-                        @if ($isSalesLead)
+                        @if ($isOrder)
+                        entityIdForConfirm = {{ $order->id }};
+                        confirmOptions = {type: 'order'};
+                        const orderTmpl = "{{ route('admin.orders.activities.index', $order->id) }}";
+                        const orderRes = await this.$axios.get(orderTmpl, {params: {is_done: 0}});
+                        const orderAll = Array.isArray(orderRes?.data?.data) ? orderRes.data.data : [];
+                        openCount = orderAll.length;
+                        @elseif ($isSalesLead)
                         // Strictly use sales lead activities; do not fallback to lead counters
                         entityIdForConfirm = {{ $salesLead->id }};
                         confirmOptions = {type: 'sales'};
@@ -339,7 +334,7 @@
 
                         await performUpdate();
                     } catch (e) {
-                        console.error('Could not update lead stage', e);
+                        console.error('Could not update stage', e);
                         this.isUpdating = false;
                     }
                 },

@@ -3,12 +3,11 @@
 namespace Tests\Feature\Orders;
 
 use App\Enums\OrderItemStatus;
-use App\Enums\OrderStatus;
+use App\Enums\PipelineStage;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
-use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Services\OrderStatusService;
@@ -36,23 +35,27 @@ class OrderStatusTest extends TestCase
     }
 
     /**
-     * Test that order status is NEW when no order items exist
+     * Test that order stage is "voorbereiden" when no order items exist
      */
-    public function test_order_status_is_new_when_no_items_exist(): void
+    public function test_order_stage_is_voorbereiden_when_no_items_exist(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::PLANNED]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+        ]);
 
-        $calculatedStatus = $this->orderStatusService->calculate($order);
+        $calculatedStageId = $this->orderStatusService->calculate($order);
 
-        $this->assertEquals(OrderStatus::NEW, $calculatedStatus);
+        $this->assertEquals(PipelineStage::ORDER_VOORBEREIDEN->id(), $calculatedStageId);
     }
 
     /**
-     * Test that order status is NEW when not all planable items are planned
+     * Test that order stage is "voorbereiden" when not all planable items are planned
      */
-    public function test_order_status_is_new_when_not_all_planable_items_are_planned(): void
+    public function test_order_stage_is_voorbereiden_when_not_all_planable_items_are_planned(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::PLANNED]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -86,17 +89,19 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::NEW->value,
         ]);
 
-        $calculatedStatus = $this->orderStatusService->calculate($order);
+        $calculatedStageId = $this->orderStatusService->calculate($order);
 
-        $this->assertEquals(OrderStatus::NEW, $calculatedStatus);
+        $this->assertEquals(PipelineStage::ORDER_VOORBEREIDEN->id(), $calculatedStageId);
     }
 
     /**
-     * Test that order status is PLANNED when all planable items are planned
+     * Test that order stage is "wachten-uitvoering" when all planable items are planned
      */
-    public function test_order_status_is_planned_when_all_planable_items_are_planned(): void
+    public function test_order_stage_is_wachten_uitvoering_when_all_planable_items_are_planned(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::NEW]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -130,17 +135,19 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::NEW->value,
         ]);
 
-        $calculatedStatus = $this->orderStatusService->calculate($order);
+        $calculatedStageId = $this->orderStatusService->calculate($order);
 
-        $this->assertEquals(OrderStatus::PLANNED, $calculatedStatus);
+        $this->assertEquals(PipelineStage::ORDER_INGEPLAND->id(), $calculatedStageId);
     }
 
     /**
-     * Test that order status automatically changes to PLANNED when all planable items become planned
+     * Test that order stage automatically changes to "wachten-uitvoering" when all planable items become planned
      */
-    public function test_order_status_changes_to_planned_when_all_planable_items_become_planned(): void
+    public function test_order_stage_changes_to_wachten_uitvoering_when_all_planable_items_become_planned(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::NEW]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -166,26 +173,28 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::NEW->value,
         ]);
 
-        // Verify order is NEW
-        $this->assertEquals(OrderStatus::NEW, $order->fresh()->status);
+        // Verify order is at voorbereiden stage
+        $this->assertEquals(PipelineStage::ORDER_VOORBEREIDEN->id(), $order->fresh()->pipeline_stage_id);
 
         // Plan all planable items
         $item1->update(['status' => OrderItemStatus::PLANNED->value]);
         $item2->update(['status' => OrderItemStatus::PLANNED->value]);
 
-        // Recalculate order status
+        // Recalculate order stage
         $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-        // Verify order status changed to PLANNED
-        $this->assertEquals(OrderStatus::PLANNED, $order->fresh()->status);
+        // Verify order stage changed to wachten-uitvoering
+        $this->assertEquals(PipelineStage::ORDER_INGEPLAND->id(), $order->fresh()->pipeline_stage_id);
     }
 
     /**
-     * Test that order status changes back to NEW when a new unplanned planable item is added
+     * Test that order stage changes back to "voorbereiden" when a new unplanned planable item is added
      */
-    public function test_order_status_changes_to_new_when_unplanned_planable_item_is_added(): void
+    public function test_order_stage_changes_to_voorbereiden_when_unplanned_planable_item_is_added(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::PLANNED]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -205,9 +214,9 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::PLANNED->value,
         ]);
 
-        // Verify order is PLANNED
+        // Verify order is at wachten-uitvoering
         $this->orderStatusService->recalculateAndPersist($order->fresh());
-        $this->assertEquals(OrderStatus::PLANNED, $order->fresh()->status);
+        $this->assertEquals(PipelineStage::ORDER_INGEPLAND->id(), $order->fresh()->pipeline_stage_id);
 
         // Add a new unplanned planable item
         OrderItem::factory()->create([
@@ -216,19 +225,21 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::NEW->value,
         ]);
 
-        // Recalculate order status
+        // Recalculate order stage
         $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-        // Verify order status changed back to NEW
-        $this->assertEquals(OrderStatus::NEW, $order->fresh()->status);
+        // Verify order stage changed back to voorbereiden
+        $this->assertEquals(PipelineStage::ORDER_VOORBEREIDEN->id(), $order->fresh()->pipeline_stage_id);
     }
 
     /**
-     * Test that order status stays PLANNED when a non-planable item is added
+     * Test that order stage stays at "ORDER_INGEPLAND" when a non-planable item is added
      */
-    public function test_order_status_stays_planned_when_non_planable_item_is_added(): void
+    public function test_order_stage_stays_wachten_uitvoering_when_non_planable_item_is_added(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::PLANNED]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -249,30 +260,32 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::PLANNED->value,
         ]);
 
-        // Verify order is PLANNED
+        // Verify order is at wachten-uitvoering
         $this->orderStatusService->recalculateAndPersist($order->fresh());
-        $this->assertEquals(OrderStatus::PLANNED, $order->fresh()->status);
+        $this->assertEquals(PipelineStage::ORDER_INGEPLAND->id(), $order->fresh()->pipeline_stage_id);
 
-        // Add a new non-planable item (should not affect status)
+        // Add a new non-planable item (should not affect stage)
         OrderItem::factory()->create([
             'order_id'   => $order->id,
             'product_id' => $productWithoutPartner->id,
             'status'     => OrderItemStatus::NEW->value,
         ]);
 
-        // Recalculate order status
+        // Recalculate order stage
         $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-        // Verify order status stays PLANNED
-        $this->assertEquals(OrderStatus::PLANNED, $order->fresh()->status);
+        // Verify order stage stays at wachten-uitvoering
+        $this->assertEquals(PipelineStage::ORDER_INGEPLAND->id(), $order->fresh()->pipeline_stage_id);
     }
 
     /**
-     * Test that order status changes back to NEW when a planned planable item becomes unplanned
+     * Test that order stage changes back to "voorbereiden" when a planned planable item becomes unplanned
      */
-    public function test_order_status_changes_to_new_when_planned_planable_item_becomes_unplanned(): void
+    public function test_order_stage_changes_to_voorbereiden_when_planned_planable_item_becomes_unplanned(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::PLANNED]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -298,26 +311,28 @@ class OrderStatusTest extends TestCase
             'status'     => OrderItemStatus::PLANNED->value,
         ]);
 
-        // Verify order is PLANNED
+        // Verify order is at wachten-uitvoering
         $this->orderStatusService->recalculateAndPersist($order->fresh());
-        $this->assertEquals(OrderStatus::PLANNED, $order->fresh()->status);
+        $this->assertEquals(PipelineStage::ORDER_INGEPLAND->id(), $order->fresh()->pipeline_stage_id);
 
         // Remove planning from one planable item (simulate ResourceOrderItem deletion)
         $item1->update(['status' => OrderItemStatus::NEW->value]);
 
-        // Recalculate order status
+        // Recalculate order stage
         $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-        // Verify order status changed back to NEW
-        $this->assertEquals(OrderStatus::NEW, $order->fresh()->status);
+        // Verify order stage changed back to voorbereiden
+        $this->assertEquals(PipelineStage::ORDER_VOORBEREIDEN->id(), $order->fresh()->pipeline_stage_id);
     }
 
     /**
-     * Test that order status persists correctly when recalculated
+     * Test that order stage persists correctly when recalculated
      */
-    public function test_order_status_persists_when_recalculated(): void
+    public function test_order_stage_persists_when_recalculated(): void
     {
-        $order = Order::factory()->create(['status' => OrderStatus::NEW]);
+        $order = Order::factory()->create([
+            'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        ]);
         $salesLead = SalesLead::factory()->create();
         $order->sales_lead_id = $salesLead->id;
         $order->save();
@@ -340,10 +355,10 @@ class OrderStatusTest extends TestCase
         // Recalculate and persist
         $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-        // Verify status was persisted in database
+        // Verify stage was persisted in database
         $this->assertDatabaseHas('orders', [
-            'id'     => $order->id,
-            'status' => OrderStatus::PLANNED->value,
+            'id'                => $order->id,
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
         ]);
     }
 }

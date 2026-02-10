@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\OrderStatus;
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
 use App\Traits\HasAuditTrail;
 use Carbon\Carbon;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Stage;
 
 /**
  * @mixin IdeHelperOrder
@@ -21,12 +23,36 @@ class Order extends Model
 {
     use HasAuditTrail, HasFactory;
 
+    /**
+     * Stage IDs that make an order eligible for patient portal appointments.
+     * Corresponds to old statuses: PLANNED, APPROVED, SENT.
+     */
+    private const APPOINTMENT_ELIGIBLE_STAGE_IDS = [
+        // Privatescan: order-verzonden, order-bevestigd, order-ingepland, order-wachten-uitvoering,
+        // order-uitgevoerd, order-rapporten-ontvangen, order-gewonnen
+        PipelineStage::ORDER_VERZONDEN->value           => 31,
+        PipelineStage::ORDER_BEVESTIGD->value           => 32,
+        PipelineStage::ORDER_INGEPLAND->value           => 33,
+        PipelineStage::ORDER_WACHTEN_UITVOERING->value  => 34,
+        PipelineStage::ORDER_UITGEVOERD->value          => 35,
+        PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->value => 36,
+        PipelineStage::ORDER_GEWONNEN->value            => 37,
+        // Hernia equivalents
+        PipelineStage::ORDER_VERZONDEN_HERNIA->value           => 40,
+        PipelineStage::ORDER_BEVESTIGD_HERNIA->value           => 41,
+        PipelineStage::ORDER_INGEPLAND_HERNIA->value           => 42,
+        PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->value  => 43,
+        PipelineStage::ORDER_UITGEVOERD_HERNIA->value          => 44,
+        PipelineStage::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->value => 45,
+        PipelineStage::ORDER_GEWONNEN_HERNIA->value            => 46,
+    ];
+
     protected $table = 'orders';
 
     protected $fillable = [
         'title',
         'total_price',
-        'status',
+        'pipeline_stage_id',
         'first_examination_at',
         'sales_lead_id',
         'combine_order',
@@ -37,7 +63,7 @@ class Order extends Model
 
     protected $casts = [
         'total_price'          => 'decimal:2',
-        'status'               => OrderStatus::class,
+        'pipeline_stage_id'    => 'integer',
         'first_examination_at' => 'datetime',
         'sales_lead_id'        => 'integer',
         'combine_order'        => 'boolean',
@@ -50,11 +76,37 @@ class Order extends Model
         return [
             'title'                => 'required|string|max:255',
             'total_price'          => 'required|numeric|min:0',
-            'status'               => 'required|string',
+            'pipeline_stage_id'    => 'nullable|integer|exists:lead_pipeline_stages,id',
             'first_examination_at' => 'nullable|date',
             'sales_lead_id'        => 'required|integer|exists:salesleads,id',
             'combine_order'        => 'boolean',
         ];
+    }
+
+    /**
+     * Get the first order pipeline stage ID for the given department.
+     */
+    public static function firstOrderStageId(?string $departmentName): int
+    {
+        if ($departmentName === 'Herniapoli') {
+            return PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value === 7
+                ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()
+                : PipelineStage::ORDER_VOORBEREIDEN->id();
+        }
+
+        return PipelineStage::ORDER_VOORBEREIDEN->id();
+    }
+
+    /**
+     * Get the "order verzonden" stage ID for the given department.
+     */
+    public static function orderVerzondenStageId(?string $departmentName): int
+    {
+        if ($departmentName === 'Herniapoli') {
+            return PipelineStage::ORDER_VERZONDEN_HERNIA->id();
+        }
+
+        return PipelineStage::ORDER_VERZONDEN->id();
     }
 
     /**
@@ -80,6 +132,11 @@ class Order extends Model
         return $this->salesLead?->lead;
     }
 
+    public function stage(): BelongsTo
+    {
+        return $this->belongsTo(Stage::class, 'pipeline_stage_id');
+    }
+
     public function orderChecks(): HasMany
     {
         return $this->hasMany(OrderCheck::class);
@@ -88,6 +145,21 @@ class Order extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
+    }
+
+    public function isWon(): bool
+    {
+        return (bool) $this->stage?->is_won;
+    }
+
+    public function isLost(): bool
+    {
+        return (bool) $this->stage?->is_lost;
+    }
+
+    public function getOpenActivitiesCountAttribute(): int
+    {
+        return $this->activities()->where('is_done', 0)->count();
     }
 
     /**
@@ -106,7 +178,7 @@ class Order extends Model
     public function scopeAppointmentEligible(Builder $query): Builder
     {
         return $query
-            ->whereIn('status', [OrderStatus::PLANNED->value, OrderStatus::APPROVED->value, OrderStatus::SENT->value])
+            ->whereIn('pipeline_stage_id', array_values(self::APPOINTMENT_ELIGIBLE_STAGE_IDS))
             ->whereNotNull('first_examination_at');
     }
 

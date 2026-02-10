@@ -17,7 +17,7 @@
                   {
                     "id": "b51f7598-1156-49da-a455-f89566ec30c9",
                     "leftValue": "={{ $json.body.status }}",
-                    "rightValue": "bestelling-voorbereiden",
+                    "rightValue": "sales-in-behandeling",
                     "operator": {
                       "type": "string",
                       "operation": "contains"
@@ -27,7 +27,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "bestelling-voorbereiden"
+              "outputKey": "sales-in-behandeling"
             },
             {
               "conditions": {
@@ -90,7 +90,7 @@
                   {
                     "id": "02ac07b0-ba78-46fe-8196-a10553ea11ea",
                     "leftValue": "={{ $json.body.status }}",
-                    "rightValue": "bestelling-voorbereiden-hernia",
+                    "rightValue": "sales-intake-hernia",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -101,7 +101,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "bestelling-voorbereiden-hernia"
+              "outputKey": "sales-intake-hernia"
             },
             {
               "conditions": {

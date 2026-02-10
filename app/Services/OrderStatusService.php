@@ -3,38 +3,25 @@
 namespace App\Services;
 
 use App\Enums\OrderItemStatus;
-use App\Enums\OrderStatus;
+use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\SalesLead;
 use Illuminate\Support\Facades\DB;
 
 class OrderStatusService
 {
     /**
-     * Calculate the correct status for an Order.
+     * Calculate the correct pipeline stage ID for an Order.
      *
      * Rules:
      * - Only order items that can be planned (have partner products) are considered
-     * - If all planable order items are PLANNED → Order status is PLANNED
-     * - If any planable order item is not PLANNED → Order status is NEW
-     * - If no planable order items exist → Order status is NEW
+     * - If all planable order items are PLANNED → stage = order-wachten-uitvoering
+     * - If any planable order item is not PLANNED → stage = order-voorbereiden
+     * - If no planable order items exist → stage = order-voorbereiden
      */
-    public function calculate(Order $order): OrderStatus
+    public function calculate(Order $order): int
     {
-        // Get order items with their product information
-        //        $orderItems = DB::table('order_items')
-        //            ->where('order_id', $order->id)
-        //            ->join('products', 'order_items.product_id', '=', 'products.id')
-        //            ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
-        //            ->select(
-        //                'order_items.id',
-        //                'order_items.status',
-        //                'order_items.product_id',
-        //                DB::raw('COUNT(partner_products.id) as partner_product_count')
-        //            )
-        //            ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id')
-        //            ->get();
-
         $orderItems = OrderItem::query()
             ->where('order_id', $order->id)
             ->select('order_items.id', 'order_items.status', 'order_items.product_id')
@@ -44,8 +31,19 @@ class OrderStatusService
             ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id')
             ->get();
 
+        // Determine department to pick correct pipeline stages
+        $isHernia = SalesLead::isHerniaPoli($order->sales_lead_id);
+
+        $firstStageId = $isHernia
+            ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()
+            : PipelineStage::ORDER_VOORBEREIDEN->id();
+
+        $plannedStageId = $isHernia
+            ? PipelineStage::ORDER_INGEPLAND_HERNIA->id()
+            : PipelineStage::ORDER_INGEPLAND->id();
+
         if ($orderItems->isEmpty()) {
-            return OrderStatus::NEW;
+            return $firstStageId;
         }
 
         // Filter to only planable items (items with partner products)
@@ -53,34 +51,33 @@ class OrderStatusService
             return $item->isPlannable();
         });
 
-        // If there are no planable items, order status is NEW
+        // If there are no planable items, order stays at first stage
         if ($planableItems->isEmpty()) {
-            return OrderStatus::NEW;
+            return $firstStageId;
         }
 
         // Check if all planable items are planned
         foreach ($planableItems as $orderItem) {
             if ($orderItem->status !== OrderItemStatus::PLANNED) {
-                // At least one planable item is not planned, so order should be NEW
-                return OrderStatus::NEW;
+                return $firstStageId;
             }
         }
 
         // All planable items are planned
-        return OrderStatus::PLANNED;
+        return $plannedStageId;
     }
 
     /**
-     * Recalculate and persist the status if different.
+     * Recalculate and persist the stage if different.
      */
     public function recalculateAndPersist(Order $order): void
     {
-        $newStatus = $this->calculate($order);
+        $newStageId = $this->calculate($order);
 
-        if ($order->status !== $newStatus) {
+        if ($order->pipeline_stage_id !== $newStageId) {
             DB::table('orders')
                 ->where('id', $order->id)
-                ->update(['status' => $newStatus->value, 'updated_at' => now()]);
+                ->update(['pipeline_stage_id' => $newStageId, 'updated_at' => now()]);
         }
     }
 
@@ -91,10 +88,11 @@ class OrderStatusService
     {
         $order = new Order;
         $order->id = $orderId;
-        // Fetch current status minimally
-        $row = DB::table('orders')->where('id', $orderId)->first(['status']);
+        // Fetch current pipeline_stage_id minimally
+        $row = DB::table('orders')->where('id', $orderId)->first(['pipeline_stage_id', 'sales_lead_id']);
         if ($row) {
-            $order->status = OrderStatus::tryFrom($row->status);
+            $order->pipeline_stage_id = $row->pipeline_stage_id;
+            $order->sales_lead_id = $row->sales_lead_id;
         }
 
         $this->recalculateAndPersist($order);

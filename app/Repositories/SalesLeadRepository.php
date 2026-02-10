@@ -78,7 +78,8 @@ class SalesLeadRepository extends Repository
             $this->copyPersonsFromLead($salesLead, $lead);
 
             // Create initial order for this sales lead
-            $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name);
+            $departmentName = $lead->department?->name;
+            $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name, $departmentName);
 
             // Add a system activity on the lead linking to this new sales lead view
             $this->activityRepository->createSystemActivitiesForSalesLeadCreation($lead, $salesLead);

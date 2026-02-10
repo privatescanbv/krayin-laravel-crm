@@ -7,6 +7,7 @@ enum PipelineType: string
     case LEAD = 'lead';
     // TODO rename to backoffice
     case BACKOFFICE = 'workflow';
+    case ORDER = 'order';
 
     /**
      * Get all enum values as array.
@@ -34,6 +35,7 @@ enum PipelineType: string
         return match ($this) {
             self::LEAD       => 'Lead',
             self::BACKOFFICE => 'Workflow',
+            self::ORDER      => 'Order',
         };
     }
 }

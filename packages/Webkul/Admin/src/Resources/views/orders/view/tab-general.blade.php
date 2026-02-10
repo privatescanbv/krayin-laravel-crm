@@ -17,6 +17,15 @@
         </div>
     </div>
 
+    <!-- Stages Navigation -->
+    <!-- Stages Navigation -->
+    @include('admin::leads.view.stages',[
+        'overridePipeline' => $order->stage->pipeline,
+        'overrideStage' => $order->stage,
+        'overrideUpdateUrl' => route('admin.orders.stage.update', $order->id),
+        'order' => $order,
+    ])
+
     <!-- Order Details Card -->
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h4 class="mb-4 font-semibold text-gray-800 dark:text-white">Order Details</h4>
@@ -27,9 +36,9 @@
             </div>
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Status</span>
-                @if($order->status)
-                    <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $order->status->getStatusClass() }}">
-                        {{ $order->status->label() }}
+                @if($order->stage)
+                    <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                        {{ $order->stage->name }}
                     </span>
                 @else
                     <span class="text-gray-400">-</span>

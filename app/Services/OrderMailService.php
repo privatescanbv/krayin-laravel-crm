@@ -8,8 +8,10 @@ use App\Models\Order;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use RuntimeException;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Enums\EmailFolderEnum;
+use Webkul\Email\Models\Email;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
 class OrderMailService
@@ -127,13 +129,13 @@ class OrderMailService
      * This keeps Order-specific composition here, while all actual "store/send/folder"
      * happens through the generic CrmMailService pipeline.
      */
-    public function sendOrderMailDirect(Order $order, ?string $recipientEmail = null): \Webkul\Email\Models\Email
+    public function sendOrderMailDirect(Order $order, ?string $recipientEmail = null): Email
     {
         $mailData = $this->buildMailData($order);
 
         $to = $recipientEmail ?: ($mailData['default_email'] ?? null);
         if (! is_string($to) || trim($to) === '') {
-            throw new \RuntimeException('No recipient email available for order mail.');
+            throw new RuntimeException('No recipient email available for order mail.');
         }
 
         $order->loadMissing(['salesLead.lead.persons', 'salesLead.contactPerson']);

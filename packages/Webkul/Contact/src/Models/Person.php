@@ -32,6 +32,17 @@ class Person extends Model implements PersonContract
     use CustomAttribute, HasDefaultContactInfo, HasFactory, LogsActivity, SoftDeletes;
 
     /**
+     * Default attribute values.
+     *
+     * New persons should be active by default unless explicitly deactivated.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
+    /**
      * Table name.
      *
      * @var string

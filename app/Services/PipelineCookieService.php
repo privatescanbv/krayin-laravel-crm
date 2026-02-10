@@ -143,6 +143,7 @@ class PipelineCookieService
         return match ($type) {
             PipelineType::LEAD       => 'last_selected_pipeline_id_lead',
             PipelineType::BACKOFFICE => 'last_selected_pipeline_id_sales',
+            PipelineType::ORDER      => 'last_selected_pipeline_id_order',
             default                  => throw new Exception('Unknown request type '.$type->value),
         };
     }

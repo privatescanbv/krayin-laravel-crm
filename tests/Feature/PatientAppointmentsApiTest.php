@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Enums\OrderStatus;
+use App\Enums\PipelineStage;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -33,7 +33,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
 
     $futureOrder = Order::factory()->create([
         'sales_lead_id'         => $salesLead->id,
-        'status'                => OrderStatus::PLANNED,
+        'pipeline_stage_id'     => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at'  => now()->addDay(),
     ]);
 
@@ -55,11 +55,11 @@ test('patient appointments endpoint returns planned/approved orders as appointme
 
     // Creating order items/bookings may trigger status recalculation via observers.
     // Force back to an API-visible state for this endpoint.
-    $futureOrder->refresh()->update(['status' => OrderStatus::PLANNED]);
+    $futureOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);
 
     $pastOrder = Order::factory()->create([
         'sales_lead_id'         => $salesLead->id,
-        'status'                => OrderStatus::APPROVED,
+        'pipeline_stage_id'     => PipelineStage::ORDER_GEWONNEN->id(),
         'first_examination_at'  => now()->subDay(),
     ]);
 
@@ -71,22 +71,22 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         'to'           => now()->subHours(4),
     ]);
 
-    $pastOrder->refresh()->update(['status' => OrderStatus::APPROVED]);
+    $pastOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()]);
 
-    expect($futureOrder->fresh()->status)->toBe(OrderStatus::PLANNED)
-        ->and($pastOrder->fresh()->status)->toBe(OrderStatus::APPROVED);
+    expect($futureOrder->fresh()->pipeline_stage_id)->toBe(PipelineStage::ORDER_WACHTEN_UITVOERING->id())
+        ->and($pastOrder->fresh()->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id());
 
     // Should be ignored (wrong status)
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'status'               => OrderStatus::NEW,
+        'pipeline_stage_id'    => PipelineStage::ORDER_VOORBEREIDEN->id(),
         'first_examination_at' => now()->addDays(2),
     ]);
 
     // Should be ignored (no first_examination_at)
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'status'               => OrderStatus::PLANNED,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => null,
     ]);
 
@@ -153,7 +153,7 @@ test('clinic is derived from first booking for patient when order is not combine
 
     $order = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'status'               => OrderStatus::PLANNED,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'combine_order'        => false,
         'first_examination_at' => now()->addDay(),
     ]);
@@ -176,7 +176,7 @@ test('clinic is derived from first booking for patient when order is not combine
     ]);
 
     // Force back to an API-visible state (order observers can recalculate status).
-    $order->refresh()->update(['status' => OrderStatus::PLANNED]);
+    $order->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);
 
     $response = $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
         ->getJson("/api/patient/{$keycloakId}/appointments");
@@ -211,7 +211,7 @@ test('patient appointments endpoint supports future/past filter', function () {
 
     $futureOrder = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'status'               => OrderStatus::PLANNED,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => now()->addHours(6),
     ]);
 
@@ -223,11 +223,11 @@ test('patient appointments endpoint supports future/past filter', function () {
         'to'           => now()->addHours(7),
     ]);
 
-    $futureOrder->refresh()->update(['status' => OrderStatus::PLANNED]);
+    $futureOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);
 
     $pastOrder = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'status'               => OrderStatus::APPROVED,
+        'pipeline_stage_id'    => PipelineStage::ORDER_GEWONNEN->id(),
         'first_examination_at' => now()->subHours(6),
     ]);
 
@@ -239,10 +239,10 @@ test('patient appointments endpoint supports future/past filter', function () {
         'to'           => now()->subHours(5),
     ]);
 
-    $pastOrder->refresh()->update(['status' => OrderStatus::APPROVED]);
+    $pastOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()]);
 
     expect(Order::query()
-        ->whereIn('status', [OrderStatus::PLANNED->value, OrderStatus::APPROVED->value])
+        ->whereIn('pipeline_stage_id', [PipelineStage::ORDER_WACHTEN_UITVOERING->id(), PipelineStage::ORDER_GEWONNEN->id()])
         ->whereNotNull('first_examination_at')
         ->whereHas('salesLead.persons', fn ($q) => $q->whereKey($person->id))
         ->count()

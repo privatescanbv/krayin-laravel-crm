@@ -5,41 +5,43 @@
     'returnUrl' => null,
 ])
 
-@if (empty($person->keycloak_user_id))
-    @if (bouncer()->hasPermission('contacts.persons.portal-create'))
-        <form
-            method="POST"
-            action="{{ route('admin.contacts.persons.portal.create', $person->id) }}"
-            onsubmit="return confirm('Portal account aanmaken voor {{ $person->name }}?')"
-            style="display: inline;">
-            @csrf
-            @if ($returnUrl)
-                <input type="hidden" name="return_url" value="{{ $returnUrl }}">
-            @endif
-            @if ($presentLarge)
-                <button
-                    type="submit"
-                    title="Patiëntportaal account aanmaken"
-                    class="group flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-note-bg font-medium text-activity-note-text transition-all hover:border-activity-note-border hover:text-blue-700"
-                >
-                    <span class="icon-user text-2xl text-activity-note-text transition-all group-hover:text-blue-700 dark:!text-activity-note-text"></span>
-                    Portaal
-                </button>
-            @else
-                <button type="submit" class="icon-user rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-activity-note-text hover:text-blue-700" title="Patiëntportaal account aanmaken"></button>
-            @endif
-        </form>
-    @endif
-@else
-    @if (bouncer()->hasPermission('contacts.persons.portal-delete'))
-        <v-portal-revoke-button
-            person-id="{{ $person->id }}"
-            person-name="{{ $person->name }}"
-            action-url="{{ route('admin.contacts.persons.portal.delete', $person->id) }}"
-            return-url="{{ $returnUrl }}"
-            present-large="{{ $presentLarge ? 'true' : 'false' }}"
-            csrf-token="{{ csrf_token() }}"
-        ></v-portal-revoke-button>
+@if($person->is_active)
+    @if (empty($person->keycloak_user_id))
+        @if (bouncer()->hasPermission('contacts.persons.portal-create'))
+            <form
+                method="POST"
+                action="{{ route('admin.contacts.persons.portal.create', $person->id) }}"
+                onsubmit="return confirm('Portal account aanmaken voor {{ $person->name }}?')"
+                style="display: inline;">
+                @csrf
+                @if ($returnUrl)
+                    <input type="hidden" name="return_url" value="{{ $returnUrl }}">
+                @endif
+                @if ($presentLarge)
+                    <button
+                        type="submit"
+                        title="Patiëntportaal account aanmaken"
+                        class="group flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-note-bg font-medium text-activity-note-text transition-all hover:border-activity-note-border hover:text-blue-700"
+                    >
+                        <span class="icon-user text-2xl text-activity-note-text transition-all group-hover:text-blue-700 dark:!text-activity-note-text"></span>
+                        Portaal
+                    </button>
+                @else
+                    <button type="submit" class="icon-user rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-activity-note-text hover:text-blue-700" title="Patiëntportaal account aanmaken"></button>
+                @endif
+            </form>
+        @endif
+    @else
+        @if (bouncer()->hasPermission('contacts.persons.portal-delete'))
+            <v-portal-revoke-button
+                person-id="{{ $person->id }}"
+                person-name="{{ $person->name }}"
+                action-url="{{ route('admin.contacts.persons.portal.delete', $person->id) }}"
+                return-url="{{ $returnUrl }}"
+                present-large="{{ $presentLarge ? 'true' : 'false' }}"
+                csrf-token="{{ csrf_token() }}"
+            ></v-portal-revoke-button>
+        @endif
     @endif
 @endif
 

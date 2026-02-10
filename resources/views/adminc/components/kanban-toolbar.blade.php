@@ -6,11 +6,12 @@
 @php
     if ($type == 'sales') {
         $routeNameIndex = 'admin.sales-leads.index';
-        $cols = 2;
         $pipelines = app('Webkul\Lead\Repositories\PipelineRepository')->getWorkflowPipelines();
+    } elseif ($type === 'orders') {
+        $routeNameIndex = 'admin.orders.index';
+        $pipelines = app('Webkul\Lead\Repositories\PipelineRepository')->getPipelinesByType(\App\Enums\PipelineType::ORDER);
     } else {
         $routeNameIndex = 'admin.leads.index';
-        $cols = 3;
         $pipelines = app('Webkul\Lead\Repositories\PipelineRepository')->getLeadPipelines();
     }
 
@@ -33,9 +34,11 @@
         @include('adminc::components.vue.wonlost-toggle')
     </div>
 
-    <div class="h-6 ml-2">
-        @include('adminc::components.vue.duplicates-toggle')
-    </div>
+    @if ($type !== 'orders')
+        <div class="h-6 ml-2">
+            @include('adminc::components.vue.duplicates-toggle')
+        </div>
+    @endif
 
     <!-- LEFT: NAV BAR -->
     <nav class="pipeline-nav flex-shrink-0 border border-gray-200 bg-white rounded-md px-1 h-11 flex items-center">
@@ -66,6 +69,15 @@
             class="primary-button h-11 flex items-center whitespace-nowrap ml-auto"
         >
             @lang('admin::app.leads.index.create-btn')
+        </a>
+    @endif
+
+    @if ($type === 'orders' && bouncer()->hasPermission('orders.create'))
+        <a
+            href="{{ route('admin.orders.create') }}{{ request('pipeline_id') ? '?pipeline_id=' . request('pipeline_id') : '' }}"
+            class="primary-button h-11 flex items-center whitespace-nowrap ml-auto"
+        >
+            Nieuwe Order
         </a>
     @endif
 </div>

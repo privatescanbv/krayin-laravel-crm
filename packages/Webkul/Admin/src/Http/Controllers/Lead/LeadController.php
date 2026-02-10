@@ -523,6 +523,9 @@ class LeadController extends Controller
 
         $payload = [
             'entity_type' => 'persons',
+            // Persons created from the lead create flow should be active by default.
+            // (Otherwise they show up as "[Inactief]" in the UI immediately after creation.)
+            'is_active' => true,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'lastname_prefix' => (string) $request->input('lastname_prefix', ''),

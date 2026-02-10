@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Departments;
 use App\Enums\LostReason;
 use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
@@ -64,6 +65,16 @@ class SalesLead extends Model
         'closed_at'     => 'date',
         'lost_reason'   => LostReason::class,
     ];
+
+    /**
+     * @return bool true if department of the lead of this sales is hernia, otherwise it is privatescan.
+     */
+    public static function isHerniaPoli(int $salesId): bool
+    {
+        $departmentName = SalesLead::resolveDepartment($salesId);
+
+        return $departmentName == Departments::HERNIA->value;
+    }
 
     /**
      * Get the pipeline stage that owns the lead.
@@ -354,6 +365,15 @@ class SalesLead extends Model
 
             return collect();
         }
+    }
+
+    public function scopeResolveDepartment($query, int $salesId)
+    {
+        return $query
+            ->join('leads', 'salesleads.lead_id', '=', 'leads.id')
+            ->join('departments', 'leads.department_id', '=', 'departments.id')
+            ->where('salesleads.id', $salesId)
+            ->value('departments.name');
     }
 
     /**

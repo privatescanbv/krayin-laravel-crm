@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
-use App\Enums\OrderStatus;
+use App\Enums\PipelineStage;
+use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
 use App\Models\Order;
 use App\Models\OrderCheck;
@@ -17,8 +18,10 @@ use App\Services\Mail\EmailTemplateRenderingService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
 use App\Services\OrderStatusService;
+use App\Services\PipelineCookieService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,9 +32,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
+use Webkul\Activity\Models\Activity;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\EmailTemplate\Models\EmailTemplate;
+use Webkul\Lead\Models\StageProxy;
 use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
@@ -45,17 +50,181 @@ class OrderController extends SimpleEntityController
         protected OrderStatusService $orderStatusService,
         protected SalesLeadRepository $salesLeadRepository,
         protected FormService $formService,
+        protected PipelineCookieService $pipelineCookieService,
         private EmailTemplateRenderingService $emailTemplateRenderingService
     ) {
         parent::__construct($orderRepository);
 
         $this->entityName = 'orders';
         $this->datagridClass = OrderDataGrid::class;
-        $this->indexView = 'admin::orders.index';
+        $this->indexView = 'adminc.orders.index';
         $this->createView = 'admin::orders.create';
         $this->editView = 'admin::orders.edit';
         $this->indexRoute = 'admin.orders.index';
         $this->permissionPrefix = 'orders';
+    }
+
+    public function index(Request $request): View|JsonResponse
+    {
+        // Keep datagrid JSON responses working (used by table views / embedded datagrids).
+        if ($request->ajax() || $request->wantsJson()) {
+            return parent::index($request);
+        }
+
+        $pipeline = $this->pipelineCookieService->getPipeline(PipelineType::ORDER, $request->pipeline_id);
+
+        $stages = $pipeline->stages->map(function ($stage) {
+            return [
+                'id'               => $stage->id,
+                'code'             => $stage->code,
+                'name'             => $stage->name,
+                'description'      => $stage->description,
+                'sort_order'       => $stage->sort_order,
+                'lead_pipeline_id' => $stage->lead_pipeline_id,
+                'is_won'           => (bool) $stage->is_won,
+                'is_lost'          => (bool) $stage->is_lost,
+                'leads'            => [
+                    'data' => [],
+                    'meta' => [
+                        'total'        => 0,
+                        'current_page' => 1,
+                        'per_page'     => 10,
+                        'last_page'    => 1,
+                    ],
+                ],
+            ];
+        })->toArray();
+
+        return view($this->indexView, [
+            'pipeline' => $pipeline,
+            'stages'   => $stages,
+        ]);
+    }
+
+    public function get(Request $request): JsonResponse
+    {
+        $request->validate([
+            // pipeline_id is optional; if invalid/missing we fall back to default ORDER pipeline.
+            'pipeline_id'        => ['nullable', 'integer'],
+            'pipeline_stage_id'  => ['nullable', 'integer', 'exists:lead_pipeline_stages,id'],
+            'page'               => ['nullable', 'integer', 'min:1'],
+            'limit'              => ['nullable', 'integer', 'min:1', 'max:100'],
+            // Accept typical querystring boolean values like "true"/"false" and 0/1.
+            // (Laravel's `boolean` validator does not accept "true"/"false".)
+            'exclude_won_lost'   => ['nullable', 'in:0,1,true,false'],
+            'sort'               => ['nullable', 'string'],
+            'order'              => ['nullable', 'string', 'in:asc,desc'],
+        ]);
+
+        try {
+            $pipeline = $this->pipelineCookieService->getPipeline(
+                PipelineType::ORDER,
+                $request->filled('pipeline_id') ? (int) $request->pipeline_id : null
+            );
+        } catch (ModelNotFoundException|Exception) {
+            // If the requested pipeline id doesn't exist (or any resolution error occurs),
+            // gracefully fall back to the default ORDER pipeline.
+            $pipeline = $this->pipelineCookieService->getPipeline(PipelineType::ORDER, null);
+        }
+
+        $limit = (int) ($request->input('limit', 10));
+        $page = (int) ($request->input('page', 1));
+        $excludeWonLost = $request->boolean('exclude_won_lost', false);
+
+        $sort = (string) ($request->input('sort', 'created_at'));
+        $order = (string) ($request->input('order', 'desc'));
+
+        // Whitelist sortable columns.
+        if (! in_array($sort, ['created_at', 'id', 'total_price'], true)) {
+            $sort = 'created_at';
+        }
+
+        $stages = $pipeline->stages;
+
+        if ($request->filled('pipeline_stage_id')) {
+            $stageId = (int) $request->input('pipeline_stage_id');
+            $stages = $stages->where('id', $stageId);
+        }
+
+        $data = [];
+
+        foreach ($stages as $stage) {
+            if ($excludeWonLost && ($stage->is_won || $stage->is_lost)) {
+                continue;
+            }
+
+            $query = Order::query()
+                ->with([
+                    'stage',
+                    'salesLead.persons',
+                    'salesLead.lead',
+                ])
+                ->withCount([
+                    'activities as open_activities_count' => function ($q) {
+                        $q->where('is_done', 0);
+                    },
+                ])
+                ->where('pipeline_stage_id', $stage->id)
+                ->orderBy($sort, $order);
+
+            $paginator = $query->paginate($limit, ['*'], 'page', $page);
+
+            $orders = $paginator->getCollection()->map(function (Order $order) {
+                $stagePayload = $order->stage ? [
+                    'id'      => $order->stage->id,
+                    'name'    => $order->stage->name,
+                    'code'    => $order->stage->code,
+                    'is_won'  => (bool) $order->stage->is_won,
+                    'is_lost' => (bool) $order->stage->is_lost,
+                ] : null;
+
+                $patientName = null;
+                if ($order->salesLead) {
+                    $patientName = $order->salesLead->persons?->first()?->name
+                        ?: $order->salesLead->lead?->name
+                        ?: $order->salesLead->name;
+                }
+
+                return [
+                    'id'                   => $order->id,
+                    'title'                => $order->title,
+                    'total_price'          => $order->total_price,
+                    'first_examination_at' => $order->first_examination_at,
+                    'created_at'           => $order->created_at,
+                    'pipeline_stage_id'    => $order->pipeline_stage_id,
+                    'pipeline_stage'       => $stagePayload,
+                    'stage'                => $stagePayload,
+                    'open_activities_count'=> (int) ($order->open_activities_count ?? 0),
+                    'patient_name'         => $patientName,
+                    'sales_lead'           => $order->salesLead ? [
+                        'id'   => $order->salesLead->id,
+                        'name' => $order->salesLead->name,
+                    ] : null,
+                ];
+            })->values();
+
+            $data[$stage->sort_order] = [
+                'id'               => $stage->id,
+                'code'             => $stage->code,
+                'name'             => $stage->name,
+                'description'      => $stage->description,
+                'sort_order'       => $stage->sort_order,
+                'lead_pipeline_id' => $stage->lead_pipeline_id,
+                'is_won'           => (bool) $stage->is_won,
+                'is_lost'          => (bool) $stage->is_lost,
+                'leads'            => [
+                    'data' => $orders,
+                    'meta' => [
+                        'total'        => (int) $paginator->total(),
+                        'current_page' => (int) $paginator->currentPage(),
+                        'per_page'     => (int) $paginator->perPage(),
+                        'last_page'    => (int) $paginator->lastPage(),
+                    ],
+                ],
+            ];
+        }
+
+        return response()->json($data);
     }
 
     public function create(Request $request): View
@@ -94,7 +263,13 @@ class OrderController extends SimpleEntityController
         $items = $payload['items'] ?? [];
         unset($payload['items']);
 
-        $payload['status'] = OrderStatus::NEW->value;
+        // Determine department for initial order stage
+        $departmentName = null;
+        if (! empty($payload['sales_lead_id'])) {
+            $sl = SalesLead::with('lead.department')->find($payload['sales_lead_id']);
+            $departmentName = $sl?->lead?->department?->name;
+        }
+        $payload['pipeline_stage_id'] = Order::firstOrderStageId($departmentName);
         $order = $this->orderRepository->create($payload);
 
         // Persist items
@@ -432,10 +607,11 @@ class OrderController extends SimpleEntityController
 
     public function markAsSent(Request $request, int $orderId): JsonResponse
     {
-        $order = $this->orderRepository->findOrFail($orderId);
+        $order = $this->orderRepository->with('salesLead.lead.department')->findOrFail($orderId);
 
+        $departmentName = $order->salesLead?->lead?->department?->name;
         $order->update([
-            'status' => OrderStatus::SENT,
+            'pipeline_stage_id' => Order::orderVerzondenStageId($departmentName),
         ]);
 
         // Dispatch event - listeners will handle PDF activity creation
@@ -583,6 +759,35 @@ class OrderController extends SimpleEntityController
         return response()->json([
             'message' => 'GVL formulier status ophalen gebeurt nu per persoon via anamnesis.',
         ], 410); // 410 Gone
+    }
+
+    public function updateStage($id)
+    {
+        request()->validate([
+            'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+        ]);
+
+        $order = Order::findOrFail($id);
+        $targetStage = StageProxy::findOrFail((int) request('lead_pipeline_stage_id'));
+
+        // Validate stage transition (e.g. unplanned items check)
+        $this->validateOrderStage($targetStage->id, $id);
+
+        // Optionally close open activities for this order when requested
+        if (request()->boolean('close_open_activities')) {
+            Activity::where('order_id', $order->id)
+                ->where('is_done', 0)
+                ->update(['is_done' => 1]);
+        }
+
+        // Order only updates pipeline_stage_id (no closed_at / lost_reason)
+        $order->update([
+            'pipeline_stage_id' => $targetStage->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Order stage bijgewerkt.',
+        ]);
     }
 
     protected function getEditViewData(Request $request, Model $entity): array
@@ -753,16 +958,21 @@ class OrderController extends SimpleEntityController
     {
         $this->validateStore($request);
 
-        // Validate status transition
-        if ($request->has('status')) {
-            $this->validateOrderStatus($request->input('status'), $id);
+        // Validate stage transition
+        if ($request->has('pipeline_stage_id')) {
+            $this->validateOrderStage((int) $request->input('pipeline_stage_id'), $id);
         }
     }
 
-    protected function validateOrderStatus(string $requestedStatus, int $orderId): void
+    protected function validateOrderStage(int $requestedStageId, int $orderId): void
     {
-        // If trying to set status to PLANNED, check if all order items are planned
-        if ($requestedStatus === OrderStatus::PLANNED->value) {
+        // If trying to set stage to a "wachten-uitvoering" stage, check if all order items are planned
+        $wachtenStageIds = [
+            PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+            PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
+        ];
+
+        if (in_array($requestedStageId, $wachtenStageIds, true)) {
             $order = $this->orderRepository->findOrFail($orderId);
 
             $hasUnplannedItems = $order->orderItems
@@ -773,7 +983,7 @@ class OrderController extends SimpleEntityController
 
             if ($hasUnplannedItems) {
                 throw ValidationException::withMessages([
-                    'status' => 'Order kan niet op Ingepland gezet worden: er zijn nog orderitems die niet ingepland zijn.',
+                    'pipeline_stage_id' => 'Order kan niet op Ingepland gezet worden: er zijn nog orderitems die niet ingepland zijn.',
                 ]);
             }
         }

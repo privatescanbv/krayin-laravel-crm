@@ -14,8 +14,8 @@ class OrderObserver
      */
     public function updated(Order $order): void
     {
-        // Don't auto-update if status was manually changed
-        if ($order->wasChanged('status')) {
+        // Don't auto-update if pipeline_stage_id was manually changed
+        if ($order->wasChanged('pipeline_stage_id')) {
             return;
         }
 

@@ -202,7 +202,8 @@ class PersonRepository extends Repository
         }
 
         // Normalize portal activation flag (checkbox/switch can submit as on/1/true)
-        $data['is_active'] = filter_var($data['is_active'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        // Default should be active for newly created persons unless explicitly set.
+        $data['is_active'] = filter_var($data['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
         // Drop empty password submissions to avoid overwriting existing hashes
         if (array_key_exists('password', $data) && empty($data['password'])) {

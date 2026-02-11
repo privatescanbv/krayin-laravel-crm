@@ -4,8 +4,8 @@ namespace App\Actions\Keycloak;
 
 use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
+use Database\Seeders\UserSeeder;
 use Illuminate\Support\Facades\Log;
-use Webkul\Installer\Database\Seeders\User\UserSeeder;
 use Webkul\User\Repositories\UserRepository;
 
 class SyncUsersToKeycloakAction

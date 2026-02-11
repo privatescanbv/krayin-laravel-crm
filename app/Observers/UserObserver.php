@@ -7,11 +7,11 @@ use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
 use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
+use Database\Seeders\UserSeeder;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Webkul\Installer\Database\Seeders\User\UserSeeder;
 use Webkul\User\Models\User;
 
 /**

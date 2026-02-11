@@ -786,6 +786,7 @@ class LeadController extends Controller
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
             'lost_reason' => ['nullable', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
+            'user_id' => 'nullable|exists:users,id',
         ]);
         $closeOpenActivities = request()->has('close_open_activities') && request()->input('close_open_activities');
 
@@ -794,7 +795,8 @@ class LeadController extends Controller
             request()->input('lead_pipeline_stage_id'),
             $closeOpenActivities,
             request()->input('lost_reason'),
-            request()->input('closed_at'));
+            request()->input('closed_at'),
+            request()->input('user_id'));
     }
 
     /**
@@ -805,15 +807,23 @@ class LeadController extends Controller
         string $leadPipelineStageId,
         bool $closeOpenActivities,
         ?string $lostReason,
-        ?string $closedAt
+        ?string $closedAt,
+        ?string $userId = null
     ): JsonResponse
     {
         $lead = $this->leadRepository->findOrFail($leadId);
 
         //validate if the stage exists in the pipeline
-        $lead->pipeline->stages()
+        $nextStage = $lead->pipeline->stages()
             ->where('id', $leadPipelineStageId)
             ->firstOrFail();
+
+        // Require user_id when transitioning to a won stage
+        if ($nextStage->is_won && is_null($userId)) {
+            return response()->json([
+                'message' => 'Toegewezen persoon is verplicht bij status Gewonnen.',
+            ], 422);
+        }
 
         // Validate status transition if stage is being changed
         if ($leadPipelineStageId != $lead->lead_pipeline_stage_id) {
@@ -850,6 +860,9 @@ class LeadController extends Controller
         }
         if (!is_null($lostReason)) {
             $data['lost_reason'] = $lostReason;
+        }
+        if (!is_null($userId)) {
+            $data['user_id'] = $userId;
         }
         // update state after closing activiteit, otherwise new activities will be closed
         $lead = $this->leadRepository->update(

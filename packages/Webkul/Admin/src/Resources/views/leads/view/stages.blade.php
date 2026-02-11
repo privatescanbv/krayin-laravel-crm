@@ -1,4 +1,7 @@
-@php use App\Enums\LostReason; @endphp
+@php
+    use App\Enums\LostReason;
+    use Webkul\User\Models\User;
+@endphp
 @props([
     'overridePipeline',
     'overrideStage',
@@ -15,6 +18,10 @@
     $displayPipeline = $overridePipeline ?? $leadOrNull?->pipeline;
     $displayStage = $overrideStage ?? $leadOrNull?->stage;
     $updateUrl = $overrideUpdateUrl ?? ($leadOrNull ? route('admin.leads.stage.update', $leadOrNull->id) : '#');
+
+    // Users for assignment dropdown (won stage)
+    $assignableUsers = User::where('status', 1)->orderBy('first_name')->orderBy('last_name')->get();
+    $currentUserId = $leadOrNull?->user_id;
 @endphp
 
     <!-- Stages Navigation -->
@@ -110,9 +117,26 @@
                                 {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $leadOrNull]) !!}
 
                                 @if (! $isOrder)
-                                    <!-- Won Value - Removed lead_value field -->
+                                    <!-- Won stage fields -->
                                     <template v-if="isWonStage(nextStage)">
-                                        <!-- Lead value field has been removed -->
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label class="required">
+                                                Toegewezen persoon
+                                            </x-admin::form.control-group.label>
+                                            <select
+                                                name="user_id"
+                                                class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                                v-model="nextStage.user_id"
+                                                required
+                                            >
+                                                <option value="">Selecteer medewerker...</option>
+                                                @foreach($assignableUsers as $user)
+                                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <x-admin::form.control-group.error control-name="user_id" />
+                                        </x-admin::form.control-group>
+
                                         <x-adminc::components.field
                                             type="date"
                                             name="closed_at"
@@ -187,6 +211,8 @@
                     stages: @json($displayPipeline->stages),
 
                     stageToggler: '',
+
+                    currentUserId: {{ $currentUserId ? $currentUserId : 'null' }},
                 }
             },
 
@@ -241,8 +267,13 @@
                     // - when transitioning to any 'won*' stage
                     if (!this.nextStage.closed_at) {
                         if (this.isLostStage(this.nextStage) || this.isWonStage(this.nextStage)) {
-                            this.nextStage.closed_at = new Date().toLocaleDateString('nl-NL');
+                            this.nextStage.closed_at = new Date().toISOString().slice(0, 10);
                         }
+                    }
+
+                    // Default user_id to current lead assignment for won stage
+                    if (this.isWonStage(this.nextStage) && !this.nextStage.user_id) {
+                        this.nextStage.user_id = this.currentUserId ? String(this.currentUserId) : '';
                     }
 
                     this.$refs.stageUpdateModal.open();
@@ -256,6 +287,7 @@
                     if (!this.isOrderContext) {
                         if (this.isWonStage(this.nextStage)) {
                             params.closed_at = this.nextStage.closed_at;
+                            params.user_id = this.nextStage.user_id;
                         } else if (this.isLostStage(this.nextStage)) {
                             params.lost_reason = this.nextStage.lost_reason;
                             params.closed_at = this.nextStage.closed_at;

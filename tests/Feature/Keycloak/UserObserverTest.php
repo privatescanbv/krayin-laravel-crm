@@ -3,10 +3,10 @@
 namespace Tests\Feature\Keycloak;
 
 use Database\Seeders\TestSeeder;
+use Database\Seeders\UserSeeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\Keycloak\Helpers\KeycloakHttpHelpers;
-use Webkul\Installer\Database\Seeders\User\UserSeeder;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 

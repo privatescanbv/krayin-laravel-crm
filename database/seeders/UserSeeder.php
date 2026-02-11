@@ -1,6 +1,6 @@
 <?php
 
-namespace Webkul\Installer\Database\Seeders\User;
+namespace Database\Seeders;
 
 use App\Enums\Departments;
 use App\Models\Department;
@@ -13,30 +13,7 @@ use Webkul\User\Models\UserDefaultValue;
 class UserSeeder extends Seeder
 {
     /**
-     * Get user passwords - defined once, used everywhere.
-     *
-     * @return array<string, string>
-     */
-    protected static function getUserPasswords(): array
-    {
-        return [
-            'robschwankhuizen@gmail.com' => '8H5jc!e123',
-            'mark.bulthuis@privatescan.nl' => '8AAZ5jc%e&AF',
-            'mark.klaucke@privatescan.nl' => '8AAZ5jc%e&Ad',
-            'linda@privatescan.nl' => '8AAZ5jc%e&3d',
-            'petra@privatescan.nl' => '8BBZ5jc%e&Ad',
-            'wout@privatescan.nl' => '8EEZ5jc%e&Ad',
-            'lars@privatescan.nl' => '8A4Z5jc%d3Ad',
-            'frank@privatescan.nl' => '8A115dc@d3Ad',
-            'nihad@nime.dev' => '8A144dc@d1Ab',
-        ];
-    }
-
-    /**
      * Get password for a user by email from the seeder data.
-     *
-     * @param  string  $email
-     * @return string|null
      */
     public static function getPasswordForEmail(string $email): ?string
     {
@@ -44,9 +21,29 @@ class UserSeeder extends Seeder
     }
 
     /**
+     * Get user passwords - defined once, used everywhere.
+     *
+     * @return array<string, string>
+     */
+    protected static function getUserPasswords(): array
+    {
+        return [
+            'robschwankhuizen@gmail.com'   => '8H5jc!e123',
+            'mark.bulthuis@privatescan.nl' => '8AAZ5jc%e&AF',
+            'mark.klaucke@privatescan.nl'  => '8AAZ5jc%e&Ad',
+            'linda@privatescan.nl'         => '8AAZ5jc%e&3d',
+            'petra@privatescan.nl'         => '8BBZ5jc%e&Ad',
+            'wout@privatescan.nl'          => '8EEZ5jc%e&Ad',
+            'lars@privatescan.nl'          => '8A4Z5jc%d3Ad',
+            'frank@privatescan.nl'         => '8A115dc@d3Ad',
+            'nihad@nime.dev'               => '8A144dc@d1Ab',
+        ];
+    }
+
+    /**
      * Seed the application's database.
      *
-     * @param array $parameters
+     * @param  array  $parameters
      * @return void
      */
     public function run($parameters = [])
@@ -66,15 +63,15 @@ class UserSeeder extends Seeder
         // Define groups with department relationships
         $groups = [
             [
-                'id' => $groupHerniaId,
-                'name' => Departments::HERNIA->value,
-                'description' => 'Hernia team',
+                'id'            => $groupHerniaId,
+                'name'          => Departments::HERNIA->value,
+                'description'   => 'Hernia team',
                 'department_id' => $herniaDepartment?->id,
             ],
             [
-                'id' => $groupPrivatescanId,
-                'name' => Departments::PRIVATESCAN->value,
-                'description' => 'Privatescan team',
+                'id'            => $groupPrivatescanId,
+                'name'          => Departments::PRIVATESCAN->value,
+                'description'   => 'Privatescan team',
                 'department_id' => $privatescanDepartment?->id,
             ],
         ];
@@ -93,103 +90,103 @@ class UserSeeder extends Seeder
         // Define users with their group assignments
         $users = [
             [
-                'first_name' => 'Mark',
-                'last_name' => 'Bulthuis',
-                'email' => 'mark.bulthuis@privatescan.nl',
-                'password' => $passwords['mark.bulthuis@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Mark',
+                'last_name'       => 'Bulthuis',
+                'email'           => 'mark.bulthuis@privatescan.nl',
+                'password'        => $passwords['mark.bulthuis@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => null, // Admin has no specific group
-                'signature' => $this->signatureTemplate('Mark', 'Bulthuis', 'mark.bulthuis@privatescan.nl'),
+                'group_id'        => null, // Admin has no specific group
+                'signature'       => $this->signatureTemplate('Mark', 'Bulthuis', 'mark.bulthuis@privatescan.nl'),
             ],
             [
-                'first_name' => 'Mark',
-                'last_name' => 'Klaucke',
-                'email' => 'mark.klaucke@privatescan.nl',
-                'password' => $passwords['mark.klaucke@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Mark',
+                'last_name'       => 'Klaucke',
+                'email'           => 'mark.klaucke@privatescan.nl',
+                'password'        => $passwords['mark.klaucke@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => null, // Admin has no specific group
-                'signature' => $this->signatureTemplate('Mark', 'Klaucke', 'mark.klaucke@privatescan.nl'),
+                'group_id'        => null, // Admin has no specific group
+                'signature'       => $this->signatureTemplate('Mark', 'Klaucke', 'mark.klaucke@privatescan.nl'),
             ],
             [
-                'first_name' => 'Linda',
-                'last_name' => 'Meijer',
-                'email' => 'linda@privatescan.nl',
-                'password' => $passwords['linda@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Linda',
+                'last_name'       => 'Meijer',
+                'email'           => 'linda@privatescan.nl',
+                'password'        => $passwords['linda@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => null,
-                'signature' => $this->signatureTemplate('Linda', 'Meijer', 'linda@privatescan.nl'),
+                'group_id'        => null,
+                'signature'       => $this->signatureTemplate('Linda', 'Meijer', 'linda@privatescan.nl'),
             ],
             [
-                'first_name' => 'Petra',
-                'last_name' => 'Nijhof',
-                'email' => 'petra@privatescan.nl',
-                'password' => $passwords['petra@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Petra',
+                'last_name'       => 'Nijhof',
+                'email'           => 'petra@privatescan.nl',
+                'password'        => $passwords['petra@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => $groupPrivatescanId,
-                'signature' => $this->signatureTemplate('Petra', 'Nijhof', 'petra@privatescan.nl'),
+                'group_id'        => $groupPrivatescanId,
+                'signature'       => $this->signatureTemplate('Petra', 'Nijhof', 'petra@privatescan.nl'),
             ],
             [
-                'first_name' => 'Wout',
-                'last_name' => 'Lansink',
-                'email' => 'wout@privatescan.nl',
-                'password' => $passwords['wout@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Wout',
+                'last_name'       => 'Lansink',
+                'email'           => 'wout@privatescan.nl',
+                'password'        => $passwords['wout@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => $groupHerniaId,
-                'signature' => $this->signatureTemplate('Wout', 'Lansink', 'wout@privatescan.nl'),
+                'group_id'        => $groupHerniaId,
+                'signature'       => $this->signatureTemplate('Wout', 'Lansink', 'wout@privatescan.nl'),
             ],
             [
-                'first_name' => 'Lars',
-                'last_name' => 'Kamphuis',
-                'email' => 'lars@privatescan.nl',
-                'password' => $passwords['lars@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 2, // Medewerker Afdeling role
+                'first_name'      => 'Lars',
+                'last_name'       => 'Kamphuis',
+                'email'           => 'lars@privatescan.nl',
+                'password'        => $passwords['lars@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 2, // Medewerker Afdeling role
                 'view_permission' => 'group', // Restricted to group view
-                'group_id' => $groupHerniaId,
-                'signature' => $this->signatureTemplate('Lars', 'Kamphuis', 'lars@privatescan.nl'),
+                'group_id'        => $groupHerniaId,
+                'signature'       => $this->signatureTemplate('Lars', 'Kamphuis', 'lars@privatescan.nl'),
             ],
             [
-                'first_name' => 'Frank',
-                'last_name' => 'Hefti',
-                'email' => 'frank@privatescan.nl',
-                'password' => $passwords['frank@privatescan.nl'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Frank',
+                'last_name'       => 'Hefti',
+                'email'           => 'frank@privatescan.nl',
+                'password'        => $passwords['frank@privatescan.nl'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => null,
-                'signature' => $this->signatureTemplate('Frank', 'Hefti', 'frank@privatescan.nl'),
+                'group_id'        => null,
+                'signature'       => $this->signatureTemplate('Frank', 'Hefti', 'frank@privatescan.nl'),
             ],
             [
-                'first_name' => 'Rob',
-                'last_name' => 'Schwankhuizen',
-                'email' => 'robschwankhuizen@gmail.com',
-                'password' => $passwords['robschwankhuizen@gmail.com'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Rob',
+                'last_name'       => 'Schwankhuizen',
+                'email'           => 'robschwankhuizen@gmail.com',
+                'password'        => $passwords['robschwankhuizen@gmail.com'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => null,
-                'signature' => $this->signatureTemplate('Rob', 'Schwankhuizen', 'robschwankhuizen@gmail.com'),
+                'group_id'        => null,
+                'signature'       => $this->signatureTemplate('Rob', 'Schwankhuizen', 'robschwankhuizen@gmail.com'),
             ],
             [
-                'first_name' => 'Nihad',
-                'last_name' => 'Mehmedovic',
-                'email' => 'nihad@nime.dev',
-                'password' => $passwords['nihad@nime.dev'],
-                'status' => 1,
-                'role_id' => 1,
+                'first_name'      => 'Nihad',
+                'last_name'       => 'Mehmedovic',
+                'email'           => 'nihad@nime.dev',
+                'password'        => $passwords['nihad@nime.dev'],
+                'status'          => 1,
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id' => null,
-                'signature' => $this->signatureTemplate('Nihad', 'Mehmedovic', 'nihad@nime.dev'),
+                'group_id'        => null,
+                'signature'       => $this->signatureTemplate('Nihad', 'Mehmedovic', 'nihad@nime.dev'),
             ],
 
         ];
@@ -204,15 +201,15 @@ class UserSeeder extends Seeder
             $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 [
-                    'first_name' => $userData['first_name'],
-                    'last_name' => $userData['last_name'],
-                    'password' => $userData['password'], // Plaintext - User model will hash it and store plaintext for observer
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                    'status' => $userData['status'],
-                    'role_id' => $userData['role_id'],
+                    'first_name'      => $userData['first_name'],
+                    'last_name'       => $userData['last_name'],
+                    'password'        => $userData['password'], // Plaintext - User model will hash it and store plaintext for observer
+                    'created_at'      => date('Y-m-d H:i:s'),
+                    'updated_at'      => date('Y-m-d H:i:s'),
+                    'status'          => $userData['status'],
+                    'role_id'         => $userData['role_id'],
                     'view_permission' => $userData['view_permission'],
-                    'signature' => $userData['signature'] ?? null,
+                    'signature'       => $userData['signature'] ?? null,
                 ]
             );
 
@@ -220,11 +217,11 @@ class UserSeeder extends Seeder
             if ($groupId) {
                 DB::table('user_groups')->updateOrInsert(
                     [
-                        'user_id' => $user->id,
+                        'user_id'  => $user->id,
                         'group_id' => $groupId,
                     ],
                     [
-                        'user_id' => $user->id,
+                        'user_id'  => $user->id,
                         'group_id' => $groupId,
                     ]
                 );
@@ -232,10 +229,10 @@ class UserSeeder extends Seeder
 
             // Seed default user default values
             $defaultSettings = [
-                'lead.department_id' => '2',
+                'lead.department_id'   => '2',
                 'lead.lead_channel_id' => '1',
-                'lead.lead_source_id' => '6',
-                'lead.lead_type_id' => '1',
+                'lead.lead_source_id'  => '6',
+                'lead.lead_type_id'    => '1',
             ];
 
             // Override for Mark Bulthuis
@@ -247,7 +244,7 @@ class UserSeeder extends Seeder
                 UserDefaultValue::updateOrCreate(
                     [
                         'user_id' => $user->id,
-                        'key' => $key,
+                        'key'     => $key,
                     ],
                     [
                         'value' => $value,

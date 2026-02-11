@@ -103,6 +103,27 @@
                     </div>
                 </div>
 
+                <!-- Owner -->
+                <div class="flex-1">
+                    @php
+                        $userOptions = app(Webkul\User\Repositories\UserRepository::class)
+                        ->allActiveUsers();
+                        $currentUserId = $salesLead->user_id;
+                    @endphp
+                    <x-adminc::components.field
+                        type="select"
+                        name="user_id"
+                        value="{{ $currentUserId }}"
+                        label="Toegewezen gebruiker"
+                    >
+                        <option value="">-- Kies gebruiker --</option>
+                        @foreach ($userOptions as $user)
+                            <option
+                                value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
+                        @endforeach
+                    </x-adminc::components.field>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="mt-6 flex justify-end">
                     <button

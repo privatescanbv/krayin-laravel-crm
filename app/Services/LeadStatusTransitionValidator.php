@@ -184,12 +184,10 @@ class LeadStatusTransitionValidator
             PipelineStage::allStageExcludingWon(), // Any stage can transition to won/lost
             PipelineStage::allStageWon(),
             [
-                'contact_person_required' => function (Lead $lead) {
+                'custom_validation' => function (Lead $lead) {
                     return self::validateWonTransition($lead);
                 },
-                'user_id_required' => function (Lead $lead) {
-                    return self::validateWonTransitionUserRequired($lead);
-                },
+                'required_fields' => ['user_id'],
             ]
         );
 
@@ -208,15 +206,6 @@ class LeadStatusTransitionValidator
         } catch (Exception $e) {
             return ['Validatie fout: '.$e->getMessage()];
         }
-    }
-
-    private static function validateWonTransitionUserRequired(Lead $lead): array
-    {
-        if (is_null($lead->user_id)) {
-            return ['Een lead mag alleen naar status "gewonnen" als er een medewerker is toegewezen aan deze lead.'];
-        }
-
-        return [];
     }
 
     /**

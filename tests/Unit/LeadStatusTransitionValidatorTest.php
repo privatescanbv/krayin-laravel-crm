@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\Address;
+use App\Models\User;
 use App\Services\LeadStatusTransitionValidator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +31,8 @@ class LeadStatusTransitionValidatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $assignUser = User::factory()->create();
 
         // Reset validator state
         LeadStatusTransitionValidator::reset();
@@ -75,6 +78,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'first_name'             => 'John',
             'last_name'              => 'Doe',
             'lastname_prefix'        => 'van',
+            'user_id'                => $assignUser->id,
             'emails'                 => [['value' => 'john.doe@example.com', 'is_default' => true]],
             'phones'                 => [['value' => '0612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,

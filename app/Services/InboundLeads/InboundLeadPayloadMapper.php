@@ -34,17 +34,18 @@ class InboundLeadPayloadMapper
         $address = $this->mapHerniaAddress($payload);
 
         return array_filter([
-            'salutation'         => $this->mapSalutation($payload['salutation'] ?? null),
-            'first_name'         => $this->nullIfEmpty($payload['first_name'] ?? null) ?? 'Onbekend',
-            'last_name'          => $this->nullIfEmpty($payload['last_name'] ?? null),
-            'date_of_birth'      => $this->nullIfEmpty($payload['birthdate'] ?? null),
-            'description'        => $this->nullIfEmpty($payload['description'] ?? null),
-            'email'              => $this->nullIfEmpty($payload['email1'] ?? null),
-            'phone'              => $this->normalizePhone($payload['phone_mobile'] ?? null),
-            'lead_source_id'     => $this->mapLeadSourceId($payload['lead_source'] ?? null),
-            'lead_channel_id'    => $this->mapLeadChannelId($payload['kanaal_c'] ?? null),
-            'lead_type_id'       => $this->mapLeadTypeId($payload['soort_aanvraag_c'] ?? null),
-            'address'            => $address ?: null,
+            'salutation'           => $this->mapSalutation($payload['salutation'] ?? null),
+            'first_name'           => $this->nullIfEmpty($payload['first_name'] ?? null) ?? 'Onbekend',
+            'last_name'            => $this->nullIfEmpty($payload['last_name'] ?? null),
+            'date_of_birth'        => $this->nullIfEmpty($payload['birthdate'] ?? null),
+            'description'          => $this->nullIfEmpty($payload['description'] ?? null),
+            'diagnoseform_pdf_url' => $this->nullIfEmpty($payload['diagnoseform_pdf_url'] ?? null),
+            'email'                => $this->nullIfEmpty($payload['email1'] ?? null),
+            'phone'                => $this->normalizePhone($payload['phone_mobile'] ?? null),
+            'lead_source_id'       => $this->mapLeadSourceId($payload['lead_source'] ?? null),
+            'lead_channel_id'      => $this->mapLeadChannelId($payload['kanaal_c'] ?? null),
+            'lead_type_id'         => $this->mapLeadTypeId($payload['soort_aanvraag_c'] ?? null),
+            'address'              => $address ?: null,
         ], static fn ($v) => $v !== null);
     }
 

@@ -33,7 +33,8 @@ class HerniaCreateLeadRequest extends FormRequest
             'primary_huisnr_toevoeging_c' => ['nullable', 'string'],
             'primary_address_postalcode'  => ['nullable', 'string'],
 
-            'description' => ['nullable', 'string'],
+            'description'          => ['nullable', 'string'],
+            'diagnoseform_pdf_url' => ['nullable', 'string'],
         ];
     }
 

@@ -95,6 +95,7 @@ class Lead extends Model implements LeadContract
         'updated_by',
         'mri_status',
         'diagnosis_form_id',
+        'diagnoseform_pdf_url',
         'national_identification_number',
         'address_id',
     ];

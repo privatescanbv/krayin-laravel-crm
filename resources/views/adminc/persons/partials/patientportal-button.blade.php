@@ -5,7 +5,7 @@
     'returnUrl' => null,
 ])
 
-@if($person->is_active)
+@if ($person->is_active)
     @if (empty($person->keycloak_user_id))
         @if (bouncer()->hasPermission('contacts.persons.portal-create'))
             <form

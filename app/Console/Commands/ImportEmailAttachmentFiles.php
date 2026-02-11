@@ -56,10 +56,14 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 $this->startImportRun('email-attachments');
             }
 
-            // Check if upload_sugarcrm directory exists
-            $uploadDir = '/var/www/html/upload_sugarcrm';
-            if (! File::exists($uploadDir)) {
+            // Check if upload_sugarcrm directory exists (clearstatcache for Docker mounts)
+            $uploadDir = '/usr/share/nginx/html/upload_sugarcrm';
+            clearstatcache(true, $uploadDir);
+            if (! is_dir($uploadDir)) {
                 throw new Exception("Upload directory does not exist: {$uploadDir}");
+            }
+            if (! is_readable($uploadDir)) {
+                throw new Exception("Upload directory is not readable: {$uploadDir}");
             }
 
             // Get email attachments to process

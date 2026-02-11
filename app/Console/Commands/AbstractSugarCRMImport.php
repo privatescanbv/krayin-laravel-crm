@@ -133,9 +133,9 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function testConnection(string $connection): void
     {
-        $this->info('Testing database connection...');
+//        $this->info('Testing database connection...');
         DB::connection($connection)->getPdo();
-        $this->info('✓ Database connection successful');
+//        $this->info('✓ Database connection successful');
     }
 
     /**

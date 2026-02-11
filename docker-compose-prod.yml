@@ -64,7 +64,7 @@ services:
       - traefik.docker.network=public
       - logging=promtail
     volumes:
-      - '/home/mbulthuis/upload:/var/www/html/upload_sugarcrm'
+      - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
     networks:
       - backend
       - public

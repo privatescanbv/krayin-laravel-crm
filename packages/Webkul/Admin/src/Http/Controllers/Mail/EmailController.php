@@ -319,8 +319,12 @@ class EmailController extends Controller
             $parentId = $email->parent_id;
 
             if (request('type') == 'trash') {
-                $trashFolder = Folder::where('name', 'trash')->first();
-                if ($trashFolder) {
+                $trashFolder = Folder::where('name', EmailFolderEnum::TRASH->getFolderName())->first();
+                $alreadyInTrash = $trashFolder && $email->folder_id === $trashFolder->id;
+
+                if ($alreadyInTrash) {
+                    $this->emailRepository->delete($id);
+                } elseif ($trashFolder) {
                     $this->emailRepository->update([
                         'folder_id' => $trashFolder->id,
                     ], $id);
@@ -404,8 +408,12 @@ class EmailController extends Controller
                 Event::dispatch('email.' . $massDestroyRequest->input('type') . '.before', $email->id);
 
                 if ($massDestroyRequest->input('type') == 'trash') {
-                    $trashFolder = Folder::where('name', 'trash')->first();
-                    if ($trashFolder) {
+                    $trashFolder = Folder::where('name', EmailFolderEnum::TRASH->getFolderName())->first();
+                    $alreadyInTrash = $trashFolder && $email->folder_id === $trashFolder->id;
+
+                    if ($alreadyInTrash) {
+                        $this->emailRepository->delete($email->id);
+                    } elseif ($trashFolder) {
                         $this->emailRepository->update(['folder_id' => $trashFolder->id], $email->id);
                     }
                 } else {

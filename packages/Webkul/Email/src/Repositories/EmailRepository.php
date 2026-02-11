@@ -92,11 +92,14 @@ class EmailRepository extends Repository
             }
         }
 
+        $isDraft = $data['is_draft'] ?? false;
+
         $data = $this->sanitizeEmails(array_merge([
             'source'        => 'web',
             'from'          => $normalizedFrom,
             'user_type'     => 'admin',
-            'folder_id'     => $this->getFolderId($data['is_draft'] ?? false),
+            'is_read'       => $isDraft ? 0 : 1,
+            'folder_id'     => $this->getFolderId($isDraft),
             'unique_id'     => $uniqueId,
             'message_id'    => $uniqueId,
             'reference_ids' => array_merge($referenceIds, [$uniqueId]),

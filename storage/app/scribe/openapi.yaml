@@ -122,7 +122,7 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-02-07'
+                  example: '2026-02-11'
                   nullable: true
                 email1:
                   type: string
@@ -152,6 +152,11 @@ paths:
                   type: string
                   description: ''
                   example: 'Eius et animi quos velit et.'
+                  nullable: true
+                diagnoseform_pdf_url:
+                  type: string
+                  description: ''
+                  example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
                   nullable: true
               required:
                 - campaign_id
@@ -750,11 +755,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-07 12:10:08'
+                  example: '2026-02-11 12:07:05'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-07 12:10:08'
+                  example: '2026-02-11 12:07:05'
               required:
                 - type
     parameters:
@@ -762,7 +767,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the sales lead.'
-        example: 1
+        example: 16
         required: true
         schema:
           type: integer

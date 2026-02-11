@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-
+    
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-
+    
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -221,7 +221,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: February 7, 2026</li>
+        <li>Last updated: February 11, 2026</li>
     </ul>
 </div>
 
@@ -244,7 +244,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="endpoints">Endpoints</h1>
 
-
+    
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -272,13 +272,14 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-02-07\",
+    \"birthdate\": \"2026-02-11\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
     \"primary_huisnr_toevoeging_c\": \"architecto\",
     \"primary_address_postalcode\": \"1234AB\",
-    \"description\": \"Eius et animi quos velit et.\"
+    \"description\": \"Eius et animi quos velit et.\",
+    \"diagnoseform_pdf_url\": \"http:\\/\\/www.bailey.biz\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"
 }"
 </code></pre></div>
 
@@ -302,13 +303,14 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-02-07",
+    "birthdate": "2026-02-11",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
     "primary_huisnr_toevoeging_c": "architecto",
     "primary_address_postalcode": "1234AB",
-    "description": "Eius et animi quos velit et."
+    "description": "Eius et animi quos velit et.",
+    "diagnoseform_pdf_url": "http:\/\/www.bailey.biz\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html"
 };
 
 fetch(url, {
@@ -509,10 +511,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-02-07"
+               value="2026-02-11"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-07</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-11</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -585,6 +587,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>Example: <code>Eius et animi quos velit et.</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>diagnoseform_pdf_url</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="diagnoseform_pdf_url"                data-endpoint="POSTapi-leads-hernia"
+               value="http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html"
+               data-component="body">
+    <br>
+<p>Example: <code>http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html</code></p>
         </div>
         </form>
 
@@ -2665,7 +2679,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
+    --get "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -2673,7 +2687,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
 );
 
 const headers = {
@@ -2800,10 +2814,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="GETapi-sales-leads--id--activities"
-               value="1"
+               value="16"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>1</code></p>
+<p>The ID of the sales lead. Example: <code>16</code></p>
             </div>
                     </form>
 
@@ -2821,7 +2835,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -2830,15 +2844,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-07 12:10:08\",
-    \"schedule_to\": \"2026-02-07 12:10:08\"
+    \"schedule_from\": \"2026-02-11 12:07:05\",
+    \"schedule_to\": \"2026-02-11 12:07:05\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
 );
 
 const headers = {
@@ -2852,8 +2866,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-07 12:10:08",
-    "schedule_to": "2026-02-07 12:10:08"
+    "schedule_from": "2026-02-11 12:07:05",
+    "schedule_to": "2026-02-11 12:07:05"
 };
 
 fetch(url, {
@@ -2957,10 +2971,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="1"
+               value="16"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>1</code></p>
+<p>The ID of the sales lead. Example: <code>16</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
@@ -3032,10 +3046,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-07 12:10:08"
+               value="2026-02-11 12:07:05"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-07 12:10:08</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-11 12:07:05</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3044,10 +3058,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-07 12:10:08"
+               value="2026-02-11 12:07:05"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-07 12:10:08</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-11 12:07:05</code></p>
         </div>
         </form>
 
@@ -3701,7 +3715,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-
+    
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -4096,7 +4110,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-
+    
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
 
@@ -4340,7 +4354,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
-
+    
 
                                 <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (derived from Orders -&gt; Activities (type=file) -&gt; activity_files).</h2>
 
@@ -4767,7 +4781,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-
+    
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -5150,7 +5164,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-
+    
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -5650,7 +5664,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-
+    
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -6068,9 +6082,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+            
 
-
-
+        
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

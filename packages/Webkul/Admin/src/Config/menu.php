@@ -56,7 +56,7 @@ return [
      */
     [
         'key'        => 'activities',
-        'name'       => 'admin::app.layouts.activities',
+        'name'       => 'Activiteiten',
         'route'      => 'admin.activities.index',
         'sort'       => 6,
         'icon-class' => 'icon-activity',

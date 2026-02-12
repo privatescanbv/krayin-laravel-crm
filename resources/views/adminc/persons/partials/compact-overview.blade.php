@@ -20,7 +20,7 @@ $salutationLabel = $person->salutation ? $person->salutation->label() : '';
     <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
         <div class="flex items-center gap-3">
             <span class="icon-menu text-xl text-gray-600 dark:text-gray-400"></span>
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">person gegevens</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">persoon gegevens</h3>
         </div>
         <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <span class="icon-calendar text-base"></span>

@@ -30,7 +30,7 @@
             </div>
             <h3 class="text-xl font-semibold mb-2 dark:text-white">Alle gegevens komen overeen</h3>
             <p class="text-gray-600 dark:text-gray-300 text-center max-w-md">
-                Alle ingevulde velden van de lead komen overeen met de person gegevens.
+                Alle ingevulde velden van de lead komen overeen met de persoon gegevens.
             </p>
         </div>
     @else

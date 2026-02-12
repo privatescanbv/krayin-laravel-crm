@@ -91,7 +91,7 @@ class UserTestSeeder extends Seeder
                 'view_permission' => 'global',
                 'group_id'        => null, // Admin has no specific group
                 'signature'       => $this->signatureTemplate('Mark', 'Tester', 'tester@privatescan.nl'),
-            ]
+            ],
         ];
 
         // Create users and assign to groups

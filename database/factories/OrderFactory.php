@@ -22,4 +22,14 @@ class OrderFactory extends Factory
             'combine_order'  => true,
         ];
     }
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Order $order) {
+            if (empty($order->user_id) && $order->sales_lead_id) {
+                $salesLead = SalesLead::find($order->sales_lead_id);
+                $order->user_id = $salesLead?->user_id;
+            }
+        });
+    }
 }

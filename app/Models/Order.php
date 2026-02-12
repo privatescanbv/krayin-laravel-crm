@@ -55,6 +55,7 @@ class Order extends Model
         'pipeline_stage_id',
         'first_examination_at',
         'sales_lead_id',
+        'user_id',
         'combine_order',
         'confirmation_letter_content',
         'created_by',
@@ -66,6 +67,7 @@ class Order extends Model
         'pipeline_stage_id'    => 'integer',
         'first_examination_at' => 'datetime',
         'sales_lead_id'        => 'integer',
+        'user_id'              => 'integer',
         'combine_order'        => 'boolean',
         'created_by'           => 'integer',
         'updated_by'           => 'integer',
@@ -79,6 +81,7 @@ class Order extends Model
             'pipeline_stage_id'    => 'nullable|integer|exists:lead_pipeline_stages,id',
             'first_examination_at' => 'nullable|date',
             'sales_lead_id'        => 'required|integer|exists:salesleads,id',
+            'user_id'              => 'nullable|integer|exists:users,id',
             'combine_order'        => 'boolean',
         ];
     }
@@ -125,6 +128,11 @@ class Order extends Model
     public function salesLead(): BelongsTo
     {
         return $this->belongsTo(SalesLead::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function lead()

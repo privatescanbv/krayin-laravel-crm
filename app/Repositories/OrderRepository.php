@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Order;
+use App\Models\SalesLead;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Webkul\Contact\Models\Person;
@@ -17,11 +18,14 @@ class OrderRepository extends Repository
 
     public function createFromSalesLead(int $salesLeadId, string $salesLeadName, ?string $departmentName = null): Order
     {
+        $salesLead = SalesLead::find($salesLeadId);
+
         return $this->create(
-            ['title'                => 'Order voor '.$salesLeadName,
+            ['title'                => $salesLeadName,
                 'total_price'       => 0.00,
                 'pipeline_stage_id' => Order::firstOrderStageId($departmentName),
-                'sales_lead_id'     => $salesLeadId]
+                'sales_lead_id'     => $salesLeadId,
+                'user_id'           => $salesLead?->user_id]
         );
     }
 

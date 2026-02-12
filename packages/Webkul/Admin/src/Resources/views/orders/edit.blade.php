@@ -176,6 +176,26 @@ use Webkul\Lead\Models\Stage;
                                 <option value="0" {{ !$orders->combine_order ? 'selected' : '' }}>Nee</option>
                             </x-adminc::components.field>
 
+                            <!-- Owner -->
+                            <div class="flex-1">
+                                @php
+                                    $userOptions = app(Webkul\User\Repositories\UserRepository::class)
+                                    ->allActiveUsers();
+                                    $currentUserId = $orders->user_id;
+                                @endphp
+                                <x-adminc::components.field
+                                    type="select"
+                                    name="user_id"
+                                    value="{{ $currentUserId }}"
+                                    label="Toegewezen gebruiker"
+                                >
+                                    <option value="">-- Kies gebruiker --</option>
+                                    @foreach ($userOptions as $user)
+                                        <option
+                                            value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
+                                    @endforeach
+                                </x-adminc::components.field>
+                            </div>
                             </div>
 
                             @if(isset($missingPersonsWarning) && $missingPersonsWarning)

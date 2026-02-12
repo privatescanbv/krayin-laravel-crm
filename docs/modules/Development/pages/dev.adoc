@@ -37,6 +37,7 @@ Stappen voor een volgende keer:
 
  * run ./start-dev.sh
  * Open in browser: http://crm.local:8000
+ * [optioneel] sail artisan boost:mcp (voor claude of andere ai tooling)
 
 
 === Feature testen uitvoeren

@@ -131,6 +131,7 @@ class SalesLeadController extends Controller
                             ] : null,
                         ] : null,
                     ] : null,
+                    'user_id' => $salesLead->user_id,
                     'user' => $salesLead->user ? [
                         'id'   => $salesLead->user->id,
                         'name' => $salesLead->user->name,

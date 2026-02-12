@@ -220,6 +220,7 @@ class LeadController extends Controller
                     'leads.married_name_prefix',
                     'leads.lead_pipeline_id',
                     'leads.lead_pipeline_stage_id',
+                    'leads.user_id',
                     'leads.mri_status',
                     'leads.lost_reason',
                     'leads.diagnosis_form_id',
@@ -812,6 +813,12 @@ class LeadController extends Controller
     ): JsonResponse
     {
         $lead = $this->leadRepository->findOrFail($leadId);
+
+        // Apply incoming data to lead model before validation so transition
+        // rules (e.g. required_fields) can see the values from the request.
+        if (!is_null($userId)) {
+            $lead->user_id = $userId;
+        }
 
         // Validate status transition if stage is being changed
         if ($leadPipelineStageId != $lead->lead_pipeline_stage_id) {

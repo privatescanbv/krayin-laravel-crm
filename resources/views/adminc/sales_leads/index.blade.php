@@ -14,7 +14,7 @@
             <x-admin::breadcrumbs name="sales-leads" />
 
             <div class="text-xl font-bold dark:text-white">
-                Sales order
+                Sales
             </div>
         </div>
 

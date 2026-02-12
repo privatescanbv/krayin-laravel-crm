@@ -1,4 +1,9 @@
-@php use App\Enums\LostReason; @endphp
+@php
+    use App\Enums\LostReason;
+    use Webkul\User\Models\User;
+
+    $assignableUsers = User::where('status', 1)->orderBy('first_name')->orderBy('last_name')->get();
+@endphp
 @props([
     'type',
     'stages',
@@ -472,8 +477,8 @@
                 </div>
             </div>
 
-            <!-- Lost Stage Modal -->
-            <x-admin::modal ref="lostStageModal">
+            <!-- Stage Detail Modal (won + lost) -->
+            <x-admin::modal ref="stageDetailModal">
                 <x-slot:header>
                     <h3 class="text-base font-semibold dark:text-white">
                         Meer details nodig
@@ -484,43 +489,73 @@
                         <div v-if="currentStageUpdate">
                             <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
                                 Lead "<strong>@{{ getLeadName(currentStageUpdate.lead) }}</strong>" wordt verplaatst
-                                naar status "Verloren"
+                                naar status "@{{ currentStageUpdate.type === 'won' ? 'Gewonnen' : 'Verloren' }}"
                             </p>
 
-                            <!-- Lost Reason -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="closed_at"
-                                    v-model="currentStageUpdate.closed_at"
-                                    placeholder="dd-mm-yyyy"
-                                    required
-                                />
+                            <!-- Won stage fields -->
+                            <template v-if="currentStageUpdate.type === 'won'">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label class="required">
+                                        Toegewezen persoon
+                                    </x-admin::form.control-group.label>
+                                    <select
+                                        name="user_id"
+                                        class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                        v-model="currentStageUpdate.user_id"
+                                        required
+                                    >
+                                        <option value="">Selecteer medewerker...</option>
+                                        @foreach ($assignableUsers as $user)
+                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-admin::form.control-group>
 
-                                <select
-                                    name="lost_reason"
-                                    class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
-                                    v-model="currentStageUpdate.lost_reason"
-                                    required
-                                >
-                                    <option value="">Selecteer reden...</option>
-                                    @foreach (LostReason::cases() as $reason)
-                                        <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
-                                    @endforeach
-                                </select>
-                                <x-admin::form.control-group.label>
-                                    Reden van verlies
-                                </x-admin::form.control-group.label>
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Gesloten op
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        name="closed_at"
+                                        v-model="currentStageUpdate.closed_at"
+                                        placeholder="dd-mm-yyyy"
+                                    />
+                                </x-admin::form.control-group>
+                            </template>
 
-                            </x-admin::form.control-group>
+                            <!-- Lost stage fields -->
+                            <template v-else>
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Gesloten op
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        name="closed_at"
+                                        v-model="currentStageUpdate.closed_at"
+                                        placeholder="dd-mm-yyyy"
+                                        required
+                                    />
+                                </x-admin::form.control-group>
 
-                            <!-- Closed At -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    Gesloten op
-                                </x-admin::form.control-group.label>
-
-                            </x-admin::form.control-group>
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Reden van verlies
+                                    </x-admin::form.control-group.label>
+                                    <select
+                                        name="lost_reason"
+                                        class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                        v-model="currentStageUpdate.lost_reason"
+                                        required
+                                    >
+                                        <option value="">Selecteer reden...</option>
+                                        @foreach (LostReason::cases() as $reason)
+                                            <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-admin::form.control-group>
+                            </template>
                         </div>
                         <div v-else>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -533,7 +568,7 @@
                             <button
                                 type="button"
                                 class="secondary-button mr-2"
-                                @click="cancelLostStage"
+                                @click="cancelStageDetail"
                             >
                                 Annuleren
                             </button>
@@ -541,7 +576,7 @@
                             <button
                                 type="button"
                                 class="primary-button"
-                                @click="handleLostStageSubmit"
+                                @click="handleStageDetailSubmit"
                             >
                                 Opslaan
                             </button>
@@ -923,13 +958,18 @@
                             return;
                         }
 
-                        // Check if moving to any lost stage (leads/sales require extra details)
-                        if (this.entityType !== 'orders' && this.isLostStage(stage)) {
-                            this.showLostModal(stage, event.added.element);
+                        // Check if moving to any won or lost stage (leads/sales require extra details)
+                        if (this.entityType !== 'orders' && this.isWonStage(stage)) {
+                            this.showStageDetailModal('won', stage, event.added.element);
                             return;
                         }
 
-                        // Update stage counters for non-lost stages
+                        if (this.entityType !== 'orders' && this.isLostStage(stage)) {
+                            this.showStageDetailModal('lost', stage, event.added.element);
+                            return;
+                        }
+
+                        // Update stage counters for regular stages
                         this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage
                             .sort_order].leads.meta.total + 1;
 
@@ -937,27 +977,30 @@
                     },
 
                     /**
-                     * Show modal for lost stage with required fields
+                     * Show modal for won/lost stage with required fields
                      */
-                    showLostModal(stage, lead) {
+                    showStageDetailModal(type, stage, lead) {
                         this.currentStageUpdate = {
+                            type: type,
                             stage: stage,
                             lead: lead,
                             lost_reason: '',
-                            closed_at: new Date().toLocaleDateString('nl-NL')
+                            closed_at: new Date().toISOString().slice(0, 10),
+                            user_id: String(lead.user_id || lead.user?.id || ''),
                         };
 
-                        // Use nextTick to ensure the modal is rendered before opening
                         this.$nextTick(() => {
-                            this.$refs.lostStageModal.open();
+                            this.$refs.stageDetailModal.open();
                         });
                     },
 
                     /**
-                     * Handle form submission for lost stage
+                     * Handle form submission for won/lost stage
                      */
-                    handleLostStageSubmit() {
-                        if (!this.currentStageUpdate.lost_reason.trim()) {
+                    handleStageDetailSubmit() {
+                        const update = this.currentStageUpdate;
+
+                        if (update.type === 'lost' && !update.lost_reason.trim()) {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Reden van verlies is verplicht'
@@ -965,16 +1008,24 @@
                             return;
                         }
 
+                        let extraData = {};
+
+                        if (update.type === 'won') {
+                            extraData.closed_at = update.closed_at;
+                            extraData.user_id = update.user_id;
+                        } else {
+                            extraData.lost_reason = update.lost_reason;
+                            extraData.closed_at = update.closed_at;
+                        }
+
                         this.updateLeadStage(
-                            this.currentStageUpdate.lead.id,
-                            this.currentStageUpdate.stage.id, {
-                                lost_reason: this.currentStageUpdate.lost_reason,
-                                closed_at: this.currentStageUpdate.closed_at
-                            }
+                            update.lead.id,
+                            update.stage.id,
+                            extraData
                         );
 
-                        if (this.$refs.lostStageModal) {
-                            this.$refs.lostStageModal.close();
+                        if (this.$refs.stageDetailModal) {
+                            this.$refs.stageDetailModal.close();
                         }
                         this.currentStageUpdate = null;
                     },
@@ -1072,11 +1123,11 @@
                     },
 
                     /**
-                     * Cancel lost stage modal
+                     * Cancel stage detail modal
                      */
-                    cancelLostStage() {
-                        if (this.$refs.lostStageModal) {
-                            this.$refs.lostStageModal.close();
+                    cancelStageDetail() {
+                        if (this.$refs.stageDetailModal) {
+                            this.$refs.stageDetailModal.close();
                         }
                         this.currentStageUpdate = null;
                     },

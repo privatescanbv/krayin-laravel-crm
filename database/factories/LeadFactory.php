@@ -82,7 +82,7 @@ class LeadFactory extends Factory
             'first_name'             => $this->faker->firstName(),
             'last_name'              => $this->faker->lastName(),
             'emails'                 => [['value' => $this->faker->email(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
-            'phones'                 => [['value' => $this->faker->randomNumber(9), 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
+            'phones'                 => [['value' => '+31'.$this->faker->numerify('6########'), 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
             'lastname_prefix'        => null,
             'married_name'           => null,
             'married_name_prefix'    => null,

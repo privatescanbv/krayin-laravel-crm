@@ -47,7 +47,7 @@ namespace UiTests.Steps
 
             // Wacht specifiek op de <p> met tekst 'Dashboard'
 //            await _driver.Page.WaitForSelectorAsync("p:has-text(\"Dashboard\")", new() { Timeout = 30000 });
-            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/dashboard$"));
+            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/leads"));
 //            await _driver.Page.Locator("p:has-text(\"Dashboard\")").First.WaitForAsync();
 
             // Debug info

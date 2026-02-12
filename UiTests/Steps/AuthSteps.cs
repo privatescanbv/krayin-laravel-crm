@@ -38,7 +38,7 @@ namespace UiTests.Steps
 
             try
             {
-                await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/dashboard$"), new() { Timeout = 30000 });
+                await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/leads"), new() { Timeout = 30000 });
             }
             catch
             {

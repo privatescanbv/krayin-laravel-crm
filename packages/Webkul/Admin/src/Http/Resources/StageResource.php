@@ -21,6 +21,9 @@ class StageResource extends JsonResource
             'description'          => $this->description,
             'is_user_defined'      => $this->is_user_defined,
             'sort_order'           => $this->sort_order,
+            'lead_pipeline_id'     => $this->lead_pipeline_id,
+            'is_won'               => $this->is_won,
+            'is_lost'              => $this->is_lost,
             'created_at'           => $this->created_at,
             'updated_at'           => $this->updated_at,
         ];

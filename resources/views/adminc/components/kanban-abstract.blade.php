@@ -857,6 +857,7 @@
                                     pipeline_stage_id: stage.id,
                                     sort: sort,
                                     order: order,
+                                    limit: 10,
                                     exclude_won_lost: this.hideWonLost,
                                     include_duplicates: this.showDuplicates,
                                 }
@@ -952,8 +953,8 @@
                         }
 
                         if (event.removed) {
-                            this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage
-                                .sort_order].leads.meta.total - 1;
+                            this.stageLeads[stage.id].leads.meta.total = this.stageLeads[stage
+                                .id].leads.meta.total - 1;
 
                             return;
                         }
@@ -970,8 +971,8 @@
                         }
 
                         // Update stage counters for regular stages
-                        this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage
-                            .sort_order].leads.meta.total + 1;
+                        this.stageLeads[stage.id].leads.meta.total = this.stageLeads[stage
+                            .id].leads.meta.total + 1;
 
                         this.updateLeadStageWithChecks(event.added.element, stage);
                     },
@@ -1050,8 +1051,8 @@
                                 // Update stage counters after successful update
                                 const stage = this.stages.find(s => s.id === stageId);
                                 if (stage) {
-                                    this.stageLeads[stage.sort_order].leads.meta.total = this
-                                        .stageLeads[stage.sort_order].leads.meta.total + 1;
+                                    this.stageLeads[stage.id].leads.meta.total = this
+                                        .stageLeads[stage.id].leads.meta.total + 1;
                                 }
                             })
                             .catch(error => {
@@ -1081,8 +1082,8 @@
 
                                 if (!confirmClose) {
                                     // Revert UI count since we optimistically incremented earlier
-                                    this.stageLeads[stage.sort_order].leads.meta.total = this
-                                        .stageLeads[stage.sort_order].leads.meta.total - 1;
+                                    this.stageLeads[stage.id].leads.meta.total = this
+                                        .stageLeads[stage.id].leads.meta.total - 1;
                                     return;
                                 }
 
@@ -1160,8 +1161,8 @@
                                 return;
                             }
 
-                            if (this.stageLeads[stage.sort_order].leads.meta.current_page == this
-                                .stageLeads[stage.sort_order].leads.meta.last_page) {
+                            if (this.stageLeads[stage.id].leads.meta.current_page == this
+                                .stageLeads[stage.id].leads.meta.last_page) {
                                 return;
                             }
 
@@ -1171,7 +1172,7 @@
                             this.append({
                                 pipeline_stage_id: stage.id,
                                 pipeline_id: stage.lead_pipeline_id,
-                                page: this.stageLeads[stage.sort_order].leads.meta
+                                page: this.stageLeads[stage.id].leads.meta
                                     .current_page + 1,
                                 limit: 10,
                                 sort: sort,

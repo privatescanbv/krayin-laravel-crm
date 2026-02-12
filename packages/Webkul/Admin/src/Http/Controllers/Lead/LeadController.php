@@ -242,7 +242,7 @@ class LeadController extends Controller
                     'leads.created_at',
                     in_array(request('order'), ['asc', 'desc'], true) ? request('order') : 'desc'
                 )
-                ->paginate($perPage, ['*'], 'simplePaginate');
+                ->paginate($perPage, ['*'], 'page');
 
                 // Set pipeline and stage relations manually to prevent N+1 queries
                 foreach ($paginator->items() as $lead) {

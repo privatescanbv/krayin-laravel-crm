@@ -169,7 +169,7 @@
         name="national_identification_number"
         label="Burgerservicenummer (BSN)"
         value="{{ $entity?->national_identification_number ?? '' }}"
-        placeholder="BSN nummer"
+        placeholder="fake-text-anti-autocomplete"
         :disabled="!$mayEditPersonFields"
         :readonly="!$mayEditPersonFields"
     />

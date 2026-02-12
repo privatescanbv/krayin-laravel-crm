@@ -194,7 +194,13 @@ $salutationToGenderMapping = [
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
                         @include('adminc.components.validation-errors')
+                        @if ($returnUrl = request()->input('return_url') ?? request()->query('return_url'))
+                            <input type="hidden" name="return_url" value="{{ $returnUrl }}"/>
+                        @endif
                         <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
+                        @if(! empty($linkEmailId))
+                            <input type="hidden" name="link_email_id" value="{{ $linkEmailId }}"/>
+                        @endif
                         <!-- Hidden selected person id to link to lead on save -->
                         <input type="hidden" name="person_ids[0]" :value="selectedPersonId || ''" />
 

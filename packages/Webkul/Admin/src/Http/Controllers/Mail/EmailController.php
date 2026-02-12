@@ -70,11 +70,6 @@ class EmailController extends Controller
                     return view('admin::mail.index', compact('folder', 'hierarchicalFolders', 'emails'));
                 }
 
-                // Fallback to original behavior for backward compatibility
-                if (request()->ajax()) {
-                    return datagrid(EmailDataGrid::class)->process();
-                }
-
                 $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
                 return view('admin::mail.index', compact('hierarchicalFolders'));
         }

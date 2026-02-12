@@ -27,7 +27,7 @@
                     <div class="flex flex-wrap gap-2">
                         {!! view_render_event('admin.persons.view.actions.before', ['person' => $person]) !!}
 
-                        @if (bouncer()->hasPermission('mail.compose'))
+                        @if (bouncer()->hasPermission('mail.create'))
                             <!-- Mail Activity Action -->
                             <x-admin::activities.actions.mail :entity="$person" entity-control-name="person_id"/>
                         @endif

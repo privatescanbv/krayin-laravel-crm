@@ -94,7 +94,7 @@
                     {!! view_render_event('admin.mail.create.compose_mail_btn.before') !!}
 
                     <!-- Create button for person -->
-                    @if (bouncer()->hasPermission('mail.compose'))
+                    @if (bouncer()->hasPermission('mail.create'))
                         <button
                             type="button"
                             class="primary-button"

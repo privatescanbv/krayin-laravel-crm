@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
+use Exception;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Support\Facades\Hash;
@@ -50,7 +51,7 @@ class ResetPasswordController extends Controller
             );
 
             if ($response == Password::PASSWORD_RESET) {
-                return redirect()->route('admin.dashboard.index');
+                return redirect()->route(config('admin.home_route'));
             }
 
             return back()
@@ -58,7 +59,7 @@ class ResetPasswordController extends Controller
                 ->withErrors([
                     'email' => trans($response),
                 ]);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             session()->flash('error', trans($exception->getMessage()));
 
             return redirect()->back();

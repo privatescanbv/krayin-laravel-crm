@@ -38,7 +38,7 @@ class KeycloakController extends Controller
     {
         // Prevent redirect loops - if already authenticated, redirect to dashboard
         if (Auth::guard('user')->check()) {
-            return redirect()->route('admin.dashboard.index');
+            return redirect()->route(config('admin.home_route'));
         }
 
         return $this->keycloakService->getRedirectUrl();
@@ -53,7 +53,7 @@ class KeycloakController extends Controller
     {
         try {
             if (Auth::guard('user')->check()) {
-                return redirect()->route('admin.dashboard.index');
+                return redirect()->route(config('admin.home_route'));
             }
 
             if (! request()->has('code')) {
@@ -312,7 +312,7 @@ class KeycloakController extends Controller
 
         Auth::guard('user')->login($user, true);
 
-        if (! bouncer()->hasPermission('dashboard')) {
+        if (! bouncer()->hasPermission(config('admin.home_permission'))) {
             $availableNextMenu = menu()->getItems('admin')?->first();
 
             if (is_null($availableNextMenu)) {
@@ -325,7 +325,7 @@ class KeycloakController extends Controller
         }
 
         session()->forget('url.intended');
-        return redirect()->route('admin.dashboard.index');
+        return redirect()->route(config('admin.home_route'));
     }
 
     /**

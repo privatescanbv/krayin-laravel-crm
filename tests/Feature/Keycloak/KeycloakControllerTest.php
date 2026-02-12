@@ -29,7 +29,7 @@ beforeEach(function () {
 it('redirects to dashboard if already authenticated', function () {
     $this->actingAs($this->user, 'user')
         ->get(route('admin.keycloak.redirect'))
-        ->assertRedirect(route('admin.dashboard.index'));
+        ->assertRedirect(route(config('admin.home_route')));
 });
 
 it('redirects to Keycloak login when not authenticated', function () {
@@ -48,7 +48,7 @@ it('redirects to Keycloak login when not authenticated', function () {
 it('redirects to dashboard if already authenticated on callback', function () {
     $this->actingAs($this->user, 'user')
         ->get(route('admin.keycloak.callback', ['code' => 'test-code', 'state' => 'test-state']))
-        ->assertRedirect(route('admin.dashboard.index'));
+        ->assertRedirect(route(config('admin.home_route')));
 });
 
 it('redirects to login on callback without code', function () {
@@ -103,7 +103,7 @@ it('handles successful SSO callback with existing user', function () {
         'state' => 'test-state',
     ]));
 
-    $response->assertRedirect(route('admin.dashboard.index'));
+    $response->assertRedirect(route(config('admin.home_route')));
 
     // Check user still has the same keycloak_user_id (should not change)
     $existingUser->refresh();
@@ -144,7 +144,7 @@ it('handles SSO callback with existing user that has matching keycloak_user_id',
         'state' => 'test-state',
     ]));
 
-    $response->assertRedirect(route('admin.dashboard.index'));
+    $response->assertRedirect(route(config('admin.home_route')));
 
     // Check user still has the same keycloak_user_id (should match for login to succeed)
     $existingUser->refresh();

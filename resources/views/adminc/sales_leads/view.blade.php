@@ -65,7 +65,7 @@
                     <div class="flex flex-wrap gap-2">
                         {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}
 
-                        @if (bouncer()->hasPermission('mail.compose'))
+                        @if (bouncer()->hasPermission('mail.create'))
                             <!-- Mail Activity Action -->
                             <x-admin::activities.actions.mail
                                 :entity="$salesLead"

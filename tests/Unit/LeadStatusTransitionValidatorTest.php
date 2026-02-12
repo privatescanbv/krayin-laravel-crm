@@ -28,11 +28,14 @@ class LeadStatusTransitionValidatorTest extends TestCase
 
     private Stage $otherStage;
 
+    private User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $assignUser = User::factory()->create();
+        $this->user = $assignUser;
 
         // Reset validator state
         LeadStatusTransitionValidator::reset();
@@ -394,6 +397,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'last_name'              => 'Doe',
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create a person with matching minimal data
@@ -422,6 +426,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'emails'                 => [['value' => 'john.doe@example.com', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create a person with matching names but no email
@@ -435,7 +440,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
 
         // This should throw an exception because match score will be less than 100%
         // (name fields match but email mismatch = ~90% score)
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('contact person of een van de gekoppelde personen een match score van 100% heeft');
 
         LeadStatusTransitionValidator::validateTransition($leadWithEmail, $this->wonStage->id);
@@ -453,6 +458,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'phones'                 => [['value' => '0612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create person with matching date of birth and complete data
@@ -483,6 +489,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'date_of_birth'          => '1990-01-01',
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create person with different date of birth
@@ -512,6 +519,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'phones'                 => [['value' => '0612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create person with matching address and complete data
@@ -561,6 +569,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'phones'                 => [['value' => '+31612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create person with normalized phone number and complete data
@@ -593,6 +602,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'date_of_birth'          => '1990-01-01',
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id'       => $this->lead->lead_pipeline_id,
+            'user_id' =>  $this->user->id
         ]);
 
         // Create a person with matching name fields (no email/phone/address)

@@ -813,18 +813,6 @@ class LeadController extends Controller
     {
         $lead = $this->leadRepository->findOrFail($leadId);
 
-        //validate if the stage exists in the pipeline
-        $nextStage = $lead->pipeline->stages()
-            ->where('id', $leadPipelineStageId)
-            ->firstOrFail();
-
-        // Require user_id when transitioning to a won stage
-        if ($nextStage->is_won && is_null($userId)) {
-            return response()->json([
-                'message' => 'Toegewezen persoon is verplicht bij status Gewonnen.',
-            ], 422);
-        }
-
         // Validate status transition if stage is being changed
         if ($leadPipelineStageId != $lead->lead_pipeline_stage_id) {
 

@@ -17,12 +17,12 @@ class ForgotPasswordController extends Controller
     public function create()
     {
         if (auth()->guard('user')->check()) {
-            return redirect()->route('admin.dashboard.index');
+            return redirect()->route(config('admin.home_route'));
         } else {
             if (strpos(url()->previous(), 'user') !== false) {
                 $intendedUrl = url()->previous();
             } else {
-                $intendedUrl = route('admin.dashboard.index');
+                $intendedUrl = route(config('admin.home_route'));
             }
 
             session()->put('url.intended', $intendedUrl);

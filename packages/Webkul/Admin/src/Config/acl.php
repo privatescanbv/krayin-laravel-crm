@@ -50,50 +50,25 @@ return [
         'route' => ['admin.leads.delete', 'admin.leads.mass_delete'],
         'sort'  => 4,
     ], [
-        'key'   => 'mail.inbox',
-        'name'  => 'admin::app.acl.inbox',
-        'route' => 'admin.mail.index',
-        'sort'  => 1,
-    ], [
-        'key'   => 'mail.draft',
-        'name'  => 'admin::app.acl.draft',
-        'route' => 'admin.mail.index',
-        'sort'  => 2,
-    ], [
-        'key'   => 'mail.outbox',
-        'name'  => 'admin::app.acl.outbox',
-        'route' => 'admin.mail.index',
-        'sort'  => 3,
-    ], [
-        'key'   => 'mail.sent',
-        'name'  => 'admin::app.acl.sent',
-        'route' => 'admin.mail.index',
-        'sort'  => 4,
-    ], [
-        'key'   => 'mail.trash',
-        'name'  => 'admin::app.acl.trash',
-        'route' => 'admin.mail.index',
-        'sort'  => 5,
-    ], [
-        'key'   => 'mail.compose',
+        'key'   => 'mail.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.mail.store'],
-        'sort'  => 6,
+        'sort'  => 1,
     ], [
         'key'   => 'mail.view',
         'name'  => 'admin::app.acl.view',
         'route' => 'admin.mail.view',
-        'sort'  => 7,
+        'sort'  => 2,
     ], [
         'key'   => 'mail.edit',
         'name'  => 'admin::app.acl.edit',
         'route' => 'admin.mail.update',
-        'sort'  => 8,
+        'sort'  => 3,
     ], [
         'key'   => 'mail.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.mail.delete', 'admin.mail.mass_delete'],
-        'sort'  => 9,
+        'sort'  => 4,
     ], [
         'key'   => 'activities',
         'name'  => 'admin::app.acl.activities',
@@ -165,50 +140,65 @@ return [
         'route' => 'admin.contacts.organizations.index',
         'sort'  => 2,
     ], [
+        'key'   => 'contacts.organizations.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.contacts.organizations.view', 'admin.contacts.organizations.view'],
+        'sort'  => 1,
+    ],[
         'key'   => 'contacts.organizations.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.contacts.organizations.create', 'admin.contacts.organizations.store'],
-        'sort'  => 1,
+        'sort'  => 2,
     ], [
         'key'   => 'contacts.organizations.edit',
         'name'  => 'admin::app.acl.edit',
         'route' => ['admin.contacts.organizations.edit', 'admin.contacts.organizations.update'],
-        'sort'  => 2,
+        'sort'  => 3,
     ], [
         'key'   => 'contacts.organizations.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.contacts.organizations.delete', 'admin.contacts.organizations.mass_delete'],
-        'sort'  => 3,
+        'sort'  => 4,
+    ], [
+        'key'   => 'products.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.products.view', 'admin.products.view'],
+        'sort'  => 1,
     ], [
         'key'   => 'products.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.products.create', 'admin.products.store'],
-        'sort'  => 1,
+        'sort'  => 2,
     ], [
         'key'   => 'products.edit',
         'name'  => 'admin::app.acl.edit',
         'route' => ['admin.products.edit', 'admin.products.update'],
-        'sort'  => 2,
+        'sort'  => 3,
     ], [
         'key'   => 'products.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.products.delete', 'admin.products.mass_delete'],
-        'sort'  => 3,
+        'sort'  => 4,
     ], [
+        'key'   => 'productgroups.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.productgroups.view', 'admin.productgroups.view'],
+        'sort'  => 1,
+    ],[
         'key'   => 'productgroups.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.productgroups.create', 'admin.productgroups.store'],
-        'sort'  => 1,
+        'sort'  => 2,
     ], [
         'key'   => 'productgroups.edit',
         'name'  => 'admin::app.acl.edit',
         'route' => ['admin.productgroups.edit', 'admin.productgroups.update'],
-        'sort'  => 2,
+        'sort'  => 3,
     ], [
         'key'   => 'productgroups.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.productgroups.delete', 'admin.productgroups.mass_delete'],
-        'sort'  => 3,
+        'sort'  => 4,
     ], [
         'key'   => 'settings',
         'name'  => 'admin::app.acl.settings',
@@ -305,20 +295,25 @@ return [
         'route' => 'admin.partner_products.index',
         'sort'  => 5,
     ], [
+        'key'   => 'partner_products.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.partner_products.view', 'admin.partner_products.view'],
+        'sort'  => 1,
+    ],[
         'key'   => 'partner_products.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.partner_products.create', 'admin.partner_products.store'],
-        'sort'  => 1,
+        'sort'  => 2,
     ], [
         'key'   => 'partner_products.edit',
         'name'  => 'admin::app.acl.edit',
         'route' => ['admin.partner_products.edit', 'admin.partner_products.update'],
-        'sort'  => 2,
+        'sort'  => 3,
     ], [
         'key'   => 'partner_products.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.partner_products.delete'],
-        'sort'  => 3,
+        'sort'  => 4,
     ], [
         'key'   => 'settings.product_types',
         'name'  => 'Product Types',
@@ -593,11 +588,42 @@ return [
         'sort'  => 9,
     ],
     [
+        'key'   => 'orders',
+        'name'  => 'Orders',
+        'route' => 'admin.orders.index',
+        'sort'  => 3,
+    ], [
+        'key'   => 'orders.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.orders.create', 'admin.orders.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'orders.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.orders.view', 'admin.orders.get'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'orders.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.orders.edit', 'admin.orders.update', 'admin.orders.stage.update'],
+        'sort'  => 3,
+    ], [
+        'key'   => 'orders.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => 'admin.orders.delete',
+        'sort'  => 4,
+    ],
+    [
         'key'   => 'sales-leads',
         'name'  => 'Sales order',
         'route' => 'admin.sales-leads.index',
-        'sort'  => 99, // of een andere gewenste volgorde
+        'sort'  => 99,
     ], [
+        'key'   => 'sales-leads.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.sales-leads.view', 'admin.sales-leads.view'],
+        'sort'  => 1,
+    ],[
         'key'   => 'sales-leads.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.sales-leads.create', 'admin.sales-leads.store'],

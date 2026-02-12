@@ -28,7 +28,7 @@ class SessionController extends Controller
     public function create()
     {
         if (auth()->guard('user')->check()) {
-            return redirect()->route('admin.dashboard.index');
+            return redirect()->route(config('admin.home_route'));
         } else {
             // Set intended URL, but exclude logout and other auth routes
             $previousUrl = url()->previous();
@@ -47,10 +47,10 @@ class SessionController extends Controller
                 if (!$isExcluded) {
                     $intendedUrl = $previousUrl;
                 } else {
-                    $intendedUrl = route('admin.dashboard.index');
+                    $intendedUrl = route(config('admin.home_route'));
                 }
             } else {
-                $intendedUrl = route('admin.dashboard.index');
+                $intendedUrl = route(config('admin.home_route'));
             }
 
             session()->put('url.intended', $intendedUrl);
@@ -108,7 +108,7 @@ class SessionController extends Controller
             return redirect()->route('admin.session.create');
         }
 
-        if (! bouncer()->hasPermission('dashboard')) {
+        if (! bouncer()->hasPermission(config('admin.home_permission'))) {
             $availableNextMenu = menu()->getItems('admin')?->first();
 
             if (is_null($availableNextMenu)) {
@@ -122,7 +122,7 @@ class SessionController extends Controller
             return redirect()->to($availableNextMenu->getUrl());
         }
 
-        return redirect()->intended(route('admin.dashboard.index'));
+        return redirect()->intended(route(config('admin.home_route')));
     }
 
     /**

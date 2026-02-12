@@ -40,7 +40,7 @@
                     </span>
 
                     <a
-                        href="{{ route('admin.dashboard.index') }}"
+                        href="{{ route(config('admin.home_route')) }}"
                         class="hover:underlsine text-sm font-semibold text-activity-note-text transition-all"
                     >
                         @lang('admin::app.errors.dashboard')

@@ -11,6 +11,6 @@ enum PipelineDefaultKeys: int
     case PIPELINE_TECHNICAL_ID = 5;
     case PIPELINE_PRIVATESCAN_ORDERS_ID = 6;
     case PIPELINE_HERNIA_ORDERS_ID = 7;
-    case PIPELINE_TECHNICAL_STAGE_ID = 48;
+    case PIPELINE_TECHNICAL_STAGE_ID = 47;
 
 }

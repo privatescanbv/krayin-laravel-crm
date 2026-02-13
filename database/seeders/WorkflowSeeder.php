@@ -52,7 +52,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA       => ['MRI aanleveren', $defaultDescription],
             PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA => ['Klant levert MRI beelden aan, verwerken', $defaultDescription],
             PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA     => ['Klant adviseren met MRI beelden', $defaultDescription],
-            PipelineStage::SALES_INGEPLAND_HERNIA                => ['4.1 consult met arts', $defaultDescription],
+            PipelineStage::SALES_DOC_COMPLETE_HERNIA                => ['4.1 consult met arts', $defaultDescription],
 
             default => ["Auto-activity: {$stage->name()}", $defaultDescription],
         };

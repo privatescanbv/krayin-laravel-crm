@@ -40,20 +40,19 @@ enum PipelineStage: string
     // HERNIA SALES PIPELINE
     // ============================================================
 
-    case SALES_INTAKE_HERNIA = 'sales-intake-hernia';
-    case SALES_MRI_BEOORDELING_HERNIA = 'sales-mri-beoordeling-hernia';
-    case SALES_CASUS_BIJ_ARTS_HERNIA = 'sales-casus-bij-arts-hernia';
-    case SALES_BEOORDELING_GEREED_HERNIA = 'sales-beoordeling-gereed-hernia';
-    case SALES_WACHTEN_OP_PLANNING_HERNIA = 'sales-wachten-op-planning-hernia';
-    case SALES_INGEPLAND_HERNIA = 'sales-ingepland-hernia';
-    case SALES_PRE_OPERATIEF_HERNIA = 'sales-pre-operatief-hernia';
-    case SALES_OPNAME_HERNIA = 'sales-opname-hernia';
-    case SALES_OPERATIE_HERNIA = 'sales-operatie-hernia';
-    case SALES_HERSTEL_HERNIA = 'sales-herstel-hernia';
-    case SALES_NACONTROLE_HERNIA = 'sales-nacontrole-hernia';
-    case SALES_RESULTAAT_HERNIA = 'sales-resultaat-hernia';
-    case SALES_MET_SUCCES_AFGEROND_HERNIA = 'sales-met-succes-afgerond-hernia';
-    case SALES_NIET_SUCCESVOL_AFGEROND_HERNIA = 'sales-niet-succesvol-afgerond-hernia';
+    case SALES_DOCTOR_ASSESSMENT_HERNIA = 'sales-intake-hernia';
+    case SALES_ASSESSMENT_DONE_HERNIA = 'sales-mri-beoordeling-hernia';
+    case SALES_PATIENT_REFLECTION_TIME_HERNIA = 'sales-casus-bij-arts-hernia';
+    case SALES_PLANNED_FOR_ADDITIONAL_RESEARCH_HERNIA = 'sales-beoordeling-gereed-hernia';
+    case SALES_CONFIRM_TREATMENT_HERNIA = 'sales-wachten-op-planning-hernia';
+    case SALES_DOC_COMPLETE_HERNIA = 'sales-ingepland-hernia';
+    case SALES_TREATMENT_PLANNED_HERNIA = 'sales-pre-operatief-hernia';
+    case SALES_AFTER_TREATMENT_HERNIA = 'sales-opname-hernia';
+    case SALES_AFTERCARE1_HERNIA = 'sales-operatie-hernia';
+    case SALES_AFTERCARE2_HERNIA = 'sales-herstel-hernia';
+    case SALES_PHYSICAL_CONSULTATION_HERNIA = 'sales-nacontrole-hernia';
+    case SALES_COMPLETE_HERNIA = 'sales-met-succes-afgerond-hernia';
+    case SALES_COMPLETE_NOT_SUCCESSFULLY_HERNIA = 'sales-niet-succesvol-afgerond-hernia';
 
     // ============================================================
     // PRIVATESCAN ORDER PIPELINE
@@ -215,99 +214,92 @@ enum PipelineStage: string
         ],
 
         // Hernia Sales
-        self::SALES_INTAKE_HERNIA->value => [
+        self::SALES_DOCTOR_ASSESSMENT_HERNIA->value => [
             'id'       => 16,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Intake',
+            'label'    => 'Casus bij arts ter beoordeling',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_MRI_BEOORDELING_HERNIA->value => [
+        self::SALES_ASSESSMENT_DONE_HERNIA->value => [
             'id'       => 17,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'MRI beoordeling',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::SALES_CASUS_BIJ_ARTS_HERNIA->value => [
-            'id'       => 18,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Casus bij arts',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::SALES_BEOORDELING_GEREED_HERNIA->value => [
-            'id'       => 19,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
             'label'    => 'Beoordeling gereed',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_WACHTEN_OP_PLANNING_HERNIA->value => [
+        self::SALES_PATIENT_REFLECTION_TIME_HERNIA->value => [
+            'id'       => 18,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Patient bedenktijd',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_PLANNED_FOR_ADDITIONAL_RESEARCH_HERNIA->value => [
+            'id'       => 19,
+            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
+            'label'    => 'Gepland voor aanvullend onderzoek',
+            'entity'   => 'sales',
+            'status'   => null,
+        ],
+        self::SALES_CONFIRM_TREATMENT_HERNIA->value => [
             'id'       => 20,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Wachten op planning',
+            'label'    => 'Behandeling bevestigen',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_INGEPLAND_HERNIA->value => [
+        self::SALES_DOC_COMPLETE_HERNIA->value => [
             'id'       => 21,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Ingepland',
+            'label'    => 'Documentatie volledig / ontvangen',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_PRE_OPERATIEF_HERNIA->value => [
+        self::SALES_TREATMENT_PLANNED_HERNIA->value => [
             'id'       => 22,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Pre-operatief consult',
+            'label'    => 'Behandeling gepland',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_OPNAME_HERNIA->value => [
+        self::SALES_AFTER_TREATMENT_HERNIA->value => [
             'id'       => 23,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Opname',
+            'label'    => 'Na-behandeling',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_OPERATIE_HERNIA->value => [
+        self::SALES_AFTERCARE1_HERNIA->value => [
             'id'       => 24,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Operatie',
+            'label'    => 'Nazorg 1',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_HERSTEL_HERNIA->value => [
+        self::SALES_AFTERCARE2_HERNIA->value => [
             'id'       => 25,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Herstel',
+            'label'    => 'Nazorg 2',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_NACONTROLE_HERNIA->value => [
+        self::SALES_PHYSICAL_CONSULTATION_HERNIA->value => [
             'id'       => 26,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Nacontrole',
+            'label'    => 'Fysiek consult',
             'entity'   => 'sales',
             'status'   => null,
         ],
-        self::SALES_RESULTAAT_HERNIA->value => [
+        self::SALES_COMPLETE_HERNIA->value => [
             'id'       => 27,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'    => 'Resultaat',
-            'entity'   => 'sales',
-            'status'   => null,
-        ],
-        self::SALES_MET_SUCCES_AFGEROND_HERNIA->value => [
-            'id'       => 28,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
             'label'    => 'Met succes afgerond',
             'entity'   => 'sales',
             'status'   => 'won',
         ],
-        self::SALES_NIET_SUCCESVOL_AFGEROND_HERNIA->value => [
-            'id'       => 29,
+        self::SALES_COMPLETE_NOT_SUCCESSFULLY_HERNIA->value => [
+            'id'       => 28,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
             'label'    => 'Niet succesvol afgerond',
             'entity'   => 'sales',

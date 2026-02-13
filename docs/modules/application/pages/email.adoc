@@ -52,6 +52,24 @@ Het systeem gebruikt de volgende logica voor het koppelen van inkomende emails:
 . **Lead Associatie**: Nieuwe berichten verschijnen zowel in de CRM inbox als in de specifieke lead.
 . **Activiteit Koppeling**: Wanneer een email vanuit een activiteit wordt verstuurd, gaat de activiteit tijdelijk op *On-Hold*. Zodra er een reply binnenkomt, wordt de activiteit weer aangeboden om verder op te volgen.
 
+===== Koppellogica bij inkomende email (`linkToExistingEntities`)
+
+Bij het verwerken van een inkomend bericht worden entiteiten gekoppeld op basis van het afzender-emailadres, in de volgende prioriteit:
+
+. **Reply / Parent**: Als het bericht een reply is op een bestaand emailbericht, worden de relaties (person_id, lead_id, sales_lead_id, clinic_id) overgenomen van het parent-bericht. Dit wordt afgehandeld in `EmailRepository::create()`.
+. **Persoon**: Zoek een persoon (`persons.emails` JSON) op basis van het afzender-emailadres.
+. **Sales**: Zoek de nieuwste actieve sales (stage niet `is_won` en niet `is_lost`) gekoppeld aan de gevonden persoon via `saleslead_persons`.
+. **Lead**: Zoek de nieuwste actieve lead (stage niet `is_won` en niet `is_lost`) gekoppeld aan de gevonden persoon via `lead_persons`. Indien geen persoon gevonden, zoek direct op `leads.emails` JSON.
+. **Kliniek**: Zoek een kliniek (`clinics.emails` JSON) op basis van het afzender-emailadres.
+
+Alle entiteitstypen worden onafhankelijk van elkaar gecontroleerd; een email kan dus tegelijk aan een persoon, lead, sales lead en kliniek gekoppeld worden.
+Indien het een reply is, dan krijgt deze een parent en wordt de relatie uit de parent gehaald.
+
+[NOTE]
+====
+Single source of truth: `AbstractEmailProcessor::linkToExistingEntities()` in `app/Services/Mail/AbstractEmailProcessor.php`.
+====
+
 ===== Verwerkingstijd
 * **Maximale verwerkingstijd**: 1 minuut
 * **Gemiddelde verwerkingstijd**: 10-30 seconden

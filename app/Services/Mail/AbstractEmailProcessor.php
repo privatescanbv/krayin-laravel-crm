@@ -2,12 +2,11 @@
 
 namespace App\Services\Mail;
 
-use App\Enums\ActivityStatus;
-use App\Enums\ActivityType;
+use App\Models\Clinic;
 use App\Models\EmailLog;
+use App\Models\SalesLead;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Models\Email;
@@ -114,7 +113,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         $emailData = $this->extractEmailData($message, $folderName, $parentEmail);
 
         // Link to existing entities based on email address
-        $this->linkToExistingEntities($emailData, $this->getFromEmail($message));
+        $emailData = $this->linkToExistingEntities($emailData, $this->getFromEmail($message));
 
         $email = $this->emailRepository->create($emailData);
 
@@ -139,7 +138,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      */
     protected function findParentEmail($message): ?Email
     {
-        $messageId = $this->getMessageId($message);
+        //        $messageId = $this->getMessageId($message);
         $conversationId = $this->getConversationId($message);
 
         // Check by conversation ID first
@@ -165,76 +164,68 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     }
 
     /**
-     * Link email to existing entities based on email address
+     * Link email to existing entities based on sender email address.
+     *
+     * Priority (first match wins per entity type, all types are checked):
+     *  1. Person   – match sender against persons.emails JSON (value field).
+     *  2. SalesLead – newest active (stage not is_won/is_lost) sales lead linked to the matched person.
+     *  3. Lead      – newest active (stage not is_won/is_lost) lead linked to the matched person,
+     *                 or by lead.emails JSON if no person was found.
+     *  4. Clinic    – match sender domain against clinic.emails JSON (plain string array).
+     *
+     * Note: reply/parent relation copying is handled separately in EmailRepository::create().
      */
-    protected function linkToExistingEntities(array &$emailData, string $emailAddress): void
+    protected function linkToExistingEntities(array $emailData, string $emailAddress): array
     {
         if (empty($emailAddress)) {
-            return;
+            return $emailData;
         }
 
-        // Try to find existing person by email
+        // 1. Find person by email address
         $person = Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
+
         if ($person) {
             $emailData['person_id'] = $person->id;
 
-            // Try to find associated lead through lead_persons table
-            $lead = $person->leads->first();
+            // 2. Find newest active sales lead via person
+            $salesLead = SalesLead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
+                ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
+                ->latest()
+                ->first();
+
+            if ($salesLead) {
+                $emailData['sales_lead_id'] = $salesLead->id;
+            }
+
+            // 3. Find newest active lead via person
+            $lead = Lead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
+                ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
+                ->latest()
+                ->first();
+
+            if ($lead) {
+                $emailData['lead_id'] = $lead->id;
+            }
+        } else {
+            // 3b. No person found – try to match lead directly by emails JSON
+            $lead = Lead::where('emails', 'like', '%'.$emailAddress.'%')
+                ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
+                ->latest()
+                ->first();
+
             if ($lead) {
                 $emailData['lead_id'] = $lead->id;
             }
         }
 
-        // Try to find existing lead by email if no person found
-        if (! isset($emailData['lead_id'])) {
-            $lead = Lead::where('emails', 'like', '%'.$emailAddress.'%')->first();
-            if ($lead) {
-                $emailData['lead_id'] = $lead->id;
-            }
+        // 4. Find clinic by sender email address
+        $clinic = Clinic::where('emails', 'like', '%'.$emailAddress.'%')->first();
+
+        if ($clinic) {
+            $emailData['clinic_id'] = $clinic->id;
         }
 
-        // Create activity if we found a lead or person
-        if (isset($emailData['lead_id']) || isset($emailData['person_id'])) {
-            $activity = $this->createEmailActivity($emailData);
-            if ($activity) {
-                $emailData['activity_id'] = $activity->id;
-            }
-        }
-    }
-
-    /**
-     * Create activity for the email
-     */
-    protected function createEmailActivity(array $emailData): ?Activity
-    {
-        try {
-            $activityData = [
-                'title'         => 'E-mail ontvangen: '.($emailData['subject'] ?: 'Geen onderwerp'),
-                'comment'       => 'E-mail ontvangen via '.$this->getProcessorName(),
-                'type'          => ActivityType::EMAIL,
-                'schedule_from' => $emailData['created_at'] ?? now(),
-                'schedule_to'   => $emailData['created_at'] ?? now(),
-                'is_done'       => true,
-                'status'        => ActivityStatus::DONE,
-            ];
-
-            if (isset($emailData['lead_id'])) {
-                $activityData['lead_id'] = $emailData['lead_id'];
-            }
-
-            if (isset($emailData['person_id'])) {
-                $activityData['person_id'] = $emailData['person_id'];
-            }
-
-            return Activity::create($activityData);
-        } catch (Exception $e) {
-            Log::error('Failed to create email activity', [
-                'email_data' => $emailData,
-                'error'      => $e->getMessage(),
-            ]);
-
-            return null;
-        }
+        return $emailData;
     }
 
     /**

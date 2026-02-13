@@ -23,6 +23,7 @@ use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
+use App\Models\SalesLead;
 use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
@@ -288,6 +289,21 @@ class Person extends Model implements PersonContract
             )->get();
         } catch (Exception $e) {
             Log::warning('Could not load leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
+    }
+
+    /**
+     * Get all sales leads gekoppeld aan deze persoon.
+     */
+    public function getSalesLeadsAttribute()
+    {
+        try {
+            return SalesLead::whereIn('id',
+                DB::table('saleslead_persons')->where('person_id', $this->id)->pluck('saleslead_id')
+            )->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load sales leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
             return collect();
         }
     }

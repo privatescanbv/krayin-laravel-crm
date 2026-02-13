@@ -27,8 +27,10 @@ trait ConcatsEmailActivities
             'sales'  => Email::forSalesLeadThread($entityId)->get(),
             'clinic' => Email::forClinicThread($entityId)->get(),
             'person' => (function () use ($entityId) {
-                $leadIds = Person::findOrFail($entityId)->leads->pluck('id')->toArray();
-                return Email::forPersonThread($entityId, $leadIds)->get();
+                $person = Person::findOrFail($entityId);
+                $leadIds = $person->leads->pluck('id')->toArray();
+                $salesLeadIds = $person->salesLeads->pluck('id')->toArray();
+                return Email::forPersonThread($entityId, $leadIds, $salesLeadIds)->get();
             })(),
             default  => collect(),
         };

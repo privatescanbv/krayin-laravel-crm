@@ -414,18 +414,19 @@ class Email extends Model implements EmailContract
             ->orWhere('sales_lead_id', $salesLeadId);
     }
 
-    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds): Builder
+    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds, array $salesLeadIds = []): Builder
     {
-        // Subquery: parents that belong to the lead
         $parentEmails = static::query()
             ->select('id')
             ->where('person_id', $personId)
-            ->orWhereIn('lead_id', $leadIds);
+            ->orWhereIn('lead_id', $leadIds)
+            ->orWhereIn('sales_lead_id', $salesLeadIds);
 
         return $query
             ->whereIn('parent_id', $parentEmails)
             ->orWhere('person_id', $personId)
-            ->orWhereIn('lead_id', $leadIds);
+            ->orWhereIn('lead_id', $leadIds)
+            ->orWhereIn('sales_lead_id', $salesLeadIds);
     }
 
     public function scopeForLeadThreadAndUnread(Builder $query, int $leadId): Builder

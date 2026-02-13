@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Mockery as m;
 use Tests\TestCase;
 use Webkul\Email\InboundEmailProcessor\WebklexImapEmailProcessor;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -44,7 +45,7 @@ class WebklexImapEmailProcessorTest extends TestCase
                     && array_key_exists('parent_id', $data) && $data['parent_id'] === null
                     && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
-            ->andReturn((object) ['id' => 123]);
+            ->andReturn(new Email(['id' => 123]));
 
         // No attachments expected
         $attachmentRepository->shouldReceive('uploadAttachments')->never();
@@ -102,7 +103,7 @@ class WebklexImapEmailProcessorTest extends TestCase
                     && array_key_exists('folder_id', $data) // Can be null if folder not found
                     && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
-            ->andReturn((object) ['id' => 555]);
+            ->andReturn(new Email(['id' => 555]));
 
         $attachmentRepository->shouldReceive('uploadAttachments')->never();
 

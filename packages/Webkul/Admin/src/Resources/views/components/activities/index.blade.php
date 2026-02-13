@@ -492,12 +492,29 @@
                     return labels[status] || status;
                 },
 
-                truncateHtml(html, maxLength = 150) {
+                // truncateHtml(html, maxLength = 150) {
+                //     if (!html) return '';
+                //
+                //     const tempDiv = document.createElement('div');
+                //     tempDiv.innerHTML = html;
+                //     const textContent = tempDiv.textContent || tempDiv.innerText || '';
+                //
+                //     if (textContent.length <= maxLength) {
+                //         return textContent;
+                //     }
+                //
+                //     return textContent.substring(0, maxLength) + '...';
+                // },
+
+                truncateHtmlASSummary(html, maxLength = 150) {
                     if (!html) return '';
 
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
-                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+                    tempDiv.querySelectorAll('style, script, link').forEach(el => el.remove());
+
+                    const textContent = (tempDiv.textContent || tempDiv.innerText || '').replace(/\s+/g, ' ').trim();
 
                     if (textContent.length <= maxLength) {
                         return textContent;

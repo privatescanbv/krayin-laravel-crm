@@ -35,7 +35,7 @@ class EmailRepository extends Repository
      */
     public function create(array $data): Email
     {
-        $uniqueId = time().'@'.config('mail.domain');
+        $uniqueId = time().'.'.bin2hex(random_bytes(8)).'@'.config('mail.domain');
 
         $referenceIds = [];
 

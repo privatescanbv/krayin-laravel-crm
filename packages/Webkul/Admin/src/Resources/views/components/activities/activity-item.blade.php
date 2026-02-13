@@ -156,7 +156,7 @@
             <!-- Activity Description -->
             <p class="dark:text-white" v-if="activity.comment">
                 <span v-if="activity.type === 'email'">
-                    @{{ truncateHtml(activity.comment, 350) }}
+                    @{{ truncateHtmlASSummary(activity.comment, 350) }}
                 </span>
                 <span v-else v-safe-html="activity.comment"></span>
             </p>

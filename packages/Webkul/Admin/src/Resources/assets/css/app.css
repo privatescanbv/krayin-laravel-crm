@@ -190,6 +190,10 @@
         content: "\e94d";
     }
 
+    .icon-sales:before {
+        content: "\e93C";
+    }
+
     .icon-anamnesis:before {
         content: "\e902";
     }

@@ -124,7 +124,7 @@
                             : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                     @click="setSection('sales')"
             >
-                <span class="icon-stats text-xl"></span>
+                <span class="icon-sales text-xl"></span>
                 Sales
             </button>
         @endif

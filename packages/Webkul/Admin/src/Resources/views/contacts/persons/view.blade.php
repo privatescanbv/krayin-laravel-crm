@@ -61,7 +61,7 @@
                 :showPartnerProducts="false"
                 :showResources="false"
                 :showLeads="true"
-                :showSales="false"
+                :showSales="true"
                 :showPatientMessages="true"
             />
 
@@ -112,6 +112,10 @@
             </div>
             <div v-else-if="leadDetailSection === 'leads'" class="flex w-full flex-col gap-4 rounded-lg">
                 <x-admin::leads :person="$person"/>
+            </div>
+
+            <div v-else-if="leadDetailSection === 'sales'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc.persons.partials.tab-sales', ['person' => $person])
             </div>
 
         </div>
@@ -256,7 +260,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'patient-berichten', 'activiteiten', 'anamnese', 'leads', 'partner-products', 'resources'];
+                                const validSections = ['algemeen', 'patient-berichten', 'activiteiten', 'anamnese', 'leads', 'sales', 'partner-products', 'resources'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

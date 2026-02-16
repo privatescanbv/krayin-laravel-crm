@@ -2,37 +2,72 @@
 
 namespace App\DataGrids;
 
-use App\Models\SalesLead;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 
 class SalesLeadDataGrid extends DataGrid
 {
-    public function prepareQueryBuilder()
+    public function prepareQueryBuilder(): Builder
     {
-        $queryBuilder = SalesLead::query()
-            ->with(['stage', 'lead', 'user']);
+        $queryBuilder = DB::table('salesleads')
+            ->leftJoin('lead_pipeline_stages', 'salesleads.pipeline_stage_id', '=', 'lead_pipeline_stages.id')
+            ->leftJoin('leads', 'salesleads.lead_id', '=', 'leads.id')
+            ->leftJoin('users', 'salesleads.user_id', '=', 'users.id')
+            ->addSelect(
+                'salesleads.id',
+                'salesleads.name',
+                'salesleads.description',
+                'salesleads.lead_id',
+                'salesleads.created_at',
+                'lead_pipeline_stages.name as stage_name',
+                DB::raw("CONCAT_WS(' ', leads.first_name, leads.lastname_prefix, leads.last_name) as lead_title"),
+                DB::raw("CONCAT_WS(' ', users.first_name, users.last_name) as user_name"),
+            );
 
         // Filter by pipeline if pipeline_id is provided
         if (request('pipeline_id')) {
             $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->find(request('pipeline_id'));
             if ($pipeline) {
                 $stageIds = $pipeline->stages()->pluck('id');
-                $queryBuilder->whereIn('pipeline_stage_id', $stageIds);
+                $queryBuilder->whereIn('salesleads.pipeline_stage_id', $stageIds);
             }
         }
 
-        // Debug: Log de query
-        Log::info('SalesLeadDataGrid Query: '.$queryBuilder->toSql());
-        Log::info('SalesLeadDataGrid Bindings: '.json_encode($queryBuilder->getBindings()));
+        // Filter by lead_id if provided
+        if (request('lead_id')) {
+            $queryBuilder->where('salesleads.lead_id', request('lead_id'));
+        }
 
-        $this->addFilter('id', 'id');
-        $this->addFilter('name', 'name');
-        $this->addFilter('description', 'description');
-        $this->addFilter('pipeline_stage_id', 'pipeline_stage_id');
-        $this->addFilter('lead_id', 'lead_id');
-        $this->addFilter('user_id', 'user_id');
-        $this->addFilter('workflow_type', 'workflow_type');
+        // Filter by person_id if provided (via saleslead_persons pivot)
+        if (request('person_id')) {
+            $queryBuilder->whereIn('salesleads.id', function ($sub) {
+                $sub->select('saleslead_id')
+                    ->from('saleslead_persons')
+                    ->where('person_id', request('person_id'));
+            });
+        }
+
+        // Filter by status bucket (active vs closed)
+        if (request('status_bucket')) {
+            if (request('status_bucket') === 'active') {
+                $queryBuilder->where('lead_pipeline_stages.is_won', 0)
+                    ->where('lead_pipeline_stages.is_lost', 0);
+            } elseif (request('status_bucket') === 'closed') {
+                $queryBuilder->where(function ($q) {
+                    $q->where('lead_pipeline_stages.is_won', 1)
+                        ->orWhere('lead_pipeline_stages.is_lost', 1);
+                });
+            }
+        }
+
+        $this->addFilter('id', 'salesleads.id');
+        $this->addFilter('name', 'salesleads.name');
+        $this->addFilter('description', 'salesleads.description');
+        $this->addFilter('stage_name', 'lead_pipeline_stages.name');
+        $this->addFilter('lead_title', 'leads.title');
+        $this->addFilter('user_name', 'users.name');
+        $this->addFilter('created_at', 'salesleads.created_at');
 
         return $queryBuilder;
     }
@@ -42,7 +77,7 @@ class SalesLeadDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'id',
             'label'      => 'ID',
-            'type'       => 'number',
+            'type'       => 'integer',
             'searchable' => true,
             'sortable'   => true,
             'width'      => '50px',
@@ -67,7 +102,7 @@ class SalesLeadDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'pipeline_stage.name',
+            'index'      => 'stage_name',
             'label'      => 'Pipeline Stage',
             'type'       => 'string',
             'searchable' => true,
@@ -76,7 +111,7 @@ class SalesLeadDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'lead.title',
+            'index'      => 'lead_title',
             'label'      => 'Lead',
             'type'       => 'string',
             'searchable' => true,
@@ -85,7 +120,7 @@ class SalesLeadDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'user.name',
+            'index'      => 'user_name',
             'label'      => 'User',
             'type'       => 'string',
             'searchable' => true,
@@ -96,7 +131,7 @@ class SalesLeadDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'created_at',
             'label'      => 'Created At',
-            'type'       => 'date_range',
+            'type'       => 'date',
             'searchable' => true,
             'sortable'   => true,
             'width'      => '120px',
@@ -106,16 +141,23 @@ class SalesLeadDataGrid extends DataGrid
     public function prepareActions(): void
     {
         $this->addAction([
+            'title'  => 'View',
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.sales-leads.view', $row->id),
+            'icon'   => 'icon-eye',
+        ]);
+
+        $this->addAction([
             'title'  => 'Edit',
             'method' => 'GET',
-            'route'  => 'admin.sales-leads.edit',
+            'url'    => fn ($row) => route('admin.sales-leads.edit', $row->id),
             'icon'   => 'icon-edit',
         ]);
 
         $this->addAction([
             'title'  => 'Delete',
             'method' => 'DELETE',
-            'route'  => 'admin.sales-leads.delete',
+            'url'    => fn ($row) => route('admin.sales-leads.delete', $row->id),
             'icon'   => 'icon-delete',
         ]);
     }

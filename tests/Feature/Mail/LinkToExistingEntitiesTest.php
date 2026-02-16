@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Clinic;
 use App\Models\SalesLead;
 use App\Services\Mail\GraphMailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -237,7 +238,7 @@ test('skips won lead by email', function () {
 });
 
 test('links clinic by email', function () {
-    $clinic = \App\Models\Clinic::factory()->create([
+    $clinic = Clinic::factory()->create([
         'emails' => ['clinic@hospital.com'],
     ]);
 
@@ -253,7 +254,7 @@ test('links person and clinic simultaneously', function () {
         'emails' => [['value' => $email, 'is_default' => true]],
     ]);
 
-    $clinic = \App\Models\Clinic::factory()->create([
+    $clinic = Clinic::factory()->create([
         'emails' => [$email],
     ]);
 
@@ -281,7 +282,7 @@ test('links all entity types simultaneously', function () {
     ]);
     $salesLead->persons()->attach($person->id);
 
-    $clinic = \App\Models\Clinic::factory()->create([
+    $clinic = Clinic::factory()->create([
         'emails' => [$email],
     ]);
 

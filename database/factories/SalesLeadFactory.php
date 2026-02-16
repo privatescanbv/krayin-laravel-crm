@@ -50,7 +50,7 @@ class SalesLeadFactory extends Factory
             'name'               => $this->faker->sentence(3),
             'description'        => $this->faker->optional()->paragraph(),
             'pipeline_stage_id'  => $stage->id,
-            'lead_id'            => null, // Optional - can be set when creating
+            'lead_id'            => Lead::factory(),
             'user_id'            => User::first()?->id, // Optional - assign to first user if available
         ];
     }

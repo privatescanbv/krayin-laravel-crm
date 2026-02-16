@@ -614,6 +614,12 @@ return [
         'sort'  => 4,
     ],
     [
+        'key'   => 'clinic-guide',
+        'name'  => 'Dagplanning',
+        'route' => 'admin.clinic-guide.index',
+        'sort'  => 98,
+    ],
+    [
         'key'   => 'sales-leads',
         'name'  => 'Sales order',
         'route' => 'admin.sales-leads.index',

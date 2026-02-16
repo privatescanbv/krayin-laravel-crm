@@ -8,6 +8,8 @@ use Webkul\DataGrid\DataGrid;
 
 class SalesLeadDataGrid extends DataGrid
 {
+    protected $primaryColumn = 'salesleads.id';
+
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('salesleads')
@@ -21,8 +23,16 @@ class SalesLeadDataGrid extends DataGrid
                 'salesleads.lead_id',
                 'salesleads.created_at',
                 'lead_pipeline_stages.name as stage_name',
-                DB::raw("CONCAT_WS(' ', leads.first_name, leads.lastname_prefix, leads.last_name) as lead_title"),
-                DB::raw("CONCAT_WS(' ', users.first_name, users.last_name) as user_name"),
+                DB::raw(
+                    DB::getDriverName() === 'sqlite'
+                        ? "TRIM(COALESCE(leads.first_name, '') || ' ' || COALESCE(leads.lastname_prefix, '') || ' ' || COALESCE(leads.last_name, '')) as lead_title"
+                        : "CONCAT_WS(' ', leads.first_name, leads.lastname_prefix, leads.last_name) as lead_title"
+                ),
+                DB::raw(
+                    DB::getDriverName() === 'sqlite'
+                        ? "TRIM(COALESCE(users.first_name, '') || ' ' || COALESCE(users.last_name, '')) as user_name"
+                        : "CONCAT_WS(' ', users.first_name, users.last_name) as user_name"
+                ),
             );
 
         // Filter by pipeline if pipeline_id is provided

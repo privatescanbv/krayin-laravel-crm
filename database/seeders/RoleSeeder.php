@@ -42,6 +42,7 @@ class RoleSeeder extends Seeder
                 'leads.create',
                 'leads.view',
                 'leads.edit',
+                'clinic-guide',
                 'products',
                 'products.view',
                 'productgroups',
@@ -76,6 +77,37 @@ class RoleSeeder extends Seeder
                 'orders.view',
                 'orders.create',
                 'orders.edit',
+            ]),
+        ]);
+
+        // Insert Kliniek Begeleider role
+        DB::table('roles')->insert([
+            'id'              => 3,
+            'name'            => 'Kliniek Begeleider',
+            'description'     => 'Kliniek begeleider met toegang tot dagplanning en basisrechten',
+            'permission_type' => 'custom',
+            'permissions'     => json_encode([
+                'dashboard',
+                'leads',
+                'leads.view',
+                'sales-leads',
+                'sales-leads.view',
+                'sales-leads.edit',
+                'orders',
+                'orders.view',
+                'orders.edit',
+                'clinic-guide',
+                'sales-leads',
+                'sales-leads.view',
+                'contacts',
+                'contacts.persons',
+                'contacts.persons.view',
+                'contacts.organizations',
+                'orders',
+                'orders.view',
+                'activities',
+                'activities.create',
+                'activities.edit',
             ]),
         ]);
     }

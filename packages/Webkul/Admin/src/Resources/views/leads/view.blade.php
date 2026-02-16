@@ -147,7 +147,7 @@
 
                 <div class="flex justify-between">
                     <span>Toegewezen aan:</span>
-                    <span>{{ $lead->user->name }}</span>
+                    <span>{{ $lead->user?->name ?: "-" }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>

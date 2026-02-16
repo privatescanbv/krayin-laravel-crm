@@ -111,10 +111,11 @@ class PipelineSeeder extends BaseSeeder
         }
         unset($stage); // Break reference
 
-        //check
-        if($stageId != PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value)
+        //check: verify the last stage's actual ID matches the expected technical stage ID
+        $lastStageId = end($stages)['id'];
+        if($lastStageId != PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value)
         {
-            throw new Exception('Pipeline stage id is not valid: ' . $stageId . ' (expected ' . PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value . ')');
+            throw new Exception('Pipeline stage id is not valid: ' . $lastStageId . ' (expected ' . PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value . ')');
         }
 
         DB::table('lead_pipeline_stages')->insert($stages);

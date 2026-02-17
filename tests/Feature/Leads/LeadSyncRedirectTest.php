@@ -212,6 +212,67 @@ test('does not redirect to sync page when match score is 100', function () {
     $response->assertRedirect(route('admin.leads.view', $lead->id));
 });
 
+test('sync updates person address country when only country differs and address is incomplete', function () {
+    $data = createLeadSyncPipelineData();
+
+    // Create person with an existing address that has NO country
+    $personAddress = Address::create([
+        'street'       => 'Kerkstraat',
+        'house_number' => '10',
+        'postal_code'  => '1234AB',
+        'city'         => 'Amsterdam',
+        'country'      => null,
+    ]);
+
+    $person = Person::factory()->create([
+        'first_name' => 'Jan',
+        'last_name'  => 'Jansen',
+        'emails'     => [['value' => 'jan@example.com', 'label' => 'eigen']],
+        'user_id'    => test()->user->id,
+        'address_id' => $personAddress->id,
+    ]);
+
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+
+    // Create lead with matching data but country = Nederland
+    $leadAddress = Address::create([
+        'street'       => 'Kerkstraat',
+        'house_number' => '10',
+        'postal_code'  => '1234AB',
+        'city'         => 'Amsterdam',
+        'country'      => 'Nederland',
+    ]);
+
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => $data['pipelineId'],
+        'lead_pipeline_stage_id' => $data['stageId'],
+        'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
+        'first_name'             => 'Jan',
+        'last_name'              => 'Jansen',
+        'emails'                 => [['value' => 'jan@example.com', 'label' => 'eigen']],
+        'address_id'             => $leadAddress->id,
+    ]);
+
+    $lead->attachPersons([$person->id]);
+
+    // Sync: choose lead value for country only
+    $response = test()
+        ->actingAs(test()->user, 'user')
+        ->post(route('admin.leads.sync-lead-to-person-update', [
+            'leadId'   => $lead->id,
+            'personId' => $person->id,
+        ]), [
+            'choice' => [
+                'address_country' => 'lead',
+            ],
+        ]);
+
+    // Person address should now have country = Nederland
+    $personAddress->refresh();
+    expect($personAddress->country)->toBe('Nederland');
+});
+
 test('handles AJAX requests correctly for sync redirect', function () {
     $data = createLeadSyncPipelineData();
 

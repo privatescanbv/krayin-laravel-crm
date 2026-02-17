@@ -309,7 +309,7 @@
 
                     timezone: "{{ config('app.timezone') }}",
 
-                    returnUrl: (typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : ''),
+                    returnUrl: (typeof window !== 'undefined' ? window.location.href : ''),
                 }
             },
 

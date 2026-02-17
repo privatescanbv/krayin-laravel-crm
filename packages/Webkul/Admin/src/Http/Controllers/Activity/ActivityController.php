@@ -22,6 +22,7 @@ use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
@@ -34,6 +35,7 @@ use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
 {
+    use HandlesReturnUrl;
     /**
      * Create a new controller instance.
      *
@@ -409,9 +411,9 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
-        // If a safe return URL is provided, prefer redirecting back to it
-        $returnUrl = request()->get('return');
-        if (is_string($returnUrl) && str_starts_with($returnUrl, '/')) {
+        // If a valid return_url is provided, prefer redirecting back to it
+        $returnUrl = $this->resolveReturnUrl();
+        if ($returnUrl) {
             return redirect($returnUrl);
         }
 
@@ -532,10 +534,17 @@ class ActivityController extends Controller
                     ],
                 ]);
             }
-            if(!is_null($leadId)) {
-                return redirect()->route('admin.leads.view', $leadId)->with('Activiteit is verwijderd.');
+            session()->flash('success', 'Activiteit is verwijderd.');
+
+            $returnUrl = $this->resolveReturnUrl();
+            if ($returnUrl) {
+                return redirect($returnUrl);
+            }
+
+            if (!is_null($leadId)) {
+                return redirect()->route('admin.leads.view', $leadId);
             } else {
-                return redirect()->route('admin.contacts.persons.view', $firstPersonId)->with('Activiteit is verwijderd.');
+                return redirect()->route('admin.contacts.persons.view', $firstPersonId);
             }
         } catch (Exception $exception) {
             logger()->error('Could not delete activity: '.$exception->getMessage());

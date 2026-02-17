@@ -197,8 +197,8 @@
                         this.item.product_name = result.name_with_path || result.name || '';
                         // Store product price for quantity updates
                         this.productPrice = result.price ? parseFloat(result.price) : null;
-                        // Set total_price from product price if available and total_price is empty or 0
-                        if (this.productPrice && (!this.item.total_price || this.item.total_price === 0)) {
+                        // Update total_price when a product is selected or changed
+                        if (this.productPrice) {
                             const quantity = this.item.quantity || 1;
                             this.item.total_price = this.productPrice * quantity;
                         }

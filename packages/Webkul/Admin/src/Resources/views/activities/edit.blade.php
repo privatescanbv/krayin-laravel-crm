@@ -8,7 +8,7 @@
     {!! view_render_event('admin.activities.edit.form.before') !!}
 
     <x-admin::form
-        :action="route('admin.activities.update', $activity->id) . (request('return') ? ('?return=' . urlencode(request('return'))) : '')"
+        :action="route('admin.activities.update', $activity->id) . (request('return_url') ? ('?return_url=' . urlencode(request('return_url'))) : '')"
         method="PUT"
     >
         @include('adminc.components.validation-errors')
@@ -258,7 +258,7 @@
 
     <!-- Hidden form used by Afronden button -->
     <form id="activity-complete-form"
-          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
+          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
           method="POST" class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT"/>
@@ -268,7 +268,7 @@
 
     <!-- Hidden form used by Heropenen button -->
     <form id="activity-reopen-form"
-          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
+          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
           method="POST" class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT"/>

@@ -56,7 +56,7 @@
                             ('{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace(
                                 'replaceId', activity.id)) :
                             ('{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id) + (
-                                returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : ''))">
+                                returnUrl ? ('?return_url=' + encodeURIComponent(returnUrl)) : ''))">
                         @{{ activity.title || 'geen' }}
 
                         <!-- Status chip hidden per requirement -->
@@ -245,7 +245,7 @@
                             <x-admin::dropdown.menu.item>
                                 <a class="flex items-center gap-2"
                                     :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity
-                                        .id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : '')">
+                                        .id) + (returnUrl ? ('?return_url=' + encodeURIComponent(returnUrl)) : '')">
                                     <span class="icon-edit text-2xl"></span>
 
                                     @lang('admin::app.components.activities.index.edit')

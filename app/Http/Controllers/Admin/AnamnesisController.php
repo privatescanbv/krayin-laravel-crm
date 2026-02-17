@@ -536,8 +536,8 @@ class AnamnesisController extends Controller
 
         $formData = [
             'user_crm_id'     => $person->id,
-            'user_firstname'  => $firstName ?: 'Onbekend',
-            'user_lastname'   => $lastName ?: 'Onbekend',
+            'user_firstname'  => $firstName ?: '-',
+            'user_lastname'   => $lastName ?: '-',
             'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
             'user_email'      => $email,
             'user_birthday'   => $birthday,

@@ -167,7 +167,7 @@ class LeadController extends Controller
         $invalidPhones = [];
 
         if (! isset($normalized['first_name']) || trim((string) $normalized['first_name']) === '') {
-            $normalized['first_name'] = 'Onbekend';
+            $normalized['first_name'] = '-';
         }
         if ($allowInvalidPhone) {
             $normalized = $request->all();

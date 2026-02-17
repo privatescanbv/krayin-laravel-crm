@@ -150,25 +150,31 @@ class SalesLeadDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        $this->addAction([
-            'title'  => 'View',
-            'method' => 'GET',
-            'url'    => fn ($row) => route('admin.sales-leads.view', $row->id),
-            'icon'   => 'icon-eye',
-        ]);
+        if (bouncer()->hasPermission('sales-leads.view')) {
+            $this->addAction([
+                'title' => 'View',
+                'method' => 'GET',
+                'url' => fn($row) => route('admin.sales-leads.view', $row->id),
+                'icon' => 'icon-eye',
+            ]);
+        }
 
-        $this->addAction([
-            'title'  => 'Edit',
-            'method' => 'GET',
-            'url'    => fn ($row) => route('admin.sales-leads.edit', $row->id),
-            'icon'   => 'icon-edit',
-        ]);
+        if (bouncer()->hasPermission('sales-leads.edit')) {
+            $this->addAction([
+                'title' => 'Edit',
+                'method' => 'GET',
+                'url' => fn($row) => route('admin.sales-leads.edit', $row->id),
+                'icon' => 'icon-edit',
+            ]);
+        }
 
-        $this->addAction([
-            'title'  => 'Delete',
-            'method' => 'DELETE',
-            'url'    => fn ($row) => route('admin.sales-leads.delete', $row->id),
-            'icon'   => 'icon-delete',
-        ]);
+        if (bouncer()->hasPermission('sales-leads.delete')) {
+            $this->addAction([
+                'title' => 'Delete',
+                'method' => 'DELETE',
+                'url' => fn($row) => route('admin.sales-leads.delete', $row->id),
+                'icon' => 'icon-delete',
+            ]);
+        }
     }
 }

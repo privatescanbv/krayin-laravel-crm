@@ -471,7 +471,7 @@ $salutationToGenderMapping = [
 
                             <!-- Right: Suggestions as separate panel (outside white card) -->
                             <div class="w-1/3 max-md:w-full">
-                                <div class="sticky top-4">
+                                <div class="sticky top-36">
                                     <div class="rounded-lg border border-activity-note-border bg-activity-note-bg dark:border-blue-800 dark:bg-blue-900 p-4" v-if="suggestions.length > 0">
                                         <x-adminc::components.person-suggestions-panel :button-handler="'selectSuggestion'" :button-text="'Koppelen'" />
                                     </div>

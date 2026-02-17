@@ -156,6 +156,7 @@
                             <x-admin::form.control-group.control
                                 type="select"
                                 name="user_id"
+                                id="user_id_select"
                                 :value="old('user_id', $activity->user_id)"
                                 class="flex-1"
                                 :disabled="$activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover"
@@ -170,6 +171,13 @@
                                     </option>
                                 @endforeach
                             </x-admin::form.control-group.control>
+
+                            {{-- Hidden fallback: disabled selects are not submitted by the browser.
+                                 This ensures the current user_id is always included in the form data.
+                                 The takeover JS updates this hidden input alongside the select. --}}
+                            @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover)
+                                <input type="hidden" name="user_id" id="user_id_hidden" value="{{ $activity->user_id }}" />
+                            @endif
 
                             <!-- Takeover Button -->
                             @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
@@ -301,10 +309,16 @@
                     const currentUserId = {{ auth()->guard('user')->id() ?? 'null' }};
 
                     // Update the user_id dropdown
-                    const userSelect = document.querySelector('select[name="user_id"]');
+                    const userSelect = document.getElementById('user_id_select');
                     if (userSelect) {
                         userSelect.value = currentUserId;
                         userSelect.disabled = false; // Enable the field since user now owns it
+                    }
+
+                    // Remove hidden fallback input (no longer needed once select is enabled)
+                    const hiddenInput = document.getElementById('user_id_hidden');
+                    if (hiddenInput) {
+                        hiddenInput.remove();
                     }
 
                     // Hide the takeover button

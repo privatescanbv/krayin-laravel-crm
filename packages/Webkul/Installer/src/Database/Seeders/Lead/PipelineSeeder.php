@@ -81,7 +81,7 @@ class PipelineSeeder extends BaseSeeder
             ],
             [
                 'id' => $privateScanOrdersPipelineId,
-                'name' => 'Privatescan Orders',
+                'name' => 'Privatescan',
                 'is_default' => 1,
                 'type' => PipelineType::ORDER,
                 'created_at' => $now,
@@ -89,7 +89,7 @@ class PipelineSeeder extends BaseSeeder
             ],
             [
                 'id' => $herniaOrdersPipelineId,
-                'name' => 'Herniapoli Orders',
+                'name' => 'Herniapoli',
                 'is_default' => 0,
                 'type' => PipelineType::ORDER,
                 'created_at' => $now,

@@ -49,6 +49,10 @@ class RoleSeeder extends Seeder
                 'productgroups.view',
                 'partner_products',
                 'partner_products.view',
+                'settings.clinics',
+                'settings.clinics.view',
+                'settings.resources',
+                'settings.resources.view',
                 'mail',
                 'mail.create',
                 'mail.view',
@@ -61,11 +65,13 @@ class RoleSeeder extends Seeder
                 'activities.takeover',
                 'contacts',
                 'contacts.persons',
+                'contacts.persons.view',
                 'contacts.persons.create',
                 'contacts.persons.edit',
                 'contacts.persons.view',
                 'contacts.persons.portal-create',
                 'contacts.organizations',
+                'contacts.organizations.view',
                 'contacts.organizations.create',
                 'contacts.organizations.edit',
                 'settings',
@@ -77,6 +83,8 @@ class RoleSeeder extends Seeder
                 'orders.view',
                 'orders.create',
                 'orders.edit',
+                'resource_planning',
+                'documentation',
             ]),
         ]);
 
@@ -108,6 +116,8 @@ class RoleSeeder extends Seeder
                 'activities',
                 'activities.create',
                 'activities.edit',
+                'resource_planning',
+                'documentation',
             ]),
         ]);
     }

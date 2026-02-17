@@ -75,12 +75,14 @@ return [
      */
     [
         'key'        => 'persons',
+        'acl'        => 'contacts.persons',
         'name'       => 'admin::app.layouts.persons',
         'route'      => 'admin.contacts.persons.index',
         'sort'       => 8,
         'icon-class' => 'icon-contact',
     ], [
         'key'        => 'organizations',
+        'acl'        => 'contacts.organizations',
         'name'       => 'admin::app.layouts.organizations',
         'route'      => 'admin.contacts.organizations.index',
         'sort'       => 9,
@@ -97,7 +99,7 @@ return [
         'sort'       => 10,
         'icon-class' => 'icon-product',
     ], [
-        'key'        => 'monitor',
+        'key'        => 'resource_planning',
         'name'       => 'Monitor resource planning',
         'route'      => 'admin.planning.monitor.index',
         'sort'       => 11,
@@ -105,6 +107,7 @@ return [
     ],
     [
         'key'        => 'clinics',
+        'acl'        => 'settings.clinics',
         'name'       => 'Klinieken',
         'route'      => 'admin.clinics.index',
         'sort'       => 12,
@@ -170,7 +173,7 @@ return [
         'sort'       => 2,
         'icon-class' => 'icon-setting',
     ], [
-        'key'        => 'settings.clinics.reources',
+        'key'        => 'settings.clinics.resources',
         'name'       => 'admin::app.layouts.resources',
         'info'       => 'admin::app.layouts.resources-info',
         'route'      => 'admin.settings.resources.index',

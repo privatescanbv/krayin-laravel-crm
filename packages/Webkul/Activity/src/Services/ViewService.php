@@ -239,14 +239,6 @@ class ViewService
 
                     if (!empty($value['group_ids'])) {
                         $query->orWhereIn('activities.group_id', $value['group_ids']);
-
-                        // Include activities where user is a participant
-                        $query->orWhereExists(function ($existsQuery) use ($value) {
-                            $existsQuery->select(DB::raw(1))
-                                ->from('activity_participants')
-                                ->whereColumn('activity_participants.activity_id', 'activities.id')
-                                ->where('activity_participants.user_id', $value['user_id']);
-                        });
                     }
                 });
                 break;

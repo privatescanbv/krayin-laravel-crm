@@ -255,6 +255,11 @@ return [
         'route' => 'admin.settings.users.index',
         'sort'  => 3,
     ], [
+        'key'   => 'settings.user.users.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.settings.users.view', 'admin.settings.users.view'],
+        'sort'  => 1,
+    ],[
         'key'   => 'settings.user.users.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.settings.users.create', 'admin.settings.users.store'],

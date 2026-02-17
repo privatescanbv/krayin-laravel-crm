@@ -75,25 +75,17 @@
                             />
 
                             <!-- Title -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="title"
-                                />
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="title"
+                                label="Titel"
+                            />
 
                             <!-- Description -->
                             <x-adminc::components.field
                                 type="textarea"
                                 name="comment"
                                 :label="trans('admin::app.components.activities.actions.file.description')"
-                            />
-
-                            <!-- File Name -->
-                            <x-adminc::components.field
-                                type="text"
-                                name="name"
-                                :label="trans('admin::app.components.activities.actions.file.name')"
                             />
 
                             <!-- File -->
@@ -104,6 +96,16 @@
                                 :label="trans('admin::app.components.activities.actions.file.file')"
                                 rules="required"
                                 class="!mb-0"
+                            />
+
+                            <!-- Publiceren in patiëntportaal -->
+                            <input type="hidden" name="publish_to_portal" value="0" />
+                            <x-adminc::components.field
+                                type="checkbox"
+                                name="publish_to_portal"
+                                label="Publiceren in patiëntportaal"
+                                value="1"
+                                class="!mb-0 mt-4"
                             />
 
                             {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.content.controls.after') !!}

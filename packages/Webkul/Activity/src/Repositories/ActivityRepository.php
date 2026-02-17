@@ -135,23 +135,24 @@ class ActivityRepository extends Repository
      */
     public function isDurationOverlapping($startFrom, $endFrom, $participants, $id)
     {
-        // Simplified overlap detection - only check assigned user conflicts
-        $queryBuilder = $this->where(function ($query) use ($startFrom, $endFrom) {
-            $query->where([
-                ['activities.schedule_from', '<=', $startFrom],
-                ['activities.schedule_to', '>=', $startFrom],
-            ])->orWhere([
-                ['activities.schedule_from', '>=', $startFrom],
-                ['activities.schedule_from', '<=', $endFrom],
-            ]);
-        })
-            ->whereNotNull('user_id'); // Only check activities with assigned users
+        $userId = request()->input('user_id') ?? auth()->guard('user')->id();
 
-        if (!is_null($id)) {
+        if (! $userId) {
+            return false;
+        }
+
+        // Only check open meetings for the same user with a true time overlap
+        $queryBuilder = $this->where('type', 'meeting')
+            ->where('user_id', $userId)
+            ->where('is_done', false)
+            ->where('schedule_from', '<', $endFrom)
+            ->where('schedule_to', '>', $startFrom);
+
+        if (! is_null($id)) {
             $queryBuilder->where('activities.id', '!=', $id);
         }
 
-        return $queryBuilder->count() ? true : false;
+        return $queryBuilder->exists();
     }
 
     public function unassign(Activity $activity): void
@@ -331,6 +332,7 @@ class ActivityRepository extends Repository
             ->with(['activity'])
             ->whereHas('activity', function ($q) use ($orderIds, $documentType) {
                 $q->where('type', ActivityType::FILE->value)
+                    ->where('publish_to_portal', true)
                     ->whereIn('order_id', $orderIds);
 
                 if (is_string($documentType) && $documentType !== '') {

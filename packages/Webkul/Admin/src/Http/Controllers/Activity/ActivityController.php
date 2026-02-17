@@ -185,7 +185,7 @@ class ActivityController extends Controller
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
-            'is_done' => request('type') == 'note' ? 1 : 0,
+            'is_done' => request('type') == ActivityType::NOTE->value ? 1 : 0,
         ]));
 
         $didChange = $this->updateStatus($activity);

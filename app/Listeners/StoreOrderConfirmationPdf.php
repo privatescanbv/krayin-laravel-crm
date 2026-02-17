@@ -56,13 +56,14 @@ class StoreOrderConfirmationPdf
 
         // Create the activity first to get an ID for the file path
         $activity = $this->activityRepository->create([
-            'type'       => ActivityType::FILE,
-            'title'      => 'Orderbevestiging PDF',
-            'comment'    => 'Automatisch gegenereerde orderbevestiging',
-            'is_done'    => true,
-            'user_id'    => $userId,
-            'order_id'   => $order->id,
-            'additional' => [
+            'type'                => ActivityType::FILE,
+            'title'               => 'Orderbevestiging PDF',
+            'comment'             => 'Automatisch gegenereerde orderbevestiging',
+            'is_done'             => true,
+            'publish_to_portal' => true,
+            'user_id'             => $userId,
+            'order_id'            => $order->id,
+            'additional'          => [
                 'document_type' => 'order_confirmation',
             ],
         ]);

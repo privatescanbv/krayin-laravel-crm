@@ -80,6 +80,9 @@
                         Vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
                     </div>
                     <div class="flex flex-row gap-1">
+                    <span v-if="activity.publish_to_portal"
+                          class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          title="Gepubliceerd in patiëntportaal">Portaal</span>
                     <span v-if="activity.is_done == 1 || activity.is_done === true"
                           class="icon-tick ml-1 text-base text-status-active-text" title="Afgerond"></span>
                         <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"

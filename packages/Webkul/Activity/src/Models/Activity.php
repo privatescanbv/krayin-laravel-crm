@@ -45,7 +45,8 @@ class Activity extends Model implements ActivityContract
         'schedule_to'   => 'datetime',
         'assigned_at'   => 'datetime',
         'additional'    => 'array',
-        'is_done'      => 'boolean',
+        'is_done'              => 'boolean',
+        'publish_to_portal'  => 'boolean',
         'type'         => ActivityType::class,
         'status'       => ActivityStatus::class,
     ];
@@ -64,6 +65,7 @@ class Activity extends Model implements ActivityContract
         'schedule_from',
         'schedule_to',
         'is_done',
+        'publish_to_portal',
         'status',
         'user_id',
         'assigned_at',

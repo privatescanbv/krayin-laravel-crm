@@ -119,6 +119,10 @@ class PatientDocumentController extends Controller
             abort(404);
         }
 
+        if (! $file->activity?->publish_to_portal) {
+            abort(404);
+        }
+
         $orderIds = $this->orderRepository->getIdsForPerson($person);
 
         $orderId = $file->activity?->order_id ? (int) $file->activity->order_id : null;

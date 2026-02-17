@@ -250,6 +250,18 @@
 
                     <!-- is_done Checkbox removed in favor of Afronden button -->
 
+                    <!-- Publiceren in patiëntportaal (alleen voor file, meeting, patient_message) -->
+                    @if(in_array($activity->type, [ActivityType::FILE, ActivityType::MEETING, ActivityType::PATIENT_MESSAGE]))
+                        <input type="hidden" name="publish_to_portal" value="0" />
+                        <x-adminc::components.field
+                            type="checkbox"
+                            name="publish_to_portal"
+                            label="Publiceren in patiëntportaal"
+                            value="1"
+                            :checked="old('publish_to_portal', $activity->publish_to_portal)"
+                        />
+                    @endif
+
                     {!! view_render_event('admin.activities.edit.form_controls.after') !!}
                 </div>
             </div>

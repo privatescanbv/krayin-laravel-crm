@@ -184,20 +184,6 @@
             :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
         />
-
-        <!-- Portal password -->
-        <x-adminc::components.field
-            type="password"
-            name="password"
-            label="Patiëntportaal wachtwoord"
-            value=""
-            placeholder="Laat leeg om niet te wijzigen"
-            :readonly="!$mayEditPersonFields"
-        />
-
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Vul een nieuw wachtwoord in om het portaalaccount bij te werken. Laat leeg om het huidige wachtwoord te behouden.
-        </p>
     @endif
 </div>
 

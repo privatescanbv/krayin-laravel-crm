@@ -77,6 +77,31 @@
                         weekNumbers: true,
                         defaultDate: this.value || null,
                         clickOpens: false,
+                        parseDate: function(dateString, format) {
+                            // Handle 8 digits without separators (ddmmyyyy)
+                            if (/^\d{8}$/.test(dateString)) {
+                                return new Date(
+                                    parseInt(dateString.substring(4, 8)),
+                                    parseInt(dateString.substring(2, 4)) - 1,
+                                    parseInt(dateString.substring(0, 2))
+                                );
+                            }
+
+                            // Handle dd-mm-yyyy
+                            let match = dateString.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+                            if (match) {
+                                return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+                            }
+
+                            // Handle yyyy-mm-dd (internal format)
+                            match = dateString.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+                            if (match) {
+                                return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+                            }
+
+                            // Fallback
+                            return new Date(dateString);
+                        },
                         onChange: function(selectedDates, dateStr, instance) {
                             self.$emit("onChange", dateStr);
                         }

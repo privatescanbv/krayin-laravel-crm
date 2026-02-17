@@ -180,7 +180,7 @@
             name="is_active"
             value="1"
             :checked="(bool) old('is_active', $entity?->is_active ?? false)"
-            label="Patiëntportaal actief"
+            label="Actief"
             :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
         />

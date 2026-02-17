@@ -152,28 +152,28 @@ class SalesLeadDataGrid extends DataGrid
     {
         if (bouncer()->hasPermission('sales-leads.view')) {
             $this->addAction([
-                'title' => 'View',
+                'title'  => 'View',
                 'method' => 'GET',
-                'url' => fn($row) => route('admin.sales-leads.view', $row->id),
-                'icon' => 'icon-eye',
+                'url'    => fn ($row) => route('admin.sales-leads.view', $row->id),
+                'icon'   => 'icon-eye',
             ]);
         }
 
         if (bouncer()->hasPermission('sales-leads.edit')) {
             $this->addAction([
-                'title' => 'Edit',
+                'title'  => 'Edit',
                 'method' => 'GET',
-                'url' => fn($row) => route('admin.sales-leads.edit', $row->id),
-                'icon' => 'icon-edit',
+                'url'    => fn ($row) => route('admin.sales-leads.edit', $row->id),
+                'icon'   => 'icon-edit',
             ]);
         }
 
         if (bouncer()->hasPermission('sales-leads.delete')) {
             $this->addAction([
-                'title' => 'Delete',
+                'title'  => 'Delete',
                 'method' => 'DELETE',
-                'url' => fn($row) => route('admin.sales-leads.delete', $row->id),
-                'icon' => 'icon-delete',
+                'url'    => fn ($row) => route('admin.sales-leads.delete', $row->id),
+                'icon'   => 'icon-delete',
             ]);
         }
     }

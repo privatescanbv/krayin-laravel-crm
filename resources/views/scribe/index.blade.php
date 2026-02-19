@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-
+    
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-
+    
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -156,7 +156,7 @@
                 </li>
                                     <ul id="tocify-subheader-patient-appointments" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="patient-appointments-GETapi-patient--id--appointments">
-                                <a href="#patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</a>
+                                <a href="#patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -166,7 +166,7 @@
                 </li>
                                     <ul id="tocify-subheader-patient-documents" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents">
-                                <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (derived from Orders -> Activities (type=file) -> activity_files).</a>
+                                <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents--documentId--download">
                                 <a href="#patient-documents-GETapi-patient--id--documents--documentId--download">Download a patient document (activity file).</a>
@@ -221,7 +221,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: February 11, 2026</li>
+        <li>Last updated: February 19, 2026</li>
     </ul>
 </div>
 
@@ -244,7 +244,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="endpoints">Endpoints</h1>
 
-
+    
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -272,7 +272,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-02-11\",
+    \"birthdate\": \"2026-02-19\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -303,7 +303,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-02-11",
+    "birthdate": "2026-02-19",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -511,10 +511,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-02-11"
+               value="2026-02-19"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-11</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-19</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -2679,7 +2679,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
+    --get "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -2687,7 +2687,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
 );
 
 const headers = {
@@ -2814,10 +2814,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="GETapi-sales-leads--id--activities"
-               value="16"
+               value="1"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>16</code></p>
+<p>The ID of the sales lead. Example: <code>1</code></p>
             </div>
                     </form>
 
@@ -2835,7 +2835,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
+    "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -2844,15 +2844,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-11 12:07:05\",
-    \"schedule_to\": \"2026-02-11 12:07:05\"
+    \"schedule_from\": \"2026-02-19 10:45:09\",
+    \"schedule_to\": \"2026-02-19 10:45:09\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
 );
 
 const headers = {
@@ -2866,8 +2866,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-11 12:07:05",
-    "schedule_to": "2026-02-11 12:07:05"
+    "schedule_from": "2026-02-19 10:45:09",
+    "schedule_to": "2026-02-19 10:45:09"
 };
 
 fetch(url, {
@@ -2971,10 +2971,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="16"
+               value="1"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>16</code></p>
+<p>The ID of the sales lead. Example: <code>1</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
@@ -3046,10 +3046,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-11 12:07:05"
+               value="2026-02-19 10:45:09"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-11 12:07:05</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 10:45:09</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3058,10 +3058,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-11 12:07:05"
+               value="2026-02-19 10:45:09"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-11 12:07:05</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 10:45:09</code></p>
         </div>
         </form>
 
@@ -3715,7 +3715,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-
+    
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -4110,9 +4110,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
+    
 
-
-                                <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
+                                <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -4171,12 +4171,7 @@ fetch(url, {
             &quot;patient_id&quot;: &quot;1&quot;,
             &quot;practitioner_id&quot;: null,
             &quot;clinic_id&quot;: null,
-            &quot;clinic_label&quot;: null,
-            &quot;clinic&quot;: {
-                &quot;id&quot;: 1,
-                &quot;name&quot;: &quot;Example Clinic&quot;,
-                &quot;address&quot;: &quot;Example street 1\n1234 AB Amsterdam&quot;
-            },
+            &quot;clinic_ref&quot;: null,
             &quot;start_at&quot;: &quot;2026-01-27T10:00:00+01:00&quot;,
             &quot;end_at&quot;: null,
             &quot;timezone&quot;: &quot;Europe/Amsterdam&quot;,
@@ -4354,15 +4349,16 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
+    
 
-
-                                <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (derived from Orders -&gt; Activities (type=file) -&gt; activity_files).</h2>
+                                <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
-
+<p>Documents are linked to the patient via any known relation:
+person_activities, lead, sales lead, or order.</p>
 
 <span id="example-requests-GETapi-patient--id--documents">
 <blockquote>Example request:</blockquote>
@@ -4781,7 +4777,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-
+    
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -5164,7 +5160,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-
+    
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -5664,7 +5660,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-
+    
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -6082,9 +6078,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+            
 
-
-
+        
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

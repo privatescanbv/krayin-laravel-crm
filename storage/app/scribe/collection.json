@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "1fcb4615-1ae8-4111-a9f7-0ae6927126bc",
+        "_postman_id": "0a2e1b7a-0aaa-4af2-b0da-457ffcbf5feb",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -614,7 +614,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-19 13:20:46\",\"schedule_to\":\"2026-02-19 13:20:46\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-19 13:53:15\",\"schedule_to\":\"2026-02-19 13:53:15\"}"
                         },
                         "description": ""
                     },

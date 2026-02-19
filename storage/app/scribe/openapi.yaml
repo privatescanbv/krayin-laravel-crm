@@ -758,11 +758,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-19 13:20:46'
+                  example: '2026-02-19 13:53:15'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-19 13:20:46'
+                  example: '2026-02-19 13:53:15'
               required:
                 - type
     parameters:

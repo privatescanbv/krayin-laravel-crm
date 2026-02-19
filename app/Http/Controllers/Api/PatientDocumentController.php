@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Enums\ActivityType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientDocumentsIndexRequest;
-use App\Http\Resources\PatientDocumentsCollection;
+use App\Http\Resources\PatientDocumentResource;
 use App\Models\Order;
 use App\Repositories\ActivityRepository;
 use App\Services\Keycloak\KeycloakService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Models\Activity;
@@ -41,15 +42,13 @@ class PatientDocumentController extends Controller
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
-    public function index(PatientDocumentsIndexRequest $request, string $keycloakUserId): JsonResponse
+    public function index(PatientDocumentsIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
 
         if (is_null($person)) {
             if (! is_null($user)) {
-                $perPage = (int) $request->validated('per_page', 15);
-
-                return PatientDocumentsCollection::empty($perPage)->response();
+                return PatientDocumentResource::collection(collect());
             }
 
             abort(404);
@@ -77,7 +76,7 @@ class PatientDocumentController extends Controller
             ->map(fn ($title) => (string) $title)
             ->all();
 
-        $documents = $paginator->getCollection()->map(function (ActivityFile $file) use ($person, $orderTitlesById) {
+        $items = $paginator->getCollection()->map(function (ActivityFile $file) use ($person, $orderTitlesById) {
             $orderId = (int) ($file->activity?->order_id ?? 0);
             $orderTitle = $orderTitlesById[$orderId] ?? null;
             $group = $orderTitle ? trim('Order '.$orderTitle) : null;
@@ -89,7 +88,15 @@ class PatientDocumentController extends Controller
             ];
         });
 
-        return PatientDocumentsCollection::fromPaginator($paginator, $documents)->response();
+        $mappedPaginator = new LengthAwarePaginator(
+            $items,
+            $paginator->total(),
+            $paginator->perPage(),
+            $paginator->currentPage(),
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
+
+        return PatientDocumentResource::collection($mappedPaginator);
     }
 
     /**

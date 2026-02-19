@@ -2854,8 +2854,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-19 13:20:46\",
-    \"schedule_to\": \"2026-02-19 13:20:46\"
+    \"schedule_from\": \"2026-02-19 13:53:15\",
+    \"schedule_to\": \"2026-02-19 13:53:15\"
 }"
 </code></pre></div>
 
@@ -2876,8 +2876,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-19 13:20:46",
-    "schedule_to": "2026-02-19 13:20:46"
+    "schedule_from": "2026-02-19 13:53:15",
+    "schedule_to": "2026-02-19 13:53:15"
 };
 
 fetch(url, {
@@ -3056,10 +3056,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-19 13:20:46"
+               value="2026-02-19 13:53:15"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 13:20:46</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 13:53:15</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3068,10 +3068,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-19 13:20:46"
+               value="2026-02-19 13:53:15"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 13:20:46</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 13:53:15</code></p>
         </div>
         </form>
 

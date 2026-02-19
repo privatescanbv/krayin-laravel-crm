@@ -60,7 +60,7 @@ it('returns paginated notifications for a patient and sets read_at when returnin
     $response->assertOk();
 
     $response->assertJsonStructure([
-        'notifications' => [
+        'data' => [
             [
                 'id',
                 'type',
@@ -148,7 +148,7 @@ it('does not return dismissed or expired notifications', function () {
 
     $response->assertOk();
     $response->assertJsonPath('meta.total', 1);
-    $response->assertJsonPath('notifications.0.title', 'Active');
+    $response->assertJsonPath('data.0.title', 'Active');
 });
 
 it('marks a dismissable notification as dismissed via dismissed_at', function () {

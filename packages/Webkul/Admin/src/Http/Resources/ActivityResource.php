@@ -41,6 +41,7 @@ class ActivityResource extends JsonResource
             'location'        => $this->location,
             'linked_entity_type' => (isset($this->emailLinkedEntityType)) ? $this->emailLinkedEntityType: '',
             'publish_to_portal' => (bool) data_get($this->resource, 'publish_to_portal', false),
+            'entity_source'   => data_get($this->resource, 'entity_source', null),
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

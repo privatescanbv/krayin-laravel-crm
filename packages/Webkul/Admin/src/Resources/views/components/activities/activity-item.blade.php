@@ -79,6 +79,19 @@
                         }">
                         Vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
                     </div>
+                    <!-- Entity source label (shows where the activity originates from in the hierarchy) -->
+                    <span v-if="activity.entity_source"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+                          :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400':   activity.entity_source.type === 'person',
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400': activity.entity_source.type === 'lead',
+                              'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400':  activity.entity_source.type === 'sales',
+                              'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400':   activity.entity_source.type === 'order',
+                          }"
+                          :title="'Activiteit van: ' + activity.entity_source.label">
+                        @{{ activity.entity_source.label }}
+                    </span>
+
                     <div class="flex flex-row gap-1">
                     <span v-if="activity.publish_to_portal"
                           class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"

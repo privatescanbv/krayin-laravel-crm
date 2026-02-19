@@ -136,7 +136,7 @@
                     </div>
 
                     <!-- Show Default Activities -->
-                    <template v-if="['action_needed', 'inbox', 'planned', 'all', 'system'].includes(selectedType)">
+                    <template v-if="['action_needed', 'inbox', 'planned', 'file', 'all', 'system'].includes(selectedType)">
                         <div class="animate-[on-fade_0.5s_ease-in-out]">
                             {!! view_render_event('admin.components.activities.content.activity.list.before') !!}
 
@@ -221,6 +221,10 @@
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
                         },
                         {
+                            name: 'file',
+                            label: "Bestanden",
+                        },
+                        {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
                         },
@@ -295,6 +299,11 @@
                             title: "Inbox is leeg",
                             description: "Er zijn geen nieuwe berichten.",
                         },
+                        file: {
+                            image: "{{ vite()->asset('images/empty-placeholders/activities.svg') }}",
+                            title: "Bestanden",
+                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.system.description') }}",
+                        },
                         planned: {
                             image: "{{ vite()->asset('images/empty-placeholders/plans.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.planned.title') }}",
@@ -359,7 +368,9 @@
                                 return aTime - bTime;
                             });
                     }
-
+                    if (this.selectedType == 'file') {
+                        return this.activities.filter(activity => activity.type == 'file');
+                    }
                     if (this.selectedType == 'system') {
                         return this.activities.filter(activity => activity.type == 'system');
                     }

@@ -5,6 +5,7 @@ use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
+use App\Services\FormService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
@@ -13,6 +14,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     config(['api.keys' => ['test-api-key']]);
+
+    // Mock FormService so tests don't make real HTTP calls to the forms API.
+    $this->mock(FormService::class, function ($mock) {
+        $mock->shouldReceive('getOpenForms')->andReturn(0);
+    });
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -34,10 +40,12 @@ test('counters endpoint returns expected keys', function () {
     $response->assertJsonStructure([
         'new_messages_count',
         'new_appointments_count',
+        'new_docs_count',
     ]);
     $response->assertJson([
         'new_messages_count'     => 0,
         'new_appointments_count' => 0,
+        'new_docs_count'         => 0,
     ]);
 });
 

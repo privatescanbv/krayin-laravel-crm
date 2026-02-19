@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AppointmentTimeFilter;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
@@ -192,15 +193,11 @@ class Order extends Model
 
     /**
      * Scope appointment time filtering.
-     *
-     * @param  string|null  $filter  Allowed values: future, past.
      */
-    public function scopeAppointmentTimeFilter(Builder $query, ?string $filter, Carbon $now): Builder
+    public function scopeAppointmentTimeFilter(Builder $query, ?AppointmentTimeFilter $filter, Carbon $now): Builder
     {
-        $filter = strtolower((string) $filter);
-
         return $query
-            ->when($filter === 'future', fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
-            ->when($filter === 'past', fn (Builder $q) => $q->where('first_examination_at', '<', $now));
+            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
+            ->when($filter === AppointmentTimeFilter::PAST, fn (Builder $q) => $q->where('first_examination_at', '<', $now));
     }
 }

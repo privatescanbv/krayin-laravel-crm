@@ -60,7 +60,7 @@ class StoreOrderConfirmationPdf
             'title'               => 'Orderbevestiging PDF',
             'comment'             => 'Automatisch gegenereerde orderbevestiging',
             'is_done'             => true,
-            'publish_to_portal' => true,
+            'publish_to_portal'   => true,
             'user_id'             => $userId,
             'order_id'            => $order->id,
             'additional'          => [

@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "364b3c11-116e-43ad-8601-5bee48c5b840",
+        "_postman_id": "1fcb4615-1ae8-4111-a9f7-0ae6927126bc",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -614,7 +614,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-19 11:28:37\",\"schedule_to\":\"2026-02-19 11:28:37\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-19 13:20:46\",\"schedule_to\":\"2026-02-19 13:20:46\"}"
                         },
                         "description": ""
                     },
@@ -997,13 +997,13 @@
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"new_messages_count\":3,\"new_appointments_count\":2,\"new_docs_count\":0}",
+                            "body": "{\"new_messages_count\":3,\"new_appointments_count\":2}",
                             "name": "Success"
                         },
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"new_messages_count\":0,\"new_appointments_count\":0,\"new_docs_count\":0}",
+                            "body": "{\"new_messages_count\":0,\"new_appointments_count\":0}",
                             "name": "No person"
                         },
                         {

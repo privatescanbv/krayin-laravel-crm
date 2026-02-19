@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\ActivityType;
 use App\Enums\AppointmentTimeFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientAppointmentsIndexRequest;
@@ -25,9 +24,7 @@ class PatientAppointmentController extends Controller
      *
      * @var ActivityType[]
      */
-    public const PORTAL_ACTIVITY_TYPES = [
-        ActivityType::MEETING,
-    ];
+    public const PORTAL_ACTIVITY_TYPES = [];
 
     public function __construct(
         private readonly KeycloakService $keycloakService,

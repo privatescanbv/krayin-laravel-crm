@@ -758,11 +758,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-19 11:28:37'
+                  example: '2026-02-19 13:20:46'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-19 11:28:37'
+                  example: '2026-02-19 13:20:46'
               required:
                 - type
     parameters:
@@ -1465,7 +1465,6 @@ paths:
                     example:
                       new_messages_count: 3
                       new_appointments_count: 2
-                      new_docs_count: 0
                     properties:
                       new_messages_count:
                         type: integer
@@ -1473,24 +1472,17 @@ paths:
                       new_appointments_count:
                         type: integer
                         example: 2
-                      new_docs_count:
-                        type: integer
-                        example: 0
                   -
                     description: 'No person'
                     type: object
                     example:
                       new_messages_count: 0
                       new_appointments_count: 0
-                      new_docs_count: 0
                     properties:
                       new_messages_count:
                         type: integer
                         example: 0
                       new_appointments_count:
-                        type: integer
-                        example: 0
-                      new_docs_count:
                         type: integer
                         example: 0
         404:

@@ -1,15 +1,12 @@
 <?php
 
-use App\Enums\ActivityType;
 use App\Enums\PatientMessageSenderType;
 use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 
 uses(RefreshDatabase::class);
@@ -129,91 +126,6 @@ test('new_appointments_count counts future orders', function () {
 
     $response->assertOk();
     $response->assertJsonPath('new_appointments_count', 1);
-});
-
-test('new_appointments_count counts future meeting activities published to portal', function () {
-    $keycloakUserId = (string) Str::uuid();
-    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
-
-    // Future published meeting — should be counted
-    $futureMeeting = Activity::create([
-        'type'              => ActivityType::MEETING->value,
-        'title'             => 'Future Meeting',
-        'schedule_from'     => now()->addDay()->format('Y-m-d H:i:s'),
-        'schedule_to'       => now()->addDay()->addHour()->format('Y-m-d H:i:s'),
-        'publish_to_portal' => true,
-        'is_done'           => false,
-    ]);
-    DB::table('person_activities')->insert([
-        'person_id' => $person->id, 'activity_id' => $futureMeeting->id,
-    ]);
-
-    // Past meeting — must not be counted
-    $pastMeeting = Activity::create([
-        'type'              => ActivityType::MEETING->value,
-        'title'             => 'Past Meeting',
-        'schedule_from'     => now()->subDay()->format('Y-m-d H:i:s'),
-        'schedule_to'       => now()->subDay()->addHour()->format('Y-m-d H:i:s'),
-        'publish_to_portal' => true,
-        'is_done'           => true,
-    ]);
-    DB::table('person_activities')->insert([
-        'person_id' => $person->id, 'activity_id' => $pastMeeting->id,
-    ]);
-
-    // Not published — must not be counted
-    $unpublished = Activity::create([
-        'type'              => ActivityType::MEETING->value,
-        'title'             => 'Unpublished Future',
-        'schedule_from'     => now()->addDay()->format('Y-m-d H:i:s'),
-        'schedule_to'       => now()->addDay()->addHour()->format('Y-m-d H:i:s'),
-        'publish_to_portal' => false,
-        'is_done'           => false,
-    ]);
-    DB::table('person_activities')->insert([
-        'person_id' => $person->id, 'activity_id' => $unpublished->id,
-    ]);
-
-    $response = $this->getJson(countersUrl($keycloakUserId), ['X-API-KEY' => 'test-api-key']);
-
-    $response->assertOk();
-    $response->assertJsonPath('new_appointments_count', 1);
-});
-
-test('new_appointments_count combines future orders and meeting activities', function () {
-    $keycloakUserId = (string) Str::uuid();
-    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
-
-    $salesLead = SalesLead::factory()->create();
-    $salesLead->persons()->attach($person->id);
-
-    // 1 future order
-    $order = Order::factory()->create([
-        'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
-        'first_examination_at' => now()->addDay(),
-    ]);
-    $order->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);
-
-    // 2 future meeting activities
-    foreach (['Meeting A', 'Meeting B'] as $title) {
-        $activity = Activity::create([
-            'type'              => ActivityType::MEETING->value,
-            'title'             => $title,
-            'schedule_from'     => now()->addDays(2)->format('Y-m-d H:i:s'),
-            'schedule_to'       => now()->addDays(2)->addHour()->format('Y-m-d H:i:s'),
-            'publish_to_portal' => true,
-            'is_done'           => false,
-        ]);
-        DB::table('person_activities')->insert([
-            'person_id' => $person->id, 'activity_id' => $activity->id,
-        ]);
-    }
-
-    $response = $this->getJson(countersUrl($keycloakUserId), ['X-API-KEY' => 'test-api-key']);
-
-    $response->assertOk();
-    $response->assertJsonPath('new_appointments_count', 3); // 1 order + 2 meetings
 });
 
 // ─── Combined ─────────────────────────────────────────────────────────────

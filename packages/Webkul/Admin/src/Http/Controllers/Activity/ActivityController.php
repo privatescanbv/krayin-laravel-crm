@@ -178,6 +178,10 @@ class ActivityController extends Controller
             }
         }
 
+        // VeeValidate sends boolean false as the string "false" via FormData,
+        // which PHP casts to true. Normalize using filter_var to get a proper boolean.
+        $data['publish_to_portal'] = filter_var($data['publish_to_portal'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
         // Ensure group_id is set and valid for lead activities
         $result = $this->ensureGroupIdForLeadActivity($data);
         if ($result !== null) {
@@ -300,6 +304,12 @@ class ActivityController extends Controller
             if (isset($data[$field]) && ($data[$field] === '')) {
                 $data[$field] = null;
             }
+        }
+
+        // VeeValidate sends boolean false as the string "false" via FormData,
+        // which PHP casts to true. Normalize using filter_var to get a proper boolean.
+        if (array_key_exists('publish_to_portal', $data)) {
+            $data['publish_to_portal'] = filter_var($data['publish_to_portal'], FILTER_VALIDATE_BOOLEAN);
         }
 
         $requestedStatus = isset($data['status']) ? (string) $data['status'] : null;

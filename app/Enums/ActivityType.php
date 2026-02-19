@@ -5,7 +5,7 @@ namespace App\Enums;
 enum ActivityType: string
 {
     case CALL = 'call';
-    case MEETING = 'meeting';
+    //    case MEETING = 'meeting';
     case TASK = 'task';
     case SYSTEM = 'system';
     case NOTE = 'note';
@@ -17,7 +17,7 @@ enum ActivityType: string
      */
     public static function userSelectable(): array
     {
-        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::FILE], true));
+        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::FILE, self::PATIENT_MESSAGE], true));
     }
 
     public static function canBeMarkedAsDone(): array
@@ -25,7 +25,6 @@ enum ActivityType: string
         return array_values(array_filter(
             self::cases(),
             fn (self $stage) => ! in_array($stage, [
-                self::MEETING,
                 self::NOTE,
             ], true)
         ));
@@ -35,7 +34,6 @@ enum ActivityType: string
     {
         return match ($this) {
             self::CALL            => trans('admin::app.components.activities.index.calls'),
-            self::MEETING         => trans('admin::app.components.activities.index.meetings'),
             self::TASK            => trans('admin::app.components.activities.index.internal-task'),
             self::SYSTEM          => trans('admin::app.components.activities.index.change-log'),
             self::NOTE            => trans('admin::app.components.activities.index.notes'),
@@ -49,6 +47,6 @@ enum ActivityType: string
      */
     public function isUserSelectable(): bool
     {
-        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE, self::EMAIL, self::PATIENT_MESSAGE], true);
+        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE, self::PATIENT_MESSAGE], true);
     }
 }

@@ -19,7 +19,6 @@ class PatientNotificationResource extends JsonResource
 
         return [
             'id'          => (int) $notification->id,
-            'type'        => (string) $notification->type,
             'dismissable' => (bool) $notification->dismissable,
             'title'       => (string) $notification->title,
             'summary'     => $notification->summary,
@@ -45,7 +44,7 @@ class PatientNotificationResource extends JsonResource
 
         return match ($type) {
             NotificationReferenceType::ACTIVITY => config('services.portal.patient.web_url').'/patient/documents',
-            NotificationReferenceType::GVL_FORM => config('services.portal.patient.web_url')."/patient/forms/{{ $id }}/step/1"
+            NotificationReferenceType::GVL_FORM => config('services.portal.patient.web_url')."/patient/forms/$id/step/1"
         };
     }
 }

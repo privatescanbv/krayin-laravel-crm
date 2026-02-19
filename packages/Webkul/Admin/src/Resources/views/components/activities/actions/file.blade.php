@@ -103,7 +103,7 @@
                             <x-adminc::components.field
                                 type="checkbox"
                                 name="publish_to_portal"
-                                label="Publiceren in patiëntportaal"
+                                label="Publiceren in patiëntportaal (TODO: indien meerdere personen, persoon kunnen selecteren)"
                                 value="1"
                                 class="!mb-0 mt-4"
                             />

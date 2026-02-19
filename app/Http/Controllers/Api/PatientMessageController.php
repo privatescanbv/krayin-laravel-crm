@@ -25,7 +25,6 @@ class PatientMessageController extends Controller
             return (new PatientUnreadCountsResource([
                 'new_messages_count'     => 0,
                 'new_appointments_count' => 0,
-                'new_docs_count'         => 0,
             ]))
                 ->additional(['message' => 'No messages for users without person association.'])
                 ->response();
@@ -43,7 +42,6 @@ class PatientMessageController extends Controller
         return (new PatientUnreadCountsResource([
             'new_messages_count'     => $messageCount,
             'new_appointments_count' => 0,
-            'new_docs_count'         => 0,
         ]))
             ->additional(['message' => 'Counts retrieved successfully.'])
             ->response();

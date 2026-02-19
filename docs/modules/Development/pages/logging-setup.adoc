@@ -65,4 +65,3 @@ Na het importeren van het dashboard kun je:
 - Controleer of de Loki datasource correct is geconfigureerd
 - Controleer of de datasource URL correct is (`http://loki:3100`)
 - Refresh de pagina en probeer opnieuw
-

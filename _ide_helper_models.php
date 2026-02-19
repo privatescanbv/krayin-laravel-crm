@@ -447,7 +447,7 @@ namespace App\Models{
  * @property-read \Webkul\User\Models\User|null $updater
  * @property-read \App\Models\User|null $user
  * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentEligible()
- * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentTimeFilter(?string $filter, \Carbon\Carbon $now)
+ * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentTimeFilter(?\App\Enums\AppointmentTimeFilter $filter, \Carbon\Carbon $now)
  * @method static \Database\Factories\OrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Order forPerson(\Webkul\Contact\Models\Person $person)
  * @method static \Illuminate\Database\Eloquent\Builder|Order newModelQuery()
@@ -649,6 +649,7 @@ namespace App\Models{
  * @property-read \Webkul\Activity\Models\Activity|null $activity
  * @property-read \Webkul\Contact\Models\Person $person
  * @property-read \Webkul\User\Models\User|null $sender
+ * @method static \Database\Factories\PatientMessageFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|PatientMessage newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PatientMessage newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PatientMessage query()

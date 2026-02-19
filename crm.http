@@ -112,6 +112,13 @@ Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
+### get counters for patient
+GET https://{{ URL }}/api/patient/{{ KEYCLOAK_USER_ID }}/counters
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}
+
+
 ### add herniapoli forms to lead
 POST https://{{ URL }}/api/leads/1999/forms
 Accept: application/json

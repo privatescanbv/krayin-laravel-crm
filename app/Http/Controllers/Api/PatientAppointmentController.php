@@ -25,7 +25,7 @@ class PatientAppointmentController extends Controller
      *
      * @var ActivityType[]
      */
-    private const PORTAL_ACTIVITY_TYPES = [
+    public const PORTAL_ACTIVITY_TYPES = [
         ActivityType::MEETING,
     ];
 

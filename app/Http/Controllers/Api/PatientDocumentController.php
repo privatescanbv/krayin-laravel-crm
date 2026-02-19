@@ -82,10 +82,10 @@ class PatientDocumentController extends Controller
             $group = $orderTitle ? trim('Order '.$orderTitle) : null;
 
             return [
-                'file'       => $file,
+                'file'        => $file,
                 'description' => $file->activity?->comment ?: '',
-                'patient_id' => (int) $person->id,
-                'group'      => $group !== '' ? $group : null,
+                'patient_id'  => (int) $person->id,
+                'group'       => $group !== '' ? $group : null,
             ];
         });
 

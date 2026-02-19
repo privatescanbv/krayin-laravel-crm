@@ -28,7 +28,7 @@ class PatientDocumentResource extends JsonResource
 
         /** @var ActivityFile $file */
         $file = $payload['file'];
-        $description  = $payload['description'];
+        $description = $payload['description'];
         $patientId = (int) ($payload['patient_id'] ?? 0);
         $group = isset($payload['group']) ? (string) $payload['group'] : null;
         $keycloakUserId = (string) ($request->route('id') ?? '');

@@ -4,49 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\PatientMessageSenderType;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PatientUnreadCountsResource;
 use App\Models\PatientMessage;
-use App\Services\Keycloak\KeycloakService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Webkul\Activity\Models\Activity;
 
 class PatientMessageController extends Controller
 {
-    public function __construct(private readonly KeycloakService $keycloakService) {}
-
     /**
      * Get the count of unread messages for a specific person.
      */
-    public function unreadCount(string $keycloakUserId): JsonResponse
-    {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-        if (! is_null($user)) {
-            return (new PatientUnreadCountsResource([
-                'new_messages_count'     => 0,
-                'new_appointments_count' => 0,
-            ]))
-                ->additional(['message' => 'No messages for users without person association.'])
-                ->response();
-        }
-        if (is_null($person)) {
-            abort(404, 'No person found for the given Keycloak user ID.');
-        }
-
-        // Count unread messages sent by STAFF or SYSTEM
-        $messageCount = PatientMessage::where('person_id', $person->id)
-            ->whereIn('sender_type', [PatientMessageSenderType::STAFF, PatientMessageSenderType::SYSTEM])
-            ->where('is_read', false)
-            ->count();
-
-        return (new PatientUnreadCountsResource([
-            'new_messages_count'     => $messageCount,
-            'new_appointments_count' => 0,
-        ]))
-            ->additional(['message' => 'Counts retrieved successfully.'])
-            ->response();
-    }
-
     public function store(): RedirectResponse
     {
         request()->merge([

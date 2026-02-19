@@ -53,7 +53,7 @@ class ActivityController extends Controller
         $leadIds = DB::table('lead_persons')->where('person_id', $id)->pluck('lead_id');
         $leadActivities = collect();
         if ($leadIds->isNotEmpty()) {
-            $leadNames = Lead::whereIn('id', $leadIds)->pluck('name', 'id');
+            $leadNames = Lead::whereIn('id', $leadIds)->pluck('id');
             $leadActivities = Activity::whereIn('lead_id', $leadIds)->get();
             $leadActivities->each(fn ($a) => $a->entity_source = [
                 'type'  => 'lead',

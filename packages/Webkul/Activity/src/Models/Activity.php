@@ -181,7 +181,6 @@ class Activity extends Model implements ActivityContract
     {
         return match ($this->type) {
             ActivityType::CALL => 'Calls',
-            ActivityType::MEETING => 'Meetings',
             ActivityType::TASK => 'Tasks',
             default => null,
         };

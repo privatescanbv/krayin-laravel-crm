@@ -13,7 +13,6 @@ class PatientNotifyEvent
 
     public function __construct(
         public int $patientId,
-        public string $type,
         public string $title,
         public string $summary,
         public NotificationReferenceType $referenceType,

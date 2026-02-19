@@ -19,7 +19,6 @@ class PatientNotificationFactory extends Factory
 
         return [
             'patient_id'               => 1,
-            'type'                     => 'document',
             'dismissable'              => $dismissable,
             'title'                    => $this->faker->sentence(6),
             'summary'                  => $this->faker->boolean(60) ? $this->faker->text(180) : null,

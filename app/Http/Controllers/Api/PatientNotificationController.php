@@ -27,7 +27,6 @@ class PatientNotificationController extends Controller
      *
      * @responseField notifications object[] List of notifications.
      * @responseField notifications[].id integer The notification ID.
-     * @responseField notifications[].type string The notification type.
      * @responseField notifications[].dismissable boolean Whether the notification can be dismissed.
      * @responseField notifications[].title string The notification title.
      * @responseField notifications[].summary string The notification summary.

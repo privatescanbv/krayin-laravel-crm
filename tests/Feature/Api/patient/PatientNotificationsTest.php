@@ -28,7 +28,6 @@ it('returns paginated notifications for a patient and sets read_at when returnin
     /** @var PatientNotification $n1 */
     $n1 = PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => true,
         'title'           => 'Nieuw document beschikbaar',
         'summary'         => 'Samenvatting',
@@ -42,7 +41,6 @@ it('returns paginated notifications for a patient and sets read_at when returnin
     /** @var PatientNotification $n2 */
     $n2 = PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => false,
         'title'           => 'Document geüpdatet',
         'summary'         => null,
@@ -63,7 +61,6 @@ it('returns paginated notifications for a patient and sets read_at when returnin
         'data' => [
             [
                 'id',
-                'type',
                 'dismissable',
                 'title',
                 'summary',
@@ -103,7 +100,6 @@ it('does not return dismissed or expired notifications', function () {
     // Active
     PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => true,
         'title'           => 'Active',
         'summary'         => null,
@@ -117,7 +113,6 @@ it('does not return dismissed or expired notifications', function () {
     // Dismissed
     PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => true,
         'title'           => 'Dismissed',
         'summary'         => null,
@@ -131,7 +126,6 @@ it('does not return dismissed or expired notifications', function () {
     // Expired
     PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => true,
         'title'           => 'Expired',
         'summary'         => null,
@@ -161,7 +155,6 @@ it('marks a dismissable notification as dismissed via dismissed_at', function ()
     /** @var PatientNotification $notification */
     $notification = PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => true,
         'title'           => 'Dismiss me',
         'summary'         => null,
@@ -192,7 +185,6 @@ it('returns 422 when trying to dismiss a non-dismissable notification', function
     /** @var PatientNotification $notification */
     $notification = PatientNotification::query()->create([
         'patient_id'      => $person->id,
-        'type'            => 'document',
         'dismissable'     => false,
         'title'           => 'Persistent',
         'summary'         => null,
@@ -223,7 +215,6 @@ it('returns 404 when trying to dismiss a notification of another patient', funct
     /** @var PatientNotification $notification */
     $notification = PatientNotification::query()->create([
         'patient_id'      => $patientA->id,
-        'type'            => 'document',
         'dismissable'     => true,
         'title'           => 'A only',
         'summary'         => null,

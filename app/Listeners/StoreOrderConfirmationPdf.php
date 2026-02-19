@@ -96,7 +96,6 @@ class StoreOrderConfirmationPdf
         foreach ($personIds as $personId) {
             PatientNotifyEvent::dispatch(
                 $personId,
-                'document',
                 'Orderbevestiging beschikbaar',
                 'Uw orderbevestiging is beschikbaar om te bekijken.',
                 NotificationReferenceType::ACTIVITY,

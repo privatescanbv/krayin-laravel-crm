@@ -19,7 +19,6 @@ class PatientNotification extends Model
 
     protected $fillable = [
         'patient_id',
-        'type',
         'dismissable',
         'title',
         'summary',

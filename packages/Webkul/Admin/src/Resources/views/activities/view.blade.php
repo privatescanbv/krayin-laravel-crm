@@ -122,7 +122,7 @@
                         </div>
                     </div>
 
-                    @if(in_array($activity->type, [ActivityType::FILE, ActivityType::MEETING, ActivityType::PATIENT_MESSAGE]))
+                    @if(in_array($activity->type, [ActivityType::FILE, ActivityType::PATIENT_MESSAGE]))
                         <div class="mb-3">
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Patiëntportaal</div>
                             <div class="text-sm text-gray-900 dark:text-gray-100">

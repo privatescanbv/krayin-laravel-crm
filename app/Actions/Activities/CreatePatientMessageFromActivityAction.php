@@ -27,7 +27,6 @@ class CreatePatientMessageFromActivityAction
                     logger()->info("CreatePatientMessageFromActivityAction #$action: Creating notification for Activity ID: ".$activity->id.' linked to Person ID: '.$patient->id);
                     PatientNotifyEvent::dispatch(
                         $patient->id,
-                        'file',
                         'Bestand beschikbaar',
                         'Volgende bestand staat voor u klaar: '.(ActivityFile::query()->where('activity_id', $activity->id)->value('name') ?? $activity->title),
                         NotificationReferenceType::ACTIVITY,

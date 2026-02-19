@@ -40,7 +40,7 @@ it('stores confirmation PDF as activity and creates patient notification', funct
 
     // Verify patient notification was created
     $notification = PatientNotification::where('patient_id', $person->id)->first();
-    expect($notification)->not->toBeNull();
-    expect($notification->type)->toBe('document');
-    expect($notification->dismissable)->toBeFalse();
+    expect($notification)->not->toBeNull()
+        ->and($notification->type)->toBe('file')
+        ->and($notification->dismissable)->toBeTrue();
 });

@@ -7,24 +7,26 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientDocumentsIndexRequest;
 use App\Http\Resources\PatientDocumentsCollection;
 use App\Models\Order;
-use App\Repositories\OrderRepository;
+use App\Repositories\ActivityRepository;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Models\File as ActivityFile;
-use Webkul\Activity\Repositories\ActivityRepository;
 
 class PatientDocumentController extends Controller
 {
     public function __construct(
         private readonly KeycloakService $keycloakService,
-        private readonly OrderRepository $orderRepository,
         private readonly ActivityRepository $activityRepository,
     ) {}
 
     /**
-     * Get all documents for a patient (derived from Orders -> Activities (type=file) -> activity_files).
+     * Get all documents for a patient (FILE activities with publish_to_portal = true).
+     *
+     * Documents are linked to the patient via any known relation:
+     * person_activities, lead, sales lead, or order.
      *
      * @group Patient documents
      *
@@ -58,30 +60,27 @@ class PatientDocumentController extends Controller
         $orderIdFilter = isset($validated['order_id']) ? (int) $validated['order_id'] : null;
         $documentTypeFilter = isset($validated['type']) ? (string) $validated['type'] : null;
 
-        $orderIds = $this->orderRepository->getIdsForPerson($person);
+        $paginator = $this->activityRepository
+            ->paginateDocumentFilesForPerson($person, $perPage, $documentTypeFilter, $orderIdFilter)
+            ->appends($request->query());
 
-        if ($orderIdFilter !== null) {
-            $orderIds = in_array($orderIdFilter, $orderIds, true) ? [$orderIdFilter] : [];
-        }
+        // Build order title map lazily from the current page results.
+        $orderIdsOnPage = $paginator->getCollection()
+            ->map(fn (ActivityFile $file) => $file->activity?->order_id)
+            ->filter()
+            ->unique()
+            ->all();
 
-        if (empty($orderIds)) {
-            return PatientDocumentsCollection::empty($perPage)->response();
-        }
-
-        $orderTitlesById = Order::query()
-            ->whereIn('id', $orderIds)
+        $orderTitlesById = empty($orderIdsOnPage) ? [] : Order::query()
+            ->whereIn('id', $orderIdsOnPage)
             ->pluck('title', 'id')
             ->map(fn ($title) => (string) $title)
             ->all();
 
-        $paginator = $this->activityRepository
-            ->paginateDocumentFilesForOrders($orderIds, $perPage, $documentTypeFilter)
-            ->appends($request->query());
-
         $documents = $paginator->getCollection()->map(function (ActivityFile $file) use ($person, $orderTitlesById) {
             $orderId = (int) ($file->activity?->order_id ?? 0);
-            $orderTitle = (string) ($orderTitlesById[$orderId] ?? '');
-            $group = trim('Order '.$orderTitle);
+            $orderTitle = $orderTitlesById[$orderId] ?? null;
+            $group = $orderTitle ? trim('Order '.$orderTitle) : null;
 
             return [
                 'file'       => $file,
@@ -115,23 +114,17 @@ class PatientDocumentController extends Controller
             ->with(['activity'])
             ->findOrFail($documentId);
 
-        if (($file->activity?->type?->value ?? null) !== ActivityType::FILE->value) {
+        $accessible = Activity::query()
+            ->where('id', $file->activity_id)
+            ->ofType(ActivityType::FILE)
+            ->publishedToPortal()
+            ->forPerson($person)
+            ->exists();
+
+        if (! $accessible) {
             abort(404);
         }
 
-        if (! $file->activity?->publish_to_portal) {
-            abort(404);
-        }
-
-        $orderIds = $this->orderRepository->getIdsForPerson($person);
-
-        $orderId = $file->activity?->order_id ? (int) $file->activity->order_id : null;
-
-        if ($orderId === null || ! in_array($orderId, $orderIds, true)) {
-            abort(404);
-        }
-
-        // Stream from storage; filename comes from activity_files.name.
         return Storage::download($file->path, $file->name);
     }
 }

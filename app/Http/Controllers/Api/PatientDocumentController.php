@@ -83,6 +83,7 @@ class PatientDocumentController extends Controller
 
             return [
                 'file'       => $file,
+                'description' => $file->activity?->comment ?: '',
                 'patient_id' => (int) $person->id,
                 'group'      => $group !== '' ? $group : null,
             ];

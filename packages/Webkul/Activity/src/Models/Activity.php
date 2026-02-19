@@ -14,6 +14,7 @@ use App\Models\SalesLead;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Models\PersonProxy;
@@ -192,6 +193,31 @@ class Activity extends Model implements ActivityContract
         return $this->persons->first()
             ?? $this->lead?->persons->first()
             ?? $this->salesLead?->persons->first();
+    }
+
+    /**
+     * Resolve all persons associated with this activity via any known relation:
+     * direct person_activities, lead, sales lead, or order → sales lead.
+     *
+     * @return Collection<int, Person>
+     */
+    public function getPatientsFromActivity(): Collection
+    {
+        $persons = collect($this->persons);
+
+        if ($this->lead_id) {
+            $persons = $persons->merge($this->lead?->persons ?? collect());
+        }
+
+        if ($this->sales_lead_id) {
+            $persons = $persons->merge($this->salesLead?->persons ?? collect());
+        }
+
+        if ($this->order_id) {
+            $persons = $persons->merge($this->order?->salesLead?->persons ?? collect());
+        }
+
+        return $persons->unique('id')->values();
     }
 
     public function getIsReadAttribute(): bool

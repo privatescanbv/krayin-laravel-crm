@@ -17,12 +17,17 @@ class PatientNotificationResource extends JsonResource
         /** @var PatientNotification $notification */
         $notification = $this->resource;
 
+        $locale = $request->attributes->get('patient_locale', 'nl');
+
         return [
-            'id'          => (int) $notification->id,
-            'dismissable' => (bool) $notification->dismissable,
-            'title'       => (string) $notification->title,
-            'summary'     => $notification->summary,
-            'reference'   => [
+            'id'           => (int) $notification->id,
+            'dismissable'  => (bool) $notification->dismissable,
+            'title'        => __($notification->title, [], $locale),
+            'summary'      => $notification->summary
+                ? __($notification->summary, ['files' => implode(', ', $notification->entity_names ?? [])], $locale)
+                : null,
+            'entity_names' => $notification->entity_names ?? [],
+            'reference'    => [
                 'type' => $notification->reference_type?->value,
                 'id'   => (int) $notification->reference_id,
                 'url'  => $this->resolveReferenceUrl($notification->reference_type, $notification->reference_id),
@@ -43,7 +48,7 @@ class PatientNotificationResource extends JsonResource
         }
 
         return match ($type) {
-            NotificationReferenceType::ACTIVITY => config('services.portal.patient.web_url').'/patient/documents',
+            NotificationReferenceType::FILE     => config('services.portal.patient.web_url').'/patient/documents',
             NotificationReferenceType::GVL_FORM => config('services.portal.patient.web_url')."/patient/forms/$id/step/1"
         };
     }

@@ -184,6 +184,24 @@
             :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
         />
+
+        <!-- Preferred language -->
+        @php
+            $currentLanguage = old('preferred_language', $entity?->preferred_language?->value);
+        @endphp
+        <x-adminc::components.field
+            type="select"
+            name="preferred_language"
+            label="Voorkeurstaal"
+            value="{{ $currentLanguage }}"
+            :disabled="!$mayEditPersonFields"
+            :readonly="!$mayEditPersonFields"
+        >
+            <option value="">{{ __('Selecteer taal') }}</option>
+            <option value="nl" @selected($currentLanguage === 'nl')>Nederlands</option>
+            <option value="en" @selected($currentLanguage === 'en')>English</option>
+            <option value="de" @selected($currentLanguage === 'de')>Deutsch</option>
+        </x-adminc::components.field>
     @endif
 </div>
 

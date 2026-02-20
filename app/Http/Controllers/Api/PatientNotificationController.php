@@ -52,6 +52,9 @@ class PatientNotificationController extends Controller
             abort(404);
         }
 
+        $locale = $person->preferred_language?->value ?? 'nl';
+        app('request')->attributes->set('patient_locale', $locale);
+
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 10);
 

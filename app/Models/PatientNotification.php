@@ -22,6 +22,7 @@ class PatientNotification extends Model
         'dismissable',
         'title',
         'summary',
+        'entity_names',
         'reference_type',
         'reference_id',
         'read_at',
@@ -34,6 +35,7 @@ class PatientNotification extends Model
 
     protected $casts = [
         'dismissable'               => 'boolean',
+        'entity_names'              => 'array',
         'reference_type'            => NotificationReferenceType::class,
         'read_at'                   => 'datetime',
         'dismissed_at'              => 'datetime',

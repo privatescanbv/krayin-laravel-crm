@@ -4,6 +4,7 @@ namespace Webkul\Contact\Models;
 
 use App\Casts\EncryptedString;
 use App\Enums\PersonGender;
+use App\Enums\PreferredLanguage;
 use App\Enums\PersonSalutation;
 use App\Models\Address;
 use App\Models\Anamnesis;
@@ -79,9 +80,10 @@ class Person extends Model implements PersonContract
         'emails'        => 'array',
         'phones'        => 'array',
         'date_of_birth' => 'date',
-        'gender'        => PersonGender::class,
-        'salutation'    => PersonSalutation::class,
-        'is_active'     => 'boolean',
+        'gender'             => PersonGender::class,
+        'salutation'         => PersonSalutation::class,
+        'is_active'          => 'boolean',
+        'preferred_language' => PreferredLanguage::class,
         'national_identification_number' => EncryptedString::class,
     ];
 
@@ -122,6 +124,7 @@ class Person extends Model implements PersonContract
         'password',
         'national_identification_number',
         'address_id',
+        'preferred_language',
     ];
 
     /**
@@ -229,6 +232,24 @@ class Person extends Model implements PersonContract
 
             return null;
         }
+    }
+
+    /**
+     * Normalize preferred_language assignment to allow empty strings and enums.
+     */
+    public function setPreferredLanguageAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['preferred_language'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['preferred_language'] = $value->value;
+            return;
+        }
+
+        $this->attributes['preferred_language'] = $value;
     }
 
     /**

@@ -7,10 +7,13 @@ use App\Enums\ActivityType;
 use App\Enums\WebhookType;
 use App\Models\CallStatus;
 use App\Models\Department;
+use App\Models\Order;
+use App\Models\SalesLead;
 use App\Services\patientmessages\PatientMessageService;
 use App\Services\WebhookService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -19,6 +22,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
@@ -89,6 +94,29 @@ class ActivityController extends Controller
 
         return response()->json([
             'data' => ActivityResource::collection($activities),
+        ]);
+    }
+
+    /**
+     * Return persons linked to a given entity (lead, sales_lead, or order).
+     * Used by the file-upload dialog to let users pick which person to share with.
+     */
+    public function personsForEntity(Request $request): JsonResponse
+    {
+        $entityType = $request->query('entity_type');
+        $entityId   = (int) $request->query('entity_id');
+
+        $nameSelect = array_map(fn ($f) => "persons.{$f}", array_merge(['id'], Person::NAME_FIELDS));
+
+        $persons = match ($entityType) {
+            'lead'       => Lead::findOrFail($entityId)->persons()->select($nameSelect)->get(),
+            'sales_lead' => SalesLead::findOrFail($entityId)->persons()->select($nameSelect)->get(),
+            'order'      => optional(Order::findOrFail($entityId)->salesLead)?->persons()->select($nameSelect)->get() ?? collect(),
+            default      => collect(),
+        };
+
+        return response()->json([
+            'data' => $persons->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
         ]);
     }
 
@@ -171,6 +199,10 @@ class ActivityController extends Controller
             unset($data['person_id']);
         }
 
+        // Extract person_ids before passing data to repository (not a column on activities)
+        $personIds = array_filter(array_map('intval', (array) ($data['person_ids'] ?? [])));
+        unset($data['person_ids']);
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
@@ -191,6 +223,11 @@ class ActivityController extends Controller
         $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => request('type') == ActivityType::NOTE->value ? 1 : 0,
         ]));
+
+        // Link selected persons (e.g. from file upload portal selector)
+        if (!empty($personIds)) {
+            $activity->persons()->syncWithoutDetaching($personIds);
+        }
 
         $didChange = $this->updateStatus($activity);
         if ($didChange) {

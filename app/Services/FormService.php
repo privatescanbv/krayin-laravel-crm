@@ -30,7 +30,7 @@ class FormService
 
         Log::info('FormService: Fetching form open count', [
             'patient'    => $patientId,
-            'url' => $url,
+            'url'        => $url,
         ]);
 
         $response = $this->makeRequest('get', $url, ['url' => $url]);

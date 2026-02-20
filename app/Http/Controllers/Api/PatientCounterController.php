@@ -62,6 +62,7 @@ class PatientCounterController extends Controller
         }
 
         $openForms = $this->formService->getOpenForms($person->id);
+
         return $this->countersResponse($messagesCount, $appointmentsCount, $openForms);
     }
 
@@ -70,7 +71,7 @@ class PatientCounterController extends Controller
         return response()->json([
             'new_messages_count'     => $messages,
             'new_appointments_count' => $appointments,
-            'new_docs_count' => $forms
+            'new_docs_count'         => $forms,
         ]);
     }
 }

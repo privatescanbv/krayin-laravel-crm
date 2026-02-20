@@ -33,6 +33,19 @@ class Person extends Model implements PersonContract
     use CustomAttribute, HasDefaultContactInfo, HasFactory, LogsActivity, SoftDeletes;
 
     /**
+     * Database columns required to compute the name accessor (getNameAttribute).
+     * Keep in sync with getNameAttribute whenever that method changes.
+     */
+    const NAME_FIELDS = [
+        'first_name',
+        'lastname_prefix',
+        'last_name',
+        'married_name_prefix',
+        'married_name',
+        'is_active',
+    ];
+
+    /**
      * Default attribute values.
      *
      * New persons should be active by default unless explicitly deactivated.

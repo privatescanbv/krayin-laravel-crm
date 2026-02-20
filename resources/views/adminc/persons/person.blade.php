@@ -1,6 +1,7 @@
 @props([
     'person',
-    'lead' => null
+    'lead' => null,
+    'returnUrl' => null,
 ])
 @php
     // Person block used in lead detail view
@@ -92,6 +93,7 @@
                     :show-sync-link="true"
                     :show-anamnesis="true"
                     :detach-route="null"
+                    :override-return-url="$returnUrl"
                 />
                 @else
                     <x-adminc::persons.person-lead-actions
@@ -103,6 +105,7 @@
                         :show-sync-link="false"
                         :show-anamnesis="false"
                         :detach-route="null"
+                        :override-return-url="$returnUrl"
                     />
                 @endif
             </div>

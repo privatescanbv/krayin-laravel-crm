@@ -8,6 +8,7 @@
     'showSyncLink' => true,
     'showAnamnesis' => true,
     'detachRoute' => null,
+    'overrideReturnUrl' => null,
 ])
 
 @php
@@ -42,11 +43,14 @@
     $canSendInfoMail = $isLead && $defaultEmail && $hasPortalAccount;
 
     // Determine return URL for edit action
-    $returnUrl = null;
-    if ($isLead && $entityId) {
+    if ($overrideReturnUrl) {
+        $returnUrl = $overrideReturnUrl;
+    } elseif ($isLead && $entityId) {
         $returnUrl = route('admin.leads.view', $entityId);
     } elseif ($isSalesLead && $entityId) {
         $returnUrl = route('admin.sales-leads.view', $entityId);
+    } else {
+        $returnUrl = null;
     }
 @endphp
 

@@ -1268,7 +1268,7 @@ class ProductSeeder extends BaseSeeder
                 'inkoopprijs'   => '44,00',
                 'verkoopprijs'  => '250,00',
                 'producttype'   => ProductTypeEnum::OVERIG,
-                'resourcetype'  => ResourceTypeEnum::OTHER,
+                'resourcetype'  => ResourceTypeEnum::RONTGEN,
                 'productgroep'  => 'Deelonderzoek',
             ],
             [
@@ -1499,7 +1499,7 @@ class ProductSeeder extends BaseSeeder
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '100,00',
                 'producttype'   => ProductTypeEnum::DIENSTEN,
-                'resourcetype'  => ResourceTypeEnum::OTHER,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Beoordeling',
             ],
             [
@@ -1510,7 +1510,7 @@ class ProductSeeder extends BaseSeeder
                 'inkoopprijs'   => '0,00',
                 'verkoopprijs'  => '350,00',
                 'producttype'   => ProductTypeEnum::DIENSTEN,
-                'resourcetype'  => ResourceTypeEnum::OTHER,
+                'resourcetype'  => ResourceTypeEnum::ARTSEN,
                 'productgroep'  => 'Arts consultatie',
             ],
             [

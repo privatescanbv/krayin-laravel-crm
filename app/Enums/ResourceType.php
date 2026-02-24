@@ -13,6 +13,8 @@ enum ResourceType: string
     case OTHER = 'other';
     case CARDIOLOGIE = 'cardiologie';
 
+    case RONTGEN = 'rontgen';
+
     /**
      * @throws Exception for none existing labels
      */
@@ -36,6 +38,7 @@ enum ResourceType: string
             self::ARTSEN          => 'Artsen',
             self::OTHER           => 'Other',
             self::CARDIOLOGIE     => 'Cardiologie',
+            self::RONTGEN         => 'Rontgen',
         };
     }
 }

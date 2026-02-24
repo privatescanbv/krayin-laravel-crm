@@ -23,6 +23,7 @@ class ResourceSeeder extends BaseSeeder
             ['name' => 'Augusta Other', 'resource_type' => 'Other', 'clinic' => 'Ambulante Kardiologie Augusta', 'is_active' => true],
             ['name' => 'Ranova-Augusta MRI Scanner 1', 'resource_type' => 'MRI scanner', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
             ['name' => 'Ranova-Augusta CT scanner', 'resource_type' => 'CT scanner', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
+            ['name' => 'Ranova-Augusta Rontgen', 'resource_type' => 'Rontgen', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
             ['name' => 'Evidia-Other', 'resource_type' => 'Other', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
             ['name' => 'Evidia-Artsen', 'resource_type' => 'Artsen', 'clinic' => 'Evidia - Augusta Klinik', 'is_active' => true],
             ['name' => 'Gradus-Artsen', 'resource_type' => 'Artsen', 'clinic' => 'GRADUS - Orthopadie & Unfallchirurgie Dusseldorf', 'is_active' => true],

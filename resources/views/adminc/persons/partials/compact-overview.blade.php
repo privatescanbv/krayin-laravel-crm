@@ -116,6 +116,13 @@ $salutationLabel = $person->salutation ? $person->salutation->label() : '';
                 label="Burgerservicenummer (BSN)"
                 value="{{ $person->national_identification_number ?? '' }}"
                 readonly />
+
+            <!-- Voorkeurstaal -->
+            <x-adminc::components.field
+                type="text"
+                label="Voorkeurstaal"
+                value="{{ $person->preferred_language?->label() ?? '' }}"
+                readonly />
         </x-adminc::leads.part.general-info-container>
     </div>
 </div>

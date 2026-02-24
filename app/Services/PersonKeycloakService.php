@@ -6,6 +6,7 @@ use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
 use App\Enums\KeycloakRoles;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 
@@ -73,6 +74,11 @@ class PersonKeycloakService
                 'message' => 'Persoon is niet gekoppeld aan een Keycloak gebruiker.',
             ];
         }
+
+        Log::info('Updating portal account for person', [
+            'person_id' => $person->id,
+            'fields'    => $changedFields,
+        ]);
 
         $userData = [];
 

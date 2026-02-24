@@ -109,8 +109,8 @@ it('can update salutation and gender', function () {
     $response->assertJsonPath('gender', 'Man');
 
     $person->refresh();
-    expect($person->salutation->value)->toBe('Dhr.');
-    expect($person->gender->value)->toBe('Man');
+    expect($person->salutation->value)->toBe('Dhr.')
+        ->and($person->gender->value)->toBe('Man');
 });
 
 it('can update date of birth', function () {

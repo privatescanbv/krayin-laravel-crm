@@ -1,17 +1,108 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as SocialiteUser;
+use Mockery;
 use Webkul\Contact\Models\Person;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Config::set('api.keys', ['valid-api-key-123']);
+    Config::set('services.keycloak.client_id', 'crm-app');
+
+    // Prevent real Keycloak HTTP calls; allow assertions in specific tests.
+    Http::fake(function (HttpRequest $request) {
+        $path = parse_url($request->url(), PHP_URL_PATH) ?? '';
+
+        if ($path === '/realms/master/protocol/openid-connect/token') {
+            return Http::response(['access_token' => 'test-admin-token'], 200);
+        }
+
+        if (preg_match('#^/admin/realms/[^/]+/users/[^/]+/reset-password$#', $path)) {
+            return Http::response(null, 204);
+        }
+
+        if (preg_match('#^/admin/realms/[^/]+/users/[^/]+$#', $path)) {
+            return Http::response(['id' => basename($path)], 200);
+        }
+
+        return Http::response([], 200);
+    });
+
     // The PersonObserver falls back to user_id=1 when no user is authenticated.
     // Create a user so that FK constraint on activities.user_id is satisfied.
     makeUser();
+});
+
+it('does not require current_password when authenticated via keycloak bearer token', function () {
+    // Ensure the middleware uses Keycloak (not API key).
+    config(['api.keys' => []]);
+
+    $keycloakUserId = (string) Str::uuid();
+
+    $socialiteUser = new SocialiteUser;
+    $socialiteUser->setRaw(['sub' => $keycloakUserId]);
+    $socialiteUser->map(['id' => $keycloakUserId]);
+
+    $provider = Mockery::mock();
+    $provider->shouldReceive('userFromToken')->once()->andReturn($socialiteUser);
+    Socialite::shouldReceive('driver')->with('keycloak')->once()->andReturn($provider);
+
+    Person::factory()->create([
+        'keycloak_user_id' => $keycloakUserId,
+        'is_active'        => true,
+        'password'         => 'OudWachtwoord1!',
+    ]);
+
+    $response = $this->putJson(
+        "/api/patient/{$keycloakUserId}/password",
+        [
+            'password'              => 'NieuwWachtwoord1!',
+            'password_confirmation' => 'NieuwWachtwoord1!',
+        ],
+        ['Authorization' => 'Bearer test-token']
+    );
+
+    $response->assertNoContent();
+
+    $person = Person::where('keycloak_user_id', $keycloakUserId)->firstOrFail();
+    expect($person->getDecryptedPassword())->toBe('NieuwWachtwoord1!');
+});
+
+it('syncs the password change to keycloak', function () {
+    $keycloakUserId = (string) Str::uuid();
+
+    Person::factory()->create([
+        'keycloak_user_id' => $keycloakUserId,
+        'is_active'        => true,
+        'password'         => 'OudWachtwoord1!',
+    ]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/password", [
+            'current_password'      => 'OudWachtwoord1!',
+            'password'              => 'NieuwWachtwoord1!',
+            'password_confirmation' => 'NieuwWachtwoord1!',
+        ]);
+
+    $response->assertNoContent();
+
+    Http::assertSent(function (HttpRequest $request) use ($keycloakUserId) {
+        $path = parse_url($request->url(), PHP_URL_PATH) ?? '';
+        $data = $request->data();
+
+        return $request->method() === 'PUT'
+            && preg_match('#^/admin/realms/[^/]+/users/'.preg_quote($keycloakUserId, '#').'/reset-password$#', $path) === 1
+            && ($data['value'] ?? null) === 'NieuwWachtwoord1!'
+            && ($data['temporary'] ?? null) === false;
+    });
 });
 
 it('successfully changes the password', function () {

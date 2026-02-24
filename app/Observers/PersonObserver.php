@@ -44,6 +44,17 @@ class PersonObserver
     }
 
     /**
+     * Handle the Person "updating" event.
+     *
+     * We sync portal changes here because `updated` can have an empty changeset
+     * depending on other listeners/traits touching the model state.
+     */
+    public function updating(Person $person): void
+    {
+        $this->handlePortalSyncOnUpdating($person);
+    }
+
+    /**
      * Handle the Person "updated" event.
      */
     public function updated(Person $person): void
@@ -62,7 +73,7 @@ class PersonObserver
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($person);
 
-        $this->handlePortalSyncOnUpdate($person);
+        $this->handlePortalDeactivationOnUpdate($person);
     }
 
     /**
@@ -76,42 +87,51 @@ class PersonObserver
         $this->deletePortalAccount($person, 'deleted');
     }
 
-    protected function handlePortalSyncOnUpdate(Person $person): void
+    protected function handlePortalSyncOnUpdating(Person $person): void
     {
         if (! $this->shouldManagePortal($person)) {
             return;
         }
 
-        $changedFields = array_keys($person->getChanges());
-
-        if (empty($changedFields)) {
+        if (! $person->is_active || empty($person->keycloak_user_id)) {
             return;
         }
 
-        if ($person->wasChanged('is_active')) {
-            if (! $person->is_active) {
-                $this->deletePortalAccount($person, 'deactivated');
-            }
+        $dirtyFields = array_keys($person->getDirty());
 
+        if (empty($dirtyFields)) {
             return;
         }
 
-        if ($person->is_active && $person->keycloak_user_id) {
-            $relevantFields = [
-                'emails',
-                'first_name',
-                'last_name',
-                'lastname_prefix',
-                'married_name',
-                'married_name_prefix',
-                'password',
-            ];
+        $relevantFields = [
+            'emails',
+            'first_name',
+            'last_name',
+            'lastname_prefix',
+            'married_name',
+            'married_name_prefix',
+            'password',
+        ];
 
-            $portalFields = array_values(array_intersect($relevantFields, $changedFields));
+        $portalFields = array_values(array_intersect($relevantFields, $dirtyFields));
 
-            if (! empty($portalFields)) {
-                $this->updatePortalAccount($person, $portalFields);
-            }
+        if (! empty($portalFields)) {
+            $this->updatePortalAccount($person, $portalFields);
+        }
+    }
+
+    protected function handlePortalDeactivationOnUpdate(Person $person): void
+    {
+        if (! $this->shouldManagePortal($person)) {
+            return;
+        }
+
+        // Use original/current comparison here to avoid reliance on the model changeset.
+        $wasActive = (bool) $person->getOriginal('is_active');
+        $isActive = (bool) $person->is_active;
+
+        if ($wasActive && ! $isActive) {
+            $this->deletePortalAccount($person, 'deactivated');
         }
     }
 
@@ -176,6 +196,13 @@ class PersonObserver
     {
         if (! $this->isKeycloakConfigured()) {
             return false;
+        }
+
+        // A default email is required for creating/updating profile details, but for
+        // password-only updates we can still sync to Keycloak as long as a portal
+        // account exists.
+        if (! empty($person->keycloak_user_id)) {
+            return true;
         }
 
         return ! empty($person->findDefaultEmail());

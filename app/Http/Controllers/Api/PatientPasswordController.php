@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 use Webkul\User\Models\User;
 
 class PatientPasswordController extends Controller
@@ -35,21 +36,28 @@ class PatientPasswordController extends Controller
             abort(404);
         }
 
+        $authHeader = (string) $request->header('Authorization', '');
+        $usingBearerToken = $authHeader !== '' && str_starts_with($authHeader, 'Bearer ');
+
         $validated = $request->validate([
-            'current_password'      => 'required|string',
+            'current_password'      => ['nullable', 'string', Rule::requiredIf(! $usingBearerToken)],
             'password'              => 'required|string|min:7|confirmed',
             'password_confirmation' => 'required|string',
         ]);
 
-        $currentDecrypted = $person->getDecryptedPassword();
+        // Only validate current_password when the caller is not already authenticated
+        // as the patient via a Keycloak Bearer token.
+        if (! $usingBearerToken) {
+            $currentDecrypted = $person->getDecryptedPassword();
 
-        if ($currentDecrypted !== null && $validated['current_password'] !== $currentDecrypted) {
-            abort(response()->json([
-                'message' => 'The given data was invalid.',
-                'errors'  => [
-                    'current_password' => ['Het huidige wachtwoord is onjuist.'],
-                ],
-            ], 422));
+            if ($currentDecrypted !== null && ($validated['current_password'] ?? null) !== $currentDecrypted) {
+                abort(response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors'  => [
+                        'current_password' => ['Het huidige wachtwoord is onjuist.'],
+                    ],
+                ], 422));
+            }
         }
 
         $person->password = $validated['password'];

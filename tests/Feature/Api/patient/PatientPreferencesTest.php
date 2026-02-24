@@ -142,3 +142,73 @@ it('can update language and other preferences in one request', function () {
     $person->refresh();
     expect($person->preferred_language->value)->toBe('de');
 });
+
+it('returns onboarding_completed_at as null when not set', function () {
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakUserId}/preferences");
+
+    $response->assertOk();
+    $response->assertJsonPath('preferences.onboarding_completed_at', null);
+});
+
+it('can set onboarding_completed_at', function () {
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $timestamp = '2026-02-24T10:00:00+00:00';
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/preferences", [
+            'preferences' => [
+                'onboarding_completed_at' => $timestamp,
+            ],
+        ]);
+
+    $response->assertOk();
+
+    $person->refresh();
+    expect($person->onboarding_completed_at)->not->toBeNull();
+    expect($response->json('preferences.onboarding_completed_at'))->not->toBeNull();
+});
+
+it('can clear onboarding_completed_at by passing null', function () {
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create([
+        'keycloak_user_id'        => $keycloakUserId,
+        'onboarding_completed_at' => now(),
+    ]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/preferences", [
+            'preferences' => [
+                'onboarding_completed_at' => null,
+            ],
+        ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('preferences.onboarding_completed_at', null);
+
+    $person->refresh();
+    expect($person->onboarding_completed_at)->toBeNull();
+});
+
+it('returns 422 for invalid onboarding_completed_at value', function () {
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/preferences", [
+            'preferences' => [
+                'onboarding_completed_at' => 'not-a-date',
+            ],
+        ]);
+
+    $response->assertUnprocessable();
+});

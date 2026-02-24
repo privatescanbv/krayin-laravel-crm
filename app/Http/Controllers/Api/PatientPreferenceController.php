@@ -41,7 +41,10 @@ class PatientPreferenceController extends Controller
         return response()->json([
             'preferences' => array_merge(
                 PersonPreference::getAllForPerson($person->id),
-                ['language' => $person->preferred_language?->value]
+                [
+                    'language'                => $person->preferred_language?->value,
+                    'onboarding_completed_at' => $person->onboarding_completed_at?->toIso8601String(),
+                ]
             ),
         ]);
     }
@@ -73,6 +76,7 @@ class PatientPreferenceController extends Controller
             'preferences'                                                          => 'required|array',
             'preferences.'.PersonPreferenceKey::EMAIL_NOTIFICATIONS_ENABLED->value => 'boolean',
             'preferences.language'                                                 => ['nullable', Rule::enum(PreferredLanguage::class)],
+            'preferences.onboarding_completed_at'                                  => 'nullable|date',
         ]);
 
         $preferences = $validated['preferences'];
@@ -80,6 +84,13 @@ class PatientPreferenceController extends Controller
         foreach ($preferences as $key => $value) {
             if ($key === 'language') {
                 $person->preferred_language = $value;
+                $person->save();
+
+                continue;
+            }
+
+            if ($key === 'onboarding_completed_at') {
+                $person->onboarding_completed_at = $value;
                 $person->save();
 
                 continue;
@@ -101,7 +112,10 @@ class PatientPreferenceController extends Controller
         return response()->json([
             'preferences' => array_merge(
                 PersonPreference::getAllForPerson($person->id),
-                ['language' => $person->preferred_language?->value]
+                [
+                    'language'                => $person->preferred_language?->value,
+                    'onboarding_completed_at' => $person->onboarding_completed_at?->toIso8601String(),
+                ]
             ),
         ]);
     }

@@ -85,6 +85,7 @@ class Person extends Model implements PersonContract
         'is_active'          => 'boolean',
         'preferred_language' => PreferredLanguage::class,
         'national_identification_number' => EncryptedString::class,
+        'onboarding_completed_at'        => 'datetime',
     ];
 
     /**
@@ -125,6 +126,7 @@ class Person extends Model implements PersonContract
         'national_identification_number',
         'address_id',
         'preferred_language',
+        'onboarding_completed_at',
     ];
 
     /**

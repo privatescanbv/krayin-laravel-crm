@@ -125,7 +125,7 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-02-19'
+                  example: '2026-02-24'
                   nullable: true
                 email1:
                   type: string
@@ -758,11 +758,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-19 13:53:15'
+                  example: '2026-02-24 11:08:24'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-19 13:53:15'
+                  example: '2026-02-24 11:08:24'
               required:
                 - type
     parameters:
@@ -770,7 +770,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the sales lead.'
-        example: 1
+        example: 16
         required: true
         schema:
           type: integer
@@ -1030,47 +1030,6 @@ paths:
                     example: 'Not Found'
       tags:
         - 'Patient messages'
-    parameters:
-      -
-        in: path
-        name: id
-        description: 'The ID of the patient.'
-        example: architecto
-        required: true
-        schema:
-          type: string
-  '/api/patient/{id}/activities/unread/count':
-    get:
-      summary: 'Get the count of unread messages for a specific person.'
-      operationId: getTheCountOfUnreadMessagesForASpecificPerson
-      description: ''
-      parameters:
-        -
-          in: header
-          name: X-API-KEY
-          description: ''
-          example: '{YOUR_AUTH_KEY}'
-          schema:
-            type: string
-      responses:
-        401:
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error: 'Invalid API key'
-                  message: 'The provided API key is not valid'
-                properties:
-                  error:
-                    type: string
-                    example: 'Invalid API key'
-                  message:
-                    type: string
-                    example: 'The provided API key is not valid'
-      tags:
-        - Endpoints
     parameters:
       -
         in: path
@@ -1465,6 +1424,7 @@ paths:
                     example:
                       new_messages_count: 3
                       new_appointments_count: 2
+                      new_docs_count: 0
                     properties:
                       new_messages_count:
                         type: integer
@@ -1472,17 +1432,24 @@ paths:
                       new_appointments_count:
                         type: integer
                         example: 2
+                      new_docs_count:
+                        type: integer
+                        example: 0
                   -
                     description: 'No person'
                     type: object
                     example:
                       new_messages_count: 0
                       new_appointments_count: 0
+                      new_docs_count: 0
                     properties:
                       new_messages_count:
                         type: integer
                         example: 0
                       new_appointments_count:
+                        type: integer
+                        example: 0
+                      new_docs_count:
                         type: integer
                         example: 0
         404:
@@ -2048,6 +2015,11 @@ paths:
                   example:
                     email_notifications_enabled: true
                   properties:
+                    language:
+                      type: "['nl',"
+                      description: "'en', 'de'] Preferred language of the patient"
+                      example: architecto
+                      nullable: true
                     email_notifications_enabled:
                       type: boolean
                       description: 'Enable or disable email notifications.'

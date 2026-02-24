@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "0a2e1b7a-0aaa-4af2-b0da-457ffcbf5feb",
+        "_postman_id": "261661db-83c8-40a8-bfad-8e25cb13587e",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -41,7 +41,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-02-19\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
+                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-02-24\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
                         },
                         "description": ""
                     },
@@ -539,7 +539,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": "1",
+                                    "value": "16",
                                     "description": "The ID of the sales lead."
                                 }
                             ]
@@ -596,7 +596,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": "1",
+                                    "value": "16",
                                     "description": "The ID of the sales lead."
                                 }
                             ]
@@ -614,7 +614,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-19 13:53:15\",\"schedule_to\":\"2026-02-19 13:53:15\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-24 11:08:24\",\"schedule_to\":\"2026-02-24 11:08:24\"}"
                         },
                         "description": ""
                     },
@@ -708,63 +708,6 @@
                         "description": ""
                     },
                     "response": []
-                },
-                {
-                    "name": "Get the count of unread messages for a specific person.",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/patient\/:id\/activities\/unread\/count",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/patient\/:id\/activities\/unread\/count",
-                            "variable": [
-                                {
-                                    "id": "id",
-                                    "key": "id",
-                                    "value": "architecto",
-                                    "description": "The ID of the patient."
-                                }
-                            ]
-                        },
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            }
-                        ],
-                        "body": null,
-                        "description": ""
-                    },
-                    "response": [
-                        {
-                            "header": [
-                                {
-                                    "key": "cache-control",
-                                    "value": "no-cache, private"
-                                },
-                                {
-                                    "key": "content-type",
-                                    "value": "application\/json"
-                                },
-                                {
-                                    "key": "x-ratelimit-limit",
-                                    "value": "60"
-                                },
-                                {
-                                    "key": "x-ratelimit-remaining",
-                                    "value": "55"
-                                }
-                            ],
-                            "code": 401,
-                            "body": "{\"error\":\"Invalid API key\",\"message\":\"The provided API key is not valid\"}",
-                            "name": ""
-                        }
-                    ]
                 }
             ]
         },
@@ -997,13 +940,13 @@
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"new_messages_count\":3,\"new_appointments_count\":2}",
+                            "body": "{\"new_messages_count\":3,\"new_appointments_count\":2, \"new_docs_count\":0}",
                             "name": "Success"
                         },
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"new_messages_count\":0,\"new_appointments_count\":0}",
+                            "body": "{\"new_messages_count\":0,\"new_appointments_count\":0, \"new_docs_count\":0}",
                             "name": "No person"
                         },
                         {
@@ -1151,7 +1094,7 @@
                                 },
                                 {
                                     "key": "x-ratelimit-remaining",
-                                    "value": "54"
+                                    "value": "55"
                                 }
                             ],
                             "code": 401,
@@ -1350,7 +1293,7 @@
                                 },
                                 {
                                     "key": "x-ratelimit-remaining",
-                                    "value": "53"
+                                    "value": "54"
                                 }
                             ],
                             "code": 401,
@@ -1471,7 +1414,7 @@
                                 },
                                 {
                                     "key": "x-ratelimit-remaining",
-                                    "value": "52"
+                                    "value": "53"
                                 }
                             ],
                             "code": 401,
@@ -1510,7 +1453,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true}}"
+                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\"}}"
                         },
                         "description": ""
                     },

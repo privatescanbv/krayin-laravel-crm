@@ -125,9 +125,6 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient--id--messages">
                                 <a href="#endpoints-POSTapi-patient--id--messages">Store a new patient message or reply.</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-patient--id--activities-unread-count">
-                                <a href="#endpoints-GETapi-patient--id--activities-unread-count">Get the count of unread messages for a specific person.</a>
-                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-keycloak" class="tocify-header">
@@ -231,7 +228,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: February 19, 2026</li>
+        <li>Last updated: February 24, 2026</li>
     </ul>
 </div>
 
@@ -282,7 +279,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-02-19\",
+    \"birthdate\": \"2026-02-24\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -313,7 +310,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-02-19",
+    "birthdate": "2026-02-24",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -521,10 +518,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-02-19"
+               value="2026-02-24"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-19</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-24</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -2689,7 +2686,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
+    --get "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -2697,7 +2694,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
 );
 
 const headers = {
@@ -2824,10 +2821,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="GETapi-sales-leads--id--activities"
-               value="1"
+               value="16"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>1</code></p>
+<p>The ID of the sales lead. Example: <code>16</code></p>
             </div>
                     </form>
 
@@ -2845,7 +2842,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -2854,15 +2851,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-19 13:53:15\",
-    \"schedule_to\": \"2026-02-19 13:53:15\"
+    \"schedule_from\": \"2026-02-24 11:08:24\",
+    \"schedule_to\": \"2026-02-24 11:08:24\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
 );
 
 const headers = {
@@ -2876,8 +2873,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-19 13:53:15",
-    "schedule_to": "2026-02-19 13:53:15"
+    "schedule_from": "2026-02-24 11:08:24",
+    "schedule_to": "2026-02-24 11:08:24"
 };
 
 fetch(url, {
@@ -2981,10 +2978,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="1"
+               value="16"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>1</code></p>
+<p>The ID of the sales lead. Example: <code>16</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
@@ -3056,10 +3053,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-19 13:53:15"
+               value="2026-02-24 11:08:24"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 13:53:15</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 11:08:24</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3068,10 +3065,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-19 13:53:15"
+               value="2026-02-24 11:08:24"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-19 13:53:15</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 11:08:24</code></p>
         </div>
         </form>
 
@@ -3566,162 +3563,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Example: <code>architecto</code></p>
         </div>
         </form>
-
-                    <h2 id="endpoints-GETapi-patient--id--activities-unread-count">Get the count of unread messages for a specific person.</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-
-
-<span id="example-requests-GETapi-patient--id--activities-unread-count">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/patient/architecto/activities/unread/count" \
-    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/patient/architecto/activities/unread/count"
-);
-
-const headers = {
-    "X-API-KEY": "{YOUR_AUTH_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-patient--id--activities-unread-count">
-            <blockquote>
-            <p>Example response (401):</p>
-        </blockquote>
-                <details class="annotation">
-            <summary style="cursor: pointer;">
-                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
-            </summary>
-            <pre><code class="language-http">cache-control: no-cache, private
-content-type: application/json
-x-ratelimit-limit: 60
-x-ratelimit-remaining: 55
- </code></pre></details>         <pre>
-
-<code class="language-json" style="max-height: 300px;">{
-    &quot;error&quot;: &quot;Invalid API key&quot;,
-    &quot;message&quot;: &quot;The provided API key is not valid&quot;
-}</code>
- </pre>
-    </span>
-<span id="execution-results-GETapi-patient--id--activities-unread-count" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-patient--id--activities-unread-count"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-patient--id--activities-unread-count"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-patient--id--activities-unread-count" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-patient--id--activities-unread-count">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-patient--id--activities-unread-count" data-method="GET"
-      data-path="api/patient/{id}/activities/unread/count"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-patient--id--activities-unread-count', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-patient--id--activities-unread-count"
-                    onclick="tryItOut('GETapi-patient--id--activities-unread-count');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-patient--id--activities-unread-count"
-                    onclick="cancelTryOut('GETapi-patient--id--activities-unread-count');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-patient--id--activities-unread-count"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/patient/{id}/activities/unread/count</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="{YOUR_AUTH_KEY}"
-               data-component="header">
-    <br>
-<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
-                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="id"                data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="architecto"
-               data-component="url">
-    <br>
-<p>The ID of the patient. Example: <code>architecto</code></p>
-            </div>
-                    </form>
 
                 <h1 id="keycloak">Keycloak</h1>
 
@@ -4407,7 +4248,8 @@ fetch(url, {
 
 <code class="language-json" style="max-height: 300px;">{
     &quot;new_messages_count&quot;: 3,
-    &quot;new_appointments_count&quot;: 2
+    &quot;new_appointments_count&quot;: 2,
+    &quot;new_docs_count&quot;: 0
 }</code>
  </pre>
             <blockquote>
@@ -4417,7 +4259,8 @@ fetch(url, {
 
 <code class="language-json" style="max-height: 300px;">{
     &quot;new_messages_count&quot;: 0,
-    &quot;new_appointments_count&quot;: 0
+    &quot;new_appointments_count&quot;: 0,
+    &quot;new_docs_count&quot;: 0
 }</code>
  </pre>
             <blockquote>
@@ -4828,7 +4671,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 54
+x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -5399,7 +5242,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 53
+x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -5550,14 +5393,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
 <br>
 <p>The notification ID.</p>
-                    </div>
-                                                                <div style="margin-left: 14px; clear: unset;">
-                        <b style="line-height: 2;"><code>type</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
- &nbsp;
-<br>
-<p>The notification type.</p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>dismissable</code></b>&nbsp;&nbsp;
@@ -5892,7 +5727,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 52
+x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -6039,7 +5874,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     </div>
                                     </details>
         </div>
-                                        </details>
+                                                                    <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>language</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+<br>
+<p>['nl', 'en', 'de'] Preferred language of the patient</p>
+                    </div>
+                                    </details>
         </div>
                         <h2 id="patient-preferences-PUTapi-patient--id--preferences">Update preferences for a patient.</h2>
 
@@ -6061,7 +5904,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"preferences\": {
-        \"email_notifications_enabled\": true
+        \"email_notifications_enabled\": true,
+        \"language\": \"architecto\"
     }
 }"
 </code></pre></div>
@@ -6080,7 +5924,8 @@ const headers = {
 
 let body = {
     "preferences": {
-        "email_notifications_enabled": true
+        "email_notifications_enabled": true,
+        "language": "architecto"
     }
 };
 
@@ -6234,6 +6079,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Key-value map of preferences to update.</p>
             </summary>
                                                 <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>language</code></b>&nbsp;&nbsp;
+<small>[&#039;nl&#039;,</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="preferences.language"                data-endpoint="PUTapi-patient--id--preferences"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>'en', 'de'] Preferred language of the patient Example: <code>architecto</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;
 <small>boolean</small>&nbsp;
 <i>optional</i> &nbsp;

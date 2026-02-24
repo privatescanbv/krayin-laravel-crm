@@ -10,7 +10,7 @@ enum PreferredLanguage: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NL => 'Nederlands',
             self::EN => 'Engels',
             self::DE => 'Duits',

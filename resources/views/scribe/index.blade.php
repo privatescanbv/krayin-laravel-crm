@@ -147,6 +147,29 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-patient-naw" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="patient-naw">
+                    <a href="#patient-naw">Patient NAW</a>
+                </li>
+                                    <ul id="tocify-subheader-patient-naw" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="patient-naw-GETapi-patient--id--naw">
+                                <a href="#patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="patient-naw-PUTapi-patient--id--naw">
+                                <a href="#patient-naw-PUTapi-patient--id--naw">Update NAW data for a patient.</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-patient-password" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="patient-password">
+                    <a href="#patient-password">Patient Password</a>
+                </li>
+                                    <ul id="tocify-subheader-patient-password" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="patient-password-PUTapi-patient--id--password">
+                                <a href="#patient-password-PUTapi-patient--id--password">Update the password for a patient.</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-patient-appointments" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="patient-appointments">
                     <a href="#patient-appointments">Patient appointments</a>
@@ -2851,8 +2874,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-24 11:08:24\",
-    \"schedule_to\": \"2026-02-24 11:08:24\"
+    \"schedule_from\": \"2026-02-24 15:51:35\",
+    \"schedule_to\": \"2026-02-24 15:51:35\"
 }"
 </code></pre></div>
 
@@ -2873,8 +2896,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-24 11:08:24",
-    "schedule_to": "2026-02-24 11:08:24"
+    "schedule_from": "2026-02-24 15:51:35",
+    "schedule_to": "2026-02-24 15:51:35"
 };
 
 fetch(url, {
@@ -3053,10 +3076,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-24 11:08:24"
+               value="2026-02-24 15:51:35"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 11:08:24</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 15:51:35</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3065,10 +3088,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-24 11:08:24"
+               value="2026-02-24 15:51:35"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 11:08:24</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 15:51:35</code></p>
         </div>
         </form>
 
@@ -3956,6 +3979,990 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>Example question/answer pair.</p>
+        </div>
+        </form>
+
+                <h1 id="patient-naw">Patient NAW</h1>
+
+
+
+                                <h2 id="patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-patient--id--naw">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/naw" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/naw"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-patient--id--naw">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;salutation&quot;: &quot;Dhr.&quot;,
+    &quot;first_name&quot;: &quot;Jan&quot;,
+    &quot;lastname_prefix&quot;: &quot;van&quot;,
+    &quot;last_name&quot;: &quot;Berg&quot;,
+    &quot;married_name_prefix&quot;: null,
+    &quot;married_name&quot;: null,
+    &quot;initials&quot;: &quot;J.&quot;,
+    &quot;date_of_birth&quot;: &quot;1985-03-15&quot;,
+    &quot;gender&quot;: &quot;Man&quot;,
+    &quot;phones&quot;: [
+        {
+            &quot;value&quot;: &quot;0612345678&quot;,
+            &quot;label&quot;: &quot;eigen&quot;,
+            &quot;is_default&quot;: true
+        }
+    ],
+    &quot;emails&quot;: [
+        {
+            &quot;value&quot;: &quot;jan@example.com&quot;,
+            &quot;label&quot;: &quot;eigen&quot;,
+            &quot;is_default&quot;: true
+        }
+    ],
+    &quot;address&quot;: {
+        &quot;street&quot;: &quot;Hoofdstraat&quot;,
+        &quot;house_number&quot;: &quot;1&quot;,
+        &quot;house_number_suffix&quot;: null,
+        &quot;postal_code&quot;: &quot;1234AB&quot;,
+        &quot;city&quot;: &quot;Amsterdam&quot;,
+        &quot;state&quot;: null,
+        &quot;country&quot;: &quot;Nederland&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Patient not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not Found&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-patient--id--naw" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-patient--id--naw"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-patient--id--naw"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-patient--id--naw" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-patient--id--naw">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-patient--id--naw" data-method="GET"
+      data-path="api/patient/{id}/naw"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-patient--id--naw', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-patient--id--naw"
+                    onclick="tryItOut('GETapi-patient--id--naw');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-patient--id--naw"
+                    onclick="cancelTryOut('GETapi-patient--id--naw');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-patient--id--naw"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/patient/{id}/naw</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-patient--id--naw"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-patient--id--naw"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-patient--id--naw"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="GETapi-patient--id--naw"
+               value="3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="patient-naw-PUTapi-patient--id--naw">Update NAW data for a patient.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-PUTapi-patient--id--naw">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PUT \
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/naw" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"salutation\": \"Dhr.\",
+    \"first_name\": \"Jan\",
+    \"lastname_prefix\": \"van\",
+    \"last_name\": \"Berg\",
+    \"married_name_prefix\": \"de\",
+    \"married_name\": \"Vries\",
+    \"initials\": \"J.\",
+    \"date_of_birth\": \"1985-03-15\",
+    \"gender\": \"Man\",
+    \"phones\": [
+        \"architecto\"
+    ],
+    \"emails\": [
+        \"architecto\"
+    ],
+    \"address\": {
+        \"street\": \"Hoofdstraat\",
+        \"house_number\": \"1\",
+        \"house_number_suffix\": \"A\",
+        \"postal_code\": \"1234AB\",
+        \"city\": \"Amsterdam\",
+        \"state\": \"Noord-Holland\",
+        \"country\": \"Nederland\"
+    }
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/naw"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "salutation": "Dhr.",
+    "first_name": "Jan",
+    "lastname_prefix": "van",
+    "last_name": "Berg",
+    "married_name_prefix": "de",
+    "married_name": "Vries",
+    "initials": "J.",
+    "date_of_birth": "1985-03-15",
+    "gender": "Man",
+    "phones": [
+        "architecto"
+    ],
+    "emails": [
+        "architecto"
+    ],
+    "address": {
+        "street": "Hoofdstraat",
+        "house_number": "1",
+        "house_number_suffix": "A",
+        "postal_code": "1234AB",
+        "city": "Amsterdam",
+        "state": "Noord-Holland",
+        "country": "Nederland"
+    }
+};
+
+fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PUTapi-patient--id--naw">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;salutation&quot;: &quot;Dhr.&quot;,
+    &quot;first_name&quot;: &quot;Jan&quot;,
+    &quot;lastname_prefix&quot;: &quot;van&quot;,
+    &quot;last_name&quot;: &quot;Berg&quot;,
+    &quot;married_name_prefix&quot;: null,
+    &quot;married_name&quot;: null,
+    &quot;initials&quot;: &quot;J.&quot;,
+    &quot;date_of_birth&quot;: &quot;1985-03-15&quot;,
+    &quot;gender&quot;: &quot;Man&quot;,
+    &quot;phones&quot;: [
+        {
+            &quot;value&quot;: &quot;0612345678&quot;,
+            &quot;label&quot;: &quot;eigen&quot;,
+            &quot;is_default&quot;: true
+        }
+    ],
+    &quot;emails&quot;: [
+        {
+            &quot;value&quot;: &quot;jan@example.com&quot;,
+            &quot;label&quot;: &quot;eigen&quot;,
+            &quot;is_default&quot;: true
+        }
+    ],
+    &quot;address&quot;: {
+        &quot;street&quot;: &quot;Hoofdstraat&quot;,
+        &quot;house_number&quot;: &quot;1&quot;,
+        &quot;house_number_suffix&quot;: null,
+        &quot;postal_code&quot;: &quot;1234AB&quot;,
+        &quot;city&quot;: &quot;Amsterdam&quot;,
+        &quot;state&quot;: null,
+        &quot;country&quot;: &quot;Nederland&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Patient not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not Found&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;The given data was invalid.&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PUTapi-patient--id--naw" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PUTapi-patient--id--naw"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PUTapi-patient--id--naw"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PUTapi-patient--id--naw" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PUTapi-patient--id--naw">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PUTapi-patient--id--naw" data-method="PUT"
+      data-path="api/patient/{id}/naw"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PUTapi-patient--id--naw', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-PUTapi-patient--id--naw"
+                    onclick="tryItOut('PUTapi-patient--id--naw');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-PUTapi-patient--id--naw"
+                    onclick="cancelTryOut('PUTapi-patient--id--naw');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-PUTapi-patient--id--naw"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-darkblue">PUT</small>
+            <b><code>api/patient/{id}/naw</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="PUTapi-patient--id--naw"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PUTapi-patient--id--naw"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PUTapi-patient--id--naw"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="PUTapi-patient--id--naw"
+               value="3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>salutation</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="salutation"                data-endpoint="PUTapi-patient--id--naw"
+               value="Dhr."
+               data-component="body">
+    <br>
+<p>Salutation. Allowed values: Dhr., Mevr. Example: <code>Dhr.</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>first_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="first_name"                data-endpoint="PUTapi-patient--id--naw"
+               value="Jan"
+               data-component="body">
+    <br>
+<p>First name. Example: <code>Jan</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>lastname_prefix</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lastname_prefix"                data-endpoint="PUTapi-patient--id--naw"
+               value="van"
+               data-component="body">
+    <br>
+<p>Lastname prefix (tussenvoegsel). Example: <code>van</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>last_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="last_name"                data-endpoint="PUTapi-patient--id--naw"
+               value="Berg"
+               data-component="body">
+    <br>
+<p>Last name. Example: <code>Berg</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>married_name_prefix</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="married_name_prefix"                data-endpoint="PUTapi-patient--id--naw"
+               value="de"
+               data-component="body">
+    <br>
+<p>Married name prefix. Example: <code>de</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>married_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="married_name"                data-endpoint="PUTapi-patient--id--naw"
+               value="Vries"
+               data-component="body">
+    <br>
+<p>Married name. Example: <code>Vries</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>initials</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="initials"                data-endpoint="PUTapi-patient--id--naw"
+               value="J."
+               data-component="body">
+    <br>
+<p>Initials. Example: <code>J.</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>date_of_birth</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="date_of_birth"                data-endpoint="PUTapi-patient--id--naw"
+               value="1985-03-15"
+               data-component="body">
+    <br>
+<p>Date of birth (Y-m-d). Example: <code>1985-03-15</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>gender</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="gender"                data-endpoint="PUTapi-patient--id--naw"
+               value="Man"
+               data-component="body">
+    <br>
+<p>Gender. Allowed values: Man, Vrouw, Anders. Example: <code>Man</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+        <details>
+            <summary style="padding-bottom: 10px;">
+                <b style="line-height: 2;"><code>phones</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+<br>
+<p>List of phone numbers. Exactly one entry must have is_default set to true.</p>
+            </summary>
+                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>value</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="phones.0.value"                data-endpoint="PUTapi-patient--id--naw"
+               value="0612345678"
+               data-component="body">
+    <br>
+<p>Phone number. Example: <code>0612345678</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>label</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="phones.0.label"                data-endpoint="PUTapi-patient--id--naw"
+               value="eigen"
+               data-component="body">
+    <br>
+<p>Label. Allowed values: eigen, relatie, anders. Example: <code>eigen</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>is_default</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <label data-endpoint="PUTapi-patient--id--naw" style="display: none">
+            <input type="radio" name="phones.0.is_default"
+                   value="true"
+                   data-endpoint="PUTapi-patient--id--naw"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PUTapi-patient--id--naw" style="display: none">
+            <input type="radio" name="phones.0.is_default"
+                   value="false"
+                   data-endpoint="PUTapi-patient--id--naw"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether this is the default number. Example: <code>true</code></p>
+                    </div>
+                                    </details>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+        <details>
+            <summary style="padding-bottom: 10px;">
+                <b style="line-height: 2;"><code>emails</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+<br>
+<p>List of email addresses. Exactly one entry must have is_default set to true.</p>
+            </summary>
+                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>value</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="emails.0.value"                data-endpoint="PUTapi-patient--id--naw"
+               value="jan@example.com"
+               data-component="body">
+    <br>
+<p>Email address. Example: <code>jan@example.com</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>label</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="emails.0.label"                data-endpoint="PUTapi-patient--id--naw"
+               value="eigen"
+               data-component="body">
+    <br>
+<p>Label. Allowed values: eigen, relatie, anders. Example: <code>eigen</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>is_default</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <label data-endpoint="PUTapi-patient--id--naw" style="display: none">
+            <input type="radio" name="emails.0.is_default"
+                   value="true"
+                   data-endpoint="PUTapi-patient--id--naw"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PUTapi-patient--id--naw" style="display: none">
+            <input type="radio" name="emails.0.is_default"
+                   value="false"
+                   data-endpoint="PUTapi-patient--id--naw"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether this is the default email. Example: <code>true</code></p>
+                    </div>
+                                    </details>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+        <details>
+            <summary style="padding-bottom: 10px;">
+                <b style="line-height: 2;"><code>address</code></b>&nbsp;&nbsp;
+<small>object</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+<br>
+<p>Address data.</p>
+            </summary>
+                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>street</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.street"                data-endpoint="PUTapi-patient--id--naw"
+               value="Hoofdstraat"
+               data-component="body">
+    <br>
+<p>Street name. Example: <code>Hoofdstraat</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>house_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.house_number"                data-endpoint="PUTapi-patient--id--naw"
+               value="1"
+               data-component="body">
+    <br>
+<p>House number. Example: <code>1</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>house_number_suffix</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.house_number_suffix"                data-endpoint="PUTapi-patient--id--naw"
+               value="A"
+               data-component="body">
+    <br>
+<p>House number suffix. Example: <code>A</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>postal_code</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.postal_code"                data-endpoint="PUTapi-patient--id--naw"
+               value="1234AB"
+               data-component="body">
+    <br>
+<p>Postal code. Example: <code>1234AB</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>city</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.city"                data-endpoint="PUTapi-patient--id--naw"
+               value="Amsterdam"
+               data-component="body">
+    <br>
+<p>City. Example: <code>Amsterdam</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>state</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.state"                data-endpoint="PUTapi-patient--id--naw"
+               value="Noord-Holland"
+               data-component="body">
+    <br>
+<p>State / province. Example: <code>Noord-Holland</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>country</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="address.country"                data-endpoint="PUTapi-patient--id--naw"
+               value="Nederland"
+               data-component="body">
+    <br>
+<p>Country. Example: <code>Nederland</code></p>
+                    </div>
+                                    </details>
+        </div>
+        </form>
+
+                <h1 id="patient-password">Patient Password</h1>
+
+
+
+                                <h2 id="patient-password-PUTapi-patient--id--password">Update the password for a patient.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-PUTapi-patient--id--password">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PUT \
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/password" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"current_password\": \"OudWachtwoord1!\",
+    \"password\": \"NieuwWachtwoord1!\",
+    \"password_confirmation\": \"NieuwWachtwoord1!\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/password"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "current_password": "OudWachtwoord1!",
+    "password": "NieuwWachtwoord1!",
+    "password_confirmation": "NieuwWachtwoord1!"
+};
+
+fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PUTapi-patient--id--password">
+            <blockquote>
+            <p>Example response (204, Success):</p>
+        </blockquote>
+                <pre>
+<code>Empty response</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Patient not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not Found&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;The given data was invalid.&quot;,
+    &quot;errors&quot;: {
+        &quot;current_password&quot;: [
+            &quot;Het huidige wachtwoord is onjuist.&quot;
+        ]
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PUTapi-patient--id--password" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PUTapi-patient--id--password"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PUTapi-patient--id--password"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PUTapi-patient--id--password" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PUTapi-patient--id--password">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PUTapi-patient--id--password" data-method="PUT"
+      data-path="api/patient/{id}/password"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PUTapi-patient--id--password', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-PUTapi-patient--id--password"
+                    onclick="tryItOut('PUTapi-patient--id--password');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-PUTapi-patient--id--password"
+                    onclick="cancelTryOut('PUTapi-patient--id--password');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-PUTapi-patient--id--password"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-darkblue">PUT</small>
+            <b><code>api/patient/{id}/password</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="PUTapi-patient--id--password"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PUTapi-patient--id--password"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PUTapi-patient--id--password"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="PUTapi-patient--id--password"
+               value="3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>current_password</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="current_password"                data-endpoint="PUTapi-patient--id--password"
+               value="OudWachtwoord1!"
+               data-component="body">
+    <br>
+<p>The current password. Example: <code>OudWachtwoord1!</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="password"                data-endpoint="PUTapi-patient--id--password"
+               value="NieuwWachtwoord1!"
+               data-component="body">
+    <br>
+<p>The new password (min 8 characters). Example: <code>NieuwWachtwoord1!</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>password_confirmation</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="password_confirmation"                data-endpoint="PUTapi-patient--id--password"
+               value="NieuwWachtwoord1!"
+               data-component="body">
+    <br>
+<p>Confirmation of the new password. Example: <code>NieuwWachtwoord1!</code></p>
         </div>
         </form>
 
@@ -5905,7 +6912,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"preferences\": {
         \"email_notifications_enabled\": true,
-        \"language\": \"architecto\"
+        \"language\": \"architecto\",
+        \"onboarding_completed_at\": \"2026-02-24T15:51:35\"
     }
 }"
 </code></pre></div>
@@ -5925,7 +6933,8 @@ const headers = {
 let body = {
     "preferences": {
         "email_notifications_enabled": true,
-        "language": "architecto"
+        "language": "architecto",
+        "onboarding_completed_at": "2026-02-24T15:51:35"
     }
 };
 
@@ -6089,6 +7098,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>'en', 'de'] Preferred language of the patient Example: <code>architecto</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>onboarding_completed_at</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
+               value="2026-02-24T15:51:35"
+               data-component="body">
+    <br>
+<p>Must be a valid date. Example: <code>2026-02-24T15:51:35</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

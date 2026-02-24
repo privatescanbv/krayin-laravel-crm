@@ -17,6 +17,12 @@ tags:
     name: Leads
     description: "\nAPIs for managing leads"
   -
+    name: 'Patient NAW'
+    description: ''
+  -
+    name: 'Patient Password'
+    description: ''
+  -
     name: 'Patient appointments'
     description: ''
   -
@@ -758,11 +764,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-24 11:08:24'
+                  example: '2026-02-24 15:51:35'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-24 11:08:24'
+                  example: '2026-02-24 15:51:35'
               required:
                 - type
     parameters:
@@ -1210,6 +1216,530 @@ paths:
         required: true
         schema:
           type: integer
+  '/api/patient/{id}/naw':
+    get:
+      summary: 'Get NAW data for a patient.'
+      operationId: getNAWDataForAPatient
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  salutation: Dhr.
+                  first_name: Jan
+                  lastname_prefix: van
+                  last_name: Berg
+                  married_name_prefix: null
+                  married_name: null
+                  initials: J.
+                  date_of_birth: '1985-03-15'
+                  gender: Man
+                  phones:
+                    -
+                      value: '0612345678'
+                      label: eigen
+                      is_default: true
+                  emails:
+                    -
+                      value: jan@example.com
+                      label: eigen
+                      is_default: true
+                  address:
+                    street: Hoofdstraat
+                    house_number: '1'
+                    house_number_suffix: null
+                    postal_code: 1234AB
+                    city: Amsterdam
+                    state: null
+                    country: Nederland
+                properties:
+                  salutation:
+                    type: string
+                    example: Dhr.
+                  first_name:
+                    type: string
+                    example: Jan
+                  lastname_prefix:
+                    type: string
+                    example: van
+                  last_name:
+                    type: string
+                    example: Berg
+                  married_name_prefix:
+                    type: string
+                    example: null
+                  married_name:
+                    type: string
+                    example: null
+                  initials:
+                    type: string
+                    example: J.
+                  date_of_birth:
+                    type: string
+                    example: '1985-03-15'
+                  gender:
+                    type: string
+                    example: Man
+                  phones:
+                    type: array
+                    example:
+                      -
+                        value: '0612345678'
+                        label: eigen
+                        is_default: true
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: string
+                          example: '0612345678'
+                        label:
+                          type: string
+                          example: eigen
+                        is_default:
+                          type: boolean
+                          example: true
+                  emails:
+                    type: array
+                    example:
+                      -
+                        value: jan@example.com
+                        label: eigen
+                        is_default: true
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: string
+                          example: jan@example.com
+                        label:
+                          type: string
+                          example: eigen
+                        is_default:
+                          type: boolean
+                          example: true
+                  address:
+                    type: object
+                    properties:
+                      street:
+                        type: string
+                        example: Hoofdstraat
+                      house_number:
+                        type: string
+                        example: '1'
+                      house_number_suffix:
+                        type: string
+                        example: null
+                      postal_code:
+                        type: string
+                        example: 1234AB
+                      city:
+                        type: string
+                        example: Amsterdam
+                      state:
+                        type: string
+                        example: null
+                      country:
+                        type: string
+                        example: Nederland
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient NAW'
+    put:
+      summary: 'Update NAW data for a patient.'
+      operationId: updateNAWDataForAPatient
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  salutation: Dhr.
+                  first_name: Jan
+                  lastname_prefix: van
+                  last_name: Berg
+                  married_name_prefix: null
+                  married_name: null
+                  initials: J.
+                  date_of_birth: '1985-03-15'
+                  gender: Man
+                  phones:
+                    -
+                      value: '0612345678'
+                      label: eigen
+                      is_default: true
+                  emails:
+                    -
+                      value: jan@example.com
+                      label: eigen
+                      is_default: true
+                  address:
+                    street: Hoofdstraat
+                    house_number: '1'
+                    house_number_suffix: null
+                    postal_code: 1234AB
+                    city: Amsterdam
+                    state: null
+                    country: Nederland
+                properties:
+                  salutation:
+                    type: string
+                    example: Dhr.
+                  first_name:
+                    type: string
+                    example: Jan
+                  lastname_prefix:
+                    type: string
+                    example: van
+                  last_name:
+                    type: string
+                    example: Berg
+                  married_name_prefix:
+                    type: string
+                    example: null
+                  married_name:
+                    type: string
+                    example: null
+                  initials:
+                    type: string
+                    example: J.
+                  date_of_birth:
+                    type: string
+                    example: '1985-03-15'
+                  gender:
+                    type: string
+                    example: Man
+                  phones:
+                    type: array
+                    example:
+                      -
+                        value: '0612345678'
+                        label: eigen
+                        is_default: true
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: string
+                          example: '0612345678'
+                        label:
+                          type: string
+                          example: eigen
+                        is_default:
+                          type: boolean
+                          example: true
+                  emails:
+                    type: array
+                    example:
+                      -
+                        value: jan@example.com
+                        label: eigen
+                        is_default: true
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: string
+                          example: jan@example.com
+                        label:
+                          type: string
+                          example: eigen
+                        is_default:
+                          type: boolean
+                          example: true
+                  address:
+                    type: object
+                    properties:
+                      street:
+                        type: string
+                        example: Hoofdstraat
+                      house_number:
+                        type: string
+                        example: '1'
+                      house_number_suffix:
+                        type: string
+                        example: null
+                      postal_code:
+                        type: string
+                        example: 1234AB
+                      city:
+                        type: string
+                        example: Amsterdam
+                      state:
+                        type: string
+                        example: null
+                      country:
+                        type: string
+                        example: Nederland
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The given data was invalid.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The given data was invalid.'
+      tags:
+        - 'Patient NAW'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                salutation:
+                  type: string
+                  description: 'Salutation. Allowed values: Dhr., Mevr.'
+                  example: Dhr.
+                  nullable: true
+                first_name:
+                  type: string
+                  description: 'First name.'
+                  example: Jan
+                  nullable: true
+                lastname_prefix:
+                  type: string
+                  description: 'Lastname prefix (tussenvoegsel).'
+                  example: van
+                  nullable: true
+                last_name:
+                  type: string
+                  description: 'Last name.'
+                  example: Berg
+                  nullable: true
+                married_name_prefix:
+                  type: string
+                  description: 'Married name prefix.'
+                  example: de
+                  nullable: true
+                married_name:
+                  type: string
+                  description: 'Married name.'
+                  example: Vries
+                  nullable: true
+                initials:
+                  type: string
+                  description: Initials.
+                  example: J.
+                  nullable: true
+                date_of_birth:
+                  type: string
+                  description: 'Date of birth (Y-m-d).'
+                  example: '1985-03-15'
+                  nullable: true
+                gender:
+                  type: string
+                  description: 'Gender. Allowed values: Man, Vrouw, Anders.'
+                  example: Man
+                  nullable: true
+                phones:
+                  type: array
+                  description: 'List of phone numbers. Exactly one entry must have is_default set to true.'
+                  example:
+                    - architecto
+                  items:
+                    type: string
+                    nullable: true
+                emails:
+                  type: array
+                  description: 'List of email addresses. Exactly one entry must have is_default set to true.'
+                  example:
+                    - architecto
+                  items:
+                    type: string
+                    nullable: true
+                address:
+                  type: object
+                  description: 'Address data.'
+                  example: []
+                  properties:
+                    street:
+                      type: string
+                      description: 'Street name.'
+                      example: Hoofdstraat
+                      nullable: true
+                    house_number:
+                      type: string
+                      description: 'House number.'
+                      example: '1'
+                      nullable: true
+                    house_number_suffix:
+                      type: string
+                      description: 'House number suffix.'
+                      example: A
+                      nullable: true
+                    postal_code:
+                      type: string
+                      description: 'Postal code.'
+                      example: 1234AB
+                      nullable: true
+                    city:
+                      type: string
+                      description: City.
+                      example: Amsterdam
+                      nullable: true
+                    state:
+                      type: string
+                      description: 'State / province.'
+                      example: Noord-Holland
+                      nullable: true
+                    country:
+                      type: string
+                      description: Country.
+                      example: Nederland
+                      nullable: true
+                  nullable: true
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
+  '/api/patient/{id}/password':
+    put:
+      summary: 'Update the password for a patient.'
+      operationId: updateThePasswordForAPatient
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ''
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The given data was invalid.'
+                  errors:
+                    current_password:
+                      - 'Het huidige wachtwoord is onjuist.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The given data was invalid.'
+                  errors:
+                    type: object
+                    properties:
+                      current_password:
+                        type: array
+                        example:
+                          - 'Het huidige wachtwoord is onjuist.'
+                        items:
+                          type: string
+      tags:
+        - 'Patient Password'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_password:
+                  type: string
+                  description: 'The current password.'
+                  example: OudWachtwoord1!
+                password:
+                  type: string
+                  description: 'The new password (min 8 characters).'
+                  example: NieuwWachtwoord1!
+                password_confirmation:
+                  type: string
+                  description: 'Confirmation of the new password.'
+                  example: NieuwWachtwoord1!
+              required:
+                - current_password
+                - password
+                - password_confirmation
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
   '/api/patient/{id}/appointments':
     get:
       summary: 'Get appointments for a patient (derived from Orders and published Activities).'
@@ -2019,6 +2549,11 @@ paths:
                       type: "['nl',"
                       description: "'en', 'de'] Preferred language of the patient"
                       example: architecto
+                      nullable: true
+                    onboarding_completed_at:
+                      type: string
+                      description: 'Must be a valid date.'
+                      example: '2026-02-24T15:51:35'
                       nullable: true
                     email_notifications_enabled:
                       type: boolean

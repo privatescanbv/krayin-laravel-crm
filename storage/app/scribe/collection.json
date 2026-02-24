@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "261661db-83c8-40a8-bfad-8e25cb13587e",
+        "_postman_id": "75659e65-8201-4105-a65f-13837934fc8f",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -614,7 +614,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-24 11:08:24\",\"schedule_to\":\"2026-02-24 11:08:24\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-24 15:51:35\",\"schedule_to\":\"2026-02-24 15:51:35\"}"
                         },
                         "description": ""
                     },
@@ -818,6 +818,174 @@
                             "header": [],
                             "code": 422,
                             "body": "{\"message\":\"Invalid form data format. Each key must contain an array with [question, answer].\"}",
+                            "name": "Validation error"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient NAW",
+            "description": "",
+            "item": [
+                {
+                    "name": "Get NAW data for a patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/naw",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/naw",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":null,\"married_name\":null,\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[{\"value\":\"0612345678\",\"label\":\"eigen\",\"is_default\":true}],\"emails\":[{\"value\":\"jan@example.com\",\"label\":\"eigen\",\"is_default\":true}],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":null,\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":null,\"country\":\"Nederland\"}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update NAW data for a patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/naw",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/naw",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":\"de\",\"married_name\":\"Vries\",\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[\"architecto\"],\"emails\":[\"architecto\"],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":\"A\",\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":\"Noord-Holland\",\"country\":\"Nederland\"}}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":null,\"married_name\":null,\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[{\"value\":\"0612345678\",\"label\":\"eigen\",\"is_default\":true}],\"emails\":[{\"value\":\"jan@example.com\",\"label\":\"eigen\",\"is_default\":true}],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":null,\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":null,\"country\":\"Nederland\"}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The given data was invalid.\"}",
+                            "name": "Validation error"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Patient Password",
+            "description": "",
+            "item": [
+                {
+                    "name": "Update the password for a patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/password",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/password",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"current_password\":\"OudWachtwoord1!\",\"password\":\"NieuwWachtwoord1!\",\"password_confirmation\":\"NieuwWachtwoord1!\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The given data was invalid.\",\"errors\":{\"current_password\":[\"Het huidige wachtwoord is onjuist.\"]}}",
                             "name": "Validation error"
                         }
                     ]
@@ -1453,7 +1621,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\"}}"
+                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-02-24T15:51:35\"}}"
                         },
                         "description": ""
                     },

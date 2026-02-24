@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\LeadFormController;
 use App\Http\Controllers\Api\PatientAppointmentController;
 use App\Http\Controllers\Api\PatientCounterController;
 use App\Http\Controllers\Api\PatientDocumentController;
+use App\Http\Controllers\Api\PatientNawController;
 use App\Http\Controllers\Api\PatientNotificationController;
+use App\Http\Controllers\Api\PatientPasswordController;
 use App\Http\Controllers\Api\PatientPreferenceController;
 use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
@@ -108,6 +110,16 @@ $registerAuthenticatedApiRoutes = function () {
                 ->name('api.patient.notifications.index');
             Route::post('notifications/{notificationId}/read', [PatientNotificationController::class, 'markAsRead'])
                 ->name('api.patient.notifications.read');
+
+            // Patient NAW (personal details + address)
+            Route::get('naw', [PatientNawController::class, 'show'])
+                ->name('api.patient.naw.show');
+            Route::put('naw', [PatientNawController::class, 'update'])
+                ->name('api.patient.naw.update');
+
+            // Patient password
+            Route::put('password', [PatientPasswordController::class, 'update'])
+                ->name('api.patient.password.update');
 
             // Patient preferences
             Route::get('preferences', [PatientPreferenceController::class, 'index'])

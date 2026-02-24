@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProductReports;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Abstracts\BaseProduct;
+use Exception;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
@@ -189,7 +190,12 @@ class PartnerProduct extends BaseProduct
     public function isPlannable(): bool
     {
         // ignore, too much relations and these clinics won't have a schedule; $this->clinics()->where('is_active', true)->exists()
-        return ResourceTypeEnum::mapFrom($this->resourceType?->name) !== ResourceTypeEnum::OTHER;
+        try {
+            return ResourceTypeEnum::mapFrom($this->resourceType?->name) !== ResourceTypeEnum::OTHER;
+        } catch (Exception $e) {
+            // all custom created resource types will be handled as not plannable.
+            return false;
+        }
 
     }
 }

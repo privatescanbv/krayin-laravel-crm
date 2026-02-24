@@ -104,25 +104,29 @@ class ProductGroupDataGrid extends DataGrid
      */
     public function prepareActions()
     {
-        $this->addAction([
-            'title'  => trans('admin::app.productgroups.index.datagrid.edit'),
-            'method' => 'GET',
-            'route'  => 'admin.productgroups.edit',
-            'url'    => function ($row) {
-                return route('admin.productgroups.edit', $row->id);
-            },
-            'icon'   => 'icon-edit',
-        ]);
+        if (bouncer()->hasPermission('productgroups.edit')) {
+            $this->addAction([
+                'title' => trans('admin::app.productgroups.index.datagrid.edit'),
+                'method' => 'GET',
+                'route' => 'admin.productgroups.edit',
+                'url' => function ($row) {
+                    return route('admin.productgroups.edit', $row->id);
+                },
+                'icon' => 'icon-edit',
+            ]);
+        }
 
-        $this->addAction([
-            'title'  => trans('admin::app.productgroups.index.datagrid.delete'),
-            'method' => 'DELETE',
-            'route'  => 'admin.productgroups.delete',
-            'url'    => function ($row) {
-                return route('admin.productgroups.delete', $row->id);
-            },
-            'icon'   => 'icon-delete',
-        ]);
+        if (bouncer()->hasPermission('productgroups.delete')) {
+            $this->addAction([
+                'title' => trans('admin::app.productgroups.index.datagrid.delete'),
+                'method' => 'DELETE',
+                'route' => 'admin.productgroups.delete',
+                'url' => function ($row) {
+                    return route('admin.productgroups.delete', $row->id);
+                },
+                'icon' => 'icon-delete',
+            ]);
+        }
     }
 
 }

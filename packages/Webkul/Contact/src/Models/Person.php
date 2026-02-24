@@ -4,6 +4,7 @@ namespace Webkul\Contact\Models;
 
 use App\Casts\EncryptedString;
 use App\Enums\PersonGender;
+use App\Enums\PreferredLanguage;
 use App\Enums\PersonSalutation;
 use App\Models\Address;
 use App\Models\Anamnesis;
@@ -23,6 +24,7 @@ use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
+use App\Models\SalesLead;
 use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
@@ -30,6 +32,19 @@ use Webkul\User\Models\UserProxy;
 class Person extends Model implements PersonContract
 {
     use CustomAttribute, HasDefaultContactInfo, HasFactory, LogsActivity, SoftDeletes;
+
+    /**
+     * Database columns required to compute the name accessor (getNameAttribute).
+     * Keep in sync with getNameAttribute whenever that method changes.
+     */
+    const NAME_FIELDS = [
+        'first_name',
+        'lastname_prefix',
+        'last_name',
+        'married_name_prefix',
+        'married_name',
+        'is_active',
+    ];
 
     /**
      * Default attribute values.
@@ -65,9 +80,10 @@ class Person extends Model implements PersonContract
         'emails'        => 'array',
         'phones'        => 'array',
         'date_of_birth' => 'date',
-        'gender'        => PersonGender::class,
-        'salutation'    => PersonSalutation::class,
-        'is_active'     => 'boolean',
+        'gender'             => PersonGender::class,
+        'salutation'         => PersonSalutation::class,
+        'is_active'          => 'boolean',
+        'preferred_language' => PreferredLanguage::class,
         'national_identification_number' => EncryptedString::class,
     ];
 
@@ -108,6 +124,7 @@ class Person extends Model implements PersonContract
         'password',
         'national_identification_number',
         'address_id',
+        'preferred_language',
     ];
 
     /**
@@ -218,6 +235,24 @@ class Person extends Model implements PersonContract
     }
 
     /**
+     * Normalize preferred_language assignment to allow empty strings and enums.
+     */
+    public function setPreferredLanguageAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['preferred_language'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['preferred_language'] = $value->value;
+            return;
+        }
+
+        $this->attributes['preferred_language'] = $value;
+    }
+
+    /**
      * Normalize salutation assignment to allow empty strings and enums.
      */
     public function setSalutationAttribute($value): void
@@ -288,6 +323,21 @@ class Person extends Model implements PersonContract
             )->get();
         } catch (Exception $e) {
             Log::warning('Could not load leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
+    }
+
+    /**
+     * Get all sales leads gekoppeld aan deze persoon.
+     */
+    public function getSalesLeadsAttribute()
+    {
+        try {
+            return SalesLead::whereIn('id',
+                DB::table('saleslead_persons')->where('person_id', $this->id)->pluck('saleslead_id')
+            )->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load sales leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
             return collect();
         }
     }

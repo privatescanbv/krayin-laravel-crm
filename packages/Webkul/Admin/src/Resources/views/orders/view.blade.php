@@ -90,6 +90,10 @@
                 class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
 
                 <div class="flex justify-between">
+                    <span>Toegewezen aan:</span>
+                    <span>{{ $order->user?->name }}</span>
+                </div>
+                <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $order->created_at->format('d-m-Y') }}</span>
                 </div>

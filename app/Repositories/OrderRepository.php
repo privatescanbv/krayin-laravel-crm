@@ -2,7 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Enums\AppointmentTimeFilter;
 use App\Models\Order;
+use App\Models\SalesLead;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Webkul\Contact\Models\Person;
@@ -17,11 +19,14 @@ class OrderRepository extends Repository
 
     public function createFromSalesLead(int $salesLeadId, string $salesLeadName, ?string $departmentName = null): Order
     {
+        $salesLead = SalesLead::find($salesLeadId);
+
         return $this->create(
-            ['title'                => 'Order voor '.$salesLeadName,
+            ['title'                => $salesLeadName,
                 'total_price'       => 0.00,
                 'pipeline_stage_id' => Order::firstOrderStageId($departmentName),
-                'sales_lead_id'     => $salesLeadId]
+                'sales_lead_id'     => $salesLeadId,
+                'user_id'           => $salesLead?->user_id]
         );
     }
 
@@ -88,11 +93,9 @@ class OrderRepository extends Repository
     }
 
     /**
-     * Paginate orders that are shown as patient appointments.
-     *
-     * @param  string|null  $filter  Allowed values: future, past.
+     * Get a query builder for orders shown as patient appointments.
      */
-    public function paginatePatientAppointmentsForPerson(Person $person, int $perPage, ?string $filter = null, ?Carbon $now = null): LengthAwarePaginator
+    public function queryPatientAppointmentsForPerson(Person $person, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): \Illuminate\Database\Eloquent\Builder
     {
         $now = $now ?: now();
 
@@ -100,8 +103,15 @@ class OrderRepository extends Repository
             ->appointmentEligible()
             ->forPerson($person)
             ->appointmentTimeFilter($filter, $now)
-            ->orderBy('first_examination_at', 'asc')
-            ->paginate($perPage);
+            ->orderBy('first_examination_at', 'asc');
+    }
+
+    /**
+     * Paginate orders that are shown as patient appointments.
+     */
+    public function paginatePatientAppointmentsForPerson(Person $person, int $perPage, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): LengthAwarePaginator
+    {
+        return $this->queryPatientAppointmentsForPerson($person, $filter, $now)->paginate($perPage);
     }
 
     /**

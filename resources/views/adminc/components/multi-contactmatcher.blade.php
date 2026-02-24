@@ -164,7 +164,7 @@
                                 :class="{ 'opacity-50 cursor-not-allowed': (isCreatingPerson || isLeadDirty) }"
                                 :title="isLeadDirty ? 'Sla de lead eerst op om de nieuwste gegevens te gebruiken.' : ''"
                             >
-                                {{ isCreatingPerson ? 'Aanmaken...' : 'Contact aanmaken' }}
+                                {{ isCreatingPerson ? 'Aanmaken...' : 'Persoon aanmaken' }}
                             </button>
                         </div>
 
@@ -232,13 +232,24 @@
                 // Expose for external integrations (e.g., edit lead auto-suggest linking)
                 window.multiContactMatcher = this;
 
-                // Mark as dirty on any input/change inside the surrounding form
+                // Mark as dirty on any input/change inside the surrounding form.
+                // Delay listener registration to ignore browser autofill / initial
+                // render events (Edge fires these during mount).
                 this._formEl = this.$el?.closest?.('form');
 
                 if (this._formEl) {
-                    this._onFormDirty = () => { this.isLeadDirty = true; };
-                    this._formEl.addEventListener('input', this._onFormDirty, true);
-                    this._formEl.addEventListener('change', this._onFormDirty, true);
+                    this._onFormDirty = (e) => {
+                        // Ignore events originating from this component's own elements
+                        // (e.g. hidden person_ids inputs managed by Vue).
+                        if (this.$el.contains(e.target)) return;
+                        this.isLeadDirty = true;
+                    };
+                    setTimeout(() => {
+                        if (this._formEl) {
+                            this._formEl.addEventListener('input', this._onFormDirty, true);
+                            this._formEl.addEventListener('change', this._onFormDirty, true);
+                        }
+                    }, 500);
                 }
 
                 // Calculate match scores for existing persons
@@ -388,7 +399,7 @@
                      const hasEmail = this.lead.emails && this.lead.emails.length > 0;
 
                      if (!hasName && !hasEmail) {
-                         alert('Kan geen contact aanmaken: naam of e-mail is vereist.');
+                         alert('Kan geen persoon aanmaken: naam of e-mail is vereist.');
                          return;
                      }
 

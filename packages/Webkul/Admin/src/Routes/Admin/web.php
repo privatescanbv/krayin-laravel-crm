@@ -53,6 +53,11 @@ require 'configuration-routes.php';
 require 'rest-routes.php';
 
 /**
+ * Clinic guide routes.
+ */
+require 'clinic-guide-routes.php';
+
+/**
  * Orders routes.
  */
 require 'orders-routes.php';

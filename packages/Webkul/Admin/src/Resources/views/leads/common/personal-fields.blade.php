@@ -180,24 +180,28 @@
             name="is_active"
             value="1"
             :checked="(bool) old('is_active', $entity?->is_active ?? false)"
-            label="Patiëntportaal actief"
+            label="Actief"
             :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
         />
 
-        <!-- Portal password -->
+        <!-- Preferred language -->
+        @php
+            $currentLanguage = old('preferred_language', $entity?->preferred_language?->value);
+        @endphp
         <x-adminc::components.field
-            type="password"
-            name="password"
-            label="Patiëntportaal wachtwoord"
-            value=""
-            placeholder="Laat leeg om niet te wijzigen"
+            type="select"
+            name="preferred_language"
+            label="Voorkeurstaal"
+            value="{{ $currentLanguage }}"
+            :disabled="!$mayEditPersonFields"
             :readonly="!$mayEditPersonFields"
-        />
-
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Vul een nieuw wachtwoord in om het portaalaccount bij te werken. Laat leeg om het huidige wachtwoord te behouden.
-        </p>
+        >
+            <option value="">{{ __('Selecteer taal') }}</option>
+            <option value="nl" @selected($currentLanguage === 'nl')>Nederlands</option>
+            <option value="en" @selected($currentLanguage === 'en')>English</option>
+            <option value="de" @selected($currentLanguage === 'de')>Deutsch</option>
+        </x-adminc::components.field>
     @endif
 </div>
 

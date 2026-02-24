@@ -13,6 +13,8 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
 fi
 export TestSettingsHeadless=true
 dotnet build
+# Installeer Playwright browsers (for claude)
+pwsh bin/Debug/net8.0/playwright.ps1 install
 #dotnet test
 dotnet test --filter "FullyQualifiedName!~PartnerProduct"
 #dotnet test --filter "FullyQualifiedName~PartnerProduct"

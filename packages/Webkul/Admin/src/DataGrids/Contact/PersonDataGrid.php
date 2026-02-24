@@ -40,6 +40,7 @@ class PersonDataGrid extends DataGrid
                 'persons.emails',
                 'persons.phones',
                 'persons.date_of_birth',
+                'persons.is_active',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -92,6 +93,7 @@ class PersonDataGrid extends DataGrid
             NULLIF(persons.last_name, '')
         )"));
         $this->addFilter('organization', 'organizations.name');
+        $this->addFilter('is_active', 'persons.is_active');
 
         return $queryBuilder;
     }
@@ -189,6 +191,23 @@ class PersonDataGrid extends DataGrid
 
                 return $age . ' jaar';
             },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'is_active',
+            'label'      => 'Actief',
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => true,
+            'searchable' => false,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'Actief', 'value' => '1'],
+                ['label' => 'Inactief', 'value' => '0'],
+            ],
+            'closure'    => fn ($row) => $row->is_active
+                ? '<span class="icon-tick text-lg text-green-600" title="Actief"></span>'
+                : '<span class="icon-cross text-lg text-red-600" title="Inactief"></span>',
         ]);
 
         $this->addColumn([

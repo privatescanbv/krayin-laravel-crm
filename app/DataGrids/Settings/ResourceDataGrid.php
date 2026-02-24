@@ -152,13 +152,15 @@ class ResourceDataGrid extends DataGrid
             'url'    => fn ($row) => route('admin.settings.resources.show', $row->id),
         ]);
 
-        $this->addAction([
-            'index'  => 'manage-shifts',
-            'icon'   => 'icon-calendar',
-            'title'  => trans('admin::app.settings.resources.index.manage-shifts'),
-            'method' => 'GET',
-            'url'    => fn ($row) => route('admin.settings.resources.shifts.index', $row->id),
-        ]);
+        if (bouncer()->hasPermission('settings.resources.edit')) {
+            $this->addAction([
+                'index'  => 'manage-shifts',
+                'icon'   => 'icon-calendar',
+                'title'  => trans('admin::app.settings.resources.index.manage-shifts'),
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.settings.resources.shifts.index', $row->id),
+            ]);
+        }
 
         if (bouncer()->hasPermission('settings.resources.edit')) {
             $this->addAction([

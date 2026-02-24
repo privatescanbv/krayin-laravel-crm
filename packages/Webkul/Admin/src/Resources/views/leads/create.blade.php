@@ -194,7 +194,13 @@ $salutationToGenderMapping = [
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
                         @include('adminc.components.validation-errors')
+                        @if ($returnUrl = request()->input('return_url') ?? request()->query('return_url'))
+                            <input type="hidden" name="return_url" value="{{ $returnUrl }}"/>
+                        @endif
                         <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
+                        @if(! empty($linkEmailId))
+                            <input type="hidden" name="link_email_id" value="{{ $linkEmailId }}"/>
+                        @endif
                         <!-- Hidden selected person id to link to lead on save -->
                         <input type="hidden" name="person_ids[0]" :value="selectedPersonId || ''" />
 
@@ -465,7 +471,7 @@ $salutationToGenderMapping = [
 
                             <!-- Right: Suggestions as separate panel (outside white card) -->
                             <div class="w-1/3 max-md:w-full">
-                                <div class="sticky top-4">
+                                <div class="sticky top-36">
                                     <div class="rounded-lg border border-activity-note-border bg-activity-note-bg dark:border-blue-800 dark:bg-blue-900 p-4" v-if="suggestions.length > 0">
                                         <x-adminc::components.person-suggestions-panel :button-handler="'selectSuggestion'" :button-text="'Koppelen'" />
                                     </div>

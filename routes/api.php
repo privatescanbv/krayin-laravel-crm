@@ -5,8 +5,8 @@ use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\LeadFormController;
 use App\Http\Controllers\Api\PatientAppointmentController;
+use App\Http\Controllers\Api\PatientCounterController;
 use App\Http\Controllers\Api\PatientDocumentController;
-use App\Http\Controllers\Api\PatientMessageController;
 use App\Http\Controllers\Api\PatientNotificationController;
 use App\Http\Controllers\Api\PatientPreferenceController;
 use App\Http\Controllers\Api\PersonActivityController;
@@ -89,7 +89,10 @@ $registerAuthenticatedApiRoutes = function () {
             Route::get('messages', [PersonActivityController::class, 'index']);
             Route::post('messages', [PersonActivityController::class, 'store']);
             Route::put('messages/mark_as_read', [PersonActivityController::class, 'markAsRead']);
-            Route::get('activities/unread/count', [PatientMessageController::class, 'unreadCount']);
+
+            // Patient counters (menu badges): unread messages + future appointments
+            Route::get('counters', PatientCounterController::class)
+                ->name('api.patient.counters');
 
             // Patient appointments (derived from Orders), by keycloak user id
             Route::get('appointments', [PatientAppointmentController::class, 'index']);

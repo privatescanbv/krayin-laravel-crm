@@ -8,7 +8,7 @@
     {!! view_render_event('admin.activities.edit.form.before') !!}
 
     <x-admin::form
-        :action="route('admin.activities.update', $activity->id) . (request('return') ? ('?return=' . urlencode(request('return'))) : '')"
+        :action="route('admin.activities.update', $activity->id) . (request('return_url') ? ('?return_url=' . urlencode(request('return_url'))) : '')"
         method="PUT"
     >
         @include('adminc.components.validation-errors')
@@ -156,6 +156,7 @@
                             <x-admin::form.control-group.control
                                 type="select"
                                 name="user_id"
+                                id="user_id_select"
                                 :value="old('user_id', $activity->user_id)"
                                 class="flex-1"
                                 :disabled="$activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover"
@@ -170,6 +171,13 @@
                                     </option>
                                 @endforeach
                             </x-admin::form.control-group.control>
+
+                            {{-- Hidden fallback: disabled selects are not submitted by the browser.
+                                 This ensures the current user_id is always included in the form data.
+                                 The takeover JS updates this hidden input alongside the select. --}}
+                            @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover)
+                                <input type="hidden" name="user_id" id="user_id_hidden" value="{{ $activity->user_id }}" />
+                            @endif
 
                             <!-- Takeover Button -->
                             @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
@@ -242,6 +250,18 @@
 
                     <!-- is_done Checkbox removed in favor of Afronden button -->
 
+                    <!-- Publiceren in patiëntportaal (alleen voor file, meeting, patient_message) -->
+                    @if(in_array($activity->type, [ActivityType::FILE, ActivityType::PATIENT_MESSAGE]))
+                        <input type="hidden" name="publish_to_portal" value="0" />
+                        <x-adminc::components.field
+                            type="checkbox"
+                            name="publish_to_portal"
+                            label="Publiceren in patiëntportaal"
+                            value="1"
+                            :checked="old('publish_to_portal', $activity->publish_to_portal)"
+                        />
+                    @endif
+
                     {!! view_render_event('admin.activities.edit.form_controls.after') !!}
                 </div>
             </div>
@@ -250,7 +270,7 @@
 
     <!-- Hidden form used by Afronden button -->
     <form id="activity-complete-form"
-          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
+          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
           method="POST" class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT"/>
@@ -260,7 +280,7 @@
 
     <!-- Hidden form used by Heropenen button -->
     <form id="activity-reopen-form"
-          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
+          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
           method="POST" class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT"/>
@@ -301,10 +321,16 @@
                     const currentUserId = {{ auth()->guard('user')->id() ?? 'null' }};
 
                     // Update the user_id dropdown
-                    const userSelect = document.querySelector('select[name="user_id"]');
+                    const userSelect = document.getElementById('user_id_select');
                     if (userSelect) {
                         userSelect.value = currentUserId;
                         userSelect.disabled = false; // Enable the field since user now owns it
+                    }
+
+                    // Remove hidden fallback input (no longer needed once select is enabled)
+                    const hiddenInput = document.getElementById('user_id_hidden');
+                    if (hiddenInput) {
+                        hiddenInput.remove();
                     }
 
                     // Hide the takeover button

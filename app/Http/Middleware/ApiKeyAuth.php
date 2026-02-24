@@ -64,7 +64,7 @@ class ApiKeyAuth
                         $request->attributes->set('keycloak_token_sub', $keycloakUserId);
                     }
 
-                    Log::info('ApiKeyAuth: valid Keycloak bearer token accepted');
+                    //                    Log::debug('ApiKeyAuth: valid Keycloak bearer token accepted');
 
                     return $next($request);
                 } catch (Throwable $e) {

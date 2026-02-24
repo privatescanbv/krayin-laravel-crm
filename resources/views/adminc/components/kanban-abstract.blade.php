@@ -426,31 +426,11 @@
                                                         @{{ element.title || ('Order #' + element.id) }}
                                                     </span>
                                                 </div>
-
-                                                <span
-                                                    class="text-xs leading-normal text-gray-600 truncate"
-                                                    v-if="element.patient_name"
-                                                >
-                                                    @{{ element.patient_name }}
-                                                </span>
-                                                <span
-                                                    class="text-xs leading-normal text-gray-600 truncate"
-                                                    v-else-if="element.sales_lead && element.sales_lead.name"
-                                                >
-                                                    @{{ element.sales_lead.name }}
-                                                </span>
                                             </div>
 
                                             <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                                                 <span class="text-[9px] text-gray-500 whitespace-nowrap">
                                                     @{{ formatDate(element.created_at) }}
-                                                </span>
-
-                                                <span
-                                                    class="text-xs font-semibold text-gray-800"
-                                                    v-if="element.total_price !== null && element.total_price !== undefined"
-                                                >
-                                                    € @{{ Number(element.total_price).toFixed(2) }}
                                                 </span>
                                             </div>
                                         </div>

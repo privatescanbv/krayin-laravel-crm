@@ -13,7 +13,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Webkul\Admin\Http\Resources\ActivityResource;
-use Webkul\Contact\Models\Person;
 
 /**
  * Controller for managing person activities, specifically patient messages.

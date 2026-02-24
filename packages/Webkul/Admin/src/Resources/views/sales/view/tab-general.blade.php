@@ -51,13 +51,18 @@
             @include('adminc::persons.person', [
                 'lead' => $sales,
                 'person' => $sales->contactPerson,
-                'isContactPerson' => true
+                'isContactPerson' => true,
+                'returnUrl' => route('admin.sales-leads.view', $sales->id),
             ])
         @endif
 
         <!-- Person Blocks - One for each person -->
         @foreach ($sales->persons as $person)
-            @include('adminc::persons.person', ['lead' => $sales->lead, 'person' => $person])
+            @include('adminc::persons.person', [
+                'lead' => $sales->lead,
+                'person' => $person,
+                'returnUrl' => route('admin.sales-leads.view', $sales->id),
+            ])
         @endforeach
    </div>
 

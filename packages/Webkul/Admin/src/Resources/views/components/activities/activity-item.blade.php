@@ -56,7 +56,7 @@
                             ('{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace(
                                 'replaceId', activity.id)) :
                             ('{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id) + (
-                                returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : ''))">
+                                returnUrl ? ('?return_url=' + encodeURIComponent(returnUrl)) : ''))">
                         @{{ activity.title || 'geen' }}
 
                         <!-- Status chip hidden per requirement -->
@@ -79,7 +79,23 @@
                         }">
                         Vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
                     </div>
+                    <!-- Entity source label (shows where the activity originates from in the hierarchy) -->
+                    <span v-if="activity.entity_source"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+                          :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400':   activity.entity_source.type === 'person',
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400': activity.entity_source.type === 'lead',
+                              'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400':  activity.entity_source.type === 'sales',
+                              'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400':   activity.entity_source.type === 'order',
+                          }"
+                          :title="'Activiteit van: ' + activity.entity_source.label">
+                        @{{ activity.entity_source.label }}
+                    </span>
+
                     <div class="flex flex-row gap-1">
+                    <span v-if="activity.publish_to_portal"
+                          class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          title="Gepubliceerd in patiëntportaal">Portaal</span>
                     <span v-if="activity.is_done == 1 || activity.is_done === true"
                           class="icon-tick ml-1 text-base text-status-active-text" title="Afgerond"></span>
                         <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"
@@ -156,7 +172,7 @@
             <!-- Activity Description -->
             <p class="dark:text-white" v-if="activity.comment">
                 <span v-if="activity.type === 'email'">
-                    @{{ truncateHtml(activity.comment, 350) }}
+                    @{{ truncateHtmlASSummary(activity.comment, 350) }}
                 </span>
                 <span v-else v-safe-html="activity.comment"></span>
             </p>
@@ -245,7 +261,7 @@
                             <x-admin::dropdown.menu.item>
                                 <a class="flex items-center gap-2"
                                     :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity
-                                        .id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : '')">
+                                        .id) + (returnUrl ? ('?return_url=' + encodeURIComponent(returnUrl)) : '')">
                                     <span class="icon-edit text-2xl"></span>
 
                                     @lang('admin::app.components.activities.index.edit')

@@ -398,19 +398,30 @@ class SalesLeadController extends Controller
 
     public function activities($id)
     {
-        // Get activities related to this Sales (not paginated, same as lead activities)
-        $query = Activity::where('sales_lead_id', $id);
+        $salesLead = SalesLead::findOrFail($id);
 
-        // Optional filter for efficiency: is_done=0 (open) or 1 (done)
-        if (request()->has('is_done')) {
-            $isDone = (int) request('is_done') === 1 ? 1 : 0;
-            $query->where('is_done', $isDone);
+        // 1. Own sales activities — label: 'Sales'
+        $salesActivities = Activity::where('sales_lead_id', $id)->get();
+        $salesActivities->each(fn ($a) => $a->entity_source = [
+            'type'  => 'sales',
+            'label' => 'Sales',
+        ]);
+
+        // 2. Child order activities — label: 'Order: {title}'
+        $orderIds = $salesLead->orders()->pluck('orders.id');
+        $orderActivities = collect();
+        if ($orderIds->isNotEmpty()) {
+            $orderTitles = Order::whereIn('id', $orderIds)->pluck('title', 'id');
+            $orderActivities = Activity::whereIn('order_id', $orderIds)->get();
+            $orderActivities->each(fn ($a) => $a->entity_source = [
+                'type'  => 'order',
+                'label' => 'Order: '.($orderTitles[$a->order_id] ?? $a->order_id),
+            ]);
         }
 
-        $activities = $query->get();
+        $all = $salesActivities->merge($orderActivities)->unique('id')->values();
 
-        // Concat emails as activity-like objects through the shared, centralized mapping.
-        $merged = $this->concatEmailActivitiesFor('sales', (int) $id, $activities, $this->attachmentRepository);
+        $merged = $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository);
 
         return ActivityResource::collection($merged);
     }

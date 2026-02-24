@@ -24,6 +24,30 @@ class FormService
         readonly private LeadAndSalesService $leadAndSalesService
     ) {}
 
+    public function getOpenForms(int $patientId): int
+    {
+        $url = $this->buildApiUrl("/api/forms/$patientId/open/count");
+
+        Log::info('FormService: Fetching form open count', [
+            'patient'    => $patientId,
+            'url'        => $url,
+        ]);
+
+        $response = $this->makeRequest('get', $url, ['url' => $url]);
+        $result = $this->parseResponse($response, ['crm_person_id' => $patientId, 'url' => $url]);
+
+        if ($result['status'] !== 200) {
+            throw new Exception($result['json']['message'] ?? 'Could not get form count for patient.');
+        }
+        $openFormCount = $result['json']['open_forms_count'] ?? 0;
+
+        Log::info('FormService: Form open count retrieved successfully', [
+            'open_forms_count'  => $openFormCount,
+        ]);
+
+        return $openFormCount;
+    }
+
     /**
      * Get form status from forms API.
      *
@@ -142,8 +166,8 @@ class FormService
 
         $formData = [
             'lead_id'         => (string) $lead->id,
-            'firstname'       => $lead->first_name ?: 'Onbekend',
-            'lastname'        => $lead->last_name ?: 'Onbekend',
+            'firstname'       => $lead->first_name ?: '-',
+            'lastname'        => $lead->last_name ?: '-',
             'fields'          => $fields,
         ];
 

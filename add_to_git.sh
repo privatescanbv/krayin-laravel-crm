@@ -10,6 +10,7 @@ config
 tests
 routes
 packages
+lang
 "
 
 for dir in $DIRS; do

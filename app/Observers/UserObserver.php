@@ -367,12 +367,9 @@ class UserObserver
         try {
             $keycloakUserId = $user->keycloak_user_id;
             $result = $this->deleteKeycloakUserAction->execute($keycloakUserId);
-
+            // always remote the relation, even when user could not be found in Keycloak, to prevent orphaned keycloak_user_id references
+            $user->update(['keycloak_user_id' => null]);
             if ($result['success']) {
-                // Clear keycloak_user_id after successful deletion
-                // When user is reactivated, a new user will be created in Keycloak with a new ID
-                $user->update(['keycloak_user_id' => null]);
-
                 Log::info('User deleted from Keycloak via observer', [
                     'user_id'     => $user->id,
                     'email'       => $user->email,
@@ -385,7 +382,7 @@ class UserObserver
                     'message' => $result['message'] ?? 'Unknown error',
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exception while deleting user from Keycloak via observer', [
                 'user_id' => $user->id,
                 'email'   => $user->email,

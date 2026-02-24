@@ -48,7 +48,14 @@ class AddressRepository extends Repository
             return null;
         }
 
-        // Require minimum fields for a valid address payload
+        // Check if entity already has an address — partial updates are allowed
+        if ($entity->address_id && $existing = $this->find($entity->address_id)) {
+            $this->update($filled, $existing->id);
+
+            return $existing->fresh();
+        }
+
+        // For new addresses, require minimum fields for a valid payload
         $houseNumber = isset($addressData['house_number']) ? trim((string) $addressData['house_number']) : '';
         $postalCode = isset($addressData['postal_code']) ? trim((string) $addressData['postal_code']) : '';
         if ($houseNumber === '' || $postalCode === '') {
@@ -58,14 +65,6 @@ class AddressRepository extends Repository
         $validator = Validator::make($addressData, Address::$rules);
         if ($validator->fails()) {
             throw new InvalidArgumentException('Address validation failed: '.$validator->errors()->first());
-        }
-
-        // Check if entity already has an address
-        if ($entity->address_id && $existing = $this->find($entity->address_id)) {
-            // Update existing address
-            $this->update($filled, $existing->id);
-
-            return $existing->fresh();
         }
 
         // Create new address and link to entity

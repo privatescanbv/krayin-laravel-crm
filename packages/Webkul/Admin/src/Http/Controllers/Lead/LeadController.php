@@ -7,6 +7,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineType;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use BackedEnum;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use App\Models\Anamnesis;
@@ -57,7 +58,7 @@ use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
 {
-    use NormalizesContactFields, HasAdvancedSearch;
+    use NormalizesContactFields, HasAdvancedSearch, HandlesReturnUrl;
 
     /**
      * Const variable for supported types.
@@ -428,6 +429,7 @@ class LeadController extends Controller
             'prefilledLeadPerson' => $prefilledLeadPerson,
             'userDefaults' => $userDefaults,
             'currentUserId' => $user->id,
+            'linkEmailId' => request('email_id'),
         ]);
     }
 
@@ -463,6 +465,14 @@ class LeadController extends Controller
                 }
 
                 [$lead] = $this->storeLead($request);
+
+                // Link the originating email to this lead if email_id was passed
+                if ($linkEmailId = $request->input('link_email_id')) {
+                    DB::table('emails')
+                        ->where('id', (int) $linkEmailId)
+                        ->whereNull('lead_id')
+                        ->update(['lead_id' => $lead->id]);
+                }
 
                 // Check if we should redirect to sync page after creation
                 if ($this->shouldRedirectToSync($lead)) {
@@ -1766,14 +1776,22 @@ class LeadController extends Controller
      */
     private function respondSuccess(string $message, string $redirectRoute, array $redirectParams = []): RedirectResponse|JsonResponse
     {
+        $returnUrl = $this->resolveReturnUrl();
+        $defaultRedirect = route($redirectRoute, $redirectParams);
+        $redirect = $returnUrl ?: $defaultRedirect;
+
         if (request()->ajax()) {
             return response()->json([
                 'message' => $message,
-                'redirect' => route($redirectRoute, $redirectParams),
+                'redirect' => $redirect,
             ]);
         }
 
         session()->flash('success', $message);
+
+        if ($returnUrl) {
+            return redirect($returnUrl);
+        }
 
         return redirect()->route($redirectRoute, $redirectParams);
     }

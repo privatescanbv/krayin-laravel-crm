@@ -7,10 +7,13 @@ use App\Enums\ActivityType;
 use App\Enums\WebhookType;
 use App\Models\CallStatus;
 use App\Models\Department;
+use App\Models\Order;
+use App\Models\SalesLead;
 use App\Services\patientmessages\PatientMessageService;
 use App\Services\WebhookService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -19,9 +22,12 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
@@ -34,6 +40,7 @@ use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
 {
+    use HandlesReturnUrl;
     /**
      * Create a new controller instance.
      *
@@ -87,6 +94,29 @@ class ActivityController extends Controller
 
         return response()->json([
             'data' => ActivityResource::collection($activities),
+        ]);
+    }
+
+    /**
+     * Return persons linked to a given entity (lead, sales_lead, or order).
+     * Used by the file-upload dialog to let users pick which person to share with.
+     */
+    public function personsForEntity(Request $request): JsonResponse
+    {
+        $entityType = $request->query('entity_type');
+        $entityId   = (int) $request->query('entity_id');
+
+        $nameSelect = array_map(fn ($f) => "persons.{$f}", array_merge(['id'], Person::NAME_FIELDS));
+
+        $persons = match ($entityType) {
+            'lead'       => Lead::findOrFail($entityId)->persons()->select($nameSelect)->get(),
+            'sales_lead' => SalesLead::findOrFail($entityId)->persons()->select($nameSelect)->get(),
+            'order'      => optional(Order::findOrFail($entityId)->salesLead)?->persons()->select($nameSelect)->get() ?? collect(),
+            default      => collect(),
+        };
+
+        return response()->json([
+            'data' => $persons->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
         ]);
     }
 
@@ -169,12 +199,20 @@ class ActivityController extends Controller
             unset($data['person_id']);
         }
 
+        // Extract person_ids before passing data to repository (not a column on activities)
+        $personIds = array_filter(array_map('intval', (array) ($data['person_ids'] ?? [])));
+        unset($data['person_ids']);
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
+
+        // VeeValidate sends boolean false as the string "false" via FormData,
+        // which PHP casts to true. Normalize using filter_var to get a proper boolean.
+        $data['publish_to_portal'] = filter_var($data['publish_to_portal'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         // Ensure group_id is set and valid for lead activities
         $result = $this->ensureGroupIdForLeadActivity($data);
@@ -183,8 +221,13 @@ class ActivityController extends Controller
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
-            'is_done' => request('type') == 'note' ? 1 : 0,
+            'is_done' => request('type') == ActivityType::NOTE->value ? 1 : 0,
         ]));
+
+        // Link selected persons (e.g. from file upload portal selector)
+        if (!empty($personIds)) {
+            $activity->persons()->syncWithoutDetaching($personIds);
+        }
 
         $didChange = $this->updateStatus($activity);
         if ($didChange) {
@@ -300,6 +343,12 @@ class ActivityController extends Controller
             }
         }
 
+        // VeeValidate sends boolean false as the string "false" via FormData,
+        // which PHP casts to true. Normalize using filter_var to get a proper boolean.
+        if (array_key_exists('publish_to_portal', $data)) {
+            $data['publish_to_portal'] = filter_var($data['publish_to_portal'], FILTER_VALIDATE_BOOLEAN);
+        }
+
         $requestedStatus = isset($data['status']) ? (string) $data['status'] : null;
 
         $activity = $this->activityRepository->update($data, $id);
@@ -409,9 +458,9 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
-        // If a safe return URL is provided, prefer redirecting back to it
-        $returnUrl = request()->get('return');
-        if (is_string($returnUrl) && str_starts_with($returnUrl, '/')) {
+        // If a valid return_url is provided, prefer redirecting back to it
+        $returnUrl = $this->resolveReturnUrl();
+        if ($returnUrl) {
             return redirect($returnUrl);
         }
 
@@ -532,10 +581,17 @@ class ActivityController extends Controller
                     ],
                 ]);
             }
-            if(!is_null($leadId)) {
-                return redirect()->route('admin.leads.view', $leadId)->with('Activiteit is verwijderd.');
+            session()->flash('success', 'Activiteit is verwijderd.');
+
+            $returnUrl = $this->resolveReturnUrl();
+            if ($returnUrl) {
+                return redirect($returnUrl);
+            }
+
+            if (!is_null($leadId)) {
+                return redirect()->route('admin.leads.view', $leadId);
             } else {
-                return redirect()->route('admin.contacts.persons.view', $firstPersonId)->with('Activiteit is verwijderd.');
+                return redirect()->route('admin.contacts.persons.view', $firstPersonId);
             }
         } catch (Exception $exception) {
             logger()->error('Could not delete activity: '.$exception->getMessage());

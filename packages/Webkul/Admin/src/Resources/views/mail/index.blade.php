@@ -678,8 +678,31 @@
                     };
                 },
 
+                created() {
+                    // Default filter: show unread/unlinked emails on first visit.
+                    // Skipped when URL already has filters or when localStorage has stored state
+                    // (i.e. user previously changed/cleared filters).
+                    const url = new URL(window.location.href);
+                    const hasUrlFilters = url.search.includes('filters%5B') || url.search.includes('filters[');
+
+                    if (!hasUrlFilters) {
+                        const src = @json(route('admin.mail.index', request('route')));
+
+                        try {
+                            const stored = JSON.parse(localStorage.getItem('datagrids') || '[]');
+
+                            if (!stored.some(dg => dg.src === src)) {
+                                url.searchParams.append('filters[ongelezen_ongekoppeld][]', '1');
+                                window.history.replaceState({}, '', url.toString());
+                            }
+                        } catch (e) {
+                            url.searchParams.append('filters[ongelezen_ongekoppeld][]', '1');
+                            window.history.replaceState({}, '', url.toString());
+                        }
+                    }
+                },
+
                 mounted() {
-                    console.log('mount ');
                     const params = new URLSearchParams(window.location.search);
 
                     if (params.get('openModal')) {

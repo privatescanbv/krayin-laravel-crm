@@ -645,6 +645,12 @@ Breadcrumbs::for('dashboard.account.edit', function (BreadcrumbTrail $trail, $us
     $trail->push(trans('admin::app.account.edit.title'), route('admin.user.account.edit', $user->id));
 });
 
+// Dashboard > Dagplanning
+Breadcrumbs::for('clinic-guide', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Dagplanning', route('admin.clinic-guide.index'));
+});
+
 // Dashboard > Sales Leads
 Breadcrumbs::for('sales-leads', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

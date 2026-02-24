@@ -263,11 +263,15 @@ class OrderController extends SimpleEntityController
         $items = $payload['items'] ?? [];
         unset($payload['items']);
 
-        // Determine department for initial order stage
+        // Determine department for initial order stage and default user_id from sales lead
         $departmentName = null;
         if (! empty($payload['sales_lead_id'])) {
             $sl = SalesLead::with('lead.department')->find($payload['sales_lead_id']);
             $departmentName = $sl?->lead?->department?->name;
+
+            if (empty($payload['user_id'])) {
+                $payload['user_id'] = $sl?->user_id;
+            }
         }
         $payload['pipeline_stage_id'] = Order::firstOrderStageId($departmentName);
         $order = $this->orderRepository->create($payload);
@@ -944,6 +948,7 @@ class OrderController extends SimpleEntityController
             'title'                => ['required', 'string', 'max:255'],
             'total_price'          => ['nullable', 'numeric', 'min:0'],
             'sales_lead_id'        => ['required', 'integer', 'exists:salesleads,id'],
+            'user_id'              => ['nullable', 'integer', 'exists:users,id'],
             'combine_order'        => ['nullable', 'boolean'],
             'first_examination_at' => ['nullable', 'date'],
             'items'                => ['nullable', 'array'],

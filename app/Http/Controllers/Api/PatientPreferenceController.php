@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\PersonPreferenceKey;
+use App\Enums\PreferredLanguage;
 use App\Http\Controllers\Controller;
 use App\Models\PersonPreference;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class PatientPreferenceController extends Controller
 {
@@ -24,23 +27,22 @@ class PatientPreferenceController extends Controller
      * @responseField preferences.email_notifications_enabled object Email notification preference.
      * @responseField preferences.email_notifications_enabled.value boolean Whether email notifications are enabled.
      * @responseField preferences.email_notifications_enabled.is_system_managed boolean Whether this preference is managed by the system.
+     * @responseField preferences.language ['nl', 'en', 'de'] Preferred language of the patient
      */
     public function index(string $keycloakUserId): JsonResponse
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
 
         if (is_null($person)) {
-            if (! is_null($user)) {
-                return response()->json([
-                    'preferences' => $this->getDefaultPreferences(),
-                ]);
-            }
-
+            Log::warning("Patient with Keycloak ID {$keycloakUserId} not found when fetching preferences.");
             abort(404);
         }
 
         return response()->json([
-            'preferences' => PersonPreference::getAllForPerson($person->id),
+            'preferences' => array_merge(
+                PersonPreference::getAllForPerson($person->id),
+                ['language' => $person->preferred_language?->value]
+            ),
         ]);
     }
 
@@ -53,6 +55,7 @@ class PatientPreferenceController extends Controller
      *
      * @bodyParam preferences object required Key-value map of preferences to update. Example: {"email_notifications_enabled": true}
      * @bodyParam preferences.email_notifications_enabled boolean Enable or disable email notifications. Example: true
+     * @bodyParam preferences.language ['nl', 'en', 'de'] Preferred language of the patient
      *
      * @response 200 scenario="Success" {"preferences": {"email_notifications_enabled": {"value": true, "is_system_managed": false}}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
@@ -69,11 +72,19 @@ class PatientPreferenceController extends Controller
         $validated = $request->validate([
             'preferences'                                                          => 'required|array',
             'preferences.'.PersonPreferenceKey::EMAIL_NOTIFICATIONS_ENABLED->value => 'boolean',
+            'preferences.language'                                                 => ['nullable', Rule::enum(PreferredLanguage::class)],
         ]);
 
         $preferences = $validated['preferences'];
 
         foreach ($preferences as $key => $value) {
+            if ($key === 'language') {
+                $person->preferred_language = $value;
+                $person->save();
+
+                continue;
+            }
+
             $enumKey = PersonPreferenceKey::tryFrom($key);
 
             if ($enumKey === null) {
@@ -88,7 +99,10 @@ class PatientPreferenceController extends Controller
         }
 
         return response()->json([
-            'preferences' => PersonPreference::getAllForPerson($person->id),
+            'preferences' => array_merge(
+                PersonPreference::getAllForPerson($person->id),
+                ['language' => $person->preferred_language?->value]
+            ),
         ]);
     }
 

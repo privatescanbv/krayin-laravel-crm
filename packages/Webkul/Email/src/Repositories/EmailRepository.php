@@ -33,9 +33,9 @@ class EmailRepository extends Repository
      *
      * @return \Webkul\Email\Contracts\Email
      */
-    public function create(array $data)
+    public function create(array $data): Email
     {
-        $uniqueId = time().'@'.config('mail.domain');
+        $uniqueId = time().'.'.bin2hex(random_bytes(8)).'@'.config('mail.domain');
 
         $referenceIds = [];
 
@@ -58,23 +58,7 @@ class EmailRepository extends Repository
             $fromAddress = $data['from'] ?? config('mail.from.address');
             $fromName = config('mail.from.name', 'PrivateScan');
             $normalizedFrom = EmailModel::normalizeFromField($fromAddress, $fromName);
-        }
-
-        // Prioritize entity linking: lead_id > sales_lead_id > person_id
-        // When lead_id or sales_lead_id is set, also keep person_id so email appears in both places
-        if (!empty($data['lead_id'])) {
-            // Lead has highest priority, remove sales_lead_id but keep person_id if set
-            // This allows the email to appear both in lead view and person view
-            unset($data['sales_lead_id']);
-            // person_id is kept if it was provided
-        } elseif (!empty($data['sales_lead_id'])) {
-            // Sales lead has second priority, but also keep person_id if set
-            // This allows the email to appear both in sales lead view and person view
-            // person_id is kept if it was provided
-        } elseif (empty($data['person_id'])) {
-            // No entity IDs provided - this is allowed for some email types
-            // (e.g., system emails that don't need to be linked to a specific entity)
-        }
+        } // (e.g., system emails that don't need to be linked to a specific entity)
 
         if(!is_null($parent)) {
             //use releation of parent
@@ -82,7 +66,7 @@ class EmailRepository extends Repository
                 $data['lead_id'] = $parent->lead_id;
             }
             if($parent->sales_lead_id) {
-                $data['sales_lead_id)'] = $parent->sales_lead_id;
+                $data['sales_lead_id'] = $parent->sales_lead_id;
             }
             if($parent->person_id) {
                 $data['person_id'] = $parent->person_id;

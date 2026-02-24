@@ -484,6 +484,12 @@
 
             createLeadFromEmail() {
                 const params = new URLSearchParams();
+                // After creating a lead, return to this mail view.
+                // Must be an absolute URL because HandlesReturnUrl validates with FILTER_VALIDATE_URL.
+                params.append('return_url', window.location.href);
+                if (this.email?.id) {
+                    params.append('email_id', this.email.id);
+                }
                 if (this.senderEmail) {
                     // Extract email from string (not JSON array)
                     params.append('email', this.senderEmail);

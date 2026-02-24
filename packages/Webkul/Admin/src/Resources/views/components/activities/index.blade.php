@@ -136,7 +136,7 @@
                     </div>
 
                     <!-- Show Default Activities -->
-                    <template v-if="['action_needed', 'inbox', 'planned', 'all', 'system'].includes(selectedType)">
+                    <template v-if="['action_needed', 'inbox', 'planned', 'file', 'all', 'system'].includes(selectedType)">
                         <div class="animate-[on-fade_0.5s_ease-in-out]">
                             {!! view_render_event('admin.components.activities.content.activity.list.before') !!}
 
@@ -221,6 +221,10 @@
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
                         },
                         {
+                            name: 'file',
+                            label: "Bestanden",
+                        },
+                        {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
                         },
@@ -295,6 +299,11 @@
                             title: "Inbox is leeg",
                             description: "Er zijn geen nieuwe berichten.",
                         },
+                        file: {
+                            image: "{{ vite()->asset('images/empty-placeholders/activities.svg') }}",
+                            title: "Bestanden",
+                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.system.description') }}",
+                        },
                         planned: {
                             image: "{{ vite()->asset('images/empty-placeholders/plans.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.planned.title') }}",
@@ -309,7 +318,7 @@
 
                     timezone: "{{ config('app.timezone') }}",
 
-                    returnUrl: (typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : ''),
+                    returnUrl: (typeof window !== 'undefined' ? window.location.href : ''),
                 }
             },
 
@@ -359,7 +368,9 @@
                                 return aTime - bTime;
                             });
                     }
-
+                    if (this.selectedType == 'file') {
+                        return this.activities.filter(activity => activity.type == 'file');
+                    }
                     if (this.selectedType == 'system') {
                         return this.activities.filter(activity => activity.type == 'system');
                     }
@@ -492,12 +503,29 @@
                     return labels[status] || status;
                 },
 
-                truncateHtml(html, maxLength = 150) {
+                // truncateHtml(html, maxLength = 150) {
+                //     if (!html) return '';
+                //
+                //     const tempDiv = document.createElement('div');
+                //     tempDiv.innerHTML = html;
+                //     const textContent = tempDiv.textContent || tempDiv.innerText || '';
+                //
+                //     if (textContent.length <= maxLength) {
+                //         return textContent;
+                //     }
+                //
+                //     return textContent.substring(0, maxLength) + '...';
+                // },
+
+                truncateHtmlASSummary(html, maxLength = 150) {
                     if (!html) return '';
 
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
-                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+                    tempDiv.querySelectorAll('style, script, link').forEach(el => el.remove());
+
+                    const textContent = (tempDiv.textContent || tempDiv.innerText || '').replace(/\s+/g, ' ').trim();
 
                     if (textContent.length <= maxLength) {
                         return textContent;

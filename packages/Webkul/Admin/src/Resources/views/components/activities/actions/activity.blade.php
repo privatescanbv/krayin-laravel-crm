@@ -53,29 +53,24 @@
                         <x-slot:header>
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.before') !!}
 
-                            <x-admin::dropdown>
-                                <x-slot:toggle>
-                                    <h3 class="flex cursor-pointer items-center gap-1 text-base font-semibold dark:text-white">
-                                        @lang('admin::app.components.activities.actions.activity.title') - @{{  selectedType.label }}
-
-                                        <span class="icon-down-arrow text-2xl"></span>
-                                    </h3>
-                                    </x-slot>
-
-                                    <x-slot:menu>
-                                        {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.before') !!}
-
-                                        <x-admin::dropdown.menu.item
-                                            ::class="{ 'bg-neutral-bg dark:bg-gray-950': selectedType.value === type.value }"
-                                            v-for="type in availableTypes"
-                                            @click="selectedType = type"
-                                        >
-                                            @{{ type.label }}
-                                        </x-admin::dropdown.menu.item>
-
-                                        {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.after') !!}
-                                        </x-slot>
-                            </x-admin::dropdown>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base font-semibold dark:text-white whitespace-nowrap">
+                                    @lang('admin::app.components.activities.actions.activity.title')
+                                </h3>
+                                <select
+                                    class="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brandColor"
+                                    v-model="selectedTypeValue"
+                                    @change="onTypeChange"
+                                >
+                                    <option
+                                        v-for="type in availableTypes"
+                                        :key="type.value"
+                                        :value="type.value"
+                                    >
+                                        @{{ type.label }}
+                                    </option>
+                                </select>
+                            </div>
 
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.after') !!}
                             </x-slot>
@@ -87,7 +82,7 @@
                                 <x-admin::form.control-group.control
                                     type="hidden"
                                     name="type"
-                                    v-model="selectedType.value"
+                                    v-model="selectedTypeValue"
                                 />
 
                                 <!-- Id -->
@@ -168,6 +163,17 @@
                                     />
                                 </div>
 
+                                <!-- Publiceren in patiëntportaal (alleen voor meeting) -->
+                                <div v-show="selectedTypeValue === 'meeting'">
+                                    <input type="hidden" name="publish_to_portal" value="0" />
+                                    <x-adminc::components.field
+                                        type="checkbox"
+                                        name="publish_to_portal"
+                                        label="Publiceren in patiëntportaal"
+                                        value="1"
+                                    />
+                                </div>
+
                                 {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
                                 </x-slot>
 
@@ -213,19 +219,20 @@
             },
 
             data: function () {
+                const types = [
+                    @foreach($allowedTypes as $type)
+                    {
+                        label: "{{ $type->label() }}",
+                        value: '{{ $type->value }}'
+                    },
+                    @endforeach
+                ];
+
                 return {
                     isStoring: false,
-
-                    availableTypes: [
-                        @foreach($allowedTypes as $type)
-                        {
-                            label: "{{ $type->label() }}",
-                            value: '{{ $type->value }}'
-                        },
-                        @endforeach
-                    ],
-
-                    selectedGroupId: null
+                    availableTypes: types,
+                    selectedTypeValue: types.length > 0 ? types[0].value : null,
+                    selectedGroupId: null,
                 }
             },
 
@@ -234,14 +241,15 @@
                 if (this.entity && this.entityControlName === 'lead_id' && this.entity.department_id) {
                     this.setDefaultGroupFromDepartment();
                 }
-                if (this.availableTypes.length > 0) {
-                    this.selectedType = this.availableTypes[0];
-                }
             },
 
             methods: {
-                openModal(type) {
+                openModal() {
                     this.$refs.activityModal.open();
+                },
+
+                onTypeChange() {
+                    // Reactivity handled by v-model on selectedTypeValue
                 },
 
                 setDefaultGroupFromDepartment() {

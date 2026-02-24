@@ -374,69 +374,79 @@ class Email extends Model implements EmailContract
         ];
     }
     /**
-     * Scope: all emails (parents + replies) for a given lead.
+     * Scope: latest email per thread matching the given condition.
+     *
+     * @param  \Closure(Builder, string): void  $condition  Receives ($query, $tablePrefix) to add where clauses
      */
+    public function scopeLatestPerThread(Builder $query, \Closure $condition): Builder
+    {
+        return $query->whereIn('id', function ($sub) use ($condition) {
+            $sub->selectRaw('MAX(thread.id)')
+                ->from('emails as thread')
+                ->where(function ($w) use ($condition) {
+                    $w->where(fn ($q) => $condition($q, 'thread'))
+                        ->orWhereIn('thread.parent_id', function ($p) use ($condition) {
+                            $p->select('id')->from('emails')->where(fn ($q) => $condition($q, 'emails'));
+                        });
+                })
+                ->groupByRaw('COALESCE(thread.parent_id, thread.id)');
+        });
+    }
+
+    /**
+     * Scope: all emails in thread matching the given condition (parents + children).
+     *
+     * @param  \Closure(Builder, string): void  $condition
+     */
+    public function scopeAllInThread(Builder $query, \Closure $condition): Builder
+    {
+        return $query->where(function ($q) use ($condition) {
+            $q->where(fn ($w) => $condition($w, 'emails'))
+                ->orWhereIn('parent_id', function ($p) use ($condition) {
+                    $p->select('id')->from('emails')->where(fn ($w) => $condition($w, 'emails'));
+                });
+        });
+    }
+
     public function scopeForLeadThread(Builder $query, int $leadId): Builder
     {
-        // Subquery: parents that belong to the lead
-        $parentEmails = static::query()
-            ->select('id')
-            ->where('lead_id', $leadId);
-
-        return $query
-            ->whereIn('parent_id', $parentEmails)
-            ->orWhere('lead_id', $leadId);
+        return $query->latestPerThread(fn ($q, $t) => $q->where("{$t}.lead_id", $leadId));
     }
 
     public function scopeForClinicThread(Builder $query, int $clinicId): Builder
     {
-        // Subquery: parents that belong to the lead
-        $parentEmails = static::query()
-            ->select('id')
-            ->where('clinic_id', $clinicId);
-
-        return $query
-            ->whereIn('parent_id', $parentEmails)
-            ->orWhere('clinic_id', $clinicId);
+        return $query->latestPerThread(fn ($q, $t) => $q->where("{$t}.clinic_id", $clinicId));
     }
 
-    /**
-     * Scope: all emails (parents + replies) for a given sales lead.
-     */
     public function scopeForSalesLeadThread(Builder $query, int $salesLeadId): Builder
     {
-        $parentEmails = static::query()
-            ->select('id')
-            ->where('sales_lead_id', $salesLeadId);
-
-        return $query
-            ->whereIn('parent_id', $parentEmails)
-            ->orWhere('sales_lead_id', $salesLeadId);
+        return $query->latestPerThread(fn ($q, $t) => $q->where("{$t}.sales_lead_id", $salesLeadId));
     }
 
-    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds): Builder
+    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds, array $salesLeadIds = []): Builder
     {
-        // Subquery: parents that belong to the lead
-        $parentEmails = static::query()
-            ->select('id')
-            ->where('person_id', $personId)
-            ->orWhereIn('lead_id', $leadIds);
-
-        return $query
-            ->whereIn('parent_id', $parentEmails)
-            ->orWhere('person_id', $personId)
-            ->orWhereIn('lead_id', $leadIds);
+        return $query->latestPerThread(function ($q, $t) use ($personId, $leadIds, $salesLeadIds) {
+            $q->where("{$t}.person_id", $personId);
+            if (! empty($leadIds)) {
+                $q->orWhereIn("{$t}.lead_id", $leadIds);
+            }
+            if (! empty($salesLeadIds)) {
+                $q->orWhereIn("{$t}.sales_lead_id", $salesLeadIds);
+            }
+        });
     }
 
     public function scopeForLeadThreadAndUnread(Builder $query, int $leadId): Builder
     {
-        return self::forLeadThread($leadId)
+        return $query
+            ->allInThread(fn ($q, $t) => $q->where("{$t}.lead_id", $leadId))
             ->where('is_read', 0);
     }
 
     public function scopeForSalesLeadThreadAndUnread(Builder $query, int $salesLeadId): Builder
     {
-        return self::forSalesLeadThread($salesLeadId)
+        return $query
+            ->allInThread(fn ($q, $t) => $q->where("{$t}.sales_lead_id", $salesLeadId))
             ->where('is_read', 0);
     }
 

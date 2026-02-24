@@ -167,7 +167,7 @@ class LeadController extends Controller
         $invalidPhones = [];
 
         if (! isset($normalized['first_name']) || trim((string) $normalized['first_name']) === '') {
-            $normalized['first_name'] = 'Onbekend';
+            $normalized['first_name'] = '-';
         }
         if ($allowInvalidPhone) {
             $normalized = $request->all();
@@ -207,6 +207,12 @@ class LeadController extends Controller
             ], 422);
         }
 
+        // We need pipeline changes to trigger n8n. Lead should never be left on this pipeline stage.
+        $request->merge([
+            'lead_pipeline_stage_id' => PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value,
+            'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value,
+        ]);
+
         // Create lead with person_id
         $leadData = $request->all();
 
@@ -215,10 +221,6 @@ class LeadController extends Controller
             request()->request->add([$key => $value]);
         }
         request()->request->add(['entity_type' => 'leads']);
-
-        // We need pipeline changes to trigger n8n. Lead should never be left on this pipeline stage.
-        $request['lead_pipeline_stage_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value;
-        $request['lead_pipeline_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
 
         try {
             [$lead] = $this->leadService->storeLead($request);

@@ -125,9 +125,6 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient--id--messages">
                                 <a href="#endpoints-POSTapi-patient--id--messages">Store a new patient message or reply.</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-patient--id--activities-unread-count">
-                                <a href="#endpoints-GETapi-patient--id--activities-unread-count">Get the count of unread messages for a specific person.</a>
-                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-keycloak" class="tocify-header">
@@ -156,7 +153,17 @@
                 </li>
                                     <ul id="tocify-subheader-patient-appointments" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="patient-appointments-GETapi-patient--id--appointments">
-                                <a href="#patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</a>
+                                <a href="#patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-patient-counters" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="patient-counters">
+                    <a href="#patient-counters">Patient counters</a>
+                </li>
+                                    <ul id="tocify-subheader-patient-counters" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="patient-counters-GETapi-patient--id--counters">
+                                <a href="#patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -166,7 +173,7 @@
                 </li>
                                     <ul id="tocify-subheader-patient-documents" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents">
-                                <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (derived from Orders -> Activities (type=file) -> activity_files).</a>
+                                <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents--documentId--download">
                                 <a href="#patient-documents-GETapi-patient--id--documents--documentId--download">Download a patient document (activity file).</a>
@@ -221,7 +228,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: February 11, 2026</li>
+        <li>Last updated: February 24, 2026</li>
     </ul>
 </div>
 
@@ -272,7 +279,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-02-11\",
+    \"birthdate\": \"2026-02-24\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -303,7 +310,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-02-11",
+    "birthdate": "2026-02-24",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -511,10 +518,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-02-11"
+               value="2026-02-24"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-11</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-24</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -2844,8 +2851,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-11 12:07:05\",
-    \"schedule_to\": \"2026-02-11 12:07:05\"
+    \"schedule_from\": \"2026-02-24 11:08:24\",
+    \"schedule_to\": \"2026-02-24 11:08:24\"
 }"
 </code></pre></div>
 
@@ -2866,8 +2873,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-11 12:07:05",
-    "schedule_to": "2026-02-11 12:07:05"
+    "schedule_from": "2026-02-24 11:08:24",
+    "schedule_to": "2026-02-24 11:08:24"
 };
 
 fetch(url, {
@@ -3046,10 +3053,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-11 12:07:05"
+               value="2026-02-24 11:08:24"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-11 12:07:05</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 11:08:24</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3058,10 +3065,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-11 12:07:05"
+               value="2026-02-24 11:08:24"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-11 12:07:05</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 11:08:24</code></p>
         </div>
         </form>
 
@@ -3557,162 +3564,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
-                    <h2 id="endpoints-GETapi-patient--id--activities-unread-count">Get the count of unread messages for a specific person.</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-
-
-<span id="example-requests-GETapi-patient--id--activities-unread-count">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/patient/architecto/activities/unread/count" \
-    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/patient/architecto/activities/unread/count"
-);
-
-const headers = {
-    "X-API-KEY": "{YOUR_AUTH_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-patient--id--activities-unread-count">
-            <blockquote>
-            <p>Example response (401):</p>
-        </blockquote>
-                <details class="annotation">
-            <summary style="cursor: pointer;">
-                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
-            </summary>
-            <pre><code class="language-http">cache-control: no-cache, private
-content-type: application/json
-x-ratelimit-limit: 60
-x-ratelimit-remaining: 55
- </code></pre></details>         <pre>
-
-<code class="language-json" style="max-height: 300px;">{
-    &quot;error&quot;: &quot;Invalid API key&quot;,
-    &quot;message&quot;: &quot;The provided API key is not valid&quot;
-}</code>
- </pre>
-    </span>
-<span id="execution-results-GETapi-patient--id--activities-unread-count" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-patient--id--activities-unread-count"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-patient--id--activities-unread-count"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-patient--id--activities-unread-count" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-patient--id--activities-unread-count">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-patient--id--activities-unread-count" data-method="GET"
-      data-path="api/patient/{id}/activities/unread/count"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-patient--id--activities-unread-count', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-patient--id--activities-unread-count"
-                    onclick="tryItOut('GETapi-patient--id--activities-unread-count');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-patient--id--activities-unread-count"
-                    onclick="cancelTryOut('GETapi-patient--id--activities-unread-count');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-patient--id--activities-unread-count"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/patient/{id}/activities/unread/count</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="{YOUR_AUTH_KEY}"
-               data-component="header">
-    <br>
-<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
-                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="id"                data-endpoint="GETapi-patient--id--activities-unread-count"
-               value="architecto"
-               data-component="url">
-    <br>
-<p>The ID of the patient. Example: <code>architecto</code></p>
-            </div>
-                    </form>
-
                 <h1 id="keycloak">Keycloak</h1>
 
 
@@ -4112,7 +3963,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 
 
-                                <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
+                                <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -4171,12 +4022,7 @@ fetch(url, {
             &quot;patient_id&quot;: &quot;1&quot;,
             &quot;practitioner_id&quot;: null,
             &quot;clinic_id&quot;: null,
-            &quot;clinic_label&quot;: null,
-            &quot;clinic&quot;: {
-                &quot;id&quot;: 1,
-                &quot;name&quot;: &quot;Example Clinic&quot;,
-                &quot;address&quot;: &quot;Example street 1\n1234 AB Amsterdam&quot;
-            },
+            &quot;clinic_ref&quot;: null,
             &quot;start_at&quot;: &quot;2026-01-27T10:00:00+01:00&quot;,
             &quot;end_at&quot;: null,
             &quot;timezone&quot;: &quot;Europe/Amsterdam&quot;,
@@ -4352,17 +4198,191 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
-                <h1 id="patient-documents">Patient documents</h1>
+                <h1 id="patient-counters">Patient counters</h1>
 
 
 
-                                <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (derived from Orders -&gt; Activities (type=file) -&gt; activity_files).</h2>
+                                <h2 id="patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
 
+
+<span id="example-requests-GETapi-patient--id--counters">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/counters" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/counters"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-patient--id--counters">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;new_messages_count&quot;: 3,
+    &quot;new_appointments_count&quot;: 2,
+    &quot;new_docs_count&quot;: 0
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (200, No person):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;new_messages_count&quot;: 0,
+    &quot;new_appointments_count&quot;: 0,
+    &quot;new_docs_count&quot;: 0
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not Found&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-patient--id--counters" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-patient--id--counters"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-patient--id--counters"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-patient--id--counters" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-patient--id--counters">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-patient--id--counters" data-method="GET"
+      data-path="api/patient/{id}/counters"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-patient--id--counters', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-patient--id--counters"
+                    onclick="tryItOut('GETapi-patient--id--counters');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-patient--id--counters"
+                    onclick="cancelTryOut('GETapi-patient--id--counters');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-patient--id--counters"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/patient/{id}/counters</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-patient--id--counters"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-patient--id--counters"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-patient--id--counters"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="GETapi-patient--id--counters"
+               value="3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d</code></p>
+            </div>
+                    </form>
+
+                <h1 id="patient-documents">Patient documents</h1>
+
+
+
+                                <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Documents are linked to the patient via any known relation:
+person_activities, lead, sales lead, or order.</p>
 
 <span id="example-requests-GETapi-patient--id--documents">
 <blockquote>Example request:</blockquote>
@@ -4651,7 +4671,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 54
+x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -5222,7 +5242,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 53
+x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -5373,14 +5393,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
 <br>
 <p>The notification ID.</p>
-                    </div>
-                                                                <div style="margin-left: 14px; clear: unset;">
-                        <b style="line-height: 2;"><code>type</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
- &nbsp;
-<br>
-<p>The notification type.</p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>dismissable</code></b>&nbsp;&nbsp;
@@ -5715,7 +5727,7 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 52
+x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -5862,7 +5874,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     </div>
                                     </details>
         </div>
-                                        </details>
+                                                                    <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>language</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+<br>
+<p>['nl', 'en', 'de'] Preferred language of the patient</p>
+                    </div>
+                                    </details>
         </div>
                         <h2 id="patient-preferences-PUTapi-patient--id--preferences">Update preferences for a patient.</h2>
 
@@ -5884,7 +5904,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"preferences\": {
-        \"email_notifications_enabled\": true
+        \"email_notifications_enabled\": true,
+        \"language\": \"architecto\"
     }
 }"
 </code></pre></div>
@@ -5903,7 +5924,8 @@ const headers = {
 
 let body = {
     "preferences": {
-        "email_notifications_enabled": true
+        "email_notifications_enabled": true,
+        "language": "architecto"
     }
 };
 
@@ -6057,6 +6079,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Key-value map of preferences to update.</p>
             </summary>
                                                 <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>language</code></b>&nbsp;&nbsp;
+<small>[&#039;nl&#039;,</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="preferences.language"                data-endpoint="PUTapi-patient--id--preferences"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>'en', 'de'] Preferred language of the patient Example: <code>architecto</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;
 <small>boolean</small>&nbsp;
 <i>optional</i> &nbsp;

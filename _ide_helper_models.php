@@ -424,6 +424,7 @@ namespace App\Models{
  * @property int $id
  * @property string $title
  * @property int $sales_lead_id
+ * @property int|null $user_id
  * @property bool $combine_order
  * @property string $total_price
  * @property string|null $confirmation_letter_content
@@ -444,8 +445,9 @@ namespace App\Models{
  * @property-read \App\Models\SalesLead $salesLead
  * @property-read \Webkul\Lead\Models\Stage|null $stage
  * @property-read \Webkul\User\Models\User|null $updater
+ * @property-read \App\Models\User|null $user
  * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentEligible()
- * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentTimeFilter(?string $filter, \Carbon\Carbon $now)
+ * @method static \Illuminate\Database\Eloquent\Builder|Order appointmentTimeFilter(?\App\Enums\AppointmentTimeFilter $filter, \Carbon\Carbon $now)
  * @method static \Database\Factories\OrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Order forPerson(\Webkul\Contact\Models\Person $person)
  * @method static \Illuminate\Database\Eloquent\Builder|Order newModelQuery()
@@ -463,6 +465,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereTotalPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereUpdatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Order whereUserId($value)
  * @mixin \Eloquent
  */
 	#[\AllowDynamicProperties]
@@ -646,6 +649,7 @@ namespace App\Models{
  * @property-read \Webkul\Activity\Models\Activity|null $activity
  * @property-read \Webkul\Contact\Models\Person $person
  * @property-read \Webkul\User\Models\User|null $sender
+ * @method static \Database\Factories\PatientMessageFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|PatientMessage newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PatientMessage newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PatientMessage query()

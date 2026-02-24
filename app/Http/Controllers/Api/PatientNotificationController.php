@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientNotificationsIndexRequest;
-use App\Http\Resources\PatientNotificationsResponseResource;
+use App\Http\Resources\PatientNotificationResource;
 use App\Models\PatientNotification;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Carbon;
 
 class PatientNotificationController extends Controller
@@ -26,7 +27,6 @@ class PatientNotificationController extends Controller
      *
      * @responseField notifications object[] List of notifications.
      * @responseField notifications[].id integer The notification ID.
-     * @responseField notifications[].type string The notification type.
      * @responseField notifications[].dismissable boolean Whether the notification can be dismissed.
      * @responseField notifications[].title string The notification title.
      * @responseField notifications[].summary string The notification summary.
@@ -40,19 +40,20 @@ class PatientNotificationController extends Controller
      * @responseField meta.per_page integer Items per page.
      * @responseField meta.total integer Total number of notifications.
      */
-    public function index(PatientNotificationsIndexRequest $request, string $keycloakUserId): JsonResponse
+    public function index(PatientNotificationsIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
 
         if (is_null($person)) {
             if (! is_null($user)) {
-                $perPage = (int) $request->validated('per_page', 10);
-
-                return PatientNotificationsResponseResource::empty($perPage)->response();
+                return PatientNotificationResource::collection(collect());
             }
 
             abort(404);
         }
+
+        $locale = $person->preferred_language?->value ?? 'nl';
+        app('request')->attributes->set('patient_locale', $locale);
 
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 10);
@@ -89,7 +90,7 @@ class PatientNotificationController extends Controller
             });
         }
 
-        return PatientNotificationsResponseResource::fromPaginator($paginator)->response();
+        return PatientNotificationResource::collection($paginator);
     }
 
     /**

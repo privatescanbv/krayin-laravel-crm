@@ -122,7 +122,7 @@ return [
     ],  [
         'key'   => 'contacts.persons.view',
         'name'  => 'admin::app.acl.view',
-        'route' => 'admin.contacts.persons.view',
+        'route' => ['admin.contacts.persons.view', 'admin.contacts.persons.view'],
         'sort'  => 5,
     ], [
         'key'   => 'contacts.persons.portal-create',
@@ -255,6 +255,11 @@ return [
         'route' => 'admin.settings.users.index',
         'sort'  => 3,
     ], [
+        'key'   => 'settings.user.users.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.settings.users.view', 'admin.settings.users.view'],
+        'sort'  => 1,
+    ],[
         'key'   => 'settings.user.users.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.settings.users.create', 'admin.settings.users.store'],
@@ -271,24 +276,54 @@ return [
         'sort'  => 3,
     ], [
         'key'   => 'settings.clinics',
-        'name'  => 'Clinics',
-        'route' => 'admin.clinics.index',
-        'sort'  => 4,
+        'name'  => 'Klinieken',
+        'route' => 'admin.settings.clinics.index',
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.clinics.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.settings.clinics.view', 'admin.settings.clinics.view'],
+        'sort'  => 1,
     ], [
         'key'   => 'settings.clinics.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.clinics.create', 'admin.clinics.store'],
-        'sort'  => 1,
+        'route' => ['admin.settings.clinics.create', 'admin.settings.clinics.store'],
+        'sort'  => 2,
     ], [
         'key'   => 'settings.clinics.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.clinics.edit', 'admin.clinics.update'],
-        'sort'  => 2,
+        'route' => ['admin.settings.clinics.edit', 'admin.settings.clinics.update'],
+        'sort'  => 3,
     ], [
         'key'   => 'settings.clinics.delete',
         'name'  => 'admin::app.acl.delete',
-        'route' => ['admin.clinics.delete'],
+        'route' => ['admin.settings.clinics.delete'],
+        'sort'  => 4,
+    ], [
+        'key'   => 'settings.resources',
+        'name'  => 'Resources',
+        'route' => 'admin.settings.resources.index',
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.resources.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.settings.resources.view', 'admin.settings.resources.view'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.resources.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.settings.resources.create', 'admin.settings.resources.store'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.resources.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.settings.resources.edit', 'admin.settings.resources.update'],
         'sort'  => 3,
+    ], [
+        'key'   => 'settings.resources.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.settings.resources.delete'],
+        'sort'  => 4,
     ], [
         'key'   => 'partner_products',
         'name'  => 'Partner Products',
@@ -614,6 +649,12 @@ return [
         'sort'  => 4,
     ],
     [
+        'key'   => 'clinic-guide',
+        'name'  => 'Dagplanning',
+        'route' => 'admin.clinic-guide.index',
+        'sort'  => 98,
+    ],
+    [
         'key'   => 'sales-leads',
         'name'  => 'Sales order',
         'route' => 'admin.sales-leads.index',
@@ -643,5 +684,11 @@ return [
         'name'  => 'Documentation',
         'route' => 'admin.docs.index',
         'sort'  => 100,
+    ],
+    [
+        'key'   => 'resource_planning',
+        'name'  => 'Monitor resource planning',
+        'route' => 'admin.planning.monitor.index',
+        'sort'  => 101,
     ],
 ];

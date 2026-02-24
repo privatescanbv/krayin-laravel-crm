@@ -387,6 +387,7 @@ return [
                     'create-lead' => 'Lead aanmaken',
                 ],
             ],
+            'persons' => 'Personen',
         ],
 
         'attributes' => [

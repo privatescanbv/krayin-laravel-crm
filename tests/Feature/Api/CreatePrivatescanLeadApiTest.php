@@ -42,8 +42,8 @@ test('POST api/leads/privatescan creates a lead', function () {
         ->assertJsonStructure(['lead_id', 'data' => ['id']]);
 
     $leadId = $res->json('data.id');
-    expect($leadId)->not->toBeNull();
-    expect($res->json('lead_id'))->toBe($leadId);
+    expect($leadId)->not->toBeNull()
+        ->and($res->json('lead_id'))->toBe($leadId);
 
     $lead = Lead::find($leadId);
     expect($lead)->not->toBeNull()

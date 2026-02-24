@@ -20,6 +20,9 @@ tags:
     name: 'Patient appointments'
     description: ''
   -
+    name: 'Patient counters'
+    description: ''
+  -
     name: 'Patient documents'
     description: ''
   -
@@ -122,7 +125,7 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-02-11'
+                  example: '2026-02-24'
                   nullable: true
                 email1:
                   type: string
@@ -755,11 +758,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-11 12:07:05'
+                  example: '2026-02-24 11:08:24'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-11 12:07:05'
+                  example: '2026-02-24 11:08:24'
               required:
                 - type
     parameters:
@@ -1036,47 +1039,6 @@ paths:
         required: true
         schema:
           type: string
-  '/api/patient/{id}/activities/unread/count':
-    get:
-      summary: 'Get the count of unread messages for a specific person.'
-      operationId: getTheCountOfUnreadMessagesForASpecificPerson
-      description: ''
-      parameters:
-        -
-          in: header
-          name: X-API-KEY
-          description: ''
-          example: '{YOUR_AUTH_KEY}'
-          schema:
-            type: string
-      responses:
-        401:
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error: 'Invalid API key'
-                  message: 'The provided API key is not valid'
-                properties:
-                  error:
-                    type: string
-                    example: 'Invalid API key'
-                  message:
-                    type: string
-                    example: 'The provided API key is not valid'
-      tags:
-        - Endpoints
-    parameters:
-      -
-        in: path
-        name: id
-        description: 'The ID of the patient.'
-        example: architecto
-        required: true
-        schema:
-          type: string
   '/api/keycloak/persons/{keycloakUserId}':
     get:
       summary: 'Haal person id op op basis van Keycloak user id.'
@@ -1250,8 +1212,8 @@ paths:
           type: integer
   '/api/patient/{id}/appointments':
     get:
-      summary: 'Get appointments for a patient (derived from Orders).'
-      operationId: getAppointmentsForAPatientderivedFromOrders
+      summary: 'Get appointments for a patient (derived from Orders and published Activities).'
+      operationId: getAppointmentsForAPatientderivedFromOrdersAndPublishedActivities
       description: ''
       parameters:
         -
@@ -1308,11 +1270,7 @@ paths:
                           patient_id: '1'
                           practitioner_id: null
                           clinic_id: null
-                          clinic_label: null
-                          clinic:
-                            id: 1
-                            name: 'Example Clinic'
-                            address: "Example street 1\n1234 AB Amsterdam"
+                          clinic_ref: null
                           start_at: '2026-01-27T10:00:00+01:00'
                           end_at: null
                           timezone: Europe/Amsterdam
@@ -1333,11 +1291,7 @@ paths:
                             patient_id: '1'
                             practitioner_id: null
                             clinic_id: null
-                            clinic_label: null
-                            clinic:
-                              id: 1
-                              name: 'Example Clinic'
-                              address: "Example street 1\n1234 AB Amsterdam"
+                            clinic_ref: null
                             start_at: '2026-01-27T10:00:00+01:00'
                             end_at: null
                             timezone: Europe/Amsterdam
@@ -1360,21 +1314,9 @@ paths:
                             clinic_id:
                               type: string
                               example: null
-                            clinic_label:
+                            clinic_ref:
                               type: string
                               example: null
-                            clinic:
-                              type: object
-                              properties:
-                                id:
-                                  type: integer
-                                  example: 1
-                                name:
-                                  type: string
-                                  example: 'Example Clinic'
-                                address:
-                                  type: string
-                                  example: "Example street 1\n1234 AB Amsterdam"
                             start_at:
                               type: string
                               example: '2026-01-27T10:00:00+01:00'
@@ -1456,11 +1398,88 @@ paths:
         required: true
         schema:
           type: string
+  '/api/patient/{id}/counters':
+    get:
+      summary: 'Get notification counters for the patient portal menu badges.'
+      operationId: getNotificationCountersForThePatientPortalMenuBadges
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    description: Success
+                    type: object
+                    example:
+                      new_messages_count: 3
+                      new_appointments_count: 2
+                      new_docs_count: 0
+                    properties:
+                      new_messages_count:
+                        type: integer
+                        example: 3
+                      new_appointments_count:
+                        type: integer
+                        example: 2
+                      new_docs_count:
+                        type: integer
+                        example: 0
+                  -
+                    description: 'No person'
+                    type: object
+                    example:
+                      new_messages_count: 0
+                      new_appointments_count: 0
+                      new_docs_count: 0
+                    properties:
+                      new_messages_count:
+                        type: integer
+                        example: 0
+                      new_appointments_count:
+                        type: integer
+                        example: 0
+                      new_docs_count:
+                        type: integer
+                        example: 0
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+      tags:
+        - 'Patient counters'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The Keycloak user ID of the patient.'
+        example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+        required: true
+        schema:
+          type: string
   '/api/patient/{id}/documents':
     get:
-      summary: 'Get all documents for a patient (derived from Orders -> Activities (type=file) -> activity_files).'
-      operationId: getAllDocumentsForAPatientderivedFromOrdersActivitiestypefileActivityFiles
-      description: ''
+      summary: 'Get all documents for a patient (FILE activities with publish_to_portal = true).'
+      operationId: getAllDocumentsForAPatientFILEActivitiesWithPublishToPortalTrue
+      description: "Documents are linked to the patient via any known relation:\nperson_activities, lead, sales lead, or order."
       parameters:
         -
           in: query
@@ -1996,6 +2015,11 @@ paths:
                   example:
                     email_notifications_enabled: true
                   properties:
+                    language:
+                      type: "['nl',"
+                      description: "'en', 'de'] Preferred language of the patient"
+                      example: architecto
+                      nullable: true
                     email_notifications_enabled:
                       type: boolean
                       description: 'Enable or disable email notifications.'

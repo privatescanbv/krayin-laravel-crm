@@ -24,10 +24,18 @@ return [
     ],
 
     [
+        'key'        => 'clinic-guide',
+        'name'       => 'Dagplanning',
+        'route'      => 'admin.clinic-guide.index',
+        'sort'       => 3,
+        'icon-class' => 'icon-activity',
+    ],
+
+    [
         'key'        => 'sales-leads',
         'name'       => 'admin::app.layouts.sales-leads',
         'route'      => 'admin.sales-leads.index',
-        'sort'       => 3,
+        'sort'       => 4,
         'icon-class' => 'icon-setting',
     ],
 
@@ -36,7 +44,7 @@ return [
         'key'        => 'orders',
         'name'       => 'Orders',
         'route'      => 'admin.orders.index',
-        'sort'       => 4,
+        'sort'       => 5,
         'icon-class' => 'icon-quote',
     ],
 
@@ -48,7 +56,7 @@ return [
         'name'       => 'admin::app.layouts.mail.title',
         'route'      => 'admin.mail.index',
         'params'     => ['route' => 'inbox'],
-        'sort'       => 5,
+        'sort'       => 6,
         'icon-class' => 'icon-mail',
 ],
     /**
@@ -58,7 +66,7 @@ return [
         'key'        => 'activities',
         'name'       => 'Activiteiten',
         'route'      => 'admin.activities.index',
-        'sort'       => 6,
+        'sort'       => 7,
         'icon-class' => 'icon-activity',
     ],
 
@@ -67,15 +75,17 @@ return [
      */
     [
         'key'        => 'persons',
+        'acl'        => 'contacts.persons',
         'name'       => 'admin::app.layouts.persons',
         'route'      => 'admin.contacts.persons.index',
-        'sort'       => 7,
+        'sort'       => 8,
         'icon-class' => 'icon-contact',
     ], [
         'key'        => 'organizations',
+        'acl'        => 'contacts.organizations',
         'name'       => 'admin::app.layouts.organizations',
         'route'      => 'admin.contacts.organizations.index',
-        'sort'       => 8,
+        'sort'       => 9,
         'icon-class' => 'icon-organization',
     ],
 
@@ -86,20 +96,21 @@ return [
         'key'        => 'products',
         'name'       => 'admin::app.layouts.products',
         'route'      => 'admin.products.index',
-        'sort'       => 9,
+        'sort'       => 10,
         'icon-class' => 'icon-product',
     ], [
-        'key'        => 'monitor',
+        'key'        => 'resource_planning',
         'name'       => 'Monitor resource planning',
         'route'      => 'admin.planning.monitor.index',
-        'sort'       => 10,
+        'sort'       => 11,
         'icon-class' => 'icon-activity',
     ],
     [
         'key'        => 'clinics',
+        'acl'        => 'settings.clinics',
         'name'       => 'Klinieken',
         'route'      => 'admin.clinics.index',
-        'sort'       => 11,
+        'sort'       => 12,
         'icon-class' => 'icon-organization',
     ],
 
@@ -110,7 +121,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 12,
+        'sort'       => 13,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',
@@ -162,7 +173,7 @@ return [
         'sort'       => 2,
         'icon-class' => 'icon-setting',
     ], [
-        'key'        => 'settings.clinics.reources',
+        'key'        => 'settings.clinics.resources',
         'name'       => 'admin::app.layouts.resources',
         'info'       => 'admin::app.layouts.resources-info',
         'route'      => 'admin.settings.resources.index',
@@ -314,7 +325,7 @@ return [
         'key'        => 'configuration',
         'name'       => 'admin::app.layouts.configuration',
         'route'      => 'admin.configuration.index',
-        'sort'       => 14,
+        'sort'       => 15,
         'icon-class' => 'icon-configuration',
     ], [
         'key'        => 'patient_portal',

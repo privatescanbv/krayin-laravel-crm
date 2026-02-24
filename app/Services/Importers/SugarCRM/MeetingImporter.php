@@ -39,59 +39,61 @@ class MeetingImporter
         if (empty($leadIds)) {
             return [];
         }
+        // disable for now, pick this up later with import orders.
 
-        try {
-            $this->command->validateTableExists($this->connection, ['meetings']);
-
-            $sql = DB::connection($this->connection)
-                ->table('meetings as m')
-                ->select([
-                    'm.id',
-                    'm.name',
-                    'm.date_entered',
-                    'm.date_modified',
-                    'm.modified_user_id',
-                    'm.created_by',
-                    'm.description',
-                    'm.deleted',
-                    'm.assigned_user_id',
-                    'm.duration_hours',
-                    'm.duration_minutes',
-                    'm.date_start',
-                    'm.date_end',
-                    'm.parent_type',
-                    'm.status',
-                    'm.parent_id',
-                    'm.reminder_time',
-                ])
-                ->whereIn('m.parent_id', $leadIds)
-                ->where('m.parent_type', '=', 'Leads')
-                ->where('m.deleted', '=', 0)
-                ->orderBy('m.date_entered', 'asc');
-
-            $this->command->infoVV('Extracting meeting activities: '.$sql->toRawSql());
-            $meetings = $sql->get();
-
-            $this->command->infoV('Found '.$meetings->count().' meeting activities');
-
-            // Group meetings by parent_id (lead_id)
-            $result = [];
-            foreach ($meetings as $meeting) {
-                if (! isset($result[$meeting->parent_id])) {
-                    $result[$meeting->parent_id] = [];
-                }
-                $result[$meeting->parent_id][] = $meeting;
-            }
-
-            return $result;
-        } catch (QueryException $e) {
-            $this->command->error('SQL Error while extracting meeting activities: '.$e->getMessage());
-            $this->command->error('SQL: '.$e->getSql());
-            throw new Exception('Meeting activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
-        } catch (Exception $e) {
-            $this->command->error('Failed to extract meeting activities: '.$e->getMessage());
-            throw new Exception('Meeting activities extraction failed: '.$e->getMessage(), 0, $e);
-        }
+        return [];
+        //        try {
+        //            $this->command->validateTableExists($this->connection, ['meetings']);
+        //
+        //            $sql = DB::connection($this->connection)
+        //                ->table('meetings as m')
+        //                ->select([
+        //                    'm.id',
+        //                    'm.name',
+        //                    'm.date_entered',
+        //                    'm.date_modified',
+        //                    'm.modified_user_id',
+        //                    'm.created_by',
+        //                    'm.description',
+        //                    'm.deleted',
+        //                    'm.assigned_user_id',
+        //                    'm.duration_hours',
+        //                    'm.duration_minutes',
+        //                    'm.date_start',
+        //                    'm.date_end',
+        //                    'm.parent_type',
+        //                    'm.status',
+        //                    'm.parent_id',
+        //                    'm.reminder_time',
+        //                ])
+        //                ->whereIn('m.parent_id', $leadIds)
+        //                ->where('m.parent_type', '=', 'Leads')
+        //                ->where('m.deleted', '=', 0)
+        //                ->orderBy('m.date_entered', 'asc');
+        //
+        //            $this->command->infoVV('Extracting meeting activities: '.$sql->toRawSql());
+        //            $meetings = $sql->get();
+        //
+        //            $this->command->infoV('Found '.$meetings->count().' meeting activities');
+        //
+        //            // Group meetings by parent_id (lead_id)
+        //            $result = [];
+        //            foreach ($meetings as $meeting) {
+        //                if (! isset($result[$meeting->parent_id])) {
+        //                    $result[$meeting->parent_id] = [];
+        //                }
+        //                $result[$meeting->parent_id][] = $meeting;
+        //            }
+        //
+        //            return $result;
+        //        } catch (QueryException $e) {
+        //            $this->command->error('SQL Error while extracting meeting activities: '.$e->getMessage());
+        //            $this->command->error('SQL: '.$e->getSql());
+        //            throw new Exception('Meeting activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
+        //        } catch (Exception $e) {
+        //            $this->command->error('Failed to extract meeting activities: '.$e->getMessage());
+        //            throw new Exception('Meeting activities extraction failed: '.$e->getMessage(), 0, $e);
+        //        }
     }
 
     /**

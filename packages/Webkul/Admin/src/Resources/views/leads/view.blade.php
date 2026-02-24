@@ -130,7 +130,7 @@
                 </div>
             </div>
             @endif
-            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount"/>
+            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" show-sales="true"/>
 
             <!-- Footer with creation and modification dates -->
             <div
@@ -147,7 +147,7 @@
 
                 <div class="flex justify-between">
                     <span>Toegewezen aan:</span>
-                    <span>{{ $lead->user->name }}</span>
+                    <span>{{ $lead->user?->name ?: "-" }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
@@ -181,6 +181,10 @@
 
             <div v-else-if="leadDetailSection === 'marketing'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::leads.view.marketing', ['lead' => $lead])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'sales'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('admin::leads.view.tab-sales', ['lead' => $lead])
             </div>
         </div>
 
@@ -324,7 +328,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing'];
+                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing', 'sales'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

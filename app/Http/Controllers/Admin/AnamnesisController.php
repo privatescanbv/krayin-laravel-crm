@@ -161,9 +161,7 @@ class AnamnesisController extends Controller
             // Notify patient that GVL form is ready
             PatientNotifyEvent::dispatch(
                 $anamnesis->person_id,
-                'gvl_form',
-                'GVL formulier beschikbaar',
-                'Er staat een gezondheidsverklaring voor u klaar om in te vullen.',
+                $formLink,
                 NotificationReferenceType::GVL_FORM,
                 $anamnesis->id,
                 false,
@@ -247,9 +245,7 @@ class AnamnesisController extends Controller
             // Notify patient that GVL form is ready
             PatientNotifyEvent::dispatch(
                 $anamnesis->person_id,
-                'gvl_form',
-                'GVL formulier beschikbaar',
-                'Er staat een gezondheidsverklaring voor u klaar om in te vullen.',
+                $formLink,
                 NotificationReferenceType::GVL_FORM,
                 $anamnesis->id,
                 false,
@@ -536,8 +532,8 @@ class AnamnesisController extends Controller
 
         $formData = [
             'user_crm_id'     => $person->id,
-            'user_firstname'  => $firstName ?: 'Onbekend',
-            'user_lastname'   => $lastName ?: 'Onbekend',
+            'user_firstname'  => $firstName ?: '-',
+            'user_lastname'   => $lastName ?: '-',
             'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
             'user_email'      => $email,
             'user_birthday'   => $birthday,

@@ -15,6 +15,16 @@ export VITE_HMR_HOST=${VITE_HMR_HOST:-crm.local.privatescan.nl}
 export APP_ENV=${APP_ENV:-production}
 docker info >/dev/null 2>&1 || { echo "❌ Docker is not running"; exit 1; }
 
+# remove old logs:
+VOLUME="privatescan_crm_loki-data"
+
+if docker volume inspect "$VOLUME" >/dev/null 2>&1; then
+  echo "Removing volume $VOLUME"
+  docker volume rm "$VOLUME"
+else
+  echo "Volume $VOLUME does not exist, skipping"
+fi
+
 if docker-compose ps crm | grep -q 'Up'; then
   echo "📦 Restarting containers..."
   ./vendor/bin/sail restart
@@ -70,3 +80,5 @@ fi
 # Keep model files clean: only write @mixin, put properties/methods in _ide_helper_models.php
 ./vendor/bin/sail artisan ide-helper:models --write-mixin --reset --no-interaction
 ./vendor/bin/sail artisan ide-helper:generate --no-interaction
+
+./vendor/bin/sail artisan boost:mcp

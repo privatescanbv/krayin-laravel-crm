@@ -89,28 +89,35 @@ Content-Type: application/json
 }
 
 ### get person info
-GET https://{{ URL }}/api/keycloak/persons/39cdb90c-b41e-4126-b271-daafaa29f982
+GET https://{{ URL }}/api/keycloak/persons/{{ KEYCLOAK_USER_ID }}
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 ### get person info
-GET https://{{ URL }}/api/patient/4e162dae-4ea9-4b66-ae67-9ff1fb3f57ed/documents
+GET https://{{ URL }}/api/patient/{{ KEYCLOAK_USER_ID }}/documents
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 ### get person info
-GET https://{{ URL }}/api/patient/4e162dae-4ea9-4b66-ae67-9ff1fb3f57ed/notifications
+GET https://{{ URL }}/api/patient/{{ KEYCLOAK_USER_ID }}/notifications
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
 ### get appointments for patient
-GET https://{{ URL }}/api/patient/acfd9f3f-b710-4ec6-9a0d-539f99899a4c/appointments
+GET https://{{ URL }}/api/patient/{{ KEYCLOAK_USER_ID }}/appointments
 Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
+
+### get counters for patient
+GET https://{{ URL }}/api/patient/{{ KEYCLOAK_USER_ID }}/counters
+Accept: application/json
+Content-Type: application/json
+X-API-KEY: {{API_KEY}}
+
 
 ### add herniapoli forms to lead
 POST https://{{ URL }}/api/leads/1999/forms

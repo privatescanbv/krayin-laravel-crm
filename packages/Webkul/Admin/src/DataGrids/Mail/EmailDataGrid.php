@@ -43,24 +43,19 @@ class EmailDataGrid extends DataGrid
                 'emails.person_id',
                 'emails.lead_id',
                 'emails.sales_lead_id',
-                // Preload related entity names to avoid N+1 queries
-                // For leads: select individual name fields to construct name in closure
                 'leads.first_name as lead_first_name',
                 'leads.lastname_prefix as lead_lastname_prefix',
                 'leads.last_name as lead_last_name',
                 'leads.married_name_prefix as lead_married_name_prefix',
                 'leads.married_name as lead_married_name',
-                // For persons: select individual name fields to construct name in closure
                 'persons.first_name as person_first_name',
                 'persons.lastname_prefix as person_lastname_prefix',
                 'persons.last_name as person_last_name',
                 'persons.married_name_prefix as person_married_name_prefix',
                 'persons.married_name as person_married_name',
                 DB::raw('salesleads.name as sales_name'),
-                // Aggregate tags and attachments
                 DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
                 DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
-                // Add entity information
                 DB::raw('CASE
                     WHEN emails.person_id IS NOT NULL THEN "person"
                     WHEN emails.lead_id IS NOT NULL THEN "lead"
@@ -71,7 +66,6 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('email_attachments', 'emails.id', '=', 'email_attachments.email_id')
             ->leftJoin('email_tags', 'emails.id', '=', 'email_tags.email_id')
             ->leftJoin('tags', 'tags.id', '=', 'email_tags.tag_id')
-            // Preload related entities to avoid N+1 queries
             ->leftJoin('leads', 'emails.lead_id', '=', 'leads.id')
             ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
@@ -83,10 +77,12 @@ class EmailDataGrid extends DataGrid
                 'emails.is_read',
                 'emails.created_at'
             )
-            // Filter by folder name - handle both new folder_id and old folders JSON
-            ->where(function($query) {
-                $query->where('folders.name', request('route'));
-            });
+            ->where('folders.name', request('route'));
+
+        // Custom composite filter: show only unread and/or unlinked emails.
+        // Applied manually because the datagrid engine can't handle this OR-condition.
+        // Removed from request afterwards so the datagrid core skips it.
+        $this->applyUnreadUnlinkedFilter($queryBuilder);
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');
@@ -94,6 +90,41 @@ class EmailDataGrid extends DataGrid
         $this->addFilter('created_at', 'emails.created_at');
 
         return $queryBuilder;
+    }
+
+    /**
+     * Apply the "ongelezen / ongekoppeld" composite filter and remove it from request.
+     */
+    protected function applyUnreadUnlinkedFilter(Builder $queryBuilder): void
+    {
+        $filters = request()->input('filters', []);
+
+        if (empty($filters['ongelezen_ongekoppeld'])) {
+            return;
+        }
+
+        $values = array_filter((array) $filters['ongelezen_ongekoppeld']);
+
+        if (in_array('1', $values)) {
+            $queryBuilder->where(function ($query) {
+                $query->where('emails.is_read', 0)
+                    ->orWhere(function ($q) {
+                        $q->whereNull('emails.person_id')
+                            ->whereNull('emails.lead_id')
+                            ->whereNull('emails.sales_lead_id');
+                    });
+            });
+        }
+
+        // Remove so datagrid core won't try to apply it as an equality filter
+        unset($filters['ongelezen_ongekoppeld']);
+
+        if (! empty($filters)) {
+            request()->merge(['filters' => $filters]);
+        } else {
+            request()->request->remove('filters');
+            request()->query->remove('filters');
+        }
     }
 
     /**
@@ -119,6 +150,21 @@ class EmailDataGrid extends DataGrid
      */
     public function prepareColumns(): void
     {
+        // Filter-only column: filters to unread + unlinked emails (not shown as table column).
+        $this->addColumn([
+            'index'              => 'ongelezen_ongekoppeld',
+            'label'              => 'Ongelezen / ongekoppeld',
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => false,
+            'filterable'         => true,
+            'visibility'         => false,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'Actief', 'value' => '1'],
+            ],
+        ]);
+
         $this->addColumn([
             'index'      => 'attachments',
             'label'      => trans('admin::app.mail.index.datagrid.attachments'),

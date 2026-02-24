@@ -162,7 +162,7 @@ return [
     |
     */
 
-    'domain' => env('MAIL_DOMAIN', 'example.com'),
+    'domain' => env('MAIL_DOMAIN', 'privatescan.nl'),
 
     /*
     |--------------------------------------------------------------------------

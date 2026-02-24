@@ -2,8 +2,20 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Enums\AppointmentTimeFilter;
+
 class PatientAppointmentsIndexRequest extends PatientPaginatedIndexRequest
 {
+    /**
+     * Return the validated filter as a typed enum, or null when absent.
+     */
+    public function timeFilter(): ?AppointmentTimeFilter
+    {
+        $value = $this->validated('filter');
+
+        return $value ? AppointmentTimeFilter::from($value) : null;
+    }
+
     protected function additionalRules(): array
     {
         return [

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AppointmentTimeFilter;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
@@ -55,6 +56,7 @@ class Order extends Model
         'pipeline_stage_id',
         'first_examination_at',
         'sales_lead_id',
+        'user_id',
         'combine_order',
         'confirmation_letter_content',
         'created_by',
@@ -66,6 +68,7 @@ class Order extends Model
         'pipeline_stage_id'    => 'integer',
         'first_examination_at' => 'datetime',
         'sales_lead_id'        => 'integer',
+        'user_id'              => 'integer',
         'combine_order'        => 'boolean',
         'created_by'           => 'integer',
         'updated_by'           => 'integer',
@@ -79,6 +82,7 @@ class Order extends Model
             'pipeline_stage_id'    => 'nullable|integer|exists:lead_pipeline_stages,id',
             'first_examination_at' => 'nullable|date',
             'sales_lead_id'        => 'required|integer|exists:salesleads,id',
+            'user_id'              => 'nullable|integer|exists:users,id',
             'combine_order'        => 'boolean',
         ];
     }
@@ -125,6 +129,11 @@ class Order extends Model
     public function salesLead(): BelongsTo
     {
         return $this->belongsTo(SalesLead::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function lead()
@@ -184,15 +193,11 @@ class Order extends Model
 
     /**
      * Scope appointment time filtering.
-     *
-     * @param  string|null  $filter  Allowed values: future, past.
      */
-    public function scopeAppointmentTimeFilter(Builder $query, ?string $filter, Carbon $now): Builder
+    public function scopeAppointmentTimeFilter(Builder $query, ?AppointmentTimeFilter $filter, Carbon $now): Builder
     {
-        $filter = strtolower((string) $filter);
-
         return $query
-            ->when($filter === 'future', fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
-            ->when($filter === 'past', fn (Builder $q) => $q->where('first_examination_at', '<', $now));
+            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
+            ->when($filter === AppointmentTimeFilter::PAST, fn (Builder $q) => $q->where('first_examination_at', '<', $now));
     }
 }

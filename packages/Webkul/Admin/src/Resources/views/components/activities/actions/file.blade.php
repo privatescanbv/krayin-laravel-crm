@@ -75,25 +75,17 @@
                             />
 
                             <!-- Title -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="title"
-                                />
-                            </x-admin::form.control-group>
+                            <x-adminc::components.field
+                                type="text"
+                                name="title"
+                                label="Titel"
+                            />
 
                             <!-- Description -->
                             <x-adminc::components.field
                                 type="textarea"
                                 name="comment"
                                 :label="trans('admin::app.components.activities.actions.file.description')"
-                            />
-
-                            <!-- File Name -->
-                            <x-adminc::components.field
-                                type="text"
-                                name="name"
-                                :label="trans('admin::app.components.activities.actions.file.name')"
                             />
 
                             <!-- File -->
@@ -105,6 +97,42 @@
                                 rules="required"
                                 class="!mb-0"
                             />
+
+                            <!-- Publiceren in patiëntportaal -->
+                            <div class="mt-4">
+                                <label class="flex cursor-pointer items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        v-model="publishToPortal"
+                                        @change="onPublishChange"
+                                        class="rounded border-gray-300"
+                                    />
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Publiceren in patiëntportaal
+                                    </span>
+                                </label>
+
+                                <!-- Person selector: shown when portal is enabled and entity has multiple persons -->
+                                <div v-if="publishToPortal" class="mt-3">
+                                    <div v-if="loadingPersons" class="text-sm text-gray-500">
+                                        Personen laden...
+                                    </div>
+                                    <div v-else-if="persons.length > 1">
+                                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Deel met persoon
+                                        </label>
+                                        <select
+                                            v-model="selectedPersonId"
+                                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        >
+                                            <option value="" disabled>Selecteer een persoon</option>
+                                            <option v-for="person in persons" :key="person.id" :value="person.id">
+                                                @{{ person.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
 
                             {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.content.controls.after') !!}
                         </x-slot>
@@ -152,22 +180,76 @@
             data: function () {
                 return {
                     isStoring: false,
+                    publishToPortal: false,
+                    persons: [],
+                    selectedPersonId: '',
+                    loadingPersons: false,
                 }
             },
 
             methods: {
                 openModal(type) {
+                    this.publishToPortal = false;
+                    this.persons = [];
+                    this.selectedPersonId = '';
                     this.$refs.fileActivityModal.open();
+                },
+
+                onPublishChange() {
+                    this.persons = [];
+                    this.selectedPersonId = '';
+
+                    if (!this.publishToPortal) {
+                        return;
+                    }
+
+                    // Derive entity type from entityControlName: "order_id" → "order", "sales_lead_id" → "sales_lead"
+                    const entityType = this.entityControlName.replace('_id', '');
+
+                    this.loadingPersons = true;
+
+                    this.$axios.get("{{ route('admin.activities.persons-for-entity') }}", {
+                        params: { entity_type: entityType, entity_id: this.entity.id }
+                    }).then(response => {
+                        this.persons = response.data.data ?? [];
+
+                        // Auto-select if only one person
+                        if (this.persons.length === 1) {
+                            this.selectedPersonId = this.persons[0].id;
+                        }
+                    }).catch(() => {
+                        this.persons = [];
+                    }).finally(() => {
+                        this.loadingPersons = false;
+                    });
                 },
 
                 save(params, { setErrors }) {
                     this.isStoring = true;
 
-                    this.$axios.post("{{ route('admin.activities.store') }}", params, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            }
-                        })
+                    // Build FormData explicitly so we can include reactive publish_to_portal and person_ids
+                    const formData = new FormData();
+
+                    Object.entries(params).forEach(([key, value]) => {
+                        if (value === null || value === undefined) return;
+                        if (value instanceof FileList) {
+                            Array.from(value).forEach(f => formData.append(key, f));
+                        } else if (value instanceof File || value instanceof Blob) {
+                            formData.append(key, value);
+                        } else {
+                            formData.append(key, String(value));
+                        }
+                    });
+
+                    // Set publish_to_portal from Vue reactive state
+                    formData.set('publish_to_portal', this.publishToPortal ? '1' : '0');
+
+                    // Attach selected person when publishing to portal
+                    if (this.publishToPortal && this.selectedPersonId) {
+                        formData.append('person_ids[]', String(this.selectedPersonId));
+                    }
+
+                    this.$axios.post("{{ route('admin.activities.store') }}", formData)
                         .then (response => {
                             this.isStoring = false;
 

@@ -2,6 +2,9 @@
 
 namespace Webkul\Activity\Models;
 
+use App\Enums\ActivityStatus;
+use App\Enums\ActivityType;
+use App\Enums\AppointmentTimeFilter;
 use App\Enums\PatientMessageSenderType;
 use App\Models\CallStatus;
 use App\Models\Clinic;
@@ -9,10 +12,10 @@ use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
-use App\Enums\ActivityType;
-use App\Enums\ActivityStatus;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Lead\Models\LeadProxy;
@@ -45,7 +48,8 @@ class Activity extends Model implements ActivityContract
         'schedule_to'   => 'datetime',
         'assigned_at'   => 'datetime',
         'additional'    => 'array',
-        'is_done'      => 'boolean',
+        'is_done'              => 'boolean',
+        'publish_to_portal'  => 'boolean',
         'type'         => ActivityType::class,
         'status'       => ActivityStatus::class,
     ];
@@ -64,6 +68,7 @@ class Activity extends Model implements ActivityContract
         'schedule_from',
         'schedule_to',
         'is_done',
+        'publish_to_portal',
         'status',
         'user_id',
         'assigned_at',
@@ -176,7 +181,6 @@ class Activity extends Model implements ActivityContract
     {
         return match ($this->type) {
             ActivityType::CALL => 'Calls',
-            ActivityType::MEETING => 'Meetings',
             ActivityType::TASK => 'Tasks',
             default => null,
         };
@@ -188,6 +192,31 @@ class Activity extends Model implements ActivityContract
         return $this->persons->first()
             ?? $this->lead?->persons->first()
             ?? $this->salesLead?->persons->first();
+    }
+
+    /**
+     * Resolve all persons associated with this activity via any known relation:
+     * direct person_activities, lead, sales lead, or order → sales lead.
+     *
+     * @return Collection<int, Person>
+     */
+    public function getPatientsFromActivity(): Collection
+    {
+        $persons = collect($this->persons);
+
+        if ($this->lead_id) {
+            $persons = $persons->merge($this->lead?->persons ?? collect());
+        }
+
+        if ($this->sales_lead_id) {
+            $persons = $persons->merge($this->salesLead?->persons ?? collect());
+        }
+
+        if ($this->order_id) {
+            $persons = $persons->merge($this->order?->salesLead?->persons ?? collect());
+        }
+
+        return $persons->unique('id')->values();
     }
 
     public function getIsReadAttribute(): bool
@@ -203,6 +232,46 @@ class Activity extends Model implements ActivityContract
         }
 
         return true;
+    }
+
+    /**
+     * Scope activities that are published to the patient portal.
+     */
+    public function scopePublishedToPortal(Builder $query): Builder
+    {
+        return $query->where('publish_to_portal', true);
+    }
+
+    /**
+     * Scope activities by type.
+     */
+    public function scopeOfType(Builder $query, ActivityType $type): Builder
+    {
+        return $query->where('type', $type->value);
+    }
+
+    /**
+     * Scope activities related to a person via any of the known relations:
+     * direct person_activities, lead, sales lead, or order.
+     */
+    public function scopeForPerson(Builder $query, Person $person): Builder
+    {
+        return $query->where(function (Builder $q) use ($person) {
+            $q->whereHas('persons', fn (Builder $sub) => $sub->whereKey($person->id))
+                ->orWhereHas('lead.persons', fn (Builder $sub) => $sub->whereKey($person->id))
+                ->orWhereHas('salesLead.persons', fn (Builder $sub) => $sub->whereKey($person->id))
+                ->orWhereHas('order.salesLead.persons', fn (Builder $sub) => $sub->whereKey($person->id));
+        });
+    }
+
+    /**
+     * Scope activity time filtering based on schedule_from.
+     */
+    public function scopeScheduleTimeFilter(Builder $query, ?AppointmentTimeFilter $filter, Carbon $now): Builder
+    {
+        return $query
+            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('schedule_from', '>=', $now))
+            ->when($filter === AppointmentTimeFilter::PAST,   fn (Builder $q) => $q->where('schedule_from', '<', $now));
     }
 
     /**

@@ -87,3 +87,58 @@ it('returns 404 for unknown patient on update', function () {
 
     $response->assertNotFound();
 });
+
+it('can update preferred language', function () {
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/preferences", [
+            'preferences' => [
+                'language' => 'en',
+            ],
+        ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('preferences.language', 'en');
+
+    $person->refresh();
+    expect($person->preferred_language->value)->toBe('en');
+});
+
+it('returns 422 for invalid language value', function () {
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/preferences", [
+            'preferences' => [
+                'language' => 'invalid',
+            ],
+        ]);
+
+    $response->assertUnprocessable();
+});
+
+it('can update language and other preferences in one request', function () {
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/preferences", [
+            'preferences' => [
+                'language'                    => 'de',
+                'email_notifications_enabled' => false,
+            ],
+        ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('preferences.language', 'de');
+    $response->assertJsonPath('preferences.email_notifications_enabled.value', false);
+
+    $person->refresh();
+    expect($person->preferred_language->value)->toBe('de');
+});

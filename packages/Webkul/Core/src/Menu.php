@@ -70,7 +70,7 @@ class Menu
         switch ($area) {
             case self::ADMIN:
                 $this->configMenu = $configMenu
-                    ->filter(fn ($item) => bouncer()->hasPermission($item['key']))
+                    ->filter(fn ($item) => bouncer()->hasPermission($item['acl'] ?? $item['key']))
                     ->toArray();
                 break;
 

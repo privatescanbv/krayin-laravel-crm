@@ -28,6 +28,7 @@ class PatientDocumentResource extends JsonResource
 
         /** @var ActivityFile $file */
         $file = $payload['file'];
+        $description = $payload['description'];
         $patientId = (int) ($payload['patient_id'] ?? 0);
         $group = isset($payload['group']) ? (string) $payload['group'] : null;
         $keycloakUserId = (string) ($request->route('id') ?? '');
@@ -59,6 +60,7 @@ class PatientDocumentResource extends JsonResource
             'type'         => (string) $documentType,
             'group'        => $group,
             'title'        => $title,
+            'description'  => $description,
             'file_name'    => (string) $file->name,
             'mime_type'    => (string) $mimeType,
             'size'         => $size,

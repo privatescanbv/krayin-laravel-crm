@@ -153,7 +153,7 @@ class AnamnesisController extends Controller
 
         try {
             // Create form request for this person
-            $formLink = $this->createFormRequestForAnamnesis($anamnesis);
+            [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
 
             // Reload the anamnesis to get updated gvl_form_link
             $anamnesis->refresh();
@@ -163,7 +163,7 @@ class AnamnesisController extends Controller
                 $anamnesis->person_id,
                 $formLink,
                 NotificationReferenceType::GVL_FORM,
-                $anamnesis->id,
+                $formId,
                 false,
                 auth()->id()
             );
@@ -237,7 +237,7 @@ class AnamnesisController extends Controller
             }
 
             // Create form request for this person
-            $formLink = $this->createFormRequestForAnamnesis($anamnesis);
+            [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
 
             // Reload the anamnesis to get updated gvl_form_link
             $anamnesis->refresh();
@@ -247,7 +247,7 @@ class AnamnesisController extends Controller
                 $anamnesis->person_id,
                 $formLink,
                 NotificationReferenceType::GVL_FORM,
-                $anamnesis->id,
+                $formId,
                 false,
                 auth()->id()
             );
@@ -494,7 +494,7 @@ class AnamnesisController extends Controller
     /**
      * Create a form request for anamnesis and return the form link.
      */
-    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis): string
+    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis): array
     {
         if (! $anamnesis->person) {
             throw new Exception('Anamnesis heeft geen gekoppelde persoon.');
@@ -604,7 +604,7 @@ class AnamnesisController extends Controller
             'gvl_form_link' => $formLink,
         ]);
 
-        return $formLink;
+        return [$result['json']['data']['id'],  $formLink];
     }
 
     // todo move to repro

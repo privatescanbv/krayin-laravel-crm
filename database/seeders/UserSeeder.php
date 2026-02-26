@@ -37,6 +37,9 @@ class UserSeeder extends Seeder
             'lars@privatescan.nl'          => '8A4Z5jc%d3Ad',
             'frank@privatescan.nl'         => '8A115dc@d3Ad',
             'nihad@nime.dev'               => '8A144dc@d1Ab',
+            'carolien@privatescan.nl'      => '8A115dc@d4Ab',
+            'maria@privatescan.nl'         => '8A115dc@d4Ab',
+            'esther@privatescan.nl'        => '8A115dc@d4Ab',
         ];
     }
 
@@ -165,6 +168,39 @@ class UserSeeder extends Seeder
                 'view_permission' => 'global',
                 'group_id'        => null,
                 'signature'       => $this->signatureTemplate('Frank', 'Hefti', 'frank@privatescan.nl'),
+            ],
+            [
+                'first_name'      => 'Carolien',
+                'last_name'       => 'Cicek',
+                'email'           => 'carolien@privatescan.nl',
+                'password'        => $passwords['carolien@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 2,
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupPrivatescanId,
+                'signature'       => $this->signatureTemplate('Carolien', 'Cicek', 'carolien@privatescan.nl'),
+            ],
+            [
+                'first_name'      => 'Maria',
+                'last_name'       => 'Issa',
+                'email'           => 'maria@privatescan.nl',
+                'password'        => $passwords['maria@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 2,
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupPrivatescanId,
+                'signature'       => $this->signatureTemplate('Maria', 'Issa', 'maria@privatescan.nl'),
+            ],
+            [
+                'first_name'      => 'Esther',
+                'last_name'       => 'de Jonge',
+                'email'           => 'esther@privatescan.nl',
+                'password'        => $passwords['esther@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 3, // Kliniek begeleidster
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupPrivatescanId,
+                'signature'       => $this->signatureTemplate('Esther', 'de Jonge', 'esther@privatescan.nl'),
             ],
             [
                 'first_name'      => 'Rob',

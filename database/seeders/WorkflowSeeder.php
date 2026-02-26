@@ -47,7 +47,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
             PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA => ['Klant data bijwerken', $defaultDescription],
             PipelineStage::KLANT_ADVISEREN_START,
-            PipelineStage::KLANT_ADVISEREN_START_HERNIA             => ['Titel voor andere stage', $defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_START_HERNIA             => ['Nieuwe lead bellen', $defaultDescription],
             PipelineStage::KLANT_ADVISEREN_OPVOLGEN                 => ['Klant bellen voor advies', $defaultDescription],
             PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA          => ['MRI aanleveren', $defaultDescription],
             PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA    => ['Klant levert MRI beelden aan, verwerken', $defaultDescription],

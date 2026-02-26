@@ -8,6 +8,7 @@ use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
+use App\Models\PatientNotification;
 use App\Services\FormService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -334,6 +335,14 @@ class AnamnesisController extends Controller
             $anamnesis->update([
                 'gvl_form_link' => null,
             ]);
+
+            // clean up patient notification related to this form
+            $patientNotification = PatientNotification::where('reference_id', $formId)
+                ->where('reference_type', NotificationReferenceType::GVL_FORM)
+                ->where('patient_id', $anamnesis->person_id)
+                ->first();
+
+            $patientNotification?->delete();
 
             Log::info('AnamnesisController@detachGvlForm geslaagd', [
                 'anamnesis_id' => $anamnesisid,

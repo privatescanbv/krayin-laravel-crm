@@ -8,6 +8,7 @@ use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
+use App\Models\PatientNotification;
 use App\Services\FormService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -153,7 +154,7 @@ class AnamnesisController extends Controller
 
         try {
             // Create form request for this person
-            $formLink = $this->createFormRequestForAnamnesis($anamnesis);
+            [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
 
             // Reload the anamnesis to get updated gvl_form_link
             $anamnesis->refresh();
@@ -163,7 +164,7 @@ class AnamnesisController extends Controller
                 $anamnesis->person_id,
                 $formLink,
                 NotificationReferenceType::GVL_FORM,
-                $anamnesis->id,
+                $formId,
                 false,
                 auth()->id()
             );
@@ -237,7 +238,7 @@ class AnamnesisController extends Controller
             }
 
             // Create form request for this person
-            $formLink = $this->createFormRequestForAnamnesis($anamnesis);
+            [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
 
             // Reload the anamnesis to get updated gvl_form_link
             $anamnesis->refresh();
@@ -247,7 +248,7 @@ class AnamnesisController extends Controller
                 $anamnesis->person_id,
                 $formLink,
                 NotificationReferenceType::GVL_FORM,
-                $anamnesis->id,
+                $formId,
                 false,
                 auth()->id()
             );
@@ -334,6 +335,14 @@ class AnamnesisController extends Controller
             $anamnesis->update([
                 'gvl_form_link' => null,
             ]);
+
+            // clean up patient notification related to this form
+            $patientNotification = PatientNotification::where('reference_id', $formId)
+                ->where('reference_type', NotificationReferenceType::GVL_FORM)
+                ->where('patient_id', $anamnesis->person_id)
+                ->first();
+
+            $patientNotification?->delete();
 
             Log::info('AnamnesisController@detachGvlForm geslaagd', [
                 'anamnesis_id' => $anamnesisid,
@@ -494,7 +503,7 @@ class AnamnesisController extends Controller
     /**
      * Create a form request for anamnesis and return the form link.
      */
-    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis): string
+    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis): array
     {
         if (! $anamnesis->person) {
             throw new Exception('Anamnesis heeft geen gekoppelde persoon.');
@@ -604,7 +613,7 @@ class AnamnesisController extends Controller
             'gvl_form_link' => $formLink,
         ]);
 
-        return $formLink;
+        return [$result['json']['data']['id'],  $formLink];
     }
 
     // todo move to repro

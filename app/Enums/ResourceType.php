@@ -12,7 +12,6 @@ enum ResourceType: string
     case ARTSEN = 'artsen';
     case OTHER = 'other';
     case CARDIOLOGIE = 'cardiologie';
-
     case RONTGEN = 'rontgen';
 
     /**

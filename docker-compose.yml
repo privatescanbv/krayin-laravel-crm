@@ -86,9 +86,11 @@ services:
     networks:
       public:
       backend:
+      backend_redis:
       privateforms_form_traefik:
     depends_on:
       - mysql_crm
+      - redis
 
   mysql_crm:
     image: 'mysql/mysql-server:8.0'
@@ -153,6 +155,7 @@ services:
       - ./.docker/config/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
     networks:
       - backend
+      - backend_redis
     labels:
       - logging=promtail
     depends_on:
@@ -299,12 +302,23 @@ services:
 #      - public
 #      - backend
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - backend_redis
 
 networks:
   backend:
     driver: bridge
   public:
     driver: bridge
+  backend_redis:
+    external: true
+    name: backend_redis
   privateforms_form_traefik:
     external: ${USE_EXTERNAL_TRAEFIK_NETWORK:-false}
     name: ${TRAEFIK_NETWORK_NAME:-privateforms_form_traefik}

@@ -6,6 +6,8 @@ use App\Actions\Leads\LeadToLostAction;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
 use App\Repositories\SalesLeadRepository;
+use App\Services\DomainEvents\DomainEventBuilder;
+use App\Services\DomainEvents\RedisEventPublisher;
 use App\Services\LeadDuplicateCacheService;
 use App\Services\WebhookService;
 use Exception;
@@ -32,7 +34,8 @@ class LeadObserver
         protected ActivityRepository $activityRepository,
         private readonly LeadRepository $leadRepository,
         private readonly SalesLeadRepository $salesLeadRepository,
-        private readonly LeadToLostAction $leadToLostAction
+        private readonly LeadToLostAction $leadToLostAction,
+        private readonly RedisEventPublisher $redisEventPublisher,
     ) {}
 
     /**
@@ -113,6 +116,14 @@ class LeadObserver
             ]);
             // 'stack_trace' => (new \Exception())->getTraceAsString(),
             $this->sendWebhook($lead, 'LeadObserver@updated');
+
+            $event = DomainEventBuilder::pipelineStageChanged(
+                aggregateType: 'Lead',
+                entity: $lead,
+                oldStageId: (int) $lead->getOriginal('lead_pipeline_stage_id'),
+                newStageId: $lead->lead_pipeline_stage_id,
+            );
+            $this->redisEventPublisher->publish($event);
 
             // If stage transitioned to a "won" stage, create SalesLead and initial Order
             // Reload the stage relationship to get the fresh data

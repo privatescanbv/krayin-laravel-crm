@@ -8,6 +8,7 @@ use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Department;
 use App\Observers\LeadObserver;
 use App\Repositories\SalesLeadRepository;
+use App\Services\DomainEvents\RedisEventPublisher;
 use App\Services\WebhookService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,12 +33,16 @@ class LeadWebhookTest extends TestCase
 
         $this->webhookCallCount = 0;
 
+        $mockPublisher = Mockery::mock(RedisEventPublisher::class);
+        $mockPublisher->shouldReceive('publish')->andReturn(true);
+
         $this->observer = new LeadObserver(
             webhookService: $this->mockWebhookService(),
             activityRepository: app(ActivityRepository::class),
             leadRepository: app(LeadRepository::class),
             salesLeadRepository: app(SalesLeadRepository::class),
             leadToLostAction: app(LeadToLostAction::class),
+            redisEventPublisher: $mockPublisher,
         );
     }
 

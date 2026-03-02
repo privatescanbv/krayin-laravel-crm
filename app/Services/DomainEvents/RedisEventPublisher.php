@@ -13,6 +13,12 @@ class RedisEventPublisher
 
     public function publish(array $event): bool
     {
+        // Increment once before any retry attempts — all retries carry the same version.
+        // The consumer (n8n) validates by doing its own incr on seq:{aggregateId} and
+        // expects the event version to match. A failed publish leaves a gap, which
+        // correctly triggers a replay on the consumer side.
+        $event['version'] = (int) Redis::connection('events')->incr('seq:' . ($event['aggregateId'] ?? 'unknown'));
+
         $json          = json_encode($event, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $lastException = null;
 
@@ -25,6 +31,7 @@ class RedisEventPublisher
                     'eventType'     => $event['eventType'] ?? null,
                     'aggregateType' => $event['aggregateType'] ?? null,
                     'aggregateId'   => $event['aggregateId'] ?? null,
+                    'version'       => $event['version'],
                 ]);
 
                 return true;
@@ -38,6 +45,7 @@ class RedisEventPublisher
             'eventType'     => $event['eventType'] ?? null,
             'aggregateType' => $event['aggregateType'] ?? null,
             'aggregateId'   => $event['aggregateId'] ?? null,
+            'version'       => $event['version'],
             'channel'       => self::CHANNEL,
             'error'         => $lastException?->getMessage(),
         ]);

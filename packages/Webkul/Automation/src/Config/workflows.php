@@ -77,6 +77,17 @@ return [
             ],
         ],
 
+        'orders' => [
+            'name'   => 'Orders',
+            'class'  => 'Webkul\Automation\Helpers\Entity\Order',
+            'events' => [
+                [
+                    'event' => 'order.update_stage.after',
+                    'name'  => 'Status',
+                ],
+            ],
+        ],
+
         // Removed quotes entity: class no longer exists
     ],
 ];

@@ -26,6 +26,7 @@ class SalesLeadObserver
      */
     public function created(SalesLead $salesLead): void
     {
+        Event::dispatch('sale.update_stage.after', $salesLead);
         $this->sendWebhook($salesLead, 'SalesLeadObserver@created');
     }
 

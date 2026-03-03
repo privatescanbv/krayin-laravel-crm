@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class WorkflowSeeder extends Seeder
 {
+    // todo dynamisch type. bellen doen voor klant adviseren -> bellen
     public function __construct() {}
 
     public function run($parameters = [])
@@ -17,18 +18,19 @@ class WorkflowSeeder extends Seeder
         DB::table('workflows')->delete();
 
         $now = Carbon::now();
-        $activityType = ActivityType::TASK->value;
 
         $rows = [];
         $id = 1;
 
         foreach (PipelineStage::cases() as $stage) {
-            $rows[] = $this->buildWorkflowRow(
+            $workflow = $this->buildWorkflowRow(
                 id: $id++,
                 stage: $stage,
-                activityType: $activityType,
                 now: $now
             );
+            if (! is_null($workflow)) {
+                $rows[] = $workflow;
+            }
         }
 
         DB::table('workflows')->insert(array_filter($rows));
@@ -37,37 +39,42 @@ class WorkflowSeeder extends Seeder
     /**
      * Generated default data
      *
-     * @return array{title: string, description: string}
+     * @return ?array{title: string, description: string, type: ActivityType}
      */
-    private function createActivityTitle(PipelineStage $stage): array
+    private function createActivityTitle(PipelineStage $stage): ?array
     {
         $defaultDescription = 'Automatisch aangemaakt op basis van statuswijziging';
 
         return match ($stage) {
             PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
-            PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA => ['Klant data bijwerken', $defaultDescription],
+            PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA => ['Klant data bijwerken', $defaultDescription, ActivityType::TASK],
             PipelineStage::KLANT_ADVISEREN_START,
-            PipelineStage::KLANT_ADVISEREN_START_HERNIA             => ['Nieuwe lead bellen', $defaultDescription],
-            PipelineStage::KLANT_ADVISEREN_OPVOLGEN                 => ['Klant bellen voor advies', $defaultDescription],
-            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA          => ['MRI aanleveren', $defaultDescription],
-            PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA    => ['Klant levert MRI beelden aan, verwerken', $defaultDescription],
-            PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA        => ['Klant adviseren met MRI beelden', $defaultDescription],
-            PipelineStage::SALES_DOC_COMPLETE_HERNIA                => ['4.1 consult met arts', $defaultDescription],
-            PipelineStage::SALES_MET_SUCCES_AFGEROND                => ['Test auto op sales entiteit', $defaultDescription],
+            PipelineStage::KLANT_ADVISEREN_START_HERNIA             => ['Nieuwe lead bellen', $defaultDescription, ActivityType::CALL],
+            PipelineStage::KLANT_ADVISEREN_OPVOLGEN                 => null,
+            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA          => ['MRI aanleveren', $defaultDescription, ActivityType::TASK],
+            PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA    => ['Klant levert MRI beelden aan, verwerken', $defaultDescription, ActivityType::TASK],
+            PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA        => ['Klant adviseren met MRI beelden', $defaultDescription, ActivityType::CALL],
+            PipelineStage::SALES_DOC_COMPLETE_HERNIA                => ['4.1 consult met arts', $defaultDescription, ActivityType::TASK],
+            PipelineStage::SALES_MET_SUCCES_AFGEROND                => ['Test auto op sales entiteit', $defaultDescription, ActivityType::TASK],
 
-            default => ["Auto-activity: {$stage->name()}", $defaultDescription],
+            default => ["Auto-activity: {$stage->name()}", $defaultDescription, ActivityType::TASK],
         };
     }
 
-    private function buildWorkflowRow(int $id, PipelineStage $stage, string $activityType, Carbon $now): array
+    private function buildWorkflowRow(int $id, PipelineStage $stage, Carbon $now): ?array
     {
         if ($stage->isLost() || $stage->isWon() || $stage == PipelineStage::NO_PIPELINE) {
             // no auto activities
             return [];
         }
-        [$title, $description] = $this->createActivityTitle($stage);
-        $entityType = ($stage->isLead()) ? 'leads' : 'saleslead';
-        $entityTypeEvent = ($stage->isLead()) ? 'lead' : 'sale';
+        $activityVars = $this->createActivityTitle($stage);
+        if (is_null($activityVars)) {
+            return null;
+        }
+
+        [$title, $description, $type] = $activityVars;
+        $entityType = $stage->isOrder() ? 'orders' : ($stage->isLead() ? 'leads' : 'saleslead');
+        $entityTypeEvent = $stage->isOrder() ? 'order' : ($stage->isLead() ? 'lead' : 'sale');
 
         return [
             'id'             => $id,
@@ -90,7 +97,7 @@ class WorkflowSeeder extends Seeder
                     'attributes' => [
                         'title'       => $title,
                         'description' => $description,
-                        'type'        => $activityType,
+                        'type'        => $type->value,
                     ],
                 ],
             ]),

@@ -3,6 +3,7 @@
 namespace App\Actions\Activities;
 
 use App\Models\Department;
+use App\Models\Order;
 use App\Models\SalesLead;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +44,31 @@ class CreateActivityForLeadOrSalesAction
         $activityData['sales_lead_id'] = $sales->id;
 
         return $this->createActivity(null, $sales->id, $groupId, $activityIsDone, $activityData);
+    }
+
+    /**
+     * @throws DuplicateException
+     */
+    public function executeForOrder(Order $order, bool $activityIsDone, array $activityData): Activity
+    {
+        $groupId = Department::getGroupIdForLead($order->salesLead->lead);
+        $activityData['order_id'] = $order->id;
+
+        $isDuplicate = $this->activityRepository
+            ->where('order_id', $order->id)
+            ->where('title', $activityData['title'] ?? null)
+            ->where('is_done', 0)
+            ->exists();
+
+        if ($isDuplicate) {
+            throw new DuplicateException('Duplicate activity: same title exists for this order and is not done.');
+        }
+
+        return $this->activityRepository->create(array_merge($activityData, [
+            'is_done'  => $activityIsDone ? 1 : 0,
+            'user_id'  => $activityData['user_id'] ?? null,
+            'group_id' => $groupId,
+        ]));
     }
 
     /**

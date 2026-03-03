@@ -79,6 +79,7 @@ class LeadObserver
         $willUpdatePipeline = $this->willPipelineBeUpdated($lead);
 
         $this->setDefaultPipelineState($lead);
+        Event::dispatch('lead.update_stage.after', $lead);
 
         // Only send webhook if pipeline wasn't updated (to avoid duplicate)
         // The updated observer will handle the webhook if pipeline changed

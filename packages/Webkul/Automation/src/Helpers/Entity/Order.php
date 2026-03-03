@@ -90,9 +90,8 @@ class Order extends AbstractEntity
                         'name'    => 'Type',
                         'type'    => 'select',
                         'options' => [
-                            ['id' => ActivityType::CALL->value, 'name' => 'Telefoontje'],
-                            ['id' => ActivityType::NOTE->value, 'name' => 'Meeting'],
-                            ['id' => ActivityType::TASK->value, 'name' => 'Taak'],
+                            ['id' => ActivityType::CALL->value, 'name' => ActivityType::CALL->label()],
+                            ['id' => ActivityType::TASK->value, 'name' => ActivityType::TASK->label()],
                         ],
                     ],
                 ],

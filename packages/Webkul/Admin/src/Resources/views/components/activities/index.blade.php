@@ -336,9 +336,9 @@
                 },
 
                 filteredActivities() {
-                    console.log('selectedType = '+this.selectedType + ', activityTypeFilter = ' + this.activityTypeFilter);
+                    // console.log('selectedType = '+this.selectedType + ', activityTypeFilter = ' + this.activityTypeFilter);
                     // console.log(JSON.parse(JSON.stringify(this.activities)));
-                    if (this.selectedType == 'action_needed') {
+                    if (this.selectedType === 'action_needed') {
                          return this.activities
                              .filter(activity => ! activity.is_done && this.isPast(activity.schedule_from))
                             .sort((a, b) => {
@@ -407,7 +407,6 @@
             methods: {
                 get() {
                     this.isLoading = true;
-                    console.log('retrieve acti ' + this.endpoint);
                     this.$axios.get(this.endpoint)
                         .then(response => {
                             this.activities = response.data.data;

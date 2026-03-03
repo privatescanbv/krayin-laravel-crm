@@ -4,6 +4,7 @@ namespace Webkul\Automation\Helpers\Entity;
 
 use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
 use App\Actions\Activities\DuplicateException;
+use App\Enums\ActivityType;
 use App\Enums\PipelineStage;
 use App\Repositories\SalesLeadRepository;
 use Exception;
@@ -144,9 +145,8 @@ class SalesLead extends AbstractEntity
                         'name' => 'Type',
                         'type' => 'select',
                         'options' => [
-                            ['id' => 'call', 'name' => 'Telefoontje'],
-                            ['id' => 'meeting', 'name' => 'Meeting'],
-                            ['id' => 'task', 'name' => 'Taak'],
+                            ['id' => ActivityType::CALL->value, 'name' => ActivityType::CALL->label()],
+                            ['id' => ActivityType::TASK->value, 'name' => ActivityType::TASK->label()],
                         ]
                     ]
                 ],

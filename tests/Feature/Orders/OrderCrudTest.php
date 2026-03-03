@@ -84,9 +84,9 @@ test('order item total_price is automatically calculated from product price when
         'sales_lead_id' => $salesLead->id,
         'items'         => [
             [
-                'product_id'  => $product->id,
-                'quantity'    => 3,
-                'total_price' => 0, // Should be calculated automatically
+                'product_id' => $product->id,
+                'quantity'   => 3,
+                // total_price omitted → should fall back to product price
             ],
         ],
     ];
@@ -114,9 +114,9 @@ test('order item total_price is automatically calculated from product price when
         '_method'       => 'put',
         'items'         => [
             [
-                'product_id'  => $product->id,
-                'quantity'    => 2,
-                'total_price' => 0, // Should be calculated automatically
+                'product_id' => $product->id,
+                'quantity'   => 2,
+                // total_price omitted → should fall back to product price
             ],
         ],
     ];
@@ -130,6 +130,33 @@ test('order item total_price is automatically calculated from product price when
         'product_id'  => $product->id,
         'quantity'    => 2,
         'total_price' => 301.50, // 150.75 * 2
+    ]);
+});
+
+test('order item total_price of zero is preserved as free (not overridden by product price)', function () {
+    $salesLead = SalesLead::factory()->create();
+    $product = Product::factory()->create(['price' => 99.50]);
+
+    $payload = [
+        'title'         => 'Free Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        'items'         => [
+            [
+                'product_id'  => $product->id,
+                'quantity'    => 2,
+                'total_price' => 0, // Explicit free price — must not be overridden
+            ],
+        ],
+    ];
+
+    $response = $this->postJson(route('admin.orders.store'), $payload);
+    $response->assertOk();
+
+    $this->assertDatabaseHas('order_items', [
+        'product_id'  => $product->id,
+        'quantity'    => 2,
+        'total_price' => 0,
     ]);
 });
 

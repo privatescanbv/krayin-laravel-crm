@@ -282,9 +282,14 @@ class OrderController extends SimpleEntityController
                 $productId = (int) $item['product_id'];
                 $quantity = (int) $item['quantity'];
 
-                // Get total_price from request, or calculate from product price
-                $totalPrice = (float) ($item['total_price'] ?? 0);
-                if ($totalPrice == 0) {
+                // Get total_price from request, or calculate from product price.
+                // Only fall back to the product price when the field was not explicitly provided —
+                // an explicit 0 means "free" and must be preserved.
+                $hasTotalPrice = array_key_exists('total_price', $item)
+                    && $item['total_price'] !== ''
+                    && $item['total_price'] !== null;
+                $totalPrice = $hasTotalPrice ? (float) $item['total_price'] : 0;
+                if (! $hasTotalPrice) {
                     $product = Product::find($productId);
                     if ($product && $product->price) {
                         $totalPrice = (float) $product->price * $quantity;
@@ -389,9 +394,14 @@ class OrderController extends SimpleEntityController
                     $productId = (int) $item['product_id'];
                     $quantity = (int) $item['quantity'];
 
-                    // Get total_price from request, or calculate from product price
-                    $totalPrice = (float) ($item['total_price'] ?? 0);
-                    if ($totalPrice == 0) {
+                    // Get total_price from request, or calculate from product price.
+                    // Only fall back to the product price when the field was not explicitly provided —
+                    // an explicit 0 means "free" and must be preserved.
+                    $hasTotalPrice = array_key_exists('total_price', $item)
+                        && $item['total_price'] !== ''
+                        && $item['total_price'] !== null;
+                    $totalPrice = $hasTotalPrice ? (float) $item['total_price'] : 0;
+                    if (! $hasTotalPrice) {
                         $product = Product::find($productId);
                         if ($product && $product->price) {
                             $totalPrice = (float) $product->price * $quantity;

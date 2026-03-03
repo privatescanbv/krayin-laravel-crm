@@ -87,7 +87,7 @@ services:
     volumes:
       - 'sail-mysql:/var/lib/mysql'
 #      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-      - './docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
+      - '/home/apps/docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
     networks:
       - backend
 #    healthcheck:
@@ -260,7 +260,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki-data:/loki
-      - ./docker/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - /home/apps/docker/loki/:/etc/loki/:ro
     networks:
       - backend
     labels:
@@ -273,7 +273,7 @@ services:
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./docker/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /home/apps/docker/promtail/:/etc/promtail/:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
       - backend

@@ -27,11 +27,11 @@ docker cp temp-crm:/docker/.env.keycloak.prod ./.env.keycloak
 docker cp temp-crm:/docker/config ./docker/config
 # Ensure directories exist
 mkdir -p ./docker/loki ./docker/promtail
-docker cp temp-crm:/docker/loki/loki-config.yml ./docker/loki/loki-config.yml
-docker cp temp-crm:/docker/promtail/promtail-config.yml ./docker/promtail/promtail-config.yml
+docker cp temp-crm:/docker/loki/loki-config.yml ./docker/loki/local-config.yaml
+docker cp temp-crm:/docker/promtail/promtail-config.yml ./docker/promtail/config.yml
 
 # Verwijder tijdelijke container
 docker rm temp-crm
 
 #docker-compose down && docker-compose up -d --force-recreate
-docker-compose up -d
+docker compose up -d

@@ -1,5 +1,5 @@
 {!! view_render_event('admin.leads.multi_contactmatcher.before') !!}
-
+@props(['lead' => null, 'persons' => []])
 @php
     /**
      * IMPORTANT: `date_of_birth` is a DATE-only field.

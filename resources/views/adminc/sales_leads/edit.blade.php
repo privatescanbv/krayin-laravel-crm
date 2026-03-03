@@ -97,7 +97,7 @@
                         </div>
 
                         <x-adminc::components.multi-contactmatcher
-                            :leads=" (object)['id' => $salesLead->id]"
+                            :lead="$salesLead->lead"
                             :persons="$salesLead->persons"
                         />
                     </div>

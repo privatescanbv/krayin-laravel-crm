@@ -162,18 +162,6 @@
                                         class="w-full"
                                     />
                                 </div>
-
-                                <!-- Publiceren in patiëntportaal (alleen voor meeting) -->
-                                <div v-show="selectedTypeValue === 'meeting'">
-                                    <input type="hidden" name="publish_to_portal" value="0" />
-                                    <x-adminc::components.field
-                                        type="checkbox"
-                                        name="publish_to_portal"
-                                        label="Publiceren in patiëntportaal"
-                                        value="1"
-                                    />
-                                </div>
-
                                 {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
                                 </x-slot>
 

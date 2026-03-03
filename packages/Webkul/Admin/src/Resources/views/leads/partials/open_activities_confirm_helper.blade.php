@@ -3,32 +3,22 @@
         // Shared helper to build confirmation message with open activity titles
         window.buildOpenActivitiesConfirmMessage = async function(axiosInstance, entityId, openCount, entityType='lead', options = {}) {
             const type = (options && options.type) ? options.type : entityType;
+
+            const endpointMap = {
+                sale:  { tmpl: "{{ route('admin.sales-leads.activities.index', 0) }}", params: { is_done: 0, hierarchy: false } },
+                order: { tmpl: "{{ route('admin.orders.activities.index', 0) }}",      params: { is_done: 0 } },
+                lead:  { tmpl: "{{ route('admin.activities.by_lead_open', 0) }}",      params: {} },
+            };
+            const suffixMap = { sale: ' op deze sales', order: ' op deze order' };
+
             let titlesList = '';
             try {
-                let activities = [];
-                if (type === 'sales') {
-                    // Fetch only open activities for sales lead (server-side filter)
-                    const tmpl = "{{ route('admin.sales-leads.activities.index', 0) }}"; // .../sales-leads/0/activities
-                    const endpoint = tmpl.replace('/0/', `/${entityId}/`);
-                    const res = await axiosInstance.get(endpoint, { params: { is_done: 0 } });
-                    const all = res?.data?.data || [];
-                    activities = Array.isArray(all) ? all : [];
-                } else if (type === 'order') {
-                    // Fetch only open activities for order
-                    const tmpl = "{{ route('admin.orders.activities.index', 0) }}"; // .../orders/0/activities
-                    const endpoint = tmpl.replace('/0/', `/${entityId}/`);
-                    const res = await axiosInstance.get(endpoint, { params: { is_done: 0 } });
-                    const all = res?.data?.data || [];
-                    activities = Array.isArray(all) ? all : [];
-                } else if (type === 'lead') {
-                    // Default: fetch open activities for lead
-                    const tmpl = "{{ route('admin.activities.by_lead_open', 0) }}"; // .../by-lead/0/open
-                    const endpoint = tmpl.replace('/0/', `/${entityId}/`);
-                    const res = await axiosInstance.get(endpoint);
-                    activities = res?.data?.data || [];
-                } else {
-                    throw new Error('Unknown entity type for fetching activities');
-                }
+                const config = endpointMap[type];
+                if (!config) throw new Error('Unknown entity type for fetching activities');
+
+                const endpoint = config.tmpl.replace('/0/', `/${entityId}/`);
+                const res = await axiosInstance.get(endpoint, { params: config.params });
+                const activities = Array.isArray(res?.data?.data) ? res.data.data : [];
 
                 const titles = activities
                     .map(a => (a.title || '').trim())
@@ -44,12 +34,7 @@
                 // Ignore fetch errors; present basic message without titles
             }
 
-            let suffix = ' op deze lead';
-            if (type === 'sales') {
-                suffix = ' op deze sales';
-            } else if (type === 'order') {
-                suffix = ' op deze order';
-            }
+            const suffix = suffixMap[type] ?? ' op deze lead';
             return `Er staan nog ${openCount} open activiteit(en)${suffix}. Wil je deze afronden en de status wijzigen?${titlesList}`;
         }
     </script>

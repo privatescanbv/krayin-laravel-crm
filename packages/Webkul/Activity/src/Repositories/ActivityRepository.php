@@ -4,6 +4,7 @@ namespace Webkul\Activity\Repositories;
 
 use App\Helpers\DatabaseHelper;
 use App\Models\Clinic;
+use App\Models\Order;
 use Illuminate\Container\Container;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -287,36 +288,76 @@ class ActivityRepository extends Repository
         }
     }
 
-    public function countOpen(Object $entity)
+    public function countOpen(object $entity): \Illuminate\Http\JsonResponse
     {
-        if($entity instanceof Lead) {
-            $relationKey = 'lead_id';
-        } else if($entity instanceof Clinic) {
-            $relationKey = 'clinic_id';
-        } else if($entity instanceof SalesLead) {
-            $relationKey = 'sales_lead_id';
-        } else if($entity instanceof Person) {
-            $count = $entity->activities->where('is_done', 0)->count();
-            $unreadEmail = Email::where('person_id', $entity->id)
-                ->where('is_read', 0)
-                ->count();
-            return response()->json([
-                'data' => $count + $unreadEmail,
-            ]);
-        } else {
-            throw new InvalidArgumentException('Unsupported entity type for counting open activities.'.get_class($entity));
+        $count = match (true) {
+            $entity instanceof Person    => $this->countOpenForPerson($entity),
+            $entity instanceof Lead      => $this->countOpenForSimple($entity, 'lead_id'),
+            $entity instanceof SalesLead => $this->countOpenForSalesLead($entity),
+            $entity instanceof Clinic    => $this->countOpenForSimple($entity, 'clinic_id'),
+            $entity instanceof Order     => $this->countOpenForOrder($entity),
+            default => throw new InvalidArgumentException(
+                'Unsupported entity type for counting open activities: ' . get_class($entity)
+            ),
+        };
+
+        return response()->json(['data' => $count]);
+    }
+
+    /** Lead, Clinic — one FK on both activities and emails. */
+    private function countOpenForSimple(object $entity, string $fk): int
+    {
+        return Activity::where($fk, $entity->id)->where('is_done', 0)->count()
+             + Email::where($fk, $entity->id)->where('is_read', 0)->count();
+    }
+
+    /** SalesLead — own activities/emails + child order activities (hierarchy). */
+    private function countOpenForSalesLead(SalesLead $entity): int
+    {
+        $count = Activity::where('sales_lead_id', $entity->id)->where('is_done', 0)->count()
+               + Email::where('sales_lead_id', $entity->id)->where('is_read', 0)->count();
+
+        $orderIds = $entity->orders()->pluck('orders.id');
+        if ($orderIds->isNotEmpty()) {
+            $count += Activity::whereIn('order_id', $orderIds)->where('is_done', 0)->count();
         }
-        $entityId = $entity->id;
-        $count = $this
-            ->where($relationKey, $entityId)
-            ->where('is_done', 0)
-            ->count();
-        $unreadEmail = Email::where($relationKey, $entityId)
-            ->where('is_read', 0)
-            ->count();
-        return response()->json([
-            'data' => $count + $unreadEmail,
-        ]);
+
+        return $count;
+    }
+
+    /** Order — activities only; emails table has no order_id column. */
+    private function countOpenForOrder(Order $entity): int
+    {
+        return Activity::where('order_id', $entity->id)->where('is_done', 0)->count();
+    }
+
+    /** Person — own pivot activities + emails, plus child Lead/SalesLead/Order hierarchy. */
+    private function countOpenForPerson(Person $entity): int
+    {
+        $count = $entity->activities()->where('is_done', 0)->count()
+               + Email::where('person_id', $entity->id)->where('is_read', 0)->count();
+
+        // Child Leads (via lead_persons pivot)
+        $leadIds = DB::table('lead_persons')->where('person_id', $entity->id)->pluck('lead_id');
+        if ($leadIds->isNotEmpty()) {
+            $count += Activity::whereIn('lead_id', $leadIds)->where('is_done', 0)->count()
+                    + Email::whereIn('lead_id', $leadIds)->where('is_read', 0)->count();
+        }
+
+        // Child SalesLeads (via saleslead_persons pivot)
+        $salesLeadIds = DB::table('saleslead_persons')->where('person_id', $entity->id)->pluck('saleslead_id');
+        if ($salesLeadIds->isNotEmpty()) {
+            $count += Activity::whereIn('sales_lead_id', $salesLeadIds)->where('is_done', 0)->count()
+                    + Email::whereIn('sales_lead_id', $salesLeadIds)->where('is_read', 0)->count();
+
+            // Child Orders of those SalesLeads
+            $orderIds = Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id');
+            if ($orderIds->isNotEmpty()) {
+                $count += Activity::whereIn('order_id', $orderIds)->where('is_done', 0)->count();
+            }
+        }
+
+        return $count;
     }
 
     /**

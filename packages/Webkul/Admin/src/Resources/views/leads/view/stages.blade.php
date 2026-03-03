@@ -332,9 +332,10 @@
                         let openCount;
                         let entityIdForConfirm;
                         let confirmOptions;
+                        let entityType = 'lead';
                         @if ($isOrder)
                         entityIdForConfirm = {{ $order->id }};
-                        confirmOptions = {type: 'order'};
+                        entityType = 'order';
                         const orderTmpl = "{{ route('admin.orders.activities.index', $order->id) }}";
                         const orderRes = await this.$axios.get(orderTmpl, {params: {is_done: 0}});
                         const orderAll = Array.isArray(orderRes?.data?.data) ? orderRes.data.data : [];
@@ -342,19 +343,18 @@
                         @elseif ($isSalesLead)
                         // Strictly use sales lead activities; do not fallback to lead counters
                         entityIdForConfirm = {{ $salesLead->id }};
-                        confirmOptions = {type: 'sales'};
+                        entityType = 'sale';
                         const tmpl = "{{ route('admin.sales-leads.activities.index', $salesLead->id) }}";
-                        const res = await this.$axios.get(tmpl, {params: {is_done: 0}});
+                        const res = await this.$axios.get(tmpl, {params: {is_done: 0, hierarchy: false}});
                         const all = Array.isArray(res?.data?.data) ? res.data.data : [];
                         openCount = all.length;
                         @else
                         // Regular lead context
                         openCount = Number({{ $lead->open_activities_count ?? $lead->openActivitiesCount ?? 0 }});
                         entityIdForConfirm = {{ $lead->id }};
-                        confirmOptions = {type: 'lead'};
                         @endif
                         if (openCount > 0) {
-                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, entityIdForConfirm, openCount, confirmOptions);
+                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, entityIdForConfirm, openCount, entityType);
                             const agree = window.confirm(message);
                             if (!agree) {
                                 this.isUpdating = false;

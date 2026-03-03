@@ -335,9 +335,13 @@ class OrderController extends SimpleEntityController
     {
         $order = $this->orderRepository->findOrFail($id);
 
-        $activities = $order->activities()->get();
+        $query = $order->activities();
 
-        return ActivityResource::collection($activities);
+        if (request()->has('is_done')) {
+            $query->where('is_done', (int) request('is_done'));
+        }
+
+        return ActivityResource::collection($query->get());
     }
 
     public function emailsDetach(int $id): JsonResponse

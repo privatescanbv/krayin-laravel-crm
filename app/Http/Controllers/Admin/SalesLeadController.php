@@ -400,27 +400,39 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::findOrFail($id);
 
+        $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
+        $withHierarchy = request()->has('hierarchy') ? filter_var(request('hierarchy'), FILTER_VALIDATE_BOOLEAN) : true;
+
         // 1. Own sales activities — label: 'Sales'
-        $salesActivities = Activity::where('sales_lead_id', $id)->get();
+        $salesQuery = Activity::where('sales_lead_id', $id);
+        if (! is_null($isDoneFilter)) {
+            $salesQuery->where('is_done', $isDoneFilter);
+        }
+        $salesActivities = $salesQuery->get();
         $salesActivities->each(fn ($a) => $a->entity_source = [
             'type'  => 'sales',
             'label' => 'Sales',
         ]);
 
         // 2. Child order activities — label: 'Order: {title}'
-        $orderIds = $salesLead->orders()->pluck('orders.id');
         $orderActivities = collect();
-        if ($orderIds->isNotEmpty()) {
-            $orderTitles = Order::whereIn('id', $orderIds)->pluck('title', 'id');
-            $orderActivities = Activity::whereIn('order_id', $orderIds)->get();
-            $orderActivities->each(fn ($a) => $a->entity_source = [
-                'type'  => 'order',
-                'label' => 'Order: '.($orderTitles[$a->order_id] ?? $a->order_id),
-            ]);
+        if ($withHierarchy) {
+            $orderIds = $salesLead->orders()->pluck('orders.id');
+            if ($orderIds->isNotEmpty()) {
+                $orderTitles = Order::whereIn('id', $orderIds)->pluck('title', 'id');
+                $orderQuery = Activity::whereIn('order_id', $orderIds);
+                if (! is_null($isDoneFilter)) {
+                    $orderQuery->where('is_done', $isDoneFilter);
+                }
+                $orderActivities = $orderQuery->get();
+                $orderActivities->each(fn ($a) => $a->entity_source = [
+                    'type'  => 'order',
+                    'label' => 'Order: '.($orderTitles[$a->order_id] ?? $a->order_id),
+                ]);
+            }
         }
 
         $all = $salesActivities->merge($orderActivities)->unique('id')->values();
-
         $merged = $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository);
 
         return ActivityResource::collection($merged);

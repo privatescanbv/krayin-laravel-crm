@@ -4,7 +4,7 @@
 ])
 
 <x-adminc::components.kanban-abstract
-    type="orders"
+    type="order"
     :stages="$stages"
     :pipeline="$pipeline"
 />

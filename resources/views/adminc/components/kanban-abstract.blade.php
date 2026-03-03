@@ -16,7 +16,7 @@
         $routeNameViewEntity = 'admin.sales-leads.view';
         $RouteNameGetEntities = 'admin.sales-leads.get';
         $routeNameStageUpdate = 'admin.sales-leads.stage.update';
-    } elseif ($type === 'orders') {
+    } elseif ($type === 'order') {
         $routeNameIndex = 'admin.orders.index';
         $routeNameViewEntity = 'admin.orders.view';
         $RouteNameGetEntities = 'admin.orders.get';
@@ -191,7 +191,7 @@
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.before') !!}
 
                                     <a
-                                        v-if="entityType !== 'orders'"
+                                        v-if="entityType !== 'order'"
                                         class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-neutral-border transition-shadow shadow-xs hover:z-10 hover:shadow-lg bg-white py-1 px-2 dark:border-gray-400 dark:bg-gray-400"
                                         :href="'{{ route($routeNameViewEntity, 'replaceId') }}'.replace('replaceId', element.id)"
                                         style="min-height:unset;"
@@ -940,12 +940,12 @@
                         }
 
                         // Check if moving to any won or lost stage (leads/sales require extra details)
-                        if (this.entityType !== 'orders' && this.isWonStage(stage)) {
+                        if (this.entityType !== 'order' && this.isWonStage(stage)) {
                             this.showStageDetailModal('won', stage, event.added.element);
                             return;
                         }
 
-                        if (this.entityType !== 'orders' && this.isLostStage(stage)) {
+                        if (this.entityType !== 'order' && this.isLostStage(stage)) {
                             this.showStageDetailModal('lost', stage, event.added.element);
                             return;
                         }
@@ -1049,11 +1049,10 @@
                     async updateLeadStageWithChecks(lead, stage) {
                         try {
                             const openCount = Number(lead.open_activities_count || 0);
-
                             if (openCount > 0) {
                                 const activityType = this.entityType === 'sales'
-                                    ? 'sales'
-                                    : (this.entityType === 'orders' ? 'order' : 'lead');
+                                    ? 'sale'
+                                    : (this.entityType === 'order' ? 'order' : 'lead');
                                 const message = await window.buildOpenActivitiesConfirmMessage(this
                                     .$axios, lead.id, openCount, activityType);
                                 const confirmClose = await new Promise((resolve) => {

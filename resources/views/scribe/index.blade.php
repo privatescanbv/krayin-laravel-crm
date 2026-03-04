@@ -198,6 +198,9 @@
                                                     <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents">
                                 <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="patient-documents-POSTapi-patient--id--documents">
+                                <a href="#patient-documents-POSTapi-patient--id--documents">Upload a file and attach it as a FILE activity for the patient.</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents--documentId--download">
                                 <a href="#patient-documents-GETapi-patient--id--documents--documentId--download">Download a patient document (activity file).</a>
                             </li>
@@ -251,7 +254,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: February 24, 2026</li>
+        <li>Last updated: March 4, 2026</li>
     </ul>
 </div>
 
@@ -302,7 +305,7 @@ You can switch the language used with the tabs at the top right (or from the nav
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-02-24\",
+    \"birthdate\": \"2026-03-04\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -333,7 +336,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-02-24",
+    "birthdate": "2026-03-04",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -541,10 +544,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-02-24"
+               value="2026-03-04"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-02-24</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-03-04</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -2709,7 +2712,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
+    --get "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -2717,7 +2720,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
 );
 
 const headers = {
@@ -2844,10 +2847,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="GETapi-sales-leads--id--activities"
-               value="16"
+               value="1"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>16</code></p>
+<p>The ID of the sales lead. Example: <code>1</code></p>
             </div>
                     </form>
 
@@ -2865,7 +2868,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://crm.local.privatescan.nl/api/sales-leads/16/activities" \
+    "https://crm.local.privatescan.nl/api/sales-leads/1/activities" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -2874,15 +2877,15 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-02-24 15:51:35\",
-    \"schedule_to\": \"2026-02-24 15:51:35\"
+    \"schedule_from\": \"2026-03-04 16:59:31\",
+    \"schedule_to\": \"2026-03-04 16:59:31\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/sales-leads/16/activities"
+    "https://crm.local.privatescan.nl/api/sales-leads/1/activities"
 );
 
 const headers = {
@@ -2896,8 +2899,8 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-02-24 15:51:35",
-    "schedule_to": "2026-02-24 15:51:35"
+    "schedule_from": "2026-03-04 16:59:31",
+    "schedule_to": "2026-03-04 16:59:31"
 };
 
 fetch(url, {
@@ -3001,10 +3004,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="16"
+               value="1"
                data-component="url">
     <br>
-<p>The ID of the sales lead. Example: <code>16</code></p>
+<p>The ID of the sales lead. Example: <code>1</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
@@ -3076,10 +3079,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-24 15:51:35"
+               value="2026-03-04 16:59:31"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 15:51:35</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-03-04 16:59:31</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3088,10 +3091,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-02-24 15:51:35"
+               value="2026-03-04 16:59:31"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-02-24 15:51:35</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-03-04 16:59:31</code></p>
         </div>
         </form>
 
@@ -4042,7 +4045,7 @@ fetch(url, {
     &quot;gender&quot;: &quot;Man&quot;,
     &quot;phones&quot;: [
         {
-            &quot;value&quot;: &quot;0612345678&quot;,
+            &quot;value&quot;: &quot;+31612345678&quot;,
             &quot;label&quot;: &quot;eigen&quot;,
             &quot;is_default&quot;: true
         }
@@ -4284,7 +4287,7 @@ fetch(url, {
     &quot;gender&quot;: &quot;Man&quot;,
     &quot;phones&quot;: [
         {
-            &quot;value&quot;: &quot;0612345678&quot;,
+            &quot;value&quot;: &quot;+31612345678&quot;,
             &quot;label&quot;: &quot;eigen&quot;,
             &quot;is_default&quot;: true
         }
@@ -4548,10 +4551,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="phones.0.value"                data-endpoint="PUTapi-patient--id--naw"
-               value="0612345678"
+               value="+31612345678"
                data-component="body">
     <br>
-<p>Phone number. Example: <code>0612345678</code></p>
+<p>Phone number (E.164). Example: <code>+31612345678</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>label</code></b>&nbsp;&nbsp;
@@ -5628,6 +5631,219 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Optional: document kind (stored in activity.additional.document_type). Example: <code>report</code></p>
             </div>
                 </form>
+
+                    <h2 id="patient-documents-POSTapi-patient--id--documents">Upload a file and attach it as a FILE activity for the patient.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-POSTapi-patient--id--documents">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: multipart/form-data" \
+    --header "Accept: application/json" \
+    --form "name=Bloeduitslag"\
+    --form "description=Resultaten van het bloedonderzoek."\
+    --form "file=@/tmp/phpqnhMnE" </code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "multipart/form-data",
+    "Accept": "application/json",
+};
+
+const body = new FormData();
+body.append('name', 'Bloeduitslag');
+body.append('description', 'Resultaten van het bloedonderzoek.');
+body.append('file', document.querySelector('input[name="file"]').files[0]);
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-patient--id--documents">
+            <blockquote>
+            <p>Example response (201, Created):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;File uploaded successfully&quot;,
+    &quot;id&quot;: 42
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Patient not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not Found&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;The name field is required.&quot;,
+    &quot;errors&quot;: {}
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-patient--id--documents" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-patient--id--documents"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-patient--id--documents"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-patient--id--documents" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-patient--id--documents">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-patient--id--documents" data-method="POST"
+      data-path="api/patient/{id}/documents"
+      data-authed="1"
+      data-hasfiles="1"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-patient--id--documents', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-patient--id--documents"
+                    onclick="tryItOut('POSTapi-patient--id--documents');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-patient--id--documents"
+                    onclick="cancelTryOut('POSTapi-patient--id--documents');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-patient--id--documents"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/patient/{id}/documents</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="POSTapi-patient--id--documents"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-patient--id--documents"
+               value="multipart/form-data"
+               data-component="header">
+    <br>
+<p>Example: <code>multipart/form-data</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-patient--id--documents"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="POSTapi-patient--id--documents"
+               value="3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="name"                data-endpoint="POSTapi-patient--id--documents"
+               value="Bloeduitslag"
+               data-component="body">
+    <br>
+<p>Display name for the document. Example: <code>Bloeduitslag</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="description"                data-endpoint="POSTapi-patient--id--documents"
+               value="Resultaten van het bloedonderzoek."
+               data-component="body">
+    <br>
+<p>optional Description / comment. Example: <code>Resultaten van het bloedonderzoek.</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>file</code></b>&nbsp;&nbsp;
+<small>file</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="file" style="display: none"
+                              name="file"                data-endpoint="POSTapi-patient--id--documents"
+               value=""
+               data-component="body">
+    <br>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpqnhMnE</code></p>
+        </div>
+        </form>
 
                     <h2 id="patient-documents-GETapi-patient--id--documents--documentId--download">Download a patient document (activity file).</h2>
 
@@ -6913,7 +7129,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-02-24T15:51:35\"
+        \"onboarding_completed_at\": \"2026-03-04T16:59:31\"
     }
 }"
 </code></pre></div>
@@ -6934,7 +7150,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-02-24T15:51:35"
+        "onboarding_completed_at": "2026-03-04T16:59:31"
     }
 };
 
@@ -7106,10 +7322,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-02-24T15:51:35"
+               value="2026-03-04T16:59:31"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2026-02-24T15:51:35</code></p>
+<p>Must be a valid date. Example: <code>2026-03-04T16:59:31</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

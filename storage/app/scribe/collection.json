@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "75659e65-8201-4105-a65f-13837934fc8f",
+        "_postman_id": "e821f5af-6fbc-49ff-aca4-1d18d1a881e0",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -41,7 +41,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-02-24\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
+                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-03-04\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
                         },
                         "description": ""
                     },
@@ -539,7 +539,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": "16",
+                                    "value": "1",
                                     "description": "The ID of the sales lead."
                                 }
                             ]
@@ -596,7 +596,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": "16",
+                                    "value": "1",
                                     "description": "The ID of the sales lead."
                                 }
                             ]
@@ -614,7 +614,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-02-24 15:51:35\",\"schedule_to\":\"2026-02-24 15:51:35\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-03-04 16:59:31\",\"schedule_to\":\"2026-03-04 16:59:31\"}"
                         },
                         "description": ""
                     },
@@ -863,7 +863,7 @@
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":null,\"married_name\":null,\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[{\"value\":\"0612345678\",\"label\":\"eigen\",\"is_default\":true}],\"emails\":[{\"value\":\"jan@example.com\",\"label\":\"eigen\",\"is_default\":true}],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":null,\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":null,\"country\":\"Nederland\"}}",
+                            "body": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":null,\"married_name\":null,\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[{\"value\":\"+31612345678\",\"label\":\"eigen\",\"is_default\":true}],\"emails\":[{\"value\":\"jan@example.com\",\"label\":\"eigen\",\"is_default\":true}],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":null,\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":null,\"country\":\"Nederland\"}}",
                             "name": "Success"
                         },
                         {
@@ -912,7 +912,7 @@
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":null,\"married_name\":null,\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[{\"value\":\"0612345678\",\"label\":\"eigen\",\"is_default\":true}],\"emails\":[{\"value\":\"jan@example.com\",\"label\":\"eigen\",\"is_default\":true}],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":null,\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":null,\"country\":\"Nederland\"}}",
+                            "body": "{\"salutation\":\"Dhr.\",\"first_name\":\"Jan\",\"lastname_prefix\":\"van\",\"last_name\":\"Berg\",\"married_name_prefix\":null,\"married_name\":null,\"initials\":\"J.\",\"date_of_birth\":\"1985-03-15\",\"gender\":\"Man\",\"phones\":[{\"value\":\"+31612345678\",\"label\":\"eigen\",\"is_default\":true}],\"emails\":[{\"value\":\"jan@example.com\",\"label\":\"eigen\",\"is_default\":true}],\"address\":{\"street\":\"Hoofdstraat\",\"house_number\":\"1\",\"house_number_suffix\":null,\"postal_code\":\"1234AB\",\"city\":\"Amsterdam\",\"state\":null,\"country\":\"Nederland\"}}",
                             "name": "Success"
                         },
                         {
@@ -1205,6 +1205,79 @@
                             "code": 404,
                             "body": "{\"message\":\"Not Found\"}",
                             "name": "Patient not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Upload a file and attach it as a FILE activity for the patient.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/patient\/:id\/documents",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/patient\/:id\/documents",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d",
+                                    "description": "The Keycloak user ID of the patient."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Bloeduitslag",
+                                    "type": "text",
+                                    "description": "Display name for the document."
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Resultaten van het bloedonderzoek.",
+                                    "type": "text",
+                                    "description": "optional Description \/ comment."
+                                },
+                                {
+                                    "key": "file",
+                                    "src": [],
+                                    "type": "file"
+                                }
+                            ]
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"message\":\"File uploaded successfully\",\"id\":42}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Not Found\"}",
+                            "name": "Patient not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The name field is required.\",\"errors\":{}}",
+                            "name": "Validation error"
                         }
                     ]
                 },
@@ -1621,7 +1694,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-02-24T15:51:35\"}}"
+                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-03-04T16:59:31\"}}"
                         },
                         "description": ""
                     },

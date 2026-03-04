@@ -20,7 +20,7 @@ VOLUME="privatescan_crm_loki-data"
 
 if docker volume inspect "$VOLUME" >/dev/null 2>&1; then
   echo "Removing volume $VOLUME"
-  docker volume rm "$VOLUME"
+#  docker volume rm "$VOLUME"
 else
   echo "Volume $VOLUME does not exist, skipping"
 fi

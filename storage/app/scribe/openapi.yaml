@@ -131,7 +131,7 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-02-24'
+                  example: '2026-03-04'
                   nullable: true
                 email1:
                   type: string
@@ -764,11 +764,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-24 15:51:35'
+                  example: '2026-03-04 16:59:31'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-02-24 15:51:35'
+                  example: '2026-03-04 16:59:31'
               required:
                 - type
     parameters:
@@ -776,7 +776,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the sales lead.'
-        example: 16
+        example: 1
         required: true
         schema:
           type: integer
@@ -1248,7 +1248,7 @@ paths:
                   gender: Man
                   phones:
                     -
-                      value: '0612345678'
+                      value: '+31612345678'
                       label: eigen
                       is_default: true
                   emails:
@@ -1296,7 +1296,7 @@ paths:
                     type: array
                     example:
                       -
-                        value: '0612345678'
+                        value: '+31612345678'
                         label: eigen
                         is_default: true
                     items:
@@ -1304,7 +1304,7 @@ paths:
                       properties:
                         value:
                           type: string
-                          example: '0612345678'
+                          example: '+31612345678'
                         label:
                           type: string
                           example: eigen
@@ -1399,7 +1399,7 @@ paths:
                   gender: Man
                   phones:
                     -
-                      value: '0612345678'
+                      value: '+31612345678'
                       label: eigen
                       is_default: true
                   emails:
@@ -1447,7 +1447,7 @@ paths:
                     type: array
                     example:
                       -
-                        value: '0612345678'
+                        value: '+31612345678'
                         label: eigen
                         is_default: true
                     items:
@@ -1455,7 +1455,7 @@ paths:
                       properties:
                         value:
                           type: string
-                          example: '0612345678'
+                          example: '+31612345678'
                         label:
                           type: string
                           example: eigen
@@ -1719,6 +1719,7 @@ paths:
                   type: string
                   description: 'The current password.'
                   example: OudWachtwoord1!
+                  nullable: true
                 password:
                   type: string
                   description: 'The new password (min 8 characters).'
@@ -2184,6 +2185,88 @@ paths:
                     example: 'Not Found'
       tags:
         - 'Patient documents'
+    post:
+      summary: 'Upload a file and attach it as a FILE activity for the patient.'
+      operationId: uploadAFileAndAttachItAsAFILEActivityForThePatient
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'File uploaded successfully'
+                  id: 42
+                properties:
+                  message:
+                    type: string
+                    example: 'File uploaded successfully'
+                  id:
+                    type: integer
+                    example: 42
+        404:
+          description: 'Patient not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not Found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not Found'
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The name field is required.'
+                  errors: {  }
+                properties:
+                  message:
+                    type: string
+                    example: 'The name field is required.'
+                  errors:
+                    type: object
+                    properties: {  }
+      tags:
+        - 'Patient documents'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Display name for the document.'
+                  example: Bloeduitslag
+                description:
+                  type: string
+                  description: 'optional Description / comment.'
+                  example: 'Resultaten van het bloedonderzoek.'
+                  nullable: true
+                file:
+                  type: string
+                  format: binary
+                  description: 'The file to upload (max 20 MB).'
+              required:
+                - name
+                - file
     parameters:
       -
         in: path
@@ -2553,7 +2636,7 @@ paths:
                     onboarding_completed_at:
                       type: string
                       description: 'Must be a valid date.'
-                      example: '2026-02-24T15:51:35'
+                      example: '2026-03-04T16:59:31'
                       nullable: true
                     email_notifications_enabled:
                       type: boolean

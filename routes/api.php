@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LeadFormController;
 use App\Http\Controllers\Api\PatientAppointmentController;
 use App\Http\Controllers\Api\PatientCounterController;
 use App\Http\Controllers\Api\PatientDocumentController;
+use App\Http\Controllers\Api\PatientFileUploadController;
 use App\Http\Controllers\Api\PatientNawController;
 use App\Http\Controllers\Api\PatientNotificationController;
 use App\Http\Controllers\Api\PatientPasswordController;
@@ -102,6 +103,8 @@ $registerAuthenticatedApiRoutes = function () {
             // Patient documents (derived from Orders -> Activities type=file)
             Route::get('documents', [PatientDocumentController::class, 'index'])
                 ->name('api.patient.documents.index');
+            Route::post('documents', [PatientFileUploadController::class, 'store'])
+                ->name('api.patient.documents.store');
             Route::get('documents/{documentId}/download', [PatientDocumentController::class, 'download'])
                 ->name('api.patient.documents.download');
 

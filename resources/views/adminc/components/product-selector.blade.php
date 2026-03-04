@@ -14,7 +14,13 @@
             :multiple="multiple !== false"
             :fetcher="resolvedFetcher"
             @update:items="onItemsUpdated"
-        />
+        >
+            <template #suggestion="{ item }">
+                <div class="font-medium truncate" :title="item.name_with_path || item.name || ''">
+                    {{ item.name }}
+                </div>
+            </template>
+        </v-entity-selector>
     </script>
 
     <script type="module">
@@ -82,7 +88,7 @@
                         // Ensure name_with_path is used for display, fallback to name
                         return products.map(p => ({
                             ...p,
-                            name: p.name_with_path || p.name || '',
+                            name: p.name || '',
                             name_with_path: p.name_with_path || p.name || ''
                         }));
                     } else {

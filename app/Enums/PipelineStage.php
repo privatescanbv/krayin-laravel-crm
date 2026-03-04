@@ -459,6 +459,14 @@ enum PipelineStage: string
         ));
     }
 
+    public static function getOrderStagesIdsBeforeConfirmed(): array
+    {
+        return [
+            self::ORDER_CONFIRM->id(), self::ORDER_INGEPLAND->id(),
+            self::ORDER_VOORBEREIDEN_HERNIA->id(), self::ORDER_INGEPLAND_HERNIA->id(),
+        ];
+    }
+
     // ============================================================
     // ATTRIBUTE STRUCTURE FOR EACH ENUM VALUE
     // ============================================================
@@ -509,13 +517,6 @@ enum PipelineStage: string
     public function isOrder(): bool
     {
         return $this->meta()['entity'] === 'order';
-    }
-
-    public static function getOrderStagesIdsBeforeConfirmed(): array {
-        return [
-            self::ORDER_CONFIRM->id(), self::ORDER_INGEPLAND->id(),
-            self::ORDER_VOORBEREIDEN_HERNIA->id(), self::ORDER_INGEPLAND_HERNIA->id()
-        ];
     }
 
     public function toArray(): array

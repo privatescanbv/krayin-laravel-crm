@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class OrderStatusService
 {
     /**
-     * Calculate the correct pipeline stage ID for an Order.
+     * Calculate the correct pipeline stage ID for an Order, before or in planning stages, based on the status of its order items.
      *
      * Rules:
      * - Only order items that can be planned (have partner products) are considered
@@ -22,13 +22,9 @@ class OrderStatusService
      */
     public function calculate(Order $order): int
     {
-        $orderItems = OrderItem::query()
+
+        $orderItems = OrderItem::withPartnerProductCount()
             ->where('order_id', $order->id)
-            ->select('order_items.id', 'order_items.status', 'order_items.product_id')
-            ->selectRaw('COUNT(partner_products.id) AS partner_product_count')
-            ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
-            ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id')
             ->get();
 
         // Determine department to pick correct pipeline stages
@@ -46,25 +42,32 @@ class OrderStatusService
             return $firstStageId;
         }
 
-        // Filter to only planable items (items with partner products)
-        $planableItems = $orderItems->filter(function (OrderItem $item) {
+        // Filter to only plannable items (items with partner products)
+        $plannableItems = $orderItems->filter(function (OrderItem $item) {
             return $item->isPlannable();
         });
 
-        // If there are no planable items, order stays at first stage
-        if ($planableItems->isEmpty()) {
+        // If there are no plannable items, order stays at first stage
+        if ($plannableItems->isEmpty()) {
             return $firstStageId;
         }
 
-        // Check if all planable items are planned
-        foreach ($planableItems as $orderItem) {
+        // Check if all plannable items are planned
+        foreach ($plannableItems as $orderItem) {
             if ($orderItem->status !== OrderItemStatus::PLANNED) {
                 return $firstStageId;
             }
         }
 
-        // All planable items are planned
-        return $plannedStageId;
+        // All plannable items are planned
+        // only auto recalculate if order is before confirmed stage, otherwise keep current stage
+        if (in_array($order->stage->id, PipelineStage::getOrderStagesIdsBeforePlanned())) {
+            // change stage to planned
+            return $plannedStageId;
+        }
+
+        // keep current stage
+        return $order->stage->id;
     }
 
     /**

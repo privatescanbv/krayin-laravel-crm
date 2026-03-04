@@ -243,7 +243,7 @@ it('can update multiple phones and returns them in response', function () {
 
     $response = $this
         ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
-        ->putJson("/api/patient/{$keycloakUserId}/naw", compact('phones'));
+        ->putJson("/api/patient/{$keycloakUserId}/naw", ['phones'=>$phones]);
 
     $response->assertOk();
     $response->assertJsonCount(2, 'phones');
@@ -266,7 +266,7 @@ it('can update multiple emails and returns them in response', function () {
 
     $response = $this
         ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
-        ->putJson("/api/patient/{$keycloakUserId}/naw", compact('emails'));
+        ->putJson("/api/patient/{$keycloakUserId}/naw", ['emails'=>$emails]);
 
     $response->assertOk();
     $response->assertJsonCount(2, 'emails');

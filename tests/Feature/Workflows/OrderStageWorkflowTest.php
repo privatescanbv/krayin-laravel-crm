@@ -35,7 +35,7 @@ test('updating an order stage to one with a workflow automatically creates an ac
 
     expect(Activity::where('order_id', $order->id)->count())->toBe(0);
 
-    $order->update(['pipeline_stage_id' => PipelineStage::ORDER_VERZONDEN->id()]);
+    $order->update(['pipeline_stage_id' => PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->id()]);
 
-    expect(Activity::where('order_id', $order->id)->count())->toBe(1);
+    expect(Activity::where('order_id', $order->id)->count())->toBe(2);
 });

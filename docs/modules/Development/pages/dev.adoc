@@ -39,6 +39,15 @@ Stappen voor een volgende keer:
  * Open in browser: http://crm.local:8000
  * [optioneel] sail artisan boost:mcp (voor claude of andere ai tooling)
 
+=== Duster
+
+Formateer je code met:
+
+./vendor/bin/duster fix
+
+Indien fouten kun je met dit command meer informatie krijgen:
+
+./vendor/bin/duster lint tests/Feature/Api/patient/PatientNawTest.php -vvv
 
 === Feature testen uitvoeren
 

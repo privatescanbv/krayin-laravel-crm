@@ -308,9 +308,6 @@ class OrderController extends SimpleEntityController
 
         Event::dispatch("{$this->entityName}.create.after", $order);
 
-        // Create partner product checks for new order
-        $this->orderCheckService->updatePartnerProductChecks($order);
-
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'data'    => $order,
@@ -436,9 +433,6 @@ class OrderController extends SimpleEntityController
         }
 
         Event::dispatch("{$this->entityName}.update.after", $order);
-
-        // Update partner product checks after order items are updated
-        $this->orderCheckService->updatePartnerProductChecks($order);
 
         // Recalculate and update order status based on order items
         $this->orderStatusService->recalculateAndPersist($order);
@@ -568,7 +562,6 @@ class OrderController extends SimpleEntityController
         $check->update([
             'name'      => $request->input('name'),
             'done'      => $request->input('done', false),
-            'removable' => $request->input('removable', true),
         ]);
 
         return response()->json([

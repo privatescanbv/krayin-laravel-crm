@@ -64,6 +64,15 @@ class OrderItem extends Model
         return $this->hasMany(ResourceOrderItem::class, 'orderitem_id');
     }
 
+    public function scopeWithPartnerProductCount($query): void
+    {
+        $query->select('order_items.id', 'order_items.status', 'order_items.product_id')
+            ->selectRaw('COUNT(partner_products.id) AS partner_product_count')
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
+            ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id');
+    }
+
     public function isPlannable(): bool
     {
         return $this->product &&

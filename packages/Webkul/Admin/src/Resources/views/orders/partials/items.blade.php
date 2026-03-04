@@ -26,7 +26,7 @@
                     </x-admin::table.thead.tr>
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
-                    <template v-for="(item, index) in items" :key="index">
+                    <template v-for="(item, index) in items" :key="`${resetKey}-${item.id ?? index}`">
                         <v-order-item :item="item" :index="index" :errors="errors" :persons="persons" @onRemoveItem="removeItem($event)"></v-order-item>
                     </template>
                 </x-admin::table.tbody>
@@ -114,6 +114,7 @@
             props: ['errors', 'data', 'persons'],
             data() {
                 return {
+                    resetKey: 0,
                     items: this.data && this.data.length ? this.data.map(r => {
                         console.log('Processing order item data:', r);
                         // Get product name with path if available
@@ -147,6 +148,7 @@
                         agree: () => {
                             if (this.items.length === 1) {
                                 this.items = [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null , canPlan: false}];
+                                this.resetKey++;
                             } else {
                                 const index = this.items.indexOf(item);
                                 if (index !== -1) this.items.splice(index, 1);

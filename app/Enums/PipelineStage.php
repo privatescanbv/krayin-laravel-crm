@@ -467,6 +467,14 @@ enum PipelineStage: string
         ];
     }
 
+    public static function getOrderStagesIdsBeforePlanned(): array
+    {
+        return [
+            self::ORDER_CONFIRM->id(),
+            self::ORDER_VOORBEREIDEN_HERNIA->id(),
+        ];
+    }
+
     // ============================================================
     // ATTRIBUTE STRUCTURE FOR EACH ENUM VALUE
     // ============================================================

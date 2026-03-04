@@ -24,30 +24,6 @@ class Order extends Model
 {
     use HasAuditTrail, HasFactory;
 
-    /**
-     * Stage IDs that make an order eligible for patient portal appointments.
-     * Corresponds to old statuses: PLANNED, APPROVED, SENT.
-     */
-    private const APPOINTMENT_ELIGIBLE_STAGE_IDS = [
-        // Privatescan: order-verzonden, order-bevestigd, order-ingepland, order-wachten-uitvoering,
-        // order-uitgevoerd, order-rapporten-ontvangen, order-gewonnen
-        PipelineStage::ORDER_VERZONDEN->value           => 31,
-        PipelineStage::ORDER_BEVESTIGD->value           => 32,
-        PipelineStage::ORDER_INGEPLAND->value           => 33,
-        PipelineStage::ORDER_WACHTEN_UITVOERING->value  => 34,
-        PipelineStage::ORDER_UITGEVOERD->value          => 35,
-        PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->value => 36,
-        PipelineStage::ORDER_GEWONNEN->value            => 37,
-        // Hernia equivalents
-        PipelineStage::ORDER_VERZONDEN_HERNIA->value           => 40,
-        PipelineStage::ORDER_BEVESTIGD_HERNIA->value           => 41,
-        PipelineStage::ORDER_INGEPLAND_HERNIA->value           => 42,
-        PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->value  => 43,
-        PipelineStage::ORDER_UITGEVOERD_HERNIA->value          => 44,
-        PipelineStage::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->value => 45,
-        PipelineStage::ORDER_GEWONNEN_HERNIA->value            => 46,
-    ];
-
     protected $table = 'orders';
 
     protected $fillable = [
@@ -95,22 +71,22 @@ class Order extends Model
         if ($departmentName === 'Herniapoli') {
             return PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value === 7
                 ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()
-                : PipelineStage::ORDER_VOORBEREIDEN->id();
+                : PipelineStage::ORDER_CONFIRM->id();
         }
 
-        return PipelineStage::ORDER_VOORBEREIDEN->id();
+        return PipelineStage::ORDER_CONFIRM->id();
     }
 
     /**
      * Get the "order verzonden" stage ID for the given department.
      */
-    public static function orderVerzondenStageId(?string $departmentName): int
+    public static function orderSendByDepartmentStageId(?string $departmentName): int
     {
         if ($departmentName === 'Herniapoli') {
-            return PipelineStage::ORDER_VERZONDEN_HERNIA->id();
+            return PipelineStage::ORDER_BEVESTIGD->id();
         }
 
-        return PipelineStage::ORDER_VERZONDEN->id();
+        return PipelineStage::ORDER_BEVESTIGD->id();
     }
 
     /**
@@ -187,7 +163,7 @@ class Order extends Model
     public function scopeAppointmentEligible(Builder $query): Builder
     {
         return $query
-            ->whereIn('pipeline_stage_id', array_values(self::APPOINTMENT_ELIGIBLE_STAGE_IDS))
+            ->whereNotIn('pipeline_stage_id', PipelineStage::getOrderStagesIdsBeforeConfirmed())
             ->whereNotNull('first_examination_at');
     }
 

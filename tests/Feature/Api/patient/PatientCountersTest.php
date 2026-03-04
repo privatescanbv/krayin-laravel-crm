@@ -110,7 +110,7 @@ test('new_appointments_count counts future orders', function () {
     // Future eligible order — should be counted
     $futureOrder = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'pipeline_stage_id'    => PipelineStage::ORDER_BEVESTIGD->id(),
         'first_examination_at' => now()->addDay(),
     ]);
     $futureOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);
@@ -118,7 +118,7 @@ test('new_appointments_count counts future orders', function () {
     // Past order — must not be counted
     $pastOrder = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_GEWONNEN->id(),
+        'pipeline_stage_id'    => PipelineStage::ORDER_BEVESTIGD->id(),
         'first_examination_at' => now()->subDay(),
     ]);
     $pastOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()]);
@@ -126,7 +126,7 @@ test('new_appointments_count counts future orders', function () {
     // Not-eligible stage — must not be counted
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        'pipeline_stage_id'    => PipelineStage::ORDER_CONFIRM->id(),
         'first_examination_at' => now()->addDay(),
     ]);
 
@@ -155,7 +155,7 @@ test('counters combines messages and appointments independently', function () {
     // 1 future appointment
     $order = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'pipeline_stage_id'    => PipelineStage::ORDER_BEVESTIGD->id(),
         'first_examination_at' => now()->addDay(),
     ]);
     $order->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);

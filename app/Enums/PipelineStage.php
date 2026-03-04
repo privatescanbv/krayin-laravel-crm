@@ -58,8 +58,7 @@ enum PipelineStage: string
     // PRIVATESCAN ORDER PIPELINE
     // ============================================================
 
-    case ORDER_VOORBEREIDEN = 'order-voorbereiden';
-    case ORDER_VERZONDEN = 'order-verzonden';
+    case ORDER_CONFIRM = 'order-bevestigen';
     case ORDER_BEVESTIGD = 'order-bevestigd';
     case ORDER_INGEPLAND = 'order-ingepland';
     case ORDER_WACHTEN_UITVOERING = 'order-wachten-uitvoering';
@@ -73,7 +72,6 @@ enum PipelineStage: string
     // ============================================================
 
     case ORDER_VOORBEREIDEN_HERNIA = 'order-voorbereiden-hernia';
-    case ORDER_VERZONDEN_HERNIA = 'order-verzonden-hernia';
     case ORDER_BEVESTIGD_HERNIA = 'order-bevestigd-hernia';
     case ORDER_INGEPLAND_HERNIA = 'order-ingepland-hernia';
     case ORDER_WACHTEN_UITVOERING_HERNIA = 'order-wachten-uitvoering-hernia';
@@ -307,10 +305,10 @@ enum PipelineStage: string
         ],
 
         // Privatescan Orders
-        self::ORDER_VOORBEREIDEN->value => [
+        self::ORDER_CONFIRM->value => [
             'id'       => 30,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
-            'label'    => 'Order voorbereiden',
+            'label'    => 'Order bevestigen',
             'entity'   => 'order',
             'status'   => null,
         ],
@@ -321,17 +319,11 @@ enum PipelineStage: string
             'entity'   => 'order',
             'status'   => null,
         ],
-        self::ORDER_VERZONDEN->value => [
-            'id'       => 32,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
-            'label'    => 'Order verzonden',
-            'entity'   => 'order',
-            'status'   => null,
-        ],
+        // Wachten op order akkoord
         self::ORDER_BEVESTIGD->value => [
             'id'       => 33,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
-            'label'    => 'Order bevestigd',
+            'label'    => 'Order akkoord?',
             'entity'   => 'order',
             'status'   => null,
         ],
@@ -352,7 +344,7 @@ enum PipelineStage: string
         self::ORDER_RAPPORTEN_ONTVANGEN->value => [
             'id'       => 36,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
-            'label'    => 'Rapporten ontvangen',
+            'label'    => 'Rapporten vertalen',
             'entity'   => 'order',
             'status'   => null,
         ],
@@ -386,13 +378,6 @@ enum PipelineStage: string
             'entity'   => 'order',
             'status'   => null,
         ],
-        self::ORDER_VERZONDEN_HERNIA->value => [
-            'id'       => 41,
-            'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
-            'label'    => 'Order verzonden',
-            'entity'   => 'order',
-            'status'   => null,
-        ],
         self::ORDER_BEVESTIGD_HERNIA->value => [
             'id'       => 42,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
@@ -417,7 +402,7 @@ enum PipelineStage: string
         self::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->value => [
             'id'       => 45,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
-            'label'    => 'Rapporten ontvangen',
+            'label'    => 'Rapporten vertalen',
             'entity'   => 'order',
             'status'   => null,
         ],
@@ -526,14 +511,21 @@ enum PipelineStage: string
         return $this->meta()['entity'] === 'order';
     }
 
-    public function toArray(int $sortOrder): array
+    public static function getOrderStagesIdsBeforeConfirmed(): array {
+        return [
+            self::ORDER_CONFIRM->id(), self::ORDER_INGEPLAND->id(),
+            self::ORDER_VOORBEREIDEN_HERNIA->id(), self::ORDER_INGEPLAND_HERNIA->id()
+        ];
+    }
+
+    public function toArray(): array
     {
         return [
             'id'               => $this->id(),
             'code'             => $this->value,
             'name'             => $this->name(),
             'probability'      => $this->isWon() ? 100 : ($this->isLost() ? 0 : 100),
-            'sort_order'       => $sortOrder,
+            'sort_order'       => $this->id(),
             'lead_pipeline_id' => $this->pipeline(),
             'is_won'           => $this->isWon(),
             'is_lost'          => $this->isLost(),

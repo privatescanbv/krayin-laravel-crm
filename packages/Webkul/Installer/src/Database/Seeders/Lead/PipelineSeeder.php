@@ -100,7 +100,7 @@ class PipelineSeeder extends BaseSeeder
         $stageId = 0;
         $stages = [];
         foreach (PipelineStage::cases() as $stageEnum) {
-            $stages[] = $stageEnum->toArray(++$stageId);
+            $stages[] = $stageEnum->toArray();
         }
 
         // Add description => null to all stages that don't have it

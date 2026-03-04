@@ -29,7 +29,7 @@ test('order stage is voorbereiden when no items exist', function () {
 
     $calculatedStageId = $this->orderStatusService->calculate($order);
 
-    expect($calculatedStageId)->toEqual(PipelineStage::ORDER_VOORBEREIDEN->id());
+    expect($calculatedStageId)->toEqual(PipelineStage::ORDER_CONFIRM->id());
 });
 
 test('order stage is voorbereiden when not all planable items are planned', function () {
@@ -69,12 +69,12 @@ test('order stage is voorbereiden when not all planable items are planned', func
 
     $calculatedStageId = $this->orderStatusService->calculate($order);
 
-    expect($calculatedStageId)->toEqual(PipelineStage::ORDER_VOORBEREIDEN->id());
+    expect($calculatedStageId)->toEqual(PipelineStage::ORDER_CONFIRM->id());
 });
 
 test('order stage is wachten uitvoering when all planable items are planned', function () {
     $order = Order::factory()->create([
-        'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        'pipeline_stage_id' => PipelineStage::ORDER_CONFIRM->id(),
     ]);
     $salesLead = SalesLead::factory()->create();
     $order->sales_lead_id = $salesLead->id;
@@ -114,7 +114,7 @@ test('order stage is wachten uitvoering when all planable items are planned', fu
 
 test('order stage changes to wachten uitvoering when all planable items become planned', function () {
     $order = Order::factory()->create([
-        'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        'pipeline_stage_id' => PipelineStage::ORDER_CONFIRM->id(),
     ]);
     $salesLead = SalesLead::factory()->create();
     $order->sales_lead_id = $salesLead->id;
@@ -139,7 +139,7 @@ test('order stage changes to wachten uitvoering when all planable items become p
         'status'     => OrderItemStatus::NEW->value,
     ]);
 
-    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_VOORBEREIDEN->id());
+    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_CONFIRM->id());
 
     $item1->update(['status' => OrderItemStatus::PLANNED->value]);
     $item2->update(['status' => OrderItemStatus::PLANNED->value]);
@@ -182,7 +182,7 @@ test('order stage changes to voorbereiden when unplanned planable item is added'
 
     $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_VOORBEREIDEN->id());
+    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_CONFIRM->id());
 });
 
 test('order stage stays wachten uitvoering when non planable item is added', function () {
@@ -257,12 +257,12 @@ test('order stage changes to voorbereiden when planned planable item becomes unp
 
     $this->orderStatusService->recalculateAndPersist($order->fresh());
 
-    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_VOORBEREIDEN->id());
+    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_CONFIRM->id());
 });
 
 test('order stage persists when recalculated', function () {
     $order = Order::factory()->create([
-        'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        'pipeline_stage_id' => PipelineStage::ORDER_CONFIRM->id(),
     ]);
     $salesLead = SalesLead::factory()->create();
     $order->sales_lead_id = $salesLead->id;

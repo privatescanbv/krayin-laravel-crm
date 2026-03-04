@@ -79,7 +79,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
     // Should be ignored (wrong status)
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_VOORBEREIDEN->id(),
+        'pipeline_stage_id'    => PipelineStage::ORDER_CONFIRM->id(),
         'first_examination_at' => now()->addDays(2),
     ]);
 

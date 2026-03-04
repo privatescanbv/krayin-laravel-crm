@@ -14,7 +14,7 @@ beforeEach(function () {
 
 test('creating an order at a stage with a workflow automatically creates an activity on the order', function () {
     $salesLead = SalesLead::factory()->create();
-    $stage = PipelineStage::ORDER_VOORBEREIDEN; // id=30, entity='order', status=null
+    $stage = PipelineStage::ORDER_CONFIRM; // id=30, entity='order', status=null
 
     $order = Order::factory()->create([
         'sales_lead_id'     => $salesLead->id,

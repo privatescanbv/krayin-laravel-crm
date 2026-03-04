@@ -36,7 +36,7 @@ class OrderStatusService
 
         $firstStageId = $isHernia
             ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()
-            : PipelineStage::ORDER_VOORBEREIDEN->id();
+            : PipelineStage::ORDER_CONFIRM->id();
 
         $plannedStageId = $isHernia
             ? PipelineStage::ORDER_INGEPLAND_HERNIA->id()

@@ -6,6 +6,7 @@ use App\Enums\AppointmentTimeFilter;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
@@ -95,7 +96,7 @@ class OrderRepository extends Repository
     /**
      * Get a query builder for orders shown as patient appointments.
      */
-    public function queryPatientAppointmentsForPerson(Person $person, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): \Illuminate\Database\Eloquent\Builder
+    public function queryPatientAppointmentsForPerson(Person $person, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): Builder
     {
         $now = $now ?: now();
 

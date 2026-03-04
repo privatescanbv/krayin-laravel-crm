@@ -629,7 +629,7 @@ class OrderController extends SimpleEntityController
 
         $departmentName = $order->salesLead?->lead?->department?->name;
         $order->update([
-            'pipeline_stage_id' => Order::orderVerzondenStageId($departmentName),
+            'pipeline_stage_id' => Order::orderSendByDepartmentStageId($departmentName),
         ]);
 
         // Dispatch event - listeners will handle PDF activity creation

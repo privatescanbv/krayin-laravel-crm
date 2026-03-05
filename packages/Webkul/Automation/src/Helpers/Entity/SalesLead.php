@@ -54,7 +54,7 @@ class SalesLead extends AbstractEntity
      */
     public function getEntity(mixed $entity)
     {
-        if (! $entity instanceof SalesLead) {
+        if (! $entity instanceof \App\Models\SalesLead) {
             $entity = $this->salesRepository->find($entity);
         }
 

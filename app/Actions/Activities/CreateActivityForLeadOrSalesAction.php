@@ -43,7 +43,21 @@ class CreateActivityForLeadOrSalesAction
         $groupId = Department::getGroupIdForLead($sales->lead);
         $activityData['sales_lead_id'] = $sales->id;
 
-        return $this->createActivity(null, $sales->id, $groupId, $activityIsDone, $activityData);
+        $isDuplicate = $this->activityRepository
+            ->where('sales_lead_id', $sales->id)
+            ->where('title', $activityData['title'] ?? null)
+            ->where('is_done', 0)
+            ->exists();
+
+        if ($isDuplicate) {
+            throw new DuplicateException('Duplicate activity: same title exists for this sales lead and is not done.');
+        }
+
+        return $this->activityRepository->create(array_merge($activityData, [
+            'is_done'  => $activityIsDone ? 1 : 0,
+            'user_id'  => $activityData['user_id'] ?? null,
+            'group_id' => $groupId,
+        ]));
     }
 
     /**
@@ -105,7 +119,7 @@ class CreateActivityForLeadOrSalesAction
         if ($isDuplicate) {
             Log::warning('Lead activities store: duplicate detected', [
                 'lead_id' => $leadId,
-                'title'   => $data['title'] ?? null,
+                'title'   => $activityData['title'] ?? null,
             ]);
 
             throw new DuplicateException('Duplicate activity: same title exists for this lead and is not done.');

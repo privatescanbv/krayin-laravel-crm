@@ -76,6 +76,12 @@
                         @click="selectedType = type.name"
                     >
                         @{{ type.label }}
+                        <span
+                            v-if="type.name === 'file' && countUnprocessedFiles > 0"
+                            class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white"
+                        >
+                            @{{ countUnprocessedFiles }}
+                        </span>
                     </div>
 
                     {!! view_render_event('admin.components.activities.content.types.after') !!}
@@ -333,6 +339,12 @@
 
                 countInbox() {
                     return this.activities.filter(activity => ['email', 'patient_message'].includes(activity.type)).length;
+                },
+
+                countUnprocessedFiles() {
+                    return this.activities.filter(activity =>
+                        activity.type === 'file' && !activity.is_done
+                    ).length;
                 },
 
                 filteredActivities() {

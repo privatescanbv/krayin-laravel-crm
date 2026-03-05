@@ -132,7 +132,7 @@ class PatientDocumentController extends Controller
         if (! $accessible) {
             abort(404);
         }
-
-        return Storage::download($file->path, $file->name);
+        $downloadName = basename($file->path);
+        return Storage::download($file->path, $downloadName);
     }
 }

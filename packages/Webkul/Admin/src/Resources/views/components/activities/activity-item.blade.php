@@ -36,6 +36,12 @@
                 <span
                     class="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-blue-600 dark:border-gray-900"></span>
             </span>
+            <span v-if="activity.type === 'file' && !activity.is_done"
+                class="absolute -right-1 -top-1 flex h-3 w-3"
+                title="Nog te verwerken">
+                <span
+                    class="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-amber-500 dark:border-gray-900"></span>
+            </span>
         </div>
 
         {!! view_render_event('admin.components.activities.content.activity.item.icon.after') !!}
@@ -98,7 +104,7 @@
                           title="Gepubliceerd in patiëntportaal">Portaal</span>
                     <span v-if="activity.is_done == 1 || activity.is_done === true"
                           class="icon-tick ml-1 text-base text-status-active-text" title="Afgerond"></span>
-                        <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"
+<span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"
                               class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                               title="E-mail gekoppeld aan lead">
                             <span class="icon-activity text-[10px]"></span>

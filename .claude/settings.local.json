@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan test:*)",
+      "Bash(php -l:*)",
+      "Bash(vendor/bin/duster fix:*)",
+      "Bash(vendor/bin/larastan analyse:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(vendor/bin/sail artisan test:*)",
+      "Bash(ls:*)",
+      "Bash(vendor/bin/sail php artisan tinker:*)",
+      "Bash(php artisan make:migration:*)",
+      "Bash(./vendor/bin/larastan:*)",
+      "Bash(vendor/bin/phpstan:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(vendor/bin/sail exec:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_install",
+      "mcp__plugin_laravel-boost_laravel-boost__get-absolute-url",
+      "mcp__plugin_laravel-boost_laravel-boost__database-schema",
+      "Bash(grep:*)",
+      "mcp__plugin_laravel-boost_laravel-boost__database-query",
+      "mcp__plugin_laravel-boost_laravel-boost__tinker",
+      "mcp__plugin_laravel-boost_laravel-boost__get-config",
+      "Bash(php artisan route:list:*)",
+      "mcp__plugin_laravel-boost_laravel-boost__list-routes",
+      "Bash(php artisan tinker:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(php artisan:*)",
+      "Bash(php -r:*)",
+      "Bash(find:*)",
+      "Bash(vendor/bin/sail artisan migrate:*)",
+      "Bash(vendor/bin/sail artisan tinker:*)",
+      "Bash(docker network:*)",
+      "mcp__plugin_laravel-boost_laravel-boost__last-error",
+      "Bash(sail artisan:*)"
+    ]
+  }
+}

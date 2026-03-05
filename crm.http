@@ -118,6 +118,26 @@ Accept: application/json
 Content-Type: application/json
 X-API-KEY: {{API_KEY}}
 
+### Upload with metadata and multipart form data
+POST https://{{URL}}/api/patient/{{KEYCLOAK_USER_ID}}/documents
+X-API-KEY: {{API_KEY}}
+Accept: application/json
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="name"
+
+Bloeduitslag
+--WebAppBoundary
+Content-Disposition: form-data; name="description"
+
+Resultaten van het bloedonderzoek
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="crm.http"
+Content-Type: text/plain
+
+< ./crm.http
+--WebAppBoundary--
 
 ### add herniapoli forms to lead
 POST https://{{ URL }}/api/leads/1999/forms

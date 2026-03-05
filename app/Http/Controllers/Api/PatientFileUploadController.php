@@ -36,7 +36,20 @@ class PatientFileUploadController extends Controller
         $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'file'        => ['required', 'file', 'max:20480'],
+            'file' => [
+                'required',
+                'file',
+                'max:20480',
+                'mimes:pdf,doc,docx,xls,xlsx,csv,jpg,jpeg,png,tiff,heic,txt,zip',
+                function ($attribute, $value, $fail) {
+                    $extension = $value->getClientOriginalExtension();
+
+                    // toestaan: bestand zonder extensie
+                    if ($extension === '' || $extension === null) {
+                        return;
+                    }
+                },
+            ],
         ]);
 
         [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
@@ -44,6 +57,7 @@ class PatientFileUploadController extends Controller
         if (is_null($person)) {
             abort(404);
         }
+        logger()->info('file upload, user found for keycloak id', ['person_id' => $person->id, 'user_id' => $user?->id]);
 
         $activity = $this->activityRepository->create([
             'title'              => $request->input('name'),
@@ -51,7 +65,7 @@ class PatientFileUploadController extends Controller
             'name'               => $request->input('name'),
             'type'               => ActivityType::FILE->value,
             'publish_to_portal'  => true,
-            'is_done'            => true,
+            'is_done'            => false,
             'file'               => $request->file('file'),
         ]);
 

@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
@@ -535,7 +536,7 @@ class ActivityController extends Controller
             foreach ($candidateDisks as $disk) {
                 try {
                     if (Storage::disk($disk)->exists($file->path)) {
-                        $downloadName = $file->name ?: basename($file->path);
+                        $downloadName = basename($file->path);
 
                         return Storage::disk($disk)->download($file->path, $downloadName);
                     }
@@ -553,6 +554,9 @@ class ActivityController extends Controller
 
             abort(404);
         } catch (Exception $exception) {
+            Log::warning('Activity file download failed: '.$exception->getMessage(), [
+                'activity_file_id' => $id,
+            ]);
             abort(404);
         }
     }

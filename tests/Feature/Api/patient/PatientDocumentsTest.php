@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -311,6 +312,7 @@ it('group label uses order title when activity has an order_id', function () {
 
 it('download works for file activity linked via person_activities', function () {
     config(['api.keys' => ['test-api-key']]);
+    Storage::fake('local');
 
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
@@ -323,14 +325,14 @@ it('download works for file activity linked via person_activities', function () 
         'activity_id' => $activity->id,
     ]);
 
-    // File does not exist in storage; we expect a non-404 response —
-    // any error other than 404 confirms access was granted (auth passed).
+    Storage::disk('local')->put($file->path, 'fake-content');
+
     $response = $this->getJson(
         "/api/patient/{$keycloakUserId}/documents/{$file->id}/download",
         ['X-API-KEY' => 'test-api-key']
     );
 
-    expect($response->getStatusCode())->not->toBe(404);
+    $response->assertOk();
 });
 
 it('download returns 404 for file activity not linked to patient', function () {

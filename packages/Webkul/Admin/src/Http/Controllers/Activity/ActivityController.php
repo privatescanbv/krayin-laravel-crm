@@ -165,30 +165,6 @@ class ActivityController extends Controller
             'file'          => 'required_if:type,file',
         ]);
 
-        if (request('type') === 'meeting') {
-            /**
-             * Check if meeting is overlapping with other meetings.
-             */
-            $isOverlapping = $this->activityRepository->isDurationOverlapping(
-                request()->input('schedule_from'),
-                request()->input('schedule_to'),
-                null, // No participants check needed
-                request()->input('id')
-            );
-
-            if ($isOverlapping) {
-                if (request()->ajax()) {
-                    return response()->json([
-                        'message' => trans('admin::app.activities.overlapping-error'),
-                    ], 400);
-                }
-
-                session()->flash('success', trans('admin::app.activities.overlapping-error'));
-
-                return redirect()->back();
-            }
-        }
-
         Event::dispatch('activity.create.before');
 
         // Auto-assign group if not specified but user has a group
@@ -222,7 +198,7 @@ class ActivityController extends Controller
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
-            'is_done' => request('type') == ActivityType::NOTE->value ? 1 : 0,
+            'is_done' => (request('type') == ActivityType::NOTE->value || request('type') == ActivityType::FILE->value ) ? 1 : 0,
         ]));
 
         // Link selected persons (e.g. from file upload portal selector)

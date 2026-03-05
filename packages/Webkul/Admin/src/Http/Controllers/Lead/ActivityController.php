@@ -2,7 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
-use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
+use App\Actions\Activities\CreateActivityForLeadAction;
 use App\Actions\Activities\DuplicateException;
 use App\Models\Department;
 use Exception;
@@ -30,7 +30,7 @@ class ActivityController extends Controller
         protected EmailRepository      $emailRepository,
         protected AttachmentRepository $attachmentRepository,
         protected LeadRepository       $leadRepository,
-        private readonly CreateActivityForLeadOrSalesAction $createActivityAction
+        private readonly CreateActivityForLeadAction $createActivityAction
     )
     {
     }
@@ -83,7 +83,7 @@ class ActivityController extends Controller
 
             // Always load the lead for department validation
             try {
-                $activity = $this->createActivityAction->executeForLeadId(
+                $activity = $this->createActivityAction->executeForId(
                     $id,
                     $request->type == 'note' ? true : false,
                     $data

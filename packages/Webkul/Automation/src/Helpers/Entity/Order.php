@@ -2,7 +2,7 @@
 
 namespace Webkul\Automation\Helpers\Entity;
 
-use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
+use App\Actions\Activities\CreateActivityForOrderAction;
 use App\Actions\Activities\DuplicateException;
 use App\Enums\ActivityType;
 use App\Enums\PipelineStage;
@@ -28,7 +28,7 @@ class Order extends AbstractEntity
         protected ActivityRepository $activityRepository,
         protected WebhookRepository $webhookRepository,
         protected WebhookService $webhookService,
-        private readonly CreateActivityForLeadOrSalesAction $createActivityForLeadOrSalesAction,
+        private readonly CreateActivityForOrderAction $createActivityForLeadOrSalesAction,
     ) {}
 
     public function getEntity(mixed $entity)
@@ -109,7 +109,7 @@ class Order extends AbstractEntity
                     $type    = $action['attributes']['type'];
                     $comment = $action['attributes']['comment'] ?? '';
                     try {
-                        $this->createActivityForLeadOrSalesAction->executeForOrder(
+                        $this->createActivityForLeadOrSalesAction->execute(
                             $order,
                             false,
                             [

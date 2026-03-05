@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
+use App\Actions\Activities\CreateActivityForSalesLeadAction;
 use App\Http\Controllers\Controller;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
@@ -14,7 +14,7 @@ use Webkul\Lead\Models\Pipeline;
 class SalesLeadController extends Controller
 {
     public function __construct(
-        private readonly CreateActivityForLeadOrSalesAction $createActivityForLeadOrSalesAction,
+        private readonly CreateActivityForSalesLeadAction $createActivityForLeadOrSalesAction,
     ) {}
 
     /**
@@ -85,7 +85,7 @@ class SalesLeadController extends Controller
 
         $salesLead = SalesLead::findOrFail($id);
 
-        $activity = $this->createActivityForLeadOrSalesAction->executeForSales(
+        $activity = $this->createActivityForLeadOrSalesAction->execute(
             $salesLead,
             false,
             [

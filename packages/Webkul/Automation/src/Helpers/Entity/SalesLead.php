@@ -2,7 +2,7 @@
 
 namespace Webkul\Automation\Helpers\Entity;
 
-use App\Actions\Activities\CreateActivityForLeadOrSalesAction;
+use App\Actions\Activities\CreateActivityForSalesLeadAction;
 use App\Actions\Activities\DuplicateException;
 use App\Enums\ActivityType;
 use App\Enums\PipelineStage;
@@ -44,7 +44,7 @@ class SalesLead extends AbstractEntity
         protected WebhookRepository                         $webhookRepository,
         protected WebhookService                            $webhookService,
         protected AttributeValueRepository                  $attributeValueRepository,
-        private readonly CreateActivityForLeadOrSalesAction $createActivityForLeadOrSalesAction,
+        private readonly CreateActivityForSalesLeadAction $createActivityForLeadOrSalesAction,
     )
     {
     }
@@ -169,7 +169,7 @@ class SalesLead extends AbstractEntity
                     $type = $action['attributes']['type'];
                     $comment = $action['attributes']['comment'] ?? '';
                     try {
-                        $this->createActivityForLeadOrSalesAction->executeForSales($sales, false,
+                        $this->createActivityForLeadOrSalesAction->execute($sales, false,
                             [
                                 'title' => $title,
                                 'type' => $type,

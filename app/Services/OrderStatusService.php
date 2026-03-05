@@ -62,13 +62,13 @@ class OrderStatusService
 
         // All plannable items are planned
         // only auto recalculate if order is before confirmed stage, otherwise keep current stage
-        if (in_array($order->stage->id, PipelineStage::getOrderStagesIdsBeforePlanned())) {
+        if (in_array($order->pipeline_stage_id, PipelineStage::getOrderStagesIdsBeforePlanned())) {
             // change stage to planned
             return $plannedStageId;
         }
 
         // keep current stage
-        return $order->stage->id;
+        return $order->pipeline_stage_id;
     }
 
     /**

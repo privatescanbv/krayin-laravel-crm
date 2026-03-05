@@ -2,6 +2,7 @@
 
 namespace Webkul\Activity\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Contracts\File as FileContract;
@@ -47,6 +48,31 @@ class File extends Model implements FileContract
     public function getUrlAttribute()
     {
         return $this->url();
+    }
+
+    /**
+     * Resolve the storage disk this file lives on.
+     * Returns the first disk that contains the file, or null if not found on any.
+     */
+    public function resolveDisk(): ?string
+    {
+        $candidateDisks = array_values(array_unique(array_filter([
+            config('filesystems.default'),
+            'public',
+            'local',
+        ])));
+
+        foreach ($candidateDisks as $disk) {
+            try {
+                if (Storage::disk($disk)->exists($this->path)) {
+                    return $disk;
+                }
+            } catch (Exception) {
+                continue;
+            }
+        }
+
+        return null;
     }
 
     /**

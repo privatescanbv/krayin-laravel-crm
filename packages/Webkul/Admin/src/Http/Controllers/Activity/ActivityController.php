@@ -527,32 +527,18 @@ class ActivityController extends Controller
         try {
             $file = $this->fileRepository->findOrFail($id);
 
-            $candidateDisks = array_values(array_unique(array_filter([
-                config('filesystems.default'),
-                'public',
-                'local',
-            ])));
+            $disk = $file->resolveDisk();
 
-            foreach ($candidateDisks as $disk) {
-                try {
-                    if (Storage::disk($disk)->exists($file->path)) {
-                        $downloadName = basename($file->path);
-
-                        return Storage::disk($disk)->download($file->path, $downloadName);
-                    }
-                } catch (Exception $e) {
-                    // Ignore disk-specific errors and try the next disk.
-                    continue;
-                }
+            if ($disk === null) {
+                logger()->warning('Activity file download failed: file missing on all disks', [
+                    'activity_file_id' => $file->id,
+                    'path'             => $file->path,
+                ]);
+                abort(404);
             }
 
-            logger()->warning('Activity file download failed: file missing on disks', [
-                'activity_file_id' => $file->id,
-                'path'             => $file->path,
-                'disks_tried'       => $candidateDisks,
-            ]);
-
-            abort(404);
+            $downloadName = basename($file->path);
+            return Storage::disk($disk)->download($file->path, $downloadName);
         } catch (Exception $exception) {
             Log::warning('Activity file download failed: '.$exception->getMessage(), [
                 'activity_file_id' => $id,

@@ -132,7 +132,19 @@ class PatientDocumentController extends Controller
         if (! $accessible) {
             abort(404);
         }
+
+        $disk = $file->resolveDisk();
+
+        if ($disk === null) {
+            logger()->warning('Patient document download failed: file missing on all disks', [
+                'activity_file_id' => $file->id,
+                'path'             => $file->path,
+            ]);
+            abort(404);
+        }
+
         $downloadName = basename($file->path);
-        return Storage::download($file->path, $downloadName);
+
+        return Storage::disk($disk)->download($file->path, $downloadName);
     }
 }

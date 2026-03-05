@@ -38,14 +38,33 @@ class PatientDocumentResource extends JsonResource
         $mimeType = 'application/octet-stream';
         $size = 0;
 
-        try {
-            $mimeType = Storage::mimeType($file->path) ?: $mimeType;
-        } catch (Throwable) {
-        }
+        $disk = $file->resolveDisk();
 
-        try {
-            $size = Storage::size($file->path) ?? 0;
-        } catch (Throwable) {
+        if ($disk === null) {
+            logger()->warning('PatientDocumentResource: file missing on all disks', [
+                'activity_file_id' => $file->id,
+                'path'             => $file->path,
+            ]);
+        } else {
+            try {
+                $mimeType = Storage::disk($disk)->mimeType($file->path) ?: $mimeType;
+            } catch (Throwable $e) {
+                logger()->warning('PatientDocumentResource: could not retrieve mime type', [
+                    'activity_file_id' => $file->id,
+                    'path'             => $file->path,
+                    'error'            => $e->getMessage(),
+                ]);
+            }
+
+            try {
+                $size = Storage::disk($disk)->size($file->path) ?? 0;
+            } catch (Throwable $e) {
+                logger()->warning('PatientDocumentResource: could not retrieve file size', [
+                    'activity_file_id' => $file->id,
+                    'path'             => $file->path,
+                    'error'            => $e->getMessage(),
+                ]);
+            }
         }
 
         $documentType = data_get($activity?->additional, 'document_type')

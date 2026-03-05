@@ -36,7 +36,7 @@ class PatientFileUploadController extends Controller
         $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'file' => [
+            'file'        => [
                 'required',
                 'file',
                 'max:20480',

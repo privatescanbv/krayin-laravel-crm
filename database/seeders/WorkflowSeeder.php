@@ -57,7 +57,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::SALES_MET_SUCCES_AFGEROND                => [['Test auto op sales entiteit', $defaultDescription, ActivityType::TASK]],
             PipelineStage::ORDER_INGEPLAND,
             PipelineStage::ORDER_INGEPLAND_HERNIA                  => [
-                ['Inplannen', $defaultDescription, ActivityType::TASK]
+                ['Inplannen', $defaultDescription, ActivityType::TASK],
             ],
             PipelineStage::ORDER_BEVESTIGD,
             PipelineStage::ORDER_BEVESTIGD_HERNIA                  => [
@@ -66,7 +66,7 @@ class WorkflowSeeder extends Seeder
                 ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK],
             ],
             PipelineStage::ORDER_UITGEVOERD,
-            PipelineStage::ORDER_UITGEVOERD_HERNIA =>[
+            PipelineStage::ORDER_UITGEVOERD_HERNIA => [
                 ['Rapporten ontvangen en versturen', $defaultDescription, ActivityType::TASK],
             ],
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN,

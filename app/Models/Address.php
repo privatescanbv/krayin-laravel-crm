@@ -139,13 +139,6 @@ class Address extends BaseModel
             $lines[] = $postalCode.' '.$this->city;
         }
 
-        if ($this->state || $this->country) {
-            $regionLine = trim(implode(' ', array_filter([$this->state, $this->country])));
-            if ($regionLine !== '') {
-                $lines[] = $regionLine;
-            }
-        }
-
         return implode("\n", $lines);
     }
 

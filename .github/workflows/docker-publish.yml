@@ -3,6 +3,7 @@ name: Build and push Docker image
 on:
   push:
     branches: ["development"]
+  workflow_dispatch:
 
 permissions:
   contents: read

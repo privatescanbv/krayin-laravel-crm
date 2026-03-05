@@ -16,10 +16,10 @@ elif [ "$choice" = "2" ]; then
     echo "Importing multiple leads setup..."
     ./vendor/bin/sail artisan import:leads --import-persons --limit=2000 &&
     ./vendor/bin/sail artisan import:email-attachment-files &&
-    ./vendor/bin/sail artisan planning:create-test-data
 else
     echo "Invalid choice. Please run the script again and choose 1 or 2."
     exit 1
 fi
+./vendor/bin/sail artisan planning:create-test-data
 
 

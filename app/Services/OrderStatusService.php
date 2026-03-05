@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 
 class OrderStatusService
 {
@@ -81,6 +82,9 @@ class OrderStatusService
             DB::table('orders')
                 ->where('id', $order->id)
                 ->update(['pipeline_stage_id' => $newStageId, 'updated_at' => now()]);
+
+            $order->pipeline_stage_id = $newStageId;
+            Event::dispatch('order.update_stage.after', $order);
         }
     }
 
@@ -89,15 +93,9 @@ class OrderStatusService
      */
     public function recalculateAndPersistById(int $orderId): void
     {
-        $order = new Order;
-        $order->id = $orderId;
-        // Fetch current pipeline_stage_id minimally
-        $row = DB::table('orders')->where('id', $orderId)->first(['pipeline_stage_id', 'sales_lead_id']);
-        if ($row) {
-            $order->pipeline_stage_id = $row->pipeline_stage_id;
-            $order->sales_lead_id = $row->sales_lead_id;
+        $order = Order::find($orderId);
+        if ($order) {
+            $this->recalculateAndPersist($order);
         }
-
-        $this->recalculateAndPersist($order);
     }
 }

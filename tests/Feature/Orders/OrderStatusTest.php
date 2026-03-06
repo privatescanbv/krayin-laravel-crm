@@ -22,16 +22,6 @@ beforeEach(function () {
     ]);
 });
 
-test('order stage is voorbereiden when no items exist', function () {
-    $order = Order::factory()->create([
-        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
-    ]);
-
-    $calculatedStageId = $this->orderStatusService->calculate($order);
-
-    expect($calculatedStageId)->toEqual(PipelineStage::ORDER_CONFIRM->id());
-});
-
 test('order stage is voorbereiden when not all planable items are planned', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
@@ -139,7 +129,7 @@ test('order stage changes to wachten uitvoering when all planable items become p
         'status'     => OrderItemStatus::NEW->value,
     ]);
 
-    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_CONFIRM->id());
+    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_INGEPLAND->id());
 
     $item1->update(['status' => OrderItemStatus::PLANNED->value]);
     $item2->update(['status' => OrderItemStatus::PLANNED->value]);

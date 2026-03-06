@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
@@ -27,11 +28,13 @@ test('clinic guide get returns orders for given date', function () {
 
     $orderOnDate = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse($targetDate)->setHour(10)->setMinute(30),
     ]);
 
     $orderOtherDate = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse('2026-03-16')->setHour(14)->setMinute(0),
     ]);
 
@@ -42,8 +45,8 @@ test('clinic guide get returns orders for given date', function () {
     $response->assertJsonPath('count', 1);
 
     $orderIds = collect($response->json('orders'))->pluck('order.id')->all();
-    expect($orderIds)->toContain($orderOnDate->id);
-    expect($orderIds)->not->toContain($orderOtherDate->id);
+    expect($orderIds)->toContain($orderOnDate->id)
+        ->and($orderIds)->not->toContain($orderOtherDate->id);
 });
 
 test('clinic guide get filters out orders from other days', function () {
@@ -51,11 +54,13 @@ test('clinic guide get filters out orders from other days', function () {
 
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse('2026-04-01 09:00:00'),
     ]);
 
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse('2026-04-02 11:00:00'),
     ]);
 
@@ -69,6 +74,7 @@ test('clinic guide get excludes orders without first_examination_at', function (
     $salesLead = SalesLead::factory()->create();
 
     Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'sales_lead_id'        => $salesLead->id,
         'first_examination_at' => null,
     ]);
@@ -92,6 +98,7 @@ test('clinic guide get response contains expected fields', function () {
     $targetDate = '2026-05-10';
     $order = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse($targetDate)->setHour(9)->setMinute(15),
     ]);
 
@@ -109,8 +116,8 @@ test('clinic guide get response contains expected fields', function () {
     $orderData = $response->json('orders.0');
 
     // Order fields
-    expect($orderData['order'])->toHaveKeys(['id', 'title', 'first_examination_at', 'time', 'total_price']);
-    expect($orderData['order']['time'])->toBe('09:15');
+    expect($orderData['order'])->toHaveKeys(['id', 'title', 'first_examination_at', 'time', 'total_price'])
+    ->and($orderData['order']['time'])->toBe('09:15');
 
     // Sales lead fields
     expect($orderData['sales_lead'])->toHaveKeys(['id', 'name']);
@@ -119,8 +126,8 @@ test('clinic guide get response contains expected fields', function () {
     expect($orderData['patient'])->toHaveKeys(['id', 'name']);
 
     // Order items
-    expect($orderData['order_items'])->toHaveCount(1);
-    expect($orderData['order_items'][0]['product_name'])->toBe('MRI Scan');
+    expect($orderData['order_items'])->toHaveCount(1)
+    ->and($orderData['order_items'][0]['product_name'])->toBe('MRI Scan');
 
     // Sales lead URL
     expect($orderData['sales_lead_url'])->toContain('sales-leads/view');
@@ -132,16 +139,19 @@ test('clinic guide get orders are sorted by time ascending', function () {
 
     $orderLate = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse($targetDate)->setHour(16)->setMinute(0),
     ]);
 
     $orderEarly = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse($targetDate)->setHour(8)->setMinute(0),
     ]);
 
     $orderMid = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => Carbon::parse($targetDate)->setHour(12)->setMinute(0),
     ]);
 
@@ -165,6 +175,7 @@ test('clinic guide get defaults to today when no date parameter', function () {
 
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at' => now()->setHour(10)->setMinute(0)->setSecond(0),
     ]);
 

@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 class OrderStatusService
 {
@@ -39,23 +40,18 @@ class OrderStatusService
             ? PipelineStage::ORDER_INGEPLAND_HERNIA->id()
             : PipelineStage::ORDER_INGEPLAND->id();
 
-        if ($orderItems->isEmpty()) {
+        if (is_null($order->pipeline_stage_id)) {
             return $firstStageId;
         }
-
         // Filter to only plannable items (items with partner products)
         $plannableItems = $orderItems->filter(function (OrderItem $item) {
             return $item->isPlannable();
         });
 
-        // If there are no plannable items, order stays at first stage
-        if ($plannableItems->isEmpty()) {
-            return $firstStageId;
-        }
-
         // Check if all plannable items are planned
         foreach ($plannableItems as $orderItem) {
             if ($orderItem->status !== OrderItemStatus::PLANNED) {
+                Log::info("Order {$order->id} has unplanned items, setting stage to {$firstStageId}");
                 return $firstStageId;
             }
         }
@@ -64,6 +60,7 @@ class OrderStatusService
         // only auto recalculate if order is before confirmed stage, otherwise keep current stage
         if (in_array($order->pipeline_stage_id, PipelineStage::getOrderStagesIdsBeforePlanned())) {
             // change stage to planned
+            Log::info('All plannable items for order '.$order->id.' are planned, setting stage to '.$plannedStageId);
             return $plannedStageId;
         }
 

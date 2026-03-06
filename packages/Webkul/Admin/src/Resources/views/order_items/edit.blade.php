@@ -93,6 +93,7 @@
                 <x-adminc::components.selector-field label="Persoon" :required="true" name="person_id">
                     <v-contact-person-selector
                         name="person_id"
+                        label=""
                         placeholder="Zoek persoon..."
                         :current-value="{{ $order_items->person_id ?? 'null' }}"
                         current-label="{{ $order_items->person?->name ?? '' }}"

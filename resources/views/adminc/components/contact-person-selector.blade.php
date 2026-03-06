@@ -7,7 +7,7 @@
     <script type="text/x-template" id="v-contact-person-selector-template">
         <v-entity-selector
             :name="name || 'contact_person_id'"
-            :label="label || 'Contactpersoon'"
+            :label="label !== undefined ? label : 'Contactpersoon'"
             :placeholder="placeholder || 'Selecteer contactpersoon...'"
             :search-route="resolvedSearchRoute"
             :items="computedItems"

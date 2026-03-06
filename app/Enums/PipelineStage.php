@@ -485,6 +485,14 @@ enum PipelineStage: string
         ];
     }
 
+    public static function getOrderStagesIdsForClinicGuide(): array
+    {
+        return [
+            self::ORDER_WACHTEN_UITVOERING->id(),
+            self::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
+        ];
+    }
+
     // ============================================================
     // ATTRIBUTE STRUCTURE FOR EACH ENUM VALUE
     // ============================================================

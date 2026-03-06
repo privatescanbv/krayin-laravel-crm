@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PipelineStage;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -28,6 +29,7 @@ class ClinicGuideController extends Controller
         $orders = Order::query()
             ->whereNotNull('first_examination_at')
             ->whereBetween('first_examination_at', [$startOfDay, $endOfDay])
+            ->whereIn('pipeline_stage_id', PipelineStage::getOrderStagesIdsForClinicGuide())
             ->with([
                 'salesLead.persons',
                 'salesLead.stage',

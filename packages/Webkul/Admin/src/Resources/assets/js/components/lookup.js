@@ -35,7 +35,7 @@ export default function registerLookupComponent(app) {
                         :key="item.id"
                         class="px-3 py-2 hover:bg-blue-50 cursor-pointer"
                         @click="select(item)"
-                        v-text="item.name"
+                        v-text="item.name_with_path ?? item.name"
                     ></li>
                     <li v-if="!results.length"
                         class="px-3 py-2 text-gray-500 text-sm">Geen resultaten</li>
@@ -58,14 +58,31 @@ export default function registerLookupComponent(app) {
         data() {
             return {
                 open: false,
-                searchTerm: '',
+                searchTerm: this.value?.name_with_path || this.value?.name || '',
                 results: [],
                 selectedItem: this.value || {},
                 abortController: null,
             };
         },
 
+        mounted() {
+            if (this.value?.id) {
+                this._createOrUpdateHiddenInput(this.value.id);
+            }
+        },
+
         methods: {
+            _createOrUpdateHiddenInput(id) {
+                let hidden = this.$el.querySelector(`input[type="hidden"][name="${this.name}"]`);
+                if (!hidden) {
+                    hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = this.name;
+                    this.$el.appendChild(hidden);
+                }
+                hidden.value = id;
+            },
+
             async search() {
                 if (!this.src || this.searchTerm.length < 2) {
                     this.results = [];
@@ -78,10 +95,11 @@ export default function registerLookupComponent(app) {
 
                 try {
                     const res = await fetch(
-                        `${this.src}?q=${encodeURIComponent(this.searchTerm)}`,
+                        `${this.src}?query=${encodeURIComponent(this.searchTerm)}`,
                         { signal: this.abortController.signal }
                     );
-                    this.results = await res.json();
+                    const json = await res.json();
+                    this.results = json?.data || (Array.isArray(json) ? json : []);
                 } catch (e) {
                     if (e.name !== 'AbortError') console.error(e);
                 }
@@ -90,7 +108,8 @@ export default function registerLookupComponent(app) {
             select(item) {
                 this.selectedItem = item;
                 this.open = false;
-                this.searchTerm = item.name;
+                this.searchTerm = item.name_with_path ?? item.name;
+                this._createOrUpdateHiddenInput(item.id);
                 this.$emit('on-selected', item);
             },
         },

@@ -178,7 +178,7 @@ class PartnerProductController extends SimpleEntityController
     protected function getEditViewData(Request $request, Model $entity): array
     {
         // Load product relationship for name_with_path
-        $entity->load('product.productGroup');
+        $entity->load('product.productGroup', 'purchasePrice', 'relatedPurchasePrice');
 
         return [
             'partner_products' => $entity,
@@ -270,13 +270,19 @@ class PartnerProductController extends SimpleEntityController
             'reporting'           => 'nullable|array',
             'reporting.*'         => 'string|in:'.implode(',', array_column(ProductReports::cases(), 'value')),
 
+            // purchase price fields (all optional, default to 0)
+            'purchase_price_misc'           => 'nullable|numeric|min:0',
+            'purchase_price_doctor'         => 'nullable|numeric|min:0',
+            'purchase_price_cardiology'     => 'nullable|numeric|min:0',
+            'purchase_price_clinic'         => 'nullable|numeric|min:0',
+            'purchase_price_radiology'      => 'nullable|numeric|min:0',
+
             // related purchase price fields (all optional, default to 0)
             'rel_purchase_price_misc'       => 'nullable|numeric|min:0',
             'rel_purchase_price_doctor'     => 'nullable|numeric|min:0',
             'rel_purchase_price_cardiology' => 'nullable|numeric|min:0',
             'rel_purchase_price_clinic'     => 'nullable|numeric|min:0',
             'rel_purchase_price_radiology'  => 'nullable|numeric|min:0',
-            'rel_purchase_price'            => 'nullable|numeric|min:0',
 
             // relations
             'clinics'             => 'required|array|min:1',
@@ -362,25 +368,16 @@ class PartnerProductController extends SimpleEntityController
             $payload['product_id'] = $payload['product_id'] === '' ? null : $payload['product_id'];
         }
 
-        // Normalize and calculate purchase price fields
-        $purchasePriceFields = [
-            'purchase_price_misc',
-            'purchase_price_doctor',
-            'purchase_price_cardiology',
-            'purchase_price_clinic',
-            'purchase_price_radiology',
+        // Strip purchase price fields — saved separately via purchasePrice relations
+        $purchasePriceKeys = [
+            'purchase_price_misc', 'purchase_price_doctor', 'purchase_price_cardiology',
+            'purchase_price_clinic', 'purchase_price_radiology',
+            'rel_purchase_price_misc', 'rel_purchase_price_doctor', 'rel_purchase_price_cardiology',
+            'rel_purchase_price_clinic', 'rel_purchase_price_radiology',
         ];
-        $payload = $this->normalizeAndCalculatePurchasePrices($payload, $purchasePriceFields, 'purchase_price');
-
-        // Normalize and calculate related purchase price fields
-        $relatedPurchasePriceFields = [
-            'rel_purchase_price_misc',
-            'rel_purchase_price_doctor',
-            'rel_purchase_price_cardiology',
-            'rel_purchase_price_clinic',
-            'rel_purchase_price_radiology',
-        ];
-        $payload = $this->normalizeAndCalculatePurchasePrices($payload, $relatedPurchasePriceFields, 'rel_purchase_price');
+        foreach ($purchasePriceKeys as $key) {
+            unset($payload[$key]);
+        }
 
         // Normalize reporting field - ensure it's always an array or null
         if (array_key_exists('reporting', $payload)) {
@@ -424,6 +421,41 @@ class PartnerProductController extends SimpleEntityController
         RequestHelper::syncRelationFromRequest($entity, 'clinics', $request, 'clinics');
         RequestHelper::syncRelationFromRequest($entity, 'relatedProducts', $request, 'related_products');
         RequestHelper::syncRelationFromRequest($entity, 'resources', $request, 'resources');
+        $this->savePurchasePrices($entity, $request);
+    }
+
+    protected function savePurchasePrices(Model $entity, Request $request): void
+    {
+        $mainFields = [
+            'purchase_price_misc', 'purchase_price_doctor', 'purchase_price_cardiology',
+            'purchase_price_clinic', 'purchase_price_radiology',
+        ];
+        $mainData = [];
+        $mainTotal = 0;
+        foreach ($mainFields as $field) {
+            $value = floatval($request->input($field, 0));
+            $mainData[$field] = $value;
+            $mainTotal += $value;
+        }
+        $mainData['purchase_price'] = $mainTotal;
+        $entity->purchasePrice()->updateOrCreate([], $mainData);
+
+        $relMapping = [
+            'rel_purchase_price_misc'       => 'purchase_price_misc',
+            'rel_purchase_price_doctor'     => 'purchase_price_doctor',
+            'rel_purchase_price_cardiology' => 'purchase_price_cardiology',
+            'rel_purchase_price_clinic'     => 'purchase_price_clinic',
+            'rel_purchase_price_radiology'  => 'purchase_price_radiology',
+        ];
+        $relData = [];
+        $relTotal = 0;
+        foreach ($relMapping as $requestField => $dbField) {
+            $value = floatval($request->input($requestField, 0));
+            $relData[$dbField] = $value;
+            $relTotal += $value;
+        }
+        $relData['purchase_price'] = $relTotal;
+        $entity->relatedPurchasePrice()->updateOrCreate([], $relData);
     }
 
     // Price normalization centralized in App\Enums\Currency::normalizePrice

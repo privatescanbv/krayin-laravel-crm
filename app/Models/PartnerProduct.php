@@ -6,6 +6,7 @@ use App\Enums\ProductReports;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Abstracts\BaseProduct;
 use Exception;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
@@ -38,18 +39,6 @@ class PartnerProduct extends BaseProduct
         // partner specific
         'clinic_description',
         'duration',
-        'purchase_price_misc',
-        'purchase_price_doctor',
-        'purchase_price_cardiology',
-        'purchase_price_clinic',
-        'purchase_price_radiology',
-        'purchase_price',
-        'rel_purchase_price_misc',
-        'rel_purchase_price_doctor',
-        'rel_purchase_price_cardiology',
-        'rel_purchase_price_clinic',
-        'rel_purchase_price_radiology',
-        'rel_purchase_price',
         'reporting',
         'deleted_at',
     ];
@@ -62,20 +51,8 @@ class PartnerProduct extends BaseProduct
         'product_id'                    => 'integer',
         'created_by'                    => 'integer',
         'updated_by'                    => 'integer',
-        'duration'                      => 'integer',
-        'purchase_price_misc'           => 'decimal:2',
-        'purchase_price_doctor'         => 'decimal:2',
-        'purchase_price_cardiology'     => 'decimal:2',
-        'purchase_price_clinic'         => 'decimal:2',
-        'purchase_price_radiology'      => 'decimal:2',
-        'purchase_price'                => 'decimal:2',
-        'rel_purchase_price_misc'       => 'decimal:2',
-        'rel_purchase_price_doctor'     => 'decimal:2',
-        'rel_purchase_price_cardiology' => 'decimal:2',
-        'rel_purchase_price_clinic'     => 'decimal:2',
-        'rel_purchase_price_radiology'  => 'decimal:2',
-        'rel_purchase_price'            => 'decimal:2',
-        'reporting'                     => 'array',
+        'duration'  => 'integer',
+        'reporting' => 'array',
         'deleted_at'                    => 'datetime',
     ];
 
@@ -135,6 +112,16 @@ class PartnerProduct extends BaseProduct
         }
 
         return [];
+    }
+
+    public function purchasePrice(): MorphOne
+    {
+        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'main');
+    }
+
+    public function relatedPurchasePrice(): MorphOne
+    {
+        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'related');
     }
 
     public function clinics()

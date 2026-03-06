@@ -7,7 +7,12 @@
         <p class="text-sm text-gray-600 dark:text-white">Voeg producten toe met aantallen en bedragen.</p>
     </div>
 
-    <v-order-item-list :errors="errors" :data='@json((isset($order) ? $order->orderItems : []))' :persons='@json($persons ?? [])'></v-order-item-list>
+    <v-order-item-list
+        :errors="errors"
+        :data='@json((isset($order) ? $order->orderItems : []))'
+        :persons='@json($persons ?? [])'
+        edit-base-url="{{ rtrim(route('admin.order_items.edit', ['id' => 0]), '0') }}"
+    ></v-order-item-list>
 </div>
 
 @pushOnce('scripts')
@@ -27,7 +32,7 @@
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
                     <template v-for="(item, index) in items" :key="`${resetKey}-${item.id ?? index}`">
-                        <v-order-item :item="item" :index="index" :errors="errors" :persons="persons" @onRemoveItem="removeItem($event)"></v-order-item>
+                        <v-order-item :item="item" :index="index" :errors="errors" :persons="persons" :edit-base-url="editBaseUrl" @onRemoveItem="removeItem($event)"></v-order-item>
                     </template>
                 </x-admin::table.tbody>
             </x-admin::table>
@@ -102,6 +107,9 @@
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <div class="flex items-center justify-end gap-2">
+                    <a v-if="item.id" :href="editBaseUrl + item.id" title="Bewerken">
+                        <i class="icon-edit cursor-pointer text-2xl"></i>
+                    </a>
                     <i @click="removeItem" class="icon-delete cursor-pointer text-2xl"></i>
                 </div>
             </x-admin::table.td>
@@ -111,7 +119,7 @@
     <script type="module">
         app.component('v-order-item-list', {
             template: '#v-order-item-list-template',
-            props: ['errors', 'data', 'persons'],
+            props: ['errors', 'data', 'persons', 'editBaseUrl'],
             data() {
                 return {
                     resetKey: 0,
@@ -179,7 +187,7 @@
 
         app.component('v-order-item', {
             template: '#v-order-item-template',
-            props: ['index', 'item', 'errors', 'persons'],
+            props: ['index', 'item', 'errors', 'persons', 'editBaseUrl'],
             data() {
                 return {
                     productPrice: null, // Store the product price for calculations

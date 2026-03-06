@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
@@ -25,9 +26,12 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'name',
+        'description',
         'person_id',
         'quantity',
         'total_price',
+        'currency',
         'status',
         'created_by',
         'updated_by',
@@ -39,6 +43,7 @@ class OrderItem extends Model
         'person_id'   => 'integer',
         'quantity'    => 'integer',
         'total_price' => 'decimal:2',
+        'currency'    => 'string',
         'status'      => OrderItemStatus::class,
         'created_by'  => 'integer',
         'updated_by'  => 'integer',
@@ -57,6 +62,11 @@ class OrderItem extends Model
     public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class);
+    }
+
+    public function purchasePrice(): MorphOne
+    {
+        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'main');
     }
 
     public function resourceOrderItems(): HasMany

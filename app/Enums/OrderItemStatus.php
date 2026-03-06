@@ -6,12 +6,16 @@ enum OrderItemStatus: string
 {
     case NEW = 'new';
     case PLANNED = 'planned';
+    case WON = 'won';
+    case LOST = 'lost';
 
     public function label(): string
     {
         return match ($this) {
             self::NEW     => 'Nieuw',
             self::PLANNED => 'Ingepland',
+            self::WON => 'Gewonnen',
+            self::LOST => 'Verloren',
         };
     }
 }

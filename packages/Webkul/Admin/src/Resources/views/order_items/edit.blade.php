@@ -100,36 +100,44 @@
                     />
                 </x-adminc::components.selector-field>
 
-                <x-adminc::components.field
-                    type="number"
-                    name="quantity"
-                    label="Aantal"
-                    value="{{ $order_items->quantity }}"
-                    rules="required|integer|min:1"
-                />
+                <div class="flex gap-4">
+                    <div class="w-28">
+                        <x-adminc::components.field
+                            type="number"
+                            name="quantity"
+                            label="Aantal"
+                            value="{{ $order_items->quantity }}"
+                            rules="required|integer|min:1"
+                        />
+                    </div>
 
-                <x-adminc::components.field
-                    type="number"
-                    name="total_price"
-                    label="Totale prijs"
-                    value="{{ $order_items->total_price }}"
-                    step="0.01"
-                />
+                    <div class="flex-1">
+                        <x-adminc::components.field
+                            type="number"
+                            name="total_price"
+                            label="Totale prijs"
+                            value="{{ $order_items->total_price }}"
+                            step="0.01"
+                        />
+                    </div>
 
-                <x-adminc::components.field
-                    type="select"
-                    name="currency"
-                    label="Valuta"
-                    value="{{ old('currency', $order_items->currency ?? $defaultCurrency) }}"
-                    rules=""
-                >
-                    @foreach ($currencies as $currency)
-                        <option
-                            value="{{ $currency['code'] }}"
-                            @selected(old('currency', $order_items->currency ?? $defaultCurrency) === $currency['code'])
-                        >{{ $currency['label'] }}</option>
-                    @endforeach
-                </x-adminc::components.field>
+                    <div class="w-40">
+                        <x-adminc::components.field
+                            type="select"
+                            name="currency"
+                            label="Valuta"
+                            value="{{ old('currency', $order_items->currency ?? $defaultCurrency) }}"
+                            rules=""
+                        >
+                            @foreach ($currencies as $currency)
+                                <option
+                                    value="{{ $currency['code'] }}"
+                                    @selected(old('currency', $order_items->currency ?? $defaultCurrency) === $currency['code'])
+                                >{{ $currency['label'] }}</option>
+                            @endforeach
+                        </x-adminc::components.field>
+                    </div>
+                </div>
 
 
 

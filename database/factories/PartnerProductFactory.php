@@ -39,11 +39,11 @@ class PartnerProductFactory extends Factory
             }
             $partnerProduct->clinics()->sync([$clinicId]);
 
-            $misc   = $this->faker->randomFloat(2, 0, 100);
+            $misc = $this->faker->randomFloat(2, 0, 100);
             $doctor = $this->faker->randomFloat(2, 0, 200);
             $cardio = $this->faker->randomFloat(2, 0, 150);
             $clinic = $this->faker->randomFloat(2, 0, 100);
-            $radio  = $this->faker->randomFloat(2, 0, 120);
+            $radio = $this->faker->randomFloat(2, 0, 120);
             $partnerProduct->purchasePrice()->create([
                 'type'                       => 'main',
                 'purchase_price_misc'        => $misc,
@@ -54,11 +54,11 @@ class PartnerProductFactory extends Factory
                 'purchase_price'             => $misc + $doctor + $cardio + $clinic + $radio,
             ]);
 
-            $rMisc   = $this->faker->randomFloat(2, 0, 50);
+            $rMisc = $this->faker->randomFloat(2, 0, 50);
             $rDoctor = $this->faker->randomFloat(2, 0, 100);
             $rCardio = $this->faker->randomFloat(2, 0, 75);
             $rClinic = $this->faker->randomFloat(2, 0, 50);
-            $rRadio  = $this->faker->randomFloat(2, 0, 60);
+            $rRadio = $this->faker->randomFloat(2, 0, 60);
             $partnerProduct->relatedPurchasePrice()->create([
                 'type'                       => 'related',
                 'purchase_price_misc'        => $rMisc,

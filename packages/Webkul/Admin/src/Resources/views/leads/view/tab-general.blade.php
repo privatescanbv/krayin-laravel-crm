@@ -1,6 +1,10 @@
-@php
-    // General lead information view
-@endphp
+@props([
+    'lead',
+    'persons',
+    'contactPerson',
+    'canEditLead' => false,
+    'canDeleteLead' => false,
+])
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
 
@@ -9,14 +13,14 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Algemene informatie Lead</h3>
 
             <div class="direction-row flex items-center gap-4">
-                @if (bouncer()->hasPermission('leads.edit'))
+                @if ($canEditLead)
                     <a href="{{ route('admin.leads.edit', $lead->id) }}"
                         class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
                         <span class="icon-edit text-base"></span><span>Bewerk lead</span>
                     </a>
                 @endif
 
-                @if (bouncer()->hasPermission('leads.delete'))
+                @if ($canDeleteLead)
                     <v-lead-delete delete-url="{{ route('admin.leads.delete', $lead->id) }}"
                         redirect-url="{{ route('admin.leads.index') }}" :lead-name='@json($lead->name)'></v-lead-delete>
                 @endif
@@ -45,13 +49,13 @@
         @if ($lead->hasContactPerson())
             @include('adminc::persons.person', [
                 'lead' => $lead,
-                'person' => $lead->contactPerson,
+                'person' => $contactPerson,
                 'isContactPerson' => true
             ])
         @endif
 
         <!-- Person Blocks - One for each person -->
-        @foreach ($lead->persons as $person)
+        @foreach ($persons as $person)
             @include('adminc::persons.person', ['lead' => $lead, 'person' => $person])
         @endforeach
 

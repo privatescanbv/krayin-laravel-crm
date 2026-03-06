@@ -88,6 +88,7 @@
                 :showOrders="false"
                 :showAnamnesis="false"
                 :showMarketing="false"
+                :showAfletteren="true"
             />
 
             <!-- Footer with creation and modification dates -->
@@ -121,6 +122,10 @@
 
             <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::activities.partials.tab-activities', ['entityId' => $order->id, 'entityType' => 'orders'])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'afletteren'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('admin::orders.view.tab-afletteren', ['order' => $order])
             </div>
         </div>
 
@@ -264,7 +269,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten'];
+                                const validSections = ['algemeen', 'activiteiten', 'afletteren'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

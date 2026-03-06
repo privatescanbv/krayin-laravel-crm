@@ -617,6 +617,7 @@ class LeadController extends Controller
                 $data['closed_at'] = Carbon::now();
             }
             $lead = $this->leadRepository->create($data);
+            /** @var \Webkul\Lead\Models\Lead $lead */
 
             // Validate and persist address if provided on lead create
             try {
@@ -691,11 +692,14 @@ class LeadController extends Controller
         $lead = $this->leadRepository->with([
             'address',
             'organization',
+            'contactPerson',
             'source',
             'type',
             'channel',
             'department',
             'user',
+            'pipeline',
+            'stage',
         ])->findOrFail($id);
 
         $userIds = bouncer()->getAuthorizedUserIds();
@@ -713,7 +717,11 @@ class LeadController extends Controller
 
         return view('admin::leads.view', [
             'lead' => $lead,
-            'activitiesCount' => $activitiesCount
+            'activitiesCount' => $activitiesCount,
+            'canEditLead'     => bouncer()->hasPermission('leads.edit'),
+            'canDeleteLead'   => bouncer()->hasPermission('leads.delete'),
+            'persons'         => $lead->persons()->get(),
+            'contactPerson'   => $lead->contactPerson,
         ]);
     }
 

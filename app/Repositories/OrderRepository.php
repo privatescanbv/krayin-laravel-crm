@@ -50,13 +50,13 @@ class OrderRepository extends Repository
         }
 
         $variables = [
-            'order'           => $order,
-            'order_reference' => (string) $order->id,
+            'order'            => $order,
+            'order_reference'  => (string) $order->id,
             'order_number'     => $order->order_number ?? '',
-            'order_title'     => $order->title ?? '',
-            'order_status'    => $order->stage?->name ?? '',
-            'order_total'     => $order->total_price ?? 0,
-            'customer_name'   => $this->resolveCustomerName($order),
+            'order_title'      => $order->title ?? '',
+            'order_status'     => $order->stage?->name ?? '',
+            'order_total'      => $order->total_price ?? 0,
+            'customer_name'    => $this->resolveCustomerName($order),
         ];
 
         // Resolve appointment variables from resource order items
@@ -230,14 +230,14 @@ class OrderRepository extends Repository
                 $address = $resourceOrderItem->resource?->clinic?->address;
 
                 $appointmentsByPerson[$personId]['appointments'][] = [
-                    'product_name'  => $item->getProductName() ?? 'Onbekend product',
+                    'product_name'        => $item->getProductName() ?? 'Onbekend product',
                     'product_description' => $item->getProductDescription() ?? 'Onbekend product',
-                    'date'          => $this->formatDutchDate($resourceOrderItem->from),
-                    'time_from'     => Carbon::parse($resourceOrderItem->from)->format('H:i'),
-                    'time_to'       => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,
-                    'clinic_name'   => $resourceOrderItem->resource?->clinic?->name ?? 'Onbekend',
-                    'address'       => $address ? $address->formatAddress() : '',
-                    'resource_name' => $resourceOrderItem->resource?->name ?? 'Onbekend',
+                    'date'                => $this->formatDutchDate($resourceOrderItem->from),
+                    'time_from'           => Carbon::parse($resourceOrderItem->from)->format('H:i'),
+                    'time_to'             => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,
+                    'clinic_name'         => $resourceOrderItem->resource?->clinic?->name ?? 'Onbekend',
+                    'address'             => $address ? $address->formatAddress() : '',
+                    'resource_name'       => $resourceOrderItem->resource?->name ?? 'Onbekend',
                 ];
             }
         }

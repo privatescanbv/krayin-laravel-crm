@@ -326,6 +326,8 @@ class OrderController extends SimpleEntityController
             'salesLead.contactPerson',
             'orderItems.product',
             'orderItems.person',
+            'orderItems.purchasePrice',
+            'orderItems.invoicePurchasePrice',
         ])->findOrFail($id);
 
         $activitiesCount = $order->activities()->where('is_done', false)->count();
@@ -377,6 +379,7 @@ class OrderController extends SimpleEntityController
             $updatedItemIds = [];
 
             if (is_array($items) && ! empty($items)) {
+                $sortCounter = 0;
                 foreach ($items as $normalizedKey => $item) {
                     // Skip invalid rows
                     if (empty($item['product_id']) || empty($item['quantity'])) {
@@ -410,6 +413,7 @@ class OrderController extends SimpleEntityController
                         'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                         'quantity'    => $quantity,
                         'total_price' => $totalPrice,
+                        'sort_order'  => $sortCounter++,
                     ];
 
                     // If key is a numeric id and exists, update without touching status

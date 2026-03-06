@@ -101,6 +101,9 @@
                     this.$emit('change', first);
                     this.$emit('update:value', first ? first.id : null);
                     this.$emit('select', first);
+                    document.dispatchEvent(new CustomEvent('adminc:product-selected', {
+                        detail: { id: first ? first.id : null, fieldName: this.name || 'product_id' }
+                    }));
                 }
             }
         });

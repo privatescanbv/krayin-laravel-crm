@@ -49,7 +49,13 @@ class ResourcePlanningMonitorController extends Controller
 
     public function orderPlanning(Request $request, int $orderId): View
     {
-        $order = Order::with(['orderItems.product.partnerProducts', 'orderItems.person', 'salesLead.lead'])->findOrFail($orderId);
+        $order = Order::with([
+            'orderItems.product.partnerProducts',
+            'orderItems.person',
+            'orderItems.productType',
+            'orderItems.product.productType',
+            'salesLead.lead',
+        ])->findOrFail($orderId);
 
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = app(ResourceRepository::class)
@@ -66,18 +72,28 @@ class ResourcePlanningMonitorController extends Controller
 
     public function orderResourceTypes(Request $request, int $orderId): JsonResponse
     {
-        $order = Order::with(['orderItems.product.resourceType'])->findOrFail($orderId);
+        $order = Order::with([
+            'orderItems.product.resourceType',
+            'orderItems.productType',
+            'orderItems.product.productType',
+        ])->findOrFail($orderId);
 
-        // Get unique resource types from order items
-        $resourceTypes = $order->orderItems
-            ->filter(fn ($item) => $item->product && $item->product->resourceType)
-            ->map(fn ($item) => $item->product->resourceType)
-            ->unique('id')
+        $resourceTypeNames = $order->orderItems
+            ->map(fn (OrderItem $item) => $item->resolvedResourceTypeName())
+            ->filter()
+            ->unique()
+            ->values();
+
+        $resourceTypes = ResourceType::query()
+            ->whereIn('name', $resourceTypeNames->all())
+            ->get(['id', 'name'])
+            ->sortBy(fn ($rt) => array_search($rt->name, $resourceTypeNames->all(), true))
             ->values()
             ->map(fn ($type) => [
                 'id'   => $type->id,
                 'name' => $type->name,
-            ]);
+            ])
+            ->values();
 
         return response()->json([
             'resource_types' => $resourceTypes,
@@ -108,7 +124,11 @@ class ResourcePlanningMonitorController extends Controller
             $replace = $request->boolean('replace_existing', true);
 
             // Load orderItem with product + resourceType
-            $orderItem = OrderItem::with('product.resourceType')->findOrFail($orderItemId);
+            $orderItem = OrderItem::with([
+                'product.resourceType',
+                'productType',
+                'product.productType',
+            ])->findOrFail($orderItemId);
 
             // Load resource with resourceType
             $resource = Resource::with('resourceType')->findOrFail((int) $request->input('resource_id'));
@@ -116,10 +136,11 @@ class ResourcePlanningMonitorController extends Controller
             // -------------------------------
             // VALIDATION: ResourceType match
             // -------------------------------
-            if ($orderItem->product->resourceType?->name !== $resource->resourceType?->name) {
+            $requiredType = $orderItem->resolvedResourceTypeName();
+            if ($requiredType !== $resource->resourceType?->name) {
                 return response()->json([
                     'message'       => 'Gekozen resource heeft een ander type dan vereist voor dit order item.',
-                    'required_type' => $orderItem->product->resourceType?->name,
+                    'required_type' => $requiredType,
                     'resource_type' => $resource->resourceType?->name,
                 ], 422);
             }
@@ -658,7 +679,12 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         // Get order items with their existing bookings
-        $orderItems = $order->orderItems()->with(['product', 'resourceOrderItems.resource'])->get();
+        $orderItems = $order->orderItems()->with([
+            'product',
+            'productType',
+            'product.productType',
+            'resourceOrderItems.resource',
+        ])->get();
 
         return response()->json([
             'view_type' => 'week',
@@ -735,7 +761,12 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         // Get order items with their existing bookings
-        $orderItems = $order->orderItems()->with(['product', 'resourceOrderItems.resource'])->get();
+        $orderItems = $order->orderItems()->with([
+            'product',
+            'productType',
+            'product.productType',
+            'resourceOrderItems.resource',
+        ])->get();
 
         return response()->json([
             'view_type' => 'month',

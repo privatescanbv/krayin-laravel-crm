@@ -48,12 +48,15 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
  * Order items routes (top-level, not under settings).
  */
 Route::controller(OrderItemController::class)->prefix('order-items')->group(function () {
+    Route::get('', 'index')->name('admin.order_items.index');
     Route::get('create', 'create')->name('admin.order_items.create');
     Route::post('create', 'store')->name('admin.order_items.store');
     Route::get('edit/{id}', 'edit')->name('admin.order_items.edit');
     Route::put('edit/{id}', 'update')->name('admin.order_items.update');
     Route::delete('', 'destroy')->name('admin.order_items.delete');
     Route::delete('{id}', 'destroy')->name('admin.order_items.delete');
+    Route::get('partner-purchase-prices/{productId}', 'getPartnerPurchasePrices')
+        ->name('admin.order_items.partner_purchase_prices');
 });
 
 /**

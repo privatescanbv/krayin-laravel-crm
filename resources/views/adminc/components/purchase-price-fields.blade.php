@@ -4,6 +4,7 @@
     'title'         => 'admin::app.partner_products.index.create.purchase_prices',
     'totalLabel'    => 'admin::app.partner_products.index.create.purchase_price_total',
     'totalId'       => 'purchase-price-total',
+    'labels'        => null,
 ])
 
 @php
@@ -21,14 +22,15 @@
                 $fieldName = $fieldPrefix . 'purchase_price_' . $suffix;
                 $fieldValue = old($fieldName, number_format($purchasePrice?->{'purchase_price_' . $suffix} ?? 0, 2, ',', ''));
                 $transKey = 'admin::app.partner_products.index.create.' . $fieldPrefix . 'purchase_price_' . $suffix;
+                $label = $labels[$suffix] ?? trans($transKey);
             @endphp
 
             <x-adminc::components.field
                 type="price"
                 name="{{ $fieldName }}"
                 value="{{ $fieldValue }}"
-                :label="trans($transKey)"
-                :placeholder="trans($transKey)"
+                :label="$label"
+                :placeholder="$label"
             />
         @endforeach
     </div>

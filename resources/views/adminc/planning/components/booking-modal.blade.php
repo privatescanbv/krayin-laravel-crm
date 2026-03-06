@@ -23,7 +23,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            ✓ @{{ item.product_name }} (Aantal: @{{ item.quantity }})
+                            ✓ @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }})
                         </option>
                     </optgroup>
                     <!-- Planned items -->
@@ -34,7 +34,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            📅 @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
+                            📅 @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
                         </option>
                     </optgroup>
                     <!-- Not planable items -->
@@ -46,7 +46,7 @@
                             :value="item.id"
                             :disabled="true"
                         >
-                            ⚠ @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - Niet planbaar
+                            ⚠ @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }}) - Niet planbaar
                         </option>
                     </optgroup>
                 </x-adminc::components.field>

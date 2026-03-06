@@ -475,6 +475,16 @@ enum PipelineStage: string
         ];
     }
 
+    public static function getOrderStagesIdsWon(): array
+    {
+        return [
+            self::ORDER_BEVESTIGD->id(),
+            self::ORDER_BEVESTIGD_HERNIA->id(),
+            self::ORDER_UITGEVOERD->id(),
+            self::ORDER_UITGEVOERD_HERNIA->id(),
+        ];
+    }
+
     // ============================================================
     // ATTRIBUTE STRUCTURE FOR EACH ENUM VALUE
     // ============================================================

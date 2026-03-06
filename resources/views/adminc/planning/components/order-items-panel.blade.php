@@ -18,7 +18,7 @@
             <div
                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $canPlan ? 'bg-activity-note-bg dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
                 <div class="flex justify-between items-start mb-2">
-                    <h4 class="font-medium text-sm">{{ $item->product->fullName ?? 'Onbekend product' }}</h4>
+                    <h4 class="font-medium text-sm">{{ $item->getProductName() ?: 'Onbekend product' }}</h4>
                     <span
                         class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'planned' ? 'bg-green-100 text-green-800' : 'bg-neutral-bg text-gray-800' }}">
                         {{ $statusLabel }}
@@ -26,6 +26,9 @@
                 </div>
                 <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
                     {{ $item->person?->name ?? 'Geen persoon toegewezen' }} &mdash; Aantal: {{ $item->quantity }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    Product type: {{ $item->resolvedProductType()?->name ?? '-' }}
+                </div>
                 @if ($item->resourceOrderItems && $item->resourceOrderItems->count() > 0)
                     <div class="text-xs text-gray-700 dark:text-gray-300">
                         <div class="font-medium mb-1">Ingepland:</div>

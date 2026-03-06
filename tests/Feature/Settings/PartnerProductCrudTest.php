@@ -59,9 +59,10 @@ test('can create partner product', function () {
     ]);
 
     $createdProduct = PartnerProduct::where('name', 'MRI Scan')->first();
-    expect($createdProduct->purchase_price)->toBe('102.00')
-        ->and($createdProduct->purchase_price_misc)->toBe('10.50')
-        ->and($createdProduct->purchase_price_doctor)->toBe('25.00');
+    $pp = $createdProduct->purchasePrice;
+    expect($pp->purchase_price)->toBe('102.00')
+        ->and($pp->purchase_price_misc)->toBe('10.50')
+        ->and($pp->purchase_price_doctor)->toBe('25.00');
 });
 
 test('can update partner product', function () {
@@ -98,9 +99,10 @@ test('can update partner product', function () {
     ]);
 
     $pp->refresh();
-    expect($pp->purchase_price)->toBe('92.00')
-        ->and($pp->purchase_price_misc)->toBe('5.00')
-        ->and($pp->purchase_price_doctor)->toBe('50.00');
+    $price = $pp->purchasePrice;
+    expect($price->purchase_price)->toBe('92.00')
+        ->and($price->purchase_price_misc)->toBe('5.00')
+        ->and($price->purchase_price_doctor)->toBe('50.00');
 });
 
 test('can delete partner product', function () {
@@ -144,14 +146,15 @@ test('purchase price total is calculated correctly on create', function () {
     $response->assertOk();
 
     $pp = PartnerProduct::where('name', 'Test Product')->first();
+    $price = $pp->purchasePrice;
 
     // Use string comparison since decimal:2 cast returns strings
-    expect($pp->purchase_price)->toBe('294.00')
-        ->and($pp->purchase_price_misc)->toBe('22.50')
-        ->and($pp->purchase_price_doctor)->toBe('100.00')
-        ->and($pp->purchase_price_cardiology)->toBe('50.25')
-        ->and($pp->purchase_price_clinic)->toBe('75.75')
-        ->and($pp->purchase_price_radiology)->toBe('45.50');
+    expect($price->purchase_price)->toBe('294.00')
+        ->and($price->purchase_price_misc)->toBe('22.50')
+        ->and($price->purchase_price_doctor)->toBe('100.00')
+        ->and($price->purchase_price_cardiology)->toBe('50.25')
+        ->and($price->purchase_price_clinic)->toBe('75.75')
+        ->and($price->purchase_price_radiology)->toBe('45.50');
 });
 
 test('validates resources belong to selected clinics when creating', function () {

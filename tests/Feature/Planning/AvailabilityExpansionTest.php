@@ -2,14 +2,19 @@
 
 namespace Tests\Feature\Planning;
 
+use App\Enums\ProductType as ProductTypeEnum;
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductType;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
+use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Models\Shift;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
 
@@ -498,4 +503,29 @@ test('resources with expired shifts are not shown', function (): void {
     $this->assertArrayNotHasKey($resource->id, $data['blocks'], 'Expired resource should NOT have blocks');
 
     // Note: Expired resource should not be shown in API response (tested above)
+});
+
+test('order monitor resource types include overridden product type resource type', function (): void {
+    $this->withoutMiddleware();
+
+    $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
+    $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
+
+    $petscanType = ProductType::factory()->create(['name' => ProductTypeEnum::PETSCAN->label()]);
+    $product = Product::factory()->create(['resource_type_id' => $mri->id]);
+
+    $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
+    OrderItem::factory()->create([
+        'order_id'        => $order->id,
+        'product_id'      => $product->id,
+        'product_type_id' => $petscanType->id, // override product type
+    ]);
+
+    $resp = $this->getJson(route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]));
+    $resp->assertOk();
+
+    $types = collect($resp->json('resource_types'));
+
+    expect($types->pluck('id'))->toContain($pet->id)
+        ->and($types->pluck('id'))->not->toContain($mri->id);
 });

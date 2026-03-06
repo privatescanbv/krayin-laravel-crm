@@ -72,6 +72,22 @@
                     />
                 </x-adminc::components.selector-field>
 
+                <x-adminc::components.field
+                    type="select"
+                    name="product_type_id"
+                    label="Product type (overschrijft product type)"
+                    value="{{ old('product_type_id', $order_items->product_type_id ?? $order_items->product?->product_type_id ?? '') }}"
+                    rules=""
+                >
+                    <option value="">@lang('admin::app.select')</option>
+                    @foreach ($productTypes as $type)
+                        <option
+                            value="{{ $type->id }}"
+                            @selected((string) old('product_type_id', $order_items->product_type_id ?? $order_items->product?->product_type_id ?? '') === (string) $type->id)
+                        >{{ $type->name }}</option>
+                    @endforeach
+                </x-adminc::components.field>
+
                 @include('adminc.components.contact-person-selector')
 
                 <x-adminc::components.selector-field label="Persoon" :required="true" name="person_id">
@@ -120,8 +136,56 @@
                 <x-adminc::components.purchase-price-fields
                     :purchase-price="$order_items->purchasePrice"
                 />
+
+                <x-adminc::components.purchase-price-fields
+                    :purchase-price="$order_items->invoicePurchasePrice"
+                    field-prefix="invoice_"
+                    title="Factuur inkoopprijzen"
+                    total-id="invoice-purchase-price-total"
+                    :labels="[
+                        'misc'        => 'Overig',
+                        'doctor'      => 'Arts',
+                        'cardiology'  => 'Cardiologie',
+                        'clinic'      => 'Kliniek',
+                        'radiology'   => 'Radiologie',
+                    ]"
+                />
             </div>
         </div>
     </x-admin::form>
+
+    @push('scripts')
+    <script type="module">
+        document.addEventListener('adminc:product-selected', async function(e) {
+            if (e.detail.fieldName !== 'product_id' || !e.detail.id) return;
+
+            try {
+                const response = await axios.get(`/admin/order-items/partner-purchase-prices/${e.detail.id}`);
+                const prices = response.data;
+
+                const productTypeSelect = document.querySelector(`select[name="product_type_id"]`);
+                if (productTypeSelect) {
+                    productTypeSelect.value = prices.product_type_id ?? '';
+                    productTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                const suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+                suffixes.forEach(suffix => {
+                    const input = document.querySelector(`input[name="purchase_price_${suffix}"]`);
+                    if (input) {
+                        const value = new Intl.NumberFormat('nl-NL', {
+                            minimumFractionDigits: 2, maximumFractionDigits: 2
+                        }).format(prices[suffix] ?? 0);
+                        input.value = value;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            } catch (err) {
+                console.warn('Failed to fetch partner purchase prices', err);
+            }
+        });
+    </script>
+    @endpush
 </x-admin::layouts>
 

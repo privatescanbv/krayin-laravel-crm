@@ -189,7 +189,7 @@
                     id="reporting_{{ $value }}"
                     name="reporting[]"
                     value="{{ $value }}"
-                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                    class="h-4 w-4 flex-none rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
                     @checked(in_array($value, $selectedReporting, true))
                 />
                 <label for="reporting_{{ $value }}" class="ml-2 text-sm text-gray-700 dark:text-gray-300">

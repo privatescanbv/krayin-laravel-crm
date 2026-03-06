@@ -40,6 +40,12 @@
         </div>
         <div class="grid grid-cols-2 gap-4 text-sm">
             <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Ordernummer</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->order_number ?: '-' }}
+                </span>
+            </div>
+            <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Status</span>
                 @if($order->stage)
                     <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
@@ -135,7 +141,7 @@
                         @foreach($order->orderItems as $item)
                             <tr class="border-b border-gray-100 dark:border-gray-800">
                                 <td class="px-2 py-2 text-gray-800 dark:text-white">
-                                    {{ $item->product?->name ?? '-' }}
+                                    {{ $item->getProductName() ?: '-' }}
                                 </td>
                                 <td class="px-2 py-2 text-gray-800 dark:text-white">
                                     {{ $item->person?->name ?? '-' }}

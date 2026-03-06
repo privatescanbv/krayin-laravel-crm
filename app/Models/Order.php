@@ -27,6 +27,7 @@ class Order extends Model
     protected $table = 'orders';
 
     protected $fillable = [
+        'order_number',
         'title',
         'total_price',
         'pipeline_stage_id',

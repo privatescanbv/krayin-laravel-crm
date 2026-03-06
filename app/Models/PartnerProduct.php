@@ -51,8 +51,8 @@ class PartnerProduct extends BaseProduct
         'product_id'                    => 'integer',
         'created_by'                    => 'integer',
         'updated_by'                    => 'integer',
-        'duration'  => 'integer',
-        'reporting' => 'array',
+        'duration'                      => 'integer',
+        'reporting'                     => 'array',
         'deleted_at'                    => 'datetime',
     ];
 

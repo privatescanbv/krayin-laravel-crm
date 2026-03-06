@@ -27,6 +27,13 @@ class OrderItemObserver
      */
     public function updated(OrderItem $orderItem): void
     {
+        // If status changed to LOST, free up planning slots
+        if ($orderItem->wasChanged('status') && $orderItem->status === OrderItemStatus::LOST) {
+            DB::table('resource_orderitem')
+                ->where('orderitem_id', $orderItem->id)
+                ->delete();
+        }
+
         // Check if product_id changed, then recalculate status
         if ($orderItem->wasChanged('product_id')) {
             $this->updateOrderItemStatus($orderItem);

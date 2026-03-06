@@ -4,6 +4,7 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductType;
 use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
@@ -53,23 +54,53 @@ test('can create order_item', function () {
 });
 
 test('can update order_item', function () {
-    $item = OrderItem::factory()->create();
+    $typeA = ProductType::factory()->create();
+    $product = Product::factory()->create(['product_type_id' => $typeA->id]);
+    $item = OrderItem::factory()->create(['product_id' => $product->id]);
 
     $payload = [
-        'order_id'      => $item->order_id,
-        'product_id'    => $item->product_id,
-        'person_id'     => test()->person->id,
-        'quantity'      => 5,
-        'total_price'   => 555.55,
-        '_method'       => 'put',
+        'order_id'        => $item->order_id,
+        'product_id'      => $item->product_id,
+        'product_type_id' => $typeA->id,
+        'person_id'       => test()->person->id,
+        'quantity'        => 5,
+        'total_price'     => 555.55,
+        '_method'         => 'put',
     ];
 
     $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
     $response->assertOk()->assertJsonPath('data.quantity', 5);
 
     $this->assertDatabaseHas('order_items', [
-        'id'       => $item->id,
-        'quantity' => 5,
+        'id'              => $item->id,
+        'quantity'        => 5,
+        'product_type_id' => null,
+    ]);
+});
+
+test('order_item product_type_id is stored when different from product', function () {
+    $typeA = ProductType::factory()->create();
+    $typeB = ProductType::factory()->create();
+
+    $product = Product::factory()->create(['product_type_id' => $typeA->id]);
+    $item = OrderItem::factory()->create(['product_id' => $product->id]);
+
+    $payload = [
+        'order_id'        => $item->order_id,
+        'product_id'      => $item->product_id,
+        'product_type_id' => $typeB->id,
+        'person_id'       => test()->person->id,
+        'quantity'        => 5,
+        'total_price'     => 555.55,
+        '_method'         => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
+    $response->assertOk()->assertJsonPath('data.product_type_id', $typeB->id);
+
+    $this->assertDatabaseHas('order_items', [
+        'id'              => $item->id,
+        'product_type_id' => $typeB->id,
     ]);
 });
 

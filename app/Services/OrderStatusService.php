@@ -74,7 +74,7 @@ class OrderStatusService
     /**
      * Recalculate and persist the stage if different.
      */
-    public function recalculateAndPersist(Order $order): void
+    public function recalculateAndPersist(Order $order): ?string
     {
         $newStageId = $this->calculate($order);
 
@@ -85,7 +85,11 @@ class OrderStatusService
 
             $order->pipeline_stage_id = $newStageId;
             Event::dispatch('order.update_stage.after', $order);
+
+            return $newStageId;
         }
+
+        return null;
     }
 
     /**

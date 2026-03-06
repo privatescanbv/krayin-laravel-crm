@@ -422,6 +422,7 @@ namespace App\Models{
 namespace App\Models{
 /**
  * @property int $id
+ * @property string $order_number
  * @property string $title
  * @property int $sales_lead_id
  * @property int|null $user_id
@@ -459,6 +460,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereFirstExaminationAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Order whereOrderNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order wherePipelineStageId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereSalesLeadId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Order whereTitle($value)
@@ -509,9 +511,13 @@ namespace App\Models{
  * @property int $id
  * @property int $order_id
  * @property int $product_id
+ * @property int|null $product_type_id
+ * @property string|null $name
+ * @property string|null $description
  * @property int|null $person_id
  * @property int $quantity
  * @property string $total_price
+ * @property string|null $currency
  * @property \App\Enums\OrderItemStatus $status
  * @property int|null $created_by
  * @property int|null $updated_by
@@ -519,27 +525,36 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read string $can_plan
+ * @property-read \App\Models\PurchasePrice|null $invoicePurchasePrice
  * @property-read \App\Models\Order $order
  * @property-read \Webkul\Contact\Models\Person|null $person
  * @property-read \Webkul\Product\Models\Product $product
+ * @property-read \App\Models\ProductType|null $productType
+ * @property-read \App\Models\PurchasePrice|null $purchasePrice
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ResourceOrderItem> $resourceOrderItems
  * @property-read int|null $resource_order_items_count
  * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Database\Factories\OrderItemFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|OrderItem forOrderAndNotLost(string $orderId)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem query()
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereCurrency($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereOrderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem wherePersonId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereProductId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereProductTypeId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereTotalPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereUpdatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|OrderItem withPartnerProductCount()
  * @mixin \Eloquent
  */
 	#[\AllowDynamicProperties]
@@ -563,19 +578,7 @@ namespace App\Models{
  * @property int|null $resource_type_id
  * @property string|null $clinic_description
  * @property int|null $duration
- * @property string $purchase_price_misc
- * @property string $purchase_price_doctor
- * @property string $purchase_price_cardiology
- * @property string $purchase_price_clinic
- * @property string $purchase_price_radiology
- * @property string $purchase_price
  * @property array|null $reporting
- * @property string|null $rel_purchase_price_misc
- * @property string|null $rel_purchase_price_doctor
- * @property string|null $rel_purchase_price_cardiology
- * @property string|null $rel_purchase_price_clinic
- * @property string|null $rel_purchase_price_radiology
- * @property string|null $rel_purchase_price
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property int|null $created_by
@@ -585,8 +588,10 @@ namespace App\Models{
  * @property-read int|null $clinics_count
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \Webkul\Product\Models\Product|null $product
+ * @property-read \App\Models\PurchasePrice|null $purchasePrice
  * @property-read \Illuminate\Database\Eloquent\Collection<int, PartnerProduct> $relatedProducts
  * @property-read int|null $related_products_count
+ * @property-read \App\Models\PurchasePrice|null $relatedPurchasePrice
  * @property-read \App\Models\ResourceType|null $resourceType
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Resource> $resources
  * @property-read int|null $resources_count
@@ -609,18 +614,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereProductId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct wherePurchasePrice($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct wherePurchasePriceCardiology($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct wherePurchasePriceClinic($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct wherePurchasePriceDoctor($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct wherePurchasePriceMisc($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct wherePurchasePriceRadiology($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelPurchasePrice($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelPurchasePriceCardiology($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelPurchasePriceClinic($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelPurchasePriceDoctor($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelPurchasePriceMisc($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelPurchasePriceRadiology($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereRelatedSalesPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereReporting($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PartnerProduct whereResourceTypeId($value)
@@ -672,10 +665,10 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $patient_id
- * @property string $type
  * @property bool $dismissable
  * @property string $title
  * @property string|null $summary
+ * @property array|null $entity_names
  * @property \App\Enums\NotificationReferenceType $reference_type
  * @property int $reference_id
  * @property \Illuminate\Support\Carbon|null $read_at
@@ -699,6 +692,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereDismissable($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereDismissedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereEntityNames($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereExpiresAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereLastNotifiedByEmailAt($value)
@@ -708,7 +702,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereReferenceType($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereSummary($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PatientNotification whereUpdatedBy($value)
  * @mixin \Eloquent
@@ -780,6 +773,42 @@ namespace App\Models{
  */
 	#[\AllowDynamicProperties]
 	class IdeHelperProductType {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property string $priceable_type
+ * @property int $priceable_id
+ * @property string $type
+ * @property string|null $purchase_price_misc
+ * @property string|null $purchase_price_doctor
+ * @property string|null $purchase_price_cardiology
+ * @property string|null $purchase_price_clinic
+ * @property string|null $purchase_price_radiology
+ * @property string|null $purchase_price
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $priceable
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice query()
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePriceableId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePriceableType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePurchasePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePurchasePriceCardiology($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePurchasePriceClinic($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePurchasePriceDoctor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePurchasePriceMisc($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice wherePurchasePriceRadiology($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|PurchasePrice whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperPurchasePrice {}
 }
 
 namespace App\Models{

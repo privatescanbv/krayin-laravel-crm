@@ -21,7 +21,7 @@
         <tbody>
         @foreach ($items as $item)
             <tr>
-                <td style="padding:8px; border-bottom:1px solid #e5e7eb;">{{ $item->product->name ?? 'Onbekend product' }}</td>
+                <td style="padding:8px; border-bottom:1px solid #e5e7eb;">{{ $item->getProductName() ?: 'Onbekend product' }}</td>
                 <td style="padding:8px; border-bottom:1px solid #e5e7eb;">{{ $item->person->name ?? '-' }}</td>
                 <td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">{{ $item->quantity ?? 0 }}</td>
                 <td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">

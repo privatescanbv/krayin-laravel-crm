@@ -52,6 +52,7 @@ class OrderRepository extends Repository
         $variables = [
             'order'           => $order,
             'order_reference' => (string) $order->id,
+            'order_number'     => $order->order_number ?? '',
             'order_title'     => $order->title ?? '',
             'order_status'    => $order->stage?->name ?? '',
             'order_total'     => $order->total_price ?? 0,
@@ -229,7 +230,8 @@ class OrderRepository extends Repository
                 $address = $resourceOrderItem->resource?->clinic?->address;
 
                 $appointmentsByPerson[$personId]['appointments'][] = [
-                    'product_name'  => $item->product->description ?? $item->product->name ?? 'Onbekend product',
+                    'product_name'  => $item->getProductName() ?? 'Onbekend product',
+                    'product_description' => $item->getProductDescription() ?? 'Onbekend product',
                     'date'          => $this->formatDutchDate($resourceOrderItem->from),
                     'time_from'     => Carbon::parse($resourceOrderItem->from)->format('H:i'),
                     'time_to'       => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,

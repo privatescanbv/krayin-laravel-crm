@@ -14,8 +14,8 @@ enum OrderItemStatus: string
         return match ($this) {
             self::NEW     => 'Nieuw',
             self::PLANNED => 'Ingepland',
-            self::WON => 'Gewonnen',
-            self::LOST => 'Verloren',
+            self::WON     => 'Gewonnen',
+            self::LOST    => 'Verloren',
         };
     }
 }

@@ -28,6 +28,11 @@
                         <h1 class="text-xl font-bold text-gray-800 dark:text-white">
                             {{ $order->title }}
                         </h1>
+                        @if(!empty($order->order_number))
+                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                #{{ $order->order_number }}
+                            </span>
+                        @endif
                         @if($order->status)
                             <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full {{ $order->status->getStatusClass() }}">
                                 {{ $order->status->label() }}

@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\OrderItemStatus;
+use App\Enums\ProductType as ProductTypeEnum;
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Traits\HasAuditTrail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,6 +29,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'product_type_id',
         'name',
         'description',
         'person_id',
@@ -38,15 +42,16 @@ class OrderItem extends Model
     ];
 
     protected $casts = [
-        'order_id'    => 'integer',
-        'product_id'  => 'integer',
-        'person_id'   => 'integer',
-        'quantity'    => 'integer',
-        'total_price' => 'decimal:2',
-        'currency'    => 'string',
-        'status'      => OrderItemStatus::class,
-        'created_by'  => 'integer',
-        'updated_by'  => 'integer',
+        'order_id'        => 'integer',
+        'product_id'      => 'integer',
+        'product_type_id' => 'integer',
+        'person_id'       => 'integer',
+        'quantity'        => 'integer',
+        'total_price'     => 'decimal:2',
+        'currency'        => 'string',
+        'status'          => OrderItemStatus::class,
+        'created_by'      => 'integer',
+        'updated_by'      => 'integer',
     ];
 
     public function order(): BelongsTo
@@ -59,6 +64,97 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function productType(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ProductType::class);
+    }
+
+    /**
+     * Returns the effective product type ID for this order item.
+     *
+     * If an override (`order_items.product_type_id`) is set, that wins.
+     * Otherwise it falls back to the selected product's `product_type_id`.
+     */
+    public function resolvedProductTypeId(): ?int
+    {
+        if (! empty($this->product_type_id)) {
+            return (int) $this->product_type_id;
+        }
+
+        return $this->product?->product_type_id ? (int) $this->product?->product_type_id : null;
+    }
+
+    /**
+     * Returns the effective ProductType model for this order item.
+     */
+    public function resolvedProductType(): ?\App\Models\ProductType
+    {
+        if (! empty($this->product_type_id)) {
+            return $this->productType;
+        }
+
+        return $this->product?->productType;
+    }
+
+    public function resolvedProductTypeEnum(): ?ProductTypeEnum
+    {
+        $name = $this->resolvedProductType()?->name;
+
+        if (! $name) {
+            return null;
+        }
+
+        foreach (ProductTypeEnum::cases() as $case) {
+            if (strcasecmp($case->label(), $name) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    public function resolvedResourceTypeEnum(): ?ResourceTypeEnum
+    {
+        $productType = $this->resolvedProductTypeEnum();
+
+        if (! $productType) {
+            return null;
+        }
+
+        return match ($productType) {
+            ProductTypeEnum::TOTAL_BODYSCAN => ResourceTypeEnum::MRI_SCANNER,
+            ProductTypeEnum::MRI_SCAN       => ResourceTypeEnum::MRI_SCANNER,
+            ProductTypeEnum::CT_SCAN        => ResourceTypeEnum::CT_SCANNER,
+            ProductTypeEnum::PETSCAN        => ResourceTypeEnum::PET_CT_SCANNER,
+            ProductTypeEnum::CARDIOLOGIE    => ResourceTypeEnum::CARDIOLOGIE,
+            ProductTypeEnum::OPERATIONS     => ResourceTypeEnum::ARTSEN,
+
+            // Not (directly) plannable or not tied to a scan resource type
+            ProductTypeEnum::ENDOSCOPIE,
+            ProductTypeEnum::LABORATORIUM,
+            ProductTypeEnum::VERTALING,
+            ProductTypeEnum::DIENSTEN,
+            ProductTypeEnum::OVERIG => ResourceTypeEnum::OTHER,
+        };
+    }
+
+    /**
+     * Effective resource type name for planning/monitor.
+     *
+     * Uses overridden product type (if set) to infer the required resource type.
+     * Falls back to the selected product's resource type name.
+     */
+    public function resolvedResourceTypeName(): ?string
+    {
+        $fromProductType = $this->resolvedResourceTypeEnum();
+
+        if ($fromProductType) {
+            return $fromProductType->label();
+        }
+
+        return $this->product?->resourceType?->name;
+    }
+
     public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class);
@@ -69,18 +165,29 @@ class OrderItem extends Model
         return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'main');
     }
 
+    public function invoicePurchasePrice(): MorphOne
+    {
+        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'invoice');
+    }
+
     public function resourceOrderItems(): HasMany
     {
         return $this->hasMany(ResourceOrderItem::class, 'orderitem_id');
     }
 
-    public function scopeWithPartnerProductCount($query): void
+    public function scopeWithPartnerProductCount(Builder $query): Builder
     {
-        $query->select('order_items.id', 'order_items.status', 'order_items.product_id')
+        return $query->select('order_items.id', 'order_items.status', 'order_items.product_id')
             ->selectRaw('COUNT(partner_products.id) AS partner_product_count')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->leftJoin('partner_products', 'products.id', '=', 'partner_products.product_id')
             ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id');
+    }
+
+    public function scopeForOrderAndNotLost(Builder $query, string $orderId): Builder
+    {
+        return $query->where('order_id', $orderId)
+            ->where('status', '!=', OrderItemStatus::LOST->value);
     }
 
     public function isPlannable(): bool
@@ -88,6 +195,24 @@ class OrderItem extends Model
         return $this->product &&
             $this->product->partnerProducts &&
             $this->product->partnerProducts->filter(fn ($product) => $product->isPlannable())->count() > 0;
+    }
+
+    public function getProductName(): string
+    {
+        if (! empty($this->name)) {
+            return $this->name;
+        }
+
+        return $this->product?->name ?? '';
+    }
+
+    public function getProductDescription(): string
+    {
+        if (! empty($this->description)) {
+            return $this->description;
+        }
+
+        return $this->product?->ndescriptioname ?? '';
     }
 
     public function getCanPlanAttribute(): string

@@ -1,7 +1,7 @@
 @php use Carbon\Carbon; @endphp
 <x-admin::layouts>
     <x-slot:title>
-        Resource Planning - Order #{{ $order->id }}
+        Resource Planning - Order #{{ $order->order_number }}
     </x-slot>
 
     <x-adminc::planning.components.planning-calendar/>
@@ -9,7 +9,7 @@
 
     <div class="flex flex-col gap-4">
         <x-adminc::planning.components.page-header
-            title="Resource Planning - Order #{{ $order->id }}"
+            title="Resource Planning - Order #{{ $order->order_number }}"
             :subtitle="$order->title"
             :actions="[
                 ['url' => route('admin.orders.edit', ['id' => $order->id]), 'label' => 'Terug naar order'],
@@ -32,7 +32,8 @@
 
                 return [
                     'id' => $item->id,
-                    'product_name' => $item->product?->name ?? 'Onbekend product',
+                    'product_name' => $item->getProductName() ?: 'Onbekend product',
+                    'product_type' => $item->resolvedProductType()?->name,
                     'quantity' => $item->quantity,
                     'duration' => $duration, // Duration in minutes
                     'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'new')),
@@ -249,7 +250,10 @@
                     orderItemOptions() {
                         return this.orderItems.map(item => ({
                             value: item.id,
-                            label: item.product_name + ' (Aantal: ' + item.quantity + ')' + (!item.can_plan ? ' - Niet planbaar' : '')
+                            label: item.product_name
+                                + (item.product_type ? ' — ' + item.product_type : '')
+                                + ' (Aantal: ' + item.quantity + ')'
+                                + (!item.can_plan ? ' - Niet planbaar' : '')
                         }));
                     },
                     // Sorted order items: unplanned first, then planned

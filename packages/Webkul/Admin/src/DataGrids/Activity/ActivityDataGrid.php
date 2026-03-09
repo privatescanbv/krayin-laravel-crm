@@ -129,6 +129,10 @@ class ActivityDataGrid extends DataGrid
         } else {
             /** @var ActivityQueueRegistry $queueRegistry */
             $queueRegistry = app(ActivityQueueRegistry::class);
+
+            // Operational dashboard queues: never show completed activities.
+            $queryBuilder->where('activities.is_done', false);
+
             $queueRegistry->applyFilters($queryBuilder, $queueKey, auth()->guard('user')->id());
         }
 
@@ -405,7 +409,7 @@ class ActivityDataGrid extends DataGrid
             },
         ]);
 
-        // Hidden technical column remains for filtering, plus visual "done" icon column at the end
+        // Hidden technical column remains for filtering
         $this->addColumn([
             'index'      => 'is_done',
             'label'      => 'Afgerond',
@@ -416,21 +420,23 @@ class ActivityDataGrid extends DataGrid
             'visibility' => false,
         ]);
 
-        // Visual done indicator (last column)
-        $this->addColumn([
-            'index'      => 'is_done_symbol',
-            'label'      => 'Gereed',
-            'type'       => 'string',
-            'searchable' => false,
-            'filterable' => false,
-            'sortable'   => false,
-            'closure'    => function ($row) {
-                if ((int)($row->is_done ?? 0) === 1) {
-                    return "<span class='icon-tick text-status-active-text text-xl' title='Afgerond'></span>";
-                }
-                return '';
-            },
-        ]);
+        // Only show visual "Gereed" indicator in standard activities screens (not on operational dashboard queues).
+        if (! request()->get('queue')) {
+            $this->addColumn([
+                'index'      => 'is_done_symbol',
+                'label'      => 'Gereed',
+                'type'       => 'string',
+                'searchable' => false,
+                'filterable' => false,
+                'sortable'   => false,
+                'closure'    => function ($row) {
+                    if ((int)($row->is_done ?? 0) === 1) {
+                        return "<span class='icon-tick text-status-active-text text-xl' title='Afgerond'></span>";
+                    }
+                    return '';
+                },
+            ]);
+        }
     }
 
     /**

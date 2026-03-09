@@ -283,14 +283,12 @@ $salutationToGenderMapping = [
 
                                     <!-- Create person from lead data (create flow only) -->
                                     <div class="mt-4">
-                                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                            <input
-                                                type="checkbox"
-                                                class="cursor-pointer"
-                                                v-model="formData.create_person_from_lead"
-                                            />
-                                            <span>Tevens persoon aanmaken met deze lead gegevens en koppelen</span>
-                                        </label>
+                                        <x-adminc::components.field
+                                            type="switch"
+                                            name="create_person_from_lead"
+                                            label="Tevens persoon aanmaken met deze lead gegevens en koppelen"
+                                            v-model="formData.create_person_from_lead"
+                                        />
                                     </div>
 
                                     <!-- Other attributes -->

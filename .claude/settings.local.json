@@ -33,7 +33,9 @@
       "Bash(vendor/bin/sail artisan tinker:*)",
       "Bash(docker network:*)",
       "mcp__plugin_laravel-boost_laravel-boost__last-error",
-      "Bash(sail artisan:*)"
+      "Bash(sail artisan:*)",
+      "WebFetch(domain:node-blot-58802943.figma.site)",
+      "Bash(npx playwright:*)"
     ]
   }
 }

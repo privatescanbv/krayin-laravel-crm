@@ -170,46 +170,7 @@
                                 </template>
 
                                 <!-- Actions Column -->
-                                <div class="flex items-center justify-end gap-1.5" v-if="available.actions.length">
-                                    <!-- Standard Actions -->
-                                    <span
-                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
-                                        :class="action.icon"
-                                        :title="action.title"
-                                        v-for="action in record.actions"
-                                        @click="performAction(action)"
-                                    ></span>
-
-                                    <!-- Assign to Me Button -->
-                                    <button
-                                        v-if="!record.user_id"
-                                        class="ml-2 px-2 py-1 rounded bg-brand-privatescan-main text-white text-xs hover:bg-brand-privatescan-hover transition-colors"
-                                        @click="assignToMe(record)"
-                                        title="Aan mij toekennen"
-                                    >
-                                        Toekennen
-                                    </button>
-
-                                    <!-- Takeover Button -->
-                                    <button
-                                        v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
-                                        class="ml-2 px-2 py-1 rounded bg-brand-privatescan-accent text-white text-xs hover:bg-brand-privatescan-accenthover transition-colors"
-                                        @click="takeoverActivity(record)"
-                                        :title="'Overnemen van ' + (record.user && record.user.name ? record.user.name : 'onbekend')"
-                                    >
-                                        Overnemen
-                                    </button>
-
-                                    <!-- Unassign Button -->
-                                    <button
-                                        v-if="record.user_id == {{ auth()->guard('user')->id() ?? 'null' }}"
-                                        class="ml-2 px-2 py-1 rounded bg-brand-privatescan-accent text-white text-xs hover:bg-brand-privatescan-accenthover transition-colors"
-                                        @click="unassignActivity(record)"
-                                        title="Ontkoppelen - maak beschikbaar voor anderen"
-                                    >
-                                        Ontkoppelen
-                                    </button>
-                                </div>
+                                @include('admin::activities.partials.datagrid-actions-desktop')
                             </div>
 
                             <!-- Mobile Card View -->
@@ -240,41 +201,7 @@
                                         </p>
 
                                         <!-- Actions for Mobile -->
-                                        <div class="flex w-full items-center justify-end gap-2">
-                                            <div class="flex items-center" v-if="available.actions.length">
-                                                <span
-                                                    class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
-                                                    :class="action.icon"
-                                                    :title="action.title"
-                                                    v-for="action in record.actions"
-                                                    @click="performAction(action)"
-                                                ></span>
-                                            </div>
-
-                                            <button
-                                                v-if="!record.user_id"
-                                                class="px-2 py-1 rounded bg-brand-herniapoli-main text-white text-xs hover:text-activity-note-text transition-colors"
-                                                @click="assignToMe(record)"
-                                            >
-                                                Toekennen
-                                            </button>
-
-                                            <button
-                                                v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
-                                                class="ml-2 px-2 py-1 rounded bg-orange-500 text-white text-xs hover:bg-orange-600 transition-colors"
-                                                @click="takeoverActivity(record)"
-                                            >
-                                                Overnemen
-                                            </button>
-
-                                            <button
-                                                v-if="record.user_id == {{ auth()->guard('user')->id() ?? 'null' }}"
-                                                class="ml-2 px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600 transition-colors"
-                                                @click="unassignActivity(record)"
-                                            >
-                                                Ontkoppelen
-                                            </button>
-                                        </div>
+                                        @include('admin::activities.partials.datagrid-actions-mobile')
                                     </div>
                                 </div>
 

@@ -3,6 +3,7 @@
 namespace Webkul\Admin\DataGrids\Activity;
 
 use App\Enums\ActivityType;
+use App\Services\ActivityQueueRegistry;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -60,12 +61,19 @@ class ActivityDataGrid extends DataGrid
             )
 
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
+            ->leftJoin('orders', 'activities.order_id', '=', 'orders.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             // Joins to fetch display names for related entities
             ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
             ->leftJoin('persons', 'person_activities.person_id', '=', 'persons.id')
-            ->whereIn('type', ['call', 'meeting','task', ActivityType::PATIENT_MESSAGE->value])
+            ->whereIn('type', [
+                'call',
+                'meeting',
+                'task',
+                ActivityType::PATIENT_MESSAGE->value,
+                ActivityType::FILE->value,
+            ])
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
                     if ($userIds = bouncer()->getAuthorizedUserIds()) {
@@ -83,37 +91,45 @@ class ActivityDataGrid extends DataGrid
                 });
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
 
-        // Apply view filters - use default view if none specified
-        $viewService = app(ViewService::class);
-        $view = request()->get('view');
-        if (!$view) {
-            $defaultView = $viewService->getDefaultView();
-            $view = $defaultView['key'];
-        }
+        $queueKey = request()->get('queue');
 
-        // Get view configuration to add filters to the interface
-        $viewConfig = $viewService->getView($view);
-        if ($viewConfig) {
-            // Always apply view filters on the query (supports custom filters and OR logic)
-            $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+        if (! $queueKey) {
+            // Apply view filters - use default view if none specified
+            $viewService = app(ViewService::class);
+            $view = request()->get('view');
+            if (!$view) {
+                $defaultView = $viewService->getDefaultView();
+                $view = $defaultView['key'];
+            }
 
-            // Additionally, mirror simple filters into the datagrid request 'filters' so both paths behave consistently
-            $requestedFilters = request()->input('filters', []);
-            foreach ($viewConfig['filters'] as $filter) {
-                // Only mirror non-custom filters; custom ones are handled server-side only
-                if (($filter['operator'] ?? 'eq') !== 'custom') {
-                    $columnKey = $filter['column'];
-                    $value = $filter['value'];
-                    if (!isset($requestedFilters[$columnKey]) || !is_array($requestedFilters[$columnKey])) {
-                        $requestedFilters[$columnKey] = [];
-                    }
-                    // Avoid duplicate entries
-                    if (!in_array($value, $requestedFilters[$columnKey], true)) {
-                        $requestedFilters[$columnKey][] = $value;
+            // Get view configuration to add filters to the interface
+            $viewConfig = $viewService->getView($view);
+            if ($viewConfig) {
+                // Always apply view filters on the query (supports custom filters and OR logic)
+                $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+
+                // Additionally, mirror simple filters into the datagrid request 'filters' so both paths behave consistently
+                $requestedFilters = request()->input('filters', []);
+                foreach ($viewConfig['filters'] as $filter) {
+                    // Only mirror non-custom filters; custom ones are handled server-side only
+                    if (($filter['operator'] ?? 'eq') !== 'custom') {
+                        $columnKey = $filter['column'];
+                        $value = $filter['value'];
+                        if (!isset($requestedFilters[$columnKey]) || !is_array($requestedFilters[$columnKey])) {
+                            $requestedFilters[$columnKey] = [];
+                        }
+                        // Avoid duplicate entries
+                        if (!in_array($value, $requestedFilters[$columnKey], true)) {
+                            $requestedFilters[$columnKey][] = $value;
+                        }
                     }
                 }
+                request()->merge(['filters' => $requestedFilters]);
             }
-            request()->merge(['filters' => $requestedFilters]);
+        } else {
+            /** @var ActivityQueueRegistry $queueRegistry */
+            $queueRegistry = app(ActivityQueueRegistry::class);
+            $queueRegistry->applyFilters($queryBuilder, $queueKey, auth()->guard('user')->id());
         }
 
         // Default sorting: urgent tasks first, then newest
@@ -135,6 +151,8 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('assigned_user_id', 'users.id');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
+        $this->addFilter('lead_pipeline_stage_id', 'leads.lead_pipeline_stage_id');
+        $this->addFilter('lead_pipeline_id', 'leads.lead_pipeline_id');
         $this->addFilter('group', 'groups.name');
 
         /**

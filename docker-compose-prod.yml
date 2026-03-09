@@ -166,9 +166,6 @@ services:
       APP_DEBUG: 'false'
       APP_URL: "$PATIENT_PORTAL_URL"
       ASSET_URL: "$PATIENT_PORTAL_URL"
-      POSTMARK_TOKEN: '3ea2bc92-4dd0-4bc5-af86-fb764e5d7af9'
-      MAIL_FROM_ADDRESS: 'no-reply@privatescan.nl'
-      MAIL_FROM_NAME: 'PrivateScan'
       APP_FALLBACK_LOCALE: 'en'
       APP_FAKER_LOCALE: 'en_US'
       APP_LOCALE: 'nl'
@@ -195,7 +192,6 @@ services:
       CACHE_STORE: 'database'
       MEMCACHED_HOST: '127.0.0.1'
       FORWARD_REDIS_PORT: 6379
-      EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
       KEYCLOAK_BASE_URL: 'https://sso.dev.privatescan.nl'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_CLIENT_ID: 'patient-app'

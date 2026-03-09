@@ -10,6 +10,11 @@ Breadcrumbs::for('dashboard', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.layouts.dashboard'), route('admin.dashboard.index'));
 });
 
+// Dashboard > Werkbakken (Operational dashboard)
+Breadcrumbs::for('operational-dashboard', function (BreadcrumbTrail $trail) {
+    $trail->push('Werkbakken', route('admin.operational-dashboard.index'));
+});
+
 // Dashboard > Leads
 Breadcrumbs::for('leads', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

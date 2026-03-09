@@ -2,6 +2,17 @@
 
 return [
     /**
+     * Operational dashboard (werkbakken).
+     */
+    [
+        'key'        => 'operational-dashboard',
+        'name'       => 'Werkbakken',
+        'route'      => 'admin.operational-dashboard.index',
+        'sort'       => 0,
+        'icon-class' => 'icon-dashboard',
+    ],
+
+    /**
      * Dashboard.
      */
     [

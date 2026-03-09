@@ -63,3 +63,8 @@ require 'clinic-guide-routes.php';
 require 'orders-routes.php';
 
 require 'address-routes.php';
+
+/**
+ * Operational dashboard routes.
+ */
+require 'operational-dashboard-routes.php';

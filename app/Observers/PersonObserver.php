@@ -263,10 +263,11 @@ class PersonObserver
                     $newValue = $newValue ?: '-';
                 }
 
-                $activity = $this->activityRepository->create([
+                $this->activityRepository->create([
                     'type'       => 'system',
                     'title'      => "$fieldLabel gewijzigd",
                     'is_done'    => 1,
+                    'person_id'  => $person->id,
                     'additional' => json_encode([
                         'attribute' => $fieldLabel,
                         'new'       => [
@@ -280,8 +281,6 @@ class PersonObserver
                     ]),
                     'user_id' => auth()->id() ?? 1,
                 ]);
-
-                $person->activities()->attach($activity->id);
             }
         }
     }

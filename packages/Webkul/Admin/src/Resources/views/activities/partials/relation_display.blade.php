@@ -3,8 +3,9 @@
 @php
     $relations = [];
 
-    // Persons (many via person_activities)
-    foreach ($activity->persons as $person) {
+    // Person (via person_id FK)
+    if ($activity->person) {
+        $person = $activity->person;
         $relations[] = [
             'type'  => 'person',
             'label' => 'Persoon',

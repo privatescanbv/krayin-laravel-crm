@@ -7,8 +7,12 @@ use App\Enums\Currency;
 use App\Models\OrderItem;
 use App\Models\ProductType;
 use App\Repositories\OrderItemRepository;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Product\Models\Product;
 
 class OrderItemController extends SimpleEntityController
 {
@@ -27,18 +31,18 @@ class OrderItemController extends SimpleEntityController
         $this->permissionPrefix = 'settings.order_items';
     }
 
-    public function update(Request $request, int $id): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
         $this->validateUpdate($request, $id);
 
-        \Illuminate\Support\Facades\Event::dispatch("settings.{$this->entityName}.update.before", $id);
+        Event::dispatch("settings.{$this->entityName}.update.before", $id);
 
         $entity = $this->repository->update($this->transformPayload($request->all(), $id), $id);
 
         $this->saveOrderItemPurchasePrice($entity, $request);
         $this->saveInvoicePurchasePrice($entity, $request);
 
-        \Illuminate\Support\Facades\Event::dispatch("settings.{$this->entityName}.update.after", $entity);
+        Event::dispatch("settings.{$this->entityName}.update.after", $entity);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -52,9 +56,9 @@ class OrderItemController extends SimpleEntityController
             ->with('success', $this->getUpdateSuccessMessage());
     }
 
-    public function getPartnerPurchasePrices(int $productId): \Illuminate\Http\JsonResponse
+    public function getPartnerPurchasePrices(int $productId): JsonResponse
     {
-        $product = \Webkul\Product\Models\Product::with(['partnerProducts.purchasePrice'])
+        $product = Product::with(['partnerProducts.purchasePrice'])
             ->findOrFail($productId);
 
         $suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
@@ -217,7 +221,7 @@ class OrderItemController extends SimpleEntityController
         }
 
         if ($productId) {
-            $product = \Webkul\Product\Models\Product::query()
+            $product = Product::query()
                 ->select(['id', 'product_type_id'])
                 ->find($productId);
 

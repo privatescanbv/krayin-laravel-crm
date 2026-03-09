@@ -265,7 +265,7 @@ class PersonController extends Controller
         // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)
         $duplicateCount = $this->personRepository->findPotentialDuplicates($person)->count();
         $activitiesCount = $this->activityRepository->countOpen($person)->getData()->data;
-        $patientMessageActivity = $person->activities()
+        $patientMessageActivity = $person->primaryActivities()
             ->where('type', ActivityType::PATIENT_MESSAGE->value)
             ->orderByDesc('updated_at')
             ->first();

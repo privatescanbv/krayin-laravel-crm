@@ -52,19 +52,19 @@ class ActivityDataGrid extends DataGrid
                 })()),
                 // Add entity information
                 DB::raw('CASE
+                    WHEN activities.order_id IS NOT NULL THEN "'.EntityType::ORDER->value.'"
                     WHEN activities.lead_id IS NOT NULL THEN "'.EntityType::LEAD->value.'"
                     WHEN activities.sales_lead_id IS NOT NULL THEN "'.EntityType::SALES->value.'"
-                    WHEN activities.order_id IS NOT NULL THEN "'.EntityType::ORDER->value.'"
                     WHEN activities.clinic_id IS NOT NULL THEN "'.EntityType::CLINIC->value.'"
-                    WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN "'.EntityType::PERSON->value.'"
+                    WHEN activities.person_id IS NOT NULL THEN "'.EntityType::PERSON->value.'"
                     ELSE NULL
                 END as entity_type'),
                 DB::raw('CASE
+                    WHEN activities.order_id IS NOT NULL THEN activities.order_id
                     WHEN activities.lead_id IS NOT NULL THEN activities.lead_id
                     WHEN activities.sales_lead_id IS NOT NULL THEN activities.sales_lead_id
-                    WHEN activities.order_id IS NOT NULL THEN activities.order_id
                     WHEN activities.clinic_id IS NOT NULL THEN activities.clinic_id
-                    WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT person_id FROM person_activities WHERE activity_id = activities.id LIMIT 1)
+                    WHEN activities.person_id IS NOT NULL THEN activities.person_id
                     ELSE NULL
                 END as entity_id')
             )
@@ -73,9 +73,8 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('orders', 'activities.order_id', '=', 'orders.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
-            // Joins to fetch display names for related entities
-            ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
-            ->leftJoin('persons', 'person_activities.person_id', '=', 'persons.id')
+            // Join persons directly via the person_id FK
+            ->leftJoin('persons', 'activities.person_id', '=', 'persons.id')
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
                     if ($userIds = bouncer()->getAuthorizedUserIds()) {
@@ -91,7 +90,7 @@ class ActivityDataGrid extends DataGrid
                             });
                     }
                 });
-            })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
+            })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id', 'persons.id');
 
         $queueKey = request()->get('queue');
 

@@ -69,7 +69,7 @@ class PatientFileUploadController extends Controller
             'file'               => $request->file('file'),
         ]);
 
-        $activity->persons()->attach($person->id);
+        $activity->update(['person_id' => $person->id]);
 
         return response()->json(['message' => 'File uploaded successfully', 'id' => $activity->id], 201);
     }

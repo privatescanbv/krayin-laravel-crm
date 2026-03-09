@@ -31,13 +31,11 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-// Voeg deze helper toe:
 function createLeadWithAttributes(
     AttributeValueRepository $attributeValueRepository,
     string $firstName = 'John',
     string $lastName = 'Doe',
-    array $attributes = []
-
+    array $attributes = [],
 ) {
     $pipeline = Pipeline::first();
     $stage = Stage::first();
@@ -626,13 +624,13 @@ test('date of birth matching affects name field scoring', function () {
     $noDateScore = round($collection->firstWhere('id', $noDatePerson->id)->match_score, 2);
 
     // Person with matching date should have highest score
-    expect($matchingDateScore)->toBeGreaterThanOrEqual($differentDateScore);
-    expect($matchingDateScore)->toBeGreaterThanOrEqual($noDateScore);
+    expect($matchingDateScore)->toBeGreaterThanOrEqual($differentDateScore)
+        ->and($matchingDateScore)->toBeGreaterThanOrEqual($noDateScore)
+        ->and($matchingDateScore)->toBeGreaterThan(70)
+        ->and($differentDateScore)->toBeGreaterThan(70)
+        ->and($noDateScore)->toBeGreaterThan(70);
 
     // All persons should have reasonably high scores due to name, email, phone matches
-    expect($matchingDateScore)->toBeGreaterThan(70);
-    expect($differentDateScore)->toBeGreaterThan(70);
-    expect($noDateScore)->toBeGreaterThan(70);
 
     // The scores should reflect the date_of_birth matching impact
     $scoreDifference = $matchingDateScore - $differentDateScore;

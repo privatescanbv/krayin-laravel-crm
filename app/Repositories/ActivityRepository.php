@@ -44,7 +44,7 @@ class ActivityRepository extends Repository
      * Paginate document files (FILE activities) for a person.
      *
      * Returns published FILE activities linked to the person via any known relation:
-     * direct (person_activities), lead, sales lead, or order.
+     * direct person_id FK, lead, sales lead, or order.
      *
      * @param  string|null  $documentType  Optional filter on activity.additional.document_type.
      * @param  int|null  $orderIdFilter  Optional: restrict to a specific order_id.

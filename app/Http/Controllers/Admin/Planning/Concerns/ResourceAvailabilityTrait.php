@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Planning\Concerns;
 
 use App\Models\Resource;
+use App\Models\ResourceOrderItem;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
@@ -89,7 +90,7 @@ trait ResourceAvailabilityTrait
 
     protected function getOccupancy($resources, CarbonImmutable $start, CarbonImmutable $end): Collection
     {
-        return \App\Models\ResourceOrderItem::query()
+        return ResourceOrderItem::query()
             ->with(['orderItem.order.salesLead.lead'])
             ->whereIn('resource_id', $resources->pluck('id'))
             ->where(function ($q) use ($start, $end) {

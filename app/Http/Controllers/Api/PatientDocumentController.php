@@ -27,7 +27,7 @@ class PatientDocumentController extends Controller
      * Get all documents for a patient (FILE activities with publish_to_portal = true).
      *
      * Documents are linked to the patient via any known relation:
-     * person_activities, lead, sales lead, or order.
+     * person_id FK, lead, sales lead, or order.
      *
      * @group Patient documents
      *

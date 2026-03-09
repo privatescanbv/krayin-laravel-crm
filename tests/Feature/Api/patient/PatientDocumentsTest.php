@@ -2,7 +2,6 @@
 
 use App\Models\Order;
 use App\Models\SalesLead;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -164,19 +163,14 @@ function makeFileRecord(Activity $activity, string $name = 'doc.pdf'): ActivityF
     ]);
 }
 
-it('returns file activity linked directly via person_activities', function () {
+it('returns file activity linked directly via person_id FK', function () {
     config(['api.keys' => ['test-api-key']]);
 
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
-    $activity = makeFileActivity();
+    $activity = makeFileActivity(['person_id' => $person->id]);
     $file = makeFileRecord($activity);
-
-    DB::table('person_activities')->insert([
-        'person_id'   => $person->id,
-        'activity_id' => $activity->id,
-    ]);
 
     $response = $this->getJson(
         "/api/patient/{$keycloakUserId}/documents",
@@ -239,13 +233,8 @@ it('excludes file activity with publish_to_portal false', function () {
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
-    $activity = makeFileActivity(['publish_to_portal' => false]);
+    $activity = makeFileActivity(['publish_to_portal' => false, 'person_id' => $person->id]);
     makeFileRecord($activity);
-
-    DB::table('person_activities')->insert([
-        'person_id'   => $person->id,
-        'activity_id' => $activity->id,
-    ]);
 
     $response = $this->getJson(
         "/api/patient/{$keycloakUserId}/documents",
@@ -310,20 +299,15 @@ it('group label uses order title when activity has an order_id', function () {
     $response->assertJsonPath('data.0.group', 'Order MRI Knie');
 });
 
-it('download works for file activity linked via person_activities', function () {
+it('download works for file activity linked via person_id FK', function () {
     config(['api.keys' => ['test-api-key']]);
     Storage::fake('local');
 
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
-    $activity = makeFileActivity();
+    $activity = makeFileActivity(['person_id' => $person->id]);
     $file = makeFileRecord($activity);
-
-    DB::table('person_activities')->insert([
-        'person_id'   => $person->id,
-        'activity_id' => $activity->id,
-    ]);
 
     Storage::disk('local')->put($file->path, 'fake-content');
 

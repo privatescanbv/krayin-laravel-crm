@@ -39,11 +39,8 @@ class ActivityController extends Controller
      */
     public function index($id)
     {
-        // 1. Direct person activities (via person_activities pivot) — label: 'Persoon'
-        $personActivities = $this->activityRepository
-            ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
-            ->where('person_activities.person_id', $id)
-            ->get();
+        // 1. Direct person activities (via person_id FK) — label: 'Persoon'
+        $personActivities = Activity::where('person_id', $id)->get();
         $personActivities->each(fn ($a) => $a->entity_source = [
             'type'  => 'person',
             'label' => 'Persoon',
@@ -109,7 +106,7 @@ class ActivityController extends Controller
         }
 
         $person = Person::query()->findOrFail($id);
-        $existingActivity = $person->activities()
+        $existingActivity = $person->primaryActivities()
             ->where('type', ActivityType::PATIENT_MESSAGE->value)
             ->orderByDesc('updated_at')
             ->first();
@@ -126,12 +123,11 @@ class ActivityController extends Controller
             'schedule_from' => now(),
             'schedule_to'   => now(),
             'is_done'       => 0,
+            'person_id'     => $person->id,
             'additional'    => [
                 'skip_patient_message_creation' => true,
             ],
         ]);
-
-        $activity->persons()->syncWithoutDetaching([$person->id]);
 
         return redirect()->to(route('admin.contacts.persons.view', $person->id) . '#patient-berichten');
     }

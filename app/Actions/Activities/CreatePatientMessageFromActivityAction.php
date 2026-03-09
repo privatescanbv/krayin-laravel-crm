@@ -50,9 +50,8 @@ class CreatePatientMessageFromActivityAction
 
             if (! is_null($person)) {
                 $personId = $person->id;
-            } elseif ($activity->persons->isNotEmpty()) {
-                // Attempt 1: Check if persons are already loaded
-                $personId = $activity->persons->first()->id;
+            } elseif ($activity->person_id) {
+                $personId = $activity->person_id;
             }
 
             // Attempt 2: Check via Lead

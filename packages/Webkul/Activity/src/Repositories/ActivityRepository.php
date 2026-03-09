@@ -274,9 +274,6 @@ class ActivityRepository extends Repository
                 ],
             ]);
 
-            /** @var \Webkul\Activity\Models\Activity $activity */
-            $activity->persons()->attach($person->id);
-
             return $activity;
         } catch (Throwable $e) {
             Log::error('Failed to create system activity for portal revocation', [
@@ -331,10 +328,10 @@ class ActivityRepository extends Repository
         return Activity::where('order_id', $entity->id)->where('is_done', 0)->count();
     }
 
-    /** Person — own pivot activities + emails, plus child Lead/SalesLead/Order hierarchy. */
+    /** Person — own FK/pivot activities + emails, plus child Lead/SalesLead/Order hierarchy. */
     private function countOpenForPerson(Person $entity): int
     {
-        $count = $entity->activities()->where('is_done', 0)->count()
+        $count = Activity::where('person_id', $entity->id)->where('is_done', 0)->count()
                + Email::where('person_id', $entity->id)->where('is_read', 0)->count();
 
         // Child Leads (via lead_persons pivot)

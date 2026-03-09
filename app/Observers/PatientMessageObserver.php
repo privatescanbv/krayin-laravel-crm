@@ -22,9 +22,7 @@ class PatientMessageObserver
         // 2. If not, look for an existing activity for this person
         elseif ($patientMessage->person_id) {
             $activity = Activity::where('type', ActivityType::PATIENT_MESSAGE->value)
-                ->whereHas('persons', function ($query) use ($patientMessage) {
-                    $query->where('persons.id', $patientMessage->person_id);
-                })
+                ->where('person_id', $patientMessage->person_id)
                 ->latest()
                 ->first();
         }
@@ -60,9 +58,9 @@ class PatientMessageObserver
             'schedule_to'   => $patientMessage->created_at,
         ]);
 
-        // Link the activity to the person
+        // Link the activity to the person via person_id FK
         if ($patientMessage->person_id) {
-            $activity->persons()->attach($patientMessage->person_id);
+            $activity->update(['person_id' => $patientMessage->person_id]);
         }
 
         // Update the message with the activity ID (without triggering observer again)

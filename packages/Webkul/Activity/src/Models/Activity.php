@@ -77,6 +77,7 @@ class Activity extends Model implements ActivityContract
         'sales_lead_id',
         'order_id',
         'clinic_id',
+        'person_id',
         'external_id',
     ];
 
@@ -141,11 +142,11 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * The Person that belong to the activity.
+     * Get the primary person that owns the activity (direct FK).
      */
-    public function persons()
+    public function person()
     {
-        return $this->belongsToMany(PersonProxy::modelClass(), 'person_activities');
+        return $this->belongsTo(PersonProxy::modelClass(), 'person_id');
     }
 
     /**
@@ -189,20 +190,24 @@ class Activity extends Model implements ActivityContract
 
     public function getPatientFromActivity(): ?Person
     {
-        return $this->persons->first()
+        return ($this->person_id ? $this->person : null)
             ?? $this->lead?->persons->first()
             ?? $this->salesLead?->persons->first();
     }
 
     /**
      * Resolve all persons associated with this activity via any known relation:
-     * direct person_activities, lead, sales lead, or order → sales lead.
+     * direct person_id FK, lead, sales lead, or order → sales lead.
      *
      * @return Collection<int, Person>
      */
     public function getPatientsFromActivity(): Collection
     {
-        $persons = collect($this->persons);
+        $persons = collect();
+
+        if ($this->person_id) {
+            $persons = $persons->merge($this->person ? [$this->person] : []);
+        }
 
         if ($this->lead_id) {
             $persons = $persons->merge($this->lead?->persons ?? collect());
@@ -252,12 +257,12 @@ class Activity extends Model implements ActivityContract
 
     /**
      * Scope activities related to a person via any of the known relations:
-     * direct person_activities, lead, sales lead, or order.
+     * direct person_id FK, lead, sales lead, or order.
      */
     public function scopeForPerson(Builder $query, Person $person): Builder
     {
         return $query->where(function (Builder $q) use ($person) {
-            $q->whereHas('persons', fn (Builder $sub) => $sub->whereKey($person->id))
+            $q->where('person_id', $person->id)
                 ->orWhereHas('lead.persons', fn (Builder $sub) => $sub->whereKey($person->id))
                 ->orWhereHas('salesLead.persons', fn (Builder $sub) => $sub->whereKey($person->id))
                 ->orWhereHas('order.salesLead.persons', fn (Builder $sub) => $sub->whereKey($person->id));

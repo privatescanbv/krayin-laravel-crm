@@ -341,9 +341,9 @@ class PersonRepository extends Repository
                         $duplicatePerson->emails()->update(['person_id' => $primaryPersonId]);
                     }
 
-                    // Transfer activities
-                    $duplicatePerson->activities()->sync([]);
-                    $primaryPerson->activities()->attach($duplicatePerson->activities->pluck('id'));
+                    // Transfer activities: re-point person_id FK activities to primary person
+                    \Webkul\Activity\Models\Activity::where('person_id', $duplicatePerson->id)
+                        ->update(['person_id' => $primaryPersonId]);
 
                     // Add merge note to primary person's activities
                     $this->addMergeNote($primaryPerson, $duplicatePerson);
@@ -405,16 +405,14 @@ class PersonRepository extends Repository
     private function addSystemActivity($primaryPerson, $duplicatePerson): void
     {
         try {
-            $activity = app(ActivityRepository::class)->create([
-                'type' => 'note',
-                'title' => 'Person Merge',
-                'comment' => "Removed duplicate person \"{$duplicatePerson->name}\" (ID: {$duplicatePerson->id}) during merge operation.",
-                'is_done' => true,
-                'user_id' => auth()->id() ?: 1,
+            app(ActivityRepository::class)->create([
+                'type'      => 'note',
+                'title'     => 'Person Merge',
+                'comment'   => "Removed duplicate person \"{$duplicatePerson->name}\" (ID: {$duplicatePerson->id}) during merge operation.",
+                'is_done'   => true,
+                'person_id' => $primaryPerson->id,
+                'user_id'   => auth()->id() ?: 1,
             ]);
-
-            // Link activity to primary person
-            $primaryPerson->activities()->attach($activity->id);
 
             Log::info('System activity created for person duplicate removal', [
                 'primary_person_id' => $primaryPerson->id,
@@ -438,16 +436,14 @@ class PersonRepository extends Repository
     private function addMergeNote($primaryPerson, $duplicatePerson): void
     {
         try {
-            $activity = app(ActivityRepository::class)->create([
-                'type' => 'note',
-                'title' => 'Person Merged',
-                'comment' => "Person #{$duplicatePerson->id} ({$duplicatePerson->name}) was merged into this person.",
-                'is_done' => true,
-                'user_id' => auth()->id() ?: 1,
+            app(ActivityRepository::class)->create([
+                'type'      => 'note',
+                'title'     => 'Person Merged',
+                'comment'   => "Person #{$duplicatePerson->id} ({$duplicatePerson->name}) was merged into this person.",
+                'is_done'   => true,
+                'person_id' => $primaryPerson->id,
+                'user_id'   => auth()->id() ?: 1,
             ]);
-
-            // Link activity to primary person
-            $primaryPerson->activities()->attach($activity->id);
         } catch (Exception $e) {
             Log::error('Error adding merge note: ' . $e->getMessage());
         }

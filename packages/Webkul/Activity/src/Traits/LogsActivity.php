@@ -14,7 +14,9 @@ trait LogsActivity
     protected static function booted(): void
     {
         static::created(function ($model) {
-            if (! method_exists($model->entity ?? $model, 'activities')) {
+            $entity = $model->entity ?? $model;
+            $isPerson = method_exists($entity, 'getTable') && $entity->getTable() === 'persons';
+            if (! $isPerson && ! method_exists($entity, 'activities')) {
                 return;
             }
 
@@ -42,10 +44,7 @@ trait LogsActivity
 
                 $activity = app(ActivityRepository::class)->create($activityData);
 
-                // Only attach via pivot table if not a Lead model
-                if (!(method_exists($model, 'getTable') && $model->getTable() === 'leads')) {
-                    $model->activities()->attach($activity->id);
-                }
+                static::linkActivityToEntity($activity, $model);
 
                 return;
             }
@@ -54,7 +53,9 @@ trait LogsActivity
         });
 
         static::updated(function ($model) {
-            if (! method_exists($model->entity ?? $model, 'activities')) {
+            $entity = $model->entity ?? $model;
+            $isPerson = method_exists($entity, 'getTable') && $entity->getTable() === 'persons';
+            if (! $isPerson && ! method_exists($entity, 'activities')) {
                 return;
             }
 
@@ -133,16 +134,27 @@ trait LogsActivity
             $activity = app(ActivityRepository::class)->create($activityData);
 
             if ($model instanceof AttributeValue) {
-                // Only attach via pivot table if the entity is not a Lead model
-                if (!(method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads')) {
-                    $model->entity->activities()->attach($activity->id);
-                }
+                static::linkActivityToEntity($activity, $model->entity);
             } else {
-                // Only attach via pivot table if not a Lead model
-                if (!(method_exists($model, 'getTable') && $model->getTable() === 'leads')) {
-                    $model->activities()->attach($activity->id);
-                }
+                static::linkActivityToEntity($activity, $model);
             }
+        }
+    }
+
+    /**
+     * Link an activity to an entity using the correct path:
+     * - Person entities: update person_id FK directly
+     * - Lead entities: already handled via lead_id in activityData, skip attach
+     * - All others with activities(): attach via pivot
+     */
+    private static function linkActivityToEntity(\Webkul\Activity\Models\Activity $activity, $entity): void
+    {
+        if (method_exists($entity, 'getTable') && $entity->getTable() === 'persons') {
+            $activity->update(['person_id' => $entity->id]);
+        } elseif (method_exists($entity, 'getTable') && $entity->getTable() === 'leads') {
+            // lead_id already set in activityData, nothing to attach
+        } elseif (method_exists($entity, 'activities')) {
+            $entity->activities()->attach($activity->id);
         }
     }
 

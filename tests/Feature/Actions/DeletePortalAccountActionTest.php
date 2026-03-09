@@ -82,7 +82,7 @@ test('deleting portal account with reason creates audit activity', function () {
     // Refresh person to get the activities relationship
     $person->refresh();
 
-    $activity = $person->activities()
+    $activity = $person->primaryActivities()
         ->where('type', 'system')
         ->where('title', 'Patiëntportaal account ingetrokken')
         ->first();

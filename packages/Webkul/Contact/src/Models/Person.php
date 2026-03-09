@@ -307,11 +307,11 @@ class Person extends Model implements PersonContract
     }
 
     /**
-     * Get the activities.
+     * Get activities linked directly via person_id FK.
      */
-    public function activities()
+    public function primaryActivities()
     {
-        return $this->belongsToMany(ActivityProxy::modelClass(), 'person_activities');
+        return $this->hasMany(ActivityProxy::modelClass(), 'person_id');
     }
 
     /**

@@ -201,9 +201,18 @@ class ActivityController extends Controller
             'is_done' => (request('type') == ActivityType::NOTE->value || request('type') == ActivityType::FILE->value ) ? 1 : 0,
         ]));
 
-        // Link selected persons (e.g. from file upload portal selector)
+        // Link selected persons: use person_id FK for the primary person when no other entity is set
         if (!empty($personIds)) {
-            $activity->persons()->syncWithoutDetaching($personIds);
+            $hasPrimaryEntity = !empty($data['lead_id']) || !empty($data['sales_lead_id'])
+                || !empty($data['order_id']) || !empty($data['clinic_id']);
+
+            if (!$hasPrimaryEntity && !$activity->person_id) {
+                // Set the first person as the primary FK, link the rest via pivot
+                $primaryPersonId = array_shift($personIds);
+                $activity->update(['person_id' => $primaryPersonId]);
+            }
+
+            // Extra person_ids beyond the primary FK are no longer stored (pivot removed)
         }
 
         $didChange = $this->updateStatus($activity);
@@ -245,11 +254,11 @@ class ActivityController extends Controller
         if ($activity->lead_id) {
             $relatedEntity = $activity->lead;
             $relatedEntityName = 'Lead';
-        }elseif ($activity->sales_lead_id) {
+        } elseif ($activity->sales_lead_id) {
             $relatedEntity = $activity->salesLead;
             $relatedEntityName = 'Sales';
-        } elseif ($activity->persons()->count() > 0) {
-            $relatedEntity = $activity->persons()->first();
+        } elseif ($activity->person_id) {
+            $relatedEntity = $activity->person;
             $relatedEntityName = 'Person';
         }
         $user = auth()->guard('user')->user();
@@ -530,7 +539,7 @@ class ActivityController extends Controller
     {
         $activity = $this->activityRepository->findOrFail($id);
         $leadId = $activity->lead_id;
-        $firstPersonId = $activity->persons()->first()?->id;
+        $firstPersonId = $activity->person_id;
         try {
             Event::dispatch('activity.delete.before', $id);
             $activity->delete();

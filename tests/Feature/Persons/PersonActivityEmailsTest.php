@@ -32,7 +32,7 @@ test('person activities index includes email from activity without person_id', f
         'person_id' => $person->id,
     ]);
 
-    // Create an activity for the lead, and link that activity to the person via pivot
+    // Create an activity for the lead (lead_id takes priority as primary entity FK)
     $activity = Activity::create([
         'type'          => 'task',
         'title'         => 'Follow up',
@@ -41,10 +41,6 @@ test('person activities index includes email from activity without person_id', f
         'schedule_from' => now()->format('Y-m-d H:i:s'),
         'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
         'is_done'       => 0,
-    ]);
-    DB::table('person_activities')->insert([
-        'person_id'   => $person->id,
-        'activity_id' => $activity->id,
     ]);
 
     // Get or create inbox folder

@@ -3,12 +3,7 @@
     use App\Enums\PatientMessageSenderType;
     // Get all patient messages linked to this person, sorted by created_at
     // We assume the activity has a person attached or lead->person
-    $person = null;
-    if($activity->persons->isNotEmpty()) {
-        $person = $activity->persons->first();
-    } elseif($activity->lead && $activity->lead->person) {
-        $person = $activity->lead->person;
-    }
+    $person = $activity->person ?? ($activity->lead?->person ?? null);
 
     $messages = collect();
     if($person) {

@@ -28,8 +28,8 @@ test('it_reopens_existing_activity_when_new_patient_message_is_created_for_same_
     $this->assertNotNull($activity);
     $this->assertEquals(ActivityType::PATIENT_MESSAGE, $activity->type);
 
-    // Ensure activity is linked to person
-    $this->assertTrue($activity->persons->contains($person->id));
+    // Ensure activity is linked to person via person_id FK
+    $this->assertEquals($person->id, $activity->person_id);
 
     // 2. Close the activity
     $activity->is_done = 1;

@@ -94,11 +94,6 @@ class PersonActivityController extends Controller
                 'person_id'            => $person->id,
             ]);
 
-            //            // Link to person
-            //            $message->persons()->attach($person->id);
-            //            // required to get the event in ActvityObserver#update
-            //            $activity->touch();
-
             return $message;
         });
 
@@ -107,7 +102,7 @@ class PersonActivityController extends Controller
 
         return response()->json([
             'message' => 'Message created successfully.',
-            'data'    => new ActivityResource($patientMessage->activity->load('user', 'persons')),
+            'data'    => new ActivityResource($patientMessage->activity->load('user', 'person')),
         ], 201);
     }
 

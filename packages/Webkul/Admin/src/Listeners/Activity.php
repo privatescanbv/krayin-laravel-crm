@@ -30,11 +30,12 @@ class Activity
         // If the activity is tied to a lead, skip any person linkage
         if ($activity->lead_id || request()->input('lead_id')) {
             // lead-bound: do nothing here
-        } elseif (request()->input('person_id')) {
-            $person = $this->personRepository->find(request()->input('person_id'));
+        } elseif ($activity->person_id) {
+            // person_id FK is already set on the activity (by the controller).
+            // No pivot attach needed — just trigger the patient message action if applicable.
+            $person = $this->personRepository->find($activity->person_id);
 
-            if (! $person->activities->contains($activity->id)) {
-                $person->activities()->attach($activity->id);
+            if ($person) {
                 $this->createPatientMessageFromActivityAction->handle($activity, 'afterUpdateOrCreate', $person);
             }
         }

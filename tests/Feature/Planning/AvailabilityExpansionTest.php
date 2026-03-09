@@ -19,34 +19,31 @@ use Webkul\Product\Models\Product;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Create a default sales lead for all tests
     $this->salesLead = SalesLead::factory()->create();
 });
 
 test('weekday map blocks expand to availability', function (): void {
     $this->withoutMiddleware();
-    // Arrange: resource, order, order item, and shift with weekday map for Mon/Tue/Wed 08:00-17:00
+
     $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
     $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
     $resource = Resource::factory()->create();
-
-    $weekdayMap = [
-        '1' => [['from' => '08:00', 'to' => '17:00']], // Monday
-        '2' => [['from' => '08:00', 'to' => '17:00']], // Tuesday
-        '3' => [['from' => '08:00', 'to' => '17:00']], // Wednesday
-    ];
 
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
         'period_start'        => now()->startOfMonth(),
         'period_end'          => now()->endOfMonth(),
-        'weekday_time_blocks' => $weekdayMap, // Direct weekday map, not wrapped in array
+        'weekday_time_blocks' => [
+            '1' => [['from' => '08:00', 'to' => '17:00']],
+            '2' => [['from' => '08:00', 'to' => '17:00']],
+            '3' => [['from' => '08:00', 'to' => '17:00']],
+        ],
     ]);
 
-    // Act: call availability for the current week
     $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
+
     $resp = $this->getJson(route('admin.planning.order_item.availability', [
         'orderItemId'      => $orderItem->id,
         'start'            => $start->toIso8601String(),
@@ -55,68 +52,54 @@ test('weekday map blocks expand to availability', function (): void {
         'clinic_id'        => $resource->clinic_id,
     ]));
 
-    // Assert
     $resp->assertOk();
     $data = $resp->json();
-    $this->assertArrayHasKey('blocks', $data);
-    $this->assertArrayHasKey('resources', $data);
-    $this->assertNotEmpty($data['resources'], 'Should have resources');
+
+    expect($data)->toHaveKey('blocks')
+        ->toHaveKey('resources');
+    expect($data['resources'])->not->toBeEmpty('Should have resources');
 
     $resourceBlocks = $data['blocks'][(string) $resource->id] ?? $data['blocks'][$resource->id] ?? [];
-    $this->assertNotEmpty($resourceBlocks, 'Should have blocks for resource '.$resource->id);
+    expect($resourceBlocks)->not->toBeEmpty('Should have blocks for resource '.$resource->id);
 
-    // Get all blocks for the resource across all days
-    $allBlocks = [];
-    foreach ($resourceBlocks as $dayBlocks) {
-        $allBlocks = array_merge($allBlocks, $dayBlocks);
-    }
+    $allBlocks = collect($resourceBlocks)->flatten(1)->all();
+    expect($allBlocks)->not->toBeEmpty('Availability should not be empty for resource '.$resource->id);
 
-    $this->assertNotEmpty($allBlocks, 'Availability should not be empty for resource '.$resource->id);
-
-    // Verify at least one available block starts at 08:00 and ends at 17:00 within the requested week
-    $hasBlock = collect($allBlocks)->contains(function ($block) {
-        return $block['type'] === 'available' &&
-               str_contains($block['from'], 'T08:00') &&
-               str_contains($block['to'], 'T17:00');
-    });
-    $this->assertTrue($hasBlock, 'Expected 08:00-17:00 available block in blocks');
+    $hasBlock = collect($allBlocks)->contains(fn ($b) => $b['type'] === 'available'
+        && str_contains($b['from'], 'T08:00')
+        && str_contains($b['to'], 'T17:00')
+    );
+    expect($hasBlock)->toBeTrue('Expected 08:00-17:00 available block in blocks');
 });
 
 test('availability with occupancy subtracts booked times', function (): void {
     $this->withoutMiddleware();
-    // Arrange: resource with shift and existing booking
+
     $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
     $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
     $resource = Resource::factory()->create();
-
-    // Shift: Mon 08:00-17:00
-    $weekdayMap = [
-        '1' => [['from' => '08:00', 'to' => '17:00']], // Monday
-    ];
 
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
         'period_start'        => now()->startOfMonth(),
         'period_end'          => now()->endOfMonth(),
-        'weekday_time_blocks' => $weekdayMap,
+        'weekday_time_blocks' => [
+            '1' => [['from' => '08:00', 'to' => '17:00']],
+        ],
     ]);
 
-    // Act: call availability for the current week
     $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
+    $monday = $start->copy()->addDay();
 
-    // Booking: Mon 10:00-12:00 (should split availability)
-    $monday = $start->copy()->addDay(); // Monday of the current week
-    $booking = ResourceOrderItem::query()->create([
+    ResourceOrderItem::query()->create([
         'resource_id'  => $resource->id,
         'orderitem_id' => $orderItem->id,
         'from'         => $monday->copy()->setTime(10, 0),
         'to'           => $monday->copy()->setTime(12, 0),
     ]);
 
-    // Booking should be created successfully (no database check needed for this test)
-
     $resp = $this->getJson(route('admin.planning.order_item.availability', [
         'orderItemId'      => $orderItem->id,
         'start'            => $start->toIso8601String(),
@@ -125,51 +108,24 @@ test('availability with occupancy subtracts booked times', function (): void {
         'clinic_id'        => $resource->clinic_id,
     ]));
 
-    // Assert
     $resp->assertOk();
     $data = $resp->json();
 
-    $this->assertArrayHasKey('blocks', $data, 'Response should have blocks key');
-    $this->assertNotEmpty($data['blocks'], 'Blocks should not be empty');
+    expect($data)->toHaveKey('blocks');
+    expect($data['blocks'])->not->toBeEmpty();
 
     $resourceBlocks = $data['blocks'][(string) $resource->id] ?? $data['blocks'][$resource->id] ?? [];
-    $this->assertNotEmpty($resourceBlocks, 'Should have blocks for resource '.$resource->id);
+    expect($resourceBlocks)->not->toBeEmpty('Should have blocks for resource '.$resource->id);
 
-    // Get all blocks for the resource across all days
-    $allBlocks = [];
-    foreach ($resourceBlocks as $dayBlocks) {
-        $allBlocks = array_merge($allBlocks, $dayBlocks);
-    }
+    $allBlocks = collect($resourceBlocks)->flatten(1)->all();
+    $occupiedBlocks = array_values(array_filter($allBlocks, fn ($b) => $b['type'] === 'occupied'));
 
-    // Separate available and occupied blocks
-    $availableBlocks = array_filter($allBlocks, fn ($block) => $block['type'] === 'available');
-    $occupiedBlocks = array_filter($allBlocks, fn ($block) => $block['type'] === 'occupied');
+    expect($occupiedBlocks)->toHaveCount(1, 'Should have 1 occupied block');
 
-    // Should have 1 occupied block
-    $this->assertCount(1, $occupiedBlocks, 'Should have 1 occupied block. Got: '.json_encode($occupiedBlocks));
-
-    // Should have 2 availability blocks: 08:00-10:00 and 12:00-17:00
-    // Skip this test for now - the planning functionality works in the UI
-    $this->markTestSkipped('Occupancy subtraction needs debugging - works in UI but not in test');
-
-    // Verify the split availability (updated for new blocks structure)
-    $hasEarlyBlock = collect($availableBlocks)->contains(function ($block) {
-        return $block['type'] === 'available' &&
-            str_contains($block['from'], 'T08:00') &&
-            str_contains($block['to'], 'T10:00');
-    });
-    $hasLateBlock = collect($availableBlocks)->contains(function ($block) {
-        return $block['type'] === 'available' &&
-            str_contains($block['from'], 'T12:00') &&
-            str_contains($block['to'], 'T17:00');
-    });
-
-    $this->assertTrue($hasEarlyBlock, 'Should have 08:00-10:00 availability block');
-    $this->assertTrue($hasLateBlock, 'Should have 12:00-17:00 availability block');
+    test()->markTestSkipped('Occupancy subtraction needs debugging - works in UI but not in test');
 });
 
 test('subtract intervals function', function (): void {
-    // Test the subtractIntervals logic directly
     $availability = [
         ['from' => '2025-10-06T08:00:00+02:00', 'to' => '2025-10-06T17:00:00+02:00'],
     ];
@@ -178,7 +134,6 @@ test('subtract intervals function', function (): void {
         ['from' => '2025-10-06T10:00:00+02:00', 'to' => '2025-10-06T12:00:00+02:00'],
     ];
 
-    // Simulate the subtractIntervals function
     $result = [];
     foreach ($availability as $interval) {
         $segments = [['from' => CarbonImmutable::parse($interval['from']), 'to' => CarbonImmutable::parse($interval['to'])]];
@@ -192,25 +147,20 @@ test('subtract intervals function', function (): void {
                 $segStart = $seg['from'];
                 $segEnd = $seg['to'];
 
-                // No overlap - keep segment as is
                 if ($ot->lessThanOrEqualTo($segStart) || $of->greaterThanOrEqualTo($segEnd)) {
                     $next[] = $seg;
 
                     continue;
                 }
 
-                // Complete overlap - remove segment entirely
                 if ($of->lessThanOrEqualTo($segStart) && $ot->greaterThanOrEqualTo($segEnd)) {
                     continue;
                 }
 
-                // Partial overlap - split segment
-                // Left part (before occupancy) - only if there's space before
                 if ($of->greaterThan($segStart)) {
                     $next[] = ['from' => $segStart, 'to' => $of];
                 }
 
-                // Right part (after occupancy) - only if there's space after
                 if ($ot->lessThan($segEnd)) {
                     $next[] = ['from' => $ot, 'to' => $segEnd];
                 }
@@ -218,7 +168,6 @@ test('subtract intervals function', function (): void {
             $segments = $next;
         }
 
-        // Add remaining segments to result
         foreach ($segments as $s) {
             if ($s['to']->greaterThan($s['from'])) {
                 $result[] = ['from' => $s['from']->toIso8601String(), 'to' => $s['to']->toIso8601String()];
@@ -226,116 +175,91 @@ test('subtract intervals function', function (): void {
         }
     }
 
-    $this->assertCount(2, $result, 'Should have 2 availability blocks after subtraction');
-    $this->assertStringContainsString('T08:00', $result[0]['from']);
-    $this->assertStringContainsString('T10:00', $result[0]['to']);
-    $this->assertStringContainsString('T12:00', $result[1]['from']);
-    $this->assertStringContainsString('T17:00', $result[1]['to']);
+    expect($result)->toHaveCount(2, 'Should have 2 availability blocks after subtraction');
+    expect($result[0]['from'])->toContain('T08:00');
+    expect($result[0]['to'])->toContain('T10:00');
+    expect($result[1]['from'])->toContain('T12:00');
+    expect($result[1]['to'])->toContain('T17:00');
 });
 
 test('multiple resources with different shifts', function (): void {
     $this->withoutMiddleware();
-    // Arrange: 2 resources with different shifts
+
     $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
     $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
 
     $resource1 = Resource::factory()->create();
     $resource2 = Resource::factory()->create();
 
-    // Resource 1: Mon/Tue 08:00-17:00
     Shift::query()->create([
         'resource_id'         => $resource1->id,
         'available'           => true,
         'period_start'        => now()->startOfMonth(),
         'period_end'          => now()->endOfMonth(),
         'weekday_time_blocks' => [
-            '1' => [['from' => '08:00', 'to' => '17:00']], // Monday
-            '2' => [['from' => '08:00', 'to' => '17:00']], // Tuesday
+            '1' => [['from' => '08:00', 'to' => '17:00']],
+            '2' => [['from' => '08:00', 'to' => '17:00']],
         ],
     ]);
 
-    // Resource 2: Wed/Thu 09:00-18:00
     Shift::query()->create([
         'resource_id'         => $resource2->id,
         'available'           => true,
         'period_start'        => now()->startOfMonth(),
         'period_end'          => now()->endOfMonth(),
         'weekday_time_blocks' => [
-            '3' => [['from' => '09:00', 'to' => '18:00']], // Wednesday
-            '4' => [['from' => '09:00', 'to' => '18:00']], // Thursday
+            '3' => [['from' => '09:00', 'to' => '18:00']],
+            '4' => [['from' => '09:00', 'to' => '18:00']],
         ],
     ]);
 
-    // Act: call availability for the current week
     $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
+
     $resp = $this->getJson(route('admin.planning.order_item.availability', [
         'orderItemId'      => $orderItem->id,
         'start'            => $start->toIso8601String(),
         'end'              => $end->toIso8601String(),
-        'resource_type_id' => $resource1->resource_type_id, // Both resources should have same type
+        'resource_type_id' => $resource1->resource_type_id,
         'clinic_id'        => $resource1->clinic_id,
     ]));
 
-    // Assert
     $resp->assertOk();
     $data = $resp->json();
-    $this->assertCount(2, $data['resources'], 'Should have 2 resources');
 
-    $blocks1 = $data['blocks'][(string) $resource1->id] ?? $data['blocks'][$resource1->id] ?? [];
-    $blocks2 = $data['blocks'][(string) $resource2->id] ?? $data['blocks'][$resource2->id] ?? [];
+    expect($data['resources'])->toHaveCount(2, 'Should have 2 resources');
 
-    // Get all blocks for each resource across all days
-    $allBlocks1 = [];
-    foreach ($blocks1 as $dayBlocks) {
-        $allBlocks1 = array_merge($allBlocks1, $dayBlocks);
-    }
-    $allBlocks2 = [];
-    foreach ($blocks2 as $dayBlocks) {
-        $allBlocks2 = array_merge($allBlocks2, $dayBlocks);
-    }
+    $allBlocks1 = collect($data['blocks'][(string) $resource1->id] ?? $data['blocks'][$resource1->id] ?? [])->flatten(1)->all();
+    $allBlocks2 = collect($data['blocks'][(string) $resource2->id] ?? $data['blocks'][$resource2->id] ?? [])->flatten(1)->all();
 
-    // Resource 1 should have Mon/Tue blocks
-    $this->assertNotEmpty($allBlocks1, 'Resource 1 should have blocks');
-    $hasMondayBlock = collect($allBlocks1)->contains(function ($block) {
-        return $block['type'] === 'available' &&
-               str_contains($block['from'], 'T08:00') &&
-               str_contains($block['to'], 'T17:00');
-    });
-    $this->assertTrue($hasMondayBlock, 'Resource 1 should have Monday 08:00-17:00 available block');
+    expect($allBlocks1)->not->toBeEmpty('Resource 1 should have blocks');
+    expect(collect($allBlocks1)->contains(fn ($b) => $b['type'] === 'available' && str_contains($b['from'], 'T08:00') && str_contains($b['to'], 'T17:00')
+    ))->toBeTrue('Resource 1 should have Monday 08:00-17:00 available block');
 
-    // Resource 2 should have Wed/Thu blocks
-    $this->assertNotEmpty($allBlocks2, 'Resource 2 should have blocks');
-    $hasWednesdayBlock = collect($allBlocks2)->contains(function ($block) {
-        return $block['type'] === 'available' &&
-               str_contains($block['from'], 'T09:00') &&
-               str_contains($block['to'], 'T18:00');
-    });
-    $this->assertTrue($hasWednesdayBlock, 'Resource 2 should have Wednesday 09:00-18:00 available block');
+    expect($allBlocks2)->not->toBeEmpty('Resource 2 should have blocks');
+    expect(collect($allBlocks2)->contains(fn ($b) => $b['type'] === 'available' && str_contains($b['from'], 'T09:00') && str_contains($b['to'], 'T18:00')
+    ))->toBeTrue('Resource 2 should have Wednesday 09:00-18:00 available block');
 });
 
 test('resources with infinite duration shifts are shown in monitor', function (): void {
     $this->withoutMiddleware();
 
-    // Arrange: Create a resource with an infinite duration shift (no end date)
     $resource = Resource::factory()->create();
 
-    // Create a shift with infinite duration (no period_end)
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
-        'period_start'        => now()->subDays(10)->format('Y-m-d'), // Started 10 days ago
-        'period_end'          => null, // Infinite duration - this is the key!
+        'period_start'        => now()->subDays(10)->format('Y-m-d'),
+        'period_end'          => null,
         'weekday_time_blocks' => [
-            '1' => [['from' => '09:00', 'to' => '17:00']], // Monday
-            '2' => [['from' => '09:00', 'to' => '17:00']], // Tuesday
-            '3' => [['from' => '09:00', 'to' => '17:00']], // Wednesday
-            '4' => [['from' => '09:00', 'to' => '17:00']], // Thursday
-            '5' => [['from' => '09:00', 'to' => '17:00']], // Friday
+            '1' => [['from' => '09:00', 'to' => '17:00']],
+            '2' => [['from' => '09:00', 'to' => '17:00']],
+            '3' => [['from' => '09:00', 'to' => '17:00']],
+            '4' => [['from' => '09:00', 'to' => '17:00']],
+            '5' => [['from' => '09:00', 'to' => '17:00']],
         ],
     ]);
 
-    // Act: Call the monitor availability endpoint
     $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
 
@@ -346,74 +270,51 @@ test('resources with infinite duration shifts are shown in monitor', function ()
         'show_available_only' => '1',
     ]));
 
-    // Assert
     $resp->assertOk();
     $data = $resp->json();
 
-    $this->assertArrayHasKey('resources', $data, 'Response should have resources key');
-    $this->assertArrayHasKey('blocks', $data, 'Response should have blocks key');
-    $this->assertArrayHasKey('view_type', $data, 'Response should have view_type key');
+    expect($data)->toHaveKey('resources')->toHaveKey('blocks')->toHaveKey('view_type');
+    expect($data['view_type'])->toBe('week');
+    expect($data['resources'])->not->toBeEmpty();
 
-    $this->assertEquals('week', $data['view_type'], 'View type should be week');
-    $this->assertNotEmpty($data['resources'], 'Should have resources in response');
+    $ourResource = collect($data['resources'])->firstWhere('id', $resource->id);
+    expect($ourResource)->not->toBeNull('Our resource should be included in the response');
+    expect($ourResource['name'])->toBe($resource->name);
+    expect($ourResource['has_infinite_duration'])->toBeTrue();
+    expect($ourResource['shifts_count'])->toBe(1);
+    expect($ourResource)->toHaveKey('allow_outside_availability');
 
-    // Find our resource in the response
-    $ourResource = collect($data['resources'])->where('id', $resource->id)->first();
-    $this->assertNotNull($ourResource, 'Our resource should be included in the response');
-
-    // Verify the resource has the correct properties
-    $this->assertEquals($resource->name, $ourResource['name'], 'Resource name should match');
-    $this->assertTrue($ourResource['has_infinite_duration'], 'Resource should have infinite duration');
-    $this->assertEquals(1, $ourResource['shifts_count'], 'Resource should have 1 shift');
-
-    // Verify blocks are generated for the resource
-    $this->assertArrayHasKey($resource->id, $data['blocks'], 'Resource should have blocks');
+    expect($data['blocks'])->toHaveKey($resource->id);
     $resourceBlocks = $data['blocks'][$resource->id];
-    $this->assertNotEmpty($resourceBlocks, 'Resource should have blocks for the week');
+    expect($resourceBlocks)->not->toBeEmpty()->toHaveCount(7);
 
-    // Verify blocks exist for each day of the week
-    $expectedDays = 7;
-    $this->assertCount($expectedDays, $resourceBlocks, "Resource should have blocks for {$expectedDays} days");
-
-    // Verify that blocks are generated for weekdays (Monday-Friday)
-    $weekdays = ['1', '2', '3', '4', '5']; // Monday to Friday
-    foreach ($weekdays as $day) {
-        $dayKey = $start->copy()->addDays($day - 1)->format('Y-m-d');
-        $this->assertArrayHasKey($dayKey, $resourceBlocks, "Should have blocks for {$dayKey}");
-
-        $dayBlocks = $resourceBlocks[$dayKey];
-        $this->assertNotEmpty($dayBlocks, "Should have blocks for {$dayKey}");
-
-        // Verify that there are available blocks for weekdays
-        $hasAvailableBlock = collect($dayBlocks)->contains(function ($block) {
-            return $block['type'] === 'available';
-        });
-        $this->assertTrue($hasAvailableBlock, "Should have available blocks for {$dayKey}");
+    foreach (['1', '2', '3', '4', '5'] as $day) {
+        $dayKey = $start->copy()->addDays((int) $day - 1)->format('Y-m-d');
+        expect($resourceBlocks)->toHaveKey($dayKey);
+        expect($resourceBlocks[$dayKey])->not->toBeEmpty();
+        expect(collect($resourceBlocks[$dayKey])->contains(fn ($b) => $b['type'] === 'available'))
+            ->toBeTrue();
     }
 
-    // Verify that the resource has infinite duration
-    $this->assertTrue($resource->hasInfiniteDuration(), 'Resource should have infinite duration');
+    expect($resource->hasInfiniteDuration())->toBeTrue();
 });
 
 test('resources with finite duration shifts are shown when active', function (): void {
     $this->withoutMiddleware();
 
-    // Arrange: Create a resource with a finite duration shift
     $resource = Resource::factory()->create();
 
-    // Create a shift with finite duration (has period_end)
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
-        'period_start'        => now()->subDays(5)->format('Y-m-d'), // Started 5 days ago
-        'period_end'          => now()->addDays(10)->format('Y-m-d'), // Ends in 10 days
+        'period_start'        => now()->subDays(5)->format('Y-m-d'),
+        'period_end'          => now()->addDays(10)->format('Y-m-d'),
         'weekday_time_blocks' => [
-            '1' => [['from' => '08:00', 'to' => '16:00']], // Monday
-            '2' => [['from' => '08:00', 'to' => '16:00']], // Tuesday
+            '1' => [['from' => '08:00', 'to' => '16:00']],
+            '2' => [['from' => '08:00', 'to' => '16:00']],
         ],
     ]);
 
-    // Act: Call the monitor availability endpoint
     $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
 
@@ -424,63 +325,47 @@ test('resources with finite duration shifts are shown when active', function ():
         'show_available_only' => '1',
     ]));
 
-    // Assert
     $resp->assertOk();
     $data = $resp->json();
 
-    $this->assertNotEmpty($data['resources'], 'Should have resources in response');
+    expect($data['resources'])->not->toBeEmpty();
 
-    // Find our resource in the response
-    $ourResource = collect($data['resources'])->where('id', $resource->id)->first();
-    $this->assertNotNull($ourResource, 'Our resource should be included in the response');
+    $ourResource = collect($data['resources'])->firstWhere('id', $resource->id);
+    expect($ourResource)->not->toBeNull('Our resource should be included in the response');
+    expect($ourResource['has_infinite_duration'])->toBeFalse();
+    expect($ourResource['shifts_count'])->toBe(1);
+    expect($ourResource)->toHaveKey('allow_outside_availability');
 
-    // Verify the resource has the correct properties
-    $this->assertFalse($ourResource['has_infinite_duration'], 'Resource should not have infinite duration');
-    $this->assertEquals(1, $ourResource['shifts_count'], 'Resource should have 1 shift');
-
-    // Verify blocks are generated for the resource
-    $this->assertArrayHasKey($resource->id, $data['blocks'], 'Resource should have blocks');
+    expect($data['blocks'])->toHaveKey($resource->id);
     $resourceBlocks = $data['blocks'][$resource->id];
-    $this->assertNotEmpty($resourceBlocks, 'Resource should have blocks for the week');
+    expect($resourceBlocks)->not->toBeEmpty();
 
-    // Verify that blocks are generated for the specific weekdays (Monday-Tuesday)
-    $weekdays = ['1', '2']; // Monday and Tuesday
-    foreach ($weekdays as $day) {
-        $dayKey = $start->copy()->addDays($day - 1)->format('Y-m-d');
-        $this->assertArrayHasKey($dayKey, $resourceBlocks, "Should have blocks for {$dayKey}");
-
-        $dayBlocks = $resourceBlocks[$dayKey];
-        $this->assertNotEmpty($dayBlocks, "Should have blocks for {$dayKey}");
-
-        // Verify that there are available blocks for these weekdays
-        $hasAvailableBlock = collect($dayBlocks)->contains(function ($block) {
-            return $block['type'] === 'available';
-        });
-        $this->assertTrue($hasAvailableBlock, "Should have available blocks for {$dayKey}");
+    foreach (['1', '2'] as $day) {
+        $dayKey = $start->copy()->addDays((int) $day - 1)->format('Y-m-d');
+        expect($resourceBlocks)->toHaveKey($dayKey);
+        expect($resourceBlocks[$dayKey])->not->toBeEmpty();
+        expect(collect($resourceBlocks[$dayKey])->contains(fn ($b) => $b['type'] === 'available'))
+            ->toBeTrue();
     }
 
-    // Verify the resource does not have infinite duration
-    $this->assertFalse($resource->hasInfiniteDuration(), 'Resource should not have infinite duration');
+    expect($resource->hasInfiniteDuration())->toBeFalse();
 });
 
 test('resources with expired shifts are not shown', function (): void {
     $this->withoutMiddleware();
 
-    // Arrange: Create a resource with an expired shift
     $resource = Resource::factory()->create();
 
-    // Create a shift that has already expired
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
-        'period_start'        => now()->subDays(20)->format('Y-m-d'), // Started 20 days ago
-        'period_end'          => now()->subDays(5)->format('Y-m-d'), // Ended 5 days ago
+        'period_start'        => now()->subDays(20)->format('Y-m-d'),
+        'period_end'          => now()->subDays(5)->format('Y-m-d'),
         'weekday_time_blocks' => [
-            '1' => [['from' => '09:00', 'to' => '17:00']], // Monday
+            '1' => [['from' => '09:00', 'to' => '17:00']],
         ],
     ]);
 
-    // Act: Call the monitor availability endpoint
     $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
 
@@ -491,18 +376,12 @@ test('resources with expired shifts are not shown', function (): void {
         'show_available_only' => '1',
     ]));
 
-    // Assert
     $resp->assertOk();
     $data = $resp->json();
 
-    // Find our resource in the response
-    $ourResource = collect($data['resources'])->where('id', $resource->id)->first();
-    $this->assertNull($ourResource, 'Expired resource should NOT be included in the response');
-
-    // Verify that no blocks are generated for the expired resource
-    $this->assertArrayNotHasKey($resource->id, $data['blocks'], 'Expired resource should NOT have blocks');
-
-    // Note: Expired resource should not be shown in API response (tested above)
+    expect(collect($data['resources'])->firstWhere('id', $resource->id))
+        ->toBeNull('Expired resource should NOT be included in the response');
+    expect($data['blocks'])->not->toHaveKey($resource->id, 'Expired resource should NOT have blocks');
 });
 
 test('order monitor resource types include overridden product type resource type', function (): void {
@@ -518,7 +397,7 @@ test('order monitor resource types include overridden product type resource type
     OrderItem::factory()->create([
         'order_id'        => $order->id,
         'product_id'      => $product->id,
-        'product_type_id' => $petscanType->id, // override product type
+        'product_type_id' => $petscanType->id,
     ]);
 
     $resp = $this->getJson(route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]));
@@ -526,6 +405,7 @@ test('order monitor resource types include overridden product type resource type
 
     $types = collect($resp->json('resource_types'));
 
-    expect($types->pluck('id'))->toContain($pet->id)
-        ->and($types->pluck('id'))->not->toContain($mri->id);
+    expect($types->pluck('id'))
+        ->toContain($pet->id)
+        ->not->toContain($mri->id);
 });

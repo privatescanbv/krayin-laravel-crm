@@ -21,17 +21,19 @@ class Resource extends Model
         'resource_type_id',
         'clinic_id',
         'is_active',
+        'allow_outside_availability',
         'notes',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'clinic_id'        => 'integer',
-        'resource_type_id' => 'integer',
-        'is_active'        => 'boolean',
-        'created_by'       => 'integer',
-        'updated_by'       => 'integer',
+        'clinic_id'                  => 'integer',
+        'resource_type_id'           => 'integer',
+        'is_active'                  => 'boolean',
+        'allow_outside_availability' => 'boolean',
+        'created_by'                 => 'integer',
+        'updated_by'                 => 'integer',
     ];
 
     public function clinic()

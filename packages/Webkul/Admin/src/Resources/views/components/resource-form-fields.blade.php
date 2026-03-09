@@ -62,6 +62,15 @@
     :checked="(bool) old('is_active', $resource->is_active ?? true)"
 />
 
+<!-- Allow Outside Availability -->
+<x-adminc::components.field
+    type="switch"
+    name="allow_outside_availability"
+    label="Plannen buiten beschikbaarheid toestaan"
+    value="1"
+    :checked="(bool) old('allow_outside_availability', $resource->allow_outside_availability ?? false)"
+/>
+
 <!-- Notes -->
 <x-adminc::components.field
     type="textarea"

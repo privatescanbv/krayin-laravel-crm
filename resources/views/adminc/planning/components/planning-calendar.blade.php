@@ -34,6 +34,7 @@
         .month-block:hover { opacity: 0.8; }
         .month-block-available { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); }
         .month-block-occupied { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); cursor: not-allowed; }
+        .calendar-block-outside-availability { border: 2px dashed #dc2626 !important; }
     </style>
 
     <script type="text/x-template" id="v-planning-calendar-template">
@@ -87,16 +88,17 @@
                     </div>
 
                     <!-- Day columns -->
-                    <div v-for="d in 7" :key="'col-'+d" class="day-column">
+                    <div v-for="d in 7" :key="'col-'+d" class="day-column"
+                         @click="handleColumnClick($event, d-1)">
                         <!-- Hour slots -->
                         <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot pointer-events-none" :style="{ height: slotHeightPx(h) + 'px' }"></div>
 
                         <!-- Rendered blocks from server -->
                         <div v-for="block in getBlocksForDay(d-1)" :key="block.key"
-                             :class="['calendar-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied']"
+                             :class="['calendar-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied', block.outside_availability ? 'calendar-block-outside-availability' : '']"
                              :style="blockStyle(block)"
                              :title="getBlockTooltip(block)"
-                             @click="block.clickable ? handleBlockClick(block) : null">
+                             @click.stop="block.clickable ? handleBlockClick(block) : null">
                             <div v-if="block.type === 'occupied'" class="font-semibold text-xs">@{{ block.lead_name || 'Onbekend' }}</div>
                             <div v-else-if="block.type === 'available'" class="text-xs font-medium">Beschikbaar</div>
                             <div class="text-xs" :class="block.type === 'occupied' ? 'opacity-75' : ''">@{{ timeRange(block.from, block.to) }}</div>
@@ -177,6 +179,9 @@
                 }
             },
             computed: {
+                hasResourcesAllowingOutsideAvailability() {
+                    return this.resources.some(r => r.allow_outside_availability);
+                },
                 periodLabel() {
                     if (this.viewType === 'week') {
                         const weekNumber = this.getWeekNumber(this.window.start);
@@ -487,6 +492,23 @@
                     }
 
                     return `${name}${notes} - ${timeStr}`;
+                },
+                handleColumnClick(event, dayOffset) {
+                    if (!this.hasResourcesAllowingOutsideAvailability) return;
+                    if (event.target.closest('.calendar-block')) return;
+
+                    const col = event.currentTarget;
+                    const rect = col.getBoundingClientRect();
+                    const y = event.clientY - rect.top;
+
+                    const minutesFrom8 = (y / this.pixelsPerHour) * 60;
+                    const totalMinutes = Math.round(minutesFrom8 / 15) * 15;
+
+                    const day = this.dayDate(dayOffset);
+                    const from = new Date(day);
+                    from.setHours(Math.floor(totalMinutes / 60) + 8, totalMinutes % 60, 0, 0);
+
+                    this.$emit('column-click', { from });
                 },
                 handleBlockClick(block) {
                     this.$emit('block-click', block);

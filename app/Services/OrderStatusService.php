@@ -52,6 +52,7 @@ class OrderStatusService
         foreach ($plannableItems as $orderItem) {
             if ($orderItem->status !== OrderItemStatus::PLANNED) {
                 Log::info("Order {$order->id} has unplanned items, setting stage to {$firstStageId}");
+
                 return $firstStageId;
             }
         }
@@ -61,6 +62,7 @@ class OrderStatusService
         if (in_array($order->pipeline_stage_id, PipelineStage::getOrderStagesIdsBeforePlanned())) {
             // change stage to planned
             Log::info('All plannable items for order '.$order->id.' are planned, setting stage to '.$plannedStageId);
+
             return $plannedStageId;
         }
 

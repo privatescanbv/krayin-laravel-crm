@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Planning;
 
+use App\Http\Controllers\Admin\Planning\Concerns\ResourceAvailabilityTrait;
 use App\Http\Controllers\Controller;
 use App\Models\OrderItem;
 use App\Models\Resource;
@@ -19,6 +20,8 @@ use Illuminate\View\View;
 
 class OrderItemPlanningController extends Controller
 {
+    use ResourceAvailabilityTrait;
+
     public function show(Request $request, int $orderItemId): View
     {
         $orderItem = OrderItem::with(['product.partnerProducts', 'order'])->findOrFail($orderItemId);
@@ -57,6 +60,14 @@ class OrderItemPlanningController extends Controller
             ]);
 
             $orderItem = OrderItem::findOrFail($orderItemId);
+            $resource = Resource::with('shifts')->findOrFail((int) $request->input('resource_id'));
+
+            $from = CarbonImmutable::parse($request->input('from'));
+            $to = CarbonImmutable::parse($request->input('to'));
+
+            if ($error = $this->validateBookingAvailability($resource, $from, $to)) {
+                return $error;
+            }
 
             $replace = $request->boolean('replace_existing', true);
 
@@ -149,11 +160,12 @@ class OrderItemPlanningController extends Controller
         return response()->json([
             'view_type' => 'week',
             'resources' => $resources->map(fn ($r) => [
-                'id'             => $r->id,
-                'name'           => $r->name,
-                'clinic_id'      => $r->clinic_id,
-                'clinic'         => $r->clinic?->name,
-                'resource_type'  => $r->resourceType?->name,
+                'id'                         => $r->id,
+                'name'                       => $r->name,
+                'clinic_id'                  => $r->clinic_id,
+                'clinic'                     => $r->clinic?->name,
+                'resource_type'              => $r->resourceType?->name,
+                'allow_outside_availability' => (bool) $r->allow_outside_availability,
             ])->values(),
             'blocks'                           => $renderedBlocks,
             'window'                           => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
@@ -220,32 +232,17 @@ class OrderItemPlanningController extends Controller
         return response()->json([
             'view_type' => 'month',
             'resources' => $resources->map(fn ($r) => [
-                'id'             => $r->id,
-                'name'           => $r->name,
-                'clinic_id'      => $r->clinic_id,
-                'clinic'         => $r->clinic?->name,
-                'resource_type'  => $r->resourceType?->name,
+                'id'                         => $r->id,
+                'name'                       => $r->name,
+                'clinic_id'                  => $r->clinic_id,
+                'clinic'                     => $r->clinic?->name,
+                'resource_type'              => $r->resourceType?->name,
+                'allow_outside_availability' => (bool) $r->allow_outside_availability,
             ])->values(),
             'blocks'                           => $renderedBlocks,
             'window'                           => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
             'existing_bookings_for_order_item' => $existingForOrderItem,
         ]);
-    }
-
-    private function getOccupancy($resources, CarbonImmutable $start, CarbonImmutable $end): Collection
-    {
-        return ResourceOrderItem::query()
-            ->with(['orderItem.order.salesLead.lead'])
-            ->whereIn('resource_id', $resources->pluck('id'))
-            ->where(function ($q) use ($start, $end) {
-                $q->whereBetween('from', [$start, $end])
-                    ->orWhereBetween('to', [$start, $end])
-                    ->orWhere(function ($q2) use ($start, $end) {
-                        $q2->where('from', '<=', $start)->where('to', '>=', $end);
-                    });
-            })
-            ->get()
-            ->groupBy('resource_id');
     }
 
     private function getShifts($resources, CarbonImmutable $start, CarbonImmutable $end): Collection
@@ -264,19 +261,24 @@ class OrderItemPlanningController extends Controller
     {
         $blocks = [];
 
-        // Generate availability blocks from shifts
+        // Collect availability windows for this day
+        $availabilityWindows = [];
         foreach ($resourceShifts as $shift) {
-            $shiftBlocks = $this->getShiftBlocksForDay($shift, $day);
-            foreach ($shiftBlocks as $block) {
-                $blocks[] = [
-                    'type'          => 'available',
-                    'from'          => $block['from']->toIso8601String(),
-                    'to'            => $block['to']->toIso8601String(),
-                    'resource_id'   => $resource->id,
-                    'resource_name' => $resource->name,
-                    'clickable'     => true,
-                ];
+            foreach ($this->getShiftBlocksForDay($shift, $day) as $block) {
+                $availabilityWindows[] = $block;
             }
+        }
+
+        // Generate availability blocks from shifts
+        foreach ($availabilityWindows as $block) {
+            $blocks[] = [
+                'type'          => 'available',
+                'from'          => $block['from']->toIso8601String(),
+                'to'            => $block['to']->toIso8601String(),
+                'resource_id'   => $resource->id,
+                'resource_name' => $resource->name,
+                'clickable'     => true,
+            ];
         }
 
         // Generate occupancy blocks
@@ -295,15 +297,20 @@ class OrderItemPlanningController extends Controller
                 $productName = $occupancy->orderItem?->product?->name;
                 $leadName .= ' - '.$productName;
 
+                $outsideAvailability = empty($availabilityWindows)
+                    ? false
+                    : ! $this->overlapsWithWindows($blockStart, $blockEnd, $availabilityWindows);
+
                 $blocks[] = [
-                    'type'          => 'occupied',
-                    'from'          => $blockStart->toIso8601String(),
-                    'to'            => $blockEnd->toIso8601String(),
-                    'resource_id'   => $resource->id,
-                    'resource_name' => $resource->name,
-                    'clickable'     => false,
-                    'booking_id'    => $occupancy->id,
-                    'lead_name'     => $leadName,
+                    'type'                 => 'occupied',
+                    'from'                 => $blockStart->toIso8601String(),
+                    'to'                   => $blockEnd->toIso8601String(),
+                    'resource_id'          => $resource->id,
+                    'resource_name'        => $resource->name,
+                    'clickable'            => false,
+                    'booking_id'           => $occupancy->id,
+                    'lead_name'            => $leadName,
+                    'outside_availability' => $outsideAvailability,
                 ];
             }
         }
@@ -318,76 +325,6 @@ class OrderItemPlanningController extends Controller
 
         // Sort blocks by start time
         usort($blocks, fn ($a, $b) => strcmp($a['from'], $b['from']));
-
-        return $blocks;
-    }
-
-    private function getShiftBlocksForDay($shift, CarbonImmutable $day): array
-    {
-        $blocks = [];
-        $shiftBlocks = $shift->weekday_time_blocks;
-
-        if (empty($shiftBlocks) || $shift->available === false) {
-            return $blocks;
-        }
-
-        if (is_array($shiftBlocks)) {
-            $isWeekdayMap = ! empty($shiftBlocks) && array_keys($shiftBlocks) !== range(0, count($shiftBlocks) - 1);
-
-            if ($isWeekdayMap) {
-                // Direct weekday map: { '1': [{from,to}], '2': [...] }
-                foreach ($shiftBlocks as $wk => $entries) {
-                    $weekday = (int) $wk;
-                    $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
-
-                    if ($weekdayNormalized !== (int) $day->dayOfWeek) {
-                        continue;
-                    }
-
-                    if (! is_array($entries)) {
-                        continue;
-                    }
-
-                    foreach ($entries as $tb) {
-                        if (! is_array($tb)) {
-                            continue;
-                        }
-
-                        $fromStr = $tb['from'] ?? '09:00';
-                        $toStr = $tb['to'] ?? '17:00';
-                        $from = CarbonImmutable::parse($day->format('Y-m-d').' '.$fromStr);
-                        $to = CarbonImmutable::parse($day->format('Y-m-d').' '.$toStr);
-
-                        if ($to->gt($from)) {
-                            $blocks[] = ['from' => $from, 'to' => $to];
-                        }
-                    }
-                }
-            } else {
-                // Flat blocks array with 'weekday' field
-                foreach ($shiftBlocks as $tb) {
-                    if (! is_array($tb)) {
-                        continue;
-                    }
-
-                    $weekday = (int) ($tb['weekday'] ?? -1);
-                    $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
-
-                    if ($weekdayNormalized !== (int) $day->dayOfWeek) {
-                        continue;
-                    }
-
-                    $fromStr = $tb['from'] ?? '09:00';
-                    $toStr = $tb['to'] ?? '17:00';
-                    $from = CarbonImmutable::parse($day->format('Y-m-d').' '.$fromStr);
-                    $to = CarbonImmutable::parse($day->format('Y-m-d').' '.$toStr);
-
-                    if ($to->gt($from)) {
-                        $blocks[] = ['from' => $from, 'to' => $to];
-                    }
-                }
-            }
-        }
 
         return $blocks;
     }
@@ -452,42 +389,5 @@ class OrderItemPlanningController extends Controller
         }
 
         return $result;
-    }
-
-    private function mergeAdjacentBlocks(array $blocks): array
-    {
-        $merged = [];
-        $availableBlocks = array_filter($blocks, fn ($b) => $b['type'] === 'available');
-        $occupiedBlocks = array_filter($blocks, fn ($b) => $b['type'] === 'occupied');
-
-        // Sort available blocks by start time
-        usort($availableBlocks, fn ($a, $b) => strcmp($a['from'], $b['from']));
-
-        // Merge adjacent available blocks
-        $current = null;
-        foreach ($availableBlocks as $block) {
-            if ($current === null) {
-                $current = $block;
-            } else {
-                $currentEnd = CarbonImmutable::parse($current['to']);
-                $blockStart = CarbonImmutable::parse($block['from']);
-
-                // If blocks are adjacent (within 1 minute), merge them
-                if ($blockStart->diffInMinutes($currentEnd) <= 1) {
-                    $current['to'] = $block['to'];
-                } else {
-                    $merged[] = $current;
-                    $current = $block;
-                }
-            }
-        }
-        if ($current !== null) {
-            $merged[] = $current;
-        }
-
-        // Add occupied blocks
-        $merged = array_merge($merged, $occupiedBlocks);
-
-        return $merged;
     }
 }

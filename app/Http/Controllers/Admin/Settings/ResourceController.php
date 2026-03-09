@@ -387,30 +387,34 @@ class ResourceController extends SimpleEntityController
     protected function validateStore(Request $request): void
     {
         $request->merge([
-            'is_active' => $request->boolean('is_active', true),
+            'is_active'                  => $request->boolean('is_active', true),
+            'allow_outside_availability' => $request->boolean('allow_outside_availability', false),
         ]);
 
         $request->validate([
-            'name'              => 'required|unique:resources,name|max:100',
-            'resource_type_id'  => 'required|exists:resource_types,id',
-            'clinic_id'         => 'required|exists:clinics,id',
-            'is_active'         => 'required|boolean',
-            'notes'             => 'nullable|string',
+            'name'                       => 'required|unique:resources,name|max:100',
+            'resource_type_id'           => 'required|exists:resource_types,id',
+            'clinic_id'                  => 'required|exists:clinics,id',
+            'is_active'                  => 'required|boolean',
+            'allow_outside_availability' => 'required|boolean',
+            'notes'                      => 'nullable|string',
         ]);
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
         $request->merge([
-            'is_active' => $request->boolean('is_active', false),
+            'is_active'                  => $request->boolean('is_active', false),
+            'allow_outside_availability' => $request->boolean('allow_outside_availability', false),
         ]);
 
         $request->validate([
-            'name'              => 'required|max:100|unique:resources,name,'.$id,
-            'resource_type_id'  => 'required|exists:resource_types,id',
-            'clinic_id'         => 'required|exists:clinics,id',
-            'is_active'         => 'required|boolean',
-            'notes'             => 'nullable|string',
+            'name'                       => 'required|max:100|unique:resources,name,'.$id,
+            'resource_type_id'           => 'required|exists:resource_types,id',
+            'clinic_id'                  => 'required|exists:clinics,id',
+            'is_active'                  => 'required|boolean',
+            'allow_outside_availability' => 'required|boolean',
+            'notes'                      => 'nullable|string',
         ]);
     }
 

@@ -69,6 +69,7 @@
                     :auto-load="false"
                     @loaded="onCalendarLoaded"
                     @block-click="openBook"
+                    @column-click="openBookAtTime"
                 >
                     <template #filters>
                         <x-adminc::planning.components.filters-bar :show-order-item-filter="true" />
@@ -276,6 +277,29 @@
                     selectedOrderItem() {
                         if (!this.form.order_item_id) return null;
                         return this.orderItems.find(item => item.id === this.form.order_item_id);
+                    },
+                    isOutsideAvailability() {
+                        if (!this.form.from || !this.form.resource_id) return false;
+                        // Waarschuwing alleen tonen als de resource buiten beschikbaarheid toestaat
+                        const from = new Date(this.form.from);
+                        const pad = n => String(n).padStart(2, '0');
+                        const dayKey = `${from.getFullYear()}-${pad(from.getMonth()+1)}-${pad(from.getDate())}`;
+                        const calendar = this.$refs.calendar;
+                        if (!calendar) return false;
+                        const dayBlocks = (calendar.blocks[this.form.resource_id] || {})[dayKey] || [];
+                        const fromMs = from.getTime();
+                        return !dayBlocks.some(b =>
+                            b.type === 'available' &&
+                            new Date(b.from).getTime() <= fromMs &&
+                            new Date(b.to).getTime() > fromMs
+                        );
+                    },
+                    isOutsideAvailabilityAllowedForResource() {
+                        if (!this.form.from || !this.form.resource_id) return false;
+                        // Waarschuwing alleen tonen als de resource buiten beschikbaarheid toestaat
+                        const resource = this.resources.find(r => r.id === this.form.resource_id);
+                        if (!resource?.allow_outside_availability) return false;
+                        return true;
                     }
                 },
                 mounted() {
@@ -345,6 +369,18 @@
                         const hours = String(date.getHours()).padStart(2, '0');
                         const minutes = String(date.getMinutes()).padStart(2, '0');
                         return `${hours}:${minutes}`;
+                    },
+                    openBookAtTime({ from }) {
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+                        this.form.from = toLocal(from);
+                        this.form.resource_id = null;
+                        if (!this.form.order_item_id) {
+                            const candidate = this.unplannedItems[0] || null;
+                            if (candidate) this.form.order_item_id = candidate.id;
+                        }
+                        if (this.form.order_item_id) this.calculateEndTime();
+                        this.$refs.bookModal.toggle();
                     },
                     openBook(block) {
                         this.form.resource_id = block.resource_id;

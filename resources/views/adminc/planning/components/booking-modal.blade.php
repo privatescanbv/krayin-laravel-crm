@@ -78,6 +78,18 @@
                 </option>
             </x-adminc::components.field>
 
+            <!-- Outside availability warning -->
+            <div v-if="isOutsideAvailability && isOutsideAvailabilityAllowedForResource"
+                 class="mt-2 p-2 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded text-sm">
+                &#9888; Het geselecteerde tijdstip valt buiten de beschikbaarheid van de resource.
+                Dit is toegestaan voor deze resource.
+            </div>
+            <div v-if="isOutsideAvailability && !isOutsideAvailabilityAllowedForResource"
+                 class="mt-2 p-2 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded text-sm">
+                &#9888; Het geselecteerde tijdstip valt buiten de beschikbaarheid van de resource.
+                Dit is NIET toegestaan voor deze resource.
+            </div>
+
             <!-- From -->
             <x-adminc::components.field
                 type="datetime-local"

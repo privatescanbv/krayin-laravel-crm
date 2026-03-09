@@ -508,6 +508,7 @@ enum PipelineStage: string
         return array_map(fn ($stage) => $stage->id(), array_values(array_filter(
             self::cases(),
             fn (self $stage) => PipelineStage::META[$stage->value]['entity'] === EntityType::LEAD->value
+                || PipelineStage::META[$stage->value]['entity'] === EntityType::SALES->value
                 && ! $stage->isLost()
                 && ! $stage->isWon()
                 && ! in_array($stage->id(), self::getFrontOfficeStageIds(), true)

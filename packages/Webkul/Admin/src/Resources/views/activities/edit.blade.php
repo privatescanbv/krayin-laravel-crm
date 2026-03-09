@@ -112,13 +112,19 @@
 
                     <!-- Schedule Date -->
                     <x-admin::form.control-group>
+                        @php
+                            $scheduleFromValue = old('schedule_from') ?? optional($activity->schedule_from)->format('Y-m-d\TH:i');
+                            $scheduleToValue   = old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i');
+                        @endphp
+
                         <div class="flex gap-2 max-sm:flex-wrap">
                             <x-adminc::components.field
                                 type="datetime"
                                 name="schedule_from"
+                                id="schedule_from"
                                 :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
                                 rules="required"
-                                :value="now()->format('Y-m-d\TH:i')"
+                                :value="$scheduleFromValue"
                                 class="w-full"
                             />
 
@@ -126,15 +132,20 @@
                                 <x-adminc::components.field
                                     type="datetime"
                                     name="schedule_to"
+                                    id="schedule_to"
                                     :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
                                     rules="required"
-                                    :value="now()->format('Y-m-d\TH:i')"
+                                    :value="$scheduleToValue"
                                     class="w-full"
                                 />
                             @else
-                                <!-- Hidden field for call type - automatically set to schedule_from + 1 hour -->
-                                <input type="hidden" name="schedule_to" id="schedule_to_hidden"
-                                       value="{{ old('schedule_to') ?? $activity->schedule_to }}"/>
+                                <!-- Hidden field for call type - keeps existing schedule_to; can be updated when schedule_from changes -->
+                                <input
+                                    type="hidden"
+                                    name="schedule_to"
+                                    id="schedule_to_hidden"
+                                    value="{{ old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i') }}"
+                                />
                             @endif
                         </div>
 
@@ -478,10 +489,13 @@
                 }
             };
 
-            // Initialize schedule_to for call activities on page load
+            // Wire schedule_to updates for call activities when schedule_from changes
             document.addEventListener('DOMContentLoaded', function () {
                 @if($activity->type === ActivityType::CALL)
-                updateScheduleToForCall();
+                const scheduleFromInput = document.getElementById('schedule_from');
+                if (scheduleFromInput) {
+                    scheduleFromInput.addEventListener('change', updateScheduleToForCall);
+                }
                 @endif
             });
         </script>

@@ -6,6 +6,7 @@ use App\Enums\Currency;
 use App\Enums\ProductReports;
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
+use App\Models\PurchasePrice;
 use App\Models\ResourceType;
 use Exception;
 use RuntimeException;
@@ -149,17 +150,39 @@ class PartnerProductSeeder extends BaseSeeder
                 'sales_price'               => $normalizePrice($productData['verkoopprijs'] ?? null),
                 'resource_type_id'          => $resourceType?->id,
                 'reporting'                 => ! empty($reporting) ? $reporting : null,
-                'purchase_price_misc'       => $normalizePrice($productData['inkoopprijs_overig'] ?? null),
-                'purchase_price_doctor'     => $normalizePrice($productData['inkoopprijs_arts'] ?? null),
-                'purchase_price_cardiology' => $normalizePrice($productData['inkoopprijs_cardiologie'] ?? null),
-                'purchase_price_clinic'     => $normalizePrice($productData['inkoopprijs_kliniek'] ?? null),
-                'purchase_price_radiology'  => $normalizePrice($productData['inkoopprijs_radiologie'] ?? null),
                 'active'                    => (bool) $productData['active'],
                 'discount_info'             => $productData['discount_info'] ?? null,
             ]);
 
-        $partnerProduct->clinics()->attach($clinic->id);
-        $partnerProduct->resources()->attach($resourceId);
-        $partnerProduct->save();
+        $purchaseMisc = $normalizePrice($productData['inkoopprijs_overig'] ?? null);
+        $purchaseDoctor = $normalizePrice($productData['inkoopprijs_arts'] ?? null);
+        $purchaseCardiology = $normalizePrice($productData['inkoopprijs_cardiologie'] ?? null);
+        $purchaseClinic = $normalizePrice($productData['inkoopprijs_kliniek'] ?? null);
+        $purchaseRadiology = $normalizePrice($productData['inkoopprijs_radiologie'] ?? null);
+
+        $mainTotal = (float) $purchaseMisc
+            + (float) $purchaseDoctor
+            + (float) $purchaseCardiology
+            + (float) $purchaseClinic
+            + (float) $purchaseRadiology;
+
+        PurchasePrice::updateOrCreate(
+            [
+                'priceable_type' => PartnerProduct::class,
+                'priceable_id'   => $partnerProduct->id,
+                'type'           => 'main',
+            ],
+            [
+                'purchase_price_misc'       => $purchaseMisc,
+                'purchase_price_doctor'     => $purchaseDoctor,
+                'purchase_price_cardiology' => $purchaseCardiology,
+                'purchase_price_clinic'     => $purchaseClinic,
+                'purchase_price_radiology'  => $purchaseRadiology,
+                'purchase_price'            => number_format($mainTotal, 2, '.', ''),
+            ]
+        );
+
+        $partnerProduct->clinics()->syncWithoutDetaching([$clinic->id]);
+        $partnerProduct->resources()->syncWithoutDetaching([$resourceId]);
     }
 }

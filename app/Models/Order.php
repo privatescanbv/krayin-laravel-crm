@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 
 /**
@@ -113,7 +114,7 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function lead()
+    public function lead(): ?Lead
     {
         return $this->salesLead?->lead;
     }
@@ -141,6 +142,11 @@ class Order extends Model
     public function isLost(): bool
     {
         return (bool) $this->stage?->is_lost;
+    }
+
+    public function getNameAttribute(): string
+    {
+        return $this->order_number;
     }
 
     public function getOpenActivitiesCountAttribute(): int

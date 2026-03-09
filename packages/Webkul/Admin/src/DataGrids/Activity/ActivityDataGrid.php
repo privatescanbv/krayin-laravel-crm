@@ -3,6 +3,10 @@
 namespace Webkul\Admin\DataGrids\Activity;
 
 use App\Enums\ActivityType;
+use App\Enums\EntityType;
+use App\Models\Clinic;
+use App\Models\Order;
+use App\Models\SalesLead;
 use App\Services\ActivityQueueRegistry;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
@@ -10,7 +14,6 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\Traits\ProvideDropdownOptions;
-use Webkul\Automation\Helpers\Entity\SalesLead;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Models\Lead;
 use Webkul\Contact\Models\Person;
@@ -49,12 +52,18 @@ class ActivityDataGrid extends DataGrid
                 })()),
                 // Add entity information
                 DB::raw('CASE
-                    WHEN activities.lead_id IS NOT NULL THEN "lead"
-                    WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN "person"
+                    WHEN activities.lead_id IS NOT NULL THEN "'.EntityType::LEAD->value.'"
+                    WHEN activities.sales_lead_id IS NOT NULL THEN "'.EntityType::SALES->value.'"
+                    WHEN activities.order_id IS NOT NULL THEN "'.EntityType::ORDER->value.'"
+                    WHEN activities.clinic_id IS NOT NULL THEN "'.EntityType::CLINIC->value.'"
+                    WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN "'.EntityType::PERSON->value.'"
                     ELSE NULL
                 END as entity_type'),
                 DB::raw('CASE
                     WHEN activities.lead_id IS NOT NULL THEN activities.lead_id
+                    WHEN activities.sales_lead_id IS NOT NULL THEN activities.sales_lead_id
+                    WHEN activities.order_id IS NOT NULL THEN activities.order_id
+                    WHEN activities.clinic_id IS NOT NULL THEN activities.clinic_id
                     WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT person_id FROM person_activities WHERE activity_id = activities.id LIMIT 1)
                     ELSE NULL
                 END as entity_id')
@@ -67,13 +76,6 @@ class ActivityDataGrid extends DataGrid
             // Joins to fetch display names for related entities
             ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
             ->leftJoin('persons', 'person_activities.person_id', '=', 'persons.id')
-            ->whereIn('type', [
-                'call',
-                'meeting',
-                'task',
-                ActivityType::PATIENT_MESSAGE->value,
-                ActivityType::FILE->value,
-            ])
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
                     if ($userIds = bouncer()->getAuthorizedUserIds()) {
@@ -243,62 +245,46 @@ class ActivityDataGrid extends DataGrid
             'sortable'           => true,
             'filterable'         => true,
             'filterable_type'    => 'dropdown',
-            'filterable_options' => [
-                ['label' => 'Alles', 'value' => ''],
-                ['label' => 'Lead', 'value' => 'lead'],
-                ['label' => 'Sales', 'value' => 'sales_lead'],
-                ['label' => 'Person', 'value' => 'person'],
-            ],
+            'filterable_options' => array_merge(
+                [['label' => 'Alles', 'value' => '']],
+                array_map(
+                    fn (EntityType $type) => ['label' => $type->getLabel(), 'value' => $type->value],
+                    EntityType::cases()
+                )
+            ),
             'closure'    => function ($row) {
                 if (!$row->entity_type || !$row->entity_id) {
                     return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
                 }
 
-                $route = '';
-                $label = '';
+                $entityMap = [
+                    EntityType::LEAD->value   => ['route' => 'admin.leads.view',            'model' => Lead::class],
+                    EntityType::SALES->value  => ['route' => 'admin.sales-leads.view',      'model' => SalesLead::class],
+                    EntityType::ORDER->value  => ['route' => 'admin.orders.view',            'model' => Order::class],
+                    EntityType::CLINIC->value  => ['route' => 'admin.clinics.view', 'model' => Clinic::class],
+                    EntityType::PERSON->value => ['route' => 'admin.contacts.persons.view', 'model' => Person::class],
+                ];
 
-                switch ($row->entity_type) {
-                    case 'lead':
-                        $route = route('admin.leads.view', $row->entity_id);
-                        // Try to resolve lead name via model accessor; fallback to #ID
-                        try {
-                            $lead = Lead::find($row->entity_id);
-                            $display = $lead ? ($lead->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
-                        } catch (Throwable $e) {
-                            logger()->warning('Unable to locate lead entity id '.$row->entity_id . ', '. $e->getMessage());
-                            $display = '#'.$row->entity_id;
-                        }
-                        $label = e($display);
-                        break;
-                    case 'sales_lead':
-                        $route = route('admin.sales-lead.view', $row->entity_id);
-                        // Try to resolve lead name via model accessor; fallback to #ID
-                        try {
-                            $sales = SalesLead::find($row->entity_id);
-                            $display = $sales ? ($sales->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
-                        } catch (Throwable $e) {
-                            logger()->warning('Unable to locate sales entity id '.$row->entity_id . ', '. $e->getMessage());
-                            $display = '#'.$row->entity_id;
-                        }
-                        $label = e($display);
-                        break;
-                    case 'person':
-                        $route = route('admin.contacts.persons.view', $row->entity_id);
-                        // Try to resolve person name via model accessor; fallback to #ID
-                        try {
-                            $person = Person::find($row->entity_id);
-                            $display = $person ? $person->name : ('#'.$row->entity_id);
-                        } catch (Throwable $e) {
-                            logger()->warning('Unable to locate person entity id '.$row->entity_id . ', '. $e->getMessage());
-                            $display = '#'.$row->entity_id;
-                        }
-                        $label = e($display);
-                        break;
-                    default:
-                        return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";
+                $config = $entityMap[$row->entity_type] ?? null;
+                if (! $config) {
+                    return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";
                 }
 
-                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>".$label.'</a>';
+                try {
+                    $entity = $config['model']::find($row->entity_id);
+                    $display = $entity ? ($entity->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
+                } catch (Throwable $e) {
+                    logger()->warning('Unable to locate entity', [
+                        'type'  => $row->entity_type,
+                        'id'    => $row->entity_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $display = '#'.$row->entity_id;
+                }
+
+                return "<a class='text-brandColor hover:underline' target='_blank' href='"
+                    . route($config['route'], $row->entity_id)
+                    . "'>" . e($display) . '</a>';
             },
         ]);
 

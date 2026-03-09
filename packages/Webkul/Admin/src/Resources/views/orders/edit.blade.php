@@ -28,11 +28,9 @@ use Webkul\Lead\Models\Stage;
                         <div class="text-xl font-bold dark:text-gray-300">
                             Order bewerken
                         </div>
-                        @if(!empty($orders->order_number))
-                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                #{{ $orders->order_number }}
-                            </span>
-                        @endif
+                        <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                            #{{ $orders->name }}
+                        </span>
                         @if($orders->stage)
                             <span
                                 class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">

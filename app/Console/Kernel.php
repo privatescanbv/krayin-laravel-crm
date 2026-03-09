@@ -25,6 +25,9 @@ class Kernel extends ConsoleKernel
         // Clean up old email logs daily
         $schedule->command('emails:cleanup-logs')->daily();
 
+        // Delete emails older than retention period from Graph inbox
+        $schedule->command('emails:cleanup-graph-inbox')->daily();
+
         // Notify patients daily about new portal items (AVG-safe, no details by email)
         $schedule->command('patient:send-notification-email')
             ->dailyAt('08:00')

@@ -33,11 +33,12 @@ return [
     |
     */
 
+    // multi_environments OR single_environment -> single_environment = less traffic, better for production.
     'mailers' => [
         'microsoft-graph' => [
-            'transport' => 'microsoft-graph',
+            'transport'            => 'microsoft-graph',
+            'read_new_mail_filter' => env('MAIL_READ_STRATEGY', 'multi_environments'),
         ],
-
         'smtp' => [
             'transport'    => 'smtp',
             'host'         => env('MAIL_HOST', 'smtp.mailgun.org'),
@@ -174,5 +175,16 @@ return [
     */
 
     'log_retention_days' => env('MAIL_LOG_RETENTION_DAYS', 7),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Graph Inbox Retention
+    |--------------------------------------------------------------------------
+    |
+    | Number of days to keep emails in the Microsoft Graph inbox before cleanup
+    |
+    */
+
+    'graph_inbox_retention_days' => env('MAIL_GRAPH_INBOX_RETENTION_DAYS', 14),
 
 ];

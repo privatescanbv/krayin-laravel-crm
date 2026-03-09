@@ -66,9 +66,15 @@ class GraphMailService extends AbstractEmailProcessor
 
         $url = "{$this->baseUrl}/users/{$this->mailbox}/mailFolders('Inbox')/messages";
 
+        if (config('mail.graph.mailbox.read_new_mail_filter') == 'multi_environments') {
+            $since = now()->subDays(1)->toIso8601String();
+            $filter = "receivedDateTime ge {$since}";
+        } else {
+            $filter = 'isRead eq false';
+        }
         $response = Http::withToken($accessToken)
             ->get($url, [
-                '$filter'  => 'isRead eq false',
+                '$filter'  => $filter,
                 '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
                 '$orderby' => 'receivedDateTime desc',
                 '$top'     => 50, // Limit to prevent timeout

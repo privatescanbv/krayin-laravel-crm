@@ -10,48 +10,46 @@
     <!-- Add new call status form (moved above the list) -->
     <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
         <form id="call-status-form" class="mt-2 space-y-2" aria-hidden="false">
-            <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Status <span class="text-red-500">*</span>
-                </label>
-                <select name="status" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                    <option value="">Selecteer status...</option>
-                    @foreach (CallStatus::cases() as $status)
-                        <option value="{{ $status->value }}" {{ $status->value === 'spoken' ? 'selected' : '' }}>{{ $status->label() }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-adminc::components.field
+                type="select"
+                name="status"
+                label="Status"
+                rules="required"
+            >
+                <option value="">Selecteer status...</option>
+                @foreach (CallStatus::cases() as $status)
+                    <option value="{{ $status->value }}" {{ $status->value === 'spoken' ? 'selected' : '' }}>{{ $status->label() }}</option>
+                @endforeach
+            </x-adminc::components.field>
+
+            <x-adminc::components.field
+                type="textarea"
+                name="omschrijving"
+                label="Omschrijving"
+                placeholder="Optionele notitie over de belstatus..."
+            />
 
             <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Omschrijving
-                </label>
-                <textarea
-                    name="omschrijving"
-                    rows="2"
-                    class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                    placeholder="Optionele notitie over de belstatus..."
-                ></textarea>
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Taak verplaatsen
-                </label>
-                <select name="reschedule_days" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                <x-adminc::components.field
+                    type="select"
+                    name="reschedule_days"
+                    label="Taak verplaatsen"
+                >
                     <option value="">Geen verplaatsing</option>
                     @for($i = 1; $i <= 20; $i++)
                         <option value="{{ $i }}">{{ $i }} {{ $i == 1 ? 'dag' : 'dagen' }}</option>
                     @endfor
-                </select>
+                </x-adminc::components.field>
                 <p class="text-xs text-gray-500 mt-1">Verplaats de taak met het geselecteerde aantal dagen</p>
             </div>
 
             <div>
-                <label class="flex items-center">
-                    <input type="checkbox" name="send_email" value="1" class="rounded border-gray-300 text-activity-note-text shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800">
-                    <span class="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300">E-Mail versturen?</span>
-                </label>
+                <x-adminc::components.field
+                    type="checkbox"
+                    name="send_email"
+                    label="E-Mail versturen?"
+                    value="1"
+                />
                 <p class="text-[11px] text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
             </div>
 
@@ -181,9 +179,8 @@
                 return false;
             }
         };
-        const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
-        const csrfToken = '{{ csrf_token() }}';
-// Initialize defaults on load and when status changes
+
+        // Initialize defaults on load and when status changes
         const form = document.getElementById('call-status-form');
         if (form) {
             const statusEl = form.querySelector('[name="status"]');
@@ -197,7 +194,6 @@
                 }
             };
             applyDefaults();
-            // Direct listener (in case the element stays the same)
             statusEl && statusEl.addEventListener('change', applyDefaults);
         }
 
@@ -215,7 +211,6 @@
                 resEl.value = '7';
             }
         });
-        // Click handling is inline via onclick on the submit button to avoid delegation complexity
     });
 </script>
 @endpush

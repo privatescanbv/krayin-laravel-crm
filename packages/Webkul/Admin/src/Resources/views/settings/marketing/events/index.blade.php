@@ -251,26 +251,13 @@
                                     />
 
                                     <!-- Date -->
-                                    <x-admin::form.control-group>
-
-
-                                        <x-admin::form.control-group.control
-                                            type="date"
-                                            name="date"
-                                            id="date"
-                                            rules="required"
-                                            :label="trans('admin::app.settings.marketing.events.index.create.date')"
-                                        />
-                                        <x-admin::form.control-group.label
-                                            class="required"
-                                            for="date"
-                                        >
-                                            @lang('admin::app.settings.marketing.events.index.create.date')
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.error control-name="date" />
-
-                                    </x-admin::form.control-group>
+                                    <x-adminc::components.field
+                                        type="date"
+                                        name="date"
+                                        id="date"
+                                        rules="required"
+                                        :label="trans('admin::app.settings.marketing.events.index.create.date')"
+                                    />
 
                                     {!! view_render_event('admin.settings.marketing.events.index.form_controls.modal.content.controls.after') !!}
                                 </x-slot>

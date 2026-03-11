@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PipelineStage;
+use App\Services\Concerns\HasStatusTransitionRules;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +14,8 @@ use Webkul\Lead\Models\Stage;
 
 class LeadStatusTransitionValidator
 {
+    use HasStatusTransitionRules;
+
     /**
      * Validatie regels per status transitie.
      * Key format: "from_stage_code->to_stage_code"
@@ -98,31 +101,7 @@ class LeadStatusTransitionValidator
      */
     public static function reset(): void
     {
-        self::$transitionRules = [];
-        self::$defaultsInitialized = false;
-    }
-
-    /**
-     * Voeg een nieuwe transitie validatie regel toe.
-     */
-    public static function addTransitionRule(PipelineStage $fromStageCode, PipelineStage $toStageCode, array $rules): void
-    {
-        $transitionKey = $fromStageCode->value.'->'.$toStageCode->value;
-        self::$transitionRules[$transitionKey] = $rules;
-    }
-
-    public static function addTransitionsRule(PipelineStage $fromStageCode, array $toStageCodes, array $rules): void
-    {
-        foreach ($toStageCodes as $toStageCode) {
-            self::addTransitionRule($fromStageCode, $toStageCode, $rules);
-        }
-    }
-
-    public static function addTransitionsRules(array $fromStageCodes, array $toStageCodes, array $rules): void
-    {
-        foreach ($fromStageCodes as $fromStageCode) {
-            self::addTransitionsRule($fromStageCode, $toStageCodes, $rules);
-        }
+        self::resetTransitionRules();
     }
 
     /**
@@ -132,7 +111,7 @@ class LeadStatusTransitionValidator
     {
         self::ensureDefaultRules();
 
-        return self::$transitionRules;
+        return self::getAllRegisteredTransitionRules();
     }
 
     /**
@@ -141,9 +120,8 @@ class LeadStatusTransitionValidator
     public static function hasTransitionRule(string $fromStageCode, string $toStageCode): bool
     {
         self::ensureDefaultRules();
-        $transitionKey = $fromStageCode.'->'.$toStageCode;
 
-        return isset(self::$transitionRules[$transitionKey]);
+        return self::hasRegisteredTransitionRule($fromStageCode, $toStageCode);
     }
 
     /**

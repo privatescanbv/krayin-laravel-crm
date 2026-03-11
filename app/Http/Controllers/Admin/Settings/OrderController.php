@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
-use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
 use App\Models\Order;
@@ -18,6 +17,7 @@ use App\Services\Mail\EmailTemplateRenderingService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
 use App\Services\OrderStatusService;
+use App\Services\OrderStatusTransitionValidator;
 use App\Services\PipelineCookieService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -785,8 +785,15 @@ class OrderController extends SimpleEntityController
         $order = Order::findOrFail($id);
         $targetStage = StageProxy::findOrFail((int) request('lead_pipeline_stage_id'));
 
-        // Validate stage transition (e.g. unplanned items check)
-        $this->validateOrderStage($targetStage->id, $id);
+        // Valideer status transitie (bijv. plannable items mogen niet meer nieuw zijn)
+        try {
+            OrderStatusTransitionValidator::validateTransition($order, $targetStage->id);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Order status transitie validatie gefaald: '.$e->getMessage(),
+                'errors'  => $e->errors(),
+            ], 422);
+        }
 
         // Optionally close open activities for this order when requested
         if (request()->boolean('close_open_activities')) {
@@ -976,32 +983,10 @@ class OrderController extends SimpleEntityController
 
         // Validate stage transition
         if ($request->has('pipeline_stage_id')) {
-            $this->validateOrderStage((int) $request->input('pipeline_stage_id'), $id);
-        }
-    }
+            /** @var Order $order */
+            $order = $this->orderRepository->findOrFail($id);
 
-    protected function validateOrderStage(int $requestedStageId, int $orderId): void
-    {
-        // If trying to set stage to a "wachten-uitvoering" stage, check if all order items are planned
-        $wachtenStageIds = [
-            PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
-            PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
-        ];
-
-        if (in_array($requestedStageId, $wachtenStageIds, true)) {
-            $order = $this->orderRepository->findOrFail($orderId);
-
-            $hasUnplannedItems = $order->orderItems
-                ->filter(function (OrderItem $item) {
-                    return $item->isPlannable() && !$item->status->isPlannedStatus();
-                })
-                ->isNotEmpty();
-
-            if ($hasUnplannedItems) {
-                throw ValidationException::withMessages([
-                    'pipeline_stage_id' => 'Order kan niet op Ingepland gezet worden: er zijn nog orderitems die niet ingepland zijn.',
-                ]);
-            }
+            OrderStatusTransitionValidator::validateTransition($order, (int) $request->input('pipeline_stage_id'));
         }
     }
 

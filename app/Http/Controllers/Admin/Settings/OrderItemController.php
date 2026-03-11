@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderItemDataGrid;
 use App\Enums\Currency;
+use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
 use App\Models\ProductType;
 use App\Repositories\OrderItemRepository;
@@ -104,7 +105,7 @@ class OrderItemController extends SimpleEntityController
             'quantity'                          => ['required', 'integer', 'min:1'],
             'total_price'                       => ['nullable', 'numeric', 'min:0'],
             'currency'                          => ['nullable', 'string', 'in:'.implode(',', Currency::codes())],
-            'status'                            => ['nullable', 'string', 'in:'.implode(',', array_column(\App\Enums\OrderItemStatus::cases(), 'value'))],
+            'status'                            => ['nullable', 'string', 'in:'.implode(',', array_column(OrderItemStatus::cases(), 'value'))],
             'purchase_price_misc'               => ['nullable', 'numeric', 'min:0'],
             'purchase_price_doctor'             => ['nullable', 'numeric', 'min:0'],
             'purchase_price_cardiology'         => ['nullable', 'numeric', 'min:0'],
@@ -197,7 +198,7 @@ class OrderItemController extends SimpleEntityController
             'order_items'     => $entity,
             'persons'         => $persons,
             'productTypes'    => ProductType::orderBy('name')->get(['id', 'name']),
-            'statuses'        => collect(\App\Enums\OrderItemStatus::cases())
+            'statuses'        => collect(OrderItemStatus::cases())
                 ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
                 ->toArray(),
             'currencies'      => Currency::options(),

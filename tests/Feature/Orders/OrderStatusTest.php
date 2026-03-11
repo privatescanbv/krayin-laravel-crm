@@ -9,7 +9,10 @@ use App\Models\PartnerProduct;
 use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Services\OrderStatusService;
+use App\Services\OrderStatusTransitionValidator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
+use Webkul\Lead\Models\Stage as LeadStage;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
@@ -22,7 +25,7 @@ beforeEach(function () {
     ]);
 });
 
-test('order stage is voorbereiden when not all planable items are planned', function () {
+test('order stage is voorbereiden when not all plannable items are planned', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
     ]);
@@ -277,4 +280,48 @@ test('order stage persists when recalculated', function () {
         'id'                => $order->id,
         'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
     ]);
+});
+
+test('cannot move order with unplanned plannable items to later order stages', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $order->sales_lead_id = $salesLead->id;
+    $order->save();
+
+    $productWithPartner = Product::factory()->create();
+    $productWithoutPartner = Product::factory()->create();
+
+    PartnerProduct::factory()->create([
+        'product_id'       => $productWithPartner->id,
+        'resource_type_id' => $this->plannableResourceType->id,
+    ]);
+
+    // Plannable NEW item (should block transition)
+    OrderItem::factory()->create([
+        'order_id'   => $order->id,
+        'product_id' => $productWithPartner->id,
+        'status'     => OrderItemStatus::NEW->value,
+    ]);
+
+    // Non-plannable NEW item (ignored)
+    OrderItem::factory()->create([
+        'order_id'   => $order->id,
+        'product_id' => $productWithoutPartner->id,
+        'status'     => OrderItemStatus::NEW->value,
+    ]);
+
+    // Maak stage records die overeenkomen met de huidige en gewenste order pipeline stage.
+    $currentStage = LeadStage::factory()->create([
+        'code' => PipelineStage::ORDER_CONFIRM->value,
+    ]);
+
+    $targetStage = LeadStage::factory()->create([
+        'code' => PipelineStage::ORDER_GEWONNEN->value,
+    ]);
+
+    $order->pipeline_stage_id = $currentStage->id;
+    $order->save();
+
+    expect(fn () => OrderStatusTransitionValidator::validateTransition($order->fresh(), $targetStage->id))
+        ->toThrow(ValidationException::class);
 });

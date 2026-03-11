@@ -18,4 +18,9 @@ enum OrderItemStatus: string
             self::LOST    => 'Verloren',
         };
     }
+
+    public function isPlannedStatus(): bool
+    {
+        return $this === self::PLANNED || $this === self::WON || $this === self::LOST;
+    }
 }

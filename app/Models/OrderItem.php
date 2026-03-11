@@ -184,10 +184,10 @@ class OrderItem extends Model
             ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id');
     }
 
-    public function scopeForOrderAndNotLost(Builder $query, string $orderId): Builder
+    public function scopeForOrderAndNotLostAndNew(Builder $query, string $orderId): Builder
     {
         return $query->where('order_id', $orderId)
-            ->where('status', '!=', OrderItemStatus::LOST->value);
+            ->whereNotIn('status', [OrderItemStatus::LOST->value, OrderItemStatus::NEW->value]);
     }
 
     public function isPlannable(): bool

@@ -993,7 +993,7 @@ class OrderController extends SimpleEntityController
 
             $hasUnplannedItems = $order->orderItems
                 ->filter(function (OrderItem $item) {
-                    return $item->isPlannable() && $item->status !== OrderItemStatus::PLANNED;
+                    return $item->isPlannable() && !$item->status->isPlannedStatus();
                 })
                 ->isNotEmpty();
 

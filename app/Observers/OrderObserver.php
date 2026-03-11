@@ -46,7 +46,7 @@ class OrderObserver
         }
         if ($stageChange && in_array($order->pipeline_stage_id, PipelineStage::getOrderStagesIdsWon(), true)) {
             Log::info('Updating order items to WON for order '.$order->id);
-            OrderItem::forOrderAndNotLost($order->id)
+            OrderItem::forOrderAndNotLostAndNew($order->id)
                 ->update(['status' => OrderItemStatus::WON->value]);
         }
     }

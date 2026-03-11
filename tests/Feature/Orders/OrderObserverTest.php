@@ -21,7 +21,7 @@ test('updating to a won stage marks all non-lost order items as won', function (
     $order->pipeline_stage_id = PipelineStage::ORDER_BEVESTIGD->id();
     $order->save();
 
-    expect($newItem->fresh()->status)->toBe(OrderItemStatus::WON)
+    expect($newItem->fresh()->status)->toBe(OrderItemStatus::NEW)
         ->and($plannedItem->fresh()->status)->toBe(OrderItemStatus::WON)
         ->and($lostItem->fresh()->status)->toBe(OrderItemStatus::LOST);
 });
@@ -38,7 +38,7 @@ test('updating to a hernia won stage marks order items as won', function () {
     $order->pipeline_stage_id = PipelineStage::ORDER_BEVESTIGD_HERNIA->id();
     $order->save();
 
-    expect($newItem->fresh()->status)->toBe(OrderItemStatus::WON)
+    expect($newItem->fresh()->status)->toBe(OrderItemStatus::NEW)
         ->and($plannedItem->fresh()->status)->toBe(OrderItemStatus::WON)
         ->and($lostItem->fresh()->status)->toBe(OrderItemStatus::LOST);
 });
@@ -68,7 +68,7 @@ test('order items from other orders are not affected when one order moves to won
         'pipeline_stage_id' => PipelineStage::ORDER_CONFIRM->id(),
     ]);
 
-    $itemA = OrderItem::factory()->create(['order_id' => $orderA->id, 'status' => OrderItemStatus::NEW->value]);
+    $itemA = OrderItem::factory()->create(['order_id' => $orderA->id, 'status' => OrderItemStatus::PLANNED->value]);
     $itemB = OrderItem::factory()->create(['order_id' => $orderB->id, 'status' => OrderItemStatus::NEW->value]);
 
     $orderA->pipeline_stage_id = PipelineStage::ORDER_BEVESTIGD->id();

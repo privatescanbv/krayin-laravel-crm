@@ -37,19 +37,20 @@
                             <x-admin::activities.actions.note :entity="$person" entity-control-name="person_id"/>
 
                             <!-- Activity Action -->
-{{--                            <x-admin::activities.actions.activity :entity="$person" entity-control-name="person_id" :allowed-types="[App\Enums\ActivityType::PATIENT_MESSAGE]"/>--}}
                             @include('adminc.persons.partials.patientportal-button' , [
                                 'person' => $person,
                                 'presentLarge' => true,
                                 'returnUrl' => route('admin.contacts.persons.view', $person->id),
                             ])
+                            @include('adminc.persons.partials.patient-impersonate-button' , [
+                                   'person' => $person,
+                                   'presentLarge' => true,
+                                   'returnUrl' => route('admin.contacts.persons.view', $person->id),
+                               ])
 
                         @endif
                         {!! view_render_event('admin.persons.view.actions.after', ['person' => $person]) !!}
                     </div>
-
-
-
                 </div>
             </div>
 

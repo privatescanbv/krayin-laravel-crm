@@ -103,21 +103,11 @@
         'returnUrl' => $returnUrl,
     ])
 
-    @if (bouncer()->hasPermission('contacts.persons.impersonate') && $hasPortalAccount)
-        <form
-            id="impersonate-form-{{ $person->id }}"
-            method="POST"
-            action="{{ route('admin.contacts.persons.impersonate', $person->id) }}"
-            style="display:inline;">
-            @csrf
-            <button
-                type="button"
-                class="icon-user rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 text-activity-note-text hover:text-blue-700"
-                title="Login als patiënt"
-                onclick="startPatientImpersonation({{ $person->id }})"
-            ></button>
-        </form>
-    @endif
+    @include('adminc.persons.partials.patient-impersonate-button' , [
+       'person' => $person,
+       'presentLarge' => false,
+       'returnUrl' => route('admin.contacts.persons.view', $person->id),
+   ])
 
     @if ($detachRoute)
         <button
@@ -128,19 +118,6 @@
         ></button>
     @endif
 </div>
-
-@once
-<script type="module">
-    window.startPatientImpersonation = function(personId) {
-        const form = document.getElementById('impersonate-form-' + personId);
-        if (!form) return;
-        form.target = '_blank';
-        form.submit();
-        // Reload main tab after a moment so the warning banner appears
-        setTimeout(() => window.location.reload(), 1200);
-    };
-</script>
-@endOnce
 
 @if ($isLead)
     @pushOnce('scripts')

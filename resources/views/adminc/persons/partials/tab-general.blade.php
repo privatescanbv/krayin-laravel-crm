@@ -10,13 +10,18 @@
             <div class="direction-row flex items-center gap-4">
                 @if (bouncer()->hasPermission('persons.edit'))
                     <a href="{{ route('admin.contacts.persons.edit', $person->id) }}"
-                       class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text"><span
-                            class="icon-edit text-base"></span><span>Bewerk Persoon</span></a>
+                       class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                        <span class="icon-edit text-base"></span>
+                        <span>Bewerk Persoon</span>
+                    </a>
                 @endif
 
                 @if (bouncer()->hasPermission('persons.delete'))
-                    <v-lead-delete delete-url="{{ route('admin.contacts.persons.delete', $person->id) }}"
-                                   redirect-url="{{ route('admin.contacts.persons.index') }}" />
+                    <v-person-delete
+                        delete-url="{{ route('admin.contacts.persons.delete', $person->id) }}"
+                        redirect-url="{{ route('admin.contacts.persons.index') }}"
+                        person-name="{{ $person->name }}"
+                    />
                 @endif
             </div>
         </div>

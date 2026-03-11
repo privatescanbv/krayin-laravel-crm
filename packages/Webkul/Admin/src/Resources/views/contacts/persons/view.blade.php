@@ -154,7 +154,7 @@
             >
                 <span class="icon-delete text-base"></span>
 
-                <span>@lang('admin::app.persons.view.delete-btn')</span>
+                <span>Verwijderen</span>
             </button>
         </script>
 
@@ -182,11 +182,11 @@
                         isDeleting: false,
 
                         translations: {
-                            title: @json(__('admin::app.persons.view.delete-confirm.title')),
-                            messageTemplate: @json(__('admin::app.persons.view.delete-confirm.message')),
-                            confirm: @json(__('admin::app.persons.view.delete-confirm.confirm')),
-                            cancel: @json(__('admin::app.persons.view.delete-confirm.cancel')),
-                            failed: @json(__('admin::app.persons.view.delete-failed')),
+                            title: @json(__('admin::app.contacts.persons.index.delete-confirm.title')),
+                            messageTemplate: @json(__('admin::app.contacts.persons.index.delete-confirm.message')),
+                            confirm: @json(__('admin::app.contacts.persons.index.delete-confirm.confirm')),
+                            cancel: @json(__('admin::app.contacts.persons.index.delete-confirm.cancel')),
+                            failed: @json(__('admin::app.contacts.persons.index.delete-failed')),
                         },
                     };
                 },

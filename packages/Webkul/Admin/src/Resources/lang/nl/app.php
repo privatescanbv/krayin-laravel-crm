@@ -434,6 +434,12 @@ return [
                 'update-success' => 'Persoon succesvol bijgewerkt.',
                 'delete-success' => 'Persoon succesvol verwijderd.',
                 'delete-failed' => 'Persoon kan niet worden verwijderd.',
+                'delete-confirm' => [
+                    'title' => 'Persoon verwijderen',
+                    'message' => 'Weet je zeker dat je ":name" wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.',
+                    'confirm' => 'Verwijderen',
+                    'cancel' => 'Annuleren',
+                ],
                 'datagrid' => [
                     'contact-numbers' => 'Contactnummers',
                     'delete' => 'Verwijderen',

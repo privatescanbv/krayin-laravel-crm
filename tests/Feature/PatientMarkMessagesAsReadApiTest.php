@@ -6,12 +6,18 @@ use App\Enums\PatientMessageSenderType;
 use App\Models\PatientMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Config::set('api.keys', ['valid-api-key-123']);
+
+    // Disable Activity model events so Activity observers do not
+    // create additional PatientMessage records that would affect
+    // the marked_count expectations in these tests.
+    Activity::unsetEventDispatcher();
 });
 
 test('mark_as_read returns response body with marked_count', function () {

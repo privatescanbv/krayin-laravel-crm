@@ -1,3 +1,29 @@
+@if ($impersonating = session('impersonating'))
+    <div class="sticky top-0 z-[10002] flex items-center justify-between bg-amber-500 px-4 py-2 text-sm text-white shadow-md">
+        <span class="font-semibold">
+            &#9888; U simuleert een sessie als patiënt: {{ $impersonating['person_name'] }}
+        </span>
+        <div class="flex items-center gap-4">
+            <a
+                href="{{ config('services.portal.patient.web_url') }}"
+                target="_blank"
+                class="underline hover:no-underline"
+            >Open patiëntportaal &#8599;</a>
+
+            <form
+                method="POST"
+                action="{{ route('admin.contacts.impersonation.stop') }}"
+                style="display:inline;">
+                @csrf
+                <button
+                    type="submit"
+                    class="rounded bg-white px-3 py-1 font-semibold text-amber-700 hover:bg-amber-50"
+                >Stop simulatie</button>
+            </form>
+        </div>
+    </div>
+@endif
+
 <header class="sticky top-0 z-[10001] flex items-center justify-between gap-1 border-b bg-white px-4 py-2.5 transition-all dark:border-gray-800 dark:bg-gray-900">
     <!-- logo -->
     <div class="flex items-center gap-1.5">

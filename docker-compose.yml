@@ -83,6 +83,7 @@ services:
       - "clinicdev.local.privatescan.nl:host-gateway"
       - "patientdev.local.privatescan.nl:host-gateway"
       - "formsdev.local.privatescan.nl:host-gateway"
+      - "sso.local.privatescan.nl:host-gateway"
     networks:
       public:
       backend:
@@ -212,7 +213,8 @@ services:
       KC_THEME_STATIC_MAX_AGE: "-1"
     entrypoint: >
       /bin/sh -c "
-        exec /opt/keycloak/bin/kc.sh start
+        /opt/keycloak/bin/kc.sh build --features=token-exchange &&
+        exec /opt/keycloak/bin/kc.sh start --optimized
       "
     ports:
       - "8085:8080"

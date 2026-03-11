@@ -35,7 +35,9 @@
       "mcp__plugin_laravel-boost_laravel-boost__last-error",
       "Bash(sail artisan:*)",
       "WebFetch(domain:node-blot-58802943.figma.site)",
-      "Bash(npx playwright:*)"
+      "Bash(npx playwright:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose:*)"
     ]
   }
 }

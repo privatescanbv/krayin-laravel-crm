@@ -427,6 +427,31 @@ class FormService
         ];
     }
 
+    public function removeSessionForPerson(string $personId): void
+    {
+        $formData = ['crm_person_id' => $personId];
+
+        $url = $this->buildApiUrl('/api/sessions/invalidate');
+
+        Log::info('FormService: removing session for person', [
+            'url'           => $url,
+            'method'        => 'POST',
+            'body'          => $formData,
+        ]);
+
+        $response = $this->makeRequest('post', $url, ['url' => $url], $formData);
+        $result = $this->parseResponse($response, ['url' => $url], true);
+
+        if (! $response->successful()) {
+            Log::error('FormService: Could not remove session for person', ['status' => $result['status'], 'response' => $result['json']]);
+        } else {
+
+            Log::info('FormService: Eemoving session for person success', [
+                'status'         => $result['status'],
+            ]);
+        }
+    }
+
     /**
      * Validate and get API token.
      *

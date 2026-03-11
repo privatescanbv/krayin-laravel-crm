@@ -8,6 +8,7 @@ use App\Models\SalesLead;
 use App\Services\FormService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 
 uses(RefreshDatabase::class);
@@ -19,6 +20,10 @@ beforeEach(function () {
     $this->mock(FormService::class, function ($mock) {
         $mock->shouldReceive('getOpenForms')->andReturn(0);
     });
+
+    // Disable Activity events to prevent automatic creation of extra PatientMessage
+    // records via observers, which would interfere with message counter assertions.
+    Activity::unsetEventDispatcher();
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -110,6 +115,7 @@ test('new_appointments_count counts future orders', function () {
     // Future eligible order — should be counted
     $futureOrder = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'order_number'         => 'ORD-FUTURE-1',
         'pipeline_stage_id'    => PipelineStage::ORDER_BEVESTIGD->id(),
         'first_examination_at' => now()->addDay(),
     ]);
@@ -118,6 +124,7 @@ test('new_appointments_count counts future orders', function () {
     // Past order — must not be counted
     $pastOrder = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'order_number'         => 'ORD-PAST-1',
         'pipeline_stage_id'    => PipelineStage::ORDER_BEVESTIGD->id(),
         'first_examination_at' => now()->subDay(),
     ]);
@@ -126,6 +133,7 @@ test('new_appointments_count counts future orders', function () {
     // Not-eligible stage — must not be counted
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'order_number'         => 'ORD-NOT-ELIGIBLE-1',
         'pipeline_stage_id'    => PipelineStage::ORDER_CONFIRM->id(),
         'first_examination_at' => now()->addDay(),
     ]);
@@ -155,6 +163,7 @@ test('counters combines messages and appointments independently', function () {
     // 1 future appointment
     $order = Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
+        'order_number'         => 'ORD-FUTURE-2',
         'pipeline_stage_id'    => PipelineStage::ORDER_BEVESTIGD->id(),
         'first_examination_at' => now()->addDay(),
     ]);

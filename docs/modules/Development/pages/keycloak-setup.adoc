@@ -77,14 +77,22 @@ KEYCLOAK_ADMIN_PASSWORD=c8f4b3a8e69
 KEYCLOAK_DB_USERNAME=keycloak_user
 KEYCLOAK_DB_PASSWORD=c8f4b3a8323369
 ----
-
 **Belangrijk**: Deze waarden worden automatisch gebruikt voor zowel de database als Keycloak configuratie. Je hoeft ze maar één keer op te geven.
 
-==== Stap 6: Applicatie Herstarten
+
+==== Stap 6: Configuratie realm client patient-app aanpassen voor Impersonation
+
+- Service accounts roles aanvinken onder Authentication flow.
+- Tab Service accounts roles -> assign impersonation role aan de client.
+
+Note: docker start op met een feature flag: --features=token-exchange
+
+
+==== Stap 7: Applicatie Herstarten
 
 Herstart de applicatie containers.
 
-==== Stap 7: Testen
+==== Stap 8: Testen
 
 ===== SSO Login Testen
 
@@ -101,7 +109,7 @@ Herstart de applicatie containers.
 4. Je wordt doorgestuurd naar Keycloak logout en daarna terug naar de login pagina
 5. Probeer opnieuw in te loggen - je zou opnieuw moeten inloggen (geen automatische login)
 
-==== Stap 8: Bestaande CRM Gebruikers Synchroniseren (Optioneel)
+==== Stap 9: Bestaande CRM Gebruikers Synchroniseren (Optioneel)
 
 Als je bestaande CRM gebruikers hebt die je wilt synchroniseren met Keycloak:
 

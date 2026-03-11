@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\Admin\Settings\Clinic\EmailController;
 use App\Http\Controllers\Admin\Contacts\PersonLeadsController;
+use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\Settings\Clinic\EmailController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Contact\OrganizationController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\ActivityController;
@@ -46,6 +47,9 @@ Route::prefix('contacts')->group(function () {
 
         Route::post('mass-destroy', 'massDestroy')->name('admin.contacts.persons.mass_delete');
 
+        Route::post('{person}/impersonate', [ImpersonationController::class, 'impersonate'])
+            ->name('admin.contacts.persons.impersonate');
+
         /**
          * Leads datagrid (embedded in person view).
          */
@@ -88,6 +92,9 @@ Route::prefix('contacts')->group(function () {
             Route::post('false-positive', 'markFalsePositive')->name('admin.contacts.persons.duplicates.false_positive');
         });
     });
+
+    Route::post('impersonation/stop', [ImpersonationController::class, 'stop'])
+        ->name('admin.contacts.impersonation.stop');
 
     /**
      * Organization routes.

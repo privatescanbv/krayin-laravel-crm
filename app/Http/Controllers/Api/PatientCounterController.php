@@ -47,7 +47,7 @@ class PatientCounterController extends Controller
         $now = now();
 
         $messagesCount = PatientMessage::where('person_id', $person->id)
-            ->whereIn('sender_type', [PatientMessageSenderType::STAFF, PatientMessageSenderType::SYSTEM])
+            ->whereIn('sender_type', [PatientMessageSenderType::STAFF->value, PatientMessageSenderType::SYSTEM->value])
             ->where('is_read', false)
             ->count();
 

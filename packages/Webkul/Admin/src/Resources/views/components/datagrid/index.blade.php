@@ -85,7 +85,7 @@
         app.component('v-datagrid', {
             template: '#v-datagrid-template',
 
-            props: ['src'],
+            props: ['src', 'noAutoLoad'],
 
             data() {
                 return {
@@ -104,6 +104,8 @@
 
                         meta: {},
                     },
+
+                    persistentParams: {},
 
                     applied: {
                         massActions: {
@@ -232,7 +234,7 @@
                                 if (match) {
                                     const columnIndex = match[1];
                                     let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
-                                    
+
                                     if (!filterColumn) {
                                         filterColumn = {
                                             index: columnIndex,
@@ -240,20 +242,24 @@
                                         };
                                         this.applied.filters.columns.push(filterColumn);
                                     }
-                                    
+
                                     if (!filterColumn.value.includes(value)) {
                                         filterColumn.value.push(value);
                                     }
                                 }
                             });
 
-                            this.get();
+                            if (!this.noAutoLoad) {
+                                this.get(this.persistentParams);
+                            }
 
                             return;
                         }
                     }
 
-                    this.get();
+                    if (!this.noAutoLoad) {
+                        this.get(this.persistentParams);
+                    }
                 },
 
                 /**
@@ -288,7 +294,7 @@
 
                     // Persist the cleared state and reload data
                     this.updateDatagrids();
-                    this.get();
+                    this.get(this.persistentParams);
                 },
 
                 /**
@@ -297,6 +303,10 @@
                  * @returns {void}
                  */
                 get(extraParams = {}) {
+                    if (Object.keys(extraParams).length) {
+                        this.persistentParams = { ...extraParams };
+                    }
+
                     let params = {
                         pagination: {
                             page: this.applied.pagination.page,
@@ -381,7 +391,7 @@
 
                     this.applied.pagination.page = targetPage;
 
-                    this.get();
+                    this.get(this.persistentParams);
                 },
 
                 /**
@@ -400,7 +410,7 @@
                         this.applied.pagination.page = 1;
                     }
 
-                    this.get();
+                    this.get(this.persistentParams);
                 },
 
                 /**
@@ -421,7 +431,7 @@
                          */
                         this.applied.pagination.page = 1;
 
-                        this.get();
+                        this.get(this.persistentParams);
                     }
                 },
 
@@ -442,7 +452,7 @@
                      */
                     this.applied.pagination.page = 1;
 
-                    this.get();
+                    this.get(this.persistentParams);
                 },
 
                 /**
@@ -473,7 +483,7 @@
                      */
                     this.applied.pagination.page = 1;
 
-                    this.get();
+                    this.get(this.persistentParams);
                 },
 
                 /**
@@ -493,7 +503,7 @@
 
                     this.applied.savedFilterId = filter.id;
 
-                    this.get();
+                    this.get(this.persistentParams);
                 },
 
                 /**

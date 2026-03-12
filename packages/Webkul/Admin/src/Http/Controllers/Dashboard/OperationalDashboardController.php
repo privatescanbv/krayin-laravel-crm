@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Dashboard;
 
+use App\Enums\Departments;
 use App\Services\ActivityQueueRegistry;
 use App\Services\ActivityQueueRepository;
 use Illuminate\Http\JsonResponse;
@@ -47,9 +48,11 @@ class OperationalDashboardController extends Controller
                 ->filter()->unique()->values()
             : collect();
 
-        $defaultDepartment = $departmentNames->count() === 1
-            ? strtolower($departmentNames->first())
-            : 'privatescan';
+        $deptCase = $departmentNames->count() === 1
+            ? collect(Departments::cases())->first(fn ($d) => $d->value === $departmentNames->first())
+            : null;
+
+        $defaultDepartment = $deptCase ? $deptCase->key() : Departments::PRIVATESCAN->key();
 
         return view('admin::dashboard.operational.index', [
             'queues'            => $queues,

@@ -3,8 +3,17 @@
         Dashboard / Werkbakken
     </x-slot>
 
+    @php
+        $departmentOptions = collect(\App\Enums\Departments::cases())
+            ->map(fn ($d) => ['key' => $d->key(), 'label' => $d->value])
+            ->prepend(['key' => 'all', 'label' => 'Alles'])
+            ->values()
+            ->all();
+    @endphp
+
     <v-operational-dashboard
         :initial-queues='@json($queues)'
+        :initial-departments='@json($departmentOptions)'
         initial-queue-key="{{ $defaultQueueKey }}"
         initial-department="{{ $defaultDepartment }}"
     >
@@ -123,6 +132,7 @@
                         <x-admin::datagrid
                             src="/admin/operational-dashboard/queues"
                             :isMultiRow="true"
+                            no-auto-load
                             ref="datagrid"
                         >
                             <template #body="{
@@ -296,6 +306,10 @@
                         type: Array,
                         required: true,
                     },
+                    initialDepartments: {
+                        type: Array,
+                        required: true,
+                    },
                     initialQueueKey: {
                         type: String,
                         required: true,
@@ -309,13 +323,9 @@
                 data() {
                     return {
                         queues: this.initialQueues,
+                        departments: this.initialDepartments,
                         activeQueueKey: this.initialQueueKey,
                         activeDepartment: this.initialDepartment,
-                        departments: [
-                            { key: 'all',         label: 'Alles' },
-                            { key: 'privatescan', label: 'Privatescan' },
-                            { key: 'herniapoli',  label: 'Herniapoli' },
-                        ],
                         currentUserId: {{ auth()->guard('user')->id() ?? 'null' }},
                         canTakeover: (function() {
                             const user = {{ auth()->guard('user')->user()->id ?? 'null' }};
@@ -339,20 +349,31 @@
                         return this.queues.find((q) => q.key === this.activeQueueKey) || null;
                     },
                     departmentFilter() {
-                        const map = { privatescan: 'Privatescan', herniapoli: 'Herniapoli' };
-                        return map[this.activeDepartment] ?? null;
+                        const dept = this.departments.find(d => d.key === this.activeDepartment);
+                        return (dept && dept.key !== 'all') ? dept.label : null;
                     },
                 },
 
                 methods: {
+                    updateUrl() {
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('queue', this.activeQueueKey);
+                        if (this.departmentFilter) {
+                            params.set('department', this.departmentFilter);
+                        } else {
+                            params.delete('department');
+                        }
+                        history.replaceState(null, '', '?' + params.toString());
+                    },
+
                     setActiveQueue(key) {
                         if (this.activeQueueKey === key) {
                             return;
                         }
 
                         this.activeQueueKey = key;
+                        this.updateUrl();
 
-                        // Refresh datagrid when switching queues.
                         if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
                             const params = { queue: this.activeQueueKey };
                             if (this.departmentFilter) params.department = this.departmentFilter;
@@ -362,6 +383,7 @@
 
                     setActiveDepartment(dept) {
                         this.activeDepartment = dept;
+                        this.updateUrl();
                         if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
                             const params = { queue: this.activeQueueKey };
                             if (this.departmentFilter) params.department = this.departmentFilter;
@@ -481,8 +503,28 @@
                     },
                 },
 
+                created() {
+                    const urlParams = new URLSearchParams(window.location.search);
+
+                    if (urlParams.has('queue')) {
+                        const queueKey = urlParams.get('queue');
+                        if (this.queues.find(q => q.key === queueKey)) {
+                            this.activeQueueKey = queueKey;
+                        }
+                    }
+
+                    if (urlParams.has('department')) {
+                        const deptLabel = urlParams.get('department');
+                        const dept = this.departments.find(d => d.label === deptLabel);
+                        if (dept) {
+                            this.activeDepartment = dept.key;
+                        }
+                    }
+                },
+
                 mounted() {
-                    // Ensure the initial queue and department filter are applied on first load.
+                    this.updateUrl();
+
                     if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
                         const params = { queue: this.activeQueueKey };
                         if (this.departmentFilter) params.department = this.departmentFilter;

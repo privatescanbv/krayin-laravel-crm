@@ -40,6 +40,8 @@ class UserSeeder extends Seeder
             'carolien@privatescan.nl'      => '8A115dc@d4Ab',
             'maria@privatescan.nl'         => '8A115dc@d4Ab',
             'esther@privatescan.nl'        => '8A115dc@d4Ab',
+            'rowain@privatescan.nl'        => '8A115dc@d4Ab',
+            'safak@privatescan.nl'         => '8A115dc@d4Ab',
         ];
     }
 
@@ -223,6 +225,28 @@ class UserSeeder extends Seeder
                 'view_permission' => 'global',
                 'group_id'        => null,
                 'signature'       => $this->signatureTemplate('Nihad', 'Mehmedovic', 'nihad@nime.dev'),
+            ],
+            [
+                'first_name'      => 'Rowain',
+                'last_name'       => 'Morsink',
+                'email'           => 'rowain@privatescan.nl',
+                'password'        => $passwords['rowain@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 2,
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupPrivatescanId,
+                'signature'       => $this->signatureTemplate('Rowain', 'Morsink', 'rowain@privatescan.nl'),
+            ],
+            [
+                'first_name'      => 'Safak',
+                'last_name'       => 'Sel',
+                'email'           => 'safak@privatescan.nl',
+                'password'        => $passwords['safak@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 2,
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupHerniaId,
+                'signature'       => $this->signatureTemplate('Safak', 'Sel', 'safak@privatescan.nl'),
             ],
 
         ];

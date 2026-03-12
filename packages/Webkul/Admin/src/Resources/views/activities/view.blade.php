@@ -187,6 +187,8 @@
             @include('admin::activities.partials.patient-message')
         @elseif($activity->type == ActivityType::FILE)
             @include('admin::activities.partials.file')
+        @elseif($activity->type == ActivityType::SYSTEM)
+            @include('admin::activities.partials.system')
         @endif
     </div>
     @pushOnce('scripts')

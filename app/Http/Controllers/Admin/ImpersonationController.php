@@ -6,7 +6,6 @@ use App\Services\FormService;
 use App\Services\ImpersonationService;
 use App\Services\KeycloakTokenExchangeService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -44,7 +43,7 @@ class ImpersonationController extends Controller
             'started_at'       => now()->toISOString(),
         ]]);
 
-        $this->impersonationService->logActivity($person, 'start', request()->ip());
+        $this->impersonationService->logActivity($person, 'start', request());
 
         $portalUrl = rtrim(config('services.portal.patient.web_url'), '/')
             .'/auth/keycloak?token='.urlencode($token);
@@ -64,7 +63,7 @@ class ImpersonationController extends Controller
             $personId = $data['person_id'];
             $person = Person::find($data['person_id']);
             if ($person) {
-                $this->impersonationService->logActivity($person, 'stop', request()->ip());
+                $this->impersonationService->logActivity($person, 'stop', request());
                 $this->resetSessionPortal($personId);
             } else {
                 Log::error('Could not stop impersonation,person not found by ID '.$personId);
@@ -78,25 +77,9 @@ class ImpersonationController extends Controller
 
     private function resetSessionPortal($crmPersonId)
     {
-
         // Portal session invalidation
         try {
-            //            $portalUrl = rtrim(config('services.portal.patient.web_url'), '/')
-            //                . '/api/sessions/invalidate';
-
-            //            Log::info('Calling '.$portalUrl, ['crm_person_id' => $crmPersonId]);
-
             $this->formService->removeSessionForPerson($crmPersonId);
-
-            //            $response = Http::timeout(5)
-            //                ->withHeaders([
-            //                    'X-API-Key' =>  config('services.portal.patient.api_token'),
-            //                    'Accept'    => 'application/json',
-            //                ])
-            //                ->post($portalUrl, [
-            //                    'crm_person_id' => $crmPersonId,
-            //                ]);
-            //            Log::info('Response '.$portalUrl, ['status' => $response->status()]);
         } catch (Throwable $e) {
             Log::errorat('Failed to invalidate patient portal session', [
                 'user_id' => $data['keycloak_user_id'] ?? null,

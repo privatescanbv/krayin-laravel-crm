@@ -127,9 +127,11 @@
                 </template>
 
                 <template v-else>
-                    <div class="flex flex-wrap items-center gap-1 font-medium dark:text-white">
+                    <a class="flex cursor-pointer flex-wrap grow items-center gap-1 font-medium hover:underline dark:text-white"
+                        :href="'{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id) +
+                            (returnUrl ? ('?return_url=' + encodeURIComponent(returnUrl)) : '')">
                         @{{ activity.title || 'geen' }}
-                    </div>
+                    </a>
                 </template>
 
                 <template v-if="activity.type == 'system' && activity.additional">

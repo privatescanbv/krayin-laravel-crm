@@ -24,12 +24,17 @@ class OperationalDashboardController extends Controller
      */
     public function index(): View
     {
+        $department = request()->query('department');
+        if ($department && ! in_array($department, Departments::allValues(), true)) {
+            $department = null;
+        }
+
         $queues = [];
 
         foreach ($this->queueRegistry->all() as $definition) {
             $key = $definition['key'];
 
-            $counts = $this->queueRepository->counts($key);
+            $counts = $this->queueRepository->counts($key, $department);
 
             $queues[] = [
                 'key'     => $key,
@@ -41,24 +46,37 @@ class OperationalDashboardController extends Controller
 
         $defaultQueueKey = $queues[0]['key'] ?? 'frontoffice';
 
-        $user = auth()->guard('user')->user();
-        $departmentNames = $user
-            ? $user->groups()->with('department')->get()
-                ->map(fn ($g) => $g->department?->name)
-                ->filter()->unique()->values()
-            : collect();
 
-        $deptCase = $departmentNames->count() === 1
-            ? collect(Departments::cases())->first(fn ($d) => $d->value === $departmentNames->first())
-            : null;
-
-        $defaultDepartment = $deptCase ? $deptCase->key() : Departments::PRIVATESCAN->key();
+        $defaultDepartment = $this->getInitialDepartmentForCurrentUser();
 
         return view('admin::dashboard.operational.index', [
             'queues'            => $queues,
             'defaultQueueKey'   => $defaultQueueKey,
             'defaultDepartment' => $defaultDepartment,
         ]);
+    }
+
+    /**
+     * JSON endpoint returning open/overdue counts per queue, optionally filtered by department.
+     */
+    public function getCounts(Request $request): JsonResponse
+    {
+        $department = $request->query('department');
+        if ($department && ! in_array($department, Departments::allValues(), true)) {
+            $department = $this->getInitialDepartmentForCurrentUser();
+        }
+
+        $queues = [];
+        foreach ($this->queueRegistry->all() as $definition) {
+            $counts = $this->queueRepository->counts($definition['key'], $department);
+            $queues[] = [
+                'key'     => $definition['key'],
+                'open'    => $counts['open'],
+                'overdue' => $counts['overdue'],
+            ];
+        }
+
+        return response()->json($queues);
     }
 
     /**
@@ -87,6 +105,22 @@ class OperationalDashboardController extends Controller
         }
 
         return datagrid(ActivityDataGrid::class)->process();
+    }
+
+    private function getInitialDepartmentForCurrentUser(): string
+    {
+        $user = auth()->guard('user')->user();
+        $departmentNames = $user
+            ? $user->groups()->with('department')->get()
+                ->map(fn ($g) => $g->department?->name)
+                ->filter()->unique()->values()
+            : collect();
+
+        $deptCase = $departmentNames->count() === 1
+            ? collect(Departments::cases())->first(fn ($d) => $d->value === $departmentNames->first())
+            : null;
+
+        return $deptCase ? $deptCase->key() : Departments::PRIVATESCAN->key();
     }
 }
 

@@ -384,10 +384,29 @@
                     setActiveDepartment(dept) {
                         this.activeDepartment = dept;
                         this.updateUrl();
+                        this.refreshCounts();
                         if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
                             const params = { queue: this.activeQueueKey };
                             if (this.departmentFilter) params.department = this.departmentFilter;
                             this.$refs.datagrid.get(params);
+                        }
+                    },
+
+                    async refreshCounts() {
+                        const url = this.departmentFilter
+                            ? `/admin/operational-dashboard/counts?department=${encodeURIComponent(this.departmentFilter)}`
+                            : '/admin/operational-dashboard/counts';
+                        try {
+                            const response = await this.$axios.get(url);
+                            response.data.forEach(updated => {
+                                const queue = this.queues.find(q => q.key === updated.key);
+                                if (queue) {
+                                    queue.open = updated.open;
+                                    queue.overdue = updated.overdue;
+                                }
+                            });
+                        } catch (e) {
+                            // tellers zijn cosmetic — stil falen
                         }
                     },
 
@@ -524,6 +543,10 @@
 
                 mounted() {
                     this.updateUrl();
+
+                    if (this.departmentFilter) {
+                        this.refreshCounts();
+                    }
 
                     if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
                         const params = { queue: this.activeQueueKey };

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ActivityType;
+use App\Enums\Departments;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ class ActivityQueueRepository
      *
      * @return array{open:int,overdue:int}
      */
-    public function counts(string $queueKey): array
+    public function counts(string $queueKey, ?string $department = null): array
     {
         $baseQuery = DB::table('activities')
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
@@ -53,6 +54,11 @@ class ActivityQueueRepository
 
         // Apply queue-specific filters.
         $this->registry->applyFilters($baseQuery, $queueKey, $user?->id);
+
+        // Department filter — same logic as ActivityDataGrid.
+        if ($department && in_array($department, Departments::allValues(), true)) {
+            $baseQuery->where('groups.name', $department);
+        }
 
         $openQuery = (clone $baseQuery)->where('activities.is_done', false);
 

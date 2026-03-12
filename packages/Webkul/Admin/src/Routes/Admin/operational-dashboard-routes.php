@@ -9,5 +9,7 @@ Route::controller(OperationalDashboardController::class)
         Route::get('', 'index')->name('admin.operational-dashboard.index');
 
         Route::get('queues', 'getQueue')->name('admin.operational-dashboard.queue');
+
+        Route::get('counts', 'getCounts')->name('admin.operational-dashboard.counts');
     });
 

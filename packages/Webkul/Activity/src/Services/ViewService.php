@@ -2,6 +2,8 @@
 
 namespace Webkul\Activity\Services;
 
+use App\Enums\Departments;
+use App\Enums\WorkflowType;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -30,14 +32,14 @@ class ViewService
                 'filters' => $this->getForMeOrGroupsFilters(),
             ],
             'hernia' => [
-                'key' => 'hernia',
+                'key' => WorkflowType::HERNIA->value,
                 'label' => 'Herniapoli',
                 'description' => 'Activiteiten van afdeling Hernia',
                 'is_default' => false,
                 'filters' => $this->getHerniaFilters(),
             ],
             'privatescan' => [
-                'key' => 'privatescan',
+                'key' => WorkflowType::PRIVATESCAN->value,
                 'label' => 'Privatescan',
                 'description' => 'Activiteiten van afdeling Privatescan',
                 'is_default' => false,
@@ -141,7 +143,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => 'Herniapoli',
+                'value' => Departments::HERNIA->value,
             ],
             [
                 'column' => 'is_done',
@@ -162,7 +164,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => 'Privatescan',
+                'value' => Departments::PRIVATESCAN->value,
             ],
             [
                 'column' => 'is_done',

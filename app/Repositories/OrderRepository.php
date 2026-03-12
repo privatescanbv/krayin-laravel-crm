@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\AppointmentTimeFilter;
+use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Carbon\Carbon;
@@ -18,7 +19,7 @@ class OrderRepository extends Repository
         return Order::class;
     }
 
-    public function createFromSalesLead(int $salesLeadId, string $salesLeadName, ?string $departmentName = null): Order
+    public function createFromSalesLead(int $salesLeadId, string $salesLeadName, ?Department $departmentName = null): Order
     {
         $salesLead = SalesLead::find($salesLeadId);
 

@@ -94,6 +94,12 @@ class ActivityDataGrid extends DataGrid
 
         $queueKey = request()->get('queue');
 
+        // Apply department filter when in queue mode
+        $department = request()->get('department');
+        if ($queueKey && $department && in_array($department, ['Privatescan', 'Herniapoli'], true)) {
+            $queryBuilder->where('groups.name', $department);
+        }
+
         if (! $queueKey) {
             // Apply view filters - use default view if none specified
             $viewService = app(ViewService::class);

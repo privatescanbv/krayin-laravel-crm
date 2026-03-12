@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ *  Also define group in user and for filtering in activities
+ */
 enum Departments: string
 {
     case HERNIA = 'Herniapoli';

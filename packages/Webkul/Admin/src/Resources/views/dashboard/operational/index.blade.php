@@ -6,6 +6,7 @@
     <v-operational-dashboard
         :initial-queues='@json($queues)'
         initial-queue-key="{{ $defaultQueueKey }}"
+        initial-department="{{ $defaultDepartment }}"
     >
         <div class="flex flex-col gap-4">
             <div
@@ -44,6 +45,23 @@
                         <p class="text-xl font-bold dark:text-white">
                             Werkbakken
                         </p>
+                    </div>
+
+                    <!-- Rechtsboven: afdelingsfilter -->
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Afdeling:</span>
+                        <template v-for="dept in departments" :key="dept.key">
+                            <button
+                                type="button"
+                                class="rounded-md px-3 py-1.5 text-sm font-medium transition"
+                                :class="activeDepartment === dept.key
+                                    ? 'bg-brandColor text-white'
+                                    : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'"
+                                @click="setActiveDepartment(dept.key)"
+                            >
+                                @{{ dept.label }}
+                            </button>
+                        </template>
                     </div>
                 </div>
 
@@ -99,29 +117,6 @@
                                     @{{ activeQueue.open }} activiteiten
                                 </span>
                             </div>
-
-{{--                            <div class="flex items-center gap-2">--}}
-{{--                                <!-- Location / department select placeholder (Hermapoli in Figma) -->--}}
-{{--                                <select--}}
-{{--                                    class="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-sm focus:border-brandColor focus:outline-none focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"--}}
-{{--                                >--}}
-{{--                                    <option>Hermapoli</option>--}}
-{{--                                </select>--}}
-
-{{--                                <button--}}
-{{--                                    type="button"--}}
-{{--                                    class="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"--}}
-{{--                                >--}}
-{{--                                    Filter--}}
-{{--                                </button>--}}
-
-{{--                                <button--}}
-{{--                                    type="button"--}}
-{{--                                    class="inline-flex h-9 items-center rounded-md bg-brandColor px-3 text-sm font-medium text-white shadow-sm hover:opacity-90"--}}
-{{--                                >--}}
-{{--                                    Toekennen--}}
-{{--                                </button>--}}
-{{--                            </div>--}}
                         </div>
 
                         <!-- Datagrid -->
@@ -305,12 +300,22 @@
                         type: String,
                         required: true,
                     },
+                    initialDepartment: {
+                        type: String,
+                        default: 'privatescan',
+                    },
                 },
 
                 data() {
                     return {
                         queues: this.initialQueues,
                         activeQueueKey: this.initialQueueKey,
+                        activeDepartment: this.initialDepartment,
+                        departments: [
+                            { key: 'all',         label: 'Alles' },
+                            { key: 'privatescan', label: 'Privatescan' },
+                            { key: 'herniapoli',  label: 'Herniapoli' },
+                        ],
                         currentUserId: {{ auth()->guard('user')->id() ?? 'null' }},
                         canTakeover: (function() {
                             const user = {{ auth()->guard('user')->user()->id ?? 'null' }};
@@ -333,6 +338,10 @@
                     activeQueue() {
                         return this.queues.find((q) => q.key === this.activeQueueKey) || null;
                     },
+                    departmentFilter() {
+                        const map = { privatescan: 'Privatescan', herniapoli: 'Herniapoli' };
+                        return map[this.activeDepartment] ?? null;
+                    },
                 },
 
                 methods: {
@@ -345,7 +354,18 @@
 
                         // Refresh datagrid when switching queues.
                         if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                            this.$refs.datagrid.get({ queue: this.activeQueueKey });
+                            const params = { queue: this.activeQueueKey };
+                            if (this.departmentFilter) params.department = this.departmentFilter;
+                            this.$refs.datagrid.get(params);
+                        }
+                    },
+
+                    setActiveDepartment(dept) {
+                        this.activeDepartment = dept;
+                        if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
+                            const params = { queue: this.activeQueueKey };
+                            if (this.departmentFilter) params.department = this.departmentFilter;
+                            this.$refs.datagrid.get(params);
                         }
                     },
 
@@ -462,9 +482,11 @@
                 },
 
                 mounted() {
-                    // Ensure the initial queue is applied to the datagrid on first load.
+                    // Ensure the initial queue and department filter are applied on first load.
                     if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                        this.$refs.datagrid.get({ queue: this.activeQueueKey });
+                        const params = { queue: this.activeQueueKey };
+                        if (this.departmentFilter) params.department = this.departmentFilter;
+                        this.$refs.datagrid.get(params);
                     }
                 },
             });

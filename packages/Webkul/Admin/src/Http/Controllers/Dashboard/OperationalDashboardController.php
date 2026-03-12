@@ -40,9 +40,21 @@ class OperationalDashboardController extends Controller
 
         $defaultQueueKey = $queues[0]['key'] ?? 'frontoffice';
 
+        $user = auth()->guard('user')->user();
+        $departmentNames = $user
+            ? $user->groups()->with('department')->get()
+                ->map(fn ($g) => $g->department?->name)
+                ->filter()->unique()->values()
+            : collect();
+
+        $defaultDepartment = $departmentNames->count() === 1
+            ? strtolower($departmentNames->first())
+            : 'privatescan';
+
         return view('admin::dashboard.operational.index', [
-            'queues'          => $queues,
-            'defaultQueueKey' => $defaultQueueKey,
+            'queues'            => $queues,
+            'defaultQueueKey'   => $defaultQueueKey,
+            'defaultDepartment' => $defaultDepartment,
         ]);
     }
 

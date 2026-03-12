@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Departments;
 use App\Enums\FormStatus;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -573,6 +574,6 @@ class FormService
 
     private function mapDepartmentToFormType(Department $department): string
     {
-        return $department->isHernia() ? 'herniapoli' : 'privatescan';
+        return $department->isHernia() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value;
     }
 }

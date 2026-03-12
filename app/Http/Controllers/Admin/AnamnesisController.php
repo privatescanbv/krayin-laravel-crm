@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Departments;
 use App\Enums\NotificationReferenceType;
 use App\Events\PatientNotifyEvent;
 use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
+use App\Models\Department;
 use App\Models\PatientNotification;
 use App\Services\FormService;
 use Exception;
@@ -537,7 +539,7 @@ class AnamnesisController extends Controller
 
         // Determine form type from lead department
         $department = $lead->department;
-        $formType = $department && method_exists($department, 'isHernia') && $department->isHernia() ? 'herniapoli' : 'privatescan';
+        $formType = $this->mapFormTypeFromDepartment($department);
 
         $formData = [
             'user_crm_id'     => $person->id,
@@ -694,5 +696,10 @@ class AnamnesisController extends Controller
         $personNormalized = self::normalizeValue($personValue);
 
         return $leadNormalized === $personNormalized;
+    }
+
+    public function mapFormTypeFromDepartment(?Department $department): string
+    {
+        return $department && $department->isHernia() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value;
     }
 }

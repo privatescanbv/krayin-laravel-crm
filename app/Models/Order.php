@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AppointmentTimeFilter;
+use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
@@ -68,9 +69,9 @@ class Order extends Model
     /**
      * Get the first order pipeline stage ID for the given department.
      */
-    public static function firstOrderStageId(?string $departmentName): int
+    public static function firstOrderStageId(?Department $department): int
     {
-        if ($departmentName === 'Herniapoli') {
+        if ($department->name === Departments::HERNIA->value) {
             return PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value === 7
                 ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()
                 : PipelineStage::ORDER_CONFIRM->id();
@@ -82,10 +83,10 @@ class Order extends Model
     /**
      * Get the "order verzonden" stage ID for the given department.
      */
-    public static function orderSendByDepartmentStageId(?string $departmentName): int
+    public static function orderSendByDepartmentStageId(?Department $department): int
     {
-        if ($departmentName === 'Herniapoli') {
-            return PipelineStage::ORDER_BEVESTIGD->id();
+        if ($department->name === Departments::HERNIA->value) {
+            return PipelineStage::ORDER_BEVESTIGD_HERNIA->id();
         }
 
         return PipelineStage::ORDER_BEVESTIGD->id();
@@ -146,7 +147,7 @@ class Order extends Model
 
     public function getNameAttribute(): string
     {
-        return $this->order_number . ' '. $this->salesLead->name;
+        return $this->order_number.' '.$this->salesLead->name;
     }
 
     public function getOpenActivitiesCountAttribute(): int

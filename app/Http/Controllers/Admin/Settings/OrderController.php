@@ -264,16 +264,16 @@ class OrderController extends SimpleEntityController
         unset($payload['items']);
 
         // Determine department for initial order stage and default user_id from sales lead
-        $departmentName = null;
+        $department = null;
         if (! empty($payload['sales_lead_id'])) {
             $sl = SalesLead::with('lead.department')->find($payload['sales_lead_id']);
-            $departmentName = $sl?->lead?->department?->name;
+            $department = $sl?->lead?->department;
 
             if (empty($payload['user_id'])) {
                 $payload['user_id'] = $sl?->user_id;
             }
         }
-        $payload['pipeline_stage_id'] = Order::firstOrderStageId($departmentName);
+        $payload['pipeline_stage_id'] = Order::firstOrderStageId($department);
         $order = $this->orderRepository->create($payload);
 
         // Persist items
@@ -624,9 +624,8 @@ class OrderController extends SimpleEntityController
     {
         $order = $this->orderRepository->with('salesLead.lead.department')->findOrFail($orderId);
 
-        $departmentName = $order->salesLead?->lead?->department?->name;
         $order->update([
-            'pipeline_stage_id' => Order::orderSendByDepartmentStageId($departmentName),
+            'pipeline_stage_id' => Order::orderSendByDepartmentStageId($order->salesLead?->lead?->department),
         ]);
 
         // Dispatch event - listeners will handle PDF activity creation

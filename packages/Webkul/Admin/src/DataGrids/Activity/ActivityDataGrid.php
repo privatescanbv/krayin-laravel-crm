@@ -92,6 +92,8 @@ class ActivityDataGrid extends DataGrid
                 });
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id', 'persons.id');
 
+        $queryBuilder->where('activities.type', '!=', 'patient_message');
+
         $queueKey = request()->get('queue');
 
         // Apply department filter when in queue mode

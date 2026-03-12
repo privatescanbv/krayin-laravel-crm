@@ -127,16 +127,6 @@
                             >
                                 E-mail
                             </div>
-
-                            <div
-                                class="cursor-pointer whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                                :class="activityTypeFilter === 'patient_message'
-            ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600'
-            : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
-                                @click="activityTypeFilter = 'patient_message'"
-                            >
-                                Patientberichten
-                            </div>
                         </div>
 
                     </div>

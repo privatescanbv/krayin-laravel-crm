@@ -77,6 +77,26 @@
                     {{ $order->combine_order ? 'Ja' : 'Nee' }}
                 </span>
             </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Betaling klant</span>
+                @php $paymentStatus = $order->paymentStatus(); @endphp
+                <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $paymentStatus->badgeClass() }}">
+                    {{ $paymentStatus->label() }}
+                </span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Totale inkoopprijs</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    &euro; {{ number_format($order->totalPurchasePrice(), 2, ',', '.') }}
+                </span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Inkoop status</span>
+                @php $purchaseStatus = $order->purchaseStatus(); @endphp
+                <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $purchaseStatus->badgeClass() }}">
+                    {{ $purchaseStatus->label() }}
+                </span>
+            </div>
         </div>
     </div>
 

@@ -376,7 +376,7 @@ return [
 
         'layouts' => [
             'powered-by' => [
-                'description' => '© 2025 Privatescan',
+                'description' => '© 202777 Privatescan',
             ],
 
             'header' => [

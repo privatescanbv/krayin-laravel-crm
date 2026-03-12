@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\Admin\SalesLeadController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Settings\OrderController;
 use App\Http\Controllers\Admin\Settings\OrderItemController;
+use App\Http\Controllers\Admin\Settings\OrderPaymentController;
 use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
 use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
 
@@ -43,6 +43,17 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('{id}/activities', 'activities')->name('admin.orders.activities.index');
     Route::get('{id}/emails/detach', 'emailsDetach')->name('admin.orders.emails.detach');
 });
+
+/**
+ * Order payment routes.
+ */
+Route::controller(OrderPaymentController::class)
+    ->prefix('orders/{orderId}/payments')
+    ->group(function () {
+        Route::post('', 'store')->name('admin.orders.payments.store');
+        Route::put('{paymentId}', 'update')->name('admin.orders.payments.update');
+        Route::delete('{paymentId}', 'destroy')->name('admin.orders.payments.destroy');
+    });
 
 /**
  * Order items routes (top-level, not under settings).

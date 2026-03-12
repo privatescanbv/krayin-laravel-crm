@@ -58,7 +58,7 @@ return [
                 'name'       => 'label',
                 'title'      => 'admin::app.configuration.index.general.settings.footer.powered-by',
                 'type'       => 'editor',
-                'default'    => '© 2025 Privatescan',
+                'default'    => '© 202- Privatescan',
                 'tinymce'    => true,
             ],
         ],

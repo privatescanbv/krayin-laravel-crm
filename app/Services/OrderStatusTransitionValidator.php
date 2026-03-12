@@ -98,6 +98,17 @@ class OrderStatusTransitionValidator
         if (self::$defaultsInitialized) {
             return;
         }
+        self::addTransitionsRules(
+            [
+                PipelineStage::ORDER_BEVESTIGD,
+                PipelineStage::ORDER_BEVESTIGD_HERNIA,
+            ],
+            PipelineStage::getOrderStagesAfterPlanned(),
+            [
+                'required_fields' => ['first_examination_at'],
+                'message'         => 'Het veld eerste onderzoek datum is verplicht voor deze status',
+            ]
+        );
 
         // Algemene regel:
         // Voor alle order statussen, behalve ORDER_CONFIRM en ORDER_VOORBEREIDEN_HERNIA,

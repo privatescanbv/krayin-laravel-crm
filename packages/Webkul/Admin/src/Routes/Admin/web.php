@@ -68,3 +68,8 @@ require 'address-routes.php';
  * Operational dashboard routes.
  */
 require 'operational-dashboard-routes.php';
+
+/**
+ * Afletteren routes.
+ */
+require 'afletteren-routes.php';

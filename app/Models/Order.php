@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\AppointmentTimeFilter;
+use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderPurchaseStatus;
 use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
@@ -105,6 +107,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(OrderPayment::class);
+    }
+
     public function salesLead(): BelongsTo
     {
         return $this->belongsTo(SalesLead::class);
@@ -133,6 +140,42 @@ class Order extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Betaalstatus klant: vergelijk som van payments met total_price.
+     */
+    public function paymentStatus(): OrderPaymentStatus
+    {
+        return OrderPaymentStatus::forOrder(
+            round((float) $this->total_price, 2),
+            round((float) $this->payments->sum('amount'), 2),
+        );
+    }
+
+    /**
+     * Som van alle hoofdinkoopprijzen van de order items.
+     */
+    public function totalPurchasePrice(): float
+    {
+        return round(
+            (float) $this->orderItems->sum(fn ($item) => (float) ($item->purchasePrice?->purchase_price ?? 0)),
+            2
+        );
+    }
+
+    /**
+     * Gecombineerde afletteren-status over alle order items.
+     */
+    public function purchaseStatus(): OrderPurchaseStatus
+    {
+        $purchaseTotal = $this->totalPurchasePrice();
+        $invoiceTotal  = round(
+            (float) $this->orderItems->sum(fn ($item) => (float) ($item->invoicePurchasePrice?->purchase_price ?? 0)),
+            2
+        );
+
+        return OrderPurchaseStatus::forOrder($purchaseTotal, $invoiceTotal);
     }
 
     public function isWon(): bool

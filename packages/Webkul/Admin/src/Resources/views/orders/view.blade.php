@@ -89,6 +89,7 @@
                 :showAnamnesis="false"
                 :showMarketing="false"
                 :showAfletteren="true"
+                :showPayments="true"
             />
 
             <!-- Footer with creation and modification dates -->
@@ -126,6 +127,10 @@
 
             <div v-else-if="leadDetailSection === 'afletteren'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::orders.view.tab-afletteren', ['order' => $order])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'betalingen'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('admin::orders.view.tab-payments', ['order' => $order])
             </div>
         </div>
 
@@ -269,11 +274,15 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'afletteren'];
+                                const validSections = ['algemeen', 'activiteiten', 'afletteren', 'betalingen'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;
                                 }
+                            }
+
+                            if (this.leadDetailSection === 'betalingen' && window.initOrderPaymentsTab) {
+                                this.$nextTick(() => window.initOrderPaymentsTab({{ $order->id }}));
                             }
                         },
 
@@ -281,6 +290,10 @@
                             setSection(section) {
                                 this.leadDetailSection = section;
                                 window.location.hash = section;
+
+                                if (section === 'betalingen' && window.initOrderPaymentsTab) {
+                                    this.$nextTick(() => window.initOrderPaymentsTab({{ $order->id }}));
+                                }
                             }
                         }
                     });

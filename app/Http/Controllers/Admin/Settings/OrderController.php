@@ -328,6 +328,7 @@ class OrderController extends SimpleEntityController
             'orderItems.person',
             'orderItems.purchasePrice',
             'orderItems.invoicePurchasePrice',
+            'payments',
         ])->findOrFail($id);
 
         $activitiesCount = $order->activities()->where('is_done', false)->count();

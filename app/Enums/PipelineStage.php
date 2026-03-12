@@ -475,6 +475,18 @@ enum PipelineStage: string
         ];
     }
 
+    public static function getOrderStagesAfterPlanned(): array
+    {
+        $excludeIds = self::getOrderStagesIdsBeforePlanned();
+
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $stage) => $stage->isOrder()
+                && ! $stage->isLost()
+                && ! in_array($stage->id(), $excludeIds, true)
+        ));
+    }
+
     public static function getOrderStagesIdsWon(): array
     {
         return [

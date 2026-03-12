@@ -146,7 +146,7 @@ class Order extends Model
 
     public function getNameAttribute(): string
     {
-        return $this->order_number;
+        return $this->order_number . ' '. $this->salesLead->name;
     }
 
     public function getOpenActivitiesCountAttribute(): int

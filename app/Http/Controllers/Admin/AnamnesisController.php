@@ -502,6 +502,11 @@ class AnamnesisController extends Controller
         );
     }
 
+    public function mapFormTypeFromDepartment(?Department $department): string
+    {
+        return $department && $department->isHernia() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value;
+    }
+
     /**
      * Create a form request for anamnesis and return the form link.
      */
@@ -696,10 +701,5 @@ class AnamnesisController extends Controller
         $personNormalized = self::normalizeValue($personValue);
 
         return $leadNormalized === $personNormalized;
-    }
-
-    public function mapFormTypeFromDepartment(?Department $department): string
-    {
-        return $department && $department->isHernia() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value;
     }
 }

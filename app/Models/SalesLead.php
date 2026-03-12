@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\Departments;
 use App\Enums\LostReason;
-use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
 use BackedEnum;
 use Exception;
@@ -59,7 +58,6 @@ class SalesLead extends Model
      * @var array
      */
     protected $casts = [
-        'workflow_type' => WorkflowType::class,
         'created_by'    => 'integer',
         'updated_by'    => 'integer',
         'closed_at'     => 'date',

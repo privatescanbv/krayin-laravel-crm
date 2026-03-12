@@ -3,9 +3,7 @@
 namespace Webkul\Activity\Services;
 
 use App\Enums\Departments;
-use App\Enums\WorkflowType;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ViewService
 {
@@ -32,14 +30,14 @@ class ViewService
                 'filters' => $this->getForMeOrGroupsFilters(),
             ],
             'hernia' => [
-                'key' => WorkflowType::HERNIA->value,
+                'key' => Departments::HERNIA->key(),
                 'label' => 'Herniapoli',
                 'description' => 'Activiteiten van afdeling Hernia',
                 'is_default' => false,
                 'filters' => $this->getHerniaFilters(),
             ],
             'privatescan' => [
-                'key' => WorkflowType::PRIVATESCAN->value,
+                'key' => Departments::PRIVATESCAN->key(),
                 'label' => 'Privatescan',
                 'description' => 'Activiteiten van afdeling Privatescan',
                 'is_default' => false,

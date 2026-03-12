@@ -35,64 +35,84 @@ class ClinicGuideController extends Controller
                 'salesLead.stage',
                 'salesLead.lead',
                 'salesLead.contactPerson',
-                'orderItems.product',
-                'orderItems.person',
+                'orderItems' => function ($query) {
+                    $query->whereHas('product', function ($q) {
+                        $q->whereHas('partnerProducts', function ($q) {
+                            $q->whereHas('clinics');
+                        });
+                    })->with(['product', 'person']);
+                },
                 'stage',
                 'user',
             ])
             ->orderBy('first_examination_at', 'asc')
             ->get();
 
-        $data = $orders->map(function (Order $order) {
+        $data = $orders->flatMap(function (Order $order) {
             $salesLead = $order->salesLead;
-            $patient = $salesLead?->getContactPersonOrFirstPerson();
 
-            return [
-                'order' => [
-                    'id'                   => $order->id,
-                    'title'                => $order->title,
-                    'first_examination_at' => $order->first_examination_at?->toIso8601String(),
-                    'time'                 => $order->first_examination_at?->format('H:i'),
-                    'total_price'          => $order->total_price,
-                    'stage'                => $order->stage ? [
-                        'name'    => $order->stage->name,
-                        'is_won'  => (bool) $order->stage->is_won,
-                        'is_lost' => (bool) $order->stage->is_lost,
-                    ] : null,
-                ],
-                'sales_lead' => $salesLead ? [
-                    'id'    => $salesLead->id,
-                    'name'  => $salesLead->name,
-                    'stage' => $salesLead->stage ? [
-                        'name'    => $salesLead->stage->name,
-                        'is_won'  => (bool) $salesLead->stage->is_won,
-                        'is_lost' => (bool) $salesLead->stage->is_lost,
-                    ] : null,
+            $orderData = [
+                'id'                   => $order->id,
+                'title'                => $order->title,
+                'first_examination_at' => $order->first_examination_at?->toIso8601String(),
+                'time'                 => $order->first_examination_at?->format('H:i'),
+                'total_price'          => $order->total_price,
+                'stage'                => $order->stage ? [
+                    'name'    => $order->stage->name,
+                    'is_won'  => (bool) $order->stage->is_won,
+                    'is_lost' => (bool) $order->stage->is_lost,
                 ] : null,
-                'patient' => $patient ? [
-                    'id'            => $patient->id,
-                    'name'          => $patient->name,
-                    'date_of_birth' => $patient->date_of_birth?->format('d-m-Y'),
-                    'age'           => $patient->age ?? null,
-                    'gender'        => $patient->gender ?? null,
-                    'phones'        => $patient->phones ?? [],
-                    'emails'        => $patient->emails ?? [],
-                ] : null,
-                'order_items' => $order->orderItems->map(fn ($item) => [
-                    'product_name' => $item->product?->name,
-                    'person_name'  => $item->person?->name,
-                    'quantity'     => $item->quantity,
-                ]),
-                'sales_lead_url' => $salesLead
-                    ? route('admin.sales-leads.view', $salesLead->id)
-                    : null,
             ];
+
+            $salesLeadData = $salesLead ? [
+                'id'    => $salesLead->id,
+                'name'  => $salesLead->name,
+                'stage' => $salesLead->stage ? [
+                    'name'    => $salesLead->stage->name,
+                    'is_won'  => (bool) $salesLead->stage->is_won,
+                    'is_lost' => (bool) $salesLead->stage->is_lost,
+                ] : null,
+            ] : null;
+
+            $orderUrl = route('admin.orders.view', $order->id);
+            $anamnesisRecords = $salesLead ? $salesLead->anamnesis : collect();
+
+            return $order->orderItems
+                ->groupBy('person_id')
+                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords) {
+                    $person = $items->first()->person;
+                    $gvlFormLink = $anamnesisRecords
+                        ->firstWhere('person_id', (int) $personId)
+                        ?->gvl_form_link;
+
+                    return [
+                        'order'         => $orderData,
+                        'sales_lead'    => $salesLeadData,
+                        'patient'       => $person ? [
+                            'id'            => $person->id,
+                            'name'          => $person->name,
+                            'date_of_birth' => $person->date_of_birth?->format('d-m-Y'),
+                            'age'           => $person->age ?? null,
+                            'gender'        => $person->gender ?? null,
+                            'phones'        => $person->phones ?? [],
+                            'emails'        => $person->emails ?? [],
+                        ] : null,
+                        'gvl_form_link' => $gvlFormLink,
+                        'order_items'   => $items->map(fn ($item) => [
+                            'product_name' => $item->product?->name,
+                            'person_name'  => $item->person?->name,
+                            'quantity'     => $item->quantity,
+                        ]),
+                        'order_url'     => $orderUrl,
+                    ];
+                })
+                ->values();
         });
 
         return response()->json([
             'date'   => $date,
             'count'  => $data->count(),
-            'orders' => $data,
+            'orders' => $data->values(),
         ]);
     }
 }

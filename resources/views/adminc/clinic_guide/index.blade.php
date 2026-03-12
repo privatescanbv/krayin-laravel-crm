@@ -15,6 +15,13 @@
 
     <v-clinic-guide></v-clinic-guide>
 
+    <div class="hidden">
+        <x-admin::activities.actions.activity
+            :entity="(object)['id' => null]"
+            entityControlName="person_id"
+        />
+    </div>
+
     @pushOnce('scripts')
         <script
             type="text/x-template"
@@ -91,7 +98,7 @@
                     <div
                         v-for="item in orders"
                         :key="item.order.id"
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow overflow-hidden"
+                        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow overflow-hidden flex flex-col"
                     >
                         <!-- Time header -->
                         <div class="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
@@ -102,17 +109,17 @@
                                 <span class="text-lg font-bold text-gray-900 dark:text-gray-100">@{{ item.order.time }}</span>
                             </div>
 
-                            <!-- Order stage badge -->
                             <span
-                                v-if="item.order.stage"
-                                :class="stageBadgeClass(item.order.stage)"
-                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold tracking-wide border"
+                                v-if="item.patient"
+                                @click="openActivityModal(item.patient)"
+                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] text-activity-task-text bg-activity-task-bg font-semibold border cursor-pointer"
                             >
-                                @{{ item.order.stage.name }}
+                                <span class="icon-activity text-sm text-activity-task-text mr-1 cursor-pointer"></span>
+                                Activiteit
                             </span>
                         </div>
 
-                        <div class="p-4 space-y-3">
+                        <div class="p-4 flex flex-col flex-1 gap-3">
                             <!-- Patient info -->
                             <div v-if="item.patient" class="space-y-2">
                                 <div class="flex items-center gap-2">
@@ -154,17 +161,6 @@
                                 Geen patiënt gekoppeld
                             </div>
 
-                            <!-- Sales lead stage -->
-                            <div v-if="item.sales_lead && item.sales_lead.stage" class="flex items-center gap-2">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Sales:</span>
-                                <span
-                                    :class="stageBadgeClass(item.sales_lead.stage)"
-                                    class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold tracking-wide border"
-                                >
-                                    @{{ item.sales_lead.stage.name }}
-                                </span>
-                            </div>
-
                             <!-- Order items -->
                             <div v-if="item.order_items && item.order_items.length > 0">
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Producten</p>
@@ -176,20 +172,36 @@
                                     >
                                         <span class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></span>
                                         <span>@{{ oi.product_name || 'Onbekend product' }}</span>
-                                        <span v-if="oi.person_name" class="text-gray-400">(@{{ oi.person_name }})</span>
                                         <span v-if="oi.quantity > 1" class="text-gray-400">x@{{ oi.quantity }}</span>
                                     </li>
                                 </ul>
                             </div>
 
-                            <!-- Action link -->
-                            <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                            <!-- Links -->
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Links</p>
+                                <div class="flex items-center gap-1.5 text-sm">
+                                    <i class="icon-activity text-gray-400"></i>
+                                    <span class="text-gray-400">
+                                        AFB formulier
+                                    </span>
+                                </div>
+                                <div v-if="item.gvl_form_link" class="flex items-center gap-1.5 text-sm">
+                                    <i class="icon-activity"></i>
+                                    <a :href="item.gvl_form_link" target="_blank" class="hover:text-indigo-600">
+                                        GVL Formulier
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="pt-3 border-t border-gray-100 dark:border-gray-700 mt-auto flex items-center justify-between">
                                 <a
-                                    v-if="item.sales_lead_url"
-                                    :href="item.sales_lead_url"
+                                    v-if="item.order_url"
+                                    :href="item.order_url"
                                     class="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
                                 >
-                                    Bekijk sales
+                                    Bekijk order
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
@@ -198,6 +210,12 @@
                         </div>
                     </div>
                 </div>
+                <!-- Activiteit modal (gedeeld, één instantie) -->
+                <v-activity
+                    ref="activityModal"
+                    :entity="activeActivityPerson"
+                    entity-control-name="person_id"
+                ></v-activity>
             </div>
         </script>
 
@@ -210,6 +228,7 @@
                         selectedDate: new Date().toISOString().slice(0, 10),
                         orders: [],
                         loading: false,
+                        activeActivityPerson: { id: null },
                     };
                 },
 
@@ -270,6 +289,13 @@
                     goToToday() {
                         this.selectedDate = this.formatLocalDate(new Date());
                         this.fetchData();
+                    },
+
+                    openActivityModal(person) {
+                        this.activeActivityPerson = person;
+                        this.$nextTick(() => {
+                            this.$refs.activityModal.openModal();
+                        });
                     },
 
                     stageBadgeClass(stage) {

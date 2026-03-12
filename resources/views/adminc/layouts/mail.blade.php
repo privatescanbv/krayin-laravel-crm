@@ -38,7 +38,7 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="text-sm">
-                <span>© 2025 Privatescan</span>
+                <span>© {{ now()->year }} Privatescan</span>
                 | <a href="https://www.privatescan.nl/algemene-voorwaarden/" target="_blank">Algemene voorwaarden</a>
                 - <a href="https://www.privatescan.nl/privacy-statement/" target="_blank">Privacy policy</a>
                 - <a href="https://www.privatescan.nl/disclaimer/" target="_blank">Disclaimer</a>

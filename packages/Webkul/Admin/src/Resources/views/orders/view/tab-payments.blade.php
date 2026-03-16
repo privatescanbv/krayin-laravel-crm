@@ -10,7 +10,7 @@
     $today = now()->format('Y-m-d');
 
     $totalToPay = (float) ($order->total_price ?? 0);
-    $totalPaid = round((float) $order->payments->sum('amount'), 2);
+    $totalPaid = $order->netPaidAmount();
     $openAmount = round($totalToPay - $totalPaid, 2);
 @endphp
 
@@ -22,7 +22,8 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    @php $paymentStatus = $order->paymentStatus(); @endphp
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaal te betalen</div>
             <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
@@ -47,6 +48,14 @@
                 @else
                     —
                 @endif
+            </div>
+        </div>
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Betaalstatus</div>
+            <div class="mt-1">
+                <span class="inline-flex w-fit items-center px-3 py-1 text-sm font-medium rounded-full {{ $paymentStatus->badgeClass() }}">
+                    {{ $paymentStatus->label() }}
+                </span>
             </div>
         </div>
     </div>

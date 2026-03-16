@@ -17,8 +17,13 @@
                                     :key="item.id ?? idx"
                                     class="p-2 border rounded bg-status-active-bg border-status-active-border flex items-center justify-between"
                             >
-                                <div class="text-sm font-medium truncate" :title="item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx))">
-                                    {{ item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}
+                                <div class="text-sm font-medium truncate min-w-0 flex-1" :title="item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx))">
+                                    <a v-if="itemEditRoute && (item.id ?? item.value)"
+                                       :href="itemEditRoute.replace(/\{id\}/g, item.id ?? item.value)"
+                                       class="text-brandColor hover:underline truncate block"
+                                       target="_self"
+                                    >{{ item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}</a>
+                                    <span v-else>{{ item.name_with_path ?? item.name ?? item.label ?? item.text ?? ('#' + (item.id ?? idx)) }}</span>
                                 </div>
                                 <button
                                         type="button"
@@ -90,7 +95,7 @@
             if (!app._context.components['v-entity-selector']) {
                 app.component('v-entity-selector', {
                 template: '#v-entity-selector-template',
-                props: ['name','label', 'hint','placeholder','searchRoute','canAddNew','multiple','style','items','eventName','fetcher'],
+                props: ['name','label', 'hint','placeholder','searchRoute','canAddNew','multiple','style','items','eventName','fetcher','itemEditRoute'],
                 data() {
                     return {
                         search: '',

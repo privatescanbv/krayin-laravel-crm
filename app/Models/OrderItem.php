@@ -165,6 +165,51 @@ class OrderItem extends Model
         return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'main');
     }
 
+    /**
+     * Returns the effective purchase price for this order item.
+     * Resolution order per field: 1. order item, 2. product, 3. partner product.
+     * Null means "don't override" (use next level). All null = 0.
+     */
+    public function resolvedPurchasePrice(): object
+    {
+        $this->loadMissing(['product.partnerProducts.purchasePrice']);
+
+        $suffixes = PurchasePrice::priceSuffixes();
+        $orderItemPrice = $this->purchasePrice;
+        $product = $this->product;
+        $productPrice = $product && method_exists($product, 'purchasePrice') ? $product->purchasePrice : null;
+
+        $partnerProductTotals = null;
+        if ($product && ! $product->partnerProducts->isEmpty()) {
+            $partnerProductTotals = array_fill_keys($suffixes, 0.0);
+            foreach ($product->partnerProducts as $pp) {
+                if (! $pp->purchasePrice) {
+                    continue;
+                }
+                foreach ($suffixes as $suffix) {
+                    $partnerProductTotals[$suffix] += (float) ($pp->purchasePrice->{'purchase_price_'.$suffix} ?? 0);
+                }
+            }
+        }
+
+        $data = [];
+        $total = 0.0;
+        foreach ($suffixes as $suffix) {
+            $field = 'purchase_price_'.$suffix;
+            $orderItemValue = $orderItemPrice?->{$field} ?? null;
+            $productValue = $productPrice?->{$field} ?? null;
+            $partnerProductValue = $partnerProductTotals[$suffix] ?? null;
+
+            $value = $orderItemValue ?? $productValue ?? $partnerProductValue ?? 0;
+            $value = (float) $value;
+            $data[$field] = (string) round($value, 2);
+            $total += $value;
+        }
+        $data['purchase_price'] = (string) round($total, 2);
+
+        return (object) $data;
+    }
+
     public function invoicePurchasePrice(): MorphOne
     {
         return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'invoice');

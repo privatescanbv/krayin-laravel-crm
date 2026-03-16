@@ -11,12 +11,12 @@ namespace App\Enums;
 enum Currency: string
 {
     case EUR = 'EUR';
-//    case USD = 'USD';
-//    case GBP = 'GBP';
-//    case CHF = 'CHF';
-//    case DKK = 'DKK';
-//    case NOK = 'NOK';
-//    case SEK = 'SEK';
+    //    case USD = 'USD';
+    //    case GBP = 'GBP';
+    //    case CHF = 'CHF';
+    //    case DKK = 'DKK';
+    //    case NOK = 'NOK';
+    //    case SEK = 'SEK';
 
     public static function default(): self
     {
@@ -32,12 +32,12 @@ enum Currency: string
     {
         return [
             ['code' => self::EUR->value, 'label' => 'Euro (EUR)'],
-//            ['code' => self::USD->value, 'label' => 'US Dollar (USD)'],
-//            ['code' => self::GBP->value, 'label' => 'British Pound (GBP)'],
-//            ['code' => self::CHF->value, 'label' => 'Swiss Franc (CHF)'],
-//            ['code' => self::DKK->value, 'label' => 'Danish Krone (DKK)'],
-//            ['code' => self::NOK->value, 'label' => 'Norwegian Krone (NOK)'],
-//            ['code' => self::SEK->value, 'label' => 'Swedish Krona (SEK)'],
+            //            ['code' => self::USD->value, 'label' => 'US Dollar (USD)'],
+            //            ['code' => self::GBP->value, 'label' => 'British Pound (GBP)'],
+            //            ['code' => self::CHF->value, 'label' => 'Swiss Franc (CHF)'],
+            //            ['code' => self::DKK->value, 'label' => 'Danish Krone (DKK)'],
+            //            ['code' => self::NOK->value, 'label' => 'Norwegian Krone (NOK)'],
+            //            ['code' => self::SEK->value, 'label' => 'Swedish Krona (SEK)'],
         ];
     }
 
@@ -48,21 +48,21 @@ enum Currency: string
     {
         $symbolMap = [
             self::EUR->value => '€',
-//            self::USD->value => '$',
-//            self::GBP->value => '£',
-//            self::CHF->value => 'CHF',
-//            self::DKK->value => 'kr',
-//            self::NOK->value => 'kr',
-//            self::SEK->value => 'kr',
+            //            self::USD->value => '$',
+            //            self::GBP->value => '£',
+            //            self::CHF->value => 'CHF',
+            //            self::DKK->value => 'kr',
+            //            self::NOK->value => 'kr',
+            //            self::SEK->value => 'kr',
         ];
 
         $code = $currencyCode ?: self::default()->value;
         $symbol = $symbolMap[$code] ?? $code;
         $formatted = number_format($amount, 2, ',', '.');
 
-//        if (in_array($code, [self::EUR->value, self::USD->value, self::GBP->value], true)) {
-//            return $symbol.' '.$formatted;
-//        }
+        //        if (in_array($code, [self::EUR->value, self::USD->value, self::GBP->value], true)) {
+        //            return $symbol.' '.$formatted;
+        //        }
         if (in_array($code, [self::EUR->value], true)) {
             return $symbol.' '.$formatted;
         }

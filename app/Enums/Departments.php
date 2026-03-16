@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use ValueError;
+
 /**
  *  Also define group in user and for filtering in activities
  */
@@ -15,7 +17,7 @@ enum Departments: string
         return match ($key) {
             'hernia'      => self::HERNIA,
             'privatescan' => self::PRIVATESCAN,
-            default       => throw new \ValueError("Unknown department key: $key"),
+            default       => throw new ValueError("Unknown department key: $key"),
         };
     }
 

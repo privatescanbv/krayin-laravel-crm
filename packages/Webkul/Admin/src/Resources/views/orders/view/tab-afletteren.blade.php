@@ -34,7 +34,7 @@
     ];
 
     foreach (($order->orderItems ?? collect()) as $item) {
-        $purchaseTotal = $asAmount($item->purchasePrice?->purchase_price);
+        $purchaseTotal = $asAmount($item->resolvedPurchasePrice()->purchase_price);
         $invoiceTotal  = $asAmount($item->invoicePurchasePrice?->purchase_price);
         $status = OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal);
 
@@ -83,7 +83,7 @@
             Geen items met inkoop- of invoicebedrag (beide 0 wordt niet getoond).
         </div>
     @else
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
             <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Inkoop totaal</div>
                 <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ $formatEur($summary['purchase_total']) }}</div>
@@ -110,6 +110,15 @@
                             </span>
                         </span>
                     @endforeach
+                </div>
+            </div>
+
+            <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Inkoop status</div>
+                <div class="mt-1">
+                    <span class="inline-flex w-fit items-center px-3 py-1 text-sm font-medium rounded-full {{ $order->purchaseStatus()->badgeClass() }}">
+                        {{ $order->purchaseStatus()->label() }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -140,7 +149,7 @@
 
                                 $detailsRows = [];
                                 foreach ($priceFields as $field => $label) {
-                                    $p = $asAmount($item->purchasePrice?->{$field});
+                                    $p = $asAmount($item->resolvedPurchasePrice()->{$field});
                                     $i = $asAmount($item->invoicePurchasePrice?->{$field});
 
                                     if ($round2($p) <= 0 && $round2($i) <= 0) {

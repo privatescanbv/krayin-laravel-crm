@@ -143,13 +143,13 @@
 
 
                 <x-adminc::components.purchase-price-fields
-                    :purchase-price="$order_items->purchasePrice"
+                    :purchase-price="$resolvedPurchasePrice ?? $order_items->purchasePrice"
                 />
 
                 <x-adminc::components.purchase-price-fields
                     :purchase-price="$order_items->invoicePurchasePrice"
                     field-prefix="invoice_"
-                    title="Factuur inkoopprijzen"
+                    title="Factuur inkoopprijzen (Afletteren)"
                     total-id="invoice-purchase-price-total"
                     :labels="[
                         'misc'        => 'Overig',
@@ -178,7 +178,7 @@
                     productTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 }
 
-                const suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+                const suffixes = Object.keys(prices).filter(k => k !== 'product_type_id');
                 suffixes.forEach(suffix => {
                     const input = document.querySelector(`input[name="purchase_price_${suffix}"]`);
                     if (input) {

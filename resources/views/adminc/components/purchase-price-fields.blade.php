@@ -8,7 +8,8 @@
 ])
 
 @php
-    $suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+    use App\Models\PurchasePrice;
+    $suffixes = PurchasePrice::priceSuffixes();
 @endphp
 
 <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

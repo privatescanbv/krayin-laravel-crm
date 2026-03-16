@@ -117,10 +117,10 @@ class OrderStatusTransitionValidator
         $targetStages = array_filter(
             PipelineStage::cases(),
             static fn (PipelineStage $stage) => $stage->isOrder()
-                && ! in_array($stage, [
+                && (! in_array($stage, [
                     PipelineStage::ORDER_CONFIRM,
                     PipelineStage::ORDER_VOORBEREIDEN_HERNIA,
-                ], true)
+                ], true)) && !$stage->isLost()
         );
 
         self::addWildcardToStagesRules(

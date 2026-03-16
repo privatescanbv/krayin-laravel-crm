@@ -7,6 +7,7 @@ use App\Enums\Currency;
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
 use App\Models\ProductType;
+use App\Models\PurchasePrice;
 use App\Repositories\OrderItemRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -62,7 +63,7 @@ class OrderItemController extends SimpleEntityController
         $product = Product::with(['partnerProducts.purchasePrice'])
             ->findOrFail($productId);
 
-        $suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+        $suffixes = PurchasePrice::priceSuffixes();
         $totals = array_fill_keys($suffixes, 0.0);
 
         foreach ($product->partnerProducts as $pp) {
@@ -81,12 +82,11 @@ class OrderItemController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
-        $purchasePriceFields = [
-            'purchase_price_misc', 'purchase_price_doctor', 'purchase_price_cardiology',
-            'purchase_price_clinic', 'purchase_price_radiology',
-            'invoice_purchase_price_misc', 'invoice_purchase_price_doctor', 'invoice_purchase_price_cardiology',
-            'invoice_purchase_price_clinic', 'invoice_purchase_price_radiology',
-        ];
+        $suffixes = PurchasePrice::priceSuffixes();
+        $purchasePriceFields = array_merge(
+            PurchasePrice::priceableFieldNames(),
+            array_map(fn (string $s) => 'invoice_purchase_price_'.$s, $suffixes)
+        );
         foreach ($purchasePriceFields as $field) {
             $value = $request->input($field);
             $normalized = Currency::normalizePrice($value);
@@ -95,28 +95,22 @@ class OrderItemController extends SimpleEntityController
             ]);
         }
 
-        $request->validate([
-            'order_id'                          => ['required', 'integer', 'exists:orders,id'],
-            'product_id'                        => ['required', 'integer', 'exists:products,id'],
-            'product_type_id'                   => ['nullable', 'integer', 'exists:product_types,id'],
-            'name'                              => ['nullable', 'string', 'max:255'],
-            'description'                       => ['nullable', 'string'],
-            'person_id'                         => ['required', 'integer', 'exists:persons,id'],
-            'quantity'                          => ['required', 'integer', 'min:1'],
-            'total_price'                       => ['nullable', 'numeric', 'min:0'],
-            'currency'                          => ['nullable', 'string', 'in:'.implode(',', Currency::codes())],
-            'status'                            => ['nullable', 'string', 'in:'.implode(',', array_column(OrderItemStatus::cases(), 'value'))],
-            'purchase_price_misc'               => ['nullable', 'numeric', 'min:0'],
-            'purchase_price_doctor'             => ['nullable', 'numeric', 'min:0'],
-            'purchase_price_cardiology'         => ['nullable', 'numeric', 'min:0'],
-            'purchase_price_clinic'             => ['nullable', 'numeric', 'min:0'],
-            'purchase_price_radiology'          => ['nullable', 'numeric', 'min:0'],
-            'invoice_purchase_price_misc'       => ['nullable', 'numeric', 'min:0'],
-            'invoice_purchase_price_doctor'     => ['nullable', 'numeric', 'min:0'],
-            'invoice_purchase_price_cardiology' => ['nullable', 'numeric', 'min:0'],
-            'invoice_purchase_price_clinic'     => ['nullable', 'numeric', 'min:0'],
-            'invoice_purchase_price_radiology'  => ['nullable', 'numeric', 'min:0'],
-        ]);
+        $rules = [
+            'order_id'        => ['required', 'integer', 'exists:orders,id'],
+            'product_id'      => ['required', 'integer', 'exists:products,id'],
+            'product_type_id' => ['nullable', 'integer', 'exists:product_types,id'],
+            'name'            => ['nullable', 'string', 'max:255'],
+            'description'     => ['nullable', 'string'],
+            'person_id'       => ['required', 'integer', 'exists:persons,id'],
+            'quantity'        => ['required', 'integer', 'min:1'],
+            'total_price'     => ['nullable', 'numeric', 'min:0'],
+            'currency'        => ['nullable', 'string', 'in:'.implode(',', Currency::codes())],
+            'status'          => ['nullable', 'string', 'in:'.implode(',', array_column(OrderItemStatus::cases(), 'value'))],
+        ];
+        foreach (array_merge(PurchasePrice::priceableFieldNames(), array_map(fn (string $s) => 'invoice_purchase_price_'.$s, $suffixes)) as $field) {
+            $rules[$field] = ['nullable', 'numeric', 'min:0'];
+        }
+        $request->validate($rules);
     }
 
     protected function validateUpdate(Request $request, int $id): void
@@ -126,10 +120,7 @@ class OrderItemController extends SimpleEntityController
 
     protected function saveOrderItemPurchasePrice(OrderItem $entity, Request $request): void
     {
-        $fields = [
-            'purchase_price_misc', 'purchase_price_doctor', 'purchase_price_cardiology',
-            'purchase_price_clinic', 'purchase_price_radiology',
-        ];
+        $fields = PurchasePrice::priceableFieldNames();
         $data = [];
         $total = 0;
         foreach ($fields as $field) {
@@ -143,7 +134,7 @@ class OrderItemController extends SimpleEntityController
 
     protected function saveInvoicePurchasePrice(OrderItem $entity, Request $request): void
     {
-        $suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+        $suffixes = PurchasePrice::priceSuffixes();
         $data = ['type' => 'invoice'];
         $total = 0;
         foreach ($suffixes as $suffix) {
@@ -194,16 +185,24 @@ class OrderItemController extends SimpleEntityController
             return [$person->id => $person->name];
         })->toArray();
 
+        $resolvedPurchasePrice = $this->resolvePurchasePriceForEdit($entity);
+
         return [
-            'order_items'     => $entity,
-            'persons'         => $persons,
-            'productTypes'    => ProductType::orderBy('name')->get(['id', 'name']),
-            'statuses'        => collect(OrderItemStatus::cases())
+            'order_items'              => $entity,
+            'resolvedPurchasePrice'    => $resolvedPurchasePrice,
+            'persons'                  => $persons,
+            'productTypes'             => ProductType::orderBy('name')->get(['id', 'name']),
+            'statuses'                 => collect(OrderItemStatus::cases())
                 ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
                 ->toArray(),
-            'currencies'      => Currency::options(),
-            'defaultCurrency' => Currency::default()->value,
+            'currencies'              => Currency::options(),
+            'defaultCurrency'         => Currency::default()->value,
         ];
+    }
+
+    protected function resolvePurchasePriceForEdit(OrderItem $entity): object
+    {
+        return $entity->resolvedPurchasePrice();
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

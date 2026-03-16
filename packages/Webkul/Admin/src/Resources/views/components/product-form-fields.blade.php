@@ -132,6 +132,7 @@
         :can-add-new="true"
         :multiple="true"
         :items='@json($selectedPartnerProducts ?? [])'
+        item-edit-route="{{ rtrim(route('admin.partner_products.edit', ['id' => 0]), '0') }}{id}"
     />
     <input type="hidden" name="active" value="0"/>
     <x-admin::form.control-group.control

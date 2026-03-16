@@ -164,5 +164,4 @@ class ImpersonationController extends Controller
 
         return null;
     }
-
 }

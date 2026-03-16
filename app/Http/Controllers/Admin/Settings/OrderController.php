@@ -322,6 +322,7 @@ class OrderController extends SimpleEntityController
             'salesLead.persons',
             'salesLead.contactPerson',
             'orderItems.product',
+            'orderItems.product.partnerProducts.purchasePrice',
             'orderItems.person',
             'orderItems.purchasePrice',
             'orderItems.invoicePurchasePrice',
@@ -947,10 +948,20 @@ class OrderController extends SimpleEntityController
             $nextNewKey = 1000000; // Start high to avoid conflicts with existing IDs
 
             foreach ($items as $key => $item) {
-                // Normalize item values to integers
-                if (isset($item['product_id']) && $item['product_id'] !== null && $item['product_id'] !== '') {
-                    $item['product_id'] = (int) $item['product_id'];
+                // Skip rows without product (e.g. after removing last item; avoids validation on empty rows)
+                $hasProduct = isset($item['product_id']) && $item['product_id'] !== null && $item['product_id'] !== '';
+                if (! $hasProduct) {
+                    continue;
                 }
+
+                // Skip rows with product but no person (stale data when removing last item; avoids validation error)
+                $hasPerson = isset($item['person_id']) && $item['person_id'] !== null && $item['person_id'] !== '';
+                if (! $hasPerson) {
+                    continue;
+                }
+
+                // Normalize item values to integers
+                $item['product_id'] = (int) $item['product_id'];
                 if (isset($item['person_id']) && $item['person_id'] !== null && $item['person_id'] !== '') {
                     $item['person_id'] = (int) $item['person_id'];
                 }

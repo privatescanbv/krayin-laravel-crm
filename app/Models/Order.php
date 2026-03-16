@@ -6,6 +6,7 @@ use App\Enums\AppointmentTimeFilter;
 use App\Enums\Departments;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderPurchaseStatus;
+use App\Enums\PaymentType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
@@ -143,23 +144,40 @@ class Order extends Model
     }
 
     /**
-     * Betaalstatus klant: vergelijk som van payments met total_price.
+     * Netto betaald bedrag: aanbetalingen + kliniekbetalingen minus terugbetalingen.
+     */
+    public function netPaidAmount(): float
+    {
+        return round(
+            (float) $this->payments->sum(fn ($p) => $p->type === PaymentType::REFUND
+                ? -(float) $p->amount
+                : (float) $p->amount
+            ),
+            2
+        );
+    }
+
+    /**
+     * Betaalstatus klant: vergelijk netto betaald bedrag met total_price.
      */
     public function paymentStatus(): OrderPaymentStatus
     {
         return OrderPaymentStatus::forOrder(
             round((float) $this->total_price, 2),
-            round((float) $this->payments->sum('amount'), 2),
+            $this->netPaidAmount(),
         );
     }
 
     /**
      * Som van alle hoofdinkoopprijzen van de order items.
+     * Gebruikt resolved purchase price (order item > product > partner product).
      */
     public function totalPurchasePrice(): float
     {
+        $this->loadMissing('orderItems.product.partnerProducts.purchasePrice');
+
         return round(
-            (float) $this->orderItems->sum(fn ($item) => (float) ($item->purchasePrice?->purchase_price ?? 0)),
+            (float) $this->orderItems->sum(fn ($item) => (float) $item->resolvedPurchasePrice()->purchase_price),
             2
         );
     }

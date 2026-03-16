@@ -8,6 +8,10 @@
     $currencyOptions = Currency::options();
     $defaultCurrencyCode = Currency::default()->value;
     $today = now()->format('Y-m-d');
+
+    $totalToPay = (float) ($order->total_price ?? 0);
+    $totalPaid = round((float) $order->payments->sum('amount'), 2);
+    $openAmount = round($totalToPay - $totalPaid, 2);
 @endphp
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
@@ -15,6 +19,35 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Klant betalingen</h3>
         <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Aanbetaling, kliniekbetaling en terugbetalingen voor deze order.
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaal te betalen</div>
+            <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                @if ($totalToPay > 0)
+                    {{ Currency::formatMoney($defaultCurrencyCode, $totalToPay) }}
+                @else
+                    —
+                @endif
+            </div>
+        </div>
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Reeds betaald</div>
+            <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                {{ Currency::formatMoney($defaultCurrencyCode, $totalPaid) }}
+            </div>
+        </div>
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Nog open</div>
+            <div class="mt-1 text-lg font-semibold {{ $openAmount > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-gray-900 dark:text-white' }}">
+                @if ($totalToPay > 0)
+                    {{ Currency::formatMoney($defaultCurrencyCode, $openAmount) }}
+                @else
+                    —
+                @endif
+            </div>
         </div>
     </div>
 

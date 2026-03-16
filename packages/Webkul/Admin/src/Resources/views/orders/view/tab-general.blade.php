@@ -46,15 +46,12 @@
                 </span>
             </div>
             <div class="flex flex-col">
-                <span class="text-gray-500 dark:text-gray-400">Status</span>
-                @if($order->stage)
-                    <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                        {{ $order->stage->name }}
-                    </span>
-                @else
-                    <span class="text-gray-400">-</span>
-                @endif
+                <span class="text-gray-500 dark:text-gray-400">Gecombineerde order</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->combine_order ? 'Ja' : 'Nee' }}
+                </span>
             </div>
+            {{-- Totaalprijs links, Betaling klant rechts --}}
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Totaalprijs</span>
                 <span class="font-medium text-gray-800 dark:text-white">
@@ -66,24 +63,13 @@
                 </span>
             </div>
             <div class="flex flex-col">
-                <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
-                <span class="font-medium text-gray-800 dark:text-white">
-                    {{ $order->first_examination_at ? $order->first_examination_at->format('d-m-Y H:i') : '-' }}
-                </span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-gray-500 dark:text-gray-400">Gecombineerde order</span>
-                <span class="font-medium text-gray-800 dark:text-white">
-                    {{ $order->combine_order ? 'Ja' : 'Nee' }}
-                </span>
-            </div>
-            <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Betaling klant</span>
                 @php $paymentStatus = $order->paymentStatus(); @endphp
                 <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $paymentStatus->badgeClass() }}">
                     {{ $paymentStatus->label() }}
                 </span>
             </div>
+            {{-- Inkoopprijs links, Inkoop status rechts --}}
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Totale inkoopprijs</span>
                 <span class="font-medium text-gray-800 dark:text-white">
@@ -95,6 +81,12 @@
                 @php $purchaseStatus = $order->purchaseStatus(); @endphp
                 <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $purchaseStatus->badgeClass() }}">
                     {{ $purchaseStatus->label() }}
+                </span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->first_examination_at ? $order->first_examination_at->format('d-m-Y H:i') : '-' }}
                 </span>
             </div>
         </div>

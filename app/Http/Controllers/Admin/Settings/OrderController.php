@@ -158,6 +158,7 @@ class OrderController extends SimpleEntityController
                     'stage',
                     'salesLead.persons',
                     'salesLead.lead',
+                    'payments',
                 ])
                 ->withCount([
                     'activities as open_activities_count' => function ($q) {
@@ -185,21 +186,25 @@ class OrderController extends SimpleEntityController
                         ?: $order->salesLead->name;
                 }
 
+                $paymentStatus = $order->paymentStatus();
+
                 return [
-                    'id'                   => $order->id,
-                    'title'                => $order->title,
-                    'total_price'          => $order->total_price,
-                    'first_examination_at' => $order->first_examination_at,
-                    'created_at'           => $order->created_at,
-                    'pipeline_stage_id'    => $order->pipeline_stage_id,
-                    'pipeline_stage'       => $stagePayload,
-                    'stage'                => $stagePayload,
-                    'open_activities_count'=> (int) ($order->open_activities_count ?? 0),
-                    'patient_name'         => $patientName,
-                    'sales_lead'           => $order->salesLead ? [
+                    'id'                     => $order->id,
+                    'title'                  => $order->title,
+                    'total_price'            => $order->total_price,
+                    'first_examination_at'   => $order->first_examination_at,
+                    'created_at'             => $order->created_at,
+                    'pipeline_stage_id'      => $order->pipeline_stage_id,
+                    'pipeline_stage'         => $stagePayload,
+                    'stage'                  => $stagePayload,
+                    'open_activities_count'  => (int) ($order->open_activities_count ?? 0),
+                    'patient_name'           => $patientName,
+                    'sales_lead'             => $order->salesLead ? [
                         'id'   => $order->salesLead->id,
                         'name' => $order->salesLead->name,
                     ] : null,
+                    'payment_status_label'       => $paymentStatus->label(),
+                    'payment_status_badge_class' => $paymentStatus->badgeClass(),
                 ];
             })->values();
 
@@ -229,27 +234,19 @@ class OrderController extends SimpleEntityController
 
     public function create(Request $request): View
     {
-        $salesLeadId = $request->get('sales_lead_id');
+        $salesLeadId = $request->get('sales_lead_id') ?? old('sales_lead_id');
 
-        $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
-            return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
-        })->toArray();
-
-        // Get persons from the selected sales lead
-        $persons = [];
+        $salesLeadName = null;
         if ($salesLeadId) {
-            $salesLead = SalesLead::with('lead.persons')->find($salesLeadId);
-            if ($salesLead && $salesLead->lead) {
-                $persons = $salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
-                    return [$person->id => $person->name];
-                })->toArray();
-            }
+            $salesLead = SalesLead::with('lead')->find($salesLeadId);
+            $salesLeadName = $salesLead
+                ? $salesLead->name.($salesLead->lead ? ' ('.$salesLead->lead->name.')' : '')
+                : null;
         }
 
         return view($this->createView, [
-            'salesLeadId' => $salesLeadId,
-            'salesLeads'  => $salesLeads,
-            'persons'     => $persons,
+            'salesLeadId'   => $salesLeadId,
+            'salesLeadName' => $salesLeadName,
         ]);
     }
 
@@ -315,7 +312,7 @@ class OrderController extends SimpleEntityController
             ], 200);
         }
 
-        return redirect()->route($this->indexRoute)->with('success', $this->getCreateSuccessMessage());
+        return redirect()->route('admin.orders.edit', $order->id)->with('success', $this->getCreateSuccessMessage());
     }
 
     public function view(int $id): View
@@ -519,14 +516,14 @@ class OrderController extends SimpleEntityController
 
     public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse
     {
-        $salesLead = SalesLead::with('lead.persons')->findOrFail($salesLeadId);
+        $salesLead = SalesLead::with(['persons', 'lead.persons'])->findOrFail($salesLeadId);
 
-        $persons = [];
-        if ($salesLead && $salesLead->lead) {
-            $persons = $salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
-                return [$person->id => $person->name];
-            })->toArray();
-        }
+        $salesLeadPersons = $salesLead->persons()->get();
+        $persons = $salesLeadPersons->isNotEmpty()
+            ? $salesLeadPersons->mapWithKeys(fn ($p) => [$p->id => $p->name])->toArray()
+            : ($salesLead->lead
+                ? $salesLead->lead->persons()->get()->mapWithKeys(fn ($p) => [$p->id => $p->name])->toArray()
+                : []);
 
         return response()->json([
             'persons' => $persons,
@@ -971,9 +968,16 @@ class OrderController extends SimpleEntityController
             'first_examination_at' => ['nullable', 'date'],
             'items'                => ['nullable', 'array'],
             'items.*.product_id'   => ['nullable', 'integer', 'exists:products,id'],
-            'items.*.person_id'    => ['nullable', 'integer', 'exists:persons,id'],
+            'items.*.person_id'    => [
+                'required_with:items.*.product_id',
+                'nullable',
+                'integer',
+                'exists:persons,id',
+            ],
             'items.*.quantity'     => ['nullable', 'integer', 'min:1'],
             'items.*.total_price'  => ['nullable', 'numeric', 'min:0'],
+        ], [
+            'items.*.person_id.required_with' => 'Elk orderitem met een product moet een persoon hebben.',
         ]);
     }
 
@@ -992,13 +996,15 @@ class OrderController extends SimpleEntityController
 
     protected function transformPayload(array $payload, ?int $id = null): array
     {
-        // Compute total from items if not provided
+        // Compute total from items if provided; otherwise default to 0 for create without items
         if (! empty($payload['items']) && is_array($payload['items'])) {
             $sum = 0;
             foreach ($payload['items'] as $item) {
                 $sum += (float) ($item['total_price'] ?? 0);
             }
             $payload['total_price'] = $sum;
+        } elseif (empty($payload['total_price']) || $payload['total_price'] === '') {
+            $payload['total_price'] = 0;
         }
 
         return parent::transformPayload($payload, $id);

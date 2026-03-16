@@ -655,13 +655,9 @@ use Webkul\Lead\Models\Stage;
                                 fetch(`/admin/orders/persons/${salesLeadId}`)
                                     .then(response => response.json())
                                     .then(data => {
-                                        if (window.app && window.app.config && window.app.config.globalProperties) {
-                                            const app = window.app;
-                                            const orderItemsVue = app._instance?.proxy?.$refs?.orderItemsList;
-                                            if (orderItemsVue) {
-                                                orderItemsVue.persons = data.persons || {};
-                                            }
-                                        }
+                                        window.dispatchEvent(new CustomEvent('order-persons-loaded', {
+                                            detail: { persons: data.persons || {} }
+                                        }));
                                     })
                                     .catch(error => {
                                         console.error('[OrderEdit] Error loading persons:', error);

@@ -24,12 +24,18 @@
         $computedLabelClass = 'required';
     }
     $isGroupedControl = in_array($type, ['group', 'radio-group'], true);
+    $useStaticLabel = in_array($type, ['select', 'multiselect', 'textarea', 'datetime', 'date'], true);
 
     $resolvedFocus = $type != 'hidden' && !$readonly && $focus;
     $resolvedAutoComplete = $autocomplete && $type != 'hidden' && !$readonly;
 @endphp
 
 <x-admin::form.control-group class="{{ $class }}">
+    @if (! $isGroupedControl && $labelText && $useStaticLabel)
+        <x-admin::form.control-group.label :static="true" class="{{ $computedLabelClass }}">
+            {{ $labelText }}
+        </x-admin::form.control-group.label>
+    @endif
     <x-admin::form.control-group.control
         type="{{ $type }}"
         name="{{ $name ?: $label }}"
@@ -46,7 +52,7 @@
         {{ $slot }}
     </x-admin::form.control-group.control>
 
-    @if (! $isGroupedControl && $labelText)
+    @if (! $isGroupedControl && $labelText && ! $useStaticLabel)
         <x-admin::form.control-group.label
             :switch="$type === 'switch'"
             :check="$type === 'checkbox'"

@@ -435,13 +435,20 @@
                                             </div>
                                         </div>
 
-                                        <div class="flex items-center justify-between">
+                                        <div class="flex items-center justify-between gap-2">
                                             <div
                                                 class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400"
                                             >
                                                 <span class="icon-activity text-xs"></span>
                                                 <span>@{{ element.open_activities_count || 0 }}</span>
                                             </div>
+                                            <span
+                                                v-if="element.payment_status_label"
+                                                class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full"
+                                                :class="element.payment_status_badge_class"
+                                            >
+                                                @{{ element.payment_status_label }}
+                                            </span>
                                         </div>
                                     </a>
 

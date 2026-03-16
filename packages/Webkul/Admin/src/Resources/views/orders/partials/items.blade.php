@@ -32,7 +32,7 @@
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
                     <template v-for="(item, index) in items" :key="`${resetKey}-${item.id ?? index}`">
-                        <v-order-item :item="item" :index="index" :errors="errors" :persons="persons" :edit-base-url="editBaseUrl" @onRemoveItem="removeItem($event)"></v-order-item>
+                        <v-order-item :item="item" :index="index" :errors="errors" :persons="personsData" :edit-base-url="editBaseUrl" @onRemoveItem="removeItem($event)"></v-order-item>
                     </template>
                 </x-admin::table.tbody>
             </x-admin::table>
@@ -122,6 +122,7 @@
             props: ['errors', 'data', 'persons', 'editBaseUrl'],
             data() {
                 return {
+                    personsData: this.persons && typeof this.persons === 'object' ? { ...this.persons } : {},
                     resetKey: 0,
                     items: this.data && this.data.length ? this.data.map(r => {
                         console.log('Processing order item data:', r);
@@ -146,6 +147,28 @@
                         };
                     }) : [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
                 };
+            },
+            watch: {
+                persons: {
+                    handler(val) {
+                        this.personsData = val && typeof val === 'object' ? { ...val } : {};
+                    },
+                    immediate: true,
+                },
+            },
+            mounted() {
+                const handler = (e) => {
+                    if (e.detail && e.detail.persons) {
+                        this.personsData = typeof e.detail.persons === 'object' ? { ...e.detail.persons } : {};
+                    }
+                };
+                window.addEventListener('order-persons-loaded', handler);
+                this._orderPersonsHandler = handler;
+            },
+            beforeUnmount() {
+                if (this._orderPersonsHandler) {
+                    window.removeEventListener('order-persons-loaded', this._orderPersonsHandler);
+                }
             },
             methods: {
                 addItem() {

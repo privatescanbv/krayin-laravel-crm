@@ -4,6 +4,7 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Order;
 use App\Models\SalesLead;
+use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
 
@@ -76,6 +77,7 @@ test('can delete order', function () {
 
 test('order item total_price is automatically calculated from product price when creating order', function () {
     $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
     $product = Product::factory()->create(['price' => 99.50]);
 
     $payload = [
@@ -85,6 +87,7 @@ test('order item total_price is automatically calculated from product price when
         'items'         => [
             [
                 'product_id' => $product->id,
+                'person_id'  => $person->id,
                 'quantity'   => 3,
                 // total_price omitted → should fall back to product price
             ],
@@ -105,6 +108,7 @@ test('order item total_price is automatically calculated from product price when
 test('order item total_price is automatically calculated from product price when updating order', function () {
     $order = Order::factory()->create();
     $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
     $product = Product::factory()->create(['price' => 150.75]);
 
     $payload = [
@@ -115,6 +119,7 @@ test('order item total_price is automatically calculated from product price when
         'items'         => [
             [
                 'product_id' => $product->id,
+                'person_id'  => $person->id,
                 'quantity'   => 2,
                 // total_price omitted → should fall back to product price
             ],
@@ -135,6 +140,7 @@ test('order item total_price is automatically calculated from product price when
 
 test('order item total_price of zero is preserved as free (not overridden by product price)', function () {
     $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
     $product = Product::factory()->create(['price' => 99.50]);
 
     $payload = [
@@ -144,6 +150,7 @@ test('order item total_price of zero is preserved as free (not overridden by pro
         'items'         => [
             [
                 'product_id'  => $product->id,
+                'person_id'   => $person->id,
                 'quantity'    => 2,
                 'total_price' => 0, // Explicit free price — must not be overridden
             ],
@@ -162,6 +169,7 @@ test('order item total_price of zero is preserved as free (not overridden by pro
 
 test('order item total_price uses provided value when not zero', function () {
     $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
     $product = Product::factory()->create(['price' => 100.00]);
 
     $payload = [
@@ -171,6 +179,7 @@ test('order item total_price uses provided value when not zero', function () {
         'items'         => [
             [
                 'product_id'  => $product->id,
+                'person_id'   => $person->id,
                 'quantity'    => 2,
                 'total_price' => 250.00, // Custom price, should not be overridden
             ],

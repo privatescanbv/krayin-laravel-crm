@@ -5,13 +5,13 @@ namespace App\Enums;
 enum OrderPurchaseStatus: string
 {
     /** Beide bedragen zijn 0 – item wordt niet getoond in afletteren-tab. */
-    case HIDDEN                   = 'verberg';
-    case FULLY_RECEIVED           = 'geheel_ontvangen';
-    case PARTIALLY_RECEIVED       = 'gedeeltelijk_ontvangen';
-    case NOT_RECEIVED             = 'niet_ontvangen';
+    case HIDDEN = 'verberg';
+    case FULLY_RECEIVED = 'geheel_ontvangen';
+    case PARTIALLY_RECEIVED = 'gedeeltelijk_ontvangen';
+    case NOT_RECEIVED = 'niet_ontvangen';
     case INVOICE_WITHOUT_PURCHASE = 'invoice_zonder_inkoopprijs';
-    case NO_PURCHASE_PRICE        = 'geen_inkoopprijs';
-    case UNKNOWN                  = 'onbekend';
+    case NO_PURCHASE_PRICE = 'geen_inkoopprijs';
+    case UNKNOWN = 'onbekend';
 
     /**
      * Status per order-item (beide 0 → HIDDEN zodat het item overgeslagen wordt).
@@ -21,7 +21,9 @@ enum OrderPurchaseStatus: string
         $p = round($purchaseTotal, 2);
         $i = round($invoiceTotal, 2);
 
-        if ($p <= 0 && $i <= 0) return self::HIDDEN;
+        if ($p <= 0 && $i <= 0) {
+            return self::HIDDEN;
+        }
 
         return self::resolveNonEmpty($p, $i);
     }
@@ -34,16 +36,24 @@ enum OrderPurchaseStatus: string
         $p = round($purchaseTotal, 2);
         $i = round($invoiceTotal, 2);
 
-        if ($p <= 0 && $i <= 0) return self::NO_PURCHASE_PRICE;
+        if ($p <= 0 && $i <= 0) {
+            return self::NO_PURCHASE_PRICE;
+        }
 
         return self::resolveNonEmpty($p, $i);
     }
 
     private static function resolveNonEmpty(float $p, float $i): self
     {
-        if ($i > 0 && $p > 0) return $i === $p ? self::FULLY_RECEIVED : self::PARTIALLY_RECEIVED;
-        if ($i <= 0 && $p > 0) return self::NOT_RECEIVED;
-        if ($i > 0 && $p <= 0) return self::INVOICE_WITHOUT_PURCHASE;
+        if ($i > 0 && $p > 0) {
+            return $i === $p ? self::FULLY_RECEIVED : self::PARTIALLY_RECEIVED;
+        }
+        if ($i <= 0 && $p > 0) {
+            return self::NOT_RECEIVED;
+        }
+        if ($i > 0 && $p <= 0) {
+            return self::INVOICE_WITHOUT_PURCHASE;
+        }
 
         return self::UNKNOWN;
     }

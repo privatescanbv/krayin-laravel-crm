@@ -83,6 +83,8 @@ test('order kanban endpoint returns stages and orders', function () {
                         'pipeline_stage_id',
                         'created_at',
                         'open_activities_count',
+                        'payment_status_label',
+                        'payment_status_badge_class',
                     ],
                 ],
                 'meta' => [

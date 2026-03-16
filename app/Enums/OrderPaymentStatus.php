@@ -4,16 +4,22 @@ namespace App\Enums;
 
 enum OrderPaymentStatus: string
 {
-    case NOT_APPLICABLE  = 'niet_van_toepassing';
-    case NOT_PAID        = 'niet_betaald';
-    case PARTIALLY_PAID  = 'gedeeltelijk_betaald';
-    case FULLY_PAID      = 'volledig_betaald';
+    case NOT_APPLICABLE = 'niet_van_toepassing';
+    case NOT_PAID = 'niet_betaald';
+    case PARTIALLY_PAID = 'gedeeltelijk_betaald';
+    case FULLY_PAID = 'volledig_betaald';
 
     public static function forOrder(float $total, float $paid): self
     {
-        if ($total <= 0)    return self::NOT_APPLICABLE;
-        if ($paid <= 0)     return self::NOT_PAID;
-        if ($paid >= $total) return self::FULLY_PAID;
+        if ($total <= 0) {
+            return self::NOT_APPLICABLE;
+        }
+        if ($paid <= 0) {
+            return self::NOT_PAID;
+        }
+        if ($paid >= $total) {
+            return self::FULLY_PAID;
+        }
 
         return self::PARTIALLY_PAID;
     }

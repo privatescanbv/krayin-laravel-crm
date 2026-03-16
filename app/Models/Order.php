@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Enums\AppointmentTimeFilter;
+use App\Enums\Departments;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderPurchaseStatus;
-use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
@@ -170,7 +170,7 @@ class Order extends Model
     public function purchaseStatus(): OrderPurchaseStatus
     {
         $purchaseTotal = $this->totalPurchasePrice();
-        $invoiceTotal  = round(
+        $invoiceTotal = round(
             (float) $this->orderItems->sum(fn ($item) => (float) ($item->invoicePurchasePrice?->purchase_price ?? 0)),
             2
         );

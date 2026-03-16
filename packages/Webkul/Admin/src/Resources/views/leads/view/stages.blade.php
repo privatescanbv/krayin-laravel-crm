@@ -21,7 +21,7 @@
 
     // Users for assignment dropdown (won stage)
     $assignableUsers = User::where('status', 1)->orderBy('first_name')->orderBy('last_name')->get();
-    $currentUserId = $leadOrNull?->user_id;
+    $currentUserId = $isOrder ? ($order->user_id ?? null) : ($leadOrNull?->user_id ?? null);
 @endphp
 
     <!-- Stages Navigation -->
@@ -116,9 +116,8 @@
                             <x-slot:content>
                                 {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $leadOrNull]) !!}
 
-                                @if (! $isOrder)
-                                    <!-- Won stage fields -->
-                                    <template v-if="isWonStage(nextStage)">
+                                <!-- Won stage fields (Lead, SalesLead, Order) -->
+                                <template v-if="isWonStage(nextStage)">
                                         <x-admin::form.control-group>
                                             <x-admin::form.control-group.label class="required">
                                                 Toegewezen persoon
@@ -173,7 +172,6 @@
                                     <template v-else>
                                         <!-- No extra fields required for regular stage transitions -->
                                     </template>
-                                @endif
 
                                 </x-slot>
 
@@ -256,8 +254,21 @@
 
                     this.nextStage = stage;
 
-                    // For orders, skip the modal and update directly (no closed_at / lost_reason)
+                    // For orders: show modal for won/lost (same as Lead), skip for regular stages
                     if (this.isOrderContext) {
+                        if (this.isWonStage(stage) || this.isLostStage(stage)) {
+                            if (!this.nextStage.closed_at) {
+                                this.nextStage.closed_at = new Date().toISOString().slice(0, 10);
+                            }
+                            if (this.isWonStage(this.nextStage) && !this.nextStage.user_id) {
+                                this.nextStage.user_id = this.currentUserId ? String(this.currentUserId) : '';
+                            }
+                            if (this.isLostStage(this.nextStage)) {
+                                this.nextStage.lost_reason = '';
+                            }
+                            this.$refs.stageUpdateModal.open();
+                            return;
+                        }
                         this.update(stage);
                         return;
                     }
@@ -284,14 +295,12 @@
                         'lead_pipeline_stage_id': this.nextStage.id
                     };
 
-                    if (!this.isOrderContext) {
-                        if (this.isWonStage(this.nextStage)) {
-                            params.closed_at = this.nextStage.closed_at;
-                            params.user_id = this.nextStage.user_id;
-                        } else if (this.isLostStage(this.nextStage)) {
-                            params.lost_reason = this.nextStage.lost_reason;
-                            params.closed_at = this.nextStage.closed_at;
-                        }
+                    if (this.isWonStage(this.nextStage)) {
+                        params.closed_at = this.nextStage.closed_at;
+                        params.user_id = this.nextStage.user_id;
+                    } else if (this.isLostStage(this.nextStage)) {
+                        params.lost_reason = this.nextStage.lost_reason;
+                        params.closed_at = this.nextStage.closed_at;
                     }
 
                     this.update(this.nextStage, params);

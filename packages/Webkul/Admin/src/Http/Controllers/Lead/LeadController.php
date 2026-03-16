@@ -7,6 +7,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineType;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Services\StageTransitionAttributes;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use BackedEnum;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
@@ -866,15 +867,20 @@ class LeadController extends Controller
         } else {
             logger()->info('Do not close all activities during stage update');
         }
-        $data = [];
-        $data['lead_pipeline_stage_id'] = $leadPipelineStageId;
-        if (!is_null($closedAt)) {
-            $data['closed_at'] = $closedAt;
-        }
-        if (!is_null($lostReason)) {
-            $data['lost_reason'] = $lostReason;
-        }
-        if (!is_null($userId)) {
+        $targetStage = $this->stageRepository->find($leadPipelineStageId);
+        $resolvedClosedAt = $targetStage
+            ? StageTransitionAttributes::resolveClosedAt($targetStage, $closedAt)
+            : null;
+
+        $data = [
+            'lead_pipeline_stage_id' => $leadPipelineStageId,
+            'closed_at'              => $resolvedClosedAt?->format('Y-m-d H:i:s'),
+            'lost_reason'            => $targetStage
+                ? StageTransitionAttributes::resolveLostReason($targetStage, $lostReason)
+                : null,
+        ];
+
+        if ($targetStage && StageTransitionAttributes::isWonOrLost($targetStage) && ! is_null($userId)) {
             $data['user_id'] = $userId;
         }
         // update state after closing activiteit, otherwise new activities will be closed

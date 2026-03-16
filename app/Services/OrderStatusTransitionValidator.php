@@ -120,7 +120,7 @@ class OrderStatusTransitionValidator
                 && (! in_array($stage, [
                     PipelineStage::ORDER_CONFIRM,
                     PipelineStage::ORDER_VOORBEREIDEN_HERNIA,
-                ], true)) && !$stage->isLost()
+                ], true)) && ! $stage->isLost()
         );
 
         self::addWildcardToStagesRules(

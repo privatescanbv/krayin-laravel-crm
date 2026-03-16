@@ -23,40 +23,9 @@
                         <x-admin::breadcrumbs name="orders.view" :entity="$order"/>
                     </div>
 
-
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl font-bold text-gray-800 dark:text-white">
-                            {{ $order->title }}
-                        </h1>
-                        @if(!empty($order->order_number))
-                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                #{{ $order->order_number }}
-                            </span>
-                        @endif
-                        @if($order->status)
-                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full {{ $order->status->getStatusClass() }}">
-                                {{ $order->status->label() }}
-                            </span>
-                        @endif
+                    <div class="mb-6">
+                        <x-adminc::orders.card :order="$order" show_actions="false"/>
                     </div>
-                    <!-- Order Details -->
-                    <div class="mt-2 flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
-                        <div class="flex items-center gap-2">
-                            <span class="icon-lead text-lg"></span>
-                            <a href="{{ route('admin.sales-leads.view', $order->salesLead->id) }}" class="hover:text-brandColor hover:underline">
-                                {{ $order->salesLead->name }} - <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full">
-                                {{ $order->salesLead->stage->name }}
-                                </span>
-                            </a>
-                        </div>
-                        @if($order->first_examination_at)
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium">Eerste onderzoek:</span>
-                                <span>{{ $order->first_examination_at->format('d-m-Y H:i') }}</span>
-                            </div>
-                        @endif
-                    </div>
-
 
                     {!! view_render_event('admin.orders.view.title.before', ['order' => $order]) !!}
 

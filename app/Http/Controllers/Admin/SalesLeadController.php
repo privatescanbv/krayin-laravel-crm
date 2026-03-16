@@ -12,14 +12,13 @@ use App\Models\Order;
 use App\Models\SalesLead;
 use App\Repositories\SalesLeadRepository;
 use App\Services\PipelineCookieService;
-use Carbon\Carbon;
+use App\Services\StageTransitionAttributes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
 use Prettus\Repository\Criteria\RequestCriteria;
-use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
@@ -306,36 +305,17 @@ class SalesLeadController extends Controller
         }
 
         $attributes = [
-            // update state after closing activiteit, otherwise new activities will be closed
             'pipeline_stage_id' => $targetStage->id,
+            'closed_at'         => StageTransitionAttributes::resolveClosedAt($targetStage, request('closed_at')),
         ];
 
-        // If stage is being set to won/lost, persist closed_at (default to now if omitted)
-        if ($targetStage->is_won || $targetStage->is_lost) {
-            $closedAt = request('closed_at');
-
-            if ($closedAt) {
-                // Frontend sends nl-NL date string (d-m-Y). Be tolerant and fallback to Carbon parse.
-                try {
-                    $attributes['closed_at'] = Carbon::createFromFormat('d-m-Y', $closedAt)->startOfDay();
-                } catch (Throwable $e) {
-                    $attributes['closed_at'] = Carbon::parse($closedAt);
-                }
-            } else {
-                $attributes['closed_at'] = now();
-            }
-        }
-
-        // If stage is being set to lost, require + persist lost_reason. Otherwise clear it.
         if ($targetStage->is_lost) {
             request()->validate([
                 'lost_reason' => ['required', new Enum(LostReason::class)],
             ]);
-
-            $attributes['lost_reason'] = request('lost_reason');
-        } else {
-            $attributes['lost_reason'] = null;
         }
+
+        $attributes['lost_reason'] = StageTransitionAttributes::resolveLostReason($targetStage, request('lost_reason'));
 
         $salesLead->update($attributes);
 

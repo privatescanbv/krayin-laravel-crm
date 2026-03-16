@@ -22,4 +22,5 @@
         :show-actions="$show_actions ?? true"
         :stage="$lead->stage"
         :lost-reason="$lead->lost_reason"
+        :closed-at="$lead->closed_at ?? null"
 />

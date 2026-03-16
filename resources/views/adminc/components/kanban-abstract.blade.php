@@ -435,6 +435,15 @@
                                             </div>
                                         </div>
 
+                                        <!-- Lost Reason (only for lost status) -->
+                                        <div
+                                            class="text-[10px] text-red-700 dark:text-red-400 mt-1"
+                                            v-if="isLostStage(getElementStage(element)) && element.lost_reason_label"
+                                        >
+                                            <span class="font-medium">Verliesreden:</span>
+                                            @{{ element.lost_reason_label }}
+                                        </div>
+
                                         <div class="flex items-center justify-between gap-2">
                                             <div
                                                 class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400"
@@ -946,13 +955,13 @@
                             return;
                         }
 
-                        // Check if moving to any won or lost stage (leads/sales require extra details)
-                        if (this.entityType !== 'order' && this.isWonStage(stage)) {
+                        // Check if moving to any won or lost stage (leads/sales/orders require extra details)
+                        if (this.isWonStage(stage)) {
                             this.showStageDetailModal('won', stage, event.added.element);
                             return;
                         }
 
-                        if (this.entityType !== 'order' && this.isLostStage(stage)) {
+                        if (this.isLostStage(stage)) {
                             this.showStageDetailModal('lost', stage, event.added.element);
                             return;
                         }

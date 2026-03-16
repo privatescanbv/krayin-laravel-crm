@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\LostReason;
 use App\Enums\PipelineType;
 use App\Models\Order;
 use Database\Seeders\TestSeeder;
@@ -47,6 +48,15 @@ beforeEach(function () {
         'sort_order'       => 3,
         'is_won'           => true,
         'is_lost'          => false,
+    ]);
+
+    $this->stageLost = Stage::factory()->create([
+        'lead_pipeline_id' => $this->pipeline->id,
+        'name'             => 'Lost',
+        'code'             => 'order_lost',
+        'sort_order'       => 4,
+        'is_won'           => false,
+        'is_lost'          => true,
     ]);
 });
 
@@ -139,4 +149,61 @@ test('order kanban stage update endpoint updates pipeline stage', function () {
     ])->assertOk();
 
     expect($order->refresh()->pipeline_stage_id)->toBe($this->stageInProgress->id);
+});
+
+test('order kanban won stage requires and persists closed_at and user_id', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => $this->stageNew->id,
+    ]);
+
+    $this->putJson(route('admin.orders.stage.update', $order->id), [
+        'lead_pipeline_stage_id' => $this->stageWon->id,
+        'user_id'                => $this->user->id,
+        'closed_at'              => '16-03-2026',
+    ])->assertOk();
+
+    $order->refresh();
+    expect($order->pipeline_stage_id)->toBe($this->stageWon->id)
+        ->and($order->user_id)->toBe($this->user->id)
+        ->and($order->closed_at?->format('Y-m-d'))->toBe('2026-03-16')
+        ->and($order->lost_reason)->toBeNull();
+});
+
+test('order kanban won stage returns 422 when user_id is missing', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => $this->stageNew->id,
+    ]);
+
+    $this->putJson(route('admin.orders.stage.update', $order->id), [
+        'lead_pipeline_stage_id' => $this->stageWon->id,
+        'closed_at'              => '16-03-2026',
+    ])->assertStatus(422);
+});
+
+test('order kanban lost stage requires and persists lost_reason', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => $this->stageNew->id,
+    ]);
+
+    $this->putJson(route('admin.orders.stage.update', $order->id), [
+        'lead_pipeline_stage_id' => $this->stageLost->id,
+        'lost_reason'            => LostReason::Price->value,
+        'closed_at'              => '16-03-2026',
+    ])->assertOk();
+
+    $order->refresh();
+    expect($order->pipeline_stage_id)->toBe($this->stageLost->id)
+        ->and($order->lost_reason)->toBe(LostReason::Price)
+        ->and($order->closed_at?->format('Y-m-d'))->toBe('2026-03-16');
+});
+
+test('order kanban lost stage returns 422 when lost_reason is missing', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => $this->stageNew->id,
+    ]);
+
+    $this->putJson(route('admin.orders.stage.update', $order->id), [
+        'lead_pipeline_stage_id' => $this->stageLost->id,
+        'closed_at'              => '16-03-2026',
+    ])->assertStatus(422);
 });

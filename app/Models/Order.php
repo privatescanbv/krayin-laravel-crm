@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AppointmentTimeFilter;
 use App\Enums\Departments;
+use App\Enums\LostReason;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderPurchaseStatus;
 use App\Enums\PaymentType;
@@ -11,6 +12,7 @@ use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Helpers\ValueNormalizer;
 use App\Traits\HasAuditTrail;
+use BackedEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,6 +38,8 @@ class Order extends Model
         'title',
         'total_price',
         'pipeline_stage_id',
+        'lost_reason',
+        'closed_at',
         'first_examination_at',
         'sales_lead_id',
         'user_id',
@@ -49,6 +53,8 @@ class Order extends Model
         'total_price'          => 'decimal:2',
         'pipeline_stage_id'    => 'integer',
         'first_examination_at' => 'datetime',
+        'closed_at'            => 'date',
+        'lost_reason'          => LostReason::class,
         'sales_lead_id'        => 'integer',
         'user_id'              => 'integer',
         'combine_order'        => 'boolean',
@@ -101,6 +107,34 @@ class Order extends Model
     public function setFirstExaminationAtAttribute(mixed $value): void
     {
         $this->attributes['first_examination_at'] = ValueNormalizer::nullableDateTime($value);
+    }
+
+    /**
+     * Get the lost reason label for this order.
+     */
+    public function getLostReasonLabelAttribute(): ?string
+    {
+        return $this->lost_reason?->label() ?? null;
+    }
+
+    /**
+     * Normalize lost reason assignment to allow empty strings and enums.
+     */
+    public function setLostReasonAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['lost_reason'] = null;
+
+            return;
+        }
+
+        if ($value instanceof BackedEnum) {
+            $this->attributes['lost_reason'] = $value->value;
+
+            return;
+        }
+
+        $this->attributes['lost_reason'] = $value;
     }
 
     public function orderItems(): HasMany

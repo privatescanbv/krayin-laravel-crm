@@ -9,6 +9,7 @@
     'age' => null,
     'stage' => null,
     'lostReason' => null,
+    'closedAt' => null,
 ])
 <div class="relative">
     <!-- accent links -->
@@ -59,6 +60,17 @@
             @if ($stage && $stage->is_lost)
                 <div class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
                     <span class="font-medium">Lost reason:</span> {{ $lostReason }}
+                </div>
+            @endif
+            @if ($closedAt)
+                <div class="mb-3 contact-row">
+                    <span class="contact-icon">
+                        <span class="icon-calendar text-xs"></span>
+                    </span>
+                    <span>
+                        <span class="font-medium">Gesloten op:</span>
+                        {{ Carbon::parse($closedAt)->format('d-m-Y') }}
+                    </span>
                 </div>
             @endif
             <!-- Contact gegevens panel -->

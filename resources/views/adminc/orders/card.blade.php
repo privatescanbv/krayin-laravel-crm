@@ -1,16 +1,15 @@
 @php use Illuminate\Support\Carbon; @endphp
 @props([
-    'sales',
+    'order',
 ])
 @php
-    $entity = $sales;
-    $entityName = 'sales';
-    $entityViewURL = route('admin.sales-leads.view', $entity->id);
-    $person = $entity->getContactPersonOrFirstPerson();
+    $entity = $order;
+    $entityName = 'order';
+    $entityViewURL = route('admin.orders.view', $entity->id);
+    $person = $order->salesLead->getContactPersonOrFirstPerson();
     $age = null;
     if(!is_null($person)) {
         $entity = $person;
-        $entityName = 'person';
         $entityViewURL = route('admin.contacts.persons.view', $entity->id);
     }
 @endphp
@@ -18,10 +17,10 @@
         :entity="$entity"
         :entity-name="$entityName"
         :view-route="$entityViewURL"
-        view-button-text="Bekijk lead"
+        view-button-text="Bekijk order"
         :show-status-badge="true"
         :show-actions="$show_actions ?? true"
-        :stage="$sales->stage"
-        :lost-reason="$sales->lost_reason"
-        :closed-at="$sales->closed_at ?? null"
+        :stage="$order->stage"
+        :lost-reason="$order->lost_reason"
+        :closed-at="$order->closed_at ?? null"
 />

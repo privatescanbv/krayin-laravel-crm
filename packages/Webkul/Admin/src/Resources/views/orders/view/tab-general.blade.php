@@ -8,6 +8,12 @@
 
             <div class="direction-row flex items-center gap-4">
                 @if (bouncer()->hasPermission('orders.edit'))
+                    <a href="{{ route('admin.planning.monitor.order', ['orderId' => $order->id]) }}"
+                       class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                        Resource Planner
+                    </a>
+                @endif
+                @if (bouncer()->hasPermission('orders.edit'))
                     <a href="{{ route('admin.orders.edit', $order->id) }}"
                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
                         <span class="icon-edit text-base"></span><span>Bewerk order</span>
@@ -46,9 +52,9 @@
                 </span>
             </div>
             <div class="flex flex-col">
-                <span class="text-gray-500 dark:text-gray-400">Gecombineerde order</span>
+                <span class="text-gray-500 dark:text-gray-400">Titel</span>
                 <span class="font-medium text-gray-800 dark:text-white">
-                    {{ $order->combine_order ? 'Ja' : 'Nee' }}
+                    {{ $order->title ?: '-' }}
                 </span>
             </div>
             {{-- Totaalprijs links, Betaling klant rechts --}}
@@ -87,6 +93,13 @@
                 <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
                 <span class="font-medium text-gray-800 dark:text-white">
                     {{ $order->first_examination_at ? $order->first_examination_at->format('d-m-Y H:i') : '-' }}
+                </span>
+            </div>
+
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Gecombineerde order</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->combine_order ? 'Ja' : 'Nee' }}
                 </span>
             </div>
         </div>

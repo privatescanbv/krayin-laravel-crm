@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
+use App\Enums\LostReason;
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
@@ -19,6 +20,7 @@ use App\Services\OrderMailService;
 use App\Services\OrderStatusService;
 use App\Services\OrderStatusTransitionValidator;
 use App\Services\PipelineCookieService;
+use App\Services\StageTransitionAttributes;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -29,6 +31,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
@@ -199,6 +202,8 @@ class OrderController extends SimpleEntityController
                     'stage'                  => $stagePayload,
                     'open_activities_count'  => (int) ($order->open_activities_count ?? 0),
                     'patient_name'           => $patientName,
+                    'user_id'                => $order->user_id,
+                    'lost_reason_label'      => $order->lost_reason_label ?? null,
                     'sales_lead'             => $order->salesLead ? [
                         'id'   => $order->salesLead->id,
                         'name' => $order->salesLead->name,
@@ -798,6 +803,9 @@ class OrderController extends SimpleEntityController
     {
         request()->validate([
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+            'lost_reason'            => ['nullable', new Enum(LostReason::class)],
+            'closed_at'              => 'nullable',
+            'user_id'                => 'nullable|integer|exists:users,id',
         ]);
 
         $order = Order::findOrFail($id);
@@ -820,10 +828,28 @@ class OrderController extends SimpleEntityController
                 ->update(['is_done' => 1]);
         }
 
-        // Order only updates pipeline_stage_id (no closed_at / lost_reason)
-        $order->update([
+        $attributes = [
             'pipeline_stage_id' => $targetStage->id,
-        ]);
+            'closed_at'         => StageTransitionAttributes::resolveClosedAt($targetStage, request('closed_at')),
+        ];
+
+        // If stage is being set to won, require + persist user_id
+        if ($targetStage->is_won) {
+            request()->validate([
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+
+            $attributes['user_id'] = (int) request('user_id');
+            $attributes['lost_reason'] = null;
+        } elseif ($targetStage->is_lost) {
+            request()->validate([
+                'lost_reason' => ['required', new Enum(LostReason::class)],
+            ]);
+        }
+
+        $attributes['lost_reason'] = StageTransitionAttributes::resolveLostReason($targetStage, request('lost_reason'));
+
+        $order->update($attributes);
 
         return response()->json([
             'message' => 'Order stage bijgewerkt.',

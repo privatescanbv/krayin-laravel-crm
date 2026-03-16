@@ -31,8 +31,9 @@ class ImpersonationController extends Controller
             abort(422, 'Persoon heeft geen patiëntportaal account.');
         }
 
-        if (session('impersonating')) {
-            abort(422, 'U simuleert al een sessie. Stop de huidige simulatie eerst.');
+        $existing = session('impersonating');
+        if ($existing && (int) ($existing['person_id'] ?? 0) !== (int) $person->id) {
+            $this->stopCurrentImpersonation();
         }
 
         $token = $this->keycloakTokenExchange->impersonate($person->keycloak_user_id);
@@ -64,8 +65,9 @@ class ImpersonationController extends Controller
             abort(422, 'Persoon heeft geen patiëntportaal account.');
         }
 
-        if (session('impersonating')) {
-            abort(422, 'U simuleert al een sessie. Stop de huidige simulatie eerst.');
+        $existing = session('impersonating');
+        if ($existing && (int) ($existing['person_id'] ?? 0) !== (int) $person->id) {
+            $this->stopCurrentImpersonation();
         }
 
         $redirectInput = $request->query('redirect');
@@ -100,23 +102,38 @@ class ImpersonationController extends Controller
      */
     public function stop(): RedirectResponse
     {
-        $data = session('impersonating');
-
-        if ($data) {
-            $this->impersonationService->stopImpersonation($data['keycloak_user_id']);
-            $personId = $data['person_id'];
-            $person = Person::find($data['person_id']);
-            if ($person) {
-                $this->impersonationService->logActivity($person, 'stop', request());
-                $this->resetSessionPortal($personId);
-            } else {
-                Log::error('Could not stop impersonation,person not found by ID '.$personId);
-            }
-
-            session()->forget('impersonating');
-        }
+        $this->stopCurrentImpersonation();
 
         return redirect()->route('admin.contacts.persons.index');
+    }
+
+    /**
+     * Stop the current impersonation session: Keycloak logout, portal invalidation, log, clear session.
+     */
+    private function stopCurrentImpersonation(): void
+    {
+        $data = session('impersonating');
+        if (! $data) {
+            return;
+        }
+
+        $this->impersonationService->stopImpersonation($data['keycloak_user_id']);
+        $person = Person::find($data['person_id']);
+        if ($person) {
+            $this->impersonationService->logActivity($person, 'stop', request());
+            try {
+                $this->formService->removeSessionForPerson((string) $data['person_id']);
+            } catch (Throwable $e) {
+                Log::error('Failed to invalidate patient portal session', [
+                    'person_id' => $data['person_id'] ?? null,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        } else {
+            Log::error('Could not stop impersonation, person not found by ID '.($data['person_id'] ?? '?'));
+        }
+
+        session()->forget('impersonating');
     }
 
     /**
@@ -148,18 +165,4 @@ class ImpersonationController extends Controller
         return null;
     }
 
-    private function resetSessionPortal($crmPersonId)
-    {
-        // Portal session invalidation
-        try {
-            $this->formService->removeSessionForPerson($crmPersonId);
-        } catch (Throwable $e) {
-            Log::errorat('Failed to invalidate patient portal session', [
-                'user_id' => $data['keycloak_user_id'] ?? null,
-                'error'   => $e->getMessage(),
-            ]);
-        }
-
-        session()->forget('impersonating');
-    }
 }

@@ -24,7 +24,7 @@ class AfletterenController extends Controller
                 ),
             ]);
 
-        return view('admin::afletteren.index', compact('orders'));
+        return view('admin::afletteren.index', ['orders' => $orders]);
     }
 
     public function payments(): JsonResponse

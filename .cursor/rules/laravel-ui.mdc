@@ -1,0 +1,24 @@
+Design UI for Laravel applications.
+
+Stack:
+- Blade
+- TailwindCSS
+- Alpine.js when needed
+
+Patterns:
+- Sidebar navigation
+- Top bar with search and actions
+- Table views with filters
+- Detail pages with tabs
+- Forms with clear sections
+
+Component rules:
+- Use Tailwind utility classes
+- Extract reusable components
+- Mobile responsive
+- Accessible labels
+
+Focus on:
+- productivity tools
+- CRM style interfaces
+- data dashboards

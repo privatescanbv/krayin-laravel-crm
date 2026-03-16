@@ -266,41 +266,6 @@ use Webkul\Lead\Models\Stage;
           />
                             @endif
 
-                            @if(isset($personsWithAnamnesis) && !empty($personsWithAnamnesis))
-                                <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                                    <h2 class="mb-4 text-lg font-semibold dark:text-white">GVL Formulier(en)</h2>
-                                    <div class="space-y-4">
-                                        @foreach($personsWithAnamnesis as $personId => $data)
-                                            @php
-                                                $person = $data['person'];
-                                                $anamnesis = $data['anamnesis'];
-                                                $leadId = $data['lead_id'] ?? null;
-                                            @endphp
-                                            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                                                <h3 class="mb-2 text-sm font-semibold text-gray-800 dark:text-white">
-                                                    {{ $person->name }}
-                                                </h3>
-                                                @if($anamnesis)
-                                                    <x-admin::gvl-form-link
-                                                        :gvlFormLink="$anamnesis->gvl_form_link"
-                                                        :attachUrl="route('admin.anamnesis.gvl-form.attach', $anamnesis->id)"
-                                                        :detachUrl="route('admin.anamnesis.gvl-form.detach', $anamnesis->id)"
-                                                        :statusUrl="route('admin.anamnesis.gvl-form.status', $anamnesis->id)"
-                                                        :entityId="$anamnesis->id"
-                                                        entityType="anamnesis"
-                                                    />
-                                                @else
-                                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                        Geen lead gekoppeld. Koppel eerst een lead aan de sales lead om een GVL formulier te kunnen koppelen.
-                                                    </p>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-
-
     @pushOnce('scripts')
         @php
             $completedChecks = ($orders->orderChecks ?? collect())->where('done', true)->count();
@@ -435,134 +400,6 @@ use Webkul\Lead\Models\Stage;
 
                     hidden.value = target;
                     form.submit();
-                }
-
-                // Attach GVL form link button via delegation
-                if (e.target && e.target.id === 'attach-gvl-form-link') {
-                    e.preventDefault();
-                    const button = e.target;
-
-                    if (button.dataset.loading === 'true') {
-                        return;
-                    }
-
-                    const attachUrl = button.dataset.attachUrl;
-                    if (!attachUrl) {
-                        orderEditEmitFlash('error', 'Koppel-URL ontbreekt.');
-                        return;
-                    }
-
-                    orderEditSetButtonLoadingState(button, true);
-
-                    let response;
-                    try {
-                        response = await fetch(attachUrl, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': orderEditGetCsrfToken(),
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                        });
-                    } catch (error) {
-                        orderEditEmitFlash('error', 'GVL formulier koppelen is mislukt. Forms API niet bereikbaar.');
-                        console.error('[OrderEdit] GVL attach request failed', error);
-                        orderEditSetButtonLoadingState(button, false);
-                        return;
-                    }
-
-                    let payload = {};
-                    try {
-                        payload = await response.clone().json();
-                    } catch (error) {
-                        payload = {};
-                    }
-
-                    if (response.status === 200) {
-                        const input = document.querySelector('input[name="gvl_form_link"]');
-                        if (input && payload.gvl_form_link) {
-                            input.value = payload.gvl_form_link;
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-
-                        orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is gekoppeld.');
-
-                        // Reload page to show updated UI with detach button and status
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
-                    } else {
-                        orderEditEmitFlash('error', payload?.message ?? 'GVL formulier koppelen is mislukt.');
-                        orderEditSetButtonLoadingState(button, false);
-                    }
-
-                    return;
-                }
-
-                // Reset GVL form link button via delegation
-                if (e.target && e.target.id === 'reset-gvl-form-link') {
-                    e.preventDefault();
-                    const button = e.target;
-
-                    if (button.dataset.loading === 'true') {
-                        return;
-                    }
-
-                    const detachUrl = button.dataset.detachUrl;
-                    if (!detachUrl) {
-                        orderEditEmitFlash('error', 'Ontkoppel-URL ontbreekt.');
-                        return;
-                    }
-
-                    if (!window.confirm('Weet je zeker dat je het GVL formulier wil ontkoppelen?')) {
-                        return;
-                    }
-
-                    orderEditSetButtonLoadingState(button, true);
-
-                    let response;
-                    try {
-                        response = await fetch(detachUrl, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': orderEditGetCsrfToken(),
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                        });
-                    } catch (error) {
-                        orderEditEmitFlash('error', 'GVL formulier ontkoppelen is mislukt. Forms API niet bereikbaar.');
-                        console.error('[OrderEdit] GVL detach request failed', error);
-                        orderEditSetButtonLoadingState(button, false);
-                        return;
-                    }
-
-                    let payload = {};
-                    try {
-                        payload = await response.clone().json();
-                    } catch (error) {
-                        payload = {};
-                    }
-
-                    if (response.status === 200) {
-                        const input = document.querySelector('input[name="gvl_form_link"]');
-                        if (input) {
-                            input.value = '';
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-
-                        orderEditEmitFlash('success', payload?.message ?? 'GVL formulier is ontkoppeld.');
-
-                        // Reload page to show updated UI with attach button
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
-                    } else {
-                        orderEditEmitFlash('error', payload?.message ?? 'GVL formulier ontkoppelen is mislukt.');
-                        orderEditSetButtonLoadingState(button, false);
-                    }
-
-                    return;
                 }
 
                 // Compose order mail button via delegation (robust to re-renders)
@@ -816,10 +653,6 @@ use Webkul\Lead\Models\Stage;
                     console.log('[OrderEdit] Debug init error', err);
                 }
             };
-
-            // Note: GVL form status is now handled by the gvl-form-link component itself
-            // Each anamnesis has its own status element with ID: gvl-form-status-anamnesis-{id}
-            // The component loads the status automatically via the statusUrl prop
 
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {

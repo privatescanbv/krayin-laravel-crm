@@ -10,6 +10,7 @@
     'showPatientMessages' => false,
     'showAfletteren' => false,
     'showPayments' => false,
+    'showGvl' => false,
 ])
 <!-- Vertical Navigation Menu -->
 <div class="border-t border-gray-200 p-4 dark:border-gray-800">
@@ -72,6 +73,18 @@
             >
                 <span class="icon-stats text-xl"></span>
                 Betalingen Klant
+            </button>
+        @endif
+
+        @if ($showGvl)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'gvl'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('gvl')"
+            >
+                <span class="icon-anamnesis text-xl"></span>
+                GVL Formulier
             </button>
         @endif
 

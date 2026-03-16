@@ -41,7 +41,7 @@ class AnamnesisController extends Controller
      */
     public function edit(string $id): View
     {
-        $anamnesis = Anamnesis::with('lead', 'sales')->findOrFail($id);
+        $anamnesis = Anamnesis::with(['lead', 'sales', 'person'])->findOrFail($id);
 
         return view('admin::anamnesis.edit', ['anamnesis' => $anamnesis]);
     }
@@ -504,7 +504,7 @@ class AnamnesisController extends Controller
 
     public function mapFormTypeFromDepartment(?Department $department): string
     {
-        return $department && $department->isHernia() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value;
+        return $department && $department->isHernia() ? Departments::HERNIA->key() : Departments::PRIVATESCAN->key();
     }
 
     /**

@@ -50,6 +50,9 @@ Route::prefix('contacts')->group(function () {
         Route::post('{person}/impersonate', [ImpersonationController::class, 'impersonate'])
             ->name('admin.contacts.persons.impersonate');
 
+        Route::get('{person}/impersonate-and-open-form', [ImpersonationController::class, 'impersonateAndOpenForm'])
+            ->name('admin.contacts.persons.impersonate-and-open-form');
+
         /**
          * Leads datagrid (embedded in person view).
          */

@@ -115,6 +115,8 @@
                                 :statusUrl="route('admin.anamnesis.gvl-form.status', $anamnesis->id)"
                                 :entityId="$anamnesis->id"
                                 entityType="anamnesis"
+                                :personId="$anamnesis->person_id"
+                                :personHasPortalAccount="!empty($anamnesis->person?->keycloak_user_id)"
                             />
                         </div>
 

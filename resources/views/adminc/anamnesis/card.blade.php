@@ -1,5 +1,6 @@
 @props([
     'anamnesis',
+    'person' => null,
     'showCreatedDate' => false
 ])
 <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -72,6 +73,8 @@
                 :statusUrl="route('admin.anamnesis.gvl-form.status', $anamnesis->id)"
                 :entityId="$anamnesis->id"
                 entityType="anamnesis"
+                :personId="$anamnesis->person_id"
+                :personHasPortalAccount="!empty(($person ?? $anamnesis->person)?->keycloak_user_id)"
                 readonly="true"
             />
 

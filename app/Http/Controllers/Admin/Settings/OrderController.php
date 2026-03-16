@@ -330,7 +330,27 @@ class OrderController extends SimpleEntityController
 
         $activitiesCount = $order->activities()->where('is_done', false)->count();
 
-        return view('admin::orders.view', ['order' => $order, 'activitiesCount' => $activitiesCount]);
+        $personsWithAnamnesis = [];
+        if ($order->salesLead) {
+            $salesLeadPersons = $order->salesLead->persons()->get();
+            $leadId = $order->salesLead->lead_id;
+            $personsWithAnamnesis = $this->salesLeadRepository
+                ->findAnamnesisBySalesLeadId($leadId, $salesLeadPersons->pluck('id')->toArray())
+                ->mapWithKeys(fn ($anamnesis) => [
+                    $anamnesis->person_id => [
+                        'person'    => $salesLeadPersons->firstWhere('id', $anamnesis->person_id),
+                        'anamnesis' => $anamnesis,
+                        'lead_id'   => $leadId,
+                    ],
+                ])
+                ->all();
+        }
+
+        return view('admin::orders.view', [
+            'order'                => $order,
+            'activitiesCount'      => $activitiesCount,
+            'personsWithAnamnesis' => $personsWithAnamnesis,
+        ]);
     }
 
     public function activities(int $id): AnonymousResourceCollection

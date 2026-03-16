@@ -90,6 +90,7 @@
                 :showMarketing="false"
                 :showAfletteren="true"
                 :showPayments="true"
+                :showGvl="true"
             />
 
             <!-- Footer with creation and modification dates -->
@@ -131,6 +132,10 @@
 
             <div v-else-if="leadDetailSection === 'betalingen'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::orders.view.tab-payments', ['order' => $order])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'gvl'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('admin::orders.view.tab-gvl', ['order' => $order, 'personsWithAnamnesis' => $personsWithAnamnesis ?? []])
             </div>
         </div>
 
@@ -274,7 +279,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'afletteren', 'betalingen'];
+                                const validSections = ['algemeen', 'activiteiten', 'afletteren', 'betalingen', 'gvl'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

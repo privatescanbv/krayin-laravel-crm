@@ -6,8 +6,19 @@
     'entityId' => null,
     'entityType' => 'order',
     'personId' => null,
+    'personHasPortalAccount' => false,
     'leadId' => null,
 ])
+@php
+    $showNoPortalWarning = $personId && ! $personHasPortalAccount && $gvlFormLink;
+    $useImpersonationLink = $personId
+        && $personHasPortalAccount
+        && bouncer()->hasPermission('contacts.persons.impersonate')
+        && $gvlFormLink;
+    $openFormUrl = $useImpersonationLink
+        ? route('admin.contacts.persons.impersonate-and-open-form', $personId) . '?redirect=' . urlencode($gvlFormLink)
+        : $gvlFormLink;
+@endphp
 
 <x-admin::form.control-group>
     <div class="flex items-center gap-2">
@@ -47,12 +58,19 @@
     </div>
     @if($gvlFormLink)
         <div class="mt-1 flex items-center gap-2 text-xs">
-            <a href="{{ $gvlFormLink }}" target="_blank" class="text-activity-note-text hover:underline">
-                Open formulier
-            </a>
-            <span class="text-gray-400">|</span>
-            <span class="text-gray-500">Status: </span>
-            <span class="gvl-status font-medium" data-url="{{ $statusUrl }}">Laden...</span>
+            @if($showNoPortalWarning)
+                <span class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-500" title="Maak een patiëntportaal account aan voor deze persoon om het formulier te kunnen openen">
+                    <span class="icon-warning text-sm"></span>
+                    Maak eerst een patiëntportaal account aan voor deze persoon.
+                </span>
+            @else
+                <a href="{{ $openFormUrl }}" target="_blank" class="text-activity-note-text hover:underline">
+                    Open formulier
+                </a>
+                <span class="text-gray-400">|</span>
+                <span class="text-gray-500">Status: </span>
+                <span class="gvl-status font-medium" data-url="{{ $statusUrl }}">Laden...</span>
+            @endif
         </div>
     @endif
 </x-admin::form.control-group>

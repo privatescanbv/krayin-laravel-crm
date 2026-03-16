@@ -27,6 +27,6 @@ enum Departments: string
     /** Lowercase workflow/view key ('hernia' | 'privatescan') */
     public function key(): string
     {
-        return strtolower($this->name); // HERNIA→hernia, PRIVATESCAN→privatescan
+        return strtolower($this->value); // HERNIA→hernia, PRIVATESCAN→privatescan
     }
 }

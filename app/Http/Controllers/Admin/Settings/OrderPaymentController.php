@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Enums\Currency;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -47,7 +48,7 @@ class OrderPaymentController extends Controller
         return [
             'amount'   => 'required|numeric|min:0',
             'type'     => 'required|in:'.implode(',', array_column(PaymentType::cases(), 'value')),
-            'method'   => 'required|in:pin,cash,creditcard',
+            'method'   => 'required|in:'.implode(',', array_column(PaymentMethod::cases(), 'value')),
             'paid_at'  => 'nullable|date',
             'currency' => 'nullable|string|in:'.implode(',', array_column(Currency::cases(), 'value')),
         ];

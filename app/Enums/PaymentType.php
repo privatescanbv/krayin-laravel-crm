@@ -5,6 +5,7 @@ namespace App\Enums;
 enum PaymentType: string
 {
     case ADVANCE = 'advance';
+    case PAYED_IN_CLINIC = 'paid_at_clinic';
     case REFUND = 'refund';
 
     public static function options(): array
@@ -18,8 +19,9 @@ enum PaymentType: string
     public function label(): string
     {
         return match ($this) {
-            self::ADVANCE => 'Aanbetaling',
-            self::REFUND  => 'Terugbetaling',
+            self::ADVANCE         => 'Vooruitbetaling',
+            self::PAYED_IN_CLINIC => 'Ontvangen in kliniek',
+            self::REFUND          => 'Terugbetaling',
         };
     }
 }

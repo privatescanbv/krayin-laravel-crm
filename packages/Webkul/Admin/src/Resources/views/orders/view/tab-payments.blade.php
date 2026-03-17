@@ -2,9 +2,11 @@
 
 @php
     use App\Enums\Currency;
+    use App\Enums\PaymentMethod;
     use App\Enums\PaymentType;
 
     $paymentTypeOptions = PaymentType::options();
+    $paymentMethodOptions = PaymentMethod::options();
     $currencyOptions = Currency::options();
     $defaultCurrencyCode = Currency::default()->value;
     $today = now()->format('Y-m-d');
@@ -97,9 +99,9 @@
 
                 <input type="hidden" name="payment_id" value="">
 
-                <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-3 md:items-end">
                     <x-adminc::components.field
-                        label="Bedrag *"
+                        label="Bedrag"
                         name="amount"
                         type="number"
                         rules="required|numeric|min:0"
@@ -109,7 +111,7 @@
                     />
 
                     <x-adminc::components.field
-                        label="Type *"
+                        label="Type"
                         name="type"
                         type="select"
                         rules="required"
@@ -121,15 +123,15 @@
                     </x-adminc::components.field>
 
                     <x-adminc::components.field
-                        label="Methode *"
+                        label="Methode"
                         name="method"
                         type="select"
                         rules="required"
                         class="w-full"
                     >
-                        <option value="pin">Pin</option>
-                        <option value="cash">Contant</option>
-                        <option value="creditcard">Creditcard</option>
+                        @foreach ($paymentMethodOptions as $option)
+                            <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+                        @endforeach
                     </x-adminc::components.field>
 
                     <x-adminc::components.field
@@ -204,13 +206,9 @@
                                     ? $payment->type->label()
                                     : (PaymentType::tryFrom($typeValue)?->label() ?? $typeValue);
 
-                                $methodLabels = [
-                                    'pin'         => 'Pin',
-                                    'cash'        => 'Contant',
-                                    'creditcard'  => 'Creditcard',
-                                ];
-
-                                $methodLabel = $methodLabels[$payment->method] ?? $payment->method;
+                                $methodLabel = $payment->method instanceof PaymentMethod
+                                    ? $payment->method->label()
+                                    : (PaymentMethod::tryFrom($payment->method ?? '')?->label() ?? $payment->method);
 
                                 $currencyCode = $payment->currency ?: $defaultCurrencyCode;
                                 $displayAmount = Currency::formatMoney($currencyCode, (float) $payment->amount);
@@ -241,7 +239,7 @@
                                         data-id="{{ $payment->id }}"
                                         data-amount="{{ $payment->amount }}"
                                         data-type="{{ $typeValue }}"
-                                        data-method="{{ $payment->method }}"
+                                        data-method="{{ $payment->method instanceof PaymentMethod ? $payment->method->value : ($payment->method ?? '') }}"
                                         data-paid-at="{{ optional($payment->paid_at)->format('Y-m-d') }}"
                                         data-currency="{{ $currencyCode }}"
                                     >

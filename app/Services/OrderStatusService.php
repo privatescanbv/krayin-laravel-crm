@@ -25,10 +25,6 @@ class OrderStatusService
     public function calculate(Order $order): int
     {
 
-        $orderItems = OrderItem::withPartnerProductCount()
-            ->where('order_id', $order->id)
-            ->get();
-
         // Determine department to pick correct pipeline stages
         $isHernia = SalesLead::isHerniaPoli($order->sales_lead_id);
 
@@ -42,6 +38,14 @@ class OrderStatusService
 
         if (is_null($order->pipeline_stage_id)) {
             return $firstStageId;
+        }
+
+        $orderItems = OrderItem::withPartnerProductCount()
+            ->where('order_id', $order->id)
+            ->get();
+        if ($orderItems->isEmpty()) {
+            // auto change stage when there are no order items
+            return $order->pipeline_stage_id;
         }
         // Filter to only plannable items (items with partner products)
         $plannableItems = $orderItems->filter(function (OrderItem $item) {

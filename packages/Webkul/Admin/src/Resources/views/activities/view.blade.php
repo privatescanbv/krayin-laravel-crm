@@ -166,6 +166,20 @@
                 @endif
             </div>
 
+            @if (!empty($activity->additional))
+                <div class="p-4 border-t border-gray-200 dark:border-gray-800">
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Extra gegevens</div>
+                    <dl class="grid grid-cols-2 gap-x-4 gap-y-2">
+                        @foreach ($activity->additional as $key => $value)
+                            <dt class="text-xs text-gray-400 dark:text-gray-500">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</dt>
+                            <dd class="text-xs text-gray-900 dark:text-gray-100 break-all">
+                                {{ is_array($value) ? json_encode($value) : $value }}
+                            </dd>
+                        @endforeach
+                    </dl>
+                </div>
+            @endif
+
             <!-- Footer with creation and modification dates -->
             <div
                 class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">

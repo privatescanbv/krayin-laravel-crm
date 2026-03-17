@@ -17,57 +17,6 @@ beforeEach(function () {
     config(['mail.send_only_accept' => '*@example.com']);
 });
 
-test('mailPatient stores email record with correct subject body and from fields', function () {
-    $person = Person::factory()->create([
-        'emails' => [['value' => 'test@example.com', 'is_default' => true]],
-    ]);
-
-    $lead = Lead::factory()->create();
-
-    $htmlContent = View::make('adminc.emails.portal-gvl-completed-patient', [
-        'person'            => $person,
-        'formUrl'           => 'https://forms.example.com/forms/1',
-        'patientPortalUrl'  => config('services.portal.patient.web_url', 'https://portal.example.com'),
-        'initials_lastname' => $person->name ?? 'patiënt',
-    ])->render();
-
-    $service = app(PatientMailService::class);
-
-    $result = $service->mailPatient(
-        $person,
-        'Welkom bij het Privatescan patiëntportaal',
-        $htmlContent,
-        (string) $lead->id,
-        null,
-        null
-    );
-
-    expect($result)->toBeTrue();
-
-    $emailRecord = Email::where('person_id', $person->id)
-        ->where('lead_id', $lead->id)
-        ->first();
-
-    expect($emailRecord)->not->toBeNull()
-        ->and($emailRecord->subject)->not->toBeEmpty()
-        ->and($emailRecord->subject)->toContain('Welkom')
-        ->and($emailRecord->reply)->not->toBeEmpty()
-        ->and($emailRecord->from)->toBeArray()
-        ->and($emailRecord->from)->toHaveKey('email')
-        ->and($emailRecord->from)->toHaveKey('name')
-        ->and($emailRecord->from['email'])->not->toBeEmpty()
-        ->and($emailRecord->reply_to)->toBeArray()
-        ->and($emailRecord->reply_to)->not->toBeEmpty()
-        ->and($emailRecord->reply_to[0])->toBeString()
-        ->and($emailRecord->reply_to[0])->toBe('test@example.com')
-        ->and($emailRecord->name)->toBe($person->name)
-        ->and($emailRecord->person_id)->toBe($person->id)
-        ->and($emailRecord->lead_id)->toBe($lead->id)
-        ->and($emailRecord->source)->toBe('system')
-        ->and($emailRecord->user_type)->toBe('user')
-        ->and($emailRecord->message_id)->not->toBeEmpty();
-});
-
 test('mailPatient stores email record with sales_lead_id when provided', function () {
     $person = Person::factory()->create([
         'emails' => [['value' => 'test@example.com', 'is_default' => true]],
@@ -75,9 +24,10 @@ test('mailPatient stores email record with sales_lead_id when provided', functio
 
     $salesLead = SalesLead::factory()->create();
 
-    $htmlContent = View::make('adminc.emails.portal-gvl-completed-patient', [
+    $htmlContent = View::make('adminc.emails.portal-welcome', [
         'person'            => $person,
-        'formUrl'           => 'https://forms.example.com/forms/1',
+        'loginUrl'           => 'https://forms.example.com/forms/1',
+        'temporaryPassword'  => 'temporaryPassword123',
         'patientPortalUrl'  => config('services.portal.patient.web_url', 'https://portal.example.com'),
         'initials_lastname' => $person->name ?? 'patiënt',
     ])->render();

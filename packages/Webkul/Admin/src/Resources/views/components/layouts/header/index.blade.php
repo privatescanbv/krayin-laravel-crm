@@ -15,6 +15,7 @@
                 action="{{ route('admin.contacts.impersonation.stop') }}"
                 style="display:inline;">
                 @csrf
+                <input type="hidden" name="_redirect" value="{{ url()->current() }}">
                 <button
                     type="submit"
                     class="rounded bg-white px-3 py-1 font-semibold text-amber-700 hover:bg-amber-50"

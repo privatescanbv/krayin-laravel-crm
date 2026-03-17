@@ -367,7 +367,6 @@ class ProductController extends SimpleEntityController
             'currency'          => 'required|in:'.implode(',', Currency::codes()),
             'description'       => 'nullable|string',
             'price'             => 'nullable|numeric|min:0',
-            'costs'             => 'nullable|numeric|min:0',
             'product_group_id'  => 'required|integer|exists:product_groups,id',
             'product_type_id'   => 'nullable|integer|exists:product_types,id',
             'resource_type_id'  => 'nullable|integer|exists:resource_types,id',
@@ -383,7 +382,6 @@ class ProductController extends SimpleEntityController
     {
         $request->merge([
             'price' => Currency::normalizePrice($request->input('price')),
-            'costs' => Currency::normalizePrice($request->input('costs')),
         ]);
     }
 
@@ -433,7 +431,7 @@ class ProductController extends SimpleEntityController
         }
 
         // Convert empty strings to null for decimal fields
-        $decimalFields = ['price', 'costs'];
+        $decimalFields = ['price'];
 
         foreach ($decimalFields as $field) {
             if (array_key_exists($field, $data) && ($data[$field] === '' || $data[$field] === null)) {

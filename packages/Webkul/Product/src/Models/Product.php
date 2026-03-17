@@ -44,7 +44,6 @@ class Product extends Model implements ProductContract
         'description',
         'product_group_id',
         'price',
-        'costs',
         'resource_type_id',
         'product_type_id',
     ];
@@ -53,7 +52,6 @@ class Product extends Model implements ProductContract
         'currency'         => 'string',
         'active'           => 'boolean',
         'price'            => 'decimal:2',
-        'costs'            => 'decimal:2',
         'product_group_id' => 'integer',
         'product_type_id'  => 'integer',
         'resource_type_id' => 'integer',
@@ -109,14 +107,6 @@ class Product extends Model implements ProductContract
     public function setPriceAttribute($value): void
     {
         $this->attributes['price'] = Currency::normalizePrice($value);
-    }
-
-    /**
-     * Normalize costs on set.
-     */
-    public function setCostsAttribute($value): void
-    {
-        $this->attributes['costs'] = Currency::normalizePrice($value);
     }
 
     public function getFullNameAttribute(): string {

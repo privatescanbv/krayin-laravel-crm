@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Services\FormService;
+use App\Enums\FormType;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -24,25 +24,14 @@ test('webhooks event endpoint logs payload and returns ok', function () {
         'emails' => [['value' => 'test@example.com', 'is_default' => true]],
     ]);
 
-    // Mock FormService to return related entities
-    $mockFormService = Mockery::mock(FormService::class);
-    $mockFormService->shouldReceive('findRelatedEntityByFormId')
-        ->once()
-        ->with('https://example.test/leads/123')
-        ->andReturn([
-            'lead'      => null,
-            'sales'     => null,
-            'person_id' => $person->id,
-        ]);
-
-    app()->instance(FormService::class, $mockFormService);
-
     $payload = [
         'entity_type' => 'forms',
         'id'          => 123,
         'action'      => 'STATUS_UPDATE',
         'status'      => 'completed',
         'url'         => 'https://example.test/leads/123',
+        'person_id'   => $person->id,
+        'form_type'   => FormType::PrivateScan->value,
     ];
 
     $response = $this->withHeaders([

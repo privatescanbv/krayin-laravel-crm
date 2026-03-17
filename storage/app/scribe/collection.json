@@ -10,11 +10,58 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "e821f5af-6fbc-49ff-aca4-1d18d1a881e0",
+        "_postman_id": "04aead05-f689-4b1d-a61a-c0ac41eae9d7",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
     "item": [
+        {
+            "name": "Application webhooks",
+            "description": "",
+            "item": [
+                {
+                    "name": "Handle an application webhook event.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/webhooks\/event",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/webhooks\/event"
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"entity_type\":\"forms\",\"id\":\"form-abc-123\",\"action\":\"STATUS_UPDATE\",\"status\":\"completed\",\"url\":\"https:\\\/\\\/forms.example.com\\\/form-abc-123\",\"person_id\":42,\"form_type\":\"architecto\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":\"ok\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The person_id field is required.\",\"errors\":{}}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
         {
             "name": "Endpoints",
             "description": "",
@@ -41,7 +88,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-03-04\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
+                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-03-17\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
                         },
                         "description": ""
                     },
@@ -614,35 +661,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-03-04 16:59:31\",\"schedule_to\":\"2026-03-04 16:59:31\"}"
-                        },
-                        "description": ""
-                    },
-                    "response": []
-                },
-                {
-                    "name": "PUT api\/webhooks\/event",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/webhooks\/event",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/webhooks\/event"
-                        },
-                        "method": "PUT",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\"entity_type\":\"forms\",\"id\":\"architecto\",\"action\":\"STATUS_UPDATE\",\"status\":\"architecto\",\"url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
+                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-03-17 15:49:26\",\"schedule_to\":\"2026-03-17 15:49:26\"}"
                         },
                         "description": ""
                     },
@@ -1185,7 +1204,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Documents are linked to the patient via any known relation:\nperson_activities, lead, sales lead, or order."
+                        "description": "Documents are linked to the patient via any known relation:\nperson_id FK, lead, sales lead, or order."
                     },
                     "response": [
                         {
@@ -1694,7 +1713,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-03-04T16:59:31\"}}"
+                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-03-17T15:49:26\"}}"
                         },
                         "description": ""
                     },

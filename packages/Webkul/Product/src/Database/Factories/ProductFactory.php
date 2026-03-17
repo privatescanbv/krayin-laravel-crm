@@ -20,7 +20,6 @@ class ProductFactory extends Factory
             'currency'          => 'EUR',
             'description'       => 'Description '.strtoupper(Str::random(16)),
             'price'             => $this->faker->randomFloat(2, 10, 2000),
-            'costs'             => $this->faker->randomFloat(2, 5, 1000),
             'product_group_id'  => null,
             'resource_type_id'  => null,
             'product_type_id'   => null,

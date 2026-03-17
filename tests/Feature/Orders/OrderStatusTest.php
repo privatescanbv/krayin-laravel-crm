@@ -132,7 +132,7 @@ test('order stage changes to wachten uitvoering when all planable items become p
         'status'     => OrderItemStatus::NEW->value,
     ]);
 
-    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_INGEPLAND->id());
+    expect($order->fresh()->pipeline_stage_id)->toEqual(PipelineStage::ORDER_CONFIRM->id());
 
     $item1->update(['status' => OrderItemStatus::PLANNED->value]);
     $item2->update(['status' => OrderItemStatus::PLANNED->value]);

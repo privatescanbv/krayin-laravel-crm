@@ -100,9 +100,14 @@ class ImpersonationController extends Controller
     /**
      * Stop impersonation: log out the patient's Keycloak session and clear local state.
      */
-    public function stop(): RedirectResponse
+    public function stop(Request $request): RedirectResponse
     {
         $this->stopCurrentImpersonation();
+
+        $redirect = $request->input('_redirect');
+        if ($redirect && str_starts_with($redirect, url('/'))) {
+            return redirect()->to($redirect);
+        }
 
         return redirect()->route('admin.contacts.persons.index');
     }

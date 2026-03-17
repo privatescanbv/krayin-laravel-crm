@@ -61,7 +61,6 @@ class ProductHelper
                 'description'      => $product->description,
                 'currency'         => $product->currency,
                 'price'            => $product->price,
-                'costs'            => $product->costs,
                 'resource_type_id' => $product->resource_type_id,
             ];
         });

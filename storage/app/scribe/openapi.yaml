@@ -8,6 +8,9 @@ servers:
     url: 'https://crm.local.privatescan.nl'
 tags:
   -
+    name: 'Application webhooks'
+    description: ''
+  -
     name: Endpoints
     description: ''
   -
@@ -51,6 +54,93 @@ security:
   -
     default: []
 paths:
+  /api/webhooks/event:
+    put:
+      summary: 'Handle an application webhook event.'
+      operationId: handleAnApplicationWebhookEvent
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-API-KEY
+          description: ''
+          example: '{YOUR_AUTH_KEY}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  status: ok
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The person_id field is required.'
+                  errors: {  }
+                properties:
+                  message:
+                    type: string
+                    example: 'The person_id field is required.'
+                  errors:
+                    type: object
+                    properties: {  }
+      tags:
+        - 'Application webhooks'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entity_type:
+                  type: string
+                  description: 'Must be `forms`.'
+                  example: forms
+                id:
+                  type: string
+                  description: 'Form ID.'
+                  example: form-abc-123
+                action:
+                  type: string
+                  description: 'Must be `STATUS_UPDATE`.'
+                  example: STATUS_UPDATE
+                status:
+                  type: string
+                  description: 'Form status.'
+                  example: completed
+                url:
+                  type: string
+                  description: 'URL to view the form.'
+                  example: 'https://forms.example.com/form-abc-123'
+                person_id:
+                  type: integer
+                  description: 'CRM Person ID of the patient.'
+                  example: 42
+                form_type:
+                  type: string
+                  description: "From type. Example 'privatescan','herniapoli';"
+                  example: architecto
+              required:
+                - entity_type
+                - id
+                - action
+                - status
+                - url
+                - person_id
+                - form_type
   /api/leads/hernia:
     post:
       summary: 'Create a Hernia lead from the inbound (Gravity Forms) payload schema.'
@@ -131,7 +221,7 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-03-04'
+                  example: '2026-03-17'
                   nullable: true
                 email1:
                   type: string
@@ -764,11 +854,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-03-04 16:59:31'
+                  example: '2026-03-17 15:49:26'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-03-04 16:59:31'
+                  example: '2026-03-17 15:49:26'
               required:
                 - type
     parameters:
@@ -780,59 +870,6 @@ paths:
         required: true
         schema:
           type: integer
-  /api/webhooks/event:
-    put:
-      summary: ''
-      operationId: putApiWebhooksEvent
-      description: ''
-      parameters:
-        -
-          in: header
-          name: X-API-KEY
-          description: ''
-          example: '{YOUR_AUTH_KEY}'
-          schema:
-            type: string
-      responses: {  }
-      tags:
-        - Endpoints
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                entity_type:
-                  type: string
-                  description: ''
-                  example: forms
-                  enum:
-                    - forms
-                id:
-                  type: string
-                  description: ''
-                  example: architecto
-                action:
-                  type: string
-                  description: ''
-                  example: STATUS_UPDATE
-                  enum:
-                    - STATUS_UPDATE
-                status:
-                  type: string
-                  description: ''
-                  example: architecto
-                url:
-                  type: string
-                  description: ''
-                  example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
-              required:
-                - entity_type
-                - id
-                - action
-                - status
-                - url
   /api/keycloak/webhooks:
     post:
       summary: ''
@@ -967,6 +1004,7 @@ paths:
                             sender_id:
                               type: string
                               example: null
+                              nullable: true
                             body:
                               type: string
                               example: Hallo
@@ -982,6 +1020,7 @@ paths:
                             sender:
                               type: string
                               example: null
+                              nullable: true
                             sender_name:
                               type: string
                               example: Patient
@@ -1280,9 +1319,11 @@ paths:
                   married_name_prefix:
                     type: string
                     example: null
+                    nullable: true
                   married_name:
                     type: string
                     example: null
+                    nullable: true
                   initials:
                     type: string
                     example: J.
@@ -1342,6 +1383,7 @@ paths:
                       house_number_suffix:
                         type: string
                         example: null
+                        nullable: true
                       postal_code:
                         type: string
                         example: 1234AB
@@ -1351,6 +1393,7 @@ paths:
                       state:
                         type: string
                         example: null
+                        nullable: true
                       country:
                         type: string
                         example: Nederland
@@ -1431,9 +1474,11 @@ paths:
                   married_name_prefix:
                     type: string
                     example: null
+                    nullable: true
                   married_name:
                     type: string
                     example: null
+                    nullable: true
                   initials:
                     type: string
                     example: J.
@@ -1493,6 +1538,7 @@ paths:
                       house_number_suffix:
                         type: string
                         example: null
+                        nullable: true
                       postal_code:
                         type: string
                         example: 1234AB
@@ -1502,6 +1548,7 @@ paths:
                       state:
                         type: string
                         example: null
+                        nullable: true
                       country:
                         type: string
                         example: Nederland
@@ -1842,18 +1889,22 @@ paths:
                             practitioner_id:
                               type: string
                               example: null
+                              nullable: true
                             clinic_id:
                               type: string
                               example: null
+                              nullable: true
                             clinic_ref:
                               type: string
                               example: null
+                              nullable: true
                             start_at:
                               type: string
                               example: '2026-01-27T10:00:00+01:00'
                             end_at:
                               type: string
                               example: null
+                              nullable: true
                             timezone:
                               type: string
                               example: Europe/Amsterdam
@@ -1863,6 +1914,7 @@ paths:
                             remote_url:
                               type: string
                               example: null
+                              nullable: true
                             created_at:
                               type: string
                               example: '2026-01-20T09:00:00+01:00'
@@ -2010,7 +2062,7 @@ paths:
     get:
       summary: 'Get all documents for a patient (FILE activities with publish_to_portal = true).'
       operationId: getAllDocumentsForAPatientFILEActivitiesWithPublishToPortalTrue
-      description: "Documents are linked to the patient via any known relation:\nperson_activities, lead, sales lead, or order."
+      description: "Documents are linked to the patient via any known relation:\nperson_id FK, lead, sales lead, or order."
       parameters:
         -
           in: query
@@ -2636,7 +2688,7 @@ paths:
                     onboarding_completed_at:
                       type: string
                       description: 'Must be a valid date.'
-                      example: '2026-03-04T16:59:31'
+                      example: '2026-03-17T15:49:26'
                       nullable: true
                     email_notifications_enabled:
                       type: boolean

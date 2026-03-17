@@ -367,7 +367,6 @@ test('can get specific template product details', function () {
         'description'      => 'Template description',
         'currency'         => 'EUR',
         'price'            => 150.00,
-        'costs'            => 100.00,
         'resource_type_id' => $resourceTypeId,
         'product_group_id' => null, // Explicitly set to null
     ]);
@@ -382,7 +381,6 @@ test('can get specific template product details', function () {
     expect($data['description'])->toBe('Template description');
     expect($data['currency'])->toBe('EUR');
     expect($data['price'])->toBe('150.00');
-    expect($data['costs'])->toBe('100.00');
     expect($data['resource_type_id'])->toBe($resourceTypeId);
 });
 

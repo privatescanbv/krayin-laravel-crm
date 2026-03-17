@@ -31,8 +31,8 @@
     :placeholder="trans('admin::app.products.create.description')"
 />
 
-<!-- Grid met 3 kolommen: Valuta, Kosten, Verkoopprijs -->
-<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+<!-- Grid met 2 kolommen: Valuta, Verkoopprijs -->
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-adminc::components.field
         type="select"
         name="currency"
@@ -45,14 +45,6 @@
                 value="{{ $currency['code'] }}" @selected(old('currency', $product->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
         @endforeach
     </x-adminc::components.field>
-
-    <x-adminc::components.field
-        type="price"
-        name="costs"
-        value="{{ old('costs', $product && $product->costs ? number_format($product->costs, 2, ',', '') : '') }}"
-        :label="trans('admin::app.products.create.costs')"
-        :placeholder="trans('admin::app.products.create.costs')"
-    />
 
     <x-adminc::components.field
         type="price"
@@ -113,7 +105,7 @@
 <x-admin::attributes
     :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
         'entity_type' => 'products',
-        ['code', 'NOTIN', ['name', 'description', 'price', 'costs', 'product_type_id', 'resource_type_id', 'product_group_id']],
+        ['code', 'NOTIN', ['name', 'description', 'price', 'product_type_id', 'resource_type_id', 'product_group_id']],
     ])"
     :entity="$product"
 />

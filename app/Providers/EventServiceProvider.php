@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Events\OrderMarkedAsSent;
+use App\Events\PatientFormCompletedEvent;
 use App\Events\PatientNotifyEvent;
+use App\Listeners\CreateFormReviewTask;
 use App\Listeners\CreatePatientNotification;
 use App\Listeners\StoreOrderConfirmationPdf;
 use App\Observers\SalesLeadListener;
@@ -30,6 +32,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         PatientNotifyEvent::class => [
             CreatePatientNotification::class,
+        ],
+        PatientFormCompletedEvent::class => [
+            CreateFormReviewTask::class,
         ],
     ];
 

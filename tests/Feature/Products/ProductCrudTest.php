@@ -33,7 +33,6 @@ test('can create product', function () {
         'currency'          => 'EUR',
         'description'       => 'Basic MRI scan product',
         'price'             => 299.99,
-        'costs'             => 150.50,
         'product_group_id'  => $productGroupId,
         'resource_type_id'  => $resourceTypeId,
     ];
@@ -47,7 +46,6 @@ test('can create product', function () {
 
     $createdProduct = Product::where('name', 'MRI Scan Basic')->first();
     expect($createdProduct->price)->toBe('299.99')
-        ->and($createdProduct->costs)->toBe('150.50')
         ->and($createdProduct->currency)->toBe('EUR');
 });
 
@@ -62,7 +60,6 @@ test('can update product', function () {
         'currency'          => 'EUR',
         'description'       => 'Updated description',
         'price'             => 499.95,
-        'costs'             => 250.00,
         'product_group_id'  => $productGroupId,
         'resource_type_id'  => $resourceTypeId,
     ];
@@ -77,7 +74,6 @@ test('can update product', function () {
 
     $product->refresh();
     expect($product->price)->toBe('499.95')
-        ->and($product->costs)->toBe('250.00')
         ->and($product->description)->toBe('Updated description');
 });
 
@@ -92,73 +88,6 @@ test('can delete product', function () {
     ]);
 });
 
-test('costs field is optional when creating product', function () {
-    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
-    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
-
-    $payload = [
-        'name'              => 'Product Without Costs',
-        'currency'          => 'EUR',
-        'price'             => 199.99,
-        'product_group_id'  => $productGroupId,
-        'resource_type_id'  => $resourceTypeId,
-    ];
-
-    $response = $this->post(route('admin.products.store'), $payload);
-    $response->assertRedirect(route('admin.products.index'));
-
-    $this->assertDatabaseHas('products', [
-        'name' => 'Product Without Costs',
-    ]);
-
-    $createdProduct = Product::where('name', 'Product Without Costs')->first();
-    expect($createdProduct->costs)->toBeNull();
-});
-
-test('can update product costs from null to value', function () {
-    $product = Product::factory()->create(['costs' => null]);
-
-    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
-    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
-
-    $payload = [
-        'name'              => $product->name,
-        'currency'          => 'EUR',
-        'price'             => 299.99,
-        'costs'             => 125.75,
-        'product_group_id'  => $productGroupId,
-        'resource_type_id'  => $resourceTypeId,
-    ];
-
-    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
-    $response->assertRedirect(route('admin.products.index'));
-
-    $product->refresh();
-    expect($product->costs)->toBe('125.75');
-});
-
-test('can update product costs from value to different value', function () {
-    $product = Product::factory()->create(['costs' => 100.00]);
-
-    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
-    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
-
-    $payload = [
-        'name'              => $product->name,
-        'currency'          => 'EUR',
-        'price'             => 299.99,
-        'costs'             => 175.50,
-        'product_group_id'  => $productGroupId,
-        'resource_type_id'  => $resourceTypeId,
-    ];
-
-    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
-    $response->assertRedirect(route('admin.products.index'));
-
-    $product->refresh();
-    expect($product->costs)->toBe('175.50');
-});
-
 test('price normalization works with comma separator', function () {
     $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
     $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
@@ -167,7 +96,6 @@ test('price normalization works with comma separator', function () {
         'name'              => 'Product With Comma Price',
         'currency'          => 'EUR',
         'price'             => '1.234,56',  // European format
-        'costs'             => '567,89',     // European format
         'product_group_id'  => $productGroupId,
         'resource_type_id'  => $resourceTypeId,
     ];
@@ -176,8 +104,7 @@ test('price normalization works with comma separator', function () {
     $response->assertRedirect(route('admin.products.index'));
 
     $createdProduct = Product::where('name', 'Product With Comma Price')->first();
-    expect($createdProduct->price)->toBe('1234.56')
-        ->and($createdProduct->costs)->toBe('567.89');
+    expect($createdProduct->price)->toBe('1234.56');
 });
 
 test('can link partner products to product', function () {

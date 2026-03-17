@@ -55,7 +55,7 @@ class PartnerProductController extends SimpleEntityController
             ->where('name', 'like', '%'.$query.'%')
             ->orderBy('name')
             ->limit(50)
-            ->get(['id', 'name', 'description', 'currency', 'price', 'costs', 'resource_type_id', 'product_group_id']);
+            ->get(['id', 'name', 'description', 'currency', 'price', 'resource_type_id', 'product_group_id']);
 
         $data = ProductHelper::formatCollectionWithPaths($products);
 
@@ -73,7 +73,6 @@ class PartnerProductController extends SimpleEntityController
             'description'      => $product->description,
             'currency'         => $product->currency,
             'price'            => $product->price,
-            'costs'            => $product->costs,
             'resource_type_id' => $product->resource_type_id,
         ];
 

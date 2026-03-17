@@ -2041,7 +2041,6 @@ class ProductSeeder extends BaseSeeder
             }
 
             $price = Currency::normalizePrice($row['verkoopprijs'] ?? null) ?? '0.00';
-            $costs = Currency::normalizePrice($row['inkoopprijs'] ?? null) ?? '0.00';
             $currency = $row['valuta'] ?? 'EUR';
             $externalId = $row['external_id'] ?? null;
 
@@ -2051,7 +2050,6 @@ class ProductSeeder extends BaseSeeder
                 'description'      => $row['omschrijving'] ?? null,
                 'currency'         => $currency,
                 'price'            => $price,
-                'costs'            => $costs,
                 'resource_type_id' => $resourceType->id,
                 'product_type_id'  => $productTypeId,
                 'product_group_id' => $group->id,

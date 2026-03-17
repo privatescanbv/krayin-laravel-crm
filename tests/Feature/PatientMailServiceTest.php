@@ -25,11 +25,11 @@ test('mailPatient stores email record with sales_lead_id when provided', functio
     $salesLead = SalesLead::factory()->create();
 
     $htmlContent = View::make('adminc.emails.portal-welcome', [
-        'person'            => $person,
+        'person'             => $person,
         'loginUrl'           => 'https://forms.example.com/forms/1',
         'temporaryPassword'  => 'temporaryPassword123',
-        'patientPortalUrl'  => config('services.portal.patient.web_url', 'https://portal.example.com'),
-        'initials_lastname' => $person->name ?? 'patiënt',
+        'patientPortalUrl'   => config('services.portal.patient.web_url', 'https://portal.example.com'),
+        'initials_lastname'  => $person->name ?? 'patiënt',
     ])->render();
 
     $service = app(PatientMailService::class);

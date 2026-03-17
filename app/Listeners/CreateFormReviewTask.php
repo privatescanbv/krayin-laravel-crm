@@ -29,8 +29,8 @@ class CreateFormReviewTask
                 'is_done'       => false,
                 'status'        => ActivityStatus::ACTIVE,
                 'additional'    => [
-                    'form_id' => $event->formId,
-                    'form_url' => config('services.portal.patient.web_url')."/patient/forms/".$event->formId."/step/1"
+                    'form_id'  => $event->formId,
+                    'form_url' => config('services.portal.patient.web_url').'/patient/forms/'.$event->formId.'/step/1',
                 ],
             ]);
         } else {

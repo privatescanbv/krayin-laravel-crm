@@ -7,6 +7,7 @@ use App\Events\PatientFormCompletedEvent;
 use App\Events\PatientNotifyEvent;
 use App\Listeners\CreateFormReviewTask;
 use App\Listeners\CreatePatientNotification;
+use App\Listeners\NotifyPatientFormCompleted;
 use App\Listeners\StoreOrderConfirmationPdf;
 use App\Observers\SalesLeadListener;
 use Illuminate\Auth\Events\Registered;
@@ -35,6 +36,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         PatientFormCompletedEvent::class => [
             CreateFormReviewTask::class,
+            NotifyPatientFormCompleted::class,
         ],
     ];
 

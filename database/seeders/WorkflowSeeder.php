@@ -59,20 +59,26 @@ class WorkflowSeeder extends Seeder
             PipelineStage::ORDER_INGEPLAND_HERNIA                  => [
                 ['Inplannen', $defaultDescription, ActivityType::TASK],
             ],
-            PipelineStage::ORDER_BEVESTIGD,
+            PipelineStage::ORDER_BEVESTIGD => [
+                ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK],
+                ['GVL ontvangen?', $defaultDescription, ActivityType::TASK],
+                ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK],
+            ],
             PipelineStage::ORDER_BEVESTIGD_HERNIA                  => [
                 ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK],
                 ['GVL ontvangen?', $defaultDescription, ActivityType::TASK],
                 ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK],
             ],
-            PipelineStage::ORDER_UITGEVOERD,
+            PipelineStage::ORDER_UITGEVOERD => [
+                ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK],
+            ],
             PipelineStage::ORDER_UITGEVOERD_HERNIA => [
-                ['Rapporten ontvangen en versturen', $defaultDescription, ActivityType::TASK],
+                ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK],
             ],
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN,
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN_HERNIA => [
                 ['Laten vertalen', $defaultDescription, ActivityType::TASK],
-                ['Versturen naar klant', $defaultDescription, ActivityType::CALL],
+                ['Versturen naar klant', $defaultDescription, ActivityType::TASK],
             ],
 
             default => [["Auto-activity: {$stage->name()}", $defaultDescription, ActivityType::TASK]],

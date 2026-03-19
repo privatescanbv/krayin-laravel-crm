@@ -118,7 +118,7 @@ enum PipelineStage: string
         self::KLANT_ADVISEREN_OPVOLGEN->value => [
             'id'       => 3,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
-            'label'    => 'Klant adviseren opvolgen',
+            'label'    => 'Klant geadviseerd, opvolgen',
             'entity'   => EntityType::LEAD->value,
             'status'   => null,
         ],
@@ -367,7 +367,7 @@ enum PipelineStage: string
         self::ORDER_VOORBEREIDEN_HERNIA->value => [
             'id'       => 39,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
-            'label'    => 'Order voorbereiden',
+            'label'    => 'Order bevestigen',
             'entity'   => EntityType::ORDER->value,
             'status'   => null,
         ],
@@ -381,7 +381,7 @@ enum PipelineStage: string
         self::ORDER_BEVESTIGD_HERNIA->value => [
             'id'       => 42,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
-            'label'    => 'Order bevestigd',
+            'label'    => 'Order akkoord?',
             'entity'   => EntityType::ORDER->value,
             'status'   => null,
         ],
@@ -395,7 +395,7 @@ enum PipelineStage: string
         self::ORDER_UITGEVOERD_HERNIA->value => [
             'id'       => 44,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
-            'label'    => 'Uitgevoerd, wachten op rapporten',
+            'label'    => 'Uitgevoerd, wachten op operatieverslag',
             'entity'   => EntityType::ORDER->value,
             'status'   => null,
         ],

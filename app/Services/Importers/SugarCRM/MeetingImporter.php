@@ -3,6 +3,7 @@
 namespace App\Services\Importers\SugarCRM;
 
 use App\Console\Commands\AbstractSugarCRMImport;
+use App\Enums\ActivityType;
 use App\Models\Department;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
@@ -41,59 +42,58 @@ class MeetingImporter
         }
         // disable for now, pick this up later with import orders.
 
-        return [];
-        //        try {
-        //            $this->command->validateTableExists($this->connection, ['meetings']);
-        //
-        //            $sql = DB::connection($this->connection)
-        //                ->table('meetings as m')
-        //                ->select([
-        //                    'm.id',
-        //                    'm.name',
-        //                    'm.date_entered',
-        //                    'm.date_modified',
-        //                    'm.modified_user_id',
-        //                    'm.created_by',
-        //                    'm.description',
-        //                    'm.deleted',
-        //                    'm.assigned_user_id',
-        //                    'm.duration_hours',
-        //                    'm.duration_minutes',
-        //                    'm.date_start',
-        //                    'm.date_end',
-        //                    'm.parent_type',
-        //                    'm.status',
-        //                    'm.parent_id',
-        //                    'm.reminder_time',
-        //                ])
-        //                ->whereIn('m.parent_id', $leadIds)
-        //                ->where('m.parent_type', '=', 'Leads')
-        //                ->where('m.deleted', '=', 0)
-        //                ->orderBy('m.date_entered', 'asc');
-        //
-        //            $this->command->infoVV('Extracting meeting activities: '.$sql->toRawSql());
-        //            $meetings = $sql->get();
-        //
-        //            $this->command->infoV('Found '.$meetings->count().' meeting activities');
-        //
-        //            // Group meetings by parent_id (lead_id)
-        //            $result = [];
-        //            foreach ($meetings as $meeting) {
-        //                if (! isset($result[$meeting->parent_id])) {
-        //                    $result[$meeting->parent_id] = [];
-        //                }
-        //                $result[$meeting->parent_id][] = $meeting;
-        //            }
-        //
-        //            return $result;
-        //        } catch (QueryException $e) {
-        //            $this->command->error('SQL Error while extracting meeting activities: '.$e->getMessage());
-        //            $this->command->error('SQL: '.$e->getSql());
-        //            throw new Exception('Meeting activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
-        //        } catch (Exception $e) {
-        //            $this->command->error('Failed to extract meeting activities: '.$e->getMessage());
-        //            throw new Exception('Meeting activities extraction failed: '.$e->getMessage(), 0, $e);
-        //        }
+        try {
+            $this->command->validateTableExists($this->connection, ['meetings']);
+
+            $sql = DB::connection($this->connection)
+                ->table('meetings as m')
+                ->select([
+                    'm.id',
+                    'm.name',
+                    'm.date_entered',
+                    'm.date_modified',
+                    'm.modified_user_id',
+                    'm.created_by',
+                    'm.description',
+                    'm.deleted',
+                    'm.assigned_user_id',
+                    'm.duration_hours',
+                    'm.duration_minutes',
+                    'm.date_start',
+                    'm.date_end',
+                    'm.parent_type',
+                    'm.status',
+                    'm.parent_id',
+                    'm.reminder_time',
+                ])
+                ->whereIn('m.parent_id', $leadIds)
+                ->where('m.parent_type', '=', 'Leads')
+                ->where('m.deleted', '=', 0)
+                ->orderBy('m.date_entered', 'asc');
+
+            $this->command->infoVV('Extracting meeting activities: '.$sql->toRawSql());
+            $meetings = $sql->get();
+
+            $this->command->infoV('Found '.$meetings->count().' meeting activities');
+
+            // Group meetings by parent_id (lead_id)
+            $result = [];
+            foreach ($meetings as $meeting) {
+                if (! isset($result[$meeting->parent_id])) {
+                    $result[$meeting->parent_id] = [];
+                }
+                $result[$meeting->parent_id][] = $meeting;
+            }
+
+            return $result;
+        } catch (QueryException $e) {
+            $this->command->error('SQL Error while extracting meeting activities: '.$e->getMessage());
+            $this->command->error('SQL: '.$e->getSql());
+            throw new Exception('Meeting activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
+        } catch (Exception $e) {
+            $this->command->error('Failed to extract meeting activities: '.$e->getMessage());
+            throw new Exception('Meeting activities extraction failed: '.$e->getMessage(), 0, $e);
+        }
     }
 
     /**
@@ -137,7 +137,7 @@ class MeetingImporter
                     // Create the activity
                     $activityData = [
                         'title'       => $meetingData->name ?? 'Afspraak',
-                        'type'        => 'meeting',
+                        'type'        => ActivityType::TASK->value,
                         'comment'     => $meetingData->description ?? '',
                         'external_id' => $meetingData->id,
                         'additional'  => [
@@ -149,7 +149,7 @@ class MeetingImporter
                         ],
                         'schedule_from' => $this->parseSugarDate($meetingData->date_start),
                         'schedule_to'   => $this->parseSugarDate($meetingData->date_end),
-                        'is_done'       => $this->mapMeetingStatus($lead->stage, $meetingData->status),
+                        'is_done'       => $this->mapMeetingStatusToIsDone($lead->stage, $meetingData->status),
                         'user_id'       => $this->mapAssignedUser($meetingData->assigned_user_id),
                         'lead_id'       => $lead->id,
                         'group_id'      => $groupId,
@@ -187,7 +187,7 @@ class MeetingImporter
      * - "Not Held": Meeting was not held -> is_done = false
      * - "Planned": Meeting is planned/scheduled -> is_done = false
      */
-    private function mapMeetingStatus(Stage $stage, ?string $status): bool
+    private function mapMeetingStatusToIsDone(Stage $stage, ?string $status): bool
     {
         if ($stage->is_lost || $stage->is_won) {
             return true;

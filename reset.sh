@@ -23,5 +23,3 @@ else
     echo "Invalid choice. Please run the script again and choose 1 or 2."
     exit 1
 fi
-
-

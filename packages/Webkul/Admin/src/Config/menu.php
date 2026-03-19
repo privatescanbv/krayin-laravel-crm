@@ -106,6 +106,7 @@ return [
     [
         'key'        => 'products',
         'name'       => 'admin::app.layouts.products',
+        'acl'        => 'products',
         'route'      => 'admin.products.index',
         'sort'       => 10,
         'icon-class' => 'icon-product',

@@ -60,7 +60,7 @@ class Menu
         $configMenu = collect(config("menu.$area"))->map(function ($item) {
             // Support external URLs by checking if 'url' is already set
             $url = $item['url'] ?? route($item['route'], $item['params'] ?? []);
-            
+
             return Arr::except([
                 ...$item,
                 'url' => $url,
@@ -81,7 +81,7 @@ class Menu
         }
 
         if (! $this->items) {
-            $this->prepareMenuItems();
+        $this->prepareMenuItems();
         }
 
         $items = collect($this->items)->sortBy(fn ($item) => $item->getPosition());
@@ -148,7 +148,7 @@ class Menu
 
                 return new MenuItem(
                     key: $subMenuItem['key'],
-                    name: trans($subMenuItem['name']),
+                    name: trans($subMenuItem['name']) .'_submark',
                     route: $subMenuItem['route'] ?? '',
                     url: $subMenuItem['url'],
                     sort: $subMenuItem['sort'],

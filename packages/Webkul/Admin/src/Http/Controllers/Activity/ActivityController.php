@@ -451,16 +451,22 @@ class ActivityController extends Controller
             return redirect($returnUrl);
         }
 
-        // After completing, redirect to related lead view if available
-        $shouldRedirectToLead = false;
-        if (isset($data['is_done']) && $data['is_done']) {
-            $shouldRedirectToLead = true;
-        } elseif ($requestedStatus !== null && $requestedStatus === ActivityStatus::DONE->value) {
-            $shouldRedirectToLead = true;
-        }
+        // Fallback: when completing an activity without a return_url, redirect to the related entity
+        $isCompleting = (isset($data['is_done']) && $data['is_done'])
+            || ($requestedStatus !== null && $requestedStatus === ActivityStatus::DONE->value);
 
-        if ($shouldRedirectToLead && $activity->lead_id) {
-            return redirect()->route('admin.leads.view', $activity->lead_id);
+        if ($isCompleting) {
+            if ($activity->order_id) {
+                return redirect()->route('admin.orders.view', $activity->order_id);
+            }
+
+            if ($activity->lead_id) {
+                return redirect()->route('admin.leads.view', $activity->lead_id);
+            }
+
+            if ($activity->person_id) {
+                return redirect()->route('admin.contacts.persons.view', $activity->person_id);
+            }
         }
 
         return redirect()->route('admin.activities.index');

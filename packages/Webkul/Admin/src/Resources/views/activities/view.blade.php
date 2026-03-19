@@ -300,7 +300,7 @@
     @endPushOnce
 
     <!-- Hidden form used by Afronden button in view -->
-    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST"
+    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif" method="POST"
           class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT"/>

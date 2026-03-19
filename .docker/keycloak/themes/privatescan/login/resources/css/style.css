@@ -4262,7 +4262,7 @@ body:has(.log_main) {
 
 .log_main .log .right .l_logo a img {
     width: 305px;
-    height: 65px;
+    height: auto;
     object-fit: contain;
     display: block;
 }
@@ -4845,7 +4845,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 280px;
-        height: 50px;
+        height: auto;
     }
 }
 
@@ -4957,7 +4957,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 270px;
-        height: 40px;
+        height: auto;
     }
 }
 
@@ -5223,7 +5223,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 250px;
-        height: 40px;
+        height: auto;
     }
 
     .log_main .log .right .form_h h1 {
@@ -5292,7 +5292,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 265px;
-        height: 50px;
+        height: auto;
     }
 
     .log_main .log .right .l_logo {
@@ -5830,7 +5830,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 240px;
-        height: 44px;
+        height: auto;
     }
 
     .log_main .log .right .form_h span {
@@ -5845,7 +5845,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 225px;
-        height: 40px;
+        height: auto;
     }
 }
 
@@ -6083,7 +6083,7 @@ body:has(.log_main) {
 
     .log_main .log .right .l_logo a img {
         width: 200px;
-        height: 35px;
+        height: auto;
     }
 
     .log_main .log .right .form_h span {

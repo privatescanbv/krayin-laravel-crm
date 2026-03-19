@@ -227,33 +227,22 @@
                     </x-adminc::components.field>
 
                     <!-- Related Entity Information -->
-                    @if($relatedEntity && $relatedEntityName)
+                    @if($relatedEntity && $relatedEntityType)
                         <x-admin::form.control-group class="!mb-0">
-                            <div
-                                class="flex items-center gap-2 p-3 bg-gray-50 rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    {{ $relatedEntityName }}:
+                                    {{ $relatedEntityType->getLabel() }}:
                                 </span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">
-                                    @if($relatedEntityName === 'Lead')
-                                        <a href="{{ route('admin.leads.view', $relatedEntity->id) }}"
-                                           class="text-activity-note-text hover:text-activity-task-text underline">
-                                            {{ $relatedEntity->name ?? $relatedEntity->title ?? 'Onbekende lead' }}
-                                        </a>
-                                    @elseif($relatedEntityName === 'Sales_lead')
-                                        <a href="{{ route('admin.sales-lead.view', $relatedEntity->id) }}"
-                                           class="text-activity-note-text hover:text-activity-task-text underline">
-                                            {{ $relatedEntity->name ?? 'Onbekende sales' }}
-                                        </a>
-                                    @else
-                                        Onbekende entiteit type: {{ $relatedEntityName }}
-                                    @endif
+                                    <a href="{{ route($relatedEntityType->getRoute(), $relatedEntity->id) }}"
+                                       class="text-activity-note-text hover:text-activity-task-text underline">
+                                        {{ $relatedEntity->name ?? $relatedEntity->title ?? '#' . $relatedEntity->id }}
+                                    </a>
                                 </span>
                             </div>
                             <x-admin::form.control-group.label>
                                 Gerelateerd aan
                             </x-admin::form.control-group.label>
-
                         </x-admin::form.control-group>
                     @endif
 

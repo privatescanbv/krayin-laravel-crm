@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
+use App\Enums\EntityType;
 use App\Enums\WebhookType;
 use App\Models\CallStatus;
 use App\Models\Department;
@@ -247,19 +248,19 @@ class ActivityController extends Controller
 
         $lookUpEntityData = $this->attributeRepository->getLookUpEntity('leads', $leadId);
 
-        // Determine which entity this activity belongs to
-        $relatedEntity = null;
-        $relatedEntityName = null;
+        // Determine which entity this activity belongs to — driven by EntityType enum
+        $relatedEntityType = EntityType::resolveFromActivity($activity);
+        $relatedEntity     = $relatedEntityType
+            ? $activity->{$relatedEntityType->getRelation()}
+            : null;
 
-        if ($activity->lead_id) {
-            $relatedEntity = $activity->lead;
-            $relatedEntityName = 'Lead';
-        } elseif ($activity->sales_lead_id) {
-            $relatedEntity = $activity->salesLead;
-            $relatedEntityName = 'Sales';
-        } elseif ($activity->person_id) {
-            $relatedEntity = $activity->person;
-            $relatedEntityName = 'Person';
+        if ($relatedEntityType && ! $relatedEntity) {
+            Log::error('Activity entity relation resolved to null', [
+                'activity_id'  => $activity->id,
+                'entity_type'  => $relatedEntityType->value,
+                'foreign_key'  => $relatedEntityType->getForeignKey(),
+                'foreign_value' => $activity->{$relatedEntityType->getForeignKey()},
+            ]);
         }
         $user = auth()->guard('user')->user();
         $canTakeover = $user->hasPermission('activities.takeover');
@@ -269,7 +270,7 @@ class ActivityController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityName', 'canTakeover', 'callStatuses'));
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityType', 'canTakeover', 'callStatuses'));
     }
 
     /**

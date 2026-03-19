@@ -4,9 +4,6 @@ namespace Webkul\Admin\DataGrids\Activity;
 
 use App\Enums\ActivityType;
 use App\Enums\EntityType;
-use App\Models\Clinic;
-use App\Models\Order;
-use App\Models\SalesLead;
 use App\Services\ActivityQueueRegistry;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
@@ -15,8 +12,6 @@ use Throwable;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\Traits\ProvideDropdownOptions;
 use Webkul\DataGrid\DataGrid;
-use Webkul\Lead\Models\Lead;
-use Webkul\Contact\Models\Person;
 
 class ActivityDataGrid extends DataGrid
 {
@@ -27,6 +22,15 @@ class ActivityDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
+        $typeCases = implode(' ', array_map(
+            fn (EntityType $t) => "WHEN activities.{$t->getForeignKey()} IS NOT NULL THEN \"{$t->value}\"",
+            EntityType::cases()
+        ));
+        $idCases = implode(' ', array_map(
+            fn (EntityType $t) => "WHEN activities.{$t->getForeignKey()} IS NOT NULL THEN activities.{$t->getForeignKey()}",
+            EntityType::cases()
+        ));
+
         $queryBuilder = DB::table('activities')
             ->distinct()
             ->select(
@@ -50,23 +54,9 @@ class ActivityDataGrid extends DataGrid
                     // default MySQL/MariaDB
                     return 'DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline';
                 })()),
-                // Add entity information
-                DB::raw('CASE
-                    WHEN activities.order_id IS NOT NULL THEN "'.EntityType::ORDER->value.'"
-                    WHEN activities.lead_id IS NOT NULL THEN "'.EntityType::LEAD->value.'"
-                    WHEN activities.sales_lead_id IS NOT NULL THEN "'.EntityType::SALES->value.'"
-                    WHEN activities.clinic_id IS NOT NULL THEN "'.EntityType::CLINIC->value.'"
-                    WHEN activities.person_id IS NOT NULL THEN "'.EntityType::PERSON->value.'"
-                    ELSE NULL
-                END as entity_type'),
-                DB::raw('CASE
-                    WHEN activities.order_id IS NOT NULL THEN activities.order_id
-                    WHEN activities.lead_id IS NOT NULL THEN activities.lead_id
-                    WHEN activities.sales_lead_id IS NOT NULL THEN activities.sales_lead_id
-                    WHEN activities.clinic_id IS NOT NULL THEN activities.clinic_id
-                    WHEN activities.person_id IS NOT NULL THEN activities.person_id
-                    ELSE NULL
-                END as entity_id')
+                // Add entity information — built dynamically from EntityType enum
+                DB::raw("CASE {$typeCases} ELSE NULL END as entity_type"),
+                DB::raw("CASE {$idCases} ELSE NULL END as entity_id")
             )
 
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
@@ -260,37 +250,30 @@ class ActivityDataGrid extends DataGrid
                 )
             ),
             'closure'    => function ($row) {
-                if (!$row->entity_type || !$row->entity_id) {
+                if (! $row->entity_type || ! $row->entity_id) {
                     return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
                 }
 
-                $entityMap = [
-                    EntityType::LEAD->value   => ['route' => 'admin.leads.view',            'model' => Lead::class],
-                    EntityType::SALES->value  => ['route' => 'admin.sales-leads.view',      'model' => SalesLead::class],
-                    EntityType::ORDER->value  => ['route' => 'admin.orders.view',            'model' => Order::class],
-                    EntityType::CLINIC->value  => ['route' => 'admin.clinics.view', 'model' => Clinic::class],
-                    EntityType::PERSON->value => ['route' => 'admin.contacts.persons.view', 'model' => Person::class],
-                ];
-
-                $config = $entityMap[$row->entity_type] ?? null;
-                if (! $config) {
+                $type = EntityType::tryFrom($row->entity_type);
+                if (! $type) {
                     return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";
                 }
 
                 try {
-                    $entity = $config['model']::find($row->entity_id);
-                    $display = $entity ? ($entity->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
+                    $modelClass = $type->getModel();
+                    $entity     = $modelClass::find($row->entity_id);
+                    $display    = $entity ? ($entity->name ?? ('#' . $row->entity_id)) : ('#' . $row->entity_id);
                 } catch (Throwable $e) {
                     logger()->warning('Unable to locate entity', [
                         'type'  => $row->entity_type,
                         'id'    => $row->entity_id,
                         'error' => $e->getMessage(),
                     ]);
-                    $display = '#'.$row->entity_id;
+                    $display = '#' . $row->entity_id;
                 }
 
                 return "<a class='text-brandColor hover:underline' target='_blank' href='"
-                    . route($config['route'], $row->entity_id)
+                    . route($type->getRoute(), $row->entity_id)
                     . "'>" . e($display) . '</a>';
             },
         ]);

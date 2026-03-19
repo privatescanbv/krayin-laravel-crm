@@ -15,11 +15,11 @@
                 <!-- Email Header -->
                 <div style="margin-bottom: 45px;">
                     <a href="{{ config('app.url') }}">
-                        <img
-                            src="{{ vite()->asset('images/logo.svg') }}"
-                            alt="{{ config('app.name') }}"
-                            style="height: 40px; width: 110px;"
-                        />
+                        @include('adminc.components.inline-image', [
+                            'path'  => 'images/logo.svg',
+                            'alt'   => config('app.name'),
+                            'style' => 'height:40px;width:110px;',
+                        ])
                     </a>
                 </div>
 

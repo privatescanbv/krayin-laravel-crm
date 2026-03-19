@@ -2,6 +2,7 @@
 
 namespace Webkul\Email\Mails;
 
+use App\Services\Mail\HtmlImageInliner;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -55,7 +56,7 @@ class Email extends Mailable
             ->cc($this->email->cc ?? [])
             ->bcc($this->email->bcc ?? [])
             ->subject($subject)
-            ->html($this->email->reply);
+            ->html(app(HtmlImageInliner::class)->inline($this->email->reply ?? ''));
 
         $bareId = fn ($id) => trim($id, '<>');
         $inReplyTo = null;

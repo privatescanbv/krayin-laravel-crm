@@ -16,5 +16,4 @@ enum FormType: string
     {
         return self::tryFrom($value ?? '') ?? self::PrivateScan;
     }
-
 }

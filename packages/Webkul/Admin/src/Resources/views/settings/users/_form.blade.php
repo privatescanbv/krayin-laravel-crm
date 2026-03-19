@@ -126,16 +126,31 @@
             </div>
 
             <!-- Signature -->
-            <x-adminc::components.field
-                type="textarea"
-                id="signature"
-                name="signature"
-                :label="trans('admin::app.settings.users.index.create.signature')"
-                value="{{ old('signature', $user?->signature) }}"
-                :placeholder="trans('admin::app.settings.users.index.create.signature')"
-                :tinymce="true"
-                rows="4"
-            />
+            @if($user === null)
+                {{-- Create mode: signature is auto-generated, show read-only placeholder --}}
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.users.index.create.signature')
+                    </x-admin::form.control-group.label>
+                    <textarea
+                        class="flex w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-500"
+                        rows="3"
+                        disabled
+                    >{{ __('Wordt automatisch gegenereerd na opslaan') }}</textarea>
+                </x-admin::form.control-group>
+            @else
+                {{-- Edit mode: fully editable --}}
+                <x-adminc::components.field
+                    type="textarea"
+                    id="signature"
+                    name="signature"
+                    :label="trans('admin::app.settings.users.index.create.signature')"
+                    value="{{ old('signature', $user->signature) }}"
+                    :placeholder="trans('admin::app.settings.users.index.create.signature')"
+                    :tinymce="true"
+                    rows="4"
+                />
+            @endif
 
             <!-- Groups -->
             <x-admin::form.control-group>

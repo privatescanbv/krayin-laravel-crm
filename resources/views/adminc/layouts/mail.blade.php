@@ -10,11 +10,7 @@
     <header class="header">
         <div class="header-content">
             <a href="https://privatescan.nl" target="_blank">
-                @php
-                    // Use absolute URL to static logo file (doesn't change with builds)
-                    $logoUrl = rtrim(config('app.url', 'https://privatescan.nl'), '/') . '/images/logo.svg';
-                @endphp
-                <img src="{{ $logoUrl }}" alt="PrivateScan Logo" class="logo">
+                @include('adminc.components.inline-image', ['path' => 'images/logo.svg', 'alt' => 'PrivateScan Logo', 'style' => 'height:60px;'])
             </a>
         </div>
     </header>

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Models\Department as DepartmentModel;
+use App\Support\UserSignature;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Settings\UserDataGrid;
@@ -89,6 +90,13 @@ class UserController extends Controller
         // }
 
         $data['status'] = array_key_exists('status', $data) ? $data['status'] : 0;
+
+        // Always auto-generate the signature for new users
+        $data['signature'] = UserSignature::generate(
+            $data['first_name'] ?? '',
+            $data['last_name'] ?? '',
+            $data['email'] ?? '',
+        );
 
         Event::dispatch('settings.user.create.before');
 

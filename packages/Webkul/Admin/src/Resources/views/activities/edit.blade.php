@@ -128,25 +128,16 @@
                                 class="w-full"
                             />
 
-                            @if($activity->type !== ActivityType::CALL)
-                                <x-adminc::components.field
-                                    type="datetime"
-                                    name="schedule_to"
-                                    id="schedule_to"
-                                    :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
-                                    rules="required"
-                                    :value="$scheduleToValue"
-                                    class="w-full"
-                                />
-                            @else
-                                <!-- Hidden field for call type - keeps existing schedule_to; can be updated when schedule_from changes -->
-                                <input
-                                    type="hidden"
-                                    name="schedule_to"
-                                    id="schedule_to_hidden"
-                                    value="{{ old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i') }}"
-                                />
-                            @endif
+                            <x-adminc::components.field
+                                type="datetime"
+                                name="schedule_to"
+                                id="schedule_to"
+                                :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                                rules="required"
+                                :value="$scheduleToValue"
+                                class="w-full"
+                            />
+
                         </div>
 
                     </x-admin::form.control-group>
@@ -461,32 +452,32 @@
             /**
              * Update schedule_to for call activities (schedule_from + 1 hour)
              */
-            window.updateScheduleToForCall = function () {
-                const scheduleFromInput = document.getElementById('schedule_from');
-                const scheduleToHidden = document.getElementById('schedule_to_hidden');
+            {{--window.updateScheduleToForCall = function () {--}}
+            {{--    const scheduleFromInput = document.getElementById('schedule_from');--}}
+            {{--    const scheduleToHidden = document.getElementById('schedule_to_hidden');--}}
 
-                if (scheduleFromInput && scheduleToHidden && scheduleFromInput.value) {
-                    try {
-                        const fromDate = new Date(scheduleFromInput.value);
-                        const toDate = new Date(fromDate.getTime() + (60 * 60 * 1000)); // Add 1 hour
+            {{--    if (scheduleFromInput && scheduleToHidden && scheduleFromInput.value) {--}}
+            {{--        try {--}}
+            {{--            const fromDate = new Date(scheduleFromInput.value);--}}
+            {{--            const toDate = new Date(fromDate.getTime() + (60 * 60 * 1000)); // Add 1 hour--}}
 
-                        // Format the date for the hidden input (ISO format)
-                        scheduleToHidden.value = toDate.toISOString().slice(0, 16);
-                    } catch (error) {
-                        console.error('Error updating schedule_to for call:', error);
-                    }
-                }
-            };
+            {{--            // Format the date for the hidden input (ISO format)--}}
+            {{--            scheduleToHidden.value = toDate.toISOString().slice(0, 16);--}}
+            {{--        } catch (error) {--}}
+            {{--            console.error('Error updating schedule_to for call:', error);--}}
+            {{--        }--}}
+            {{--    }--}}
+            {{--};--}}
 
-            // Wire schedule_to updates for call activities when schedule_from changes
-            document.addEventListener('DOMContentLoaded', function () {
-                @if($activity->type === ActivityType::CALL)
-                const scheduleFromInput = document.getElementById('schedule_from');
-                if (scheduleFromInput) {
-                    scheduleFromInput.addEventListener('change', updateScheduleToForCall);
-                }
-                @endif
-            });
+            {{--// Wire schedule_to updates for call activities when schedule_from changes--}}
+            {{--document.addEventListener('DOMContentLoaded', function () {--}}
+            {{--    @if($activity->type === ActivityType::CALL)--}}
+            {{--    const scheduleFromInput = document.getElementById('schedule_from');--}}
+            {{--    if (scheduleFromInput) {--}}
+            {{--        scheduleFromInput.addEventListener('change', updateScheduleToForCall);--}}
+            {{--    }--}}
+            {{--    @endif--}}
+            {{--});--}}
         </script>
     @endPushOnce
 </x-admin::layouts>

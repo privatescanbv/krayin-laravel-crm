@@ -185,16 +185,15 @@ class PersonObserver
     }
 
     /**
-     * @param Person $person
      * @return bool true if sync portal is required
      */
     protected function shouldManagePortal(Person $person): bool
     {
-       if (! $this->isKeycloakConfigured()) {
-           return false;
-       }
+        if (! $this->isKeycloakConfigured()) {
+            return false;
+        }
 
-       return empty($person->keycloak_user_id) && ! empty($person->findDefaultEmail());
+        return empty($person->keycloak_user_id) && ! empty($person->findDefaultEmail());
     }
 
     protected function isKeycloakConfigured(): bool

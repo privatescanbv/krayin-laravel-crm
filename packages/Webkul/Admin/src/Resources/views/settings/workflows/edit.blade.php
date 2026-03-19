@@ -562,6 +562,17 @@
                                 >
                                     <option v-for="opt in attr.options" :value="opt.id">@{{ opt.name }}</option>
                                 </select>
+
+                                <!-- INTEGER (number) -->
+                                <input
+                                    v-if="attr.type === 'integer'"
+                                    type="number"
+                                    min="0"
+                                    class="border px-2 py-1 w-full"
+                                    :name="`actions[${index}][attributes][${attr.id}]`"
+                                    v-model="action.attributes[attr.id]"
+                                    placeholder=""
+                                />
                             </div>
 
 
@@ -737,6 +748,7 @@
                                 title: '',
                                 description: '',
                                 type: '',
+                                deadline_in_days: '',
                             }
                         });
                     },
@@ -1059,7 +1071,21 @@
                             this.action.attributes[attr.id] = '';
                         }
 
+                        if (attr.type === 'integer' && (this.action.attributes[attr.id] === undefined || this.action.attributes[attr.id] === null)) {
+                            this.action.attributes[attr.id] = '';
+                        }
+
                         return attr;
+                    },
+                },
+                watch: {
+                    'action.id'() {
+                        const a = this.matchedAction;
+                        if (!a?.attributes?.length || !this.action.attributes) return;
+                        a.attributes.forEach(attr => {
+                            if (attr.id in this.action.attributes) return;
+                            this.action.attributes[attr.id] = '';
+                        });
                     },
                 },
                 methods: {

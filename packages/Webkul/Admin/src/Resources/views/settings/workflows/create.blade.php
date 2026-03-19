@@ -445,6 +445,13 @@
                                 <option v-for="opt in attr.options" :value="opt.id">@{{ opt.name }}</option>
                             </select>
 
+                            <input v-if="attr.type === 'integer'"
+                                   type="number"
+                                   min="0"
+                                   class="border px-2 py-1 w-full"
+                                   :name="`actions[${index}][attributes][${attr.id}]`"
+                                   v-model="action.attributes[attr.id]" />
+
                         </div>
                     </div>
 

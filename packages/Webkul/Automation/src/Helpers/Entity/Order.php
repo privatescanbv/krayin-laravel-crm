@@ -94,6 +94,11 @@ class Order extends AbstractEntity
                             ['id' => ActivityType::TASK->value, 'name' => ActivityType::TASK->label()],
                         ],
                     ],
+                    [
+                        'id'   => 'deadline_in_days',
+                        'name' => 'Deadline in dagen (optioneel)',
+                        'type' => 'integer',
+                    ],
                 ],
             ],
         ];
@@ -108,6 +113,11 @@ class Order extends AbstractEntity
                     $title   = $action['attributes']['title'];
                     $type    = $action['attributes']['type'];
                     $comment = $action['attributes']['comment'] ?? '';
+                    $deadlineDays = $action['attributes']['deadline_in_days'] ?? null;
+                    $scheduleFrom = now();
+                    $scheduleTo = (is_numeric($deadlineDays) && (int) $deadlineDays >= 0)
+                        ? now()->addDays((int) $deadlineDays)
+                        : now()->addWeek();
                     try {
                         $this->createActivityForLeadOrSalesAction->execute(
                             $order,
@@ -117,8 +127,8 @@ class Order extends AbstractEntity
                                 'type'          => $type,
                                 'comment'       => $comment,
                                 'user_id'       => null,
-                                'schedule_from' => now(),
-                                'schedule_to'   => now()->addWeek(),
+                                'schedule_from' => $scheduleFrom,
+                                'schedule_to'   => $scheduleTo,
                             ]
                         );
                     } catch (DuplicateException $e) {

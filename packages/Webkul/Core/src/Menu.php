@@ -148,7 +148,7 @@ class Menu
 
                 return new MenuItem(
                     key: $subMenuItem['key'],
-                    name: trans($subMenuItem['name']) .'_submark',
+                    name: trans($subMenuItem['name']),
                     route: $subMenuItem['route'] ?? '',
                     url: $subMenuItem['url'],
                     sort: $subMenuItem['sort'],

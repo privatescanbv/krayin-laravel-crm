@@ -40,7 +40,8 @@
       "Bash(docker-compose:*)",
       "Bash(claude mcp:*)",
       "mcp__laravel-boost__list-routes",
-      "mcp__plugin_playwright_playwright__*"
+      "mcp__plugin_playwright_playwright__*",
+      "mcp__laravel-boost__tinker"
     ]
   }
 }

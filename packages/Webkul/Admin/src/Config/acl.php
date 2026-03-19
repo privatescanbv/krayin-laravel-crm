@@ -13,7 +13,7 @@ return [
         'sort'  => 2,
     ], [
         'key'           => 'products',
-        'name'          => 'Products',
+        'name'          => 'admin::app.layouts.products',
         'route'         => 'admin.products.index',
         'sort'          => 4,
         'icon-class'    => 'products-icon',

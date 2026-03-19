@@ -1,0 +1,30 @@
+= Handleiding Leads — Privatescan CRM
+Privatescan
+:doctype: book
+:toc: left
+:toc-title: Inhoudsopgave
+:toclevels: 3
+:sectnums:
+:imagesdir: images
+:icons: font
+:lang: nl
+:revdate: 2026-03-19
+:revnumber: 1.0
+
+== Inleiding
+
+Deze handleiding beschrijft de *Leads-module* van het Privatescan CRM.
+De handleiding is bedoeld voor medewerkers die dagelijks werken met leads:
+het aanmaken, opvolgen en beheren van patiëntaanvragen.
+
+De handleiding bestaat uit drie hoofdstukken:
+
+. *Overzicht* — uitleg van de leads-pagina en de paginaopbouw
+. *Kanban leads* — het kanbanbord en het werken met pipeline-fasen
+. *Lead aanmaken* — het invullen van het aanmaakformulier
+
+include::chapters/01-overzicht.adoc[]
+
+include::chapters/02-kanban.adoc[]
+
+include::chapters/03-lead-aanmaken.adoc[]

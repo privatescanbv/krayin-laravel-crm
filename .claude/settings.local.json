@@ -38,7 +38,9 @@
       "Bash(npx playwright:*)",
       "Bash(docker-compose logs:*)",
       "Bash(docker-compose:*)",
-      "Bash(claude mcp:*)"
+      "Bash(claude mcp:*)",
+      "mcp__laravel-boost__list-routes",
+      "mcp__plugin_playwright_playwright__*"
     ]
   }
 }

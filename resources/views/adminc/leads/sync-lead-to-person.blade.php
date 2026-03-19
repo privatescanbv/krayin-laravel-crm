@@ -63,26 +63,26 @@
                     <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                         @foreach ($matchBreakdown['field_differences'] as $field => $difference)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                <td class="px-4 py-4">
-                                    <div class="flex items-center gap-4">
+                                <td class="px-4 py-4 w-36">
+                                    <div class="flex flex-col gap-2">
                                         <label class="inline-flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="radio"
                                                 name="choice[{{ $field }}]"
                                                 value="lead"
-                                                class="text-activity-note-text border-gray-300 focus:ring-blue-500"
+                                                class="form-radio"
                                                 checked
                                             >
-                                            <span class="text-xs text-gray-600 dark:text-gray-300">Gebruik lead</span>
+                                            <span class="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">Gebruik lead</span>
                                         </label>
                                         <label class="inline-flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="radio"
                                                 name="choice[{{ $field }}]"
                                                 value="person"
-                                                class="text-activity-note-text border-gray-300 focus:ring-blue-500"
+                                                class="form-radio"
                                             >
-                                            <span class="text-xs text-gray-600 dark:text-gray-300">Gebruik person</span>
+                                            <span class="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">Gebruik person</span>
                                         </label>
                                     </div>
                                 </td>

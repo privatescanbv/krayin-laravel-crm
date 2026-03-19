@@ -69,8 +69,8 @@ class ActivityQueueRepository
             ->where('activities.schedule_to', '<', $now);
 
         return [
-            'open'    => (int) $openQuery->count('activities.id'),
-            'overdue' => (int) $overdueQuery->count('activities.id'),
+            'open'    => $openQuery->count('activities.id'),
+            'overdue' => $overdueQuery->count('activities.id'),
         ];
     }
 }

@@ -134,7 +134,7 @@ class DuplicateFalsePositiveService
                 ->get(['entity_id_1', 'entity_id_2'])
                 ->map(function ($row) use ($primaryId) {
                     // Return the "other" id in the pair.
-                    return (int) ($row->entity_id_1 === $primaryId ? $row->entity_id_2 : $row->entity_id_1);
+                    return $row->entity_id_1 === $primaryId ? $row->entity_id_2 : $row->entity_id_1;
                 })
                 ->unique()
                 ->values();

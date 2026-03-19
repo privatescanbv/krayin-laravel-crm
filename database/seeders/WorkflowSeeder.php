@@ -60,9 +60,9 @@ class WorkflowSeeder extends Seeder
                 ['Inplannen', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_BEVESTIGD => [
-                ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK],
-                ['GVL ontvangen?', $defaultDescription, ActivityType::TASK],
-                ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK],
+                ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK, 5],
+                ['GVL ontvangen?', $defaultDescription, ActivityType::TASK, 5],
+                ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_BEVESTIGD_HERNIA                  => [
                 ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK, 5],
@@ -70,15 +70,15 @@ class WorkflowSeeder extends Seeder
                 ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_UITGEVOERD => [
-                ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK],
+                ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_UITGEVOERD_HERNIA => [
                 ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN,
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN_HERNIA => [
-                ['Laten vertalen', $defaultDescription, ActivityType::TASK],
-                ['Versturen naar klant', $defaultDescription, ActivityType::TASK],
+                ['Laten vertalen', $defaultDescription, ActivityType::TASK, 5],
+                ['Versturen naar klant', $defaultDescription, ActivityType::TASK, 5],
             ],
 
             default => [["Auto-activity: {$stage->name()}", $defaultDescription, ActivityType::TASK, 5]],

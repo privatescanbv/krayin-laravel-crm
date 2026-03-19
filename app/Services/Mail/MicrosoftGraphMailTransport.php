@@ -262,23 +262,6 @@ class MicrosoftGraphMailTransport implements TransportInterface
     }
 
     /**
-     * Generate email address from user
-     */
-    protected function generateEmailFromUser($user): string
-    {
-        $firstName = strtolower($user->first_name);
-        $lastName = strtolower($user->last_name);
-
-        // Remove spaces and special characters
-        $firstName = preg_replace('/[^a-z0-9]/', '', $firstName);
-        $lastName = preg_replace('/[^a-z0-9]/', '', $lastName);
-
-        $domain = config('mail.graph.sender_domain', 'crm.private-scan.nl');
-
-        return "{$firstName}.{$lastName}@{$domain}";
-    }
-
-    /**
      * Validate recipients against allowed email patterns
      *
      * @throws Exception

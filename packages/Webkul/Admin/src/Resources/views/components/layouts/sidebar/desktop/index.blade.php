@@ -8,10 +8,14 @@
         <nav class="sidebar-rounded grid w-full gap-2">
             <!-- Navigation Menu -->
             @foreach (menu()->getItems('admin') as $menuItem)
+                @php
+                    $menuItemUrl = (! in_array($menuItem->getKey(), ['settings', 'configuration']) && $menuItem->haveChildren()) ? 'javascript:void(0)' : $menuItem->getUrl();
+                @endphp
                 <div class="px-4 group/item {{ $menuItem->isActive() ? 'active' : 'inactive' }}">
                     <a
                         class="flex gap-2 p-1.5 items-center cursor-pointer hover:rounded-lg {{ $menuItem->isActive() == 'active' ? 'bg-brandColor rounded-lg' : ' hover:bg-neutral-bg hover:dark:bg-gray-950' }} peer"
-                        href="{{ ! in_array($menuItem->getKey(), ['settings', 'configuration']) && $menuItem->haveChildren() ? 'javascript:void(0)' : $menuItem->getUrl() }}"
+                        href="{{ $menuItemUrl }}"
+                        @if($menuItem->getTarget()) target="{{ $menuItem->getTarget() }}" rel="noopener noreferrer" @endif
                         @mouseleave="!isMenuActive ? hoveringMenu = '' : {}"
                         @mouseover="hoveringMenu='{{$menuItem->getKey()}}'"
                         @click="isMenuActive = !isMenuActive"
@@ -40,13 +44,10 @@
                                 <div class="journal-scroll h-[calc(100vh-100px)] overflow-hidden">
                                     <nav class="grid w-full gap-2">
                                         @foreach ($menuItem->getChildren() as $subMenuItem)
-                                            @php
-                                                $isExternal = !empty($subMenuItem->getUrl()) && (str_starts_with($subMenuItem->getUrl(), 'http://') || str_starts_with($subMenuItem->getUrl(), 'https://'));
-                                            @endphp
                                             <div class="px-4 group/item {{ $menuItem->isActive() ? 'active' : 'inactive' }}">
                                                 <a
                                                     href="{{ $subMenuItem->getUrl() }}"
-                                                    @if($isExternal) target="_blank" rel="noopener noreferrer" @endif
+                                                    @if($subMenuItem->getTarget()) target="{{ $subMenuItem->getTarget() }}" rel="noopener noreferrer" @endif
                                                     class="flex gap-2.5 p-2 items-center cursor-pointer hover:rounded-lg {{ $subMenuItem->isActive() == 'active' ? 'bg-brandColor rounded-lg' : ' hover:bg-neutral-bg hover:dark:bg-gray-950' }} peer"
                                                 >
                                                     <p class="text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap {{ $subMenuItem->isActive() ? 'text-white' : ''}}">

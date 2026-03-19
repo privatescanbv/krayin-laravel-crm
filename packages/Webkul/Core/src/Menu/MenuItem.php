@@ -20,6 +20,7 @@ class MenuItem
         private string $icon,
         private string $info,
         private Collection $children,
+        private readonly string $target = '',
     ) {}
 
     /**
@@ -128,6 +129,23 @@ class MenuItem
     public function getUrl(): string
     {
         return $this->url;
+    }
+
+    /**
+     * Get the target of the menu item (e.g. '_blank').
+     * Items without a route (direct URL) are treated as external and open in a new tab.
+     */
+    public function getTarget(): string
+    {
+        if ($this->target !== '') {
+            return $this->target;
+        }
+
+        if ($this->route === '') {
+            return '_blank';
+        }
+
+        return '';
     }
 
     /**

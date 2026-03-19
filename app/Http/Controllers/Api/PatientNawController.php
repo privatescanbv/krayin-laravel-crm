@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\PersonGender;
-use App\Enums\PersonSalutation;
 use App\Http\Controllers\Controller;
 use App\Models\Address;
+use App\Services\ContactValidationRules;
 use App\Services\Keycloak\KeycloakService;
-use App\Validators\ContactArrayValidator;
+use App\Support\EmailNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Webkul\Contact\Models\Person;
-use Webkul\Core\Contracts\Validations\EmailValidator;
-use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 class PatientNawController extends Controller
 {
@@ -85,33 +81,25 @@ class PatientNawController extends Controller
             abort(404);
         }
 
-        $validated = $request->validate([
-            'salutation'                    => ['nullable', Rule::enum(PersonSalutation::class)],
-            'first_name'                    => 'nullable|string|max:255',
-            'lastname_prefix'               => 'nullable|string|max:255',
-            'last_name'                     => 'nullable|string|max:255',
-            'married_name_prefix'           => 'nullable|string|max:255',
-            'married_name'                  => 'nullable|string|max:255',
-            'initials'                      => 'nullable|string|max:50',
-            'date_of_birth'                 => 'nullable|date',
-            'gender'                        => ['nullable', Rule::enum(PersonGender::class)],
-            'phones'                        => ['nullable', new ContactArrayValidator('telefoon')],
-            'phones.*.value'                => ['required', 'string', new PhoneValidator],
-            'phones.*.label'                => ['required', Rule::in(['eigen', 'relatie', 'anders'])],
-            'phones.*.is_default'           => 'boolean',
-            'emails'                        => ['nullable', new ContactArrayValidator('email')],
-            'emails.*.value'                => ['required', 'string', new EmailValidator],
-            'emails.*.label'                => ['required', Rule::in(['eigen', 'relatie', 'anders'])],
-            'emails.*.is_default'           => 'boolean',
-            'address'                       => 'nullable|array',
-            'address.street'                => 'nullable|string|max:255',
-            'address.house_number'          => 'nullable|string|max:50',
-            'address.house_number_suffix'   => 'nullable|string|max:10',
-            'address.postal_code'           => 'nullable|string|max:20',
-            'address.city'                  => 'nullable|string|max:255',
-            'address.state'                 => 'nullable|string|max:255',
-            'address.country'               => 'nullable|string|max:255',
-        ]);
+        $isNewAddress = is_null($person->address);
+
+        $validated = $request->validate(array_merge(
+            ['first_name' => 'nullable|string|max:255', 'last_name' => 'nullable|string|max:255'],
+            ContactValidationRules::personalNameRules(),
+            ContactValidationRules::strictPhoneRules(),
+            ContactValidationRules::strictEmailRules(),
+            ContactValidationRules::addressRulesForPerson($isNewAddress),
+        ));
+
+        if (isset($validated['emails'])) {
+            $validated['emails'] = array_map(function ($email) {
+                if (isset($email['value'])) {
+                    $email['value'] = EmailNormalizer::normalize($email['value']) ?? $email['value'];
+                }
+
+                return $email;
+            }, $validated['emails']);
+        }
 
         $personFields = ['salutation', 'first_name', 'lastname_prefix', 'last_name', 'married_name_prefix', 'married_name', 'initials', 'date_of_birth', 'gender', 'phones', 'emails'];
         $personData = array_intersect_key($validated, array_flip($personFields));

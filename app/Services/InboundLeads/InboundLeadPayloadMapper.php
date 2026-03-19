@@ -3,6 +3,8 @@
 namespace App\Services\InboundLeads;
 
 use App\Enums\PersonSalutation;
+use App\Support\EmailNormalizer;
+use App\Support\PhoneNormalizer;
 
 class InboundLeadPayloadMapper
 {
@@ -18,7 +20,7 @@ class InboundLeadPayloadMapper
             'first_name'      => $this->nullIfEmpty($payload['first_name'] ?? null) ?? 'Onbekend',
             'last_name'       => $this->nullIfEmpty($payload['last_name'] ?? null),
             'description'     => $description,
-            'email'           => $this->nullIfEmpty($payload['email'] ?? null),
+            'email'           => $this->normalizeEmail($payload['email'] ?? null),
             'phone'           => $this->normalizePhone($payload['phone'] ?? null),
             'lead_source_id'  => $this->mapLeadSourceId($payload['lead_source'] ?? null),
             'lead_channel_id' => $this->mapLeadChannelId($payload['kanaal_c'] ?? null),
@@ -40,7 +42,7 @@ class InboundLeadPayloadMapper
             'date_of_birth'        => $this->nullIfEmpty($payload['birthdate'] ?? null),
             'description'          => $this->nullIfEmpty($payload['description'] ?? null),
             'diagnoseform_pdf_url' => $this->nullIfEmpty($payload['diagnoseform_pdf_url'] ?? null),
-            'email'                => $this->nullIfEmpty($payload['email1'] ?? null),
+            'email'                => $this->normalizeEmail($payload['email1'] ?? null),
             'phone'                => $this->normalizePhone($payload['phone_mobile'] ?? null),
             'lead_source_id'       => $this->mapLeadSourceId($payload['lead_source'] ?? null),
             'lead_channel_id'      => $this->mapLeadChannelId($payload['kanaal_c'] ?? null),
@@ -225,10 +227,16 @@ class InboundLeadPayloadMapper
         return $s === '' ? null : $s;
     }
 
-    /**
-     * Normalize common Dutch phone inputs (eg "0612345678") to E.164 (eg "+31612345678").
-     * Keeps existing "+..." as-is (minus whitespace/punctuation).
-     */
+    private function normalizeEmail(mixed $value): ?string
+    {
+        $raw = $this->nullIfEmpty($value);
+        if ($raw === null) {
+            return null;
+        }
+
+        return EmailNormalizer::normalize($raw);
+    }
+
     private function normalizePhone(mixed $value): ?string
     {
         $raw = $this->nullIfEmpty($value);
@@ -236,32 +244,6 @@ class InboundLeadPayloadMapper
             return null;
         }
 
-        $raw = trim($raw);
-
-        // Preserve leading +, strip the rest to digits
-        if (str_starts_with($raw, '+')) {
-            $digits = preg_replace('/[^0-9]/', '', $raw);
-
-            return $digits ? ('+'.$digits) : null;
-        }
-
-        // Strip non-digits
-        $digits = preg_replace('/[^0-9]/', '', $raw);
-        if (! $digits) {
-            return null;
-        }
-
-        // Convert "06..." → "+316..."
-        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
-            return '+31'.substr($digits, 1);
-        }
-
-        // Convert "31..." → "+31..."
-        if (str_starts_with($digits, '31')) {
-            return '+'.$digits;
-        }
-
-        // Fallback: return as "+<digits>" to satisfy PhoneValidator formatting expectations.
-        return '+'.$digits;
+        return PhoneNormalizer::toE164($raw);
     }
 }

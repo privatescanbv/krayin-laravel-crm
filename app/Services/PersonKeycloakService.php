@@ -85,8 +85,10 @@ class PersonKeycloakService
         if (in_array('emails', $changedFields, true)) {
             $email = $this->getPrimaryEmail($person);
             if ($email) {
-                $userData['email'] = $email;
-                $userData['username'] = $email;
+//                $userData['email'] = $email;
+//                $userData['username'] = $email;
+//                TODO https://trello.com/c/85uqm50P/199-crm-patientportaal-e-mail-wijzigen?filter=member%3Amarkbulthuis
+                Log::warning('Ignore changing email or username, keycloak does not accept is this way.');
             }
         }
 
@@ -108,6 +110,7 @@ class PersonKeycloakService
             return ['success' => true];
         }
 
+        Log::info('Updating keycloak account for person', ['person_id' => $person->id, 'keycloak_user_id' => $person->keycloak_user_id]);
         return $this->updateKeycloakUserAction->execute(
             $person->keycloak_user_id,
             $userData,

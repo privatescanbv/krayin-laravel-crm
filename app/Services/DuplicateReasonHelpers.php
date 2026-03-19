@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Helpers\ValueNormalizer;
+use App\Support\EmailNormalizer;
+use App\Support\PhoneNormalizer;
 
 trait DuplicateReasonHelpers
 {
@@ -35,19 +37,6 @@ trait DuplicateReasonHelpers
         }
 
         return array_values(array_unique($values));
-    }
-
-    /**
-     * Normalize phone number for comparison.
-     */
-    private function normalizePhone(string $phone): string
-    {
-        $digits = preg_replace('/[^0-9]/', '', $phone);
-        if (str_starts_with($digits, '31') && strlen($digits) >= 10) {
-            $digits = '0'.substr($digits, 2);
-        }
-
-        return $digits;
     }
 
     private function getNameVariations(string $name): array
@@ -100,12 +89,12 @@ trait DuplicateReasonHelpers
         $dupPhones = $this->extractValues($dup['phones'] ?? []);
 
         $emailMatches = array_values(array_intersect(
-            array_map('strtolower', $primaryEmails),
-            array_map('strtolower', $dupEmails)
+            array_map([EmailNormalizer::class, 'normalize'], $primaryEmails),
+            array_map([EmailNormalizer::class, 'normalize'], $dupEmails)
         ));
 
-        $pPhonesNorm = array_map(fn ($p) => $this->normalizePhone($p), $primaryPhones);
-        $dPhonesNorm = array_map(fn ($p) => $this->normalizePhone($p), $dupPhones);
+        $pPhonesNorm = array_map(fn ($p) => PhoneNormalizer::toDutchLocal($p), $primaryPhones);
+        $dPhonesNorm = array_map(fn ($p) => PhoneNormalizer::toDutchLocal($p), $dupPhones);
         $phoneMatches = array_values(array_filter($pPhonesNorm, fn ($p) => in_array($p, $dPhonesNorm, true)));
 
         // Name reason

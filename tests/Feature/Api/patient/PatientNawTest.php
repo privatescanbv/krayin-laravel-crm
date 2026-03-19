@@ -384,3 +384,83 @@ it('returns 422 for an invalid email label', function () {
     $response->assertUnprocessable();
     $response->assertJsonValidationErrors(['emails.0.label']);
 });
+
+it('returns 422 when creating address without house_number', function () {
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/naw", [
+            'address' => [
+                'street'      => 'Kerkstraat',
+                'postal_code' => '5678CD',
+                'city'        => 'Utrecht',
+            ],
+        ]);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors(['address.house_number']);
+});
+
+it('returns 422 when creating address without postal_code', function () {
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/naw", [
+            'address' => [
+                'street'       => 'Kerkstraat',
+                'house_number' => '5',
+                'city'         => 'Utrecht',
+            ],
+        ]);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors(['address.postal_code']);
+});
+
+it('allows updating existing address without house_number', function () {
+    $keycloakUserId = (string) Str::uuid();
+    $address = Address::factory()->create([
+        'house_number' => '10',
+        'postal_code'  => '1234AB',
+        'city'         => 'Rotterdam',
+    ]);
+    Person::factory()->create([
+        'keycloak_user_id' => $keycloakUserId,
+        'address_id'       => $address->id,
+    ]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/naw", [
+            'address' => [
+                'city' => 'Den Haag',
+            ],
+        ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('address.city', 'Den Haag');
+    expect($address->fresh()->house_number)->toBe('10');
+});
+
+it('normalizes email to lowercase', function () {
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $response = $this
+        ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->putJson("/api/patient/{$keycloakUserId}/naw", [
+            'emails' => [
+                ['value' => 'UPPER@EXAMPLE.COM', 'label' => 'eigen', 'is_default' => true],
+            ],
+        ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('emails.0.value', 'upper@example.com');
+
+    $person->refresh();
+    expect($person->emails[0]['value'])->toBe('upper@example.com');
+});

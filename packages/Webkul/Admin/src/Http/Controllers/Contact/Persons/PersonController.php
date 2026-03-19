@@ -3,6 +3,8 @@
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Actions\Persons\CreatePortalAccountAction;
+use App\Support\EmailNormalizer;
+use App\Support\PhoneNormalizer;
 use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
@@ -897,10 +899,10 @@ class PersonController extends Controller
         $emailPerson = $this->extractEmails($person);
         $emailMatched = false;
         if (!empty($emailLead)) {
-            $set = array_map('strtolower', $emailPerson);
+            $set = array_map([EmailNormalizer::class, 'normalize'], $emailPerson);
             $emailMatched = true;
             foreach ($emailLead as $e) {
-                if (!in_array(strtolower($e), $set, true)) {
+                if (!in_array(EmailNormalizer::normalize($e), $set, true)) {
                     $emailMatched = false; break;
                 }
             }
@@ -910,12 +912,12 @@ class PersonController extends Controller
         // Phone subset match (normalized)
         $phoneLead = $this->extractPhones($lead);
         $phonePerson = $this->extractPhones($person);
-        $normalizedPersonPhones = array_map(fn($p) => $this->normalizePhoneNumber($p), $phonePerson);
+        $normalizedPersonPhones = array_map(fn($p) => PhoneNormalizer::toDutchLocal($p), $phonePerson);
         $phoneMatched = false;
         if (!empty($phoneLead)) {
             $phoneMatched = true;
             foreach ($phoneLead as $p) {
-                if (!in_array($this->normalizePhoneNumber($p), $normalizedPersonPhones, true)) {
+                if (!in_array(PhoneNormalizer::toDutchLocal($p), $normalizedPersonPhones, true)) {
                     $phoneMatched = false; break;
                 }
             }
@@ -1010,22 +1012,6 @@ class PersonController extends Controller
         }
 
         return array_filter($phones);
-    }
-
-    /**
-     * Normalize phone number for comparison.
-     */
-    private function normalizePhoneNumber(string $phone): string
-    {
-        // Remove all non-numeric characters
-        $normalized = preg_replace('/[^0-9]/', '', $phone);
-
-        // Handle Dutch phone numbers - convert +31 to 0
-        if (str_starts_with($normalized, '31') && strlen($normalized) >= 10) {
-            $normalized = '0' . substr($normalized, 2);
-        }
-
-        return $normalized;
     }
 
     /**
@@ -1233,7 +1219,7 @@ class PersonController extends Controller
             }
         }
 
-        $existingValues = array_map(fn($i) => strtolower($i['value']), $normalizedPerson);
+        $existingValues = array_map(fn($i) => EmailNormalizer::normalize($i['value']) ?? strtolower($i['value']), $normalizedPerson);
 
         $addedAny = false;
         foreach ($leadContacts as $item) {
@@ -1246,13 +1232,13 @@ class PersonController extends Controller
             if ($value === null || $value === '') {
                 continue;
             }
-            if (!in_array(strtolower($value), $existingValues, true)) {
+            if (!in_array(EmailNormalizer::normalize($value) ?? strtolower($value), $existingValues, true)) {
                 $normalizedPerson[] = [
                     'value' => $value,
                     'label' => ContactLabel::default()->value,
                     'is_default' => false, // set later
                 ];
-                $existingValues[] = strtolower($value);
+                $existingValues[] = EmailNormalizer::normalize($value) ?? strtolower($value);
                 $addedAny = true;
             }
         }

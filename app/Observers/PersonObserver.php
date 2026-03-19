@@ -93,10 +93,6 @@ class PersonObserver
             return;
         }
 
-        if (! $person->is_active || empty($person->keycloak_user_id)) {
-            return;
-        }
-
         $dirtyFields = array_keys($person->getDirty());
 
         if (empty($dirtyFields)) {
@@ -137,10 +133,6 @@ class PersonObserver
 
     protected function updatePortalAccount(Person $person, array $changedFields): void
     {
-        if (! $this->isKeycloakConfigured()) {
-            return;
-        }
-
         $result = $this->personKeycloakService->update($person, $changedFields);
 
         if (! $result['success']) {
@@ -192,20 +184,17 @@ class PersonObserver
         ]);
     }
 
+    /**
+     * @param Person $person
+     * @return bool true if sync portal is required
+     */
     protected function shouldManagePortal(Person $person): bool
     {
-        if (! $this->isKeycloakConfigured()) {
-            return false;
-        }
+       if (! $this->isKeycloakConfigured()) {
+           return false;
+       }
 
-        // A default email is required for creating/updating profile details, but for
-        // password-only updates we can still sync to Keycloak as long as a portal
-        // account exists.
-        if (! empty($person->keycloak_user_id)) {
-            return true;
-        }
-
-        return ! empty($person->findDefaultEmail());
+       return $person->is_active && ! empty($person->keycloak_user_id) && ! empty($person->findDefaultEmail());
     }
 
     protected function isKeycloakConfigured(): bool

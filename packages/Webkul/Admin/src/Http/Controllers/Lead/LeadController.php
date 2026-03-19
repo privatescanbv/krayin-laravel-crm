@@ -1358,16 +1358,6 @@ class LeadController extends Controller
     }
 
     /**
-     * Normalize contact arrays to ensure proper data types
-     * @deprecated Use normalizeContactFields() from NormalizesContactFields trait instead
-     */
-    private function normalizeContactArrays($request)
-    {
-        // Replaced by normalizeContactFields() from trait
-        $this->normalizeContactFields($request);
-    }
-
-    /**
      * Detach person from lead.
      */
     public function detachPerson(int $leadId, int $personId)
@@ -1555,68 +1545,6 @@ class LeadController extends Controller
             ]);
             return false;
         }
-    }
-
-    /**
-     * Normalize phone number for comparison.
-     * This is a copy of the method from PersonController to avoid circular dependencies.
-     */
-    private function normalizePhoneNumber(string $phone): string
-    {
-        // Remove all non-numeric characters
-        $normalized = preg_replace('/[^0-9]/', '', $phone);
-
-        // Handle Dutch phone numbers - convert +31 to 0
-        if (str_starts_with($normalized, '31') && strlen($normalized) >= 10) {
-            $normalized = '0' . substr($normalized, 2);
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * Format date for comparison, handling invalid dates.
-     * This is a copy of the method from PersonController to avoid circular dependencies.
-     */
-    private function formatDateForComparison($date): ?string
-    {
-        if (empty($date)) {
-            return null;
-        }
-
-        try {
-            // Check if it's a valid Carbon instance
-            if ($date instanceof \Carbon\Carbon) {
-                // Check for invalid dates (like -0001-11-30 or 0000-00-00)
-                if ($date->year <= 0 || $date->year > 2100) {
-                    return null;
-                }
-                return $date->format('Y-m-d');
-            }
-
-            // If it's a string, try to parse it
-            if (is_string($date)) {
-                // Skip obviously invalid dates
-                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || strpos($date, '-0001') === 0) {
-                    return null;
-                }
-
-                $carbonDate = \Carbon\Carbon::parse($date);
-                if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
-                    return null;
-                }
-                return $carbonDate->format('Y-m-d');
-            }
-        } catch (Exception $e) {
-            logger()->error('Error parsing date for comparison', [
-                'date' => $date,
-                'error' => $e->getMessage()
-            ]);
-            // If parsing fails, treat as null
-            return null;
-        }
-
-        return null;
     }
 
     /**

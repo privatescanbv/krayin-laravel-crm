@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Enums\ContactLabel;
+use App\Support\EmailNormalizer;
+use App\Support\PhoneNormalizer;
 use Illuminate\Http\Request;
 
 trait NormalizesContactFields
@@ -78,7 +80,14 @@ trait NormalizesContactFields
     {
         // First normalize each email
         $emails = array_map(function ($email) {
-            return $this->normalizeContactItem($email);
+            $email = $this->normalizeContactItem($email);
+
+            // Normalize email value to lowercase
+            if (isset($email['value']) && trim($email['value']) !== '') {
+                $email['value'] = EmailNormalizer::normalize(trim($email['value'])) ?? $email['value'];
+            }
+
+            return $email;
         }, $emails);
 
         // Filter out empty values
@@ -108,13 +117,20 @@ trait NormalizesContactFields
     }
 
     /**
-     * Normalize phones array: filter empty, normalize is_default, set default label
+     * Normalize phones array: filter empty, normalize is_default, set default label, convert to E.164
      */
     protected function normalizePhonesArray(array $phones): ?array
     {
         // First normalize each phone
         $phones = array_map(function ($phone) {
-            return $this->normalizeContactItem($phone);
+            $phone = $this->normalizeContactItem($phone);
+
+            // Normalize phone value to E.164 format
+            if (isset($phone['value']) && trim($phone['value']) !== '') {
+                $phone['value'] = PhoneNormalizer::toE164(trim($phone['value'])) ?? $phone['value'];
+            }
+
+            return $phone;
         }, $phones);
 
         // Filter out empty values

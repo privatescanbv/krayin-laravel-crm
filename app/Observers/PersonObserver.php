@@ -118,7 +118,7 @@ class PersonObserver
 
     protected function handlePortalDeactivationOnUpdate(Person $person): void
     {
-        if (! $this->shouldManagePortal($person)) {
+        if (! $this->isKeycloakConfigured()) {
             return;
         }
 
@@ -194,7 +194,7 @@ class PersonObserver
            return false;
        }
 
-       return $person->is_active && ! empty($person->keycloak_user_id) && ! empty($person->findDefaultEmail());
+       return empty($person->keycloak_user_id) && ! empty($person->findDefaultEmail());
     }
 
     protected function isKeycloakConfigured(): bool

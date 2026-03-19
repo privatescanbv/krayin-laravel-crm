@@ -37,7 +37,8 @@
       "WebFetch(domain:node-blot-58802943.figma.site)",
       "Bash(npx playwright:*)",
       "Bash(docker-compose logs:*)",
-      "Bash(docker-compose:*)"
+      "Bash(docker-compose:*)",
+      "Bash(claude mcp:*)"
     ]
   }
 }

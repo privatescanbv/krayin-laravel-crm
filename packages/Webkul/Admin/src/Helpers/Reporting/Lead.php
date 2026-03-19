@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Helpers\Reporting;
 
+use App\Enums\Departments;
 use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\StageRepository;
@@ -237,15 +238,15 @@ class Lead extends AbstractReporting
     public function getLeadsByDepartmentAndStatus()
     {
         return [
-            'herniapoli' => [
-                'won' => $this->getWonLeadsByDepartmentName('Herniapoli'),
-                'lost' => $this->getLostLeadsByDepartmentName('Herniapoli'),
-                'total' => $this->getTotalLeadsByDepartmentName('Herniapoli'),
+            Departments::HERNIA->value => [
+                'won' => $this->getWonLeadsByDepartmentName(Departments::HERNIA->value),
+                'lost' => $this->getLostLeadsByDepartmentName(Departments::HERNIA->value),
+                'total' => $this->getTotalLeadsByDepartmentName(Departments::HERNIA->value),
             ],
-            'privatescan' => [
-                'won' => $this->getWonLeadsByDepartmentName('Privatescan'),
-                'lost' => $this->getLostLeadsByDepartmentName('Privatescan'),
-                'total' => $this->getTotalLeadsByDepartmentName('Privatescan'),
+            Departments::PRIVATESCAN->value => [
+                'won' => $this->getWonLeadsByDepartmentName(Departments::PRIVATESCAN->value),
+                'lost' => $this->getLostLeadsByDepartmentName(Departments::PRIVATESCAN->value),
+                'total' => $this->getTotalLeadsByDepartmentName(Departments::PRIVATESCAN->value),
             ],
         ];
     }

@@ -17,27 +17,4 @@ enum FormType: string
         return self::tryFrom($value ?? '') ?? self::PrivateScan;
     }
 
-    public function layout(): string
-    {
-        return match ($this) {
-            self::PrivateScan => 'layouts.app',
-            self::HerniaPoli  => 'layouts.herniapoli',
-        };
-    }
-
-    public function brandName(): string
-    {
-        return match ($this) {
-            self::PrivateScan => 'PrivateScan',
-            self::HerniaPoli  => 'Herniapoli',
-        };
-    }
-
-    public function supportEmail(): string
-    {
-        return match ($this) {
-            self::PrivateScan => 'info@privatescan.nl',
-            self::HerniaPoli  => 'info@herniapoli.nl',
-        };
-    }
 }

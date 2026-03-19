@@ -8,6 +8,7 @@ use App\Http\Requests\Api\HerniaCreateLeadRequest;
 use App\Http\Requests\Api\PrivatescanCreateLeadRequest;
 use App\Models\Department;
 use App\Services\InboundLeads\InboundLeadPayloadMapper;
+use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -194,7 +195,7 @@ class LeadController extends Controller
                 if (isset($rules['first_name']) && is_array($rules['first_name'])) {
                     $rules['first_name'] = array_values(array_filter(
                         $rules['first_name'],
-                        static fn ($rule) => ! ($rule instanceof \Closure)
+                        static fn ($rule) => ! ($rule instanceof Closure)
                     ));
                 }
             }

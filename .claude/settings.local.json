@@ -41,7 +41,10 @@
       "Bash(claude mcp:*)",
       "mcp__laravel-boost__list-routes",
       "mcp__plugin_playwright_playwright__*",
-      "mcp__laravel-boost__tinker"
+      "mcp__laravel-boost__tinker",
+      "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/packages/Webkul/Lead/src/Models/Channel.php)",
+      "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/packages/Webkul/Lead/src/Models/Source.php)",
+      "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/app/Models/Department.php)"
     ]
   }
 }

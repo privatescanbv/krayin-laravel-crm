@@ -417,7 +417,7 @@ $salutationToGenderMapping = [
                                     @include('admin::leads.common.sections.channel-to-owner', [
                                         'entity' => null,
                                         'defaults' => [
-                                            'department_id' => $userDefaults['department_id'] ?? $defaultDepartmentId ?? '',
+                                            'department_id' => $userDefaults['lead_department_id'] ?? $defaultDepartmentId ?? '',
                                             'lead_channel_id' => $userDefaults['lead_channel_id'] ?? '1',
                                             'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
                                             'lead_type_id' => $userDefaults['lead_type_id'] ?? 1,
@@ -515,7 +515,7 @@ $salutationToGenderMapping = [
                             description: '',
                             lead_channel_id: this.userDefaults.lead_channel_id || '1', // Default: Telefoon
                             lead_source_id: this.userDefaults.lead_source_id || 32, // Default: Anders
-                            department_id: this.userDefaults.department_id || '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
+                            lead_department_id: this.userDefaults.lead_department_id || '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
                             lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
                             lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
                             mri_status: this.userDefaults.mri_status || '',

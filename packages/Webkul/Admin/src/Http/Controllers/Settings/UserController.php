@@ -61,7 +61,10 @@ class UserController extends Controller
         $roles  = $this->roleRepository->all();
         $groups = $this->groupRepository->all();
 
-        return view('admin::settings.users.create', compact('roles', 'groups'));
+        return view('admin::settings.users.create', array_merge(
+            compact('roles', 'groups'),
+            $this->getDefaultValueOptions()
+        ));
     }
 
     /**
@@ -69,8 +72,10 @@ class UserController extends Controller
      */
     public function store(): View|JsonResponse | RedirectResponse
     {
+        $this->nullifyEmptyUserDefaultValues();
+
         try {
-             $this->validate(request(), $this->getRequestValidationRules());
+             $this->validate(request(), $this->getRequestValidationRules(), [], $this->getRequestValidationAttributes());
         } catch (ValidationException $e) {
             // For web requests, redirect back with errors so tests can assert 302 + session errors
             if (! request()->expectsJson() && ! request()->ajax()) {
@@ -181,12 +186,15 @@ class UserController extends Controller
         $roles  = $this->roleRepository->all();
         $groups = $this->groupRepository->all();
 
-        return view('admin::settings.users.edit', [
-            'user'        => $admin,
-            'roles'       => $roles,
-            'groups'      => $groups,
-            'settingsMap' => $settingsMap,
-        ]);
+        return view('admin::settings.users.edit', array_merge(
+            [
+                'user'        => $admin,
+                'roles'       => $roles,
+                'groups'      => $groups,
+                'settingsMap' => $settingsMap,
+            ],
+            $this->getDefaultValueOptions()
+        ));
     }
 
     /**
@@ -194,8 +202,10 @@ class UserController extends Controller
      */
     public function update(int $id): View|JsonResponse|RedirectResponse
     {
+        $this->nullifyEmptyUserDefaultValues();
+
         try {
-            $this->validate(request(), $this->getRequestValidationRules($id));
+            $this->validate(request(), $this->getRequestValidationRules($id), [], $this->getRequestValidationAttributes());
         } catch (ValidationException $e) {
             // For web requests, redirect back with errors so tests can assert 302 + session errors
             if (! request()->expectsJson() && ! request()->ajax()) {
@@ -384,6 +394,42 @@ class UserController extends Controller
         ]);
     }
 
+    private function getDefaultValueOptions(): array
+    {
+        return [
+            'departments' => DepartmentModel::orderBy('name')->pluck('name', 'id'),
+            'leadTypes'   => LeadType::orderBy('name')->pluck('name', 'id'),
+            'channels'    => Channel::orderBy('name')->pluck('name', 'id'),
+            'sources'     => Source::orderBy('name')->pluck('name', 'id'),
+        ];
+    }
+
+    private function nullifyEmptyUserDefaultValues(): void
+    {
+        $values = request('user_default_values', []);
+
+        if (is_array($values)) {
+            $sanitized = array_map(fn ($v) => ($v === '' ? null : $v), $values);
+            request()->merge(['user_default_values' => $sanitized]);
+        }
+    }
+
+    private function getRequestValidationAttributes(): array
+    {
+        return [
+            'first_name'                                   => 'voornaam',
+            'last_name'                                    => 'achternaam',
+            'email'                                        => 'e-mailadres',
+            'password'                                     => 'wachtwoord',
+            'password_confirmation'                        => 'wachtwoordbevestiging',
+            'role_id'                                      => 'rol',
+            'user_default_values.lead.department_id'      => 'standaard afdeling',
+            'user_default_values.lead.type_id'            => 'standaard type',
+            'user_default_values.lead.lead_channel_id'    => 'standaard kanaal',
+            'user_default_values.lead.lead_source_id'     => 'standaard bron',
+        ];
+    }
+
     private function getRequestValidationRules(?int $userId = null): array {
 
         return [
@@ -397,23 +443,22 @@ class UserController extends Controller
             'groups'           => 'nullable|array',
             'groups.*'         => 'nullable|integer|exists:groups,id',
             'groups.*.id'      => 'nullable|integer|exists:groups,id',
-            // Support both nested and dotted key forms for department default
             'user_default_values.lead\\.department_id' => [
                 'nullable',
                 'integer',
                 Rule::in([DepartmentModel::findHerniaId(), DepartmentModel::findPrivateScanId()]),
             ],
-            'user_default_values.lead\\.type_id' =>  [
+            'user_default_values.lead\\.type_id' => [
                 'nullable',
                 'integer',
                 Rule::exists(LeadType::class, 'id'),
             ],
-            'user_default_values.lead\\.lead_channel_id' =>  [
+            'user_default_values.lead\\.lead_channel_id' => [
                 'nullable',
                 'integer',
                 Rule::exists(Channel::class, 'id'),
             ],
-            'user_default_values.lead\\.lead_source_id' =>  [
+            'user_default_values.lead\\.lead_source_id' => [
                 'nullable',
                 'integer',
                 Rule::exists(Source::class, 'id'),

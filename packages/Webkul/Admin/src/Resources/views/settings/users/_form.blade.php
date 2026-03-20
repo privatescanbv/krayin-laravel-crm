@@ -181,48 +181,63 @@
                 name="status"
                 id="status"
                 value="1"
-                :label="trans('admin::app.settings.users.index.create.status')"
+                label="Actief"
                 :checked="(bool) old('is_active', $user->status ?? true)"
             />
 
             <!-- User Default Field Values -->
             <div class="mt-2 rounded border border-gray-200 p-4 dark:border-gray-800">
                 <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Default veld waarden
+                    Standaard waardes voor leads
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <x-adminc::components.field
-                        type="text"
-                        name="user_default_values[lead.department_id]"
-                        :label="'lead.department_id'"
-                        value="{{ old('user_default_values.lead\.department_id', $settingsMap['lead.department_id'] ?? '') }}"
-                        :placeholder="'2'"
-                    />
+                    @php
+                        $selectedDept    = old('user_default_values.lead\.lead_department_id',   $settingsMap['lead.lead_department_id']    ?? '');
+                        $selectedChannel = old('user_default_values.lead\.lead_channel_id', $settingsMap['lead.lead_channel_id']  ?? '');
+                        $selectedSource  = old('user_default_values.lead\.lead_source_id',  $settingsMap['lead.lead_source_id']   ?? '');
+                        $selectedType    = old('user_default_values.lead\.lead_type_id',         $settingsMap['lead.lead_type_id']          ?? '');
+                    @endphp
 
-                    <x-adminc::components.field
-                        type="text"
-                        name="user_default_values[lead.lead_channel_id]"
-                        :label="'lead.lead_channel_id'"
-                        value="{{ old('user_default_values.lead\.lead_channel_id', $settingsMap['lead.lead_channel_id'] ?? '') }}"
-                        :placeholder="'1'"
-                    />
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Afdeling</label>
+                        <select name="user_default_values[lead.lead_department_id]" class="custom-select">
+                            <option value="">— geen standaard —</option>
+                            @foreach ($departments as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $selectedDept === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                    <x-adminc::components.field
-                        type="text"
-                        name="user_default_values[lead.lead_source_id]"
-                        :label="'lead.lead_source_id'"
-                        value="{{ old('user_default_values.lead\.lead_source_id', $settingsMap['lead.lead_source_id'] ?? '') }}"
-                        :placeholder="'6'"
-                    />
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Kanaal</label>
+                        <select name="user_default_values[lead.lead_channel_id]" class="custom-select">
+                            <option value="">— geen standaard —</option>
+                            @foreach ($channels as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $selectedChannel === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                    <x-adminc::components.field
-                        type="text"
-                        name="user_default_values[lead.type_id]"
-                        :label="'lead.type_id'"
-                        value="{{ old('user_default_values.lead\.type_id', $settingsMap['lead.type_id'] ?? '') }}"
-                        :placeholder="'2'"
-                    />
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Bron</label>
+                        <select name="user_default_values[lead.lead_source_id]" class="custom-select">
+                            <option value="">— geen standaard —</option>
+                            @foreach ($sources as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $selectedSource === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
+                        <select name="user_default_values[lead.lead_type_id]" class="custom-select">
+                            <option value="">— geen standaard —</option>
+                            @foreach ($leadTypes as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $selectedType === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

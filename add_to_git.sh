@@ -3,6 +3,10 @@
 set -e
 
 DIRS="
+.claude
+.cursor
+.docker
+.github
 resources
 app
 database

@@ -13,7 +13,7 @@
             $dispatches = $clinic->afbDispatches->sortByDesc('created_at')->values();
         @endphp
 
-        @if($dispatches->isEmpty())
+        @if ($dispatches->isEmpty())
             <p class="text-sm text-gray-500 dark:text-gray-400">Nog geen AFB verzendingen geregistreerd voor deze kliniek.</p>
         @else
             <div class="overflow-x-auto">
@@ -29,7 +29,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach($dispatches as $dispatch)
+                    @foreach ($dispatches as $dispatch)
                         <tr class="align-top border-b border-gray-100 dark:border-gray-800">
                             <td class="px-2 py-2 whitespace-nowrap">
                                 {{ $dispatch->sent_at?->format('d-m-Y H:i') ?? $dispatch->created_at?->format('d-m-Y H:i') ?? '-' }}
@@ -38,7 +38,7 @@
                                 {{ $dispatch->type?->value ?? '-' }}
                             </td>
                             <td class="px-2 py-2">
-                                @if(($dispatch->status?->value ?? null) === 'success')
+                                @if (($dispatch->status?->value ?? null) === 'success')
                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
                                         success
                                     </span>
@@ -46,17 +46,17 @@
                                     <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
                                         failed
                                     </span>
-                                    @if($dispatch->error_message)
+                                    @if ($dispatch->error_message)
                                         <div class="mt-1 text-xs text-red-600">{{ $dispatch->error_message }}</div>
                                     @endif
                                 @endif
                             </td>
                             <td class="px-2 py-2">
-                                @if($dispatch->items->isEmpty())
+                                @if ($dispatch->items->isEmpty())
                                     -
                                 @else
                                     <ul class="space-y-1">
-                                        @foreach($dispatch->items as $item)
+                                        @foreach ($dispatch->items as $item)
                                             <li>
                                                 <a href="{{ route('admin.orders.view', $item->order_id) }}" class="text-brandColor hover:underline">
                                                     {{ $item->order?->order_number ?: '#'.$item->order_id }}
@@ -68,7 +68,7 @@
                                 @endif
                             </td>
                             <td class="px-2 py-2">
-                                @if($dispatch->email_id)
+                                @if ($dispatch->email_id)
                                     <a class="text-brandColor hover:underline"
                                        href="{{ route('admin.mail.view', ['id' => $dispatch->email_id, 'route' => 'sent']) }}">
                                         Bekijk mail
@@ -78,11 +78,11 @@
                                 @endif
                             </td>
                             <td class="px-2 py-2">
-                                @if($dispatch->items->isEmpty())
+                                @if ($dispatch->items->isEmpty())
                                     -
                                 @else
                                     <ul class="space-y-1">
-                                        @foreach($dispatch->items as $item)
+                                        @foreach ($dispatch->items as $item)
                                             <li>
                                                 <a class="text-brandColor hover:underline"
                                                    href="{{ route('admin.clinics.afb_dispatch_orders.download', ['id' => $clinic->id, 'dispatchOrderId' => $item->id]) }}">

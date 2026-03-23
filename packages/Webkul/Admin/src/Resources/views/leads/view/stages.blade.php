@@ -102,7 +102,7 @@
                 ref="stageUpdateForm"
             >
                 <form @submit="handleSubmit($event, handleFormSubmit)">
-                    <x-admin::modal ref="stageUpdateModal">
+                    <x-admin::modal ref="stageUpdateModal" @close="nextStage = null">
                         <x-slot:header>
                             {!! view_render_event('admin.leads.view.stages.form_controls.modal.header.before', ['lead' => $leadOrNull]) !!}
 
@@ -211,6 +211,23 @@
                     stageToggler: '',
 
                     currentUserId: {{ $currentUserId ? $currentUserId : 'null' }},
+                }
+            },
+
+            watch: {
+                nextStage(val) {
+                    if (val) {
+                        this._enterHandler = (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                this.$el.querySelector('form button[type="submit"]')?.click();
+                            }
+                        };
+                        document.addEventListener('keydown', this._enterHandler);
+                    } else if (this._enterHandler) {
+                        document.removeEventListener('keydown', this._enterHandler);
+                        this._enterHandler = null;
+                    }
                 }
             },
 

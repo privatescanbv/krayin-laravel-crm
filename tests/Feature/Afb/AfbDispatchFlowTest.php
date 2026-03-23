@@ -111,24 +111,25 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
         'to'           => $examAt->copy()->addMinutes(90),
     ]);
 
-    Anamnesis::factory()->create([
-        'sales_id'            => $salesLead->id,
-        'lead_id'             => $salesLead->lead_id,
-        'person_id'           => $person->id,
-        'claustrophobia'      => true,
-        'diabetes'            => false,
-        'metals'              => true,
-        'metals_notes'        => 'Schroef in knie',
-        'heart_surgery'       => false,
-        'implant'             => true,
-        'implant_notes'       => 'Heupprothese links',
-        'allergies'           => false,
-        'glaucoma'            => false,
-        'remarks'             => 'Nuchter',
-        'comment_clinic'      => 'Nekpijn links, voorzichtig positioneren.',
-    ]);
+    // attachPersons() already created a skeleton anamnesis via firstOrCreate; update it with test values.
+    Anamnesis::where('sales_id', $salesLead->id)
+        ->where('person_id', $person->id)
+        ->update([
+            'lead_id'        => $salesLead->lead_id,
+            'claustrophobia' => true,
+            'diabetes'       => false,
+            'metals'         => true,
+            'metals_notes'   => 'Schroef in knie',
+            'heart_surgery'  => false,
+            'implant'        => true,
+            'implant_notes'  => 'Heupprothese links',
+            'allergies'      => false,
+            'glaucoma'       => false,
+            'remarks'        => 'Nuchter',
+            'comment_clinic' => 'Nekpijn links, voorzichtig positioneren.',
+        ]);
 
-    return compact('clinic', 'order', 'person');
+    return ['clinic'=>$clinic, 'order'=>$order, 'person'=>$person];
 }
 
 test('afb generator maps crm fields into afb layout', function () {
@@ -205,14 +206,61 @@ test('dispatch service prevents duplicate send to same clinic', function () {
     expect(AfbDispatchOrder::query()
         ->where('clinic_id', $context['clinic']->id)
         ->where('order_id', $context['order']->id)
-        ->count())->toBe(1);
-
-    expect(Email::query()->where('clinic_id', $context['clinic']->id)->count())->toBe(1);
+        ->count())->toBe(1)
+        ->and(Email::query()->where('clinic_id', $context['clinic']->id)->count())->toBe(1);
 
     $context['order']->refresh();
     expect($context['order']->afb_sent_to_clinic_id)->toBe($context['clinic']->id);
 
     Mail::assertSent(EmailMailable::class, 1);
+});
+
+test('daily batch does not dispatch for clinic whose exam is later that week', function () {
+    Bus::fake();
+
+    $targetDate = now()->addDays(3)->setTime(10, 0);
+    $laterDate = now()->addDays(7)->setTime(10, 0);
+
+    $context = createOrderForClinic($targetDate);
+
+    $clinicB = Clinic::factory()->create();
+    $resource = Resource::factory()->create(['clinic_id' => $clinicB->id]);
+    $orderItem = $context['order']->orderItems()->first();
+
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => $laterDate,
+        'to'           => $laterDate->copy()->addMinutes(60),
+    ]);
+
+    $this->artisan('afb:send-daily --date='.$targetDate->toDateString())
+        ->assertExitCode(0);
+
+    Bus::assertDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->clinicId === $context['clinic']->id);
+    Bus::assertNotDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->clinicId === $clinicB->id);
+});
+
+test('adding next week clinic to order with imminent exam does not trigger immediate dispatch', function () {
+    Bus::fake();
+
+    $examSoon = now()->addHours(8);
+    $examLater = now()->addDays(7)->setTime(10, 0);
+
+    $context = createOrderForClinic($examSoon);
+
+    $clinicB = Clinic::factory()->create();
+    $resource = Resource::factory()->create(['clinic_id' => $clinicB->id]);
+    $orderItem = $context['order']->orderItems()->first();
+
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => $examLater,
+        'to'           => $examLater->copy()->addMinutes(60),
+    ]);
+
+    Bus::assertNotDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->clinicId === $clinicB->id);
 });
 
 test('clinic view contains afb verzendingen navigation', function () {

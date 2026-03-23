@@ -170,7 +170,7 @@
                 <th style="width: 16%;">Start</th>
                 <th>Omschrijving</th>
             </tr>
-            @forelse($afb['examinations'] as $exam)
+            @forelse ($afb['examinations'] as $exam)
                 <tr>
                     <td>{{ $exam['date'] }}</td>
                     <td>{{ $exam['appointment_time'] }}</td>

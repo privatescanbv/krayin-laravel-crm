@@ -105,6 +105,45 @@
         </div>
     </div>
 
+    <!-- AFB Status Card -->
+    @php
+        use App\Enums\AfbDispatchStatus;
+
+        $bookedClinics = $order->orderItems
+            ->flatMap(fn($item) => $item->resourceOrderItems)
+            ->map(fn($roi) => $roi->resource?->clinic)
+            ->filter()
+            ->unique('id');
+
+        $afbSentPerClinic = $order->afbDispatchOrders
+            ->filter(fn($ado) => $ado->dispatch?->status === AfbDispatchStatus::SUCCESS)
+            ->groupBy('clinic_id')
+            ->map(fn($records) => $records->sortByDesc('sent_at')->first());
+    @endphp
+
+    @if($bookedClinics->isNotEmpty())
+    <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">AFB status</h3>
+        <div class="space-y-2 text-sm">
+            @foreach($bookedClinics as $clinic)
+                @php $dispatch = $afbSentPerClinic->get($clinic->id); @endphp
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-gray-700 dark:text-gray-300">{{ $clinic->name }}</span>
+                    @if($dispatch)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            ✓ Verzonden {{ $dispatch->sent_at->format('d-m-Y H:i') }}
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                            Nog niet verzonden
+                        </span>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <!-- Sales Lead Card -->
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h4 class="mb-4 font-semibold text-gray-800 dark:text-white">

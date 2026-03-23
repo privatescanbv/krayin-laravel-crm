@@ -331,6 +331,9 @@ class OrderController extends SimpleEntityController
             'orderItems.person',
             'orderItems.purchasePrice',
             'orderItems.invoicePurchasePrice',
+            'orderItems.resourceOrderItems.resource.clinic',
+            'afbDispatchOrders.dispatch',
+            'afbDispatchOrders.clinic',
             'payments',
         ])->findOrFail($id);
 

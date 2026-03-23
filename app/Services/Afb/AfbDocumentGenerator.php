@@ -123,24 +123,24 @@ class AfbDocumentGenerator
                 'country'     => $address?->country ?: '-',
             ],
             'medical' => [
-                'height'            => $anamnesis?->height,
-                'weight'            => $anamnesis?->weight,
-                'claustrophobia'    => $this->formatBoolean($anamnesis?->claustrophobia),
-                'diabetes'          => $this->formatBoolean($anamnesis?->diabetes),
-                'diabetes_notes'    => $this->emptyToNull($anamnesis?->diabetes_notes),
-                'metals'            => $this->formatBoolean($anamnesis?->metals),
-                'metals_notes'      => $this->emptyToNull($anamnesis?->metals_notes),
-                'heart_surgery'     => $this->formatBoolean($anamnesis?->heart_surgery),
+                'height'              => $anamnesis?->height,
+                'weight'              => $anamnesis?->weight,
+                'claustrophobia'      => $this->formatBoolean($anamnesis?->claustrophobia),
+                'diabetes'            => $this->formatBoolean($anamnesis?->diabetes),
+                'diabetes_notes'      => $this->emptyToNull($anamnesis?->diabetes_notes),
+                'metals'              => $this->formatBoolean($anamnesis?->metals),
+                'metals_notes'        => $this->emptyToNull($anamnesis?->metals_notes),
+                'heart_surgery'       => $this->formatBoolean($anamnesis?->heart_surgery),
                 'heart_surgery_notes' => $this->emptyToNull($anamnesis?->heart_surgery_notes),
-                'implant'           => $this->formatBoolean($anamnesis?->implant),
-                'implant_notes'     => $this->emptyToNull($anamnesis?->implant_notes),
-                'allergies'         => $this->formatBoolean($anamnesis?->allergies),
-                'allergies_notes'   => $this->emptyToNull($anamnesis?->allergies_notes),
-                'contra_indication' => $this->formatBoolean($anamnesis?->glaucoma),
-                'contra_notes'      => $this->emptyToNull($anamnesis?->glaucoma_notes),
-                'remark'            => $this->emptyToNull($anamnesis?->remarks),
+                'implant'             => $this->formatBoolean($anamnesis?->implant),
+                'implant_notes'       => $this->emptyToNull($anamnesis?->implant_notes),
+                'allergies'           => $this->formatBoolean($anamnesis?->allergies),
+                'allergies_notes'     => $this->emptyToNull($anamnesis?->allergies_notes),
+                'contra_indication'   => $this->formatBoolean($anamnesis?->glaucoma),
+                'contra_notes'        => $this->emptyToNull($anamnesis?->glaucoma_notes),
+                'remark'              => $this->emptyToNull($anamnesis?->remarks),
             ],
-            'examinations' => $examinations->values()->all(),
+            'examinations'     => $examinations->values()->all(),
             'clinic_anamnesis' => $this->emptyToNull($anamnesis?->comment_clinic),
             'extra_info'       => $this->emptyToNull($order->salesLead?->description),
         ];
@@ -162,7 +162,7 @@ class AfbDocumentGenerator
             ->flatMap(function ($item) use ($clinicId) {
                 return $item->resourceOrderItems
                     ->filter(fn (ResourceOrderItem $resourceOrderItem) => (int) $resourceOrderItem->resource?->clinic_id === $clinicId)
-                    ->map(function (ResourceOrderItem $resourceOrderItem) use ($item) {
+                    ->map(function (ResourceOrderItem $resourceOrderItem) use ($item, $clinicId) {
                         $start = $resourceOrderItem->from
                             ? Carbon::parse($resourceOrderItem->from)
                             : Carbon::parse($item->order?->first_examination_at ?? now());

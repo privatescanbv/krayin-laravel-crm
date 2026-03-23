@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Throwable;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 
@@ -31,7 +32,7 @@ class AfbDispatchService
             ->join('order_items', 'order_items.order_id', '=', 'orders.id')
             ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')
             ->join('resources', 'resources.id', '=', 'resource_orderitem.resource_id')
-            ->whereDate('orders.first_examination_at', $date->toDateString())
+            ->whereDate('resource_orderitem.from', $date->toDateString())
             ->whereNotNull('resources.clinic_id')
             ->select('orders.id as order_id', 'resources.clinic_id')
             ->distinct()
@@ -146,30 +147,32 @@ class AfbDispatchService
 
             $this->crmMailService->sendEmail($email, EmailFolderEnum::SENT);
 
-            foreach ($generatedDocuments as $generatedDocument) {
-                AfbDispatchOrder::create([
-                    'afb_dispatch_id' => $dispatch->id,
-                    'order_id'        => $generatedDocument['order']->id,
-                    'clinic_id'       => $clinicId,
-                    'person_id'       => $generatedDocument['person_id'],
-                    'patient_name'    => $generatedDocument['patient_name'],
-                    'file_name'       => $generatedDocument['file_name'],
-                    'file_path'       => $generatedDocument['file_path'],
-                    'sent_at'         => now(),
-                ]);
+            DB::transaction(function () use ($generatedDocuments, $clinicId, $dispatch, $email, $type) {
+                foreach ($generatedDocuments as $generatedDocument) {
+                    AfbDispatchOrder::create([
+                        'afb_dispatch_id' => $dispatch->id,
+                        'order_id'        => $generatedDocument['order']->id,
+                        'clinic_id'       => $clinicId,
+                        'person_id'       => $generatedDocument['person_id'],
+                        'patient_name'    => $generatedDocument['patient_name'],
+                        'file_name'       => $generatedDocument['file_name'],
+                        'file_path'       => $generatedDocument['file_path'],
+                        'sent_at'         => now(),
+                    ]);
 
-                $generatedDocument['order']->update([
-                    'afb_sent_at'            => now(),
-                    'afb_sent_type'          => $type->value,
-                    'afb_sent_to_clinic_id'  => $clinicId,
-                ]);
-            }
+                    $generatedDocument['order']->update([
+                        'afb_sent_at'           => now(),
+                        'afb_sent_type'         => $type->value,
+                        'afb_sent_to_clinic_id' => $clinicId,
+                    ]);
+                }
 
-            $dispatch->update([
-                'email_id'  => $email->id,
-                'status'    => AfbDispatchStatus::SUCCESS->value,
-                'sent_at'   => now(),
-            ]);
+                $dispatch->update([
+                    'email_id' => $email->id,
+                    'status'   => AfbDispatchStatus::SUCCESS->value,
+                    'sent_at'  => now(),
+                ]);
+            });
 
             Log::info('AFB dispatch success', [
                 'clinic_id' => $clinicId,
@@ -178,7 +181,7 @@ class AfbDispatchService
                 'type'      => $type->value,
                 'status'    => AfbDispatchStatus::SUCCESS->value,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $dispatch->update([
                 'status'        => AfbDispatchStatus::FAILED->value,
                 'error_message' => $e->getMessage(),
@@ -201,13 +204,13 @@ class AfbDispatchService
 
     public function isAlreadySentToClinic(int $orderId, int $clinicId): bool
     {
-        $order = Order::query()->find($orderId);
+        $sentViaOrder = Order::query()
+            ->where('id', $orderId)
+            ->where('afb_sent_to_clinic_id', $clinicId)
+            ->whereNotNull('afb_sent_at')
+            ->exists();
 
-        if (
-            $order
-            && $order->afb_sent_at
-            && (int) $order->afb_sent_to_clinic_id === $clinicId
-        ) {
+        if ($sentViaOrder) {
             return true;
         }
 
@@ -258,11 +261,7 @@ class AfbDispatchService
         array $orderNumbers,
         int $attachmentCount
     ): Email {
-        $recipientEmails = $this->extractRecipientEmails($clinic);
-
-        if (empty($recipientEmails)) {
-            throw new RuntimeException('Kliniek heeft geen geldig emailadres voor AFB verzending.');
-        }
+        $recipientEmail = $clinic->findDefaultEmailOrError();
 
         $subject = sprintf(
             'AFB %s - %s (%d bijlage%s)',
@@ -282,37 +281,12 @@ class AfbDispatchService
         return $this->crmMailService->createEmail([
             'subject'   => $subject,
             'reply'     => $body,
-            'reply_to'  => $recipientEmails,
+            'reply_to'  => [$recipientEmail],
             'name'      => 'AFB verzending',
             'source'    => 'system',
             'user_type' => 'user',
             'clinic_id' => $clinic->id,
         ]);
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function extractRecipientEmails(Clinic $clinic): array
-    {
-        $emails = collect($clinic->emails ?? [])
-            ->map(function ($email) {
-                if (is_string($email)) {
-                    return trim($email);
-                }
-
-                if (is_array($email)) {
-                    return trim((string) ($email['value'] ?? ''));
-                }
-
-                return '';
-            })
-            ->filter(fn (string $email) => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL))
-            ->unique()
-            ->values()
-            ->all();
-
-        return $emails;
     }
 
     private function syncToMailDisk(string $path): void
@@ -323,8 +297,10 @@ class AfbDispatchService
 
         $localDisk = Storage::disk('local');
 
-        if ($localDisk->exists($path)) {
-            Storage::put($path, $localDisk->get($path));
+        if (! $localDisk->exists($path)) {
+            throw new RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
         }
+
+        Storage::put($path, $localDisk->get($path));
     }
 }

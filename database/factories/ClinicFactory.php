@@ -16,8 +16,8 @@ class ClinicFactory extends Factory
             'name'                     => $this->faker->unique()->company(),
             'website_url'              => $this->faker->url(),
             'order_confirmation_note'  => $this->faker->optional()->sentence(),
-            'emails'                   => [$this->faker->unique()->companyEmail()],
-            'phones'                   => [$this->faker->phoneNumber()],
+            'emails'                   => [['value' => $this->faker->unique()->companyEmail(), 'is_default' => true]],
+            'phones'                   => [['value' => $this->faker->phoneNumber(), 'is_default' => true]],
         ];
     }
 }

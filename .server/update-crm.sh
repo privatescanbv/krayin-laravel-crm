@@ -1,3 +1,3 @@
 #!/bin/bash
 # quick update crm, without updating env files etc
-docker compose up -d --pull always crm forms
+docker compose up -d --pull always forms

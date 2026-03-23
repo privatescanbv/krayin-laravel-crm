@@ -572,6 +572,7 @@
                             <button
                                 type="button"
                                 class="primary-button"
+                                ref="stageSubmitBtn"
                                 @click="handleStageDetailSubmit"
                             >
                                 Opslaan
@@ -636,6 +637,23 @@
                      */
                     currentPipelineId() {
                         return "{{ $pipelineId }}";
+                    }
+                },
+
+                watch: {
+                    currentStageUpdate(val) {
+                        if (val) {
+                            this._enterHandler = (e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    this.handleStageDetailSubmit();
+                                }
+                            };
+                            document.addEventListener('keydown', this._enterHandler);
+                        } else if (this._enterHandler) {
+                            document.removeEventListener('keydown', this._enterHandler);
+                            this._enterHandler = null;
+                        }
                     }
                 },
 

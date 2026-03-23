@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasAuditTrail;
+use App\Traits\HasDefaultContactInfo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +15,7 @@ use Webkul\Email\Models\Email;
  */
 class Clinic extends Model
 {
-    use HasAuditTrail, HasFactory;
+    use HasAuditTrail, HasDefaultContactInfo, HasFactory;
 
     protected $table = 'clinics';
 

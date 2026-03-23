@@ -44,7 +44,10 @@
       "mcp__laravel-boost__tinker",
       "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/packages/Webkul/Lead/src/Models/Channel.php)",
       "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/packages/Webkul/Lead/src/Models/Source.php)",
-      "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/app/Models/Department.php)"
+      "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/app/Models/Department.php)",
+      "mcp__laravel-boost__last-error",
+      "mcp__laravel-boost__read-log-entries",
+      "mcp__laravel-boost__get-config"
     ]
   }
 }

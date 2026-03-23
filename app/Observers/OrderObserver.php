@@ -6,6 +6,7 @@ use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\Afb\AfbDispatchService;
 use App\Services\OrderNumberGenerator;
 use App\Services\OrderStatusService;
 use Illuminate\Support\Facades\Event;
@@ -16,6 +17,7 @@ class OrderObserver
     public function __construct(
         private readonly OrderStatusService $orderStatusService,
         private readonly OrderNumberGenerator $orderNumberGenerator,
+        private readonly AfbDispatchService $afbDispatchService,
     ) {}
 
     public function creating(Order $order): void
@@ -30,6 +32,7 @@ class OrderObserver
     public function created(Order $order): void
     {
         Event::dispatch('order.update_stage.after', $order);
+        $this->afbDispatchService->queueLateBookingForOrder($order);
     }
 
     /**
@@ -48,6 +51,10 @@ class OrderObserver
             Log::info('Updating order items to WON for order '.$order->id);
             OrderItem::forOrderAndNotLostAndNew($order->id)
                 ->update(['status' => OrderItemStatus::WON->value]);
+        }
+
+        if ($order->wasChanged('first_examination_at')) {
+            $this->afbDispatchService->queueLateBookingForOrder($order);
         }
     }
 }

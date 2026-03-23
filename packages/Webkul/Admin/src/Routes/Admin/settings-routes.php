@@ -64,6 +64,8 @@ Route::prefix('settings')->group(function () {
         Route::get('edit/{id}', 'edit')->name('admin.clinics.edit');
         Route::put('edit/{id}', 'update')->name('admin.clinics.update');
         Route::get('search', 'search')->name('admin.clinics.search');
+        Route::get('{id}/afb-dispatch-orders/{dispatchOrderId}/download', 'downloadAfbDocument')
+            ->name('admin.clinics.afb_dispatch_orders.download');
         // Some datagrid actions may send DELETE to base path; support both
         Route::delete('', 'destroy')->name('admin.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.clinics.delete');

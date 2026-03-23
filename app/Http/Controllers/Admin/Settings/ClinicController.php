@@ -7,10 +7,12 @@ use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Http\Requests\Admin\Settings\StoreClinicRequest;
 use App\Http\Requests\Admin\Settings\UpdateClinicRequest;
 use App\Models\Address;
+use App\Models\AfbDispatchOrder;
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Webkul\Activity\Repositories\ActivityRepository;
 
@@ -80,6 +82,9 @@ class ClinicController extends SimpleEntityController
     {
         $clinic = $this->clinicRepository->with([
             'visitAddress', 'postalAddress', 'resources.resourceType', 'creator', 'updater',
+            'afbDispatches.email',
+            'afbDispatches.items.order.salesLead.persons',
+            'afbDispatches.items.person',
         ])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
 
@@ -87,6 +92,24 @@ class ClinicController extends SimpleEntityController
             'clinic'          => $clinic,
             'activitiesCount' => $activitiesCount,
         ]);
+    }
+
+    public function downloadAfbDocument(int $id, int $dispatchOrderId)
+    {
+        $clinic = $this->clinicRepository->findOrFail($id);
+
+        $dispatchOrder = AfbDispatchOrder::query()
+            ->where('clinic_id', $clinic->id)
+            ->findOrFail($dispatchOrderId);
+
+        if (! Storage::disk('local')->exists($dispatchOrder->file_path)) {
+            return redirect()->back()->with('error', 'AFB document niet gevonden op storage.');
+        }
+
+        return Storage::disk('local')->download(
+            $dispatchOrder->file_path,
+            $dispatchOrder->file_name
+        );
     }
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse

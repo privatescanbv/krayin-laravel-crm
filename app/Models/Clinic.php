@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 
@@ -82,6 +83,16 @@ class Clinic extends Model
     public function emails()
     {
         return $this->hasMany(Email::class);
+    }
+
+    public function afbDispatches(): HasMany
+    {
+        return $this->hasMany(AfbDispatch::class);
+    }
+
+    public function afbDispatchOrders(): HasMany
+    {
+        return $this->hasMany(AfbDispatchOrder::class);
     }
 
     public function label(): string

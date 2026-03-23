@@ -32,6 +32,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('patient:send-notification-email')
             ->dailyAt('08:00')
             ->withoutOverlapping();
+
+        // AFB: always send T-1 clinic batches once per day.
+        $schedule->command('afb:send-daily')
+            ->dailyAt('06:00')
+            ->withoutOverlapping();
     }
 
     /**

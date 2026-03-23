@@ -4,12 +4,16 @@ namespace App\Observers;
 
 use App\Enums\OrderItemStatus;
 use App\Models\ResourceOrderItem;
+use App\Services\Afb\AfbDispatchService;
 use App\Services\OrderStatusService;
 use Illuminate\Support\Facades\DB;
 
 class ResourceOrderItemObserver
 {
-    public function __construct(private readonly OrderStatusService $orderStatusService) {}
+    public function __construct(
+        private readonly OrderStatusService $orderStatusService,
+        private readonly AfbDispatchService $afbDispatchService
+    ) {}
 
     /**
      * Handle the ResourceOrderItem "created" event.
@@ -17,6 +21,11 @@ class ResourceOrderItemObserver
     public function created(ResourceOrderItem $resourceOrderItem): void
     {
         $this->updateOrderItemStatus($resourceOrderItem);
+
+        $order = $resourceOrderItem->orderItem?->order;
+        if ($order) {
+            $this->afbDispatchService->queueLateBookingForOrder($order);
+        }
     }
 
     /**

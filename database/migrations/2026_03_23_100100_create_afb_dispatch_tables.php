@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('afb_dispatches', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('clinic_id');
-            $table->unsignedBigInteger('email_id')->nullable();
+            $table->unsignedInteger('email_id')->nullable();
             $table->string('type', 20);
             $table->string('status', 20);
             $table->json('order_ids')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->unsignedBigInteger('afb_dispatch_id');
             $table->unsignedBigInteger('order_id');
             $table->unsignedBigInteger('clinic_id');
-            $table->unsignedBigInteger('person_id')->nullable();
+            $table->unsignedInteger('person_id')->nullable();
             $table->string('patient_name')->nullable();
             $table->string('file_name');
             $table->string('file_path');

@@ -315,7 +315,7 @@ enum PipelineStage: string
         self::ORDER_INGEPLAND->value => [
             'id'       => 31,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
-            'label'    => 'Ingepland',
+            'label'    => 'Ingepland, wacht op akkoord',
             'entity'   => EntityType::ORDER->value,
             'status'   => null,
         ],
@@ -323,7 +323,7 @@ enum PipelineStage: string
         self::ORDER_BEVESTIGD->value => [
             'id'       => 33,
             'pipeline' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
-            'label'    => 'Order akkoord?',
+            'label'    => 'Order akkoord',
             'entity'   => EntityType::ORDER->value,
             'status'   => null,
         ],

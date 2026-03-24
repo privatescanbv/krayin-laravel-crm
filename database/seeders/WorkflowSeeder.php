@@ -46,29 +46,32 @@ class WorkflowSeeder extends Seeder
 
         return match ($stage) {
             PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
-            PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA => [['Klant data bijwerken', $defaultDescription, ActivityType::TASK, 5]],
+            PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA => [['Klant data bijwerken', $defaultDescription, ActivityType::TASK, 1]],
             PipelineStage::KLANT_ADVISEREN_START,
-            PipelineStage::KLANT_ADVISEREN_START_HERNIA             => [['Nieuwe lead bellen', $defaultDescription, ActivityType::CALL, 3]],
+            PipelineStage::KLANT_ADVISEREN_START_HERNIA             => [['Nieuwe lead bellen', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::KLANT_ADVISEREN_OPVOLGEN                 => [],
             PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA          => [['MRI aanleveren', $defaultDescription, ActivityType::TASK, 5]],
             PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA    => [['Klant levert MRI beelden aan, verwerken', $defaultDescription, ActivityType::TASK, 5]],
             PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA        => [['Klant adviseren met MRI beelden', $defaultDescription, ActivityType::CALL, 5]],
             PipelineStage::SALES_DOC_COMPLETE_HERNIA                => [['4.1 consult met arts', $defaultDescription, ActivityType::TASK, 5]],
+            PipelineStage::SALES_IN_BEHANDELING                     => [['In behandeling', $defaultDescription, ActivityType::TASK, 30]],
             PipelineStage::SALES_MET_SUCCES_AFGEROND                => [['Test auto op sales entiteit', $defaultDescription, ActivityType::TASK, 5]],
+            PipelineStage::ORDER_CONFIRM                            => [['Order inplannen en versturen'], $defaultDescription, ActivityType::TASK, 1],
             PipelineStage::ORDER_INGEPLAND,
             PipelineStage::ORDER_INGEPLAND_HERNIA                  => [
-                ['Inplannen', $defaultDescription, ActivityType::TASK, 5],
+                ['Controle akkoord', $defaultDescription, ActivityType::TASK, 1],
             ],
             PipelineStage::ORDER_BEVESTIGD => [
-                ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK, 5],
-                ['GVL ontvangen?', $defaultDescription, ActivityType::TASK, 5],
-                ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK, 5],
+                ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK, 3],
+                ['GVL ontvangen?', $defaultDescription, ActivityType::TASK, 3],
+                ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK, 3],
             ],
             PipelineStage::ORDER_BEVESTIGD_HERNIA                  => [
                 ['Betaling ontvangen?', $defaultDescription, ActivityType::TASK, 5],
                 ['GVL ontvangen?', $defaultDescription, ActivityType::TASK, 5],
                 ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK, 5],
             ],
+            PipelineStage::ORDER_WACHTEN_UITVOERING                => [],
             PipelineStage::ORDER_UITGEVOERD => [
                 ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK, 5],
             ],
@@ -78,7 +81,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN,
             PipelineStage::ORDER_RAPPORTEN_ONTVANGEN_HERNIA => [
                 ['Laten vertalen', $defaultDescription, ActivityType::TASK, 5],
-                ['Versturen naar klant', $defaultDescription, ActivityType::TASK, 5],
+                ['Versturen naar klant', $defaultDescription, ActivityType::TASK, 10],
             ],
 
             default => [["Auto-activity: {$stage->name()}", $defaultDescription, ActivityType::TASK, 5]],

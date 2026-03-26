@@ -105,7 +105,7 @@
                                         type="checkbox"
                                         v-model="publishToPortal"
                                         @change="onPublishChange"
-                                        class="rounded border-gray-300"
+                                        class="h-4 w-4 shrink-0 rounded border-gray-300"
                                     />
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Publiceren in patiëntportaal

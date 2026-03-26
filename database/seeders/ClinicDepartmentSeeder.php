@@ -74,11 +74,13 @@ class ClinicDepartmentSeeder extends BaseSeeder
     protected function departmentsByClinicName(): array
     {
         return [
-            // Voorbeeld:
-            // 'Clinic Bel Etage' => [
-            //     ['name' => 'Standaard', 'description' => null, 'email' => null],
-            //     ['name' => 'Cardiologie', 'description' => null, 'email' => 'cardiologie@voorbeeld.nl'],
-            // ],
+            'Evidia - Augusta Klinik' => [
+                ['name' => 'Radiologie', 'MRI 1, MRI 2 en CT' => null, 'email' => 'kristina.gurock@evidia.de'],
+                ['name' => 'NTB', 'Nader te bepalen' => null, 'email' => 'kai.reiter@evidia.de'],
+            ],
+            'Ambulante Kardiologie Augusta' => [
+                ['name' => 'Cardiologie', 'Cardiologie' => null, 'email' => 'ambulanz@bochumer-herz.de'],
+            ],
         ];
     }
 

@@ -6,7 +6,7 @@ use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
-use App\Models\AfbDispatchOrder;
+use App\Models\AfbPersonDocument;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Services\Mail\CrmMailService;
@@ -104,7 +104,6 @@ class AfbDispatchService
             'clinic_department_id' => $departmentId,
             'type'                 => $type->value,
             'status'               => AfbDispatchStatus::FAILED->value,
-            'order_ids'            => $unsentOrders->pluck('id')->values()->all(),
             'attempt'              => max(1, $attempt),
             'last_attempt_at'      => now(),
         ]);
@@ -148,25 +147,16 @@ class AfbDispatchService
 
             $this->crmMailService->sendEmail($email, EmailFolderEnum::SENT);
 
-            DB::transaction(function () use ($generatedDocuments, $departmentId, $department, $dispatch, $email, $type) {
+            DB::transaction(function () use ($generatedDocuments, $dispatch, $email) {
                 foreach ($generatedDocuments as $generatedDocument) {
-                    AfbDispatchOrder::create([
-                        'afb_dispatch_id'      => $dispatch->id,
-                        'order_id'             => $generatedDocument['order']->id,
-                        'clinic_id'            => $department->clinic_id,
-                        'clinic_department_id' => $departmentId,
-                        'person_id'            => $generatedDocument['person_id'],
-                        'patient_name'         => $generatedDocument['patient_name'],
-                        'file_name'            => $generatedDocument['file_name'],
-                        'file_path'            => $generatedDocument['file_path'],
-                        'sent_at'              => now(),
-                    ]);
-
-                    $generatedDocument['order']->update([
-                        'afb_sent_at'                      => now(),
-                        'afb_sent_type'                    => $type->value,
-                        'afb_sent_to_clinic_id'            => $department->clinic_id,
-                        'afb_sent_to_clinic_department_id' => $departmentId,
+                    AfbPersonDocument::create([
+                        'afb_dispatch_id' => $dispatch->id,
+                        'order_id'        => $generatedDocument['order']->id,
+                        'person_id'       => $generatedDocument['person_id'],
+                        'patient_name'    => $generatedDocument['patient_name'],
+                        'file_name'       => $generatedDocument['file_name'],
+                        'file_path'       => $generatedDocument['file_path'],
+                        'sent_at'         => now(),
                     ]);
                 }
 
@@ -205,22 +195,16 @@ class AfbDispatchService
         return $dispatch->refresh();
     }
 
+    /**
+     * Whether a successful AFB was already sent for this order to this department.
+     */
     public function isAlreadySentToDepartment(int $orderId, int $departmentId): bool
     {
-        $sentViaOrder = Order::query()
-            ->where('id', $orderId)
-            ->where('afb_sent_to_clinic_department_id', $departmentId)
-            ->whereNotNull('afb_sent_at')
-            ->exists();
-
-        if ($sentViaOrder) {
-            return true;
-        }
-
-        return AfbDispatchOrder::query()
+        return AfbPersonDocument::query()
             ->where('order_id', $orderId)
-            ->where('clinic_department_id', $departmentId)
-            ->whereHas('dispatch', fn ($q) => $q->where('status', AfbDispatchStatus::SUCCESS->value))
+            ->whereHas('dispatch', fn ($q) => $q
+                ->where('clinic_department_id', $departmentId)
+                ->where('status', AfbDispatchStatus::SUCCESS->value))
             ->exists();
     }
 
@@ -268,8 +252,8 @@ class AfbDispatchService
         $clinic = $department->clinic;
 
         $subject = sprintf(
-            'AFB %s - %s (%d bijlage%s)',
-            $type === AfbDispatchType::BATCH ? 'batch' : 'individueel',
+            'AFB %s - %s (%d Anlage%s)',
+            $type === AfbDispatchType::BATCH ? 'Batch' : 'Individuell',
             $clinic->registration_form_clinic_name ?: $clinic->name,
             $attachmentCount,
             $attachmentCount === 1 ? '' : 'n'

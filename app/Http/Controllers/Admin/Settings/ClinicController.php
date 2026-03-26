@@ -7,7 +7,7 @@ use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Http\Requests\Admin\Settings\StoreClinicRequest;
 use App\Http\Requests\Admin\Settings\UpdateClinicRequest;
 use App\Models\Address;
-use App\Models\AfbDispatchOrder;
+use App\Models\AfbPersonDocument;
 use App\Repositories\ClinicRepository;
 use App\Services\ContactValidationRules;
 use Illuminate\Http\JsonResponse;
@@ -112,8 +112,8 @@ class ClinicController extends SimpleEntityController
             'visitAddress', 'postalAddress', 'resources.resourceType', 'resources.clinicDepartment', 'creator', 'updater',
             'afbDispatches.email',
             'afbDispatches.clinicDepartment',
-            'afbDispatches.items.order.salesLead.persons',
-            'afbDispatches.items.person',
+            'afbDispatches.personDocuments.order.salesLead.persons',
+            'afbDispatches.personDocuments.person',
             'departments',
         ])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
@@ -124,21 +124,21 @@ class ClinicController extends SimpleEntityController
         ]);
     }
 
-    public function downloadAfbDocument(int $id, int $dispatchOrderId)
+    public function downloadAfbDocument(int $id, int $personDocumentId)
     {
         $clinic = $this->clinicRepository->findOrFail($id);
 
-        $dispatchOrder = AfbDispatchOrder::query()
-            ->where('clinic_id', $clinic->id)
-            ->findOrFail($dispatchOrderId);
+        $document = AfbPersonDocument::query()
+            ->whereHas('dispatch', fn ($q) => $q->where('clinic_id', $clinic->id))
+            ->findOrFail($personDocumentId);
 
-        if (! Storage::disk('local')->exists($dispatchOrder->file_path)) {
+        if (! Storage::disk('local')->exists($document->file_path)) {
             return redirect()->back()->with('error', 'AFB document niet gevonden op storage.');
         }
 
         return Storage::disk('local')->download(
-            $dispatchOrder->file_path,
-            $dispatchOrder->file_name
+            $document->file_path,
+            $document->file_name
         );
     }
 

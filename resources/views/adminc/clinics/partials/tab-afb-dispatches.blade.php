@@ -39,7 +39,7 @@
                                 {{ $dispatch->type?->value ?? '-' }}
                             </td>
                             <td class="px-2 py-2">
-                                {{ $dispatch->clinicDepartment->name ?? '-' }}
+                                {{ $dispatch->clinicDepartment?->name ?? '-' }}
                             </td>
                             <td class="px-2 py-2">
                                 @if (($dispatch->status?->value ?? null) === 'success')
@@ -56,11 +56,11 @@
                                 @endif
                             </td>
                             <td class="px-2 py-2">
-                                @if ($dispatch->items->isEmpty())
+                                @if ($dispatch->personDocuments->isEmpty())
                                     -
                                 @else
                                     <ul class="space-y-1">
-                                        @foreach ($dispatch->items as $item)
+                                        @foreach ($dispatch->personDocuments as $item)
                                             <li>
                                                 <a href="{{ route('admin.orders.view', $item->order_id) }}" class="text-brandColor hover:underline">
                                                     {{ $item->order?->order_number ?: '#'.$item->order_id }}
@@ -82,14 +82,14 @@
                                 @endif
                             </td>
                             <td class="px-2 py-2">
-                                @if ($dispatch->items->isEmpty())
+                                @if ($dispatch->personDocuments->isEmpty())
                                     -
                                 @else
                                     <ul class="space-y-1">
-                                        @foreach ($dispatch->items as $item)
+                                        @foreach ($dispatch->personDocuments as $item)
                                             <li>
                                                 <a class="text-brandColor hover:underline"
-                                                   href="{{ route('admin.clinics.afb_dispatch_orders.download', ['id' => $clinic->id, 'dispatchOrderId' => $item->id]) }}">
+                                                   href="{{ route('admin.clinics.afb_person_documents.download', ['id' => $clinic->id, 'personDocumentId' => $item->id]) }}">
                                                     {{ $item->file_name }}
                                                 </a>
                                             </li>

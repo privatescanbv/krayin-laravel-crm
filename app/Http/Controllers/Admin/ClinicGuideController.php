@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AfbDispatchStatus;
 use App\Enums\PipelineStage;
 use App\Http\Controllers\Controller;
+use App\Models\AfbPersonDocument;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClinicGuideController extends Controller
 {
@@ -44,6 +49,11 @@ class ClinicGuideController extends Controller
                 },
                 'stage',
                 'user',
+                'afbPersonDocuments' => function ($query) {
+                    $query->whereHas('dispatch', function ($q) {
+                        $q->where('status', AfbDispatchStatus::SUCCESS->value);
+                    });
+                },
             ])
             ->orderBy('first_examination_at', 'asc')
             ->get();
@@ -77,13 +87,20 @@ class ClinicGuideController extends Controller
             $orderUrl = route('admin.orders.view', $order->id);
             $anamnesisRecords = $salesLead ? $salesLead->anamnesis : collect();
 
+            $afbByPerson = $order->afbPersonDocuments->groupBy('person_id');
+
             return $order->orderItems
                 ->groupBy('person_id')
-                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords) {
+                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords, $afbByPerson) {
                     $person = $items->first()->person;
                     $gvlFormLink = $anamnesisRecords
                         ->firstWhere('person_id', (int) $personId)
                         ?->gvl_form_link;
+
+                    $personAfb = $afbByPerson->get((int) $personId)?->sortByDesc('sent_at')->first();
+                    $afbPdfUrl = $personAfb
+                        ? route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $personAfb->id])
+                        : null;
 
                     return [
                         'order'         => $orderData,
@@ -98,6 +115,7 @@ class ClinicGuideController extends Controller
                             'emails'        => $person->emails ?? [],
                         ] : null,
                         'gvl_form_link' => $gvlFormLink,
+                        'afb_pdf_url'   => $afbPdfUrl,
                         'order_items'   => $items->map(fn ($item) => [
                             'product_name' => $item->product?->name,
                             'person_name'  => $item->person?->name,
@@ -113,6 +131,27 @@ class ClinicGuideController extends Controller
             'date'   => $date,
             'count'  => $data->count(),
             'orders' => $data->values(),
+        ]);
+    }
+
+    /**
+     * Serve stored AFB PDF inline so the browser opens it in the built-in PDF viewer (same file as e-mail attachment).
+     */
+    public function viewAfbPdf(int $personDocumentId): Response|StreamedResponse
+    {
+        $document = AfbPersonDocument::query()
+            ->whereHas('dispatch', fn ($q) => $q->where('status', AfbDispatchStatus::SUCCESS->value))
+            ->findOrFail($personDocumentId);
+
+        $disk = Storage::disk('local');
+
+        if (! $disk->exists($document->file_path)) {
+            abort(404, 'AFB-document niet gevonden.');
+        }
+
+        return $disk->response($document->file_path, $document->file_name, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$document->file_name.'"',
         ]);
     }
 }

@@ -4,7 +4,7 @@ use App\Enums\AfbDispatchType;
 use App\Enums\PersonSalutation;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\Address;
-use App\Models\AfbDispatchOrder;
+use App\Models\AfbPersonDocument;
 use App\Models\Anamnesis;
 use App\Models\Clinic;
 use App\Models\ClinicDepartment;
@@ -149,14 +149,14 @@ test('afb generator maps crm fields into afb layout', function () {
     $html = $rendered['html'];
 
     expect($html)
-        ->toContain('Aanvraagformulier Behandeling')
+        ->toContain('Anforderungsformular Behandlung')
         ->toContain('Evidia - Augusta Klinik')
         ->toContain('ORD-TEST-1001')
         ->toContain('Lara')
         ->toContain('Muller - de Boer')
         ->toContain('MRT HWS zonder KM')
         ->toContain('Ja')
-        ->toContain('Nee')
+        ->toContain('Nein')
         ->toContain('Schroef in knie')
         ->toContain('Nekpijn links, voorzichtig positioneren.')
         ->not->toContain('Kode')
@@ -212,16 +212,74 @@ test('dispatch service prevents duplicate send to same department', function () 
         attempt: 1
     );
 
-    expect(AfbDispatchOrder::query()
-        ->where('clinic_department_id', $context['department']->id)
+    expect(AfbPersonDocument::query()
+        ->whereHas('dispatch', fn ($q) => $q->where('clinic_department_id', $context['department']->id))
         ->where('order_id', $context['order']->id)
         ->count())->toBe(1)
         ->and(Email::query()->where('clinic_id', $context['clinic']->id)->count())->toBe(1);
 
-    $context['order']->refresh();
-    expect($context['order']->afb_sent_to_clinic_department_id)->toBe($context['department']->id);
+    expect(AfbPersonDocument::query()
+        ->where('order_id', $context['order']->id)
+        ->whereHas('dispatch', fn ($q) => $q->where('clinic_department_id', $context['department']->id))
+        ->exists())->toBeTrue();
 
     Mail::assertSent(EmailMailable::class, 1);
+});
+
+test('isAlreadySentToDepartment uses dispatch rows not order snapshot after second clinic', function () {
+    Mail::fake();
+
+    $examAt = now()->addDays(2)->setTime(11, 0);
+    $context = createOrderForClinic($examAt);
+
+    $clinicB = Clinic::factory()->create([
+        'name'                          => 'Kliniek B',
+        'registration_form_clinic_name' => 'Kliniek B',
+        'emails'                        => [['value' => 'b@example.com', 'is_default' => true]],
+    ]);
+    $departmentB = ClinicDepartment::factory()->create([
+        'clinic_id' => $clinicB->id,
+        'email'     => 'deptb@example.com',
+    ]);
+    $resourceB = Resource::factory()->create([
+        'clinic_id'            => $clinicB->id,
+        'clinic_department_id' => $departmentB->id,
+    ]);
+    $orderItem = $context['order']->orderItems()->first();
+    $partnerProduct = PartnerProduct::where('product_id', $orderItem->product_id)->first();
+    $partnerProduct->clinics()->syncWithoutDetaching([$clinicB->id]);
+
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $resourceB->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => $examAt->copy()->addDay(),
+        'to'           => $examAt->copy()->addDay()->addMinutes(60),
+    ]);
+
+    $service = app(AfbDispatchService::class);
+
+    $service->sendDispatch(
+        departmentId: $context['department']->id,
+        orderIds: [$context['order']->id],
+        type: AfbDispatchType::INDIVIDUAL,
+        attempt: 1
+    );
+
+    $service->sendDispatch(
+        departmentId: $departmentB->id,
+        orderIds: [$context['order']->id],
+        type: AfbDispatchType::INDIVIDUAL,
+        attempt: 1
+    );
+
+    expect($service->isAlreadySentToDepartment($context['order']->id, $context['department']->id))->toBeTrue()
+        ->and($service->isAlreadySentToDepartment($context['order']->id, $departmentB->id))->toBeTrue()
+        ->and(
+            AfbPersonDocument::query()
+                ->where('order_id', $context['order']->id)
+                ->whereHas('dispatch', fn ($q) => $q->where('clinic_department_id', $departmentB->id))
+                ->exists()
+        )->toBeTrue();
 });
 
 test('daily batch does not dispatch for department whose exam is later that week', function () {

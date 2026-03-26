@@ -97,7 +97,7 @@
                 <div v-if="!loading && orders.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     <div
                         v-for="item in orders"
-                        :key="item.order.id"
+                        :key="`${item.order.id}-${item.patient?.id ?? 'np'}`"
                         class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow overflow-hidden flex flex-col"
                     >
                         <!-- Time header -->
@@ -180,11 +180,15 @@
                             <!-- Links -->
                             <div>
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Links</p>
-                                <div class="flex items-center gap-1.5 text-sm">
-                                    <i class="icon-activity text-gray-400"></i>
-                                    <span class="text-gray-400">
+                                <div v-if="item.afb_pdf_url" class="flex items-center gap-1.5 text-sm">
+                                    <i class="icon-activity"></i>
+                                    <a :href="item.afb_pdf_url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">
                                         AFB formulier
-                                    </span>
+                                    </a>
+                                </div>
+                                <div v-else class="flex items-center gap-1.5 text-sm">
+                                    <i class="icon-activity text-gray-400"></i>
+                                    <span class="text-gray-400">AFB formulier (nog niet verzonden)</span>
                                 </div>
                                 <div v-if="item.gvl_form_link" class="flex items-center gap-1.5 text-sm">
                                     <i class="icon-activity"></i>

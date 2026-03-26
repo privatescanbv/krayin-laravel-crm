@@ -115,10 +115,10 @@
             ->filter()
             ->unique('id');
 
-        $afbSentPerClinic = $order->afbDispatchOrders
+        $afbSentPerClinic = $order->afbPersonDocuments
             ->filter(fn($ado) => $ado->dispatch?->status === AfbDispatchStatus::SUCCESS)
-            ->groupBy('clinic_id')
-            ->map(fn($records) => $records->sortByDesc('sent_at')->first());
+            ->groupBy(fn ($ado) => $ado->dispatch?->clinic_id)
+            ->map(fn ($records) => $records->sortByDesc('sent_at')->first());
     @endphp
 
     @if($bookedClinics->isNotEmpty())

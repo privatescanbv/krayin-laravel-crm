@@ -2,13 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AfbDispatchStatus;
+use App\Enums\AfbDispatchType;
 use App\Enums\PipelineStage;
+use App\Models\AfbDispatch;
+use App\Models\AfbPersonDocument;
+use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\SalesLead;
 use Carbon\Carbon;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
@@ -145,6 +151,92 @@ test('clinic guide get response contains expected fields', function () {
 
     // Order URL
     expect($orderData['order_url'])->toContain('orders/view');
+
+    expect($orderData['afb_pdf_url'])->toBeNull();
+});
+
+test('clinic guide get includes afb_pdf_url when AFB was sent successfully', function () {
+    Storage::fake('local');
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->attachPersons([$person->id]);
+
+    $targetDate = '2026-05-11';
+    $order = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at' => Carbon::parse($targetDate)->setHour(10)->setMinute(0),
+    ]);
+    createClinicLinkedOrderItem($order->id, $person->id);
+
+    $clinic = Clinic::query()->firstOrFail();
+    $dispatch = AfbDispatch::query()->create([
+        'clinic_id'              => $clinic->id,
+        'clinic_department_id'   => null,
+        'email_id'               => null,
+        'type'                   => AfbDispatchType::BATCH->value,
+        'status'                 => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'                => now(),
+    ]);
+
+    $relativePath = 'afb/test-'.uniqid('', true).'.pdf';
+    Storage::disk('local')->put($relativePath, '%PDF-1.4 test');
+
+    $doc = AfbPersonDocument::query()->create([
+        'afb_dispatch_id' => $dispatch->id,
+        'order_id'        => $order->id,
+        'person_id'       => $person->id,
+        'patient_name'    => $person->name,
+        'file_name'       => 'afb-test.pdf',
+        'file_path'       => $relativePath,
+        'sent_at'         => now(),
+    ]);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    $expectedUrl = route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $doc->id]);
+    $response->assertJsonPath('orders.0.afb_pdf_url', $expectedUrl);
+});
+
+test('clinic guide AFB PDF view serves PDF inline', function () {
+    Storage::fake('local');
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create([
+        'sales_lead_id'     => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+    ]);
+
+    $clinic = Clinic::query()->firstOrFail();
+    $dispatch = AfbDispatch::query()->create([
+        'clinic_id'            => $clinic->id,
+        'clinic_department_id' => null,
+        'email_id'             => null,
+        'type'                 => AfbDispatchType::BATCH->value,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now(),
+    ]);
+
+    $relativePath = 'afb/inline-'.uniqid('', true).'.pdf';
+    Storage::disk('local')->put($relativePath, '%PDF-1.4 inline');
+
+    $doc = AfbPersonDocument::query()->create([
+        'afb_dispatch_id' => $dispatch->id,
+        'order_id'        => $order->id,
+        'person_id'       => $person->id,
+        'patient_name'    => $person->name,
+        'file_name'       => 'form.pdf',
+        'file_path'       => $relativePath,
+        'sent_at'         => now(),
+    ]);
+
+    $this->get(route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $doc->id]))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertHeader('Content-Disposition', 'inline; filename="form.pdf"');
 });
 
 test('clinic guide get orders are sorted by time ascending', function () {

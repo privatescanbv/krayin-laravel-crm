@@ -7,15 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Contact\Models\Person;
 
-class AfbDispatchOrder extends Model
+/**
+ * One generated AFB PDF for a patient, linked to a CRM order and parent dispatch (email run).
+ */
+class AfbPersonDocument extends Model
 {
     use HasFactory;
+
+    protected $table = 'afb_person_documents';
 
     protected $fillable = [
         'afb_dispatch_id',
         'order_id',
-        'clinic_id',
-        'clinic_department_id',
         'person_id',
         'patient_name',
         'file_name',
@@ -24,12 +27,10 @@ class AfbDispatchOrder extends Model
     ];
 
     protected $casts = [
-        'afb_dispatch_id'      => 'integer',
-        'order_id'             => 'integer',
-        'clinic_id'            => 'integer',
-        'clinic_department_id' => 'integer',
-        'person_id'            => 'integer',
-        'sent_at'              => 'datetime',
+        'afb_dispatch_id' => 'integer',
+        'order_id'        => 'integer',
+        'person_id'       => 'integer',
+        'sent_at'         => 'datetime',
     ];
 
     public function dispatch(): BelongsTo
@@ -40,16 +41,6 @@ class AfbDispatchOrder extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
-    }
-
-    public function clinic(): BelongsTo
-    {
-        return $this->belongsTo(Clinic::class);
-    }
-
-    public function clinicDepartment(): BelongsTo
-    {
-        return $this->belongsTo(ClinicDepartment::class);
     }
 
     public function person(): BelongsTo

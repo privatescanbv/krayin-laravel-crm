@@ -7,6 +7,7 @@ use App\Traits\HasDefaultContactInfo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 
@@ -91,9 +92,9 @@ class Clinic extends Model
         return $this->hasMany(AfbDispatch::class);
     }
 
-    public function afbDispatchOrders(): HasMany
+    public function afbPersonDocuments(): HasManyThrough
     {
-        return $this->hasMany(AfbDispatchOrder::class);
+        return $this->hasManyThrough(AfbPersonDocument::class, AfbDispatch::class);
     }
 
     public function departments(): HasMany

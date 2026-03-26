@@ -144,7 +144,7 @@ return [
         'name'  => 'admin::app.acl.view',
         'route' => ['admin.contacts.organizations.view', 'admin.contacts.organizations.view'],
         'sort'  => 1,
-    ],[
+    ], [
         'key'   => 'contacts.organizations.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.contacts.organizations.create', 'admin.contacts.organizations.store'],
@@ -184,7 +184,7 @@ return [
         'name'  => 'admin::app.acl.view',
         'route' => ['admin.productgroups.view', 'admin.productgroups.view'],
         'sort'  => 1,
-    ],[
+    ], [
         'key'   => 'productgroups.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.productgroups.create', 'admin.productgroups.store'],
@@ -259,7 +259,7 @@ return [
         'name'  => 'admin::app.acl.view',
         'route' => ['admin.settings.users.view', 'admin.settings.users.view'],
         'sort'  => 1,
-    ],[
+    ], [
         'key'   => 'settings.user.users.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.settings.users.create', 'admin.settings.users.store'],
@@ -334,7 +334,7 @@ return [
         'name'  => 'admin::app.acl.view',
         'route' => ['admin.partner_products.view', 'admin.partner_products.view'],
         'sort'  => 1,
-    ],[
+    ], [
         'key'   => 'partner_products.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.partner_products.create', 'admin.partner_products.store'],
@@ -651,7 +651,7 @@ return [
     [
         'key'   => 'clinic-guide',
         'name'  => 'Dagplanning',
-        'route' => 'admin.clinic-guide.index',
+        'route' => ['admin.clinic-guide.index', 'admin.clinic-guide.get', 'admin.clinic-guide.afb-pdf.view'],
         'sort'  => 98,
     ],
     [
@@ -664,7 +664,7 @@ return [
         'name'  => 'admin::app.acl.view',
         'route' => ['admin.sales-leads.view', 'admin.sales-leads.view'],
         'sort'  => 1,
-    ],[
+    ], [
         'key'   => 'sales-leads.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.sales-leads.create', 'admin.sales-leads.store'],

@@ -387,7 +387,7 @@ class AfbDocumentGenerator
             return '-';
         }
 
-        return $value ? 'Ja' : 'Nee';
+        return $value ? 'Ja' : 'Nein';
     }
 
     private function emptyToNull(?string $value): ?string

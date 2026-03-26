@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AfbDispatchType;
 use App\Enums\AppointmentTimeFilter;
 use App\Enums\Departments;
 use App\Enums\LostReason;
@@ -42,10 +41,6 @@ class Order extends Model
         'lost_reason',
         'closed_at',
         'first_examination_at',
-        'afb_sent_at',
-        'afb_sent_type',
-        'afb_sent_to_clinic_id',
-        'afb_sent_to_clinic_department_id',
         'sales_lead_id',
         'user_id',
         'combine_order',
@@ -58,10 +53,6 @@ class Order extends Model
         'total_price'                      => 'decimal:2',
         'pipeline_stage_id'                => 'integer',
         'first_examination_at'             => 'datetime',
-        'afb_sent_at'                      => 'datetime',
-        'afb_sent_type'                    => AfbDispatchType::class,
-        'afb_sent_to_clinic_id'            => 'integer',
-        'afb_sent_to_clinic_department_id' => 'integer',
         'closed_at'                        => 'date',
         'lost_reason'                      => LostReason::class,
         'sales_lead_id'                    => 'integer',
@@ -166,11 +157,6 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function afbSentClinic(): BelongsTo
-    {
-        return $this->belongsTo(Clinic::class, 'afb_sent_to_clinic_id');
-    }
-
     public function lead(): ?Lead
     {
         return $this->salesLead?->lead;
@@ -191,9 +177,9 @@ class Order extends Model
         return $this->hasMany(Activity::class);
     }
 
-    public function afbDispatchOrders(): HasMany
+    public function afbPersonDocuments(): HasMany
     {
-        return $this->hasMany(AfbDispatchOrder::class);
+        return $this->hasMany(AfbPersonDocument::class);
     }
 
     /**

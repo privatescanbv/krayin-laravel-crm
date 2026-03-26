@@ -56,7 +56,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::SALES_DOC_COMPLETE_HERNIA                => [['4.1 consult met arts', $defaultDescription, ActivityType::TASK, 5]],
             PipelineStage::SALES_IN_BEHANDELING                     => [['In behandeling', $defaultDescription, ActivityType::TASK, 30]],
             PipelineStage::SALES_MET_SUCCES_AFGEROND                => [['Test auto op sales entiteit', $defaultDescription, ActivityType::TASK, 5]],
-            PipelineStage::ORDER_CONFIRM                            => [['Order inplannen en versturen'], $defaultDescription, ActivityType::TASK, 1],
+            PipelineStage::ORDER_CONFIRM                            => [['Order inplannen en versturen', $defaultDescription, ActivityType::TASK, 1]],
             PipelineStage::ORDER_INGEPLAND,
             PipelineStage::ORDER_INGEPLAND_HERNIA                  => [
                 ['Controle akkoord', $defaultDescription, ActivityType::TASK, 1],

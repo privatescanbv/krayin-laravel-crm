@@ -39,18 +39,41 @@ class AddressRepository extends Repository
      */
     public function upsertForEntity(Model $entity, array $addressData): ?Address
     {
-        // Filter to filled fields only for update behavior decision
-        $filled = array_filter($addressData, function ($value) {
-            return ! (is_null($value) || trim((string) $value) === '');
-        });
+        // Explicit delete request from the UI ("Wis adres" button sets address[_clear]=1).
+        if (! empty($addressData['_clear'])) {
+            if ($entity->address_id) {
+                $this->deleteForEntity($entity);
+            }
 
-        if (empty($filled)) {
             return null;
         }
 
-        // Check if entity already has an address — partial updates are allowed
+        // Normalize empty strings to null so cleared fields are stored as null
+        $normalized = array_map(function ($value) {
+            if (is_string($value) && trim($value) === '') {
+                return null;
+            }
+
+            return $value;
+        }, $addressData);
+
+        // Filter to filled fields only for update behavior decision
+        $filled = array_filter($normalized, function ($value) {
+            return ! is_null($value);
+        });
+
+        // If all fields are empty and entity already has an address, delete it
+        if (empty($filled)) {
+            if ($entity->address_id) {
+                $this->deleteForEntity($entity);
+            }
+
+            return null;
+        }
+
+        // Check if entity already has an address — update all provided fields (including nulls)
         if ($entity->address_id && $existing = $this->find($entity->address_id)) {
-            $this->update($filled, $existing->id);
+            $this->update($normalized, $existing->id);
 
             return $existing->fresh();
         }

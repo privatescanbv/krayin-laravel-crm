@@ -62,6 +62,31 @@ class ContactValidationRules
         ];
     }
 
+    /**
+     * Human-readable attribute names for a strict address block.
+     * Pass as the third argument to $request->validate() to replace
+     * technical dot-notation keys in error messages.
+     *
+     * @param  string  $prefix  e.g. 'address', 'visit_address', 'postal_address'
+     * @param  string  $label  Optional context label shown in parentheses, e.g. 'bezoekadres'
+     */
+    public static function strictAddressAttributes(string $prefix = 'address', string $label = ''): array
+    {
+        $suffix = $label ? " ({$label})" : '';
+
+        return [
+            "{$prefix}.postal_code"  => "Postcode{$suffix}",
+            "{$prefix}.house_number" => "Huisnummer{$suffix}",
+            "{$prefix}.street"       => "Straat{$suffix}",
+            "{$prefix}.city"         => "Stad{$suffix}",
+            "{$prefix}.country"      => "Land{$suffix}",
+        ];
+    }
+
+    /**
+     * Lenient address rules: all fields are nullable.
+     * Use for API endpoints that allow partial address updates.
+     */
     public static function addressRules(): array
     {
         return [
@@ -72,6 +97,38 @@ class ContactValidationRules
             'address.city'                => 'nullable|string|max:255',
             'address.state'               => 'nullable|string|max:255',
             'address.country'             => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
+     * Strict all-or-nothing address rules.
+     * If any required field is filled, ALL required fields become mandatory.
+     * Use for admin UI forms where a partial address should be rejected.
+     * Optional fields (house_number_suffix, state) are always nullable.
+     *
+     * @param  string  $prefix  The dot-notation prefix for the address block, e.g. 'address',
+     *                          'visit_address', or 'postal_address'.
+     */
+    public static function strictAddressRules(string $prefix = 'address'): array
+    {
+        $required = [
+            "{$prefix}.postal_code",
+            "{$prefix}.house_number",
+            "{$prefix}.street",
+            "{$prefix}.city",
+            "{$prefix}.country",
+        ];
+
+        $others = fn (string $field) => implode(',', array_filter($required, fn ($f) => $f !== $field));
+
+        return [
+            "{$prefix}.postal_code"         => ['required_with:'.$others("{$prefix}.postal_code"), 'nullable', 'string', 'max:20'],
+            "{$prefix}.house_number"        => ['required_with:'.$others("{$prefix}.house_number"), 'nullable', 'string', 'max:20'],
+            "{$prefix}.house_number_suffix" => 'nullable|string|max:20',
+            "{$prefix}.street"              => ['required_with:'.$others("{$prefix}.street"), 'nullable', 'string', 'max:255'],
+            "{$prefix}.city"                => ['required_with:'.$others("{$prefix}.city"), 'nullable', 'string', 'max:255'],
+            "{$prefix}.state"               => 'nullable|string|max:255',
+            "{$prefix}.country"             => ['required_with:'.$others("{$prefix}.country"), 'nullable', 'string', 'max:255'],
         ];
     }
 

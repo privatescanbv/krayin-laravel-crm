@@ -57,11 +57,15 @@ class PersonValidationService
     }
 
     /**
-     * Get validation rules for web forms
+     * Get validation rules for web forms.
+     * Overrides address rules with strict all-or-nothing validation.
      */
     public static function getWebValidationRules($request = null): array
     {
-        return self::getValidationRules($request);
+        return array_merge(
+            self::getValidationRules($request),
+            ContactValidationRules::strictAddressRules(),
+        );
     }
 
     /**

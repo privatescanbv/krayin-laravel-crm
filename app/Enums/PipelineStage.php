@@ -381,7 +381,7 @@ enum PipelineStage: string
         self::ORDER_BEVESTIGD_HERNIA->value => [
             'id'       => 42,
             'pipeline' => PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
-            'label'    => 'Order akkoord?',
+            'label'    => 'Order akkoord',
             'entity'   => EntityType::ORDER->value,
             'status'   => null,
         ],

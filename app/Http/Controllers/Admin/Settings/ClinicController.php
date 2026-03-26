@@ -83,6 +83,7 @@ class ClinicController extends SimpleEntityController
         $clinic = $this->clinicRepository->with([
             'visitAddress', 'postalAddress', 'resources.resourceType', 'resources.clinicDepartment', 'creator', 'updater',
             'afbDispatches.email',
+            'afbDispatches.clinicDepartment',
             'afbDispatches.items.order.salesLead.persons',
             'afbDispatches.items.person',
             'departments',

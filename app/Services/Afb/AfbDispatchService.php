@@ -7,7 +7,7 @@ use App\Enums\AfbDispatchType;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
 use App\Models\AfbDispatchOrder;
-use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
@@ -33,22 +33,22 @@ class AfbDispatchService
             ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')
             ->join('resources', 'resources.id', '=', 'resource_orderitem.resource_id')
             ->whereDate('resource_orderitem.from', $date->toDateString())
-            ->whereNotNull('resources.clinic_id')
-            ->select('orders.id as order_id', 'resources.clinic_id')
+            ->whereNotNull('resources.clinic_department_id')
+            ->select('orders.id as order_id', 'resources.clinic_department_id')
             ->distinct()
             ->get();
 
         $groupedOrderIds = [];
 
         foreach ($pairs as $pair) {
-            $clinicId = (int) $pair->clinic_id;
-            $groupedOrderIds[$clinicId] ??= [];
-            $groupedOrderIds[$clinicId][] = (int) $pair->order_id;
+            $departmentId = (int) $pair->clinic_department_id;
+            $groupedOrderIds[$departmentId] ??= [];
+            $groupedOrderIds[$departmentId][] = (int) $pair->order_id;
         }
 
-        foreach ($groupedOrderIds as $clinicId => $orderIds) {
+        foreach ($groupedOrderIds as $departmentId => $orderIds) {
             $orderIds = array_values(array_unique($orderIds));
-            SendAfbDispatchJob::dispatch($clinicId, $orderIds, AfbDispatchType::BATCH->value);
+            SendAfbDispatchJob::dispatch($departmentId, $orderIds, AfbDispatchType::BATCH->value);
         }
 
         return count($groupedOrderIds);
@@ -61,14 +61,14 @@ class AfbDispatchService
         }
 
         $queued = 0;
-        $clinicIds = $this->getClinicIdsForOrder((int) $order->id);
+        $departmentIds = $this->getDepartmentIdsForOrder((int) $order->id);
 
-        foreach ($clinicIds as $clinicId) {
-            if ($this->isAlreadySentToClinic((int) $order->id, (int) $clinicId)) {
+        foreach ($departmentIds as $departmentId) {
+            if ($this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)) {
                 continue;
             }
 
-            SendAfbDispatchJob::dispatch((int) $clinicId, [(int) $order->id], AfbDispatchType::INDIVIDUAL->value);
+            SendAfbDispatchJob::dispatch((int) $departmentId, [(int) $order->id], AfbDispatchType::INDIVIDUAL->value);
             $queued++;
         }
 
@@ -76,18 +76,18 @@ class AfbDispatchService
     }
 
     public function sendDispatch(
-        int $clinicId,
+        int $departmentId,
         array $orderIds,
         AfbDispatchType $type,
         int $attempt = 1
     ): AfbDispatch {
-        $clinic = Clinic::query()->findOrFail($clinicId);
+        $department = ClinicDepartment::with('clinic')->findOrFail($departmentId);
 
         $orders = Order::query()
             ->whereIn('id', $orderIds)
             ->with([
                 'salesLead.persons',
-                'orderItems.resourceOrderItems.resource.clinic',
+                'orderItems.resourceOrderItems.resource.clinicDepartment',
                 'orderItems.person',
             ])
             ->get()
@@ -96,22 +96,23 @@ class AfbDispatchService
         $unsentOrders = collect($orderIds)
             ->map(fn (int $id) => $orders->get($id))
             ->filter(fn (?Order $order) => $order !== null)
-            ->filter(fn (Order $order) => ! $this->isAlreadySentToClinic((int) $order->id, $clinicId))
+            ->filter(fn (Order $order) => ! $this->isAlreadySentToDepartment((int) $order->id, $departmentId))
             ->values();
 
         $dispatch = AfbDispatch::create([
-            'clinic_id'       => $clinicId,
-            'type'            => $type->value,
-            'status'          => AfbDispatchStatus::FAILED->value,
-            'order_ids'       => $unsentOrders->pluck('id')->values()->all(),
-            'attempt'         => max(1, $attempt),
-            'last_attempt_at' => now(),
+            'clinic_id'            => $department->clinic_id,
+            'clinic_department_id' => $departmentId,
+            'type'                 => $type->value,
+            'status'               => AfbDispatchStatus::FAILED->value,
+            'order_ids'            => $unsentOrders->pluck('id')->values()->all(),
+            'attempt'              => max(1, $attempt),
+            'last_attempt_at'      => now(),
         ]);
 
         if ($unsentOrders->isEmpty()) {
             $dispatch->update([
-                'status'   => AfbDispatchStatus::SUCCESS->value,
-                'sent_at'  => now(),
+                'status'  => AfbDispatchStatus::SUCCESS->value,
+                'sent_at' => now(),
             ]);
 
             return $dispatch;
@@ -123,12 +124,12 @@ class AfbDispatchService
             foreach ($unsentOrders as $order) {
                 $generatedDocuments[] = [
                     'order' => $order,
-                    ...$this->afbDocumentGenerator->generateForOrderAndClinic($order, $clinic),
+                    ...$this->afbDocumentGenerator->generateForOrderAndDepartment($order, $department),
                 ];
             }
 
             $email = $this->createDispatchEmail(
-                $clinic,
+                $department,
                 $type,
                 $unsentOrders->pluck('order_number')->filter()->values()->all(),
                 count($generatedDocuments)
@@ -147,23 +148,25 @@ class AfbDispatchService
 
             $this->crmMailService->sendEmail($email, EmailFolderEnum::SENT);
 
-            DB::transaction(function () use ($generatedDocuments, $clinicId, $dispatch, $email, $type) {
+            DB::transaction(function () use ($generatedDocuments, $departmentId, $department, $dispatch, $email, $type) {
                 foreach ($generatedDocuments as $generatedDocument) {
                     AfbDispatchOrder::create([
-                        'afb_dispatch_id' => $dispatch->id,
-                        'order_id'        => $generatedDocument['order']->id,
-                        'clinic_id'       => $clinicId,
-                        'person_id'       => $generatedDocument['person_id'],
-                        'patient_name'    => $generatedDocument['patient_name'],
-                        'file_name'       => $generatedDocument['file_name'],
-                        'file_path'       => $generatedDocument['file_path'],
-                        'sent_at'         => now(),
+                        'afb_dispatch_id'      => $dispatch->id,
+                        'order_id'             => $generatedDocument['order']->id,
+                        'clinic_id'            => $department->clinic_id,
+                        'clinic_department_id' => $departmentId,
+                        'person_id'            => $generatedDocument['person_id'],
+                        'patient_name'         => $generatedDocument['patient_name'],
+                        'file_name'            => $generatedDocument['file_name'],
+                        'file_path'            => $generatedDocument['file_path'],
+                        'sent_at'              => now(),
                     ]);
 
                     $generatedDocument['order']->update([
-                        'afb_sent_at'           => now(),
-                        'afb_sent_type'         => $type->value,
-                        'afb_sent_to_clinic_id' => $clinicId,
+                        'afb_sent_at'                      => now(),
+                        'afb_sent_type'                    => $type->value,
+                        'afb_sent_to_clinic_id'            => $department->clinic_id,
+                        'afb_sent_to_clinic_department_id' => $departmentId,
                     ]);
                 }
 
@@ -175,11 +178,11 @@ class AfbDispatchService
             });
 
             Log::info('AFB dispatch success', [
-                'clinic_id' => $clinicId,
-                'order_ids' => $unsentOrders->pluck('id')->values()->all(),
-                'timestamp' => now()->toIso8601String(),
-                'type'      => $type->value,
-                'status'    => AfbDispatchStatus::SUCCESS->value,
+                'clinic_department_id' => $departmentId,
+                'order_ids'            => $unsentOrders->pluck('id')->values()->all(),
+                'timestamp'            => now()->toIso8601String(),
+                'type'                 => $type->value,
+                'status'               => AfbDispatchStatus::SUCCESS->value,
             ]);
         } catch (Throwable $e) {
             $dispatch->update([
@@ -188,12 +191,12 @@ class AfbDispatchService
             ]);
 
             Log::error('AFB dispatch failed', [
-                'clinic_id'    => $clinicId,
-                'order_ids'    => $unsentOrders->pluck('id')->values()->all(),
-                'timestamp'    => now()->toIso8601String(),
-                'type'         => $type->value,
-                'status'       => AfbDispatchStatus::FAILED->value,
-                'error_message'=> $e->getMessage(),
+                'clinic_department_id' => $departmentId,
+                'order_ids'            => $unsentOrders->pluck('id')->values()->all(),
+                'timestamp'            => now()->toIso8601String(),
+                'type'                 => $type->value,
+                'status'               => AfbDispatchStatus::FAILED->value,
+                'error_message'        => $e->getMessage(),
             ]);
 
             throw $e;
@@ -202,11 +205,11 @@ class AfbDispatchService
         return $dispatch->refresh();
     }
 
-    public function isAlreadySentToClinic(int $orderId, int $clinicId): bool
+    public function isAlreadySentToDepartment(int $orderId, int $departmentId): bool
     {
         $sentViaOrder = Order::query()
             ->where('id', $orderId)
-            ->where('afb_sent_to_clinic_id', $clinicId)
+            ->where('afb_sent_to_clinic_department_id', $departmentId)
             ->whereNotNull('afb_sent_at')
             ->exists();
 
@@ -216,10 +219,8 @@ class AfbDispatchService
 
         return AfbDispatchOrder::query()
             ->where('order_id', $orderId)
-            ->where('clinic_id', $clinicId)
-            ->whereHas('dispatch', function ($query) {
-                $query->where('status', AfbDispatchStatus::SUCCESS->value);
-            })
+            ->where('clinic_department_id', $departmentId)
+            ->whereHas('dispatch', fn ($q) => $q->where('status', AfbDispatchStatus::SUCCESS->value))
             ->exists();
     }
 
@@ -241,14 +242,14 @@ class AfbDispatchService
     /**
      * @return array<int, int>
      */
-    private function getClinicIdsForOrder(int $orderId): array
+    private function getDepartmentIdsForOrder(int $orderId): array
     {
         return DB::table('order_items')
             ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')
             ->join('resources', 'resources.id', '=', 'resource_orderitem.resource_id')
             ->where('order_items.order_id', $orderId)
-            ->whereNotNull('resources.clinic_id')
-            ->pluck('resources.clinic_id')
+            ->whereNotNull('resources.clinic_department_id')
+            ->pluck('resources.clinic_department_id')
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
@@ -256,12 +257,15 @@ class AfbDispatchService
     }
 
     private function createDispatchEmail(
-        Clinic $clinic,
+        ClinicDepartment $department,
         AfbDispatchType $type,
         array $orderNumbers,
         int $attachmentCount
     ): Email {
-        $recipientEmail = $clinic->findDefaultEmailOrError();
+        $recipientEmail = $department->email
+            ?? throw new RuntimeException("Geen e-mailadres voor afdeling ID {$department->id}");
+
+        $clinic = $department->clinic;
 
         $subject = sprintf(
             'AFB %s - %s (%d bijlage%s)',

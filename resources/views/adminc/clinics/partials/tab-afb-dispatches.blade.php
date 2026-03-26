@@ -22,6 +22,7 @@
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="px-2 py-2 text-left">Datum/tijd</th>
                         <th class="px-2 py-2 text-left">Type</th>
+                        <th class="px-2 py-2 text-left">Afdeling</th>
                         <th class="px-2 py-2 text-left">Status</th>
                         <th class="px-2 py-2 text-left">Orders / patienten</th>
                         <th class="px-2 py-2 text-left">Mail log</th>
@@ -36,6 +37,9 @@
                             </td>
                             <td class="px-2 py-2">
                                 {{ $dispatch->type?->value ?? '-' }}
+                            </td>
+                            <td class="px-2 py-2">
+                                {{ $dispatch->clinicDepartment->name ?? '-' }}
                             </td>
                             <td class="px-2 py-2">
                                 @if (($dispatch->status?->value ?? null) === 'success')

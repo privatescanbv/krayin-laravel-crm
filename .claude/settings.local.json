@@ -45,7 +45,8 @@
       "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/packages/Webkul/Lead/src/Models/Channel.php)",
       "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/packages/Webkul/Lead/src/Models/Source.php)",
       "Bash(head -15 grep -n \"fillable\\\\|name\\\\|title\" /Users/nihad/dev/privatescan/krayin-laravel-crm/app/Models/Department.php)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

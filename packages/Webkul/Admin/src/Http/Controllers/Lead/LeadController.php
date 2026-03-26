@@ -190,6 +190,7 @@ class LeadController extends Controller
         $perPage = (int) request()->query('limit', 10);
 
         // Build response for each stage with per-stage pagination only when needed
+        $data = [];
         foreach ($stages as $stage) {
             // Key by stage ID to ensure all columns (including empty ones) render consistently
             $data[$stage->id] = (new StageResource($stage))->jsonSerialize();

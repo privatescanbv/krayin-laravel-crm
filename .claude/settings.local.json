@@ -46,7 +46,8 @@
       "Skill(update-config:*)",
       "Bash(npm run:*)",
       "Bash(npm install:*)",
-      "Bash(npm show:*)"
+      "Bash(npm show:*)",
+      "Bash(/dev/null grep:*)"
     ]
   }
 }

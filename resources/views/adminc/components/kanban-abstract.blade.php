@@ -148,6 +148,7 @@
                                 :list="stage.leads.data"
                                 item-key="id"
                                 group="leads"
+                                :data-stage-kanban-id="stage.id"
                                 @scroll="handleScroll(stage, $event)"
                                 @change="updateStage(stage, $event)"
                                 :scroll-sensitivity="100"
@@ -764,6 +765,12 @@
                                                 .data)) {
                                                 this.stageLeads[sortOrder] = data;
                                             }
+
+                                            this.$nextTick(() => {
+                                                for (let sortOrder of Object.keys(response.data)) {
+                                                    this.checkAutoFill(sortOrder);
+                                                }
+                                            });
                                         }
                                     })
                                     .catch(error => {
@@ -792,6 +799,12 @@
                                     for (let [sortOrder, data] of Object.entries(response.data)) {
                                         this.stageLeads[sortOrder] = data;
                                     }
+
+                                    this.$nextTick(() => {
+                                        for (let sortOrder of Object.keys(response.data)) {
+                                            this.checkAutoFill(sortOrder);
+                                        }
+                                    });
                                 }
                                 this.setWonLostButtonText();
                             })
@@ -932,8 +945,45 @@
                                             this.stageLeads[sortOrder].leads.meta = data.leads.meta;
                                         }
                                     }
+
+                                    // After DOM updates, check if columns still have no scrollbar
+                                    this.$nextTick(() => {
+                                        for (let [sortOrder] of Object.entries(response.data)) {
+                                            this.checkAutoFill(sortOrder);
+                                        }
+                                    });
                                 }
                             });
+                    },
+
+                    /**
+                     * If a column fits all loaded items without a scrollbar, automatically
+                     * load the next page so users on large screens see all items.
+                     */
+                    checkAutoFill(stageId) {
+                        const stageData = this.stageLeads[stageId];
+                        if (!stageData) return;
+
+                        // Nothing more to load
+                        if (stageData.leads.meta.current_page >= stageData.leads.meta.last_page) return;
+
+                        const el = document.querySelector(`[data-stage-kanban-id="${stageId}"]`);
+                        if (!el) return;
+
+                        // Column fits all items without scrollbar → load next page
+                        if (el.scrollHeight <= el.clientHeight) {
+                            const sortVal = this.stageSorts[stageId] || 'created_at|desc';
+                            const [sort, order] = sortVal.split('|');
+
+                            this.append({
+                                pipeline_stage_id: stageId,
+                                pipeline_id: stageData.lead_pipeline_id,
+                                page: stageData.leads.meta.current_page + 1,
+                                limit: 10,
+                                sort,
+                                order,
+                            });
+                        }
                     },
 
                     /**
@@ -1150,7 +1200,7 @@
                         this.scrollTimeouts[stage.id] = setTimeout(() => {
                             const element = event.target;
                             const bottom = Math.abs(element.scrollHeight - element.scrollTop -
-                                element.clientHeight) < 1;
+                                element.clientHeight) < 50;
 
                             if (!bottom) {
                                 return;

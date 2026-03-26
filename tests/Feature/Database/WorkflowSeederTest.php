@@ -30,6 +30,6 @@ test('WorkflowSeeder creates a workflow for each PipelineStage case except LOST 
 
     // Not alle stages have activities, so we need to exclude those from the count
     $stagesWithoutActivities = 1;
-    $stagesWitExtraActivities = 6;
+    $stagesWitExtraActivities =5;
     expect($workflows->count())->toBe(count($expectedStages) - $stagesWithoutActivities + $stagesWitExtraActivities);
 });

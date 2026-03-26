@@ -20,7 +20,7 @@ class ResourceRepository extends Repository
     public function queryWithActiveClinics(): Builder
     {
         return Resource::query()
-            ->whereHas('clinic', function ($q) {
+            ->whereHas('clinicDepartment.clinic', function ($q) {
                 $q->where('is_active', true);
             });
     }

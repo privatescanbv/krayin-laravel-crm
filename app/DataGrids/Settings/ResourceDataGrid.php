@@ -2,7 +2,6 @@
 
 namespace App\DataGrids\Settings;
 
-use App\Repositories\ClinicRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -14,26 +13,24 @@ class ResourceDataGrid extends DataGrid
      */
     protected $sortColumn = 'resources.id';
 
-    public function __construct(protected ClinicRepository $clinicRepository) {}
-
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('resources')
             ->leftJoin('resource_types', 'resource_types.id', '=', 'resources.resource_type_id')
-            ->leftJoin('clinics', 'clinics.id', '=', 'resources.clinic_id')
+            ->leftJoin('clinic_departments', 'clinic_departments.id', '=', 'resources.clinic_department_id')
             ->addSelect(
                 'resources.id',
                 'resources.name',
-                'resources.clinic_id',
+                'resources.clinic_department_id',
                 'resources.is_active',
                 'resource_types.id as resource_type_id',
                 'resource_types.name as resource_type_name',
-                'clinics.name as clinic_name'
+                'clinic_departments.name as department_name'
             );
 
         $this->addFilter('id', 'resources.id');
         $this->addFilter('is_active', 'resources.is_active');
-        // Note: resource_type_name and clinic_id filters are handled specially below
+        // Note: resource_type_name and clinic_department_id filters are handled specially below
 
         // Default filter: only active resources unless user provides a filter
         $requestedFilters = request()->input('filters', []);
@@ -44,8 +41,8 @@ class ResourceDataGrid extends DataGrid
         // Apply entity selector filter for resource_type_name
         $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'resource_type_name', 'resource_types.id');
 
-        // Apply entity selector filter for clinic_id
-        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'clinic_id', 'clinics.id');
+        // Apply entity selector filter for clinic_department_id
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'clinic_department_id', 'clinic_departments.id');
 
         // Update request with cleaned filters
         $originalFilters = request()->input('filters');
@@ -100,13 +97,13 @@ class ResourceDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'clinic_name',
+            'index'      => 'department_name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.resources.index.datagrid.clinic'),
             'searchable' => true,
             'filterable' => false,
             'sortable'   => true,
-            'columnName' => 'clinics.name',
+            'columnName' => 'clinic_departments.name',
         ]);
 
         $this->addColumn([
@@ -125,18 +122,18 @@ class ResourceDataGrid extends DataGrid
             },
         ]);
 
-        // Clinic filter column (using entity selector)
+        // Department filter column (using entity selector)
         $this->addColumn([
-            'index'              => 'clinic_id',
+            'index'              => 'clinic_department_id',
             'type'               => 'string',
-            'label'              => trans('admin::app.settings.resources.index.datagrid.clinic'),
+            'label'              => 'Afdeling',
             'searchable'         => false,
             'filterable'         => true,
             'sortable'           => false,
             'filterable_type'    => 'entity_selector',
             'filterable_options' => [
-                'search_route' => route('admin.clinics.search'),
-                'entity_type'  => 'clinic',
+                'search_route' => route('admin.clinic_departments.search'),
+                'entity_type'  => 'clinic_department',
             ],
             'visibility'        => false, // Hidden from view, only used for filtering
         ]);

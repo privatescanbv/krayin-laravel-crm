@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ResourceController;
+use App\Repositories\ClinicDepartmentRepository;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
@@ -40,6 +41,7 @@ it('merges blocks and computes net availability minus unavailability', function 
         Mockery::mock(ResourceTypeRepository::class),
         Mockery::mock(ShiftRepository::class),
         Mockery::mock(ClinicRepository::class),
+        Mockery::mock(ClinicDepartmentRepository::class),
     );
 
     // Access protected method via reflection
@@ -84,6 +86,7 @@ it('produces two distinct periods in period-aware summaries', function () {
         Mockery::mock(ResourceTypeRepository::class),
         Mockery::mock(ShiftRepository::class),
         Mockery::mock(ClinicRepository::class),
+        Mockery::mock(ClinicDepartmentRepository::class),
     );
 
     $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
@@ -29,18 +30,21 @@ test('resources index returns datagrid json', function () {
 test('can create resource', function () {
     $resourceType = ResourceType::factory()->create();
     $clinic = Clinic::factory()->create();
+    $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
 
     $payload = [
-        'name'             => 'Test Resource',
-        'resource_type_id' => $resourceType->id,
-        'clinic_id'        => $clinic->id,
+        'name'                 => 'Test Resource',
+        'resource_type_id'     => $resourceType->id,
+        'clinic_department_id' => $dept->id,
     ];
 
     $response = $this->postJson(route('admin.settings.resources.store'), $payload);
     $response->assertOk()->assertJsonPath('data.name', 'Test Resource');
 
     $this->assertDatabaseHas('resources', [
-        'name' => 'Test Resource',
+        'name'                 => 'Test Resource',
+        'clinic_department_id' => $dept->id,
+        'clinic_id'            => $clinic->id,
     ]);
 });
 
@@ -48,10 +52,10 @@ test('can update resource', function () {
     $resource = Resource::factory()->create();
 
     $payload = [
-        'name'             => 'Updated Resource',
-        'resource_type_id' => $resource->resource_type_id,
-        'clinic_id'        => $resource->clinic_id,
-        '_method'          => 'put',
+        'name'                 => 'Updated Resource',
+        'resource_type_id'     => $resource->resource_type_id,
+        'clinic_department_id' => $resource->clinic_department_id,
+        '_method'              => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.resources.update', ['id' => $resource->id]), $payload);
@@ -74,14 +78,14 @@ test('can delete resource', function () {
     ]);
 });
 
-test('resource create page pre-selects clinic when clinic_id parameter is provided', function () {
+test('resource create page pre-selects department when clinic_department_id parameter is provided', function () {
     $clinic = Clinic::factory()->create();
-    $resourceType = ResourceType::factory()->create();
+    $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+    ResourceType::factory()->create();
 
-    $response = $this->get(route('admin.settings.resources.create', ['clinic_id' => $clinic->id]));
+    $response = $this->get(route('admin.settings.resources.create', ['clinic_department_id' => $dept->id]));
     $response->assertOk();
 
-    // Check that the clinic is pre-selected in the form
-    $response->assertSee('value="'.$clinic->id.'"', false);
-    $response->assertSee(e($clinic->name), false);
+    $response->assertSee('value="'.$dept->id.'"', false);
+    $response->assertSee(e($dept->name), false);
 });

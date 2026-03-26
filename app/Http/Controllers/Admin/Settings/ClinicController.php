@@ -81,10 +81,11 @@ class ClinicController extends SimpleEntityController
     public function view(int $id)
     {
         $clinic = $this->clinicRepository->with([
-            'visitAddress', 'postalAddress', 'resources.resourceType', 'creator', 'updater',
+            'visitAddress', 'postalAddress', 'resources.resourceType', 'resources.clinicDepartment', 'creator', 'updater',
             'afbDispatches.email',
             'afbDispatches.items.order.salesLead.persons',
             'afbDispatches.items.person',
+            'departments',
         ])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
 

@@ -1782,6 +1782,7 @@ return [
                     'table' => [
                         'name' => 'Naam',
                         'resource-type' => 'Resource Type',
+                        'department' => 'Afdeling',
                         'external-id' => 'Extern ID',
                         'actions' => 'Acties',
                         'edit' => 'Bewerken',

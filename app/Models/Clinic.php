@@ -96,6 +96,11 @@ class Clinic extends Model
         return $this->hasMany(AfbDispatchOrder::class);
     }
 
+    public function departments(): HasMany
+    {
+        return $this->hasMany(ClinicDepartment::class);
+    }
+
     public function label(): string
     {
         return $this->name.' | '.$this->visitAddress?->formatAddress();

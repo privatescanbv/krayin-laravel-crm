@@ -6,6 +6,7 @@
     'showPartnerProducts' => false,
     'showResources' => false,
     'showAfbDispatches' => false,
+    'showDepartments' => false,
     'showLeads' => false,
     'showSales' => false,
     'showPatientMessages' => false,
@@ -122,6 +123,18 @@
             >
                 <span class="icon-document text-xl"></span>
                 AFB verzendingen
+            </button>
+        @endif
+
+        @if ($showDepartments)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'afdelingen'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('afdelingen')"
+            >
+                <span class="icon-organization text-xl"></span>
+                Afdelingen
             </button>
         @endif
 

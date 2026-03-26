@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @mixin IdeHelperResource
@@ -20,6 +21,7 @@ class Resource extends Model
         'name',
         'resource_type_id',
         'clinic_id',
+        'clinic_department_id',
         'is_active',
         'allow_outside_availability',
         'notes',
@@ -29,6 +31,7 @@ class Resource extends Model
 
     protected $casts = [
         'clinic_id'                  => 'integer',
+        'clinic_department_id'       => 'integer',
         'resource_type_id'           => 'integer',
         'is_active'                  => 'boolean',
         'allow_outside_availability' => 'boolean',
@@ -36,7 +39,21 @@ class Resource extends Model
         'updated_by'                 => 'integer',
     ];
 
-    public function clinic()
+    public function clinicDepartment(): BelongsTo
+    {
+        return $this->belongsTo(ClinicDepartment::class);
+    }
+
+    public function getClinic(): ?Clinic
+    {
+        return $this->clinicDepartment?->clinic
+            ?? ($this->clinic_id ? Clinic::find($this->clinic_id) : null);
+    }
+
+    /**
+     * Keep backward-compatible clinic() relation for planning code that eager-loads it.
+     */
+    public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
     }

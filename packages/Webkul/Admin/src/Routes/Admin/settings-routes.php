@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Settings\Clinic\ActivityController;
 use App\Http\Controllers\Admin\Settings\Clinic\EmailController;
 use App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController;
 use App\Http\Controllers\Admin\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\ClinicDepartmentController;
 use App\Http\Controllers\Admin\Settings\DepartmentController;
 use App\Http\Controllers\Admin\Settings\ImportLogController;
 use App\Http\Controllers\Admin\Settings\ImportRunController;
@@ -87,6 +88,20 @@ Route::prefix('settings')->group(function () {
             Route::get('', 'index')->name('admin.clinics.partner_products.index');
             Route::delete('{partner_product_id}', 'destroy')->name('admin.clinics.partner_products.delete');
         });
+    });
+
+    /**
+     * Clinic Department routes.
+     */
+    Route::controller(ClinicDepartmentController::class)->prefix('clinic-departments')->group(function () {
+        Route::get('', 'index')->name('admin.clinic_departments.index');
+        Route::get('search', 'search')->name('admin.clinic_departments.search');
+        Route::get('create', 'create')->name('admin.clinic_departments.create');
+        Route::post('create', 'store')->name('admin.clinic_departments.store');
+        Route::get('edit/{id}', 'edit')->name('admin.clinic_departments.edit');
+        Route::put('edit/{id}', 'update')->name('admin.clinic_departments.update');
+        Route::delete('', 'destroy')->name('admin.clinic_departments.delete');
+        Route::delete('{id}', 'destroy')->name('admin.clinic_departments.delete');
     });
 
     /**

@@ -207,6 +207,13 @@ return [
         'sort'       => 4,
         'icon-class' => 'icon-setting',
     ], [
+        'key'        => 'settings.clinics.departments',
+        'name'       => 'Afdelingen',
+        'info'       => 'Afdelingen per kliniek',
+        'route'      => 'admin.clinic_departments.index',
+        'sort'       => 5,
+        'icon-class' => 'icon-organization',
+    ], [
         'key'        => 'settings.lead',
         'name'       => 'admin::app.layouts.lead',
         'info'       => 'admin::app.layouts.lead-info',

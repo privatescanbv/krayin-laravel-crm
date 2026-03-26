@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ResourceController;
+use App\Repositories\ClinicDepartmentRepository;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
@@ -32,6 +33,7 @@ it('produces two distinct periods in period-aware summaries', function () {
         Mockery::mock(ResourceTypeRepository::class),
         Mockery::mock(ShiftRepository::class),
         Mockery::mock(ClinicRepository::class),
+        Mockery::mock(ClinicDepartmentRepository::class),
     );
 
     $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');
@@ -92,6 +94,7 @@ it('computes net availability with an unavailable sub-period within same month',
         Mockery::mock(ResourceTypeRepository::class),
         Mockery::mock(ShiftRepository::class),
         Mockery::mock(ClinicRepository::class),
+        Mockery::mock(ClinicDepartmentRepository::class),
     );
 
     $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');
@@ -164,6 +167,7 @@ it('shows net availability 12:00–17:00 for first week sub-period within same m
         Mockery::mock(ResourceTypeRepository::class),
         Mockery::mock(ShiftRepository::class),
         Mockery::mock(ClinicRepository::class),
+        Mockery::mock(ClinicDepartmentRepository::class),
     );
 
     $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');

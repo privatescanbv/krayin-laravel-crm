@@ -758,6 +758,7 @@ return [
                     'table' => [
                         'name'          => 'Name',
                         'resource-type' => 'Resource Type',
+                        'department'    => 'Department',
                         'external-id'   => 'External ID',
                         'actions'       => 'Actions',
                         'edit'          => 'Edit',

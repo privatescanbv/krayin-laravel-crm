@@ -1,17 +1,26 @@
-@php use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
+@php use App\Models\ResourceType;use App\Repositories\ClinicDepartmentRepository; @endphp
 @props([
     'resource' => null,
+    'preSelectedDepartmentId' => null,
     'preSelectedClinicId' => null,
 ])
 
 @php
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
-    $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
+    $departments = app(ClinicDepartmentRepository::class)->with(['clinic'])->all();
 
-    // Pre-select clinic if provided
-    $selectedClinicId = old('clinic_id', $resource->clinic_id ?? '');
-    if (empty($selectedClinicId) && isset($preSelectedClinicId)) {
-        $selectedClinicId = $preSelectedClinicId;
+    // Pre-select department if provided
+    $selectedDeptId = old('clinic_department_id', $resource->clinic_department_id ?? '');
+    if (empty($selectedDeptId) && isset($preSelectedDepartmentId)) {
+        $selectedDeptId = $preSelectedDepartmentId;
+    }
+    // Fallback: if a clinic_id is pre-selected (from clinic view), find the default department
+    if (empty($selectedDeptId) && isset($preSelectedClinicId)) {
+        $defaultDept = $departments->first(fn($d) => $d->clinic_id == $preSelectedClinicId && $d->name === 'Standaard')
+            ?? $departments->first(fn($d) => $d->clinic_id == $preSelectedClinicId);
+        if ($defaultDept) {
+            $selectedDeptId = $defaultDept->id;
+        }
     }
 @endphp
 
@@ -39,17 +48,19 @@
     @endforeach
 </x-adminc::components.field>
 
-<!-- Clinic -->
+<!-- Afdeling: value moet mee naar v-field (anders overschrijft VeeValidate de server-side selected state) -->
 <x-adminc::components.field
     type="select"
-    name="clinic_id"
-    :label="trans('admin::app.settings.resources.index.create.clinic')"
-    value="{{ $selectedClinicId }}"
+    name="clinic_department_id"
+    label="Afdeling"
+    value="{{ $selectedDeptId }}"
     rules="required|numeric"
 >
     <option value="">@lang('admin::app.select')</option>
-    @foreach ($clinics as $clinic)
-        <option value="{{ $clinic->id }}" @selected($selectedClinicId == $clinic->id)>{{ $clinic->name }}</option>
+    @foreach ($departments as $dept)
+        <option value="{{ $dept->id }}" @selected($selectedDeptId == $dept->id)>
+            {{ $dept->clinic->name }} — {{ $dept->name }}
+        </option>
     @endforeach
 </x-adminc::components.field>
 

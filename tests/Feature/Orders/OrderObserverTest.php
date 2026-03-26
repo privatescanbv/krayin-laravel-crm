@@ -2,10 +2,15 @@
 
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PartnerProduct;
+use App\Models\ResourceType;
+use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
 
@@ -97,4 +102,32 @@ test('updating to a won stage dispatches order.update_stage.after event', functi
     $order->save();
 
     Event::assertDispatched('order.update_stage.after');
+});
+
+test('touching order does not downgrade from order akkoord when plannable items are WON', function () {
+    $plannableResourceType = ResourceType::factory()->create([
+        'name' => ResourceTypeEnum::MRI_SCANNER->label(),
+    ]);
+
+    $salesLead = SalesLead::factory()->create();
+    $productWithPartner = Product::factory()->create();
+    PartnerProduct::factory()->create([
+        'product_id'       => $productWithPartner->id,
+        'resource_type_id' => $plannableResourceType->id,
+    ]);
+
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_BEVESTIGD->id(),
+        'sales_lead_id'     => $salesLead->id,
+    ]);
+
+    OrderItem::factory()->create([
+        'order_id'   => $order->id,
+        'product_id' => $productWithPartner->id,
+        'status'     => OrderItemStatus::WON->value,
+    ]);
+
+    $order->touch();
+
+    expect($order->fresh()->pipeline_stage_id)->toBe(PipelineStage::ORDER_BEVESTIGD->id());
 });

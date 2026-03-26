@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
+use App\Enums\Currency;
 use App\Enums\LostReason;
 use App\Enums\OrderItemStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentType;
 use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
+use App\Http\Requests\Admin\OrderPaymentRequest;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
@@ -28,6 +33,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -40,6 +46,7 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Models\StageProxy;
+use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
@@ -856,6 +863,75 @@ class OrderController extends SimpleEntityController
 
         return response()->json([
             'message' => 'Order stage bijgewerkt.',
+        ]);
+    }
+
+    /**
+     * Betalingsoverzicht: alle orders die nog niet volledig betaald zijn.
+     * Optioneel gefilterd op pipeline via ?pipeline_id=
+     */
+    public function paymentOverview(Request $request): View
+    {
+        /** @var PipelineRepository $pipelineRepo */
+        $pipelineRepo = app(PipelineRepository::class);
+
+        $pipelines = $pipelineRepo->getPipelinesByType(PipelineType::ORDER);
+        $currentPipeline = $this->pipelineCookieService->getPipeline(
+            PipelineType::ORDER,
+            $request->filled('pipeline_id') ? (int) $request->pipeline_id : null
+        );
+
+        $stageIds = $currentPipeline->stages->pluck('id');
+
+        $orders = Order::query()
+            ->with('payments')
+            ->whereIn('pipeline_stage_id', $stageIds)
+            ->orderBy('order_number')
+            ->get()
+            ->filter(fn (Order $o) => $o->netPaidAmount() < round((float) ($o->total_price ?? 0), 2))
+            ->values();
+
+        return view('adminc.orders.payment-overview', [
+            'orders'               => $orders,
+            'pipelines'            => $pipelines,
+            'currentPipelineId'    => $currentPipeline->id,
+            'paymentTypeOptions'   => PaymentType::options(),
+            'paymentMethodOptions' => PaymentMethod::options(),
+            'currencyOptions'      => Currency::options(),
+            'defaultCurrencyCode'  => Currency::default()->value,
+            'today'                => now()->format('Y-m-d'),
+        ]);
+    }
+
+    /**
+     * Sla meerdere betalingen in één keer op (mass action vanuit betalingsoverzicht).
+     */
+    public function savePaymentOverview(OrderPaymentRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        DB::transaction(function () use ($data) {
+            foreach ($data['rows'] as $row) {
+                $data = [
+                    'amount'   => $row['amount'],
+                    'type'     => $row['type'],
+                    'method'   => $row['method'],
+                    'paid_at'  => $row['paid_at'] ?? null,
+                    'currency' => $row['currency'] ?? 'EUR',
+                ];
+
+                if (! empty($row['payment_id'])) {
+                    OrderPayment::where('id', $row['payment_id'])->where('order_id', $row['order_id'])->update($data);
+                } else {
+                    OrderPayment::create(array_merge($data, ['order_id' => $row['order_id']]));
+                }
+            }
+        });
+
+        $count = count($data['rows']);
+
+        return response()->json([
+            'message' => "Betalingen opgeslagen ({$count} ".($count === 1 ? 'betaling' : 'betalingen').').',
         ]);
     }
 

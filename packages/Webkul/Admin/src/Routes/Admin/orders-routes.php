@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
 Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('', 'index')->name('admin.orders.index');
     Route::get('get', 'get')->name('admin.orders.get');
+    Route::get('payment-overview', 'paymentOverview')->name('admin.orders.payment-overview');
+    Route::post('payment-overview', 'savePaymentOverview')->name('admin.orders.payment-overview.save');
     Route::get('create', 'create')->name('admin.orders.create');
     Route::post('create', 'store')->name('admin.orders.store');
     Route::get('view/{id}', 'view')->name('admin.orders.view');

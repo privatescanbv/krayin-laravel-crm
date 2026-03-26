@@ -33,6 +33,7 @@
     <div class="h-6 ml-2">
         @include('adminc::components.vue.wonlost-toggle')
     </div>
+    <span class="icon-more text-xl"></span>
 
     @if ($type !== 'orders')
         <div class="h-6 ml-2">
@@ -41,29 +42,10 @@
     @endif
 
     <!-- LEFT: NAV BAR -->
-    <nav class="pipeline-nav flex-shrink-0 border border-gray-200 bg-white rounded-md px-1 h-11 flex items-center">
-        <div class="flex items-center space-x-[2px]">
-            @foreach ($pipelines as $tempPipeline)
-                @php $active = $currentPipelineId == $tempPipeline->id; @endphp
-
-                <a
-                    href="{{ route($routeNameIndex, ['pipeline_id' => $tempPipeline->id, 'view_type' => request('view_type')]) }}"
-                    class="
-                        h-9 px-4 flex items-center rounded-md text-sm font-medium transition
-                        {{ $active
-                            ? 'active bg-brand-privatescan-main text-brand-privatescan-accent shadow-sm'
-                            : 'text-brand-privatescan-main hover:bg-[#e8f0f9]'
-                        }}
-                    "
-                >
-                    {{ $tempPipeline->name }}
-                </a>
-            @endforeach
-        </div>
-    </nav>
+    <x-adminc::components.pipeline-nav :tabs="$tabs" :current-id="$currentPipelineId" />
 
     <!-- RIGHT BUTTON -->
-    @if ($type == 'leads' && bouncer()->hasPermission('leads.create'))
+    @if ($type === 'leads' && bouncer()->hasPermission('leads.create'))
         <a
             href="{{ route('admin.leads.create') }}{{ request('pipeline_id') ? '?pipeline_id=' . request('pipeline_id') : '' }}"
             class="primary-button h-11 flex items-center whitespace-nowrap ml-auto"
@@ -73,6 +55,11 @@
     @endif
 
     @if ($type === 'orders' && bouncer()->hasPermission('orders.create'))
+        <span class="icon-more text-xl"></span>
+        <a href="{{ route('admin.orders.payment-overview') }}" class="secondary-button h-11 flex items-center whitespace-nowrap">
+            <span class="icon-dollar text-xl"></span>
+            Betalingsoverzicht
+        </a>
         <a
             href="{{ route('admin.orders.create') }}{{ request('pipeline_id') ? '?pipeline_id=' . request('pipeline_id') : '' }}"
             class="primary-button h-11 flex items-center whitespace-nowrap ml-auto"

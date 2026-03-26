@@ -99,7 +99,7 @@ class DuplicateController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Leads successfully merged.',
+                'message' => __('messages.lead.merge_success'),
                 'merged_lead' => [
                     'id' => $mergedLead->id,
                     'title' => $mergedLead->title,
@@ -108,7 +108,7 @@ class DuplicateController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to merge leads: ' . $e->getMessage(),
+                'message' => __('messages.lead.merge_failed', ['error' => $e->getMessage()]),
             ], 500);
         }
     }

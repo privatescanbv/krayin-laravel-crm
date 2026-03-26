@@ -134,7 +134,7 @@ class GroupController extends Controller
             return new GroupResource($group);
         } else {
             return new JsonResponse([
-                'message' => 'Group not found by ' . $departmentName,
+                'message' => __('messages.group.not_found', ['name' => $departmentName]),
             ], 404);
         }
     }

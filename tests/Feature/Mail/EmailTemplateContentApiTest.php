@@ -218,7 +218,7 @@ test('it returns error when template not found', function () {
 
     $response->assertStatus(404)
         ->assertJson([
-            'error' => 'Template not found',
+            'error' => __('messages.email.template_not_found'),
         ]);
 });
 

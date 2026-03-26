@@ -232,7 +232,7 @@ test('validates required name field', function () {
     $response->assertStatus(422);
     $response->assertJson([
         'success' => false,
-        'message' => 'Name is required',
+        'message' => __('messages.organization.name_required'),
     ]);
 });
 

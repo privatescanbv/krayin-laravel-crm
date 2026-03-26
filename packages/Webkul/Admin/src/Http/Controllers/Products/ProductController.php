@@ -169,7 +169,7 @@ class ProductController extends SimpleEntityController
 
         if (! $product) {
             return response()->json([
-                'error' => 'Product not found',
+                'error' => __('messages.product.not_found'),
             ], 404);
         }
 

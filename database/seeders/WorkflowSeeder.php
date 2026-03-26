@@ -72,7 +72,7 @@ class WorkflowSeeder extends Seeder
                 ['AFB + GVL versturen naar Kliniek', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_WACHTEN_UITVOERING                => [],
-            PipelineStage::ORDER_UITGEVOERD => [
+            PipelineStage::ORDER_UITGEVOERD                        => [
                 ['Rapporten ontvangen? Verzenden klant', $defaultDescription, ActivityType::TASK, 5],
             ],
             PipelineStage::ORDER_UITGEVOERD_HERNIA => [

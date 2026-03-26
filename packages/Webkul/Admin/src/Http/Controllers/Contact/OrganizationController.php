@@ -71,10 +71,11 @@ class OrganizationController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Name is required'
+                    'message' => __('messages.organization.name_required'),
                 ], 422);
             }
-            return redirect()->back()->with('error', 'Name is required');
+
+            return redirect()->back()->with('error', __('messages.organization.name_required'));
         }
 
         $organization = $this->organizationRepository->create($data);
@@ -128,10 +129,11 @@ class OrganizationController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Name is required'
+                    'message' => __('messages.organization.name_required'),
                 ], 422);
             }
-            return redirect()->back()->with('error', 'Name is required');
+
+            return redirect()->back()->with('error', __('messages.organization.name_required'));
         }
 
         try {
@@ -141,10 +143,11 @@ class OrganizationController extends Controller
                 if (request()->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Organization not found'
+                        'message' => __('messages.organization.not_found'),
                     ], 404);
                 }
-                return redirect()->back()->with('error', 'Organization not found');
+
+                return redirect()->back()->with('error', __('messages.organization.not_found'));
             }
 
             // Handle address update
@@ -155,10 +158,11 @@ class OrganizationController extends Controller
                     if (request()->ajax()) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Organization not found after update'
+                            'message' => __('messages.organization.not_found'),
                         ], 404);
                     }
-                    return redirect()->back()->with('error', 'Organization not found after update');
+
+                    return redirect()->back()->with('error', __('messages.organization.not_found'));
                 }
 
                 $addressRepository = app(AddressRepository::class);
@@ -188,10 +192,10 @@ class OrganizationController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error updating organization: ' . $e->getMessage()
+                    'message' => __('messages.organization.update_error', ['error' => $e->getMessage()])
                 ], 500);
             }
-            return redirect()->back()->with('error', 'Error updating organization: ' . $e->getMessage());
+            return redirect()->back()->with('error', __('messages.organization.update_error', ['error' => $e->getMessage()]));
         }
     }
 

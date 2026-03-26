@@ -100,7 +100,7 @@ class DuplicateController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Persons successfully merged.',
+                'message' => __('messages.person.merge_success'),
                 'merged_person' => [
                     'id' => $mergedPerson->id,
                     'name' => $mergedPerson->name,
@@ -109,7 +109,7 @@ class DuplicateController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to merge persons: ' . $e->getMessage(),
+                'message' => __('messages.person.merge_failed', ['error' => $e->getMessage()]),
             ], 500);
         }
     }

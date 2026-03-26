@@ -90,10 +90,8 @@ class ActivityController extends Controller
                 );
             } catch (DuplicateException $e) {
                 return response()->json([
-                    'message' => 'Duplicate activity: same title exists for this lead and is not done.',
-                    'errors' => [
-                        'title' => ['Duplicate for this lead while open (is_done = 0).']
-                    ]
+                    'message' => __('messages.activity.duplicate_lead'),
+                    'errors'  => ['title' => [__('messages.activity.duplicate_lead')]]
                 ], 409);
             }
             return response()->json([

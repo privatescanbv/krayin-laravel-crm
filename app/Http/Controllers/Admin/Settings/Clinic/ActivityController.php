@@ -68,15 +68,13 @@ class ActivityController extends Controller
 
         if ($isDuplicate) {
             return response()->json([
-                'message' => 'Duplicate activity: same title exists for this clinic and is not done.',
-                'errors'  => [
-                    'title' => ['Duplicate for this clinic while open (is_done = 0).'],
-                ],
+                'message' => __('messages.activity.duplicate_clinic'),
+                'errors'  => ['title' => [__('messages.activity.duplicate_clinic')]],
             ], 409);
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
-            'is_done'   => $request->type == 'note' ? 1 : 0,
+            'is_done'   => $request->type === 'note' ? 1 : 0,
             'user_id'   => $data['user_id'] ?? null,
             'group_id'  => $data['group_id'] ?? null,
             'clinic_id' => $id,

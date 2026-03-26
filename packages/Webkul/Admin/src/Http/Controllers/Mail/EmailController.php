@@ -526,7 +526,7 @@ class EmailController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Internal server error',
+                'error' => __('messages.email.server_error'),
                 'message' => $e->getMessage(),
                 'trace' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 500);
@@ -614,7 +614,7 @@ class EmailController extends Controller
 
         if (is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
             return response()->json([
-                'error' => 'At least one of lead_id, person_id, or sales_lead_id is required',
+                'error' => __('messages.email.entity_required'),
             ], 400);
         }
 
@@ -623,7 +623,7 @@ class EmailController extends Controller
 
             if (!$template) {
                 return response()->json([
-                    'error' => 'Template not found',
+                    'error' => __('messages.email.template_not_found'),
                     'message' => "Template with code '{$templateCode}' does not exist in database",
                 ], 404);
             }
@@ -653,7 +653,7 @@ class EmailController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Template not found or error rendering template',
+                'error' => __('messages.email.template_render_error'),
                 'message' => $e->getMessage(),
                 'trace' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 404);
@@ -687,7 +687,7 @@ class EmailController extends Controller
 
             if (!$template) {
                 return response()->json([
-                    'error' => 'Template not found',
+                    'error' => __('messages.email.template_not_found'),
                     'message' => "Template with code '{$templateCode}' does not exist in database",
                 ], 404);
             }
@@ -708,7 +708,7 @@ class EmailController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Template not found or error rendering template',
+                'error' => __('messages.email.template_render_error'),
                 'message' => $e->getMessage(),
                 'trace' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 500);
@@ -742,7 +742,7 @@ class EmailController extends Controller
 
             if (!$template) {
                 return response()->json([
-                    'error' => 'Template not found',
+                    'error' => __('messages.email.template_not_found'),
                     'message' => "Template with code '{$templateCode}' does not exist in database",
                 ], 404);
             }
@@ -763,7 +763,7 @@ class EmailController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Template not found or error rendering template',
+                'error' => __('messages.email.template_render_error'),
                 'message' => $e->getMessage(),
                 'trace' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 500);

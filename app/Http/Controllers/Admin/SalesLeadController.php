@@ -200,7 +200,7 @@ class SalesLeadController extends Controller
         }
 
         return redirect()->route('admin.sales-leads.index')
-            ->with('success', 'Sales created successfully.');
+            ->with('success', __('messages.sales.created'));
     }
 
     public function edit($id)
@@ -226,13 +226,13 @@ class SalesLeadController extends Controller
         // If this is an AJAX request (like from kanban drag & drop), return JSON
         if ($request->ajax()) {
             return response()->json([
-                'message'       => 'Sales updated successfully.',
-                'sales_lead'    => $salesLead,
+                'message'    => __('messages.sales.updated'),
+                'sales_lead' => $salesLead,
             ]);
         }
 
         return redirect()->route('admin.sales-leads.view', $id)
-            ->with('success', 'Sales updated successfully.');
+            ->with('success', __('messages.sales.updated'));
     }
 
     public function view($id)
@@ -320,7 +320,7 @@ class SalesLeadController extends Controller
         $salesLead->update($attributes);
 
         return response()->json([
-            'message' => 'Sales stage updated successfully.',
+            'message' => __('messages.sales.stage_updated'),
         ]);
     }
 
@@ -441,7 +441,7 @@ class SalesLeadController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Activity created successfully.',
+            'message' => __('messages.sales.activity_created'),
             'data'    => $activity,
         ]);
     }
@@ -450,7 +450,7 @@ class SalesLeadController extends Controller
     {
         // Placeholder for email detachment
         return response()->json([
-            'message' => 'Email detached successfully.',
+            'message' => __('messages.sales.email_detached'),
         ]);
     }
 
@@ -460,7 +460,7 @@ class SalesLeadController extends Controller
         $salesLead->delete();
 
         return redirect()->route('admin.sales-leads.index')
-            ->with('success', 'Sales deleted successfully.');
+            ->with('success', __('messages.sales.deleted'));
     }
 
     /**

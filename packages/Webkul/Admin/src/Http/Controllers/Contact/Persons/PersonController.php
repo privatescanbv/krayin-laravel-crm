@@ -519,7 +519,7 @@ class PersonController extends Controller
             ]);
         } catch (Throwable $e) {
             return response()->json([
-                'message' => 'Unable to calculate match score breakdown',
+                'message' => __('messages.person.match_score_error'),
             ], 400);
         }
     }
@@ -560,7 +560,7 @@ class PersonController extends Controller
                 'error' => $e->getMessage(),
             ]);
             return response()->json([
-                'message' => 'Unable to calculate match score',
+                'message' => __('messages.person.match_score_error'),
             ], 400);
         }
     }

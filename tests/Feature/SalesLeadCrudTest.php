@@ -124,7 +124,7 @@ test('can update workflow lead (ajax json)', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Sales updated successfully.');
+    $response->assertOk()->assertJsonPath('message', __('messages.sales.updated'));
 
     $this->assertDatabaseHas('salesleads', [
         'id'   => $salesLead->id,
@@ -230,7 +230,7 @@ test('can update Sales person relationships', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Sales updated successfully.');
+    $response->assertOk()->assertJsonPath('message', __('messages.sales.updated'));
 
     // Refresh the Sales
     $salesLead->refresh();

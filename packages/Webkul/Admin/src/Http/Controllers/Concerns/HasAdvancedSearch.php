@@ -69,7 +69,7 @@ trait HasAdvancedSearch
         // Validate query length (Bad Request when > 25 characters)
         if (!empty($query) && mb_strlen($query) > 50) {
             return response()->json([
-                'message' => 'Search term exceeds maximum length of 25 characters.',
+                'message' => __('messages.search.term_too_long'),
             ], 400);
         }
 
@@ -595,7 +595,7 @@ trait HasAdvancedSearch
             }
             if (!in_array($field, $allowed, true)) {
                 return response()->json([
-                    'message' => 'Invalid search field',
+                    'message' => __('messages.search.invalid_field'),
                     'field' => $field,
                 ], 400);
             }

@@ -1066,7 +1066,7 @@ class LeadController extends Controller
             }
             if (!in_array($field, $allowed, true)) {
                 return response()->json([
-                    'message' => 'Invalid search field',
+                    'message' => __('messages.search.invalid_field'),
                     'field' => $field,
                 ], 400);
             }

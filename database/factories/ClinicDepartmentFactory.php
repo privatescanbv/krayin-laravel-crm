@@ -17,6 +17,7 @@ class ClinicDepartmentFactory extends Factory
         return [
             'clinic_id' => $clinic->id,
             'name'      => $this->faker->unique()->word(),
+            'email'     => $this->faker->unique()->safeEmail(),
         ];
     }
 }

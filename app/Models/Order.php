@@ -45,6 +45,7 @@ class Order extends Model
         'afb_sent_at',
         'afb_sent_type',
         'afb_sent_to_clinic_id',
+        'afb_sent_to_clinic_department_id',
         'sales_lead_id',
         'user_id',
         'combine_order',
@@ -54,19 +55,20 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'total_price'          => 'decimal:2',
-        'pipeline_stage_id'    => 'integer',
-        'first_examination_at' => 'datetime',
-        'afb_sent_at'          => 'datetime',
-        'afb_sent_type'        => AfbDispatchType::class,
-        'afb_sent_to_clinic_id'=> 'integer',
-        'closed_at'            => 'date',
-        'lost_reason'          => LostReason::class,
-        'sales_lead_id'        => 'integer',
-        'user_id'              => 'integer',
-        'combine_order'        => 'boolean',
-        'created_by'           => 'integer',
-        'updated_by'           => 'integer',
+        'total_price'                      => 'decimal:2',
+        'pipeline_stage_id'                => 'integer',
+        'first_examination_at'             => 'datetime',
+        'afb_sent_at'                      => 'datetime',
+        'afb_sent_type'                    => AfbDispatchType::class,
+        'afb_sent_to_clinic_id'            => 'integer',
+        'afb_sent_to_clinic_department_id' => 'integer',
+        'closed_at'                        => 'date',
+        'lost_reason'                      => LostReason::class,
+        'sales_lead_id'                    => 'integer',
+        'user_id'                          => 'integer',
+        'combine_order'                    => 'boolean',
+        'created_by'                       => 'integer',
+        'updated_by'                       => 'integer',
     ];
 
     public static function rules(): array

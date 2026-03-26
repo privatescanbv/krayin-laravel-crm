@@ -16,6 +16,7 @@ class AfbDispatch extends Model
 
     protected $fillable = [
         'clinic_id',
+        'clinic_department_id',
         'email_id',
         'type',
         'status',
@@ -27,19 +28,25 @@ class AfbDispatch extends Model
     ];
 
     protected $casts = [
-        'clinic_id'        => 'integer',
-        'email_id'         => 'integer',
-        'type'             => AfbDispatchType::class,
-        'status'           => AfbDispatchStatus::class,
-        'order_ids'        => 'array',
-        'sent_at'          => 'datetime',
-        'last_attempt_at'  => 'datetime',
-        'attempt'          => 'integer',
+        'clinic_id'            => 'integer',
+        'clinic_department_id' => 'integer',
+        'email_id'             => 'integer',
+        'type'                 => AfbDispatchType::class,
+        'status'               => AfbDispatchStatus::class,
+        'order_ids'            => 'array',
+        'sent_at'              => 'datetime',
+        'last_attempt_at'      => 'datetime',
+        'attempt'              => 'integer',
     ];
 
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    public function clinicDepartment(): BelongsTo
+    {
+        return $this->belongsTo(ClinicDepartment::class);
     }
 
     public function email(): BelongsTo

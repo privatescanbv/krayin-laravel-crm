@@ -15,6 +15,7 @@ class AfbDispatchOrder extends Model
         'afb_dispatch_id',
         'order_id',
         'clinic_id',
+        'clinic_department_id',
         'person_id',
         'patient_name',
         'file_name',
@@ -23,11 +24,12 @@ class AfbDispatchOrder extends Model
     ];
 
     protected $casts = [
-        'afb_dispatch_id' => 'integer',
-        'order_id'        => 'integer',
-        'clinic_id'       => 'integer',
-        'person_id'       => 'integer',
-        'sent_at'         => 'datetime',
+        'afb_dispatch_id'      => 'integer',
+        'order_id'             => 'integer',
+        'clinic_id'            => 'integer',
+        'clinic_department_id' => 'integer',
+        'person_id'            => 'integer',
+        'sent_at'              => 'datetime',
     ];
 
     public function dispatch(): BelongsTo
@@ -43,6 +45,11 @@ class AfbDispatchOrder extends Model
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    public function clinicDepartment(): BelongsTo
+    {
+        return $this->belongsTo(ClinicDepartment::class);
     }
 
     public function person(): BelongsTo

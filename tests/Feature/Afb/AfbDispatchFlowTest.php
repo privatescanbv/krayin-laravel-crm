@@ -7,6 +7,7 @@ use App\Models\Address;
 use App\Models\AfbDispatchOrder;
 use App\Models\Anamnesis;
 use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
@@ -38,6 +39,7 @@ beforeEach(function () {
 /**
  * @return array{
  *     clinic: Clinic,
+ *     department: ClinicDepartment,
  *     order: Order,
  *     person: Person
  * }
@@ -48,6 +50,12 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
         'name'                         => 'Evidia',
         'registration_form_clinic_name'=> 'Evidia - Augusta Klinik',
         'emails'                       => [['value' => 'clinic@example.com', 'is_default' => true]],
+    ]);
+
+    $department = ClinicDepartment::factory()->create([
+        'clinic_id' => $clinic->id,
+        'name'      => 'Radiologie',
+        'email'     => 'dept@example.com',
     ]);
 
     $address = Address::factory()->create([
@@ -87,8 +95,8 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
     ]);
 
     $partnerProduct = PartnerProduct::factory()->create([
-        'product_id'          => $product->id,
-        'clinic_description'  => 'MRT HWS zonder KM',
+        'product_id'         => $product->id,
+        'clinic_description' => 'MRT HWS zonder KM',
     ]);
     $partnerProduct->clinics()->sync([$clinic->id]);
 
@@ -101,7 +109,8 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
     ]);
 
     $resource = Resource::factory()->create([
-        'clinic_id' => $clinic->id,
+        'clinic_id'            => $clinic->id,
+        'clinic_department_id' => $department->id,
     ]);
 
     ResourceOrderItem::factory()->create([
@@ -129,7 +138,7 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
             'comment_clinic' => 'Nekpijn links, voorzichtig positioneren.',
         ]);
 
-    return ['clinic'=>$clinic, 'order'=>$order, 'person'=>$person];
+    return ['clinic' => $clinic, 'department' => $department, 'order' => $order, 'person' => $person];
 }
 
 test('afb generator maps crm fields into afb layout', function () {
@@ -154,7 +163,7 @@ test('afb generator maps crm fields into afb layout', function () {
         ->not->toContain('Verk.nr');
 });
 
-test('daily afb command queues one batch job per clinic', function () {
+test('daily afb command queues one batch job per department', function () {
     Bus::fake();
 
     $targetDate = now()->addDays(3)->setTime(10, 0);
@@ -164,7 +173,7 @@ test('daily afb command queues one batch job per clinic', function () {
         ->assertExitCode(0);
 
     Bus::assertDispatched(SendAfbDispatchJob::class, function (SendAfbDispatchJob $job) use ($context) {
-        return $job->clinicId === $context['clinic']->id
+        return $job->departmentId === $context['department']->id
             && $job->type === AfbDispatchType::BATCH->value
             && $job->orderIds === [$context['order']->id];
     });
@@ -177,45 +186,45 @@ test('late booking planning queues individual afb dispatch', function () {
     $context = createOrderForClinic($examAt);
 
     Bus::assertDispatched(SendAfbDispatchJob::class, function (SendAfbDispatchJob $job) use ($context) {
-        return $job->clinicId === $context['clinic']->id
+        return $job->departmentId === $context['department']->id
             && $job->type === AfbDispatchType::INDIVIDUAL->value
             && $job->orderIds === [$context['order']->id];
     });
 });
 
-test('dispatch service prevents duplicate send to same clinic', function () {
+test('dispatch service prevents duplicate send to same department', function () {
     Mail::fake();
 
     $context = createOrderForClinic(now()->addDays(2)->setTime(11, 0));
     $service = app(AfbDispatchService::class);
 
     $service->sendDispatch(
-        clinicId: $context['clinic']->id,
+        departmentId: $context['department']->id,
         orderIds: [$context['order']->id],
         type: AfbDispatchType::INDIVIDUAL,
         attempt: 1
     );
 
     $service->sendDispatch(
-        clinicId: $context['clinic']->id,
+        departmentId: $context['department']->id,
         orderIds: [$context['order']->id],
         type: AfbDispatchType::INDIVIDUAL,
         attempt: 1
     );
 
     expect(AfbDispatchOrder::query()
-        ->where('clinic_id', $context['clinic']->id)
+        ->where('clinic_department_id', $context['department']->id)
         ->where('order_id', $context['order']->id)
         ->count())->toBe(1)
         ->and(Email::query()->where('clinic_id', $context['clinic']->id)->count())->toBe(1);
 
     $context['order']->refresh();
-    expect($context['order']->afb_sent_to_clinic_id)->toBe($context['clinic']->id);
+    expect($context['order']->afb_sent_to_clinic_department_id)->toBe($context['department']->id);
 
     Mail::assertSent(EmailMailable::class, 1);
 });
 
-test('daily batch does not dispatch for clinic whose exam is later that week', function () {
+test('daily batch does not dispatch for department whose exam is later that week', function () {
     Bus::fake();
 
     $targetDate = now()->addDays(3)->setTime(10, 0);
@@ -224,7 +233,14 @@ test('daily batch does not dispatch for clinic whose exam is later that week', f
     $context = createOrderForClinic($targetDate);
 
     $clinicB = Clinic::factory()->create();
-    $resource = Resource::factory()->create(['clinic_id' => $clinicB->id]);
+    $departmentB = ClinicDepartment::factory()->create([
+        'clinic_id' => $clinicB->id,
+        'email'     => 'deptb@example.com',
+    ]);
+    $resource = Resource::factory()->create([
+        'clinic_id'            => $clinicB->id,
+        'clinic_department_id' => $departmentB->id,
+    ]);
     $orderItem = $context['order']->orderItems()->first();
 
     ResourceOrderItem::factory()->create([
@@ -237,11 +253,11 @@ test('daily batch does not dispatch for clinic whose exam is later that week', f
     $this->artisan('afb:send-daily --date='.$targetDate->toDateString())
         ->assertExitCode(0);
 
-    Bus::assertDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->clinicId === $context['clinic']->id);
-    Bus::assertNotDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->clinicId === $clinicB->id);
+    Bus::assertDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->departmentId === $context['department']->id);
+    Bus::assertNotDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->departmentId === $departmentB->id);
 });
 
-test('adding next week clinic to order with imminent exam does not trigger immediate dispatch', function () {
+test('adding next week department to order with imminent exam does not trigger immediate dispatch', function () {
     Bus::fake();
 
     $examSoon = now()->addHours(8);
@@ -250,7 +266,14 @@ test('adding next week clinic to order with imminent exam does not trigger immed
     $context = createOrderForClinic($examSoon);
 
     $clinicB = Clinic::factory()->create();
-    $resource = Resource::factory()->create(['clinic_id' => $clinicB->id]);
+    $departmentB = ClinicDepartment::factory()->create([
+        'clinic_id' => $clinicB->id,
+        'email'     => 'deptb@example.com',
+    ]);
+    $resource = Resource::factory()->create([
+        'clinic_id'            => $clinicB->id,
+        'clinic_department_id' => $departmentB->id,
+    ]);
     $orderItem = $context['order']->orderItems()->first();
 
     ResourceOrderItem::factory()->create([
@@ -260,7 +283,7 @@ test('adding next week clinic to order with imminent exam does not trigger immed
         'to'           => $examLater->copy()->addMinutes(60),
     ]);
 
-    Bus::assertNotDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->clinicId === $clinicB->id);
+    Bus::assertNotDispatched(SendAfbDispatchJob::class, fn (SendAfbDispatchJob $job) => $job->departmentId === $departmentB->id);
 });
 
 test('clinic view contains afb verzendingen navigation', function () {

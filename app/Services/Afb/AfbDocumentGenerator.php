@@ -4,6 +4,7 @@ namespace App\Services\Afb;
 
 use App\Models\Anamnesis;
 use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\PartnerProduct;
 use App\Models\ResourceOrderItem;
@@ -60,6 +61,46 @@ class AfbDocumentGenerator
     }
 
     /**
+     * @return array{
+     *     file_name: string,
+     *     file_path: string,
+     *     patient_name: ?string,
+     *     person_id: ?int
+     * }
+     */
+    public function generateForOrderAndDepartment(Order $order, ClinicDepartment $department): array
+    {
+        $department->loadMissing('clinic');
+        $rendered = $this->renderHtmlForOrderAndDepartment($order, $department);
+
+        $html = $rendered['html'];
+        $person = $rendered['person'];
+
+        $pdfContent = Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->output();
+
+        $datePart = now()->format('Ymd_His');
+        $orderPart = $order->order_number ?: (string) $order->id;
+        $fileName = sprintf(
+            'afb_%s_%s_%s.pdf',
+            Str::slug($department->clinic->name ?: 'clinic'),
+            Str::slug($orderPart),
+            $datePart
+        );
+        $filePath = sprintf('afb/%d/%d/%s', $department->clinic_id, $order->id, $fileName);
+
+        $this->documentStorage->put($filePath, $pdfContent);
+
+        return [
+            'file_name'    => $fileName,
+            'file_path'    => $filePath,
+            'patient_name' => $person?->name,
+            'person_id'    => $person?->id,
+        ];
+    }
+
+    /**
      * @return array{html: string, person: ?Person}
      */
     public function renderHtmlForOrderAndClinic(Order $order, Clinic $clinic): array
@@ -80,6 +121,37 @@ class AfbDocumentGenerator
 
         $html = view('adminc.afb.document', [
             'afb' => $this->buildViewData($order, $clinic, $person, $anamnesis, $examinations),
+        ])->render();
+
+        return [
+            'html'   => $html,
+            'person' => $person,
+        ];
+    }
+
+    /**
+     * @return array{html: string, person: ?Person}
+     */
+    public function renderHtmlForOrderAndDepartment(Order $order, ClinicDepartment $department): array
+    {
+        $department->loadMissing('clinic');
+
+        $order->loadMissing([
+            'user',
+            'salesLead.user',
+            'salesLead.contactPerson.address',
+            'salesLead.persons.address',
+            'orderItems.person.address',
+            'orderItems.product.partnerProducts.clinics',
+            'orderItems.resourceOrderItems.resource.clinicDepartment',
+        ]);
+
+        $examinations = $this->extractDepartmentExaminations($order, $department->id);
+        $person = $this->resolvePerson($order, $examinations);
+        $anamnesis = $this->resolveAnamnesis($order, $person);
+
+        $html = view('adminc.afb.document', [
+            'afb' => $this->buildViewData($order, $department->clinic, $person, $anamnesis, $examinations),
         ])->render();
 
         return [
@@ -173,6 +245,44 @@ class AfbDocumentGenerator
                             'appointment_time'      => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
                             'start_time'            => $start->format('H:i'),
                             'clinic_description'    => $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId)
+                                ?: ($item->getProductDescription() ?: $item->getProductName() ?: '-'),
+                            'order_item_person_id'  => $item->person_id ? (int) $item->person_id : null,
+                        ];
+                    });
+            })
+            ->sortBy(fn (array $row) => $row['start_at'])
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, array{
+     *     start_at: Carbon,
+     *     date: string,
+     *     appointment_time: string,
+     *     start_time: string,
+     *     clinic_description: string,
+     *     order_item_person_id: ?int
+     * }>
+     */
+    private function extractDepartmentExaminations(Order $order, int $departmentId): Collection
+    {
+        return $order->orderItems
+            ->flatMap(function ($item) use ($departmentId) {
+                return $item->resourceOrderItems
+                    ->filter(fn (ResourceOrderItem $resourceOrderItem) => (int) $resourceOrderItem->resource?->clinic_department_id === $departmentId)
+                    ->map(function (ResourceOrderItem $resourceOrderItem) use ($item) {
+                        $start = $resourceOrderItem->from
+                            ? Carbon::parse($resourceOrderItem->from)
+                            : Carbon::parse($item->order?->first_examination_at ?? now());
+
+                        $clinicId = $resourceOrderItem->resource?->clinicDepartment?->clinic_id;
+
+                        return [
+                            'start_at'              => $start,
+                            'date'                  => $start->format('d-m-Y'),
+                            'appointment_time'      => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
+                            'start_time'            => $start->format('H:i'),
+                            'clinic_description'    => ($clinicId ? $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId) : null)
                                 ?: ($item->getProductDescription() ?: $item->getProductName() ?: '-'),
                             'order_item_person_id'  => $item->person_id ? (int) $item->person_id : null,
                         ];

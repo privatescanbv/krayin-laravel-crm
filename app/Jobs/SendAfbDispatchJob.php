@@ -25,7 +25,7 @@ class SendAfbDispatchJob implements ShouldQueue
      * @param  array<int, int>  $orderIds
      */
     public function __construct(
-        public int $clinicId,
+        public int $departmentId,
         public array $orderIds,
         public string $type
     ) {}
@@ -33,7 +33,7 @@ class SendAfbDispatchJob implements ShouldQueue
     public function handle(AfbDispatchService $afbDispatchService): void
     {
         $afbDispatchService->sendDispatch(
-            clinicId: $this->clinicId,
+            departmentId: $this->departmentId,
             orderIds: $this->orderIds,
             type: AfbDispatchType::from($this->type),
             attempt: $this->attempts(),

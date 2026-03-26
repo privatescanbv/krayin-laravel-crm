@@ -501,6 +501,7 @@ if (typeof window !== 'undefined') {
 (async () => {
     await markerSDK.loadWidget({
         project: '69c4f36fee5027410256aa51',
+        useNativeScreenshot: true,
     });
 })();
 

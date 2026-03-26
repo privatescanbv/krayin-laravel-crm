@@ -1047,6 +1047,13 @@ class OrderController extends SimpleEntityController
             /** @var Order $order */
             $order = $this->orderRepository->findOrFail($id);
 
+            // Fill the in-memory model with incoming request values so the transition
+            // validator sees the to-be-saved state, not the current DB state.
+            // Exclude pipeline_stage_id: the validator uses $order->pipeline_stage_id as
+            // the *current* (from) stage; the new (to) stage is passed as a separate argument.
+            $fillable = array_diff($order->getFillable(), ['pipeline_stage_id']);
+            $order->fill($request->only($fillable));
+
             OrderStatusTransitionValidator::validateTransition($order, (int) $request->input('pipeline_stage_id'));
         }
     }

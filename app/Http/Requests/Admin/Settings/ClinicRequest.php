@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin\Settings;
 
+use App\Services\ContactValidationRules;
 use App\Validators\ContactArrayValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Webkul\Core\Contracts\Validations\EmailValidator;
@@ -9,14 +10,14 @@ use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 class ClinicRequest extends FormRequest
 {
-    public static function rulesForCreate(): array
+    public static function rulesForCreate(bool $isPostalSameAsVisit = false): array
     {
-        return (new self)->buildRules(create: true);
+        return (new self)->buildRules(create: true, isPostalSameAsVisit: $isPostalSameAsVisit);
     }
 
-    public static function rulesForUpdate(int $id): array
+    public static function rulesForUpdate(int $id, bool $isPostalSameAsVisit = false): array
     {
-        return (new self)->buildRules(create: false, id: (string) $id);
+        return (new self)->buildRules(create: false, id: (string) $id, isPostalSameAsVisit: $isPostalSameAsVisit);
     }
 
     public function authorize(): bool
@@ -36,7 +37,7 @@ class ClinicRequest extends FormRequest
         return $this->buildRules(create: true);
     }
 
-    protected function buildRules(bool $create, ?string $id = null): array
+    protected function buildRules(bool $create, ?string $id = null, bool $isPostalSameAsVisit = false): array
     {
         if ($create) {
             $nameRule = ['name' => 'required|unique:clinics,name|max:100'];
@@ -67,25 +68,11 @@ class ClinicRequest extends FormRequest
 
             // Addresses
             'is_postal_address_same_as_visit_address' => 'nullable|boolean',
+        ] + ContactValidationRules::strictAddressRules('visit_address')
+          + ($isPostalSameAsVisit ? [] : ContactValidationRules::strictAddressRules('postal_address')) + [
 
-            'visit_address.postal_code'         => 'nullable|string|max:20',
-            'visit_address.house_number'        => 'nullable|string|max:20',
-            'visit_address.house_number_suffix' => 'nullable|string|max:20',
-            'visit_address.street'              => 'nullable|string|max:255',
-            'visit_address.city'                => 'nullable|string|max:255',
-            'visit_address.state'               => 'nullable|string|max:255',
-            'visit_address.country'             => 'nullable|string|max:255',
-
-            'postal_address.postal_code'         => 'nullable|string|max:20',
-            'postal_address.house_number'        => 'nullable|string|max:20',
-            'postal_address.house_number_suffix' => 'nullable|string|max:20',
-            'postal_address.street'              => 'nullable|string|max:255',
-            'postal_address.city'                => 'nullable|string|max:255',
-            'postal_address.state'               => 'nullable|string|max:255',
-            'postal_address.country'             => 'nullable|string|max:255',
-
-            // System fields
-            'external_id' => 'nullable|string|max:255',
-        ]);
+              // System fields
+              'external_id' => 'nullable|string|max:255',
+          ]);
     }
 }

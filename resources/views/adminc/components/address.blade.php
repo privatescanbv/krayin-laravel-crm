@@ -35,10 +35,34 @@
 
 <div class="flex flex-col gap-4">
     @if (!isset($hideTitle) || !$hideTitle)
-    <div class="flex flex-col gap-1">
+    <div class="flex items-center justify-between gap-2">
         <p class="text-base font-semibold dark:text-white">
             Adresgegevens
         </p>
+        @if ((!isset($readonly) || !$readonly) && $resolvedAddress !== null)
+        <button
+            type="button"
+            id="{{ $addressId }}-clear-btn"
+            onclick="clearAddressFields('{{ $addressId }}')"
+            class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+        >
+            <span class="icon-delete text-sm"></span>
+            Adres wissen
+        </button>
+        @endif
+    </div>
+    @elseif ((!isset($readonly) || !$readonly) && $resolvedAddress !== null)
+    {{-- Title hidden but clear button still needed (e.g. clinic form with its own section header) --}}
+    <div class="flex justify-end">
+        <button
+            type="button"
+            id="{{ $addressId }}-clear-btn"
+            onclick="clearAddressFields('{{ $addressId }}')"
+            class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+        >
+            <span class="icon-delete text-sm"></span>
+            Adres wissen
+        </button>
     </div>
     @endif
 
@@ -54,6 +78,31 @@
             </div>
         </div>
     @endif
+
+    {{-- Notice shown after "Wis adres" is clicked; hidden by default --}}
+    <div
+        id="{{ $addressId }}-cleared-notice"
+        style="display:none;"
+        class="flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20"
+    >
+        <div class="flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+            <span class="icon-delete"></span>
+            Het adres wordt verwijderd wanneer je opslaat.
+        </div>
+        <button
+            type="button"
+            onclick="undoClearAddress('{{ $addressId }}')"
+            class="text-xs font-medium text-red-700 underline hover:no-underline dark:text-red-400"
+        >
+            Ongedaan maken
+        </button>
+    </div>
+
+    {{-- Hidden flag: JS sets this to "1" when the user clicks "Wis adres". The backend uses it to delete the address. --}}
+    <input type="hidden" name="{{ $resolvedNamePrefix }}[_clear]" value="0" id="{{ $addressId }}_clear_flag">
+
+    {{-- Wrapper div: visually hidden when user clears the address (Vue controls the inputs so we use the flag above instead) --}}
+    <div id="{{ $addressId }}-fields-wrapper" class="flex flex-col gap-4">
 
     <!-- Address Lookup Panel -->
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
@@ -172,6 +221,8 @@
     <v-address-preview
         :address='@json($resolvedAddress ?? new stdClass())'
     ></v-address-preview>
+
+    </div>{{-- end #{{ $addressId }}-fields-wrapper --}}
 </div>
 
 {!! view_render_event('admin.address.after') !!}
@@ -228,6 +279,39 @@
     <script>
         // Global config store (multiple address components per page)
         window.addressComponents = window.addressComponents || {};
+
+        function clearAddressFields(addressId) {
+            // Set the hidden flag — the backend will use this to delete the address.
+            // We do NOT try to clear Vue-managed inputs directly; Vue would restore them on the next render.
+            const flag = document.getElementById(addressId + '_clear_flag');
+            if (flag) flag.value = '1';
+
+            // Hide the form section, show the notice.
+            const wrapper = document.getElementById(addressId + '-fields-wrapper');
+            if (wrapper) wrapper.style.display = 'none';
+
+            const notice = document.getElementById(addressId + '-cleared-notice');
+            if (notice) notice.style.display = '';
+
+            const clearBtn = document.getElementById(addressId + '-clear-btn');
+            if (clearBtn) clearBtn.style.display = 'none';
+        }
+
+        function undoClearAddress(addressId) {
+            // Reset the flag so the backend keeps the address.
+            const flag = document.getElementById(addressId + '_clear_flag');
+            if (flag) flag.value = '0';
+
+            // Restore the form section.
+            const wrapper = document.getElementById(addressId + '-fields-wrapper');
+            if (wrapper) wrapper.style.display = '';
+
+            const notice = document.getElementById(addressId + '-cleared-notice');
+            if (notice) notice.style.display = 'none';
+
+            const clearBtn = document.getElementById(addressId + '-clear-btn');
+            if (clearBtn) clearBtn.style.display = '';
+        }
 
         // Function to initialize address lookup button
         function initializeAddressLookupButton(addressId) {

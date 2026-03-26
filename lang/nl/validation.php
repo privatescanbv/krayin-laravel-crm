@@ -109,11 +109,31 @@ return [
     'uuid'        => 'Het veld :attribute moet een geldig UUID zijn.',
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'address.postal_code' => [
+            'required_with' => 'Postcode is verplicht als je een adres invult.',
+        ],
+        'address.house_number' => [
+            'required_with' => 'Huisnummer is verplicht als je een adres invult.',
+        ],
+        'address.street' => [
+            'required_with' => 'Straat is verplicht als je een adres invult.',
+        ],
+        'address.city' => [
+            'required_with' => 'Stad is verplicht als je een adres invult.',
+        ],
+        'address.country' => [
+            'required_with' => 'Land is verplicht als je een adres invult.',
         ],
     ],
 
-    'attributes' => [],
+    'attributes' => [
+        'address.postal_code'         => 'postcode',
+        'address.house_number'        => 'huisnummer',
+        'address.house_number_suffix' => 'huisnummertoevoeging',
+        'address.street'              => 'straat',
+        'address.city'                => 'stad',
+        'address.state'               => 'provincie',
+        'address.country'             => 'land',
+    ],
 
 ];

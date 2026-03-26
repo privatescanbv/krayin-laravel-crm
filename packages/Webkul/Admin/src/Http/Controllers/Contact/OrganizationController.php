@@ -7,13 +7,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Contact\OrganizationDataGrid;
+use App\Repositories\AddressRepository;
+use App\Services\ContactValidationRules;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\OrganizationResource;
-use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Contact\Models\Organization;
-use App\Repositories\AddressRepository;
+use Webkul\Contact\Repositories\OrganizationRepository;
 
 class OrganizationController extends Controller
 {
@@ -77,10 +78,12 @@ class OrganizationController extends Controller
             return redirect()->back()->with('error', 'Name is required');
         }
 
+        $request->validate(ContactValidationRules::strictAddressRules());
+
         $organization = $this->organizationRepository->create($data);
 
         // Handle address creation
-        if (isset($data['address']) && !empty(array_filter($data['address']))) {
+        if (isset($data['address'])) {
             app(AddressRepository::class)->upsertForEntity($organization, $data['address']);
         }
 
@@ -134,6 +137,8 @@ class OrganizationController extends Controller
             return redirect()->back()->with('error', 'Name is required');
         }
 
+        $request->validate(ContactValidationRules::strictAddressRules());
+
         try {
             $organization = $this->organizationRepository->update($data, $id);
 
@@ -147,28 +152,10 @@ class OrganizationController extends Controller
                 return redirect()->back()->with('error', 'Organization not found');
             }
 
-            // Handle address update
+            // Handle address upsert/delete via repository (handles _clear flag and empty-all logic).
             if (isset($data['address'])) {
-                // Get fresh organization instance
                 $organization = $this->organizationRepository->find($id);
-                if (!$organization) {
-                    if (request()->ajax()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Organization not found after update'
-                        ], 404);
-                    }
-                    return redirect()->back()->with('error', 'Organization not found after update');
-                }
-
-                $addressRepository = app(AddressRepository::class);
-
-                if (!empty(array_filter($data['address']))) {
-                    $addressRepository->upsertForEntity($organization, $data['address']);
-                } else if ($organization->address_id) {
-                    // If address data is empty, delete existing address
-                    $addressRepository->deleteForEntity($organization);
-                }
+                app(AddressRepository::class)->upsertForEntity($organization, $data['address']);
             }
 
             Event::dispatch('contacts.organization.update.after', $organization);

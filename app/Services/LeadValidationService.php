@@ -131,10 +131,14 @@ class LeadValidationService
     }
 
     /**
-     * Get validation rules for web forms
+     * Get validation rules for web forms.
+     * Overrides address rules with strict all-or-nothing validation.
      */
     public static function getWebValidationRules($request = null, bool $create = true): array
     {
-        return self::getValidationRules($request, $create);
+        return array_merge(
+            self::getValidationRules($request, $create),
+            ContactValidationRules::strictAddressRules(),
+        );
     }
 }

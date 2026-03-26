@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\Settings\StoreClinicRequest;
 use App\Http\Requests\Admin\Settings\UpdateClinicRequest;
 use App\Models\Address;
 use App\Repositories\ClinicRepository;
+use App\Services\ContactValidationRules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,10 +62,37 @@ class ClinicController extends SimpleEntityController
 
         $isPostalSameAsVisit = $request->boolean('is_postal_address_same_as_visit_address', false);
 
+        $clinic = $this->clinicRepository->find($id);
+
         $visitAddress = $this->handleAddress($request, 'visit_address');
         $postalAddress = $isPostalSameAsVisit
             ? $visitAddress
             : $this->handleAddress($request, 'postal_address');
+
+        // Delete orphaned address records when an address is cleared.
+        // When isPostalSameAsVisit is true and the visit address is cleared, the postal
+        // address must also be removed — even if it was a separate record.
+        if (is_null($visitAddress) && $clinic?->visit_address_id) {
+            Address::where('id', $clinic->visit_address_id)->delete();
+
+            // Also clean up a separate postal address when the two were kept in sync.
+            if (
+                $isPostalSameAsVisit
+                && $clinic->postal_address_id
+                && $clinic->postal_address_id !== $clinic->visit_address_id
+            ) {
+                Address::where('id', $clinic->postal_address_id)->delete();
+            }
+        }
+
+        if (
+            ! $isPostalSameAsVisit
+            && is_null($postalAddress)
+            && $clinic?->postal_address_id
+            && $clinic->postal_address_id !== $clinic->visit_address_id
+        ) {
+            Address::where('id', $clinic->postal_address_id)->delete();
+        }
 
         $request->merge([
             'is_active'                               => $request->boolean('is_active', false),
@@ -124,12 +152,24 @@ class ClinicController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
-        $request->validate(StoreClinicRequest::rulesForCreate());
+        $isPostalSameAsVisit = $request->boolean('is_postal_address_same_as_visit_address', false);
+
+        $request->validate(
+            StoreClinicRequest::rulesForCreate($isPostalSameAsVisit),
+            [],
+            $this->clinicAddressAttributes($isPostalSameAsVisit),
+        );
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
-        $request->validate(UpdateClinicRequest::rulesForUpdate($id));
+        $isPostalSameAsVisit = $request->boolean('is_postal_address_same_as_visit_address', false);
+
+        $request->validate(
+            UpdateClinicRequest::rulesForUpdate($id, $isPostalSameAsVisit),
+            [],
+            $this->clinicAddressAttributes($isPostalSameAsVisit),
+        );
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array
@@ -159,20 +199,47 @@ class ClinicController extends SimpleEntityController
         return trans('admin::app.settings.clinics.index.delete-failed');
     }
 
+    private function clinicAddressAttributes(bool $isPostalSameAsVisit): array
+    {
+        $attrs = ContactValidationRules::strictAddressAttributes('visit_address', 'bezoekadres');
+
+        if (! $isPostalSameAsVisit) {
+            $attrs = array_merge(
+                $attrs,
+                ContactValidationRules::strictAddressAttributes('postal_address', 'postadres'),
+            );
+        }
+
+        return $attrs;
+    }
+
     private function handleAddress(Request $request, string $payloadKey = 'address'): ?Address
     {
         $addressData = $request->get($payloadKey, []);
 
-        if (! empty($addressData) && is_array($addressData)) {
-            return Address::updateOrCreate(
-                [
-                    'postal_code'  => $addressData['postal_code'] ?? null,
-                    'house_number' => $addressData['house_number'] ?? null,
-                ],
-                $addressData
-            );
+        if (! is_array($addressData)) {
+            return null;
         }
 
-        return null;
+        // Explicit clear request from the UI ("Adres wissen" button).
+        if (! empty($addressData['_clear'])) {
+            return null;
+        }
+
+        unset($addressData['_clear']);
+
+        $filled = array_filter($addressData, fn ($v) => $v !== null && $v !== '');
+
+        if (empty($filled)) {
+            return null;
+        }
+
+        return Address::updateOrCreate(
+            [
+                'postal_code'  => $addressData['postal_code'] ?? null,
+                'house_number' => $addressData['house_number'] ?? null,
+            ],
+            $addressData
+        );
     }
 }

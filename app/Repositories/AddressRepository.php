@@ -39,6 +39,15 @@ class AddressRepository extends Repository
      */
     public function upsertForEntity(Model $entity, array $addressData): ?Address
     {
+        // Explicit delete request from the UI ("Wis adres" button sets address[_clear]=1).
+        if (! empty($addressData['_clear'])) {
+            if ($entity->address_id) {
+                $this->deleteForEntity($entity);
+            }
+
+            return null;
+        }
+
         // Normalize empty strings to null so cleared fields are stored as null
         $normalized = array_map(function ($value) {
             if (is_string($value) && trim($value) === '') {

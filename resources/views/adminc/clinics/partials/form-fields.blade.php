@@ -101,7 +101,6 @@
         </h4>
 
         <x-adminc::components.address
-            :entity="$clinic"
             :address="$clinic?->visitAddress"
             name-prefix="visit_address"
             error-name-prefix="visit_address"
@@ -120,7 +119,6 @@
         </h4>
 
         <x-adminc::components.address
-            :entity="$clinic"
             :address="$clinic?->postalAddress"
             name-prefix="postal_address"
             error-name-prefix="postal_address"

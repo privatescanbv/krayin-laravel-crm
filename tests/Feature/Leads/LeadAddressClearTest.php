@@ -82,3 +82,48 @@ test('submitting empty address data for lead without address does nothing', func
     $this->assertNull($result);
     $this->assertNull($lead->address_id);
 });
+
+test('_clear flag 1 deletes the address and clears address_id', function () {
+    $lead = Lead::factory()->withAddress()->create();
+    $originalAddressId = $lead->address_id;
+
+    $this->assertNotNull($originalAddressId);
+
+    $result = $this->addressRepository->upsertForEntity($lead, ['_clear' => '1']);
+
+    $lead->refresh();
+
+    $this->assertNull($result);
+    $this->assertNull($lead->address_id);
+    $this->assertDatabaseMissing('addresses', ['id' => $originalAddressId]);
+});
+
+test('_clear flag 0 keeps the existing address', function () {
+    $lead = Lead::factory()->withAddress()->create();
+    $originalAddressId = $lead->address_id;
+
+    $this->addressRepository->upsertForEntity($lead, [
+        '_clear'       => '0',
+        'postal_code'  => '9999ZZ',
+        'house_number' => '1',
+        'street'       => 'Straat',
+        'city'         => 'Utrecht',
+        'country'      => 'Nederland',
+    ]);
+
+    $lead->refresh();
+
+    $this->assertNotNull($lead->address_id);
+    $this->assertEquals($originalAddressId, $lead->address_id);
+});
+
+test('_clear flag 1 when lead has no address does nothing and returns null', function () {
+    $lead = Lead::factory()->create(['address_id' => null]);
+
+    $result = $this->addressRepository->upsertForEntity($lead, ['_clear' => '1']);
+
+    $lead->refresh();
+
+    $this->assertNull($result);
+    $this->assertNull($lead->address_id);
+});

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -136,4 +137,47 @@ test('test_person_factory_with_address', function () {
     $this->assertDatabaseHas('addresses', [
         'id' => $person->address_id,
     ]);
+});
+
+test('_clear flag 1 deletes address when updating person via repository', function () {
+    $personRepository = app(PersonRepository::class);
+
+    $person = Person::factory()->withAddress()->create();
+    $originalAddressId = $person->address_id;
+
+    $this->assertNotNull($originalAddressId);
+    $this->assertDatabaseHas('addresses', ['id' => $originalAddressId]);
+
+    $personRepository->update([
+        'first_name'  => $person->first_name,
+        'entity_type' => 'persons',
+        'emails'      => [['value' => 'clear-test@example.com', 'label' => 'Work']],
+        'phones'      => [['value' => '0600000001', 'label' => 'Mobile']],
+        'address'     => ['_clear' => '1'],
+    ], $person->id);
+
+    $person->refresh();
+
+    $this->assertNull($person->address_id);
+    $this->assertDatabaseMissing('addresses', ['id' => $originalAddressId]);
+});
+
+test('_clear flag 1 on person without address does nothing', function () {
+    $personRepository = app(PersonRepository::class);
+
+    $person = Person::factory()->create(['address_id' => null]);
+
+    $this->assertNull($person->address_id);
+
+    $personRepository->update([
+        'first_name'  => $person->first_name,
+        'entity_type' => 'persons',
+        'emails'      => [['value' => 'no-address@example.com', 'label' => 'Work']],
+        'phones'      => [['value' => '0600000002', 'label' => 'Mobile']],
+        'address'     => ['_clear' => '1'],
+    ], $person->id);
+
+    $person->refresh();
+
+    $this->assertNull($person->address_id);
 });

@@ -19,7 +19,7 @@
         "vue": "^3.4.21"
     },
     "dependencies": {
-        "@marker.io/browser": "^2.35.1",
+        "@marker.io/browser": "^0.20.2",
         "@heroicons/vue": "^2.1.5",
         "@vee-validate/i18n": "^4.9.1",
         "@vee-validate/rules": "^4.9.1",

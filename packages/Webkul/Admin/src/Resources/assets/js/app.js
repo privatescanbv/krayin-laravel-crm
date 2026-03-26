@@ -3,6 +3,8 @@
  */
 import.meta.glob(["../images/**", "../fonts/**"]);
 
+import markerSDK from '@marker.io/browser';
+
 /**
  * Main vue bundler.
  */
@@ -495,6 +497,12 @@ if (typeof window !== 'undefined') {
         };
     }
 }
+
+(async () => {
+    await markerSDK.loadWidget({
+        project: '69c4f36fee5027410256aa51',
+    });
+})();
 
 export default app;
 

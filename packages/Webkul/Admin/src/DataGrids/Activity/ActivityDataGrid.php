@@ -420,13 +420,16 @@ class ActivityDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        $returnUrl = request()->query('return_url');
+        $returnSuffix = $returnUrl ? ('?return_url=' . urlencode($returnUrl)) : '';
+
         // View action (eye icon)
         $this->addAction([
             'index'  => 'view',
             'icon'   => 'icon-eye',
             'title'  => trans('admin::app.activities.index.datagrid.view'),
             'method' => 'GET',
-            'url'    => fn ($row) => route('admin.activities.view', $row->id),
+            'url'    => fn ($row) => route('admin.activities.view', $row->id) . $returnSuffix,
         ]);
 
         if (bouncer()->hasPermission('activities.edit')) {
@@ -435,7 +438,7 @@ class ActivityDataGrid extends DataGrid
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.activities.index.datagrid.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.activities.edit', $row->id),
+                'url'    => fn ($row) => route('admin.activities.edit', $row->id) . $returnSuffix,
             ]);
         }
 

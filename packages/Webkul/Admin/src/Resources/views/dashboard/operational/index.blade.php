@@ -130,7 +130,7 @@
 
                         <!-- Datagrid -->
                         <x-admin::datagrid
-                            src="/admin/operational-dashboard/queues"
+                            src="{{ '/admin/operational-dashboard/queues?return_url=' . urlencode(request()->fullUrl()) }}"
                             :isMultiRow="true"
                             no-auto-load
                             ref="datagrid"
@@ -375,7 +375,7 @@
                         this.updateUrl();
 
                         if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                            const params = { queue: this.activeQueueKey };
+                            const params = { queue: this.activeQueueKey, return_url: window.location.href };
                             if (this.departmentFilter) params.department = this.departmentFilter;
                             this.$refs.datagrid.get(params);
                         }
@@ -386,7 +386,7 @@
                         this.updateUrl();
                         this.refreshCounts();
                         if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                            const params = { queue: this.activeQueueKey };
+                            const params = { queue: this.activeQueueKey, return_url: window.location.href };
                             if (this.departmentFilter) params.department = this.departmentFilter;
                             this.$refs.datagrid.get(params);
                         }

@@ -19,13 +19,14 @@ class ResourceSeeder extends BaseSeeder
             return;
         }
         $csvData = [
-            ['name' => 'Augusta Cardiologie', 'resource_type' => 'Cardiologie', 'clinic' => 'Ambulante Kardiologie Augusta', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
-            ['name' => 'Augusta Other', 'resource_type' => 'Other', 'clinic' => 'Ambulante Kardiologie Augusta', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
-            ['name' => 'Ranova-Augusta MRI Scanner 1', 'resource_type' => 'MRI scanner', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
-            ['name' => 'Ranova-Augusta CT scanner', 'resource_type' => 'CT scanner', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
-            ['name' => 'Ranova-Augusta Rontgen', 'resource_type' => 'Rontgen', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
-            ['name' => 'Evidia-Other', 'resource_type' => 'Other', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
-            ['name' => 'Evidia-Artsen', 'resource_type' => 'Artsen', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => false],
+            ['name' => 'Augusta Cardiologie', 'resource_type' => 'Cardiologie', 'clinic' => 'Ambulante Kardiologie Augusta', 'department' => 'Cardiologie', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Augusta Other', 'resource_type' => 'Other', 'clinic' => 'Ambulante Kardiologie Augusta', 'department' => 'Cardiologie', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Ranova-Augusta MRI Scanner 1', 'resource_type' => 'MRI scanner', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Radiologie', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Ranova-Augusta MRI Scanner 2', 'resource_type' => 'MRI scanner', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Radiologie', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Ranova-Augusta CT scanner', 'resource_type' => 'CT scanner', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'Radiologie', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Ranova-Augusta Rontgen', 'resource_type' => 'Rontgen', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'NTB', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Evidia-Other', 'resource_type' => 'Other', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'NTB', 'is_active' => true, 'allow_outside_availability' => true],
+            ['name' => 'Evidia-Artsen', 'resource_type' => 'Artsen', 'clinic' => 'Evidia - Augusta Klinik', 'department' => 'NTB', 'is_active' => true, 'allow_outside_availability' => false],
             ['name' => 'Gradus-Artsen', 'resource_type' => 'Artsen', 'clinic' => 'GRADUS - Orthopadie & Unfallchirurgie Dusseldorf', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => false],
             ['name' => 'Gradus CT PRT', 'resource_type' => 'CT scanner', 'clinic' => 'GRADUS - Orthopadie & Unfallchirurgie Dusseldorf', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],
             ['name' => 'Procelsio - Arts - consult', 'resource_type' => 'Artsen', 'clinic' => 'Procelsio Clinic GMBH', 'department' => 'Standaard', 'is_active' => true, 'allow_outside_availability' => true],

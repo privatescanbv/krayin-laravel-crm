@@ -19,6 +19,7 @@ class AfbPersonDocument extends Model
     protected $fillable = [
         'afb_dispatch_id',
         'order_id',
+        'order_item_ids',
         'person_id',
         'patient_name',
         'file_name',
@@ -29,6 +30,7 @@ class AfbPersonDocument extends Model
     protected $casts = [
         'afb_dispatch_id' => 'integer',
         'order_id'        => 'integer',
+        'order_item_ids'  => 'array',
         'person_id'       => 'integer',
         'sent_at'         => 'datetime',
     ];

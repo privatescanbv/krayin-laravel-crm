@@ -33,7 +33,6 @@
                 return [
                     'id' => $item->id,
                     'product_name' => $item->getProductName() ?: 'Onbekend product',
-                    'product_type' => $item->resolvedProductType()?->name,
                     'required_resource_type' => $item->resolvedResourceTypeName(),
                     'quantity' => $item->quantity,
                     'duration' => $duration, // Duration in minutes
@@ -253,7 +252,6 @@
                         return this.orderItems.map(item => ({
                             value: item.id,
                             label: item.product_name
-                                + (item.product_type ? ' — ' + item.product_type : '')
                                 + ' (Aantal: ' + item.quantity + ')'
                                 + (!item.can_plan ? ' - Niet planbaar' : '')
                         }));

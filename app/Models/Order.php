@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AfbDispatchStatus;
 use App\Enums\AppointmentTimeFilter;
 use App\Enums\Departments;
 use App\Enums\LostReason;
@@ -180,6 +181,21 @@ class Order extends Model
     public function afbPersonDocuments(): HasMany
     {
         return $this->hasMany(AfbPersonDocument::class);
+    }
+
+    /**
+     * Returns the latest successful AfbPersonDocument per (person_id, clinic_department_id) combination.
+     * Use this as the single source of truth for AFB display logic across views.
+     * Requires 'afbPersonDocuments.dispatch' to be eager-loaded.
+     *
+     * @return \Illuminate\Support\Collection<int, AfbPersonDocument>
+     */
+    public function latestSuccessfulAfbDocuments(): \Illuminate\Support\Collection
+    {
+        return $this->afbPersonDocuments
+            ->filter(fn (AfbPersonDocument $doc) => $doc->dispatch?->status === AfbDispatchStatus::SUCCESS)
+            ->sortByDesc('sent_at')
+            ->unique(fn (AfbPersonDocument $doc) => $doc->person_id.'_'.$doc->dispatch?->clinic_department_id);
     }
 
     /**

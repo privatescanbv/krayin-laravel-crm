@@ -384,20 +384,21 @@ test('resources with expired shifts are not shown', function (): void {
     expect($data['blocks'])->not->toHaveKey($resource->id, 'Expired resource should NOT have blocks');
 });
 
-test('order monitor resource types include overridden product type resource type', function (): void {
+test('order monitor resource types prefer direct product resource type over order item product type override', function (): void {
     $this->withoutMiddleware();
 
     $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
     $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
 
     $petscanType = ProductType::factory()->create(['name' => ProductTypeEnum::PETSCAN->label()]);
+    // Product has a direct resource_type_id → this should take priority
     $product = Product::factory()->create(['resource_type_id' => $mri->id]);
 
     $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
     OrderItem::factory()->create([
         'order_id'        => $order->id,
         'product_id'      => $product->id,
-        'product_type_id' => $petscanType->id,
+        'product_type_id' => $petscanType->id, // overridden, but lower priority than product.resource_type_id
     ]);
 
     $resp = $this->getJson(route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]));
@@ -405,7 +406,8 @@ test('order monitor resource types include overridden product type resource type
 
     $types = collect($resp->json('resource_types'));
 
+    // Direct product resource type (MRI) wins over the product_type_id mapping (PET_CT)
     expect($types->pluck('id'))
-        ->toContain($pet->id)
-        ->not->toContain($mri->id);
+        ->toContain($mri->id)
+        ->not->toContain($pet->id);
 });

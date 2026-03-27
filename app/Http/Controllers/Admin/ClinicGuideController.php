@@ -49,11 +49,8 @@ class ClinicGuideController extends Controller
                 },
                 'stage',
                 'user',
-                'afbPersonDocuments' => function ($query) {
-                    $query->whereHas('dispatch', function ($q) {
-                        $q->where('status', AfbDispatchStatus::SUCCESS->value);
-                    });
-                },
+                'afbPersonDocuments.dispatch.clinic',
+                'afbPersonDocuments.dispatch.clinicDepartment',
             ])
             ->orderBy('first_examination_at', 'asc')
             ->get();
@@ -87,7 +84,7 @@ class ClinicGuideController extends Controller
             $orderUrl = route('admin.orders.view', $order->id);
             $anamnesisRecords = $salesLead ? $salesLead->anamnesis : collect();
 
-            $afbByPerson = $order->afbPersonDocuments->groupBy('person_id');
+            $afbByPerson = $order->latestSuccessfulAfbDocuments()->groupBy('person_id');
 
             return $order->orderItems
                 ->groupBy('person_id')
@@ -97,15 +94,21 @@ class ClinicGuideController extends Controller
                         ->firstWhere('person_id', (int) $personId)
                         ?->gvl_form_link;
 
-                    $personAfb = $afbByPerson->get((int) $personId)?->sortByDesc('sent_at')->first();
-                    $afbPdfUrl = $personAfb
-                        ? route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $personAfb->id])
-                        : null;
+                    $afbDocuments = ($afbByPerson->get((int) $personId) ?? collect())
+                        ->map(fn ($doc) => [
+                            'url'   => route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $doc->id]),
+                            'label' => implode(' - ', array_filter([
+                                $doc->dispatch?->clinic?->name,
+                                $doc->dispatch?->clinicDepartment?->name,
+                            ])),
+                        ])
+                        ->values()
+                        ->all();
 
                     return [
-                        'order'         => $orderData,
-                        'sales_lead'    => $salesLeadData,
-                        'patient'       => $person ? [
+                        'order'          => $orderData,
+                        'sales_lead'     => $salesLeadData,
+                        'patient'        => $person ? [
                             'id'            => $person->id,
                             'name'          => $person->name,
                             'date_of_birth' => $person->date_of_birth?->format('d-m-Y'),
@@ -114,14 +117,14 @@ class ClinicGuideController extends Controller
                             'phones'        => $person->phones ?? [],
                             'emails'        => $person->emails ?? [],
                         ] : null,
-                        'gvl_form_link' => $gvlFormLink,
-                        'afb_pdf_url'   => $afbPdfUrl,
-                        'order_items'   => $items->map(fn ($item) => [
+                        'gvl_form_link'  => $gvlFormLink,
+                        'afb_documents'  => $afbDocuments,
+                        'order_items'    => $items->map(fn ($item) => [
                             'product_name' => $item->product?->name,
                             'person_name'  => $item->person?->name,
                             'quantity'     => $item->quantity,
                         ]),
-                        'order_url'     => $orderUrl,
+                        'order_url'      => $orderUrl,
                     ];
                 })
                 ->values();

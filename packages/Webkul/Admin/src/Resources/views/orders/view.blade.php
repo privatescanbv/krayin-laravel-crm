@@ -88,7 +88,12 @@
         <!-- Middle Panel -->
         <div class="flex w-full flex-col gap-4">
             <div v-if="leadDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('admin::orders.view.tab-general', ['order' => $order])
+                @include('admin::orders.view.tab-general', [
+                    'order' => $order,
+                    'afbNeedsManualBanner' => $afbNeedsManualBanner ?? false,
+                    'afbHasBatchSuccess' => $afbHasBatchSuccess ?? false,
+                    'afbSendUrl' => $afbSendUrl ?? null,
+                ])
             </div>
 
             <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
@@ -129,6 +134,82 @@
 
         {!! view_render_event('admin.orders.view.right.after', ['order' => $order]) !!}
     </div>
+
+    @pushOnce('scripts', 'order-view-afb-send-button')
+        <script type="text/x-template" id="v-order-afb-send-button-template">
+            <button
+                type="button"
+                class="primary-button shrink-0 whitespace-nowrap"
+                :class="{ 'opacity-50 pointer-events-none': sending }"
+                :disabled="sending"
+                @click="sendAfb"
+            >
+                @{{ sending ? 'Bezig…' : 'AFB nu versturen' }}
+            </button>
+        </script>
+
+        <script type="module">
+            app.component('v-order-afb-send-button', {
+                template: '#v-order-afb-send-button-template',
+
+                props: {
+                    sendUrl: {
+                        type: String,
+                        required: true,
+                    },
+                },
+
+                data() {
+                    return {
+                        sending: false,
+                    };
+                },
+
+                methods: {
+                    async sendAfb() {
+                        if (this.sending || !this.sendUrl) {
+                            return;
+                        }
+
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        if (!token) {
+                            this.$emitter.emit('add-flash', { type: 'error', message: 'CSRF token niet gevonden.' });
+
+                            return;
+                        }
+
+                        this.sending = true;
+
+                        try {
+                            const res = await fetch(this.sendUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': token,
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            this.$emitter.emit('add-flash', {
+                                type: res.ok ? 'success' : 'error',
+                                message: data.message || (res.ok ? 'AFB verstuurd.' : 'AFB versturen mislukt.'),
+                            });
+                            if (res.ok) {
+                                window.location.reload();
+                            }
+                        } catch (e) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'AFB versturen mislukt: ' + (e.message || 'onbekende fout'),
+                            });
+                        } finally {
+                            this.sending = false;
+                        }
+                    },
+                },
+            });
+        </script>
+    @endPushOnce
 
     @pushOnce('scripts', 'order-view-delete-action')
         <script type="text/x-template" id="v-order-delete-template">

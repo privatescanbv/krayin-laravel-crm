@@ -1,9 +1,12 @@
 <?php
 
+use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
 use App\Enums\PersonSalutation;
+use App\Enums\PipelineType;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\Address;
+use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
 use App\Models\Anamnesis;
 use App\Models\Clinic;
@@ -25,6 +28,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 use Webkul\Installer\Http\Middleware\CanInstall;
+use Webkul\Lead\Models\Stage;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
@@ -351,4 +355,196 @@ test('clinic view contains afb verzendingen navigation', function () {
 
     $response->assertOk();
     $response->assertSee('AFB verzendingen');
+});
+
+test('order view shows manual afb banner when late booking and not yet sent', function () {
+    // ResourceOrderItemObserver queues late AFB when planning binnen 24u; zonder fake draait de job sync
+    // en is de order al "verstuurd", waardoor de banner niet verschijnt.
+    Bus::fake();
+
+    // Banner is alleen zichtbaar met orders.edit; makeUser() uit beforeEach heeft die permissie niet.
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $examAt = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+
+    $stage = Stage::query()->whereHas('pipeline', fn ($q) => $q->where('type', PipelineType::ORDER))->firstOrFail();
+    $context['order']->update(['pipeline_stage_id' => $stage->id]);
+
+    expect(app(AfbDispatchService::class)->needsManualLateAfb($context['order']->fresh()))->toBeTrue();
+
+    $response = $this->get(route('admin.orders.view', $context['order']->id));
+
+    $response->assertOk();
+    $response->assertSee('AFB: handmatige verzending nodig', false);
+    $response->assertSee('AFB nu versturen', false);
+});
+
+test('banner disappears after sending afb that includes new order item', function () {
+    Bus::fake();
+    Mail::fake();
+
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $examAt = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+
+    $service = app(AfbDispatchService::class);
+
+    // Haal de bestaande orderregel IDs op (die wél in de vorige AFB zaten)
+    $existingItemIds = $context['order']->orderItems()->pluck('id')->toArray();
+
+    // Simuleer een succesvolle dispatch van 5 minuten geleden (via factory, geen PDF nodig)
+    $dispatch = AfbDispatch::factory()->create([
+        'clinic_department_id' => $context['department']->id,
+        'clinic_id'            => $context['clinic']->id,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now()->subMinutes(5),
+    ]);
+    AfbPersonDocument::factory()->create([
+        'afb_dispatch_id' => $dispatch->id,
+        'order_id'        => $context['order']->id,
+        'order_item_ids'  => $existingItemIds,
+    ]);
+
+    // Nieuwe orderregel toegevoegd — ID staat niet in de vorige AFB
+    $newItem = OrderItem::factory()->create([
+        'order_id' => $context['order']->id,
+    ]);
+    $deptResource = Resource::where('clinic_department_id', $context['department']->id)->firstOrFail();
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $deptResource->id,
+        'orderitem_id' => $newItem->id,
+        'from'         => $examAt->copy()->addMinutes(120),
+        'to'           => $examAt->copy()->addMinutes(180),
+    ]);
+
+    // Banner moet zichtbaar zijn
+    expect($service->needsManualLateAfb($context['order']->fresh()))->toBeTrue();
+
+    // Verstuur opnieuw — sent_at wordt now() wat na created_at ligt
+    $service->sendDispatch(
+        departmentId: $context['department']->id,
+        orderIds: [$context['order']->id],
+        type: AfbDispatchType::INDIVIDUAL,
+        attempt: 1
+    );
+
+    // Na de tweede dispatch moet de banner verdwijnen
+    expect($service->needsManualLateAfb($context['order']->fresh()))->toBeFalse();
+});
+
+test('order view shows manual afb banner again after new order item added post dispatch', function () {
+    Bus::fake();
+
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $examAt = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+
+    $stage = Stage::query()->whereHas('pipeline', fn ($q) => $q->where('type', PipelineType::ORDER))->firstOrFail();
+    $context['order']->update(['pipeline_stage_id' => $stage->id]);
+
+    // Haal de bestaande orderregel IDs op (die wél in de vorige AFB zaten)
+    $existingItemIds = $context['order']->orderItems()->pluck('id')->toArray();
+
+    // Simuleer een succesvolle dispatch die eerder plaatsvond
+    $dispatch = AfbDispatch::factory()->create([
+        'clinic_department_id' => $context['department']->id,
+        'clinic_id'            => $context['clinic']->id,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now()->subMinutes(30),
+    ]);
+    AfbPersonDocument::factory()->create([
+        'afb_dispatch_id' => $dispatch->id,
+        'order_id'        => $context['order']->id,
+        'order_item_ids'  => $existingItemIds,
+    ]);
+
+    // Voeg nu een nieuwe orderregel toe — ID staat niet in de vorige AFB
+    $newItem = OrderItem::factory()->create([
+        'order_id' => $context['order']->id,
+    ]);
+    $deptResource = Resource::where('clinic_department_id', $context['department']->id)->firstOrFail();
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $deptResource->id,
+        'orderitem_id' => $newItem->id,
+        'from'         => $examAt->copy()->addMinutes(120),
+        'to'           => $examAt->copy()->addMinutes(180),
+    ]);
+
+    $response = $this->get(route('admin.orders.view', $context['order']->id));
+
+    $response->assertOk();
+    $response->assertSee('AFB: handmatige verzending nodig', false);
+    $response->assertSee('AFB nu versturen', false);
+});
+
+test('banner does not show for other departments when new item only affects one department', function () {
+    Bus::fake();
+    Mail::fake();
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $examAt = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+    $service = app(AfbDispatchService::class);
+
+    // Tweede afdeling + resource voor dezelfde order
+    $dept2 = ClinicDepartment::factory()->create(['clinic_id' => $context['clinic']->id, 'email' => 'dept2@example.com']);
+    $resource2 = Resource::factory()->create(['clinic_id' => $context['clinic']->id, 'clinic_department_id' => $dept2->id]);
+    $orderItem2 = $context['order']->orderItems()->first();
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $resource2->id,
+        'orderitem_id' => $orderItem2->id,
+        'from'         => $examAt->copy()->addMinutes(30),
+        'to'           => $examAt->copy()->addMinutes(90),
+    ]);
+
+    // Beide afdelingen zijn al eerder succesvol verstuurd
+    $existingItemIds = $context['order']->orderItems()->pluck('id')->toArray();
+
+    $dispatch1 = AfbDispatch::factory()->create([
+        'clinic_department_id' => $context['department']->id,
+        'clinic_id'            => $context['clinic']->id,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now()->subMinutes(10),
+    ]);
+    AfbPersonDocument::factory()->create([
+        'afb_dispatch_id' => $dispatch1->id,
+        'order_id'        => $context['order']->id,
+        'order_item_ids'  => $existingItemIds,
+    ]);
+
+    $dispatch2 = AfbDispatch::factory()->create([
+        'clinic_department_id' => $dept2->id,
+        'clinic_id'            => $context['clinic']->id,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now()->subMinutes(5),
+    ]);
+    AfbPersonDocument::factory()->create([
+        'afb_dispatch_id' => $dispatch2->id,
+        'order_id'        => $context['order']->id,
+        'order_item_ids'  => $existingItemIds,
+    ]);
+
+    // Nieuw item toegevoegd — alleen voor afdeling 2
+    $newItem = OrderItem::factory()->create(['order_id' => $context['order']->id]);
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $resource2->id,
+        'orderitem_id' => $newItem->id,
+        'from'         => $examAt->copy()->addMinutes(100),
+        'to'           => $examAt->copy()->addMinutes(160),
+    ]);
+
+    // Banner toont (D2 heeft nieuwe item)
+    expect($service->needsManualLateAfb($context['order']->fresh()))->toBeTrue();
+
+    // D1 heeft geen onopgenomen items — het nieuwe item hoort bij D2
+    expect($service->hasUnincludedActiveItems($context['order']->id, $context['department']->id))->toBeFalse();
+
+    // Verstuur D2 opnieuw
+    $service->sendDispatch($dept2->id, [$context['order']->id], AfbDispatchType::INDIVIDUAL, 1);
+
+    // Na de tweede dispatch moet de banner verdwenen zijn voor de hele order
+    expect($service->needsManualLateAfb($context['order']->fresh()))->toBeFalse();
 });

@@ -180,12 +180,14 @@
                             <!-- Links -->
                             <div>
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Links</p>
-                                <div v-if="item.afb_pdf_url" class="flex items-center gap-1.5 text-sm">
-                                    <i class="icon-activity"></i>
-                                    <a :href="item.afb_pdf_url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                        AFB formulier
-                                    </a>
-                                </div>
+                                <template v-if="item.afb_documents && item.afb_documents.length">
+                                    <div v-for="doc in item.afb_documents" :key="doc.url" class="flex items-center gap-1.5 text-sm">
+                                        <i class="icon-activity"></i>
+                                        <a :href="doc.url" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            AFB formulier<template v-if="doc.label"> – @{{ doc.label }}</template>
+                                        </a>
+                                    </div>
+                                </template>
                                 <div v-else class="flex items-center gap-1.5 text-sm">
                                     <i class="icon-activity text-gray-400"></i>
                                     <span class="text-gray-400">AFB formulier (nog niet verzonden)</span>

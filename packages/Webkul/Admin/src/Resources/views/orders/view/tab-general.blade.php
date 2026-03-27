@@ -1,6 +1,42 @@
-@props(['order'])
+@props([
+    'order',
+    'afbNeedsManualBanner' => false,
+    'afbHasBatchSuccess' => false,
+    'afbSendUrl' => null,
+])
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
+
+    @if ($afbNeedsManualBanner && $afbSendUrl && bouncer()->hasPermission('orders.edit'))
+        <div
+            class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
+            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div class="space-y-2">
+                    <p class="font-semibold">AFB: handmatige verzending nodig</p>
+                    <p class="text-amber-900/90 dark:text-amber-100/90">
+                        Het eerste onderzoek staat binnen 24 uur
+                        @if ($order->first_examination_at)
+                            ({{ $order->first_examination_at->timezone(config('app.timezone'))->format('d-m-Y H:i') }}).
+                        @else
+                            .
+                        @endif
+                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om 06:00 verstuurd;
+                        binnen dit venster moet u de AFB nu zelf versturen naar de kliniek.
+                    </p>
+                    @if ($afbHasBatchSuccess)
+                        <p class="text-xs text-amber-800 dark:text-amber-200/90">
+                            Er is al een succesvolle batch-verzending voor deze order geregistreerd; controleer of een extra individuele verzending nog nodig is.
+                        </p>
+                    @else
+                        <p class="text-xs text-amber-800 dark:text-amber-200/90">
+                            Er is nog geen succesvolle batch-AFB voor deze order geregistreerd voor de betreffende afdeling(en).
+                        </p>
+                    @endif
+                </div>
+                <v-order-afb-send-button send-url="{{ $afbSendUrl }}"></v-order-afb-send-button>
+            </div>
+        </div>
+    @endif
 
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between gap-4">
@@ -106,35 +142,32 @@
     </div>
 
     <!-- AFB Status Card -->
-    @php
-        use App\Enums\AfbDispatchStatus;
-
-        $bookedClinics = $order->orderItems
-            ->flatMap(fn($item) => $item->resourceOrderItems)
-            ->map(fn($roi) => $roi->resource?->clinic)
-            ->filter()
-            ->unique('id');
-
-        $afbSentPerClinic = $order->afbPersonDocuments
-            ->filter(fn($ado) => $ado->dispatch?->status === AfbDispatchStatus::SUCCESS)
-            ->groupBy(fn ($ado) => $ado->dispatch?->clinic_id)
-            ->map(fn ($records) => $records->sortByDesc('sent_at')->first());
-    @endphp
-
-    @if($bookedClinics->isNotEmpty())
+    @if($bookedDepartments->isNotEmpty())
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">AFB status</h3>
         <div class="space-y-2 text-sm">
-            @foreach($bookedClinics as $clinic)
-                @php $dispatch = $afbSentPerClinic->get($clinic->id); @endphp
+            @foreach($bookedDepartments as $department)
+                @php $dispatch = $afbSentPerDepartment->get($department->id); @endphp
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-gray-700 dark:text-gray-300">{{ $clinic->name }}</span>
+                    <div class="flex items-center gap-2 min-w-0">
+                        <a href="{{ route('admin.clinics.view', $department->clinic_id) }}" class="text-gray-700 hover:underline dark:text-gray-300 shrink-0">{{ $department->clinic?->name }}</a>
+                        <span class="text-gray-400">›</span>
+                        <a href="{{ route('admin.clinic_departments.edit', $department->id) }}" class="text-gray-500 hover:underline dark:text-gray-400 truncate">{{ $department->name }}</a>
+                    </div>
                     @if($dispatch)
-                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                            ✓ Verzonden {{ $dispatch->sent_at->format('d-m-Y H:i') }}
-                        </span>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                ✓ Verzonden {{ $dispatch->sent_at->format('d-m-Y H:i') }}
+                            </span>
+                            <a href="{{ route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $dispatch->id]) }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="text-xs text-indigo-600 hover:underline dark:text-indigo-400">
+                                Bekijk formulier
+                            </a>
+                        </div>
                     @else
-                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400 shrink-0">
                             Nog niet verzonden
                         </span>
                     @endif

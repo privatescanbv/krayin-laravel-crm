@@ -4,11 +4,13 @@ namespace App\Services\Afb;
 
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
+use App\Enums\OrderItemStatus;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -61,10 +63,11 @@ class AfbDispatchService
         }
 
         $queued = 0;
-        $departmentIds = $this->getDepartmentIdsForOrder((int) $order->id);
+        $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
 
         foreach ($departmentIds as $departmentId) {
-            if ($this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)) {
+            if ($this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)
+                && ! $this->hasUnincludedActiveItems((int) $order->id, (int) $departmentId)) {
                 continue;
             }
 
@@ -96,7 +99,8 @@ class AfbDispatchService
         $unsentOrders = collect($orderIds)
             ->map(fn (int $id) => $orders->get($id))
             ->filter(fn (?Order $order) => $order !== null)
-            ->filter(fn (Order $order) => ! $this->isAlreadySentToDepartment((int) $order->id, $departmentId))
+            ->filter(fn (Order $order) => ! $this->isAlreadySentToDepartment((int) $order->id, $departmentId)
+                || $this->hasUnincludedActiveItems((int) $order->id, $departmentId))
             ->values();
 
         $dispatch = AfbDispatch::create([
@@ -147,11 +151,18 @@ class AfbDispatchService
 
             $this->crmMailService->sendEmail($email, EmailFolderEnum::SENT);
 
-            DB::transaction(function () use ($generatedDocuments, $dispatch, $email) {
+            DB::transaction(function () use ($generatedDocuments, $dispatch, $email, $departmentId) {
                 foreach ($generatedDocuments as $generatedDocument) {
                     AfbPersonDocument::create([
                         'afb_dispatch_id' => $dispatch->id,
                         'order_id'        => $generatedDocument['order']->id,
+                        'order_item_ids'  => $generatedDocument['order']->orderItems
+                            ->where('status', '!=', OrderItemStatus::LOST)
+                            ->filter(fn ($item) => $item->resourceOrderItems
+                                ->contains(fn ($roi) => $roi->resource?->clinic_department_id === $departmentId))
+                            ->pluck('id')
+                            ->values()
+                            ->all(),
                         'person_id'       => $generatedDocument['person_id'],
                         'patient_name'    => $generatedDocument['patient_name'],
                         'file_name'       => $generatedDocument['file_name'],
@@ -208,7 +219,10 @@ class AfbDispatchService
             ->exists();
     }
 
-    private function shouldSendAsLateBooking(Order $order): bool
+    /**
+     * @return bool true, if first examination is within the next 24 hours, and thus should be sent as late booking AFB.
+     */
+    public function shouldSendAsLateBooking(Order $order): bool
     {
         if (! $order->first_examination_at) {
             return false;
@@ -224,9 +238,52 @@ class AfbDispatchService
     }
 
     /**
+     * Handmatige AFB nodig: late-booking venster, planning met afdeling, en nog niet overal succesvol verstuurd.
+     */
+    public function needsManualLateAfb(Order $order): bool
+    {
+        if (! $this->shouldSendAsLateBooking($order)) {
+            return false;
+        }
+
+        $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
+
+        if ($departmentIds === []) {
+            return false;
+        }
+
+        foreach ($departmentIds as $departmentId) {
+            if (! $this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)) {
+                return true;
+            }
+
+            // Already sent, but a new order item was added after the last dispatch →
+            // replacement AFB needed with updated content.
+            if ($this->hasUnincludedActiveItems((int) $order->id, (int) $departmentId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Of er al een succesvolle batch-verzending voor deze order is geweest.
+     */
+    public function hasSuccessfulBatchDispatchForOrder(Order $order): bool
+    {
+        return AfbPersonDocument::query()
+            ->where('order_id', $order->id)
+            ->whereHas('dispatch', fn ($q) => $q
+                ->where('type', AfbDispatchType::BATCH->value)
+                ->where('status', AfbDispatchStatus::SUCCESS->value))
+            ->exists();
+    }
+
+    /**
      * @return array<int, int>
      */
-    private function getDepartmentIdsForOrder(int $orderId): array
+    public function getUniqueDepartmentIdsForOrder(int $orderId): array
     {
         return DB::table('order_items')
             ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')
@@ -238,6 +295,35 @@ class AfbDispatchService
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Returns true when there are active (non-lost) order items for this order that were not
+     * included in the last successful AFB sent to the given department.
+     * Only items linked to the given department are considered.
+     * Lost items are intentionally excluded — they do not require a replacement AFB.
+     */
+    public function hasUnincludedActiveItems(int $orderId, int $departmentId): bool
+    {
+        $lastDocument = AfbPersonDocument::query()
+            ->where('order_id', $orderId)
+            ->whereHas('dispatch', fn ($q) => $q
+                ->where('clinic_department_id', $departmentId)
+                ->where('status', AfbDispatchStatus::SUCCESS->value))
+            ->latest('sent_at')
+            ->first();
+
+        if (! $lastDocument || $lastDocument->order_item_ids === null) {
+            return false;
+        }
+
+        return OrderItem::query()
+            ->where('order_id', $orderId)
+            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->whereHas('resourceOrderItems', fn ($q) => $q
+                ->whereHas('resource', fn ($q) => $q->where('clinic_department_id', $departmentId)))
+            ->whereNotIn('id', $lastDocument->order_item_ids)
+            ->exists();
     }
 
     private function createDispatchEmail(

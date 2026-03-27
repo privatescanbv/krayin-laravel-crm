@@ -66,28 +66,13 @@ class OrderItem extends Model
 
     public function productType(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\ProductType::class);
-    }
-
-    /**
-     * Returns the effective product type ID for this order item.
-     *
-     * If an override (`order_items.product_type_id`) is set, that wins.
-     * Otherwise it falls back to the selected product's `product_type_id`.
-     */
-    public function resolvedProductTypeId(): ?int
-    {
-        if (! empty($this->product_type_id)) {
-            return (int) $this->product_type_id;
-        }
-
-        return $this->product?->product_type_id ? (int) $this->product?->product_type_id : null;
+        return $this->belongsTo(ProductType::class);
     }
 
     /**
      * Returns the effective ProductType model for this order item.
      */
-    public function resolvedProductType(): ?\App\Models\ProductType
+    public function resolvedProductType(): ?ProductType
     {
         if (! empty($this->product_type_id)) {
             return $this->productType;
@@ -141,18 +126,22 @@ class OrderItem extends Model
     /**
      * Effective resource type name for planning/monitor.
      *
-     * Uses overridden product type (if set) to infer the required resource type.
-     * Falls back to the selected product's resource type name.
+     * Prefers the product's directly assigned resource type (most accurate for planning).
+     * Falls back to the product type → resource type enum mapping when no direct
+     * resource type is configured.
      */
     public function resolvedResourceTypeName(): ?string
     {
-        $fromProductType = $this->resolvedResourceTypeEnum();
-
-        if ($fromProductType) {
-            return $fromProductType->label();
+        // Priority 1: direct resource type on product or partner product
+        $directResourceType = $this->product?->resolvedResourceType()?->name;
+        if ($directResourceType) {
+            return $directResourceType;
         }
 
-        return $this->product?->resourceType?->name;
+        // Priority 2: infer from product type mapping
+        $fromProductType = $this->resolvedResourceTypeEnum();
+
+        return $fromProductType?->label();
     }
 
     public function person(): BelongsTo

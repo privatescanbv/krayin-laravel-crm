@@ -152,10 +152,10 @@ test('clinic guide get response contains expected fields', function () {
     // Order URL
     expect($orderData['order_url'])->toContain('orders/view');
 
-    expect($orderData['afb_pdf_url'])->toBeNull();
+    expect($orderData['afb_documents'])->toBe([]);
 });
 
-test('clinic guide get includes afb_pdf_url when AFB was sent successfully', function () {
+test('clinic guide get includes afb_documents when AFB was sent successfully', function () {
     Storage::fake('local');
 
     $person = Person::factory()->create();
@@ -197,7 +197,7 @@ test('clinic guide get includes afb_pdf_url when AFB was sent successfully', fun
 
     $response->assertOk();
     $expectedUrl = route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $doc->id]);
-    $response->assertJsonPath('orders.0.afb_pdf_url', $expectedUrl);
+    $response->assertJsonPath('orders.0.afb_documents.0.url', $expectedUrl);
 });
 
 test('clinic guide AFB PDF view serves PDF inline', function () {

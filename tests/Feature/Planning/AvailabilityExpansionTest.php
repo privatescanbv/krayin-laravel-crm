@@ -396,7 +396,7 @@ test('order monitor resource types include overridden resource type on order ite
     OrderItem::factory()->create([
         'order_id'           => $order->id,
         'product_id'         => $product->id,
-        'resource_type_id'   => $pet->id, // overridden, but lower priority than product.resource_type_id
+        'resource_type_id'   => $pet->id, // override wins over product.resource_type_id (MRI)
     ]);
 
     $resp = $this->getJson(route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]));
@@ -404,10 +404,10 @@ test('order monitor resource types include overridden resource type on order ite
 
     $types = collect($resp->json('resource_types'));
 
-    // Direct product resource type (MRI) wins over the product_type_id mapping (PET_CT)
+    // Monitor uses OrderItem::resolvedResourceTypeName() → order-item override (PET), not product MRI
     expect($types->pluck('id'))
-        ->toContain($mri->id)
-        ->not->toContain($pet->id);
+        ->toContain($pet->id)
+        ->not->toContain($mri->id);
 });
 
 test('resolved product type for planning follows order item resource type override', function (): void {

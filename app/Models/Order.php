@@ -6,6 +6,7 @@ use App\Enums\AfbDispatchStatus;
 use App\Enums\AppointmentTimeFilter;
 use App\Enums\Departments;
 use App\Enums\LostReason;
+use App\Enums\OrderItemStatus;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderPurchaseStatus;
 use App\Enums\PaymentType;
@@ -141,6 +142,28 @@ class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Earliest planned resource slot (`resource_orderitem.from`) on this order.
+     * Order items with status LOST are ignored.
+     */
+    public function earliestScheduledResourceSlotStart(): ?Carbon
+    {
+        $this->loadMissing('orderItems.resourceOrderItems');
+
+        $fromTimes = $this->orderItems
+            ->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)
+            ->flatMap(fn (OrderItem $item) => $item->resourceOrderItems)
+            ->pluck('from')
+            ->filter()
+            ->map(fn ($from) => Carbon::parse($from));
+
+        if ($fromTimes->isEmpty()) {
+            return null;
+        }
+
+        return $fromTimes->sortBy(fn (Carbon $c) => $c->getTimestamp())->first();
     }
 
     public function payments(): HasMany

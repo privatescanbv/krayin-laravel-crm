@@ -153,18 +153,20 @@ test('afb generator maps crm fields into afb layout', function () {
     $html = $rendered['html'];
 
     expect($html)
-        ->toContain('Anforderungsformular Behandlung')
+        ->toContain('Anforderungsbogen Privatescan')
         ->toContain('Evidia - Augusta Klinik')
         ->toContain('ORD-TEST-1001')
         ->toContain('Lara')
-        ->toContain('Muller - de Boer')
+        ->toContain('Muller / de Boer')
         ->toContain('MRT HWS zonder KM')
         ->toContain('Ja')
         ->toContain('Nein')
         ->toContain('Schroef in knie')
         ->toContain('Nekpijn links, voorzichtig positioneren.')
         ->not->toContain('Kode')
-        ->not->toContain('Verk.nr');
+        ->and($html)->toMatch('/<td class="label">Start<\/td>\s*<td>10:00<\/td>/');
+
+    // Summary row: Start = earliest resource_orderitem.from (09:30 + 30m = 10:00), not first_examination_at time.
 });
 
 test('daily afb command queues one batch job per department', function () {

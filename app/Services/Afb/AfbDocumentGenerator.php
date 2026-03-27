@@ -29,45 +29,6 @@ class AfbDocumentGenerator
      *     person_id: ?int
      * }
      */
-    public function generateForOrderAndClinic(Order $order, Clinic $clinic): array
-    {
-        $rendered = $this->renderHtmlForOrderAndClinic($order, $clinic);
-
-        $html = $rendered['html'];
-        $person = $rendered['person'];
-
-        $pdfContent = Pdf::loadHTML($html)
-            ->setPaper('A4', 'portrait')
-            ->output();
-
-        $datePart = now()->format('Ymd_His');
-        $orderPart = $order->order_number ?: (string) $order->id;
-        $fileName = sprintf(
-            'afb_%s_%s_%s.pdf',
-            Str::slug($clinic->name ?: 'clinic'),
-            Str::slug($orderPart),
-            $datePart
-        );
-        $filePath = sprintf('afb/%d/%d/%s', $clinic->id, $order->id, $fileName);
-
-        $this->documentStorage->put($filePath, $pdfContent);
-
-        return [
-            'file_name'    => $fileName,
-            'file_path'    => $filePath,
-            'patient_name' => $person?->name,
-            'person_id'    => $person?->id,
-        ];
-    }
-
-    /**
-     * @return array{
-     *     file_name: string,
-     *     file_path: string,
-     *     patient_name: ?string,
-     *     person_id: ?int
-     * }
-     */
     public function generateForOrderAndDepartment(Order $order, ClinicDepartment $department): array
     {
         $department->loadMissing('clinic');
@@ -120,7 +81,8 @@ class AfbDocumentGenerator
         $anamnesis = $this->resolveAnamnesis($order, $person);
 
         $html = view('adminc.afb.document', [
-            'afb' => $this->buildViewData($order, $clinic, $person, $anamnesis, $examinations),
+            'afb'   => $this->buildViewData($order, $clinic, $person, $anamnesis, $examinations),
+            'order' => $order,
         ])->render();
 
         return [
@@ -151,7 +113,8 @@ class AfbDocumentGenerator
         $anamnesis = $this->resolveAnamnesis($order, $person);
 
         $html = view('adminc.afb.document', [
-            'afb' => $this->buildViewData($order, $department->clinic, $person, $anamnesis, $examinations),
+            'afb'   => $this->buildViewData($order, $department->clinic, $person, $anamnesis, $examinations),
+            'order' => $order,
         ])->render();
 
         return [
@@ -166,7 +129,7 @@ class AfbDocumentGenerator
      *     date: string,
      *     appointment_time: string,
      *     start_time: string,
-     *     clinic_description: string
+     *     clinic_product_description: string
      * }>  $examinations
      */
     private function buildViewData(
@@ -177,10 +140,11 @@ class AfbDocumentGenerator
         Collection $examinations
     ): array {
         $address = $person?->address;
+        $earliestScheduledStart = $order->earliestScheduledResourceSlotStart();
 
         return [
             'header' => [
-                'clinic_name'     => $clinic->registration_form_clinic_name ?: $clinic->name ?: '-',
+                'clinic_name'     => $clinic->registration_form_clinic_name ?: '-',
                 'print_date'      => now()->format('d-m-Y'),
                 'assigned_user'   => $order->user?->name ?: $order->salesLead?->user?->name ?: '-',
                 'order_number'    => $order->order_number ?: (string) $order->id,
@@ -188,16 +152,17 @@ class AfbDocumentGenerator
             'patient' => [
                 'salutation'  => $person?->salutation?->label() ?: '-',
                 'first_name'  => $person?->first_name ?: '-',
-                'last_name'   => $this->formatLastName($person),
+                'last_name'   => $person?->full_last_name ?: '-',
                 'address'     => $this->formatAddressLine($address?->street, $address?->house_number, $address?->house_number_suffix),
                 'postal_code' => $address?->postal_code ?: '-',
                 'city'        => $address?->city ?: '-',
                 'country'     => $address?->country ?: '-',
+                'birthday'    => $person?->date_of_birth?->format('d-m-Y') ?: '-',
             ],
             'medical' => [
                 'height'              => $anamnesis?->height,
                 'weight'              => $anamnesis?->weight,
-                'claustrophobia'      => $this->formatBoolean($anamnesis?->claustrophobia),
+                'claustrophobia'      => $this->emptyToNull($anamnesis?->claustrophobia),
                 'diabetes'            => $this->formatBoolean($anamnesis?->diabetes),
                 'diabetes_notes'      => $this->emptyToNull($anamnesis?->diabetes_notes),
                 'metals'              => $this->formatBoolean($anamnesis?->metals),
@@ -212,9 +177,11 @@ class AfbDocumentGenerator
                 'contra_notes'        => $this->emptyToNull($anamnesis?->glaucoma_notes),
                 'remark'              => $this->emptyToNull($anamnesis?->remarks),
             ],
-            'examinations'     => $examinations->values()->all(),
+            'examinations'              => $examinations->values()->all(),
+            'first_examination_start'   => $earliestScheduledStart?->format('H:i')
+                ?: ($order->first_examination_at?->format('H:i') ?: '-'),
             'clinic_anamnesis' => $this->emptyToNull($anamnesis?->comment_clinic),
-            'extra_info'       => $this->emptyToNull($order->salesLead?->description),
+            'extra_info'       => $this->emptyToNull($anamnesis?->description),
         ];
     }
 
@@ -224,7 +191,7 @@ class AfbDocumentGenerator
      *     date: string,
      *     appointment_time: string,
      *     start_time: string,
-     *     clinic_description: string,
+     *     clinic_product_description: string,
      *     order_item_person_id: ?int
      * }>
      */
@@ -240,11 +207,11 @@ class AfbDocumentGenerator
                             : Carbon::parse($item->order?->first_examination_at ?? now());
 
                         return [
-                            'start_at'              => $start,
-                            'date'                  => $start->format('d-m-Y'),
-                            'appointment_time'      => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
-                            'start_time'            => $start->format('H:i'),
-                            'clinic_description'    => $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId)
+                            'start_at'                      => $start,
+                            'date'                          => $start->format('d-m-Y'),
+                            'appointment_time'              => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
+                            'start_time'                    => $start->format('H:i'),
+                            'clinic_product_description'    => $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId)
                                 ?: ($item->getProductDescription() ?: $item->getProductName() ?: '-'),
                             'order_item_person_id'  => $item->person_id ? (int) $item->person_id : null,
                         ];
@@ -260,7 +227,7 @@ class AfbDocumentGenerator
      *     date: string,
      *     appointment_time: string,
      *     start_time: string,
-     *     clinic_description: string,
+     *     clinic_product_description: string,
      *     order_item_person_id: ?int
      * }>
      */
@@ -278,11 +245,11 @@ class AfbDocumentGenerator
                         $clinicId = $resourceOrderItem->resource?->clinicDepartment?->clinic_id;
 
                         return [
-                            'start_at'              => $start,
-                            'date'                  => $start->format('d-m-Y'),
-                            'appointment_time'      => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
-                            'start_time'            => $start->format('H:i'),
-                            'clinic_description'    => ($clinicId ? $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId) : null)
+                            'start_at'                      => $start,
+                            'date'                          => $start->format('d-m-Y'),
+                            'appointment_time'              => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
+                            'start_time'                    => $start->format('H:i'),
+                            'clinic_product_description'    => ($clinicId ? $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId) : null)
                                 ?: ($item->getProductDescription() ?: $item->getProductName() ?: '-'),
                             'order_item_person_id'  => $item->person_id ? (int) $item->person_id : null,
                         ];
@@ -346,29 +313,6 @@ class AfbDocumentGenerator
             })
             ->latest('updated_at')
             ->first();
-    }
-
-    private function formatLastName(?Person $person): string
-    {
-        if (! $person) {
-            return '-';
-        }
-
-        $primary = trim(implode(' ', array_filter([
-            $person->lastname_prefix,
-            $person->last_name,
-        ])));
-
-        $married = trim(implode(' ', array_filter([
-            $person->married_name_prefix,
-            $person->married_name,
-        ])));
-
-        if ($primary && $married) {
-            return $primary.' - '.$married;
-        }
-
-        return $primary ?: ($married ?: '-');
     }
 
     private function formatAddressLine(?string $street, mixed $houseNumber, ?string $suffix): string

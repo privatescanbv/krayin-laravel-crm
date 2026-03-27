@@ -4,12 +4,14 @@ namespace Webkul\Contact\Models;
 
 use App\Casts\EncryptedString;
 use App\Enums\PersonGender;
-use App\Enums\PreferredLanguage;
 use App\Enums\PersonSalutation;
+use App\Enums\PreferredLanguage;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\PatientMessage;
+use App\Models\SalesLead;
 use App\Traits\HasDefaultContactInfo;
+use BackedEnum;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,7 +26,6 @@ use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
-use App\Models\SalesLead;
 use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
@@ -77,13 +78,13 @@ class Person extends Model implements PersonContract
      * @var array
      */
     protected $casts = [
-        'emails'        => 'array',
-        'phones'        => 'array',
-        'date_of_birth' => 'date',
-        'gender'             => PersonGender::class,
-        'salutation'         => PersonSalutation::class,
-        'is_active'          => 'boolean',
-        'preferred_language' => PreferredLanguage::class,
+        'emails'                         => 'array',
+        'phones'                         => 'array',
+        'date_of_birth'                  => 'date',
+        'gender'                         => PersonGender::class,
+        'salutation'                     => PersonSalutation::class,
+        'is_active'                      => 'boolean',
+        'preferred_language'             => PreferredLanguage::class,
         'national_identification_number' => EncryptedString::class,
         'onboarding_completed_at'        => 'datetime',
     ];
@@ -128,6 +129,16 @@ class Person extends Model implements PersonContract
         'preferred_language',
         'onboarding_completed_at',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return Factory
+     */
+    protected static function newFactory()
+    {
+        return PersonFactory::new();
+    }
 
     /**
      * Capitalize first character of first name.
@@ -176,11 +187,13 @@ class Person extends Model implements PersonContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['gender'] = null;
+
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['gender'] = $value->value;
+
             return;
         }
 
@@ -243,11 +256,13 @@ class Person extends Model implements PersonContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['preferred_language'] = null;
+
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['preferred_language'] = $value->value;
+
             return;
         }
 
@@ -261,11 +276,13 @@ class Person extends Model implements PersonContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['salutation'] = null;
+
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['salutation'] = $value->value;
+
             return;
         }
 
@@ -325,6 +342,7 @@ class Person extends Model implements PersonContract
             )->get();
         } catch (Exception $e) {
             Log::warning('Could not load leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
+
             return collect();
         }
     }
@@ -340,6 +358,7 @@ class Person extends Model implements PersonContract
             )->get();
         } catch (Exception $e) {
             Log::warning('Could not load sales leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
+
             return collect();
         }
     }
@@ -377,13 +396,81 @@ class Person extends Model implements PersonContract
     }
 
     /**
-     * Create a new factory instance for the model.
-     *
-     * @return Factory
+     * Get the full name attribute.
      */
-    protected static function newFactory()
+    public function getNameAttribute($value): string
     {
-        return PersonFactory::new();
+        $parts = [];
+
+        if ($this->first_name) {
+            $parts[] = trim($this->first_name);
+        }
+        array_merge($parts, $this->getFullLastNameParts());
+
+        if (! $this->is_active) {
+            $parts[] = '[Inactief]';
+        }
+
+        return implode(' ', array_filter($parts));
+    }
+
+    /**
+     * Get the full name attribute.
+     */
+    public function getFullLastNameParts(): array
+    {
+        $parts = [];
+        if ($this->lastname_prefix) {
+            $parts[] = trim($this->lastname_prefix);
+        }
+        $rawLastName = $this->attributes['last_name'] ?? null;
+        if ($rawLastName) {
+            $parts[] = trim($rawLastName);
+        }
+        if (! empty($this->married_name)) {
+            $marriedNameParts = [];
+            if ($this->married_name_prefix) {
+                $marriedNameParts[] = trim($this->married_name_prefix);
+            }
+            if ($this->married_name) {
+                $marriedNameParts[] = trim($this->married_name);
+            }
+            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
+        }
+
+        return $parts;
+    }
+
+    /**
+     * Get the full name attribute.
+     */
+    public function getFullLastNameAttribute(): string
+    {
+        return implode(' ', array_filter($this->getFullLastNameParts()));
+    }
+
+    /**
+     * Calculate and return the age of the person based on date_of_birth
+     */
+    public function getAgeAttribute(): ?int
+    {
+        if (! $this->date_of_birth) {
+            return null;
+        }
+
+        return $this->date_of_birth->age;
+    }
+
+    public function getSugarLinkAttribute(): ?string
+    {
+        if ($this->external_id) {
+            $baseUrl = config('services.sugarcrm.base_url');
+            $record = $this->external_id;
+
+            return "{$baseUrl}index.php?module=Contacts&offset=1&stamp=1758266828019787100&return_module=Contacts&action=DetailView&record={$record}";
+        }
+
+        return null;
     }
 
     /**
@@ -408,62 +495,5 @@ class Person extends Model implements PersonContract
         }
 
         return parent::performInsert($query);
-    }
-
-    /**
-     * Get the full name attribute.
-     */
-    public function getNameAttribute($value): string
-    {
-        $parts = [];
-
-        if ($this->first_name) {
-            $parts[] = trim($this->first_name);
-        }
-
-        if ($this->lastname_prefix) {
-            $parts[] = trim($this->lastname_prefix);
-        }
-
-        if ($this->last_name) {
-            $parts[] = trim($this->last_name);
-        }
-        if(!empty($this->married_name)) {
-            $marriedNameParts = [];
-            if ($this->married_name_prefix) {
-                $marriedNameParts[] = trim($this->married_name_prefix);
-            }
-            if ($this->married_name) {
-                $marriedNameParts[] = trim($this->married_name);
-            }
-            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
-        }
-
-        if (!$this->is_active) {
-            $parts[] = '[Inactief]';
-        }
-        return implode(' ', array_filter($parts));
-    }
-
-    /**
-     * Calculate and return the age of the person based on date_of_birth
-     */
-    public function getAgeAttribute(): ?int
-    {
-        if (!$this->date_of_birth) {
-            return null;
-        }
-
-        return $this->date_of_birth->age;
-    }
-
-    public function getSugarLinkAttribute() :?string
-    {
-        if ($this->external_id) {
-            $baseUrl = config('services.sugarcrm.base_url');
-            $record = $this->external_id;
-            return "{$baseUrl}index.php?module=Contacts&offset=1&stamp=1758266828019787100&return_module=Contacts&action=DetailView&record={$record}";
-        }
-        return null;
     }
 }

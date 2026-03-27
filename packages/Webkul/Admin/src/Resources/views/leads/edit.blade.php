@@ -138,7 +138,7 @@
 
                         <div class="w-1/2 max-md:w-full">
                             <!-- Personal Fields Component -->
-                            @include('admin::leads.common.personal-fields', ['entity' => $lead])
+                            @include('admin::leads.common.personal-fields', ['entity' => $lead, 'showPortalFields' => false])
                         </div>
                     </div>
 

@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Enums\OrderItemStatus;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\SalesLead;
 use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
@@ -165,6 +167,53 @@ test('order item total_price of zero is preserved as free (not overridden by pro
         'quantity'    => 2,
         'total_price' => 0,
     ]);
+});
+
+test('removing an order item from the update payload sets its status to lost instead of deleting', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $personA = Person::factory()->create();
+    $personB = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 40.00]);
+
+    $keptItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personA->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+    $removedItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personB->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+
+    $payload = [
+        'title'         => 'Updated Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
+        'items'         => [
+            $keptItem->id => [
+                'product_id'  => $product->id,
+                'person_id'   => $personA->id,
+                'quantity'    => 1,
+                'total_price' => 40.00,
+            ],
+        ],
+    ];
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), $payload);
+    $response->assertOk();
+
+    expect($removedItem->fresh()->status)->toBe(OrderItemStatus::LOST);
+    expect($keptItem->fresh()->status)->toBe(OrderItemStatus::NEW);
+    $this->assertDatabaseHas('order_items', ['id' => $removedItem->id]);
 });
 
 test('order item total_price uses provided value when not zero', function () {

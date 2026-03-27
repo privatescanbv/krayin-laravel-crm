@@ -28,7 +28,9 @@ return new class extends Migration
             $this->migrateProductTypeOverridesToResourceType();
 
             Schema::table('order_items', function (Blueprint $table) {
-                $table->dropForeign(['product_type_id']);
+                if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                    $table->dropForeign(['product_type_id']);
+                }
                 $table->dropColumn('product_type_id');
             });
         }
@@ -51,7 +53,9 @@ return new class extends Migration
             $this->migrateResourceTypeOverridesBackToProductType();
 
             Schema::table('order_items', function (Blueprint $table) {
-                $table->dropForeign(['resource_type_id']);
+                if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                    $table->dropForeign(['resource_type_id']);
+                }
                 $table->dropColumn('resource_type_id');
             });
         }

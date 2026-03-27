@@ -6,8 +6,8 @@ use App\DataGrids\Settings\OrderItemDataGrid;
 use App\Enums\Currency;
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
-use App\Models\ResourceType;
 use App\Models\PurchasePrice;
+use App\Models\ResourceType;
 use App\Repositories\OrderItemRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -96,16 +96,16 @@ class OrderItemController extends SimpleEntityController
         }
 
         $rules = [
-            'order_id'        => ['required', 'integer', 'exists:orders,id'],
-            'product_id'      => ['required', 'integer', 'exists:products,id'],
+            'order_id'         => ['required', 'integer', 'exists:orders,id'],
+            'product_id'       => ['required', 'integer', 'exists:products,id'],
             'resource_type_id' => ['nullable', 'integer', 'exists:resource_types,id'],
-            'name'            => ['nullable', 'string', 'max:255'],
-            'description'     => ['nullable', 'string'],
-            'person_id'       => ['required', 'integer', 'exists:persons,id'],
-            'quantity'        => ['required', 'integer', 'min:1'],
-            'total_price'     => ['nullable', 'numeric', 'min:0'],
-            'currency'        => ['nullable', 'string', 'in:'.implode(',', Currency::codes())],
-            'status'          => ['nullable', 'string', 'in:'.implode(',', array_column(OrderItemStatus::cases(), 'value'))],
+            'name'             => ['nullable', 'string', 'max:255'],
+            'description'      => ['nullable', 'string'],
+            'person_id'        => ['required', 'integer', 'exists:persons,id'],
+            'quantity'         => ['required', 'integer', 'min:1'],
+            'total_price'      => ['nullable', 'numeric', 'min:0'],
+            'currency'         => ['nullable', 'string', 'in:'.implode(',', Currency::codes())],
+            'status'           => ['nullable', 'string', 'in:'.implode(',', array_column(OrderItemStatus::cases(), 'value'))],
         ];
         foreach (array_merge(PurchasePrice::priceableFieldNames(), array_map(fn (string $s) => 'invoice_purchase_price_'.$s, $suffixes)) as $field) {
             $rules[$field] = ['nullable', 'numeric', 'min:0'];

@@ -168,77 +168,6 @@ class OrderItem extends Model
         return $this->product?->resourceType?->name;
     }
 
-    /**
-     * Product type enum from the linked product only (not order-item override), for resource type fallback chain.
-     */
-    private function productTypeEnumFromProductOnly(): ?ProductTypeEnum
-    {
-        $name = $this->product?->productType?->name;
-
-        if (! $name) {
-            return null;
-        }
-
-        foreach (ProductTypeEnum::cases() as $case) {
-            if (strcasecmp($case->label(), $name) === 0) {
-                return $case;
-            }
-        }
-
-        return null;
-    }
-
-    private function resourceTypeEnumFromProductProductType(): ?ResourceTypeEnum
-    {
-        $productType = $this->productTypeEnumFromProductOnly();
-
-        if (! $productType) {
-            return null;
-        }
-
-        return match ($productType) {
-            ProductTypeEnum::TOTAL_BODYSCAN => ResourceTypeEnum::MRI_SCANNER,
-            ProductTypeEnum::MRI_SCAN       => ResourceTypeEnum::MRI_SCANNER,
-            ProductTypeEnum::CT_SCAN        => ResourceTypeEnum::CT_SCANNER,
-            ProductTypeEnum::PETSCAN        => ResourceTypeEnum::PET_CT_SCANNER,
-            ProductTypeEnum::CARDIOLOGIE    => ResourceTypeEnum::CARDIOLOGIE,
-            ProductTypeEnum::OPERATIONS     => ResourceTypeEnum::ARTSEN,
-
-            ProductTypeEnum::ENDOSCOPIE,
-            ProductTypeEnum::LABORATORIUM,
-            ProductTypeEnum::VERTALING,
-            ProductTypeEnum::DIENSTEN,
-            ProductTypeEnum::OVERIG => ResourceTypeEnum::OTHER,
-        };
-    }
-
-    /**
-     * Map planning resource type label to a product type enum for display (reverse of product-type → resource mapping).
-     * Ambiguous cases pick a single canonical product type.
-     */
-    private function productTypeEnumFromResourceTypeName(?string $resourceTypeName): ?ProductTypeEnum
-    {
-        if ($resourceTypeName === null || $resourceTypeName === '') {
-            return null;
-        }
-
-        try {
-            $resourceEnum = ResourceTypeEnum::mapFrom($resourceTypeName);
-        } catch (\Exception) {
-            return null;
-        }
-
-        return match ($resourceEnum) {
-            ResourceTypeEnum::MRI_SCANNER    => ProductTypeEnum::MRI_SCAN,
-            ResourceTypeEnum::CT_SCANNER     => ProductTypeEnum::CT_SCAN,
-            ResourceTypeEnum::PET_CT_SCANNER => ProductTypeEnum::PETSCAN,
-            ResourceTypeEnum::CARDIOLOGIE    => ProductTypeEnum::CARDIOLOGIE,
-            ResourceTypeEnum::ARTSEN         => ProductTypeEnum::OPERATIONS,
-            ResourceTypeEnum::OTHER          => ProductTypeEnum::OVERIG,
-            ResourceTypeEnum::RONTGEN        => ProductTypeEnum::OVERIG,
-        };
-    }
-
     public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class);
@@ -347,5 +276,76 @@ class OrderItem extends Model
     public function getCanPlanAttribute(): string
     {
         return $this->isPlannable();
+    }
+
+    /**
+     * Product type enum from the linked product only (not order-item override), for resource type fallback chain.
+     */
+    private function productTypeEnumFromProductOnly(): ?ProductTypeEnum
+    {
+        $name = $this->product?->productType?->name;
+
+        if (! $name) {
+            return null;
+        }
+
+        foreach (ProductTypeEnum::cases() as $case) {
+            if (strcasecmp($case->label(), $name) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    private function resourceTypeEnumFromProductProductType(): ?ResourceTypeEnum
+    {
+        $productType = $this->productTypeEnumFromProductOnly();
+
+        if (! $productType) {
+            return null;
+        }
+
+        return match ($productType) {
+            ProductTypeEnum::TOTAL_BODYSCAN => ResourceTypeEnum::MRI_SCANNER,
+            ProductTypeEnum::MRI_SCAN       => ResourceTypeEnum::MRI_SCANNER,
+            ProductTypeEnum::CT_SCAN        => ResourceTypeEnum::CT_SCANNER,
+            ProductTypeEnum::PETSCAN        => ResourceTypeEnum::PET_CT_SCANNER,
+            ProductTypeEnum::CARDIOLOGIE    => ResourceTypeEnum::CARDIOLOGIE,
+            ProductTypeEnum::OPERATIONS     => ResourceTypeEnum::ARTSEN,
+
+            ProductTypeEnum::ENDOSCOPIE,
+            ProductTypeEnum::LABORATORIUM,
+            ProductTypeEnum::VERTALING,
+            ProductTypeEnum::DIENSTEN,
+            ProductTypeEnum::OVERIG => ResourceTypeEnum::OTHER,
+        };
+    }
+
+    /**
+     * Map planning resource type label to a product type enum for display (reverse of product-type → resource mapping).
+     * Ambiguous cases pick a single canonical product type.
+     */
+    private function productTypeEnumFromResourceTypeName(?string $resourceTypeName): ?ProductTypeEnum
+    {
+        if ($resourceTypeName === null || $resourceTypeName === '') {
+            return null;
+        }
+
+        try {
+            $resourceEnum = ResourceTypeEnum::mapFrom($resourceTypeName);
+        } catch (\Exception) {
+            return null;
+        }
+
+        return match ($resourceEnum) {
+            ResourceTypeEnum::MRI_SCANNER    => ProductTypeEnum::MRI_SCAN,
+            ResourceTypeEnum::CT_SCANNER     => ProductTypeEnum::CT_SCAN,
+            ResourceTypeEnum::PET_CT_SCANNER => ProductTypeEnum::PETSCAN,
+            ResourceTypeEnum::CARDIOLOGIE    => ProductTypeEnum::CARDIOLOGIE,
+            ResourceTypeEnum::ARTSEN         => ProductTypeEnum::OPERATIONS,
+            ResourceTypeEnum::OTHER          => ProductTypeEnum::OVERIG,
+            ResourceTypeEnum::RONTGEN        => ProductTypeEnum::OVERIG,
+        };
     }
 }

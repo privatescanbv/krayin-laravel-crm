@@ -29,6 +29,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
     Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
     Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
+    Route::post('{id}/send-afb', 'sendAfb')->name('admin.orders.send_afb');
 
     // Order confirmation letter routes
     Route::get('confirmation/templates', 'getConfirmationTemplates')->name('admin.orders.confirmation.templates');

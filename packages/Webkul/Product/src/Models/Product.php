@@ -87,6 +87,29 @@ class Product extends Model implements ProductContract
         return $this->belongsTo(ResourceType::class);
     }
 
+    /**
+     * Resolves the resource type for this product.
+     *
+     * Returns the directly assigned resource type if set,
+     * otherwise falls back to the resource type of the first active partner product.
+     */
+    public function resolvedResourceType(): ?\App\Models\ResourceType
+    {
+        if ($this->resource_type_id) {
+            return $this->resourceType;
+        }
+
+        return $this->partnerProducts->first()?->resourceType;
+    }
+
+    /**
+     * Resolves the resource type ID for this product.
+     */
+    public function resolvedResourceTypeId(): ?int
+    {
+        return $this->resolvedResourceType()?->id;
+    }
+
     public function productType(): BelongsTo
     {
         return $this->belongsTo(ProductType::class);

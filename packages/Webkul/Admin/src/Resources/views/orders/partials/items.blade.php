@@ -121,8 +121,15 @@
             template: '#v-order-item-list-template',
             props: ['errors', 'data', 'persons', 'editBaseUrl'],
             data() {
+                // Locaal kopiëren: this.personsData bestaat nog niet op de instance tijdens data().
+                const personsData = this.persons && typeof this.persons === 'object' ? { ...this.persons } : {};
+                const firstPersonId = (() => {
+                    const keys = Object.keys(personsData);
+                    return keys.length ? keys[0] : null;
+                })();
+
                 return {
-                    personsData: this.persons && typeof this.persons === 'object' ? { ...this.persons } : {},
+                    personsData,
                     resetKey: 0,
                     items: this.data && this.data.length ? this.data.map(r => {
                         console.log('Processing order item data:', r);
@@ -145,7 +152,7 @@
                             planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
                             canPlan: r.can_plan === '1' || r.can_plan === true || false,
                         };
-                    }) : [{ id: null, product_id: null, product_name: null, person_id: Object.keys(this.personsData)[0] ?? null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
+                    }) : [{ id: null, product_id: null, product_name: null, person_id: firstPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
                 };
             },
             watch: {
@@ -172,7 +179,9 @@
             },
             methods: {
                 addItem() {
-                    this.items.push({ id: null, product_id: null, product_name: null, person_id: Object.keys(this.personsData)[0] ?? null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
+                    const keys = Object.keys(this.personsData || {});
+                    const defaultPersonId = keys.length ? keys[0] : null;
+                    this.items.push({ id: null, product_id: null, product_name: null, person_id: defaultPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
                 },
                 removeItem(item) {
                     this.$emitter.emit('open-confirm-modal', {
@@ -181,7 +190,9 @@
                                 this.items = [];
                                 this.resetKey++;
                                 this.$nextTick(() => {
-                                    this.items.push({ id: null, product_id: null, product_name: null, person_id: Object.keys(this.personsData)[0] ?? null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false });
+                                    const k = Object.keys(this.personsData || {});
+                                    const pid = k.length ? k[0] : null;
+                                    this.items.push({ id: null, product_id: null, product_name: null, person_id: pid, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false });
                                 });
                             } else {
                                 const index = this.items.indexOf(item);

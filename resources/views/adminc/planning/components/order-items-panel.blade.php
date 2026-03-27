@@ -27,7 +27,7 @@
                 <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
                     {{ $item->person?->name ?? 'Geen persoon toegewezen' }} &mdash; Aantal: {{ $item->quantity }}</div>
                 <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                    Product type: {{ $item->resolvedProductType()?->name ?? '-' }}
+                    Resource type: {{ $item->resolvedResourceTypeName() ?? '-' }}
                 </div>
                 @if ($item->resourceOrderItems && $item->resourceOrderItems->count() > 0)
                     <div class="text-xs text-gray-700 dark:text-gray-300">

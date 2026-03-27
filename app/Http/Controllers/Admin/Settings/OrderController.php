@@ -18,6 +18,7 @@ use App\Models\OrderPayment;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
+use App\Services\Afb\AfbDispatchService;
 use App\Services\FormService;
 use App\Services\Mail\EmailTemplateRenderingService;
 use App\Services\OrderCheckService;
@@ -61,7 +62,8 @@ class OrderController extends SimpleEntityController
         protected SalesLeadRepository $salesLeadRepository,
         protected FormService $formService,
         protected PipelineCookieService $pipelineCookieService,
-        private EmailTemplateRenderingService $emailTemplateRenderingService
+        private EmailTemplateRenderingService $emailTemplateRenderingService,
+        private AfbDispatchService $afbDispatchService,
     ) {
         parent::__construct($orderRepository);
 
@@ -361,10 +363,16 @@ class OrderController extends SimpleEntityController
                 ->all();
         }
 
+        $afbNeedsManualBanner = $this->afbDispatchService->needsManualLateAfb($order);
+        $afbHasBatchSuccess = $this->afbDispatchService->hasSuccessfulBatchDispatchForOrder($order);
+
         return view('admin::orders.view', [
             'order'                => $order,
             'activitiesCount'      => $activitiesCount,
             'personsWithAnamnesis' => $personsWithAnamnesis,
+            'afbNeedsManualBanner' => $afbNeedsManualBanner,
+            'afbHasBatchSuccess'   => $afbHasBatchSuccess,
+            'afbSendUrl'           => route('admin.orders.send_afb', $order->id),
         ]);
     }
 
@@ -527,6 +535,24 @@ class OrderController extends SimpleEntityController
         }
 
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
+    }
+
+    public function sendAfb(int $id): JsonResponse
+    {
+        $order = Order::findOrFail($id);
+        try {
+            $queued = $this->afbDispatchService->queueLateBookingForOrder($order);
+
+            return response()->json([
+                'message' => $queued > 0
+                    ? "AFB verstuurd naar {$queued} afdeling(en)."
+                    : 'AFB was al verstuurd of condities zijn niet van toepassing.',
+            ]);
+        } catch (Throwable $e) {
+            Log::error('AFB dispatch mislukt', ['order_id' => $id, 'error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'AFB versturen mislukt: '.$e->getMessage()], 500);
+        }
     }
 
     /**

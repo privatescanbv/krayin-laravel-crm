@@ -1,6 +1,42 @@
-@props(['order'])
+@props([
+    'order',
+    'afbNeedsManualBanner' => false,
+    'afbHasBatchSuccess' => false,
+    'afbSendUrl' => null,
+])
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
+
+    @if ($afbNeedsManualBanner && $afbSendUrl && bouncer()->hasPermission('orders.edit'))
+        <div
+            class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
+            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div class="space-y-2">
+                    <p class="font-semibold">AFB: handmatige verzending nodig</p>
+                    <p class="text-amber-900/90 dark:text-amber-100/90">
+                        Het eerste onderzoek staat binnen 24 uur
+                        @if ($order->first_examination_at)
+                            ({{ $order->first_examination_at->timezone(config('app.timezone'))->format('d-m-Y H:i') }}).
+                        @else
+                            .
+                        @endif
+                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om 06:00 verstuurd;
+                        binnen dit venster moet u de AFB nu zelf versturen naar de kliniek.
+                    </p>
+                    @if ($afbHasBatchSuccess)
+                        <p class="text-xs text-amber-800 dark:text-amber-200/90">
+                            Er is al een succesvolle batch-verzending voor deze order geregistreerd; controleer of een extra individuele verzending nog nodig is.
+                        </p>
+                    @else
+                        <p class="text-xs text-amber-800 dark:text-amber-200/90">
+                            Er is nog geen succesvolle batch-AFB voor deze order geregistreerd voor de betreffende afdeling(en).
+                        </p>
+                    @endif
+                </div>
+                <v-order-afb-send-button send-url="{{ $afbSendUrl }}"></v-order-afb-send-button>
+            </div>
+        </div>
+    @endif
 
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between gap-4">

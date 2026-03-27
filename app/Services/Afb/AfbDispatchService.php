@@ -208,7 +208,7 @@ class AfbDispatchService
             ->exists();
     }
 
-    private function shouldSendAsLateBooking(Order $order): bool
+    public function shouldSendAsLateBooking(Order $order): bool
     {
         if (! $order->first_examination_at) {
             return false;
@@ -224,9 +224,46 @@ class AfbDispatchService
     }
 
     /**
+     * Handmatige AFB nodig: late-booking venster, planning met afdeling, en nog niet overal succesvol verstuurd.
+     */
+    public function needsManualLateAfb(Order $order): bool
+    {
+        if (! $this->shouldSendAsLateBooking($order)) {
+            return false;
+        }
+
+        $departmentIds = $this->getDepartmentIdsForOrder((int) $order->id);
+
+        if ($departmentIds === []) {
+            return false;
+        }
+
+        foreach ($departmentIds as $departmentId) {
+            if (! $this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Of er al een succesvolle batch-verzending voor deze order is geweest.
+     */
+    public function hasSuccessfulBatchDispatchForOrder(Order $order): bool
+    {
+        return AfbPersonDocument::query()
+            ->where('order_id', $order->id)
+            ->whereHas('dispatch', fn ($q) => $q
+                ->where('type', AfbDispatchType::BATCH->value)
+                ->where('status', AfbDispatchStatus::SUCCESS->value))
+            ->exists();
+    }
+
+    /**
      * @return array<int, int>
      */
-    private function getDepartmentIdsForOrder(int $orderId): array
+    public function getDepartmentIdsForOrder(int $orderId): array
     {
         return DB::table('order_items')
             ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')

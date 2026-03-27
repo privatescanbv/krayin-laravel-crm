@@ -27,7 +27,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            ✓ @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }})
+                            ✓ @{{ item.product_name }} (Aantal: @{{ item.quantity }})
                         </option>
                     </optgroup>
                     <optgroup v-if="plannedItems.length > 0"
@@ -37,7 +37,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            📅 @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
+                            📅 @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
                         </option>
                     </optgroup>
                     <optgroup v-if="notPlanableItems.length > 0"
@@ -48,7 +48,7 @@
                             :value="item.id"
                             disabled
                         >
-                            ⚠ @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }}) - Niet planbaar
+                            ⚠ @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - Niet planbaar
                         </option>
                     </optgroup>
                 </select>

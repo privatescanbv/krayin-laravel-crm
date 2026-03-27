@@ -2,6 +2,7 @@
 
 use App\Enums\AfbDispatchType;
 use App\Enums\PersonSalutation;
+use App\Enums\PipelineType;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\Address;
 use App\Models\AfbPersonDocument;
@@ -25,6 +26,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 use Webkul\Installer\Http\Middleware\CanInstall;
+use Webkul\Lead\Models\Stage;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
@@ -351,4 +353,27 @@ test('clinic view contains afb verzendingen navigation', function () {
 
     $response->assertOk();
     $response->assertSee('AFB verzendingen');
+});
+
+test('order view shows manual afb banner when late booking and not yet sent', function () {
+    // ResourceOrderItemObserver queues late AFB when planning binnen 24u; zonder fake draait de job sync
+    // en is de order al "verstuurd", waardoor de banner niet verschijnt.
+    Bus::fake();
+
+    // Banner is alleen zichtbaar met orders.edit; makeUser() uit beforeEach heeft die permissie niet.
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $examAt = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+
+    $stage = Stage::query()->whereHas('pipeline', fn ($q) => $q->where('type', PipelineType::ORDER))->firstOrFail();
+    $context['order']->update(['pipeline_stage_id' => $stage->id]);
+
+    expect(app(AfbDispatchService::class)->needsManualLateAfb($context['order']->fresh()))->toBeTrue();
+
+    $response = $this->get(route('admin.orders.view', $context['order']->id));
+
+    $response->assertOk();
+    $response->assertSee('AFB: handmatige verzending nodig', false);
+    $response->assertSee('AFB nu versturen', false);
 });

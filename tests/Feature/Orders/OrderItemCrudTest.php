@@ -4,7 +4,7 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ProductType;
+use App\Models\ResourceType;
 use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
@@ -54,53 +54,53 @@ test('can create order_item', function () {
 });
 
 test('can update order_item', function () {
-    $typeA = ProductType::factory()->create();
-    $product = Product::factory()->create(['product_type_id' => $typeA->id]);
+    $rtA = ResourceType::factory()->create();
+    $product = Product::factory()->create(['resource_type_id' => $rtA->id]);
     $item = OrderItem::factory()->create(['product_id' => $product->id]);
 
     $payload = [
-        'order_id'        => $item->order_id,
-        'product_id'      => $item->product_id,
-        'product_type_id' => $typeA->id,
-        'person_id'       => test()->person->id,
-        'quantity'        => 5,
-        'total_price'     => 555.55,
-        '_method'         => 'put',
+        'order_id'          => $item->order_id,
+        'product_id'        => $item->product_id,
+        'resource_type_id'  => $rtA->id,
+        'person_id'         => test()->person->id,
+        'quantity'          => 5,
+        'total_price'       => 555.55,
+        '_method'           => 'put',
     ];
 
     $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
     $response->assertOk()->assertJsonPath('data.quantity', 5);
 
     $this->assertDatabaseHas('order_items', [
-        'id'              => $item->id,
-        'quantity'        => 5,
-        'product_type_id' => null,
+        'id'                 => $item->id,
+        'quantity'           => 5,
+        'resource_type_id'   => null,
     ]);
 });
 
-test('order_item product_type_id is stored when different from product', function () {
-    $typeA = ProductType::factory()->create();
-    $typeB = ProductType::factory()->create();
+test('order_item resource_type_id is stored when different from product', function () {
+    $rtA = ResourceType::factory()->create();
+    $rtB = ResourceType::factory()->create();
 
-    $product = Product::factory()->create(['product_type_id' => $typeA->id]);
+    $product = Product::factory()->create(['resource_type_id' => $rtA->id]);
     $item = OrderItem::factory()->create(['product_id' => $product->id]);
 
     $payload = [
-        'order_id'        => $item->order_id,
-        'product_id'      => $item->product_id,
-        'product_type_id' => $typeB->id,
-        'person_id'       => test()->person->id,
-        'quantity'        => 5,
-        'total_price'     => 555.55,
-        '_method'         => 'put',
+        'order_id'          => $item->order_id,
+        'product_id'        => $item->product_id,
+        'resource_type_id'  => $rtB->id,
+        'person_id'         => test()->person->id,
+        'quantity'          => 5,
+        'total_price'       => 555.55,
+        '_method'           => 'put',
     ];
 
     $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
-    $response->assertOk()->assertJsonPath('data.product_type_id', $typeB->id);
+    $response->assertOk()->assertJsonPath('data.resource_type_id', $rtB->id);
 
     $this->assertDatabaseHas('order_items', [
-        'id'              => $item->id,
-        'product_type_id' => $typeB->id,
+        'id'                 => $item->id,
+        'resource_type_id'   => $rtB->id,
     ]);
 });
 

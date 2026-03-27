@@ -55,7 +55,7 @@ class ResourcePlanningMonitorController extends Controller
         $order = Order::with([
             'orderItems.product.partnerProducts',
             'orderItems.person',
-            'orderItems.productType',
+            'orderItems.resourceType',
             'orderItems.product.productType',
             'salesLead.lead',
         ])->findOrFail($orderId);
@@ -77,7 +77,7 @@ class ResourcePlanningMonitorController extends Controller
     {
         $order = Order::with([
             'orderItems.product.resourceType',
-            'orderItems.productType',
+            'orderItems.resourceType',
             'orderItems.product.productType',
         ])->findOrFail($orderId);
 

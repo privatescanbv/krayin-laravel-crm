@@ -34,7 +34,7 @@
 
                         @if (bouncer()->hasPermission('activities.create'))
                             <!-- File Activity Action -->
-                            <x-admin::activities.actions.file :entity="$clinic" entity-control-name="clinic_id"/>
+                            <x-admin::activities.actions.file :entity="$clinic" entity-control-name="clinic_id" :show-publish-to-portal="false"/>
 
                             <!-- Note Activity Action -->
                             <x-admin::activities.actions.note :entity="$clinic" entity-control-name="clinic_id"/>

@@ -1,6 +1,7 @@
 @props([
-    'entity'            => null,
-    'entityControlName' => null,
+    'entity'               => null,
+    'entityControlName'    => null,
+    'showPublishToPortal'  => true,
 ])
 
 <!-- File Button -->
@@ -25,6 +26,7 @@
         ref="fileActionComponent"
         :entity="{{ json_encode($entity) }}"
         entity-control-name="{{ $entityControlName }}"
+        :show-publish-to-portal="{{ $showPublishToPortal ? 'true' : 'false' }}"
     ></v-file-activity>
 
     {!! view_render_event('admin.components.activities.actions.file.after') !!}
@@ -99,7 +101,7 @@
                             />
 
                             <!-- Publiceren in patiëntportaal -->
-                            <div class="mt-4">
+                            <div v-if="showPublishToPortal" class="mt-4">
                                 <label class="flex cursor-pointer items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -174,7 +176,12 @@
                     type: String,
                     required: true,
                     default: ''
-                }
+                },
+
+                showPublishToPortal: {
+                    type: Boolean,
+                    default: true,
+                },
             },
 
             data: function () {

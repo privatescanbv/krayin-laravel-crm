@@ -470,10 +470,13 @@ class OrderController extends SimpleEntityController
                 }
             }
 
-            // Delete items that are in DB but not in the update list
-            $itemsToDelete = $currentItems->keys()->diff($updatedItemIds);
-            if ($itemsToDelete->isNotEmpty()) {
-                OrderItem::destroy($itemsToDelete->toArray());
+            // Soft-remove items that are in DB but not in the update list (status verloren)
+            $itemsToRemove = $currentItems->keys()->diff($updatedItemIds);
+            foreach ($itemsToRemove as $itemId) {
+                $item = $currentItems->get($itemId);
+                if ($item && $item->status !== OrderItemStatus::LOST) {
+                    $item->update(['status' => OrderItemStatus::LOST]);
+                }
             }
         }
 

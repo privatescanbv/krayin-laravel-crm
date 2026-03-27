@@ -179,18 +179,18 @@ class OrderItemController extends SimpleEntityController
 
     protected function getEditViewData(Request $request, $entity): array
     {
-        $entity->load('purchasePrice', 'invoicePurchasePrice', 'product');
-
-        $persons = $this->personRepository->all(['id', 'name'])->mapWithKeys(function ($person) {
-            return [$person->id => $person->name];
-        })->toArray();
+        $entity->load([
+            'purchasePrice',
+            'invoicePurchasePrice',
+            'person',
+            'product.partnerProducts.purchasePrice',
+        ]);
 
         $resolvedPurchasePrice = $this->resolvePurchasePriceForEdit($entity);
 
         return [
             'order_items'              => $entity,
             'resolvedPurchasePrice'    => $resolvedPurchasePrice,
-            'persons'                  => $persons,
             'productTypes'             => ProductType::orderBy('name')->get(['id', 'name']),
             'statuses'                 => collect(OrderItemStatus::cases())
                 ->mapWithKeys(fn ($case) => [$case->value => $case->label()])

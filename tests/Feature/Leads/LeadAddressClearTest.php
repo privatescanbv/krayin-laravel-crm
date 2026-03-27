@@ -98,6 +98,31 @@ test('_clear flag 1 deletes the address and clears address_id', function () {
     $this->assertDatabaseMissing('addresses', ['id' => $originalAddressId]);
 });
 
+test('clearing all address fields with _clear=0 (form default) deletes the address', function () {
+    $lead = Lead::factory()->withAddress()->create();
+    $originalAddressId = $lead->address_id;
+
+    $this->assertNotNull($originalAddressId);
+    $this->assertDatabaseHas('addresses', ['id' => $originalAddressId]);
+
+    // Simulate what the HTML form sends: _clear='0' (hidden default) + all fields empty
+    $this->addressRepository->upsertForEntity($lead, [
+        '_clear'              => '0',
+        'street'              => '',
+        'house_number'        => '',
+        'house_number_suffix' => '',
+        'postal_code'         => '',
+        'city'                => '',
+        'state'               => '',
+        'country'             => '',
+    ]);
+
+    $lead->refresh();
+
+    $this->assertNull($lead->address_id);
+    $this->assertDatabaseMissing('addresses', ['id' => $originalAddressId]);
+});
+
 test('_clear flag 0 keeps the existing address', function () {
     $lead = Lead::factory()->withAddress()->create();
     $originalAddressId = $lead->address_id;

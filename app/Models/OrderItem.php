@@ -73,18 +73,35 @@ class OrderItem extends Model
     }
 
     /**
-     * Product type always comes from the product (no order-item override).
+     * Effective product type ID for this order item (planning/UI): order-item resource override wins, else product.
      */
     public function resolvedProductTypeId(): ?int
     {
-        return $this->product?->product_type_id ? (int) $this->product->product_type_id : null;
+        $type = $this->resolvedProductType();
+
+        return $type ? (int) $type->id : null;
     }
 
     /**
-     * Product type model from the selected product.
+     * Effective product type for planning/UI: derived from order-item resource type override when set,
+     * otherwise the product's product type.
      */
     public function resolvedProductType(): ?\App\Models\ProductType
     {
+        if (! empty($this->resource_type_id)) {
+            $resource = $this->relationLoaded('resourceType')
+                ? $this->resourceType
+                : $this->resourceType()->first();
+
+            $productTypeEnum = $this->productTypeEnumFromResourceTypeName($resource?->name);
+            if ($productTypeEnum) {
+                $row = ProductType::query()->where('name', $productTypeEnum->label())->first();
+                if ($row) {
+                    return $row;
+                }
+            }
+        }
+
         return $this->product?->productType;
     }
 
@@ -121,7 +138,7 @@ class OrderItem extends Model
             }
         }
 
-        return $this->resourceTypeEnumFromResolvedProductType();
+        return $this->resourceTypeEnumFromProductProductType();
     }
 
     /**
@@ -142,7 +159,7 @@ class OrderItem extends Model
             }
         }
 
-        $fromProductType = $this->resourceTypeEnumFromResolvedProductType();
+        $fromProductType = $this->resourceTypeEnumFromProductProductType();
 
         if ($fromProductType) {
             return $fromProductType->label();
@@ -151,9 +168,29 @@ class OrderItem extends Model
         return $this->product?->resourceType?->name;
     }
 
-    private function resourceTypeEnumFromResolvedProductType(): ?ResourceTypeEnum
+    /**
+     * Product type enum from the linked product only (not order-item override), for resource type fallback chain.
+     */
+    private function productTypeEnumFromProductOnly(): ?ProductTypeEnum
     {
-        $productType = $this->resolvedProductTypeEnum();
+        $name = $this->product?->productType?->name;
+
+        if (! $name) {
+            return null;
+        }
+
+        foreach (ProductTypeEnum::cases() as $case) {
+            if (strcasecmp($case->label(), $name) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    private function resourceTypeEnumFromProductProductType(): ?ResourceTypeEnum
+    {
+        $productType = $this->productTypeEnumFromProductOnly();
 
         if (! $productType) {
             return null;
@@ -172,6 +209,33 @@ class OrderItem extends Model
             ProductTypeEnum::VERTALING,
             ProductTypeEnum::DIENSTEN,
             ProductTypeEnum::OVERIG => ResourceTypeEnum::OTHER,
+        };
+    }
+
+    /**
+     * Map planning resource type label to a product type enum for display (reverse of product-type → resource mapping).
+     * Ambiguous cases pick a single canonical product type.
+     */
+    private function productTypeEnumFromResourceTypeName(?string $resourceTypeName): ?ProductTypeEnum
+    {
+        if ($resourceTypeName === null || $resourceTypeName === '') {
+            return null;
+        }
+
+        try {
+            $resourceEnum = ResourceTypeEnum::mapFrom($resourceTypeName);
+        } catch (\Exception) {
+            return null;
+        }
+
+        return match ($resourceEnum) {
+            ResourceTypeEnum::MRI_SCANNER    => ProductTypeEnum::MRI_SCAN,
+            ResourceTypeEnum::CT_SCANNER     => ProductTypeEnum::CT_SCAN,
+            ResourceTypeEnum::PET_CT_SCANNER => ProductTypeEnum::PETSCAN,
+            ResourceTypeEnum::CARDIOLOGIE    => ProductTypeEnum::CARDIOLOGIE,
+            ResourceTypeEnum::ARTSEN         => ProductTypeEnum::OPERATIONS,
+            ResourceTypeEnum::OTHER          => ProductTypeEnum::OVERIG,
+            ResourceTypeEnum::RONTGEN        => ProductTypeEnum::OVERIG,
         };
     }
 

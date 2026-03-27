@@ -129,7 +129,7 @@ class ResourcePlanningMonitorController extends Controller
             // Load orderItem with product + resourceType
             $orderItem = OrderItem::with([
                 'product.resourceType',
-                'productType',
+                'resourceType',
                 'product.productType',
             ])->findOrFail($orderItemId);
 
@@ -585,7 +585,7 @@ class ResourcePlanningMonitorController extends Controller
         // Get order items with their existing bookings
         $orderItems = $order->orderItems()->with([
             'product',
-            'productType',
+            'resourceType',
             'product.productType',
             'resourceOrderItems.resource',
         ])->get();
@@ -669,7 +669,7 @@ class ResourcePlanningMonitorController extends Controller
         // Get order items with their existing bookings
         $orderItems = $order->orderItems()->with([
             'product',
-            'productType',
+            'resourceType',
             'product.productType',
             'resourceOrderItems.resource',
         ])->get();

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Planning;
 
+use App\Enums\ProductType as ProductTypeEnum;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductType;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
@@ -405,4 +407,32 @@ test('order monitor resource types include overridden resource type on order ite
     expect($types->pluck('id'))
         ->toContain($pet->id)
         ->not->toContain($mri->id);
+});
+
+test('resolved product type for planning follows order item resource type override', function (): void {
+    ProductType::query()->firstOrCreate(
+        ['name' => ProductTypeEnum::MRI_SCAN->label()],
+        ['description' => '']
+    );
+    ProductType::query()->firstOrCreate(
+        ['name' => ProductTypeEnum::PETSCAN->label()],
+        ['description' => '']
+    );
+
+    $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
+    $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
+
+    $mriProductType = ProductType::query()->where('name', ProductTypeEnum::MRI_SCAN->label())->firstOrFail();
+    $product = Product::factory()->create([
+        'product_type_id'  => $mriProductType->id,
+        'resource_type_id' => $mri->id,
+    ]);
+
+    $item = OrderItem::factory()->create([
+        'product_id'       => $product->id,
+        'resource_type_id' => $pet->id,
+    ]);
+    $item->load('resourceType', 'product.productType');
+
+    expect($item->resolvedProductType()?->name)->toBe(ProductTypeEnum::PETSCAN->label());
 });

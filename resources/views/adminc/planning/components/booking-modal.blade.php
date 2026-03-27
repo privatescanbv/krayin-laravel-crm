@@ -5,17 +5,21 @@
     </x-slot:header>
     <x-slot:content>
         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
-            <!-- Orderitem -->
+            <!-- Orderitem: native select (zelfde reden als resource — v-field/vee-validate blokkeert wisselen) -->
             <div>
-                <x-adminc::components.field
-                    type="select"
-                    name="order_item_id"
-                    label="Orderitem (Nog niet ingeplande items staan bovenaan)"
+                <label
+                    for="booking-modal-order_item_id"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5"
+                >
+                    Orderitem (Nog niet ingeplande items staan bovenaan)
+                </label>
+                <select
+                    id="booking-modal-order_item_id"
                     v-model="form.order_item_id"
-                    class="w-full"
+                    name="order_item_id"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-400"
                 >
                     <option value="">Selecteer orderitem</option>
-                    <!-- Unplanned items first -->
                     <optgroup v-if="unplannedItems.length > 0"
                               label="━━━ Nog niet ingepland (voorrang) ━━━">
                         <option
@@ -26,7 +30,6 @@
                             ✓ @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }})
                         </option>
                     </optgroup>
-                    <!-- Planned items -->
                     <optgroup v-if="plannedItems.length > 0"
                               label="━━━ Al ingepland (aanpassen) ━━━">
                         <option
@@ -37,19 +40,27 @@
                             📅 @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
                         </option>
                     </optgroup>
-                    <!-- Not planable items -->
                     <optgroup v-if="notPlanableItems.length > 0"
                               label="━━━ Niet planbaar ━━━">
                         <option
                             v-for="item in notPlanableItems"
                             :key="item.id"
                             :value="item.id"
-                            :disabled="true"
+                            disabled
                         >
                             ⚠ @{{ item.product_name }}<template v-if="item.product_type"> — @{{ item.product_type }}</template> (Aantal: @{{ item.quantity }}) - Niet planbaar
                         </option>
                     </optgroup>
-                </x-adminc::components.field>
+                </select>
+
+                <p v-if="selectedOrderItem && selectedOrderItem.required_resource_type"
+                   class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Vereist resource-type: @{{ selectedOrderItem.required_resource_type }}
+                </p>
+                <p v-else-if="selectedOrderItem"
+                   class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Vereist resource-type: niet bepaald
+                </p>
 
                 <!-- Show booking details for selected item -->
                 <div v-if="selectedOrderItem && selectedOrderItem.bookings && selectedOrderItem.bookings.length > 0"
@@ -65,18 +76,29 @@
                 </div>
             </div>
 
-            <!-- Resource -->
-            <x-adminc::components.field
-                type="select"
-                name="resource_id"
-                label="Resource"
-                v-model.number="form.resource_id"
-                class="w-full"
-            >
-                <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{
-                    r.clinic }})
-                </option>
-            </x-adminc::components.field>
+            <!-- Resource: native select (geen v-field/vee-validate) zodat dynamische opties betrouwbaar werken -->
+            <div>
+                <label
+                    for="booking-modal-resource_id"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5"
+                >
+                    Resource
+                </label>
+                <select
+                    id="booking-modal-resource_id"
+                    v-model.number="form.resource_id"
+                    name="resource_id"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-400"
+                >
+                    <option v-if="bookingResourceOptions.length === 0" disabled value="">
+                        — Geen resources (laden of filter aanpassen) —
+                    </option>
+                    <option v-else disabled value="">Selecteer resource</option>
+                    <option v-for="r in bookingResourceOptions" :key="r.id" :value="r.id">
+                        @{{ r.name }} (@{{ r.clinic }})
+                    </option>
+                </select>
+            </div>
 
             <!-- Outside availability warning -->
             <div v-if="isOutsideAvailability && isOutsideAvailabilityAllowedForResource"

@@ -140,11 +140,19 @@ class ResourcePlanningMonitorController extends Controller
             // VALIDATION: ResourceType match
             // -------------------------------
             $requiredType = $orderItem->resolvedResourceTypeName();
-            if ($requiredType !== $resource->resourceType?->name) {
+            $resourceTypeName = $resource->resourceType?->name;
+            if ($requiredType !== $resourceTypeName) {
+                $requiredLabel = $requiredType ?? 'Onbekend';
+                $chosenLabel = $resourceTypeName ?? 'Onbekend';
+
                 return response()->json([
-                    'message'       => 'Gekozen resource heeft een ander type dan vereist voor dit order item.',
+                    'message' => sprintf(
+                        'Dit orderregel vereist \'%s\', maar de gekozen resource is van het type \'%s\'. Kies een passende resource of een ander orderregel.',
+                        $requiredLabel,
+                        $chosenLabel
+                    ),
                     'required_type' => $requiredType,
-                    'resource_type' => $resource->resourceType?->name,
+                    'resource_type' => $resourceTypeName,
                 ], 422);
             }
 
@@ -603,13 +611,14 @@ class ResourcePlanningMonitorController extends Controller
                 'title' => $order->title,
             ],
             'order_items' => $orderItems->map(fn ($item) => [
-                'id'           => $item->id,
-                'product_name' => $item->product?->name ?? 'Onbekend product',
-                'quantity'     => $item->quantity,
-                'status'       => $item->status,
+                'id'                     => $item->id,
+                'product_name'           => $item->product?->name ?? 'Onbekend product',
+                'quantity'               => $item->quantity,
+                'status'                 => $item->status,
+                'required_resource_type' => $item->resolvedResourceTypeName(),
                 // Only plan if product has partner products linked to active clinics
-                'can_plan'     => $item->isPlannable(),
-                'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
+                'can_plan'               => $item->isPlannable(),
+                'bookings'               => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
                     'resource_id'   => $booking->resource_id,
                     'resource_name' => $booking->resource?->name ?? 'Onbekend',
@@ -686,12 +695,13 @@ class ResourcePlanningMonitorController extends Controller
                 'title' => $order->title,
             ],
             'order_items' => $orderItems->map(fn ($item) => [
-                'id'           => $item->id,
-                'product_name' => $item->product?->name ?? 'Onbekend product',
-                'quantity'     => $item->quantity,
-                'status'       => $item->status,
-                'can_plan'     => $item->isPlannable(),
-                'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
+                'id'                     => $item->id,
+                'product_name'           => $item->product?->name ?? 'Onbekend product',
+                'quantity'               => $item->quantity,
+                'status'                 => $item->status,
+                'required_resource_type' => $item->resolvedResourceTypeName(),
+                'can_plan'               => $item->isPlannable(),
+                'bookings'               => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
                     'resource_id'   => $booking->resource_id,
                     'resource_name' => $booking->resource?->name ?? 'Onbekend',

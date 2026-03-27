@@ -34,6 +34,7 @@
                     'id' => $item->id,
                     'product_name' => $item->getProductName() ?: 'Onbekend product',
                     'product_type' => $item->resolvedProductType()?->name,
+                    'required_resource_type' => $item->resolvedResourceTypeName(),
                     'quantity' => $item->quantity,
                     'duration' => $duration, // Duration in minutes
                     'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'new')),
@@ -300,6 +301,18 @@
                         const resource = this.resources.find(r => r.id === this.form.resource_id);
                         if (!resource?.allow_outside_availability) return false;
                         return true;
+                    },
+                    /**
+                     * Resources passend bij het geselecteerde orderregel (zelfde resource_type).
+                     * Fallback: alle resources als er geen match is (bijv. filter), zodat de gebruiker kan kiezen.
+                     */
+                    bookingResourceOptions() {
+                        const req = this.selectedOrderItem?.required_resource_type;
+                        if (!req) {
+                            return this.resources;
+                        }
+                        const filtered = this.resources.filter((r) => r.resource_type === req);
+                        return filtered.length > 0 ? filtered : this.resources;
                     }
                 },
                 mounted() {
@@ -317,10 +330,28 @@
                         if (this.form.from) {
                             this.calculateEndTime();
                         }
+                        this.syncBookingResourceId();
                     }
                 },
                 methods: {
                     ...planningCalendarMixin.methods,
+                    /**
+                     * Als het orderregel wisselt: resource laten matchen met vereist type indien mogelijk.
+                     */
+                    syncBookingResourceId() {
+                        const req = this.selectedOrderItem?.required_resource_type;
+                        if (!req || this.form.resource_id == null || this.form.resource_id === '') {
+                            return;
+                        }
+                        const current = this.resources.find(
+                            (r) => Number(r.id) === Number(this.form.resource_id)
+                        );
+                        if (current && current.resource_type === req) {
+                            return;
+                        }
+                        const firstMatch = this.resources.find((r) => r.resource_type === req);
+                        this.form.resource_id = firstMatch ? firstMatch.id : null;
+                    },
                     calculateEndTime() {
                         if (!this.form.from || !this.selectedOrderItem || !this.selectedOrderItem.duration) {
                             return;
@@ -370,6 +401,15 @@
                         const minutes = String(date.getMinutes()).padStart(2, '0');
                         return `${hours}:${minutes}`;
                     },
+                    firstUnplannedOrderItemMatchingResourceType(resourceTypeName) {
+                        if (!resourceTypeName) {
+                            return null;
+                        }
+
+                        return this.unplannedItems.find(
+                            (item) => item.required_resource_type === resourceTypeName
+                        ) ?? null;
+                    },
                     openBookAtTime({ from }) {
                         const pad = (n) => String(n).padStart(2, '0');
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
@@ -381,6 +421,7 @@
                         }
                         if (this.form.order_item_id) this.calculateEndTime();
                         this.$refs.bookModal.toggle();
+                        this.$nextTick(() => this.syncBookingResourceId());
                     },
                     openBook(block) {
                         this.form.resource_id = block.resource_id;
@@ -388,20 +429,27 @@
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(block.from));
                         this.form.to = toLocal(new Date(block.to));
-                        // Preselect the first order item that is planable and not yet planned
                         if (!this.form.order_item_id) {
-                            const candidate = this.unplannedItems.length > 0 ? this.unplannedItems[0] : null;
+                            const resource = this.resources.find((r) => r.id === block.resource_id);
+                            const slotType = resource?.resource_type ?? null;
+                            const candidate = this.firstUnplannedOrderItemMatchingResourceType(slotType);
                             if (candidate) {
                                 this.form.order_item_id = candidate.id;
                             }
                         }
                         this.$refs.bookModal.toggle();
+                        this.$nextTick(() => this.syncBookingResourceId());
                     },
                     async submitBooking() {
                         if (this.$refs.calendar.loading) return;
 
                         if (!this.form.order_item_id) {
                             this.$emitter.emit('add-flash', {type: 'error', message: 'Selecteer een orderitem'});
+                            return;
+                        }
+
+                        if (!this.form.resource_id) {
+                            this.$emitter.emit('add-flash', {type: 'error', message: 'Selecteer een resource'});
                             return;
                         }
 
@@ -449,9 +497,13 @@
                                 }, 100);
                             } else {
                                 const data = await res.json().catch(() => ({}));
+                                let errMsg = data.message;
+                                if (!errMsg && (data.required_type !== undefined || data.resource_type !== undefined)) {
+                                    errMsg = `Dit orderregel vereist '${data.required_type ?? 'Onbekend'}', maar de gekozen resource is van het type '${data.resource_type ?? 'Onbekend'}'. Kies een passende resource of een ander orderregel.`;
+                                }
                                 this.$emitter.emit('add-flash', {
                                     type: 'error',
-                                    message: data.message || `HTTP ${res.status}: ${res.statusText}`
+                                    message: errMsg || `HTTP ${res.status}: ${res.statusText}`
                                 });
                             }
                         } catch (error) {

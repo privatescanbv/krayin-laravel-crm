@@ -145,7 +145,7 @@
                             planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
                             canPlan: r.can_plan === '1' || r.can_plan === true || false,
                         };
-                    }) : [{ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
+                    }) : [{ id: null, product_id: null, product_name: null, person_id: Object.keys(this.personsData)[0] ?? null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
                 };
             },
             watch: {
@@ -172,7 +172,7 @@
             },
             methods: {
                 addItem() {
-                    this.items.push({ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
+                    this.items.push({ id: null, product_id: null, product_name: null, person_id: Object.keys(this.personsData)[0] ?? null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
                 },
                 removeItem(item) {
                     this.$emitter.emit('open-confirm-modal', {
@@ -181,7 +181,7 @@
                                 this.items = [];
                                 this.resetKey++;
                                 this.$nextTick(() => {
-                                    this.items.push({ id: null, product_id: null, product_name: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false });
+                                    this.items.push({ id: null, product_id: null, product_name: null, person_id: Object.keys(this.personsData)[0] ?? null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false });
                                 });
                             } else {
                                 const index = this.items.indexOf(item);

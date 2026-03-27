@@ -6,7 +6,7 @@ use App\DataGrids\Settings\OrderItemDataGrid;
 use App\Enums\Currency;
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
-use App\Models\ProductType;
+use App\Models\ResourceType;
 use App\Models\PurchasePrice;
 use App\Repositories\OrderItemRepository;
 use Illuminate\Http\JsonResponse;
@@ -75,7 +75,7 @@ class OrderItemController extends SimpleEntityController
             }
         }
 
-        $totals['product_type_id'] = $product->product_type_id;
+        $totals['resource_type_id'] = $product->resource_type_id;
 
         return response()->json($totals);
     }
@@ -98,7 +98,7 @@ class OrderItemController extends SimpleEntityController
         $rules = [
             'order_id'        => ['required', 'integer', 'exists:orders,id'],
             'product_id'      => ['required', 'integer', 'exists:products,id'],
-            'product_type_id' => ['nullable', 'integer', 'exists:product_types,id'],
+            'resource_type_id' => ['nullable', 'integer', 'exists:resource_types,id'],
             'name'            => ['nullable', 'string', 'max:255'],
             'description'     => ['nullable', 'string'],
             'person_id'       => ['required', 'integer', 'exists:persons,id'],
@@ -179,19 +179,20 @@ class OrderItemController extends SimpleEntityController
 
     protected function getEditViewData(Request $request, $entity): array
     {
-        $entity->load('purchasePrice', 'invoicePurchasePrice', 'product');
-
-        $persons = $this->personRepository->all(['id', 'name'])->mapWithKeys(function ($person) {
-            return [$person->id => $person->name];
-        })->toArray();
+        $entity->load([
+            'purchasePrice',
+            'invoicePurchasePrice',
+            'person',
+            'resourceType',
+            'product.partnerProducts.purchasePrice',
+        ]);
 
         $resolvedPurchasePrice = $this->resolvePurchasePriceForEdit($entity);
 
         return [
             'order_items'              => $entity,
             'resolvedPurchasePrice'    => $resolvedPurchasePrice,
-            'persons'                  => $persons,
-            'productTypes'             => ProductType::orderBy('name')->get(['id', 'name']),
+            'resourceTypes'            => ResourceType::orderBy('name')->get(['id', 'name']),
             'statuses'                 => collect(OrderItemStatus::cases())
                 ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
                 ->toArray(),
@@ -211,27 +212,27 @@ class OrderItemController extends SimpleEntityController
 
         $productId = $payload['product_id'] ?? null;
 
-        $selectedProductTypeId = $payload['product_type_id'] ?? null;
-        if ($selectedProductTypeId === '') {
-            $selectedProductTypeId = null;
+        $selectedResourceTypeId = $payload['resource_type_id'] ?? null;
+        if ($selectedResourceTypeId === '') {
+            $selectedResourceTypeId = null;
         }
 
-        if ($selectedProductTypeId !== null) {
-            $selectedProductTypeId = (int) $selectedProductTypeId;
+        if ($selectedResourceTypeId !== null) {
+            $selectedResourceTypeId = (int) $selectedResourceTypeId;
         }
 
         if ($productId) {
             $product = Product::query()
-                ->select(['id', 'product_type_id'])
+                ->select(['id', 'resource_type_id'])
                 ->find($productId);
 
-            if ($product && (int) ($product->product_type_id ?? 0) === (int) ($selectedProductTypeId ?? 0)) {
-                $payload['product_type_id'] = null;
+            if ($product && (int) ($product->resource_type_id ?? 0) === (int) ($selectedResourceTypeId ?? 0)) {
+                $payload['resource_type_id'] = null;
             } else {
-                $payload['product_type_id'] = $selectedProductTypeId;
+                $payload['resource_type_id'] = $selectedResourceTypeId;
             }
         } else {
-            $payload['product_type_id'] = $selectedProductTypeId;
+            $payload['resource_type_id'] = $selectedResourceTypeId;
         }
 
         return $payload;

@@ -29,7 +29,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
-        'product_type_id',
+        'resource_type_id',
         'name',
         'description',
         'person_id',
@@ -42,16 +42,16 @@ class OrderItem extends Model
     ];
 
     protected $casts = [
-        'order_id'        => 'integer',
-        'product_id'      => 'integer',
-        'product_type_id' => 'integer',
-        'person_id'       => 'integer',
-        'quantity'        => 'integer',
-        'total_price'     => 'decimal:2',
-        'currency'        => 'string',
-        'status'          => OrderItemStatus::class,
-        'created_by'      => 'integer',
-        'updated_by'      => 'integer',
+        'order_id'         => 'integer',
+        'product_id'       => 'integer',
+        'resource_type_id' => 'integer',
+        'person_id'        => 'integer',
+        'quantity'         => 'integer',
+        'total_price'      => 'decimal:2',
+        'currency'         => 'string',
+        'status'           => OrderItemStatus::class,
+        'created_by'       => 'integer',
+        'updated_by'       => 'integer',
     ];
 
     public function order(): BelongsTo
@@ -64,18 +64,42 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function productType(): BelongsTo
+    /**
+     * Optional override of the product's resource type for planning (same FK name as on products).
+     */
+    public function resourceType(): BelongsTo
     {
-        return $this->belongsTo(ProductType::class);
+        return $this->belongsTo(ResourceType::class);
     }
 
     /**
-     * Returns the effective ProductType model for this order item.
+     * Effective product type ID for this order item (planning/UI): order-item resource override wins, else product.
+     */
+    public function resolvedProductTypeId(): ?int
+    {
+        $type = $this->resolvedProductType();
+
+        return $type ? (int) $type->id : null;
+    }
+
+    /**
+     * Effective product type for planning/UI: derived from order-item resource type override when set,
+     * otherwise the product's product type.
      */
     public function resolvedProductType(): ?ProductType
     {
-        if (! empty($this->product_type_id)) {
-            return $this->productType;
+        if (! empty($this->resource_type_id)) {
+            $resource = $this->relationLoaded('resourceType')
+                ? $this->resourceType
+                : $this->resourceType()->first();
+
+            $productTypeEnum = $this->productTypeEnumFromResourceTypeName($resource?->name);
+            if ($productTypeEnum) {
+                $row = ProductType::query()->where('name', $productTypeEnum->label())->first();
+                if ($row) {
+                    return $row;
+                }
+            }
         }
 
         return $this->product?->productType;
@@ -100,7 +124,73 @@ class OrderItem extends Model
 
     public function resolvedResourceTypeEnum(): ?ResourceTypeEnum
     {
-        $productType = $this->resolvedProductTypeEnum();
+        if (! empty($this->resource_type_id)) {
+            $override = $this->relationLoaded('resourceType')
+                ? $this->resourceType
+                : $this->resourceType()->first();
+
+            if ($override?->name) {
+                try {
+                    return ResourceTypeEnum::mapFrom($override->name);
+                } catch (\Exception) {
+                    // Unknown label: fall through to product type mapping
+                }
+            }
+        }
+
+        return $this->resourceTypeEnumFromProductProductType();
+    }
+
+    /**
+     * Effective resource type name for planning/monitor.
+     *
+     * Uses order-item resource type override when set; otherwise product type → resource mapping,
+     * then the product's resource type name.
+     */
+    public function resolvedResourceTypeName(): ?string
+    {
+        if (! empty($this->resource_type_id)) {
+            $name = $this->relationLoaded('resourceType')
+                ? $this->resourceType?->name
+                : $this->resourceType()->value('name');
+
+            if ($name) {
+                return $name;
+            }
+        }
+
+        $fromProductType = $this->resourceTypeEnumFromProductProductType();
+
+        if ($fromProductType) {
+            return $fromProductType->label();
+        }
+
+        return $this->product?->resourceType?->name;
+    }
+
+    /**
+     * Product type enum from the linked product only (not order-item override), for resource type fallback chain.
+     */
+    private function productTypeEnumFromProductOnly(): ?ProductTypeEnum
+    {
+        $name = $this->product?->productType?->name;
+
+        if (! $name) {
+            return null;
+        }
+
+        foreach (ProductTypeEnum::cases() as $case) {
+            if (strcasecmp($case->label(), $name) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    private function resourceTypeEnumFromProductProductType(): ?ResourceTypeEnum
+    {
+        $productType = $this->productTypeEnumFromProductOnly();
 
         if (! $productType) {
             return null;
@@ -114,7 +204,6 @@ class OrderItem extends Model
             ProductTypeEnum::CARDIOLOGIE    => ResourceTypeEnum::CARDIOLOGIE,
             ProductTypeEnum::OPERATIONS     => ResourceTypeEnum::ARTSEN,
 
-            // Not (directly) plannable or not tied to a scan resource type
             ProductTypeEnum::ENDOSCOPIE,
             ProductTypeEnum::LABORATORIUM,
             ProductTypeEnum::VERTALING,
@@ -124,24 +213,30 @@ class OrderItem extends Model
     }
 
     /**
-     * Effective resource type name for planning/monitor.
-     *
-     * Prefers the product's directly assigned resource type (most accurate for planning).
-     * Falls back to the product type → resource type enum mapping when no direct
-     * resource type is configured.
+     * Map planning resource type label to a product type enum for display (reverse of product-type → resource mapping).
+     * Ambiguous cases pick a single canonical product type.
      */
-    public function resolvedResourceTypeName(): ?string
+    private function productTypeEnumFromResourceTypeName(?string $resourceTypeName): ?ProductTypeEnum
     {
-        // Priority 1: direct resource type on product or partner product
-        $directResourceType = $this->product?->resolvedResourceType()?->name;
-        if ($directResourceType) {
-            return $directResourceType;
+        if ($resourceTypeName === null || $resourceTypeName === '') {
+            return null;
         }
 
-        // Priority 2: infer from product type mapping
-        $fromProductType = $this->resolvedResourceTypeEnum();
+        try {
+            $resourceEnum = ResourceTypeEnum::mapFrom($resourceTypeName);
+        } catch (\Exception) {
+            return null;
+        }
 
-        return $fromProductType?->label();
+        return match ($resourceEnum) {
+            ResourceTypeEnum::MRI_SCANNER    => ProductTypeEnum::MRI_SCAN,
+            ResourceTypeEnum::CT_SCANNER     => ProductTypeEnum::CT_SCAN,
+            ResourceTypeEnum::PET_CT_SCANNER => ProductTypeEnum::PETSCAN,
+            ResourceTypeEnum::CARDIOLOGIE    => ProductTypeEnum::CARDIOLOGIE,
+            ResourceTypeEnum::ARTSEN         => ProductTypeEnum::OPERATIONS,
+            ResourceTypeEnum::OTHER          => ProductTypeEnum::OVERIG,
+            ResourceTypeEnum::RONTGEN        => ProductTypeEnum::OVERIG,
+        };
     }
 
     public function person(): BelongsTo

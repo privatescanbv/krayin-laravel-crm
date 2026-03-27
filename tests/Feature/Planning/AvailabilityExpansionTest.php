@@ -384,21 +384,19 @@ test('resources with expired shifts are not shown', function (): void {
     expect($data['blocks'])->not->toHaveKey($resource->id, 'Expired resource should NOT have blocks');
 });
 
-test('order monitor resource types prefer direct product resource type over order item product type override', function (): void {
+test('order monitor resource types include overridden resource type on order item', function (): void {
     $this->withoutMiddleware();
 
     $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
     $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
 
-    $petscanType = ProductType::factory()->create(['name' => ProductTypeEnum::PETSCAN->label()]);
-    // Product has a direct resource_type_id → this should take priority
     $product = Product::factory()->create(['resource_type_id' => $mri->id]);
 
     $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
     OrderItem::factory()->create([
-        'order_id'        => $order->id,
-        'product_id'      => $product->id,
-        'product_type_id' => $petscanType->id, // overridden, but lower priority than product.resource_type_id
+        'order_id'           => $order->id,
+        'product_id'         => $product->id,
+        'resource_type_id'   => $pet->id, // overridden, but lower priority than product.resource_type_id
     ]);
 
     $resp = $this->getJson(route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]));
@@ -410,4 +408,32 @@ test('order monitor resource types prefer direct product resource type over orde
     expect($types->pluck('id'))
         ->toContain($mri->id)
         ->not->toContain($pet->id);
+});
+
+test('resolved product type for planning follows order item resource type override', function (): void {
+    ProductType::query()->firstOrCreate(
+        ['name' => ProductTypeEnum::MRI_SCAN->label()],
+        ['description' => '']
+    );
+    ProductType::query()->firstOrCreate(
+        ['name' => ProductTypeEnum::PETSCAN->label()],
+        ['description' => '']
+    );
+
+    $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
+    $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
+
+    $mriProductType = ProductType::query()->where('name', ProductTypeEnum::MRI_SCAN->label())->firstOrFail();
+    $product = Product::factory()->create([
+        'product_type_id'  => $mriProductType->id,
+        'resource_type_id' => $mri->id,
+    ]);
+
+    $item = OrderItem::factory()->create([
+        'product_id'       => $product->id,
+        'resource_type_id' => $pet->id,
+    ]);
+    $item->load('resourceType', 'product.productType');
+
+    expect($item->resolvedProductType()?->name)->toBe(ProductTypeEnum::PETSCAN->label());
 });

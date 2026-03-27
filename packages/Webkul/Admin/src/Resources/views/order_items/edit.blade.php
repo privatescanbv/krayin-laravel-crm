@@ -74,16 +74,16 @@
 
                 <x-adminc::components.field
                     type="select"
-                    name="product_type_id"
-                    label="Product type (overschrijft product type)"
-                    value="{{ old('product_type_id', $order_items->product_type_id ?? $order_items->product?->product_type_id ?? '') }}"
+                    name="resource_type_id"
+                    label="Resource type (overschrijft resource type van product)"
+                    value="{{ old('resource_type_id', $order_items->resource_type_id ?? $order_items->product?->resource_type_id ?? '') }}"
                     rules=""
                 >
                     <option value="">@lang('admin::app.select')</option>
-                    @foreach ($productTypes as $type)
+                    @foreach ($resourceTypes as $type)
                         <option
                             value="{{ $type->id }}"
-                            @selected((string) old('product_type_id', $order_items->product_type_id ?? $order_items->product?->product_type_id ?? '') === (string) $type->id)
+                            @selected((string) old('resource_type_id', $order_items->resource_type_id ?? $order_items->product?->resource_type_id ?? '') === (string) $type->id)
                         >{{ $type->name }}</option>
                     @endforeach
                 </x-adminc::components.field>
@@ -172,13 +172,13 @@
                 const response = await axios.get(`/admin/order-items/partner-purchase-prices/${e.detail.id}`);
                 const prices = response.data;
 
-                const productTypeSelect = document.querySelector(`select[name="product_type_id"]`);
-                if (productTypeSelect) {
-                    productTypeSelect.value = prices.product_type_id ?? '';
-                    productTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                const resourceTypeSelect = document.querySelector(`select[name="resource_type_id"]`);
+                if (resourceTypeSelect) {
+                    resourceTypeSelect.value = prices.resource_type_id ?? '';
+                    resourceTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 }
 
-                const suffixes = Object.keys(prices).filter(k => k !== 'product_type_id');
+                const suffixes = Object.keys(prices).filter(k => k !== 'resource_type_id');
                 suffixes.forEach(suffix => {
                     const input = document.querySelector(`input[name="purchase_price_${suffix}"]`);
                     if (input) {

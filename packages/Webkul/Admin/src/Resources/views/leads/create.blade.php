@@ -259,7 +259,7 @@ $salutationToGenderMapping = [
                                         @include('admin::leads.common.personal-fields', [
                                             'entity' => $__entityPrefill,
                                             'bindModel' => 'formData',
-                                            'showPortalFields' => false,
+                                            'showActiveField' => false,
                                         ])
                                     </div>
 

@@ -9,7 +9,7 @@
     }
 
     // By default show portal fields, but allow includes to disable them (e.g. create lead)
-    $showPortalFields = $showPortalFields ?? true;
+    $showActiveField = $showActiveField ?? true;
     $readonlyAttributes = !$mayEditPersonFields ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
 @endphp
 
@@ -173,7 +173,7 @@
         :disabled="!$mayEditPersonFields"
         :readonly="!$mayEditPersonFields"
     />
-    @if($showPortalFields)
+    @if($showActiveField)
         <!-- Portal activation toggle -->
         <x-adminc::components.field
             type="switch"

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Webkul\Installer\Database\Seeders\DatabaseSeeder as KrayinDatabaseSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,7 +13,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(array $parameters = [])
     {
-        $this->call(KrayinDatabaseSeeder::class);
+        $this->call(TestPipelineSeeder::class);
+        $this->call(TestLeadSourceTypeSeeder::class);
         $this->call(DutchLocaleSeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(UserSeeder::class);

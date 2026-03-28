@@ -53,6 +53,12 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
+        // Compatibility alias: the Webkul Installer package was removed; map the old class
+        // name so existing test files that import it continue to resolve correctly.
+        if (! class_exists(\Webkul\Installer\Http\Middleware\CanInstall::class, false)) {
+            class_alias(\App\Http\Middleware\CanInstall::class, \Webkul\Installer\Http\Middleware\CanInstall::class);
+        }
+
         $this->app->singleton(OrderCheckService::class);
         $this->app->bind(DocumentStorage::class, LaravelDocumentStorage::class);
     }

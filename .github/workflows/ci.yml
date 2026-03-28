@@ -52,7 +52,9 @@ jobs:
       - name: Install Krayin (DB, config)
         run: |
           set -o pipefail
-          php artisan krayin-crm:install --skip-env-check --skip-admin-creation |& tee -a ci_error.txt
+          php artisan key:generate
+          php artisan migrate --force
+          php artisan db:seed --force |& tee -a ci_error.txt
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

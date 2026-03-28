@@ -4,10 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\Departments;
 use App\Models\Department;
-use Webkul\Installer\Database\Seeders\Attribute\AttributeSeeder;
-use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
-use Webkul\Installer\Database\Seeders\Lead\SourceSeeder;
-use Webkul\Installer\Database\Seeders\Lead\TypeSeeder;
 use Webkul\User\Models\Group;
 
 class TestSeeder extends BaseSeeder
@@ -15,12 +11,12 @@ class TestSeeder extends BaseSeeder
     public function run($parameters = []): void
     {
         $this->call([
-            PipelineSeeder::class,
-            AttributeSeeder::class,
+            TestPipelineSeeder::class,
+            TestAttributeSeeder::class,
             DepartmentSeeder::class,
-            TypeSeeder::class,
-            SourceSeeder::class,
+            TestLeadSourceTypeSeeder::class,
             ResourceTypeSeeder::class,
+            LeadChannelSeeder::class,
             ClinicSeeder::class,
             RoleSeeder::class,
             UserTestSeeder::class,

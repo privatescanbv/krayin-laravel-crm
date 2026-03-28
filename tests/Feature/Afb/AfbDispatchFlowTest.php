@@ -247,13 +247,13 @@ test('dispatch service prevents duplicate send to same department', function () 
     );
 
     expect(AfbPersonDocument::query()
-        ->whereHas('dispatch', fn($q) => $q->where('clinic_department_id', $context['department']->id))
+        ->whereHas('dispatch', fn ($q) => $q->where('clinic_department_id', $context['department']->id))
         ->where('order_id', $context['order']->id)
         ->count())->toBe(1)
         ->and(Email::query()->where('clinic_id', $context['clinic']->id)->count())->toBe(1)
         ->and(AfbPersonDocument::query()
             ->where('order_id', $context['order']->id)
-            ->whereHas('dispatch', fn($q) => $q->where('clinic_department_id', $context['department']->id))
+            ->whereHas('dispatch', fn ($q) => $q->where('clinic_department_id', $context['department']->id))
             ->exists())->toBeTrue();
 
     Mail::assertSent(EmailMailable::class, 1);
@@ -685,6 +685,9 @@ test('late booking does not queue dispatch when order is not in an allowed stage
     $context = createOrderForClinic($examAt);
 
     $context['order']->update(['pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id()]);
+
+    // Observer may have queued late booking on ResourceOrderItem::created while stage was still allowed.
+    Bus::fake();
 
     $queued = app(AfbDispatchService::class)->queueLateBookingForOrder($context['order']->fresh());
 

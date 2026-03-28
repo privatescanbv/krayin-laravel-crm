@@ -35,6 +35,25 @@ class HerniaCreateLeadRequest extends FormRequest
 
             'description'          => ['nullable', 'string'],
             'diagnoseform_pdf_url' => ['nullable', 'string'],
+
+            // Marketing / UTM tracking fields
+            'source'         => ['nullable', 'string'],
+            'medium'         => ['nullable', 'string'],
+            'campaign'       => ['nullable', 'string'],
+            'adgroup'        => ['nullable', 'string'],
+            'utm_term'       => ['nullable', 'string'],
+            'utm_content'    => ['nullable', 'string'],
+            'utm_id'         => ['nullable', 'string'],
+            'gclid'          => ['nullable', 'string'],
+            'gbraid'         => ['nullable', 'string'],
+            'wbraid'         => ['nullable', 'string'],
+            'gad_source'     => ['nullable', 'string'],
+            'gad_campaignid' => ['nullable', 'string'],
+            'landing_page'   => ['nullable', 'string'],
+            'referrer'       => ['nullable', 'string'],
+            'first_visit_at' => ['nullable', 'string'],
+            'last_visit_at'  => ['nullable', 'string'],
+            'attribution_url'=> ['nullable', 'string'],
         ];
     }
 

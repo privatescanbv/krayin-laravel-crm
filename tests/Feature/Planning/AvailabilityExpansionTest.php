@@ -320,7 +320,7 @@ test('resources with infinite duration shifts are shown in monitor', function ()
         $dayKey = $start->copy()->addDays((int) $day - 1)->format('Y-m-d');
         expect($resourceBlocks)->toHaveKey($dayKey)
             ->and($resourceBlocks[$dayKey])->not->toBeEmpty()
-            ->and(collect($resourceBlocks[$dayKey])->contains(fn($b) => $b['type'] === 'available'))
+            ->and(collect($resourceBlocks[$dayKey])->contains(fn ($b) => $b['type'] === 'available'))
             ->toBeTrue();
     }
 
@@ -372,7 +372,7 @@ test('resources with finite duration shifts are shown when active', function ():
         $dayKey = $start->copy()->addDays((int) $day - 1)->format('Y-m-d');
         expect($resourceBlocks)->toHaveKey($dayKey)
             ->and($resourceBlocks[$dayKey])->not->toBeEmpty()
-            ->and(collect($resourceBlocks[$dayKey])->contains(fn($b) => $b['type'] === 'available'))
+            ->and(collect($resourceBlocks[$dayKey])->contains(fn ($b) => $b['type'] === 'available'))
             ->toBeTrue();
     }
 

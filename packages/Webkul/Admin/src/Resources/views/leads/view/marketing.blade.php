@@ -152,4 +152,25 @@ $hasActiveCampaign = $lead->channel !== null;
     </div>
 </div>
 
+@php
+$marketingDataMap = $lead->marketingData->pluck('value', 'key');
+@endphp
+
+@if($marketingDataMap->isNotEmpty())
+<div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div class="flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+        <span class="icon-chart text-xl text-gray-600 dark:text-gray-400"></span>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Google Ads / UTM Tracking</h3>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+        @foreach($marketingDataMap as $key => $value)
+        <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{{ $key }}</span>
+            <span class="text-sm text-gray-900 dark:text-white break-all">{{ $value }}</span>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 {!! view_render_event('admin.leads.view.marketing.after', ['lead' => $lead]) !!}

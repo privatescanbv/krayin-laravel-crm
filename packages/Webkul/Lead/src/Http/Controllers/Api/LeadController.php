@@ -26,6 +26,7 @@ use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Illuminate\Support\Facades\DB;
+use App\Models\LeadMarketingData;
 use App\Services\LeadValidationService;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
 
@@ -66,13 +67,30 @@ class LeadController extends Controller
      */
     public function storeHernia(HerniaCreateLeadRequest $inbound): JsonResponse
     {
-        $mapped = $this->inboundLeadPayloadMapper->mapHernia($inbound->validated());
+        $validated = $inbound->validated();
+        $mapped = $this->inboundLeadPayloadMapper->mapHernia($validated);
+        $marketingData = $this->inboundLeadPayloadMapper->extractHerniaMarketingData($validated);
 
         $leadForm = LeadForm::createFrom($inbound);
         $leadForm->setContainer(app());
         $leadForm->replace($mapped);
 
-        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId(), allowInvalidPhone: true);
+        $response = $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId(), allowInvalidPhone: true);
+
+        if ($response->getStatusCode() === 201 && ! empty($marketingData)) {
+            $leadId = json_decode($response->getContent(), true)['lead_id'] ?? null;
+            if ($leadId) {
+                foreach ($marketingData as $key => $value) {
+                    LeadMarketingData::create([
+                        'lead_id' => $leadId,
+                        'key'     => $key,
+                        'value'   => $value,
+                    ]);
+                }
+            }
+        }
+
+        return $response;
     }
 
     /**

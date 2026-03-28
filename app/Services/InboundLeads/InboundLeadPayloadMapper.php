@@ -54,6 +54,33 @@ class InboundLeadPayloadMapper
         ], static fn ($v) => $v !== null);
     }
 
+    /**
+     * Extract marketing tracking fields from the Hernia payload.
+     * Returns only fields that have a non-empty value.
+     */
+    public function extractHerniaMarketingData(array $payload): array
+    {
+        $keys = [
+            'source', 'medium', 'campaign', 'adgroup',
+            'utm_term', 'utm_content', 'utm_id',
+            'gclid', 'gbraid', 'wbraid',
+            'gad_source', 'gad_campaignid',
+            'landing_page', 'referrer',
+            'first_visit_at', 'last_visit_at',
+            'attribution_url',
+        ];
+
+        $result = [];
+        foreach ($keys as $key) {
+            $value = $this->nullIfEmpty($payload[$key] ?? null);
+            if ($value !== null) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
     private function mapHerniaAddress(array $payload): array
     {
         $houseNumber = $this->nullIfEmpty($payload['primary_huisnr_c'] ?? null);

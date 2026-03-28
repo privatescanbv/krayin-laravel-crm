@@ -9,6 +9,7 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use App\Models\LeadMarketingData;
 use App\Traits\HasDefaultContactInfo;
 use BackedEnum;
 use Carbon\Carbon;
@@ -446,6 +447,22 @@ class Lead extends Model implements LeadContract
 
     public function hasOrganization(): bool {
         return !is_null($this->organization_id);
+    }
+
+    /**
+     * Get the marketing data for this lead.
+     */
+    public function marketingData()
+    {
+        return $this->hasMany(LeadMarketingData::class);
+    }
+
+    /**
+     * Get marketing data as key => value array.
+     */
+    public function getMarketingDataMapAttribute(): array
+    {
+        return $this->marketingData->pluck('value', 'key')->all();
     }
 
     /**

@@ -365,6 +365,7 @@ class OrderController extends SimpleEntityController
 
         $afbNeedsManualBanner = $this->afbDispatchService->needsManualLateAfb($order);
         $afbHasBatchSuccess = $this->afbDispatchService->hasSuccessfulBatchDispatchForOrder($order);
+        $avbDispatchReadiness = $this->afbDispatchService->getAvbDispatchReadiness($order);
 
         $bookedDepartments = $order->orderItems
             ->flatMap(fn ($item) => $item->resourceOrderItems)
@@ -385,6 +386,7 @@ class OrderController extends SimpleEntityController
             'afbSendUrl'           => route('admin.orders.send_afb', $order->id),
             'bookedDepartments'    => $bookedDepartments,
             'afbSentPerDepartment' => $afbSentPerDepartment,
+            'avbDispatchReadiness' => $avbDispatchReadiness,
         ]);
     }
 

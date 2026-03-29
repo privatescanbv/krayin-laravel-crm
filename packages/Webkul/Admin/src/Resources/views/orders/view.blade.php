@@ -93,6 +93,7 @@
                     'afbNeedsManualBanner' => $afbNeedsManualBanner ?? false,
                     'afbHasBatchSuccess' => $afbHasBatchSuccess ?? false,
                     'afbSendUrl' => $afbSendUrl ?? null,
+                    'avbDispatchReadiness' => $avbDispatchReadiness ?? ['is_ready' => false, 'is_late' => false, 'planned_at' => null, 'reasons' => []],
                 ])
             </div>
 

@@ -551,6 +551,79 @@ test('banner does not show for other departments when new item only affects one 
     expect($service->needsManualLateAfb($context['order']->fresh()))->toBeFalse();
 });
 
+// ---------------------------------------------------------------------------
+// getAvbDispatchReadiness
+// ---------------------------------------------------------------------------
+
+test('getAvbDispatchReadiness returns not_ready when no first_examination_at', function () {
+    $service = app(AfbDispatchService::class);
+
+    $order = Order::factory()->create([
+        'sales_lead_id'        => SalesLead::factory()->create(['user_id' => auth()->id()])->id,
+        'user_id'              => auth()->id(),
+        'first_examination_at' => null,
+    ]);
+
+    $readiness = $service->getAvbDispatchReadiness($order);
+
+    expect($readiness['is_ready'])->toBeFalse();
+    expect($readiness['reasons'])->toContain('Geen eerste onderzoekdatum ingesteld');
+});
+
+test('getAvbDispatchReadiness returns not_ready when examination date is in the past', function () {
+    $service = app(AfbDispatchService::class);
+    $context = createOrderForClinic(now()->subDays(2));
+
+    $readiness = $service->getAvbDispatchReadiness($context['order']);
+
+    expect($readiness['is_ready'])->toBeFalse();
+    expect($readiness['reasons'])->toContain('Eerste onderzoekdatum is verstreken');
+});
+
+test('getAvbDispatchReadiness returns not_ready when no departments are linked', function () {
+    $service = app(AfbDispatchService::class);
+
+    $salesLead = SalesLead::factory()->create(['user_id' => auth()->id()]);
+    $order = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'user_id'              => auth()->id(),
+        'first_examination_at' => now()->addDays(3),
+    ]);
+    // No order items with clinic departments
+
+    $readiness = $service->getAvbDispatchReadiness($order);
+
+    expect($readiness['is_ready'])->toBeFalse();
+    expect($readiness['reasons'])->toContain('Geen kliniekafdelingen gekoppeld aan order items');
+});
+
+test('getAvbDispatchReadiness returns ready with planned_at for batch window', function () {
+    $service = app(AfbDispatchService::class);
+    $examAt  = now()->addDays(3)->setTime(10, 0, 0);
+    $context = createOrderForClinic($examAt);
+
+    $readiness = $service->getAvbDispatchReadiness($context['order']);
+
+    expect($readiness['is_ready'])->toBeTrue();
+    expect($readiness['is_late'])->toBeFalse();
+    expect($readiness['planned_at'])->not->toBeNull();
+    expect($readiness['planned_at']->format('H:i'))->toBe('06:00');
+    expect($readiness['planned_at']->toDateString())->toBe($examAt->copy()->subDay()->toDateString());
+    expect($readiness['reasons'])->toBeEmpty();
+});
+
+test('getAvbDispatchReadiness returns ready and is_late for late-booking window', function () {
+    $service = app(AfbDispatchService::class);
+    $examAt  = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+
+    $readiness = $service->getAvbDispatchReadiness($context['order']);
+
+    expect($readiness['is_ready'])->toBeTrue();
+    expect($readiness['is_late'])->toBeTrue();
+    expect($readiness['reasons'])->toBeEmpty();
+});
+
 test('banner shows when order item from last afb dispatch is marked lost', function () {
     Bus::fake();
     Mail::fake();

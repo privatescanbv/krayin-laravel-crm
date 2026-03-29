@@ -3,6 +3,7 @@
     'afbNeedsManualBanner' => false,
     'afbHasBatchSuccess' => false,
     'afbSendUrl' => null,
+    'avbDispatchReadiness' => ['is_ready' => false, 'is_late' => false, 'planned_at' => null, 'reasons' => []],
 ])
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
@@ -130,6 +131,44 @@
                 <span class="font-medium text-gray-800 dark:text-white">
                     {{ $order->first_examination_at ? $order->first_examination_at->format('d-m-Y H:i') : '-' }}
                 </span>
+            </div>
+
+            {{-- AVB dispatch status --}}
+            <div class="col-span-2 flex flex-col gap-1">
+                <span class="text-gray-500 dark:text-gray-400">AVB dispatch status</span>
+                @php
+                    $avbReady   = $avbDispatchReadiness['is_ready'];
+                    $avbLate    = $avbDispatchReadiness['is_late'];
+                    $avbPlanned = $avbDispatchReadiness['planned_at'];
+                    $avbReasons = $avbDispatchReadiness['reasons'];
+                @endphp
+                <div class="flex flex-wrap items-center gap-2">
+                    @if ($avbReady && $avbLate)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            ⚠ Klaar voor dispatch (handmatig verzenden vereist)
+                        </span>
+                    @elseif ($avbReady)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            ✓ Klaar voor dispatch
+                        </span>
+                        @if ($avbPlanned)
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                Gepland op {{ $avbPlanned->format('d-m-Y') }} om 06:00
+                            </span>
+                        @endif
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            ✗ Niet klaar voor dispatch
+                        </span>
+                        @if (!empty($avbReasons))
+                            <ul class="mt-0.5 list-inside list-disc text-xs text-gray-500 dark:text-gray-400">
+                                @foreach ($avbReasons as $reason)
+                                    <li>{{ $reason }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @endif
+                </div>
             </div>
 
             <div class="flex flex-col">

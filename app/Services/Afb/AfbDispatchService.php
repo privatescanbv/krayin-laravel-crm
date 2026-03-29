@@ -284,6 +284,46 @@ class AfbDispatchService
     }
 
     /**
+     * Geeft de AVB dispatch-gereedheid terug voor weergave op de order view.
+     *
+     * @return array{is_ready: bool, is_late: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
+     */
+    public function getAvbDispatchReadiness(Order $order): array
+    {
+        $reasons = [];
+
+        if (! $order->first_examination_at) {
+            $reasons[] = 'Geen eerste onderzoekdatum ingesteld';
+        }
+
+        $hasDepartments = $this->getUniqueDepartmentIdsForOrder((int) $order->id) !== [];
+        if (! $hasDepartments) {
+            $reasons[] = 'Geen kliniekafdelingen gekoppeld aan order items';
+        }
+
+        if ($order->first_examination_at && Carbon::parse($order->first_examination_at)->isPast()) {
+            $reasons[] = 'Eerste onderzoekdatum is verstreken';
+        }
+
+        $isReady = empty($reasons);
+        $isLate  = $isReady && $this->shouldSendAsLateBooking($order);
+
+        $plannedAt = null;
+        if ($order->first_examination_at && ! Carbon::parse($order->first_examination_at)->isPast()) {
+            $plannedAt = Carbon::parse($order->first_examination_at)
+                ->subDay()
+                ->setTime(6, 0, 0);
+        }
+
+        return [
+            'is_ready'   => $isReady,
+            'is_late'    => $isLate,
+            'planned_at' => $plannedAt,
+            'reasons'    => $reasons,
+        ];
+    }
+
+    /**
      * Of er al een succesvolle batch-verzending voor deze order is geweest.
      */
     public function hasSuccessfulBatchDispatchForOrder(Order $order): bool

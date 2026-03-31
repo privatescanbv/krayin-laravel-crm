@@ -133,44 +133,6 @@
                 </span>
             </div>
 
-            {{-- AVB dispatch status --}}
-            <div class="col-span-2 flex flex-col gap-1">
-                <span class="text-gray-500 dark:text-gray-400">AVB dispatch status</span>
-                @php
-                    $avbReady   = $avbDispatchReadiness['is_ready'];
-                    $avbLate    = $avbDispatchReadiness['is_late'];
-                    $avbPlanned = $avbDispatchReadiness['planned_at'];
-                    $avbReasons = $avbDispatchReadiness['reasons'];
-                @endphp
-                <div class="flex flex-wrap items-center gap-2">
-                    @if ($avbReady && $avbLate)
-                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                            ⚠ Klaar voor dispatch (handmatig verzenden vereist)
-                        </span>
-                    @elseif ($avbReady)
-                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                            ✓ Klaar voor dispatch
-                        </span>
-                        @if ($avbPlanned)
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
-                                Gepland op {{ $avbPlanned->format('d-m-Y') }} om 06:00
-                            </span>
-                        @endif
-                    @else
-                        <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                            ✗ Niet klaar voor dispatch
-                        </span>
-                        @if (!empty($avbReasons))
-                            <ul class="mt-0.5 list-inside list-disc text-xs text-gray-500 dark:text-gray-400">
-                                @foreach ($avbReasons as $reason)
-                                    <li>{{ $reason }}</li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    @endif
-                </div>
-            </div>
-
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Gecombineerde order</span>
                 <span class="font-medium text-gray-800 dark:text-white">
@@ -181,40 +143,78 @@
     </div>
 
     <!-- AFB Status Card -->
-    @if($bookedDepartments->isNotEmpty())
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">AFB status</h3>
-        <div class="space-y-2 text-sm">
-            @foreach($bookedDepartments as $department)
-                @php $dispatch = $afbSentPerDepartment->get($department->id); @endphp
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <a href="{{ route('admin.clinics.view', $department->clinic_id) }}" class="text-gray-700 hover:underline dark:text-gray-300 shrink-0">{{ $department->clinic?->name }}</a>
-                        <span class="text-gray-400">›</span>
-                        <a href="{{ route('admin.clinic_departments.edit', $department->id) }}" class="text-gray-500 hover:underline dark:text-gray-400 truncate">{{ $department->name }}</a>
-                    </div>
-                    @if($dispatch)
-                        <div class="flex items-center gap-2 shrink-0">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                ✓ Verzonden {{ $dispatch->sent_at->format('d-m-Y H:i') }}
-                            </span>
-                            <a href="{{ route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $dispatch->id]) }}"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               class="text-xs text-indigo-600 hover:underline dark:text-indigo-400">
-                                Bekijk formulier
-                            </a>
-                        </div>
-                    @else
-                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400 shrink-0">
-                            Nog niet verzonden
-                        </span>
-                    @endif
-                </div>
-            @endforeach
+
+        {{-- AVB dispatch status --}}
+        @php
+            $avbReady   = $avbDispatchReadiness['is_ready'];
+            $avbLate    = $avbDispatchReadiness['is_late'];
+            $avbPlanned = $avbDispatchReadiness['planned_at'];
+            $avbReasons = $avbDispatchReadiness['reasons'];
+        @endphp
+        <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
+            @if ($avbReady && $avbLate)
+                <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                    ⚠ Klaar voor dispatch (handmatig verzenden vereist)
+                </span>
+            @elseif ($avbReady)
+                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    ✓ Klaar voor dispatch
+                </span>
+                @if ($avbPlanned)
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                        Gepland op {{ $avbPlanned->format('d-m-Y') }} om {{ $avbPlanned->format('H:i') }}
+                    </span>
+                @endif
+            @else
+                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                    ✗ Niet klaar voor dispatch
+                </span>
+                @if (!empty($avbReasons))
+                    <ul class="mt-0.5 list-inside list-disc text-xs text-gray-500 dark:text-gray-400">
+                        @foreach ($avbReasons as $reason)
+                            <li>{{ $reason }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            @endif
         </div>
+
+        {{-- AFB status per afdeling --}}
+        @if($bookedDepartments->isNotEmpty())
+            <div class="border-t border-gray-100 pt-3 dark:border-gray-800">
+                <div class="space-y-2 text-sm">
+                    @foreach($bookedDepartments as $department)
+                        @php $dispatch = $afbSentPerDepartment->get($department->id); @endphp
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <a href="{{ route('admin.clinics.view', $department->clinic_id) }}" class="text-gray-700 hover:underline dark:text-gray-300 shrink-0">{{ $department->clinic?->name }}</a>
+                                <span class="text-gray-400">›</span>
+                                <a href="{{ route('admin.clinic_departments.edit', $department->id) }}" class="text-gray-500 hover:underline dark:text-gray-400 truncate">{{ $department->name }}</a>
+                            </div>
+                            @if($dispatch)
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                        ✓ Verzonden {{ $dispatch->sent_at->format('d-m-Y H:i') }}
+                                    </span>
+                                    <a href="{{ route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $dispatch->id]) }}"
+                                       target="_blank" rel="noopener noreferrer"
+                                       class="text-xs text-indigo-600 hover:underline dark:text-indigo-400">
+                                        Bekijk formulier
+                                    </a>
+                                </div>
+                            @else
+                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400 shrink-0">
+                                    Nog niet verzonden
+                                </span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
-    @endif
 
     <!-- Sales Lead Card -->
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

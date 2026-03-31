@@ -4,6 +4,7 @@ namespace Tests\Feature\Planning;
 
 use App\Enums\ProductType as ProductTypeEnum;
 use App\Enums\ResourceType as ResourceTypeEnum;
+use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductType;
@@ -188,14 +189,26 @@ test('multiple resources with different shifts', function (): void {
     $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
     $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
 
-    $resource1 = Resource::factory()->create();
-    $resource2 = Resource::factory()->create();
+    $resourceType = ResourceType::where('name', ResourceTypeEnum::MRI_SCANNER->label())->firstOrFail();
+    $clinic = Clinic::factory()->create();
+
+    $resource1 = Resource::factory()->create([
+        'resource_type_id' => $resourceType->id,
+        'clinic_id'        => $clinic->id,
+    ]);
+    $resource2 = Resource::factory()->create([
+        'resource_type_id' => $resourceType->id,
+        'clinic_id'        => $clinic->id,
+    ]);
+
+    $start = now()->startOfWeek();
+    $end = (clone $start)->addDays(6)->endOfDay();
 
     Shift::query()->create([
         'resource_id'         => $resource1->id,
         'available'           => true,
-        'period_start'        => now()->startOfMonth(),
-        'period_end'          => now()->endOfMonth(),
+        'period_start'        => $start->toDateString(),
+        'period_end'          => $end->toDateString(),
         'weekday_time_blocks' => [
             '1' => [['from' => '08:00', 'to' => '17:00']],
             '2' => [['from' => '08:00', 'to' => '17:00']],
@@ -205,16 +218,13 @@ test('multiple resources with different shifts', function (): void {
     Shift::query()->create([
         'resource_id'         => $resource2->id,
         'available'           => true,
-        'period_start'        => now()->startOfMonth(),
-        'period_end'          => now()->endOfMonth(),
+        'period_start'        => $start->toDateString(),
+        'period_end'          => $end->toDateString(),
         'weekday_time_blocks' => [
             '3' => [['from' => '09:00', 'to' => '18:00']],
             '4' => [['from' => '09:00', 'to' => '18:00']],
         ],
     ]);
-
-    $start = now()->startOfWeek();
-    $end = (clone $start)->addDays(6)->endOfDay();
 
     $resp = $this->getJson(route('admin.planning.order_item.availability', [
         'orderItemId'      => $orderItem->id,
@@ -232,13 +242,13 @@ test('multiple resources with different shifts', function (): void {
     $allBlocks1 = collect($data['blocks'][(string) $resource1->id] ?? $data['blocks'][$resource1->id] ?? [])->flatten(1)->all();
     $allBlocks2 = collect($data['blocks'][(string) $resource2->id] ?? $data['blocks'][$resource2->id] ?? [])->flatten(1)->all();
 
-    expect($allBlocks1)->not->toBeEmpty('Resource 1 should have blocks');
-    expect(collect($allBlocks1)->contains(fn ($b) => $b['type'] === 'available' && str_contains($b['from'], 'T08:00') && str_contains($b['to'], 'T17:00')
-    ))->toBeTrue('Resource 1 should have Monday 08:00-17:00 available block');
+    expect($allBlocks1)->not->toBeEmpty('Resource 1 should have blocks')
+        ->and(collect($allBlocks1)->contains(fn ($b) => $b['type'] === 'available' && str_contains($b['from'], 'T08:00') && str_contains($b['to'], 'T17:00')
+        ))->toBeTrue('Resource 1 should have Monday 08:00-17:00 available block')
+        ->and($allBlocks2)->not->toBeEmpty('Resource 2 should have blocks')
+        ->and(collect($allBlocks2)->contains(fn ($b) => $b['type'] === 'available' && str_contains($b['from'], 'T09:00') && str_contains($b['to'], 'T18:00')
+        ))->toBeTrue('Resource 2 should have Wednesday 09:00-18:00 available block');
 
-    expect($allBlocks2)->not->toBeEmpty('Resource 2 should have blocks');
-    expect(collect($allBlocks2)->contains(fn ($b) => $b['type'] === 'available' && str_contains($b['from'], 'T09:00') && str_contains($b['to'], 'T18:00')
-    ))->toBeTrue('Resource 2 should have Wednesday 09:00-18:00 available block');
 });
 
 test('resources with infinite duration shifts are shown in monitor', function (): void {

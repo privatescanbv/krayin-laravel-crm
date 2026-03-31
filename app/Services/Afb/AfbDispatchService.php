@@ -5,6 +5,7 @@ namespace App\Services\Afb;
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
 use App\Enums\OrderItemStatus;
+use App\Enums\PipelineStage;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
@@ -36,6 +37,7 @@ class AfbDispatchService
             ->join('resources', 'resources.id', '=', 'resource_orderitem.resource_id')
             ->whereDate('resource_orderitem.from', $date->toDateString())
             ->whereNotNull('resources.clinic_department_id')
+            ->whereIn('orders.pipeline_stage_id', PipelineStage::getAfbDispatchAllowedStageIds())
             ->select('orders.id as order_id', 'resources.clinic_department_id')
             ->distinct()
             ->get();
@@ -58,6 +60,10 @@ class AfbDispatchService
 
     public function queueLateBookingForOrder(Order $order): int
     {
+        if (! in_array($order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true)) {
+            return 0;
+        }
+
         if (! $this->shouldSendAsLateBooking($order)) {
             return 0;
         }
@@ -99,6 +105,7 @@ class AfbDispatchService
         $unsentOrders = collect($orderIds)
             ->map(fn (int $id) => $orders->get($id))
             ->filter(fn (?Order $order) => $order !== null)
+            ->filter(fn (Order $order) => in_array($order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true))
             ->filter(fn (Order $order) => ! $this->isAlreadySentToDepartment((int) $order->id, $departmentId)
                 || $this->hasUnincludedActiveItems((int) $order->id, $departmentId))
             ->values();
@@ -292,6 +299,10 @@ class AfbDispatchService
     {
         $reasons = [];
 
+        if (! in_array($order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true)) {
+            $reasons[] = 'Order staat niet in de juiste status voor AFB dispatch';
+        }
+
         if (! $order->first_examination_at) {
             $reasons[] = 'Geen eerste onderzoekdatum ingesteld';
         }
@@ -306,7 +317,7 @@ class AfbDispatchService
         }
 
         $isReady = empty($reasons);
-        $isLate  = $isReady && $this->shouldSendAsLateBooking($order);
+        $isLate = $isReady && $this->shouldSendAsLateBooking($order);
 
         $plannedAt = null;
         if ($order->first_examination_at && ! Carbon::parse($order->first_examination_at)->isPast()) {
@@ -337,16 +348,24 @@ class AfbDispatchService
     }
 
     /**
+     * Unique clinic department IDs from plannable order items (see {@see OrderItem::isPlannable()})
+     * that have a resource booking with a department.
+     *
      * @return array<int, int>
      */
     public function getUniqueDepartmentIdsForOrder(int $orderId): array
     {
-        return DB::table('order_items')
-            ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')
-            ->join('resources', 'resources.id', '=', 'resource_orderitem.resource_id')
-            ->where('order_items.order_id', $orderId)
-            ->whereNotNull('resources.clinic_department_id')
-            ->pluck('resources.clinic_department_id')
+        return OrderItem::query()
+            ->where('order_id', $orderId)
+            ->with([
+                'product.partnerProducts.resourceType',
+                'resourceOrderItems.resource',
+            ])
+            ->get()
+            ->filter(fn (OrderItem $item) => $item->isPlannable())
+            ->flatMap(fn (OrderItem $item) => $item->resourceOrderItems
+                ->map(fn ($roi) => $roi->resource?->clinic_department_id))
+            ->filter()
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()

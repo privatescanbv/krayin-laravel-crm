@@ -505,6 +505,17 @@ enum PipelineStage: string
         ];
     }
 
+    /** @return list<int> */
+    public static function getAfbDispatchAllowedStageIds(): array
+    {
+        return [
+            self::ORDER_WACHTEN_UITVOERING->id(),
+            self::ORDER_UITGEVOERD->id(),
+            self::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
+            self::ORDER_UITGEVOERD_HERNIA->id(),
+        ];
+    }
+
     // Used for operational grids:
 
     public static function getFrontOfficeStageIds(): array

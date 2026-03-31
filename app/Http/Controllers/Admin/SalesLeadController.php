@@ -415,6 +415,10 @@ class SalesLeadController extends Controller
         $all = $salesActivities->merge($orderActivities)->unique('id')->values();
         $merged = $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository);
 
+        if (! is_null($isDoneFilter)) {
+            $merged = $merged->filter(fn ($a) => (int) $a->is_done === $isDoneFilter)->values();
+        }
+
         return ActivityResource::collection($merged);
     }
 

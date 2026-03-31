@@ -492,6 +492,12 @@ class OrderController extends SimpleEntityController
                     $item->update(['status' => OrderItemStatus::LOST]);
                 }
             }
+
+            // Recalculate total_price excluding LOST items
+            $order->total_price = $order->orderItems()
+                ->where('status', '!=', OrderItemStatus::LOST->value)
+                ->sum('total_price');
+            $order->saveQuietly();
         }
 
         Event::dispatch("{$this->entityName}.update.after", $order);

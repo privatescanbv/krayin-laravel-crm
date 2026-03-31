@@ -16,7 +16,8 @@ class OrderItemDataGrid extends DataGrid
                 'order_items.order_id',
                 'order_items.product_id',
                 'order_items.quantity',
-                'order_items.total_price'
+                'order_items.total_price',
+                'order_items.status'
             );
 
         $this->addFilter('id', 'order_items.id');
@@ -69,6 +70,34 @@ class OrderItemDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'status',
+            'type'       => 'string',
+            'label'      => 'Status',
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                $classes = match ($row->status) {
+                    'planned' => 'bg-green-100 text-green-800',
+                    'won'     => 'bg-blue-100 text-blue-800',
+                    'lost'    => 'bg-red-100 text-red-800',
+                    default   => 'bg-neutral-bg text-gray-800',
+                };
+                $labels = [
+                    'new'     => 'Nieuw',
+                    'planned' => 'Ingepland',
+                    'won'     => 'Gewonnen',
+                    'lost'    => 'Verloren',
+                ];
+                $label = $labels[$row->status] ?? ($row->status ?? '-');
+
+                return $row->status
+                    ? "<span class=\"inline-flex items-center px-2 py-1 text-xs font-medium rounded-full {$classes}\">{$label}</span>"
+                    : '<span class="text-gray-400 text-xs">-</span>';
+            },
         ]);
     }
 

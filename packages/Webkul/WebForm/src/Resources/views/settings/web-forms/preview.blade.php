@@ -111,14 +111,15 @@
 
                                 this.$refs.webForm.reset();
 
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                            })
-                            .catch(error => {
-                                if (error.response.data.redirect) {
-                                    window.location.href = error.response.data.redirect;
+                                if (response.data.redirect) {
+                                    window.location.href = response.data.redirect;
 
                                     return;
                                 }
+
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            })
+                            .catch(error => {
 
                                 if (! error.response.data.errors) {
                                     this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });

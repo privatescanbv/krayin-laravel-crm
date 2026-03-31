@@ -109,9 +109,17 @@ class PipelineController extends Controller
         } else {
             $defaultPipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
 
+            $firstStage = $defaultPipeline->stages()->first();
+
+            if (! $firstStage) {
+                return response()->json([
+                    'message' => trans('admin::app.settings.pipelines.index.delete-failed'),
+                ], 400);
+            }
+
             $pipeline->leads()->update([
                 'lead_pipeline_id'       => $defaultPipeline->id,
-                'lead_pipeline_stage_id' => $defaultPipeline->stages()->first()->id,
+                'lead_pipeline_stage_id' => $firstStage->id,
             ]);
         }
 

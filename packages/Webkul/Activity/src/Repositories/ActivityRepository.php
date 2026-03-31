@@ -136,7 +136,9 @@ class ActivityRepository extends Repository
      */
     public function isDurationOverlapping($startFrom, $endFrom, $participants, $id)
     {
-        $userId = request()->input('user_id') ?? auth()->guard('user')->id();
+        // Always use the authenticated user — never trust request input for user_id,
+        // as that would allow any user to probe another user's schedule.
+        $userId = auth()->guard('user')->id();
 
         if (! $userId) {
             return false;

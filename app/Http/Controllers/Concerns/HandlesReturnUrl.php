@@ -29,15 +29,26 @@ trait HandlesReturnUrl
 
     /**
      * Resolve a valid return_url from the current request, or null.
+     *
+     * Only allows same-origin or relative paths to prevent open redirect attacks.
      */
     protected function resolveReturnUrl(): ?string
     {
         $returnUrl = request()->input('return_url') ?? request()->query('return_url');
 
-        if ($returnUrl && filter_var($returnUrl, FILTER_VALIDATE_URL)) {
-            return $returnUrl;
+        if (! $returnUrl) {
+            return null;
         }
 
-        return null;
+        // Allow relative paths (must start with /)
+        if (! filter_var($returnUrl, FILTER_VALIDATE_URL)) {
+            return str_starts_with($returnUrl, '/') ? $returnUrl : null;
+        }
+
+        // Absolute URL: only allow same host as the application to prevent open redirect
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST);
+        $redirectHost = parse_url($returnUrl, PHP_URL_HOST);
+
+        return ($redirectHost !== null && $redirectHost === $appHost) ? $returnUrl : null;
     }
 }

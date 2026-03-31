@@ -550,3 +550,38 @@ test('banner does not show for other departments when new item only affects one 
     // Na de tweede dispatch moet de banner verdwenen zijn voor de hele order
     expect($service->needsManualLateAfb($context['order']->fresh()))->toBeFalse();
 });
+
+test('banner shows when order item from last afb dispatch is marked lost', function () {
+    Bus::fake();
+    Mail::fake();
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $examAt = now()->addHours(10);
+    $context = createOrderForClinic($examAt);
+    $service = app(AfbDispatchService::class);
+
+    // Sla een succesvolle dispatch op met het bestaande orderitem
+    $existingItemIds = $context['order']->orderItems()->pluck('id')->toArray();
+
+    $dispatch = AfbDispatch::factory()->create([
+        'clinic_department_id' => $context['department']->id,
+        'clinic_id'            => $context['clinic']->id,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now()->subMinutes(10),
+    ]);
+    AfbPersonDocument::factory()->create([
+        'afb_dispatch_id' => $dispatch->id,
+        'order_id'        => $context['order']->id,
+        'order_item_ids'  => $existingItemIds,
+    ]);
+
+    // Geen banner nodig: alles al verstuurd
+    expect($service->needsManualLateAfb($context['order']->fresh()))->toBeFalse();
+
+    // Markeer het orderitem als LOST (simuleert verwijdering in de UI)
+    OrderItem::whereIn('id', $existingItemIds)->update(['status' => \App\Enums\OrderItemStatus::LOST->value]);
+
+    // Nu moet de banner tonen: de kliniek moet een bijgewerkte AFB ontvangen
+    expect($service->needsManualLateAfb($context['order']->fresh()))->toBeTrue()
+        ->and($service->hasUnincludedActiveItems($context['order']->id, $context['department']->id))->toBeTrue();
+});

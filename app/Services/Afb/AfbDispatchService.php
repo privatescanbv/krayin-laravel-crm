@@ -246,18 +246,34 @@ class AfbDispatchService
             return false;
         }
 
+        // Active-item departments (items with resource_orderitem records)
         $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
 
-        if ($departmentIds === []) {
+        // Also include departments that previously received a successful dispatch — items may
+        // have been marked LOST since then (their resource_orderitem records are deleted by the
+        // observer, so they no longer appear in getUniqueDepartmentIdsForOrder).
+        $previouslyDispatchedIds = DB::table('afb_person_documents')
+            ->join('afb_dispatches', 'afb_dispatches.id', '=', 'afb_person_documents.afb_dispatch_id')
+            ->where('afb_person_documents.order_id', $order->id)
+            ->where('afb_dispatches.status', AfbDispatchStatus::SUCCESS->value)
+            ->pluck('afb_dispatches.clinic_department_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $allDepartmentIds = array_values(array_unique(array_merge($departmentIds, $previouslyDispatchedIds)));
+
+        if ($allDepartmentIds === []) {
             return false;
         }
 
-        foreach ($departmentIds as $departmentId) {
+        foreach ($allDepartmentIds as $departmentId) {
             if (! $this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)) {
                 return true;
             }
 
-            // Already sent, but a new order item was added after the last dispatch →
+            // Already sent, but order items changed after the last dispatch (added or removed) →
             // replacement AFB needed with updated content.
             if ($this->hasUnincludedActiveItems((int) $order->id, (int) $departmentId)) {
                 return true;
@@ -298,10 +314,9 @@ class AfbDispatchService
     }
 
     /**
-     * Returns true when there are active (non-lost) order items for this order that were not
-     * included in the last successful AFB sent to the given department.
-     * Only items linked to the given department are considered.
-     * Lost items are intentionally excluded — they do not require a replacement AFB.
+     * Returns true when the last successful AFB for this order+department is out of date:
+     * either a new active item was added that is not in the last dispatch, or an item that
+     * was in the last dispatch has since been marked LOST (cancelled item → updated AFB needed).
      */
     public function hasUnincludedActiveItems(int $orderId, int $departmentId): bool
     {
@@ -317,12 +332,23 @@ class AfbDispatchService
             return false;
         }
 
-        return OrderItem::query()
+        // New active items linked to this department that were not in the last dispatch
+        $hasNewItems = OrderItem::query()
             ->where('order_id', $orderId)
             ->where('status', '!=', OrderItemStatus::LOST->value)
             ->whereHas('resourceOrderItems', fn ($q) => $q
                 ->whereHas('resource', fn ($q) => $q->where('clinic_department_id', $departmentId)))
             ->whereNotIn('id', $lastDocument->order_item_ids)
+            ->exists();
+
+        if ($hasNewItems) {
+            return true;
+        }
+
+        // Items that were in the last dispatch but are now LOST (clinic must receive updated AFB)
+        return OrderItem::query()
+            ->whereIn('id', $lastDocument->order_item_ids)
+            ->where('status', OrderItemStatus::LOST->value)
             ->exists();
     }
 

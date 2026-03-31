@@ -49,10 +49,16 @@ class WebFormController extends Controller
      */
     public function formStore(int $id): JsonResponse
     {
-        $person = $this->personRepository
-            ->getModel()
-            ->where('emails', 'like', '%'.request('persons.emails.0.value').'%')
-            ->first();
+        $emailValue = request('persons.emails.0.value');
+
+        $person = null;
+
+        if ($emailValue) {
+            $person = $this->personRepository
+                ->getModel()
+                ->whereRaw("JSON_SEARCH(emails, 'one', ?, NULL, '$[*].value') IS NOT NULL", [$emailValue])
+                ->first();
+        }
 
         if ($person) {
             request()->request->add(['persons' => array_merge(request('persons'), ['id' => $person->id])]);
@@ -79,6 +85,12 @@ class WebFormController extends Controller
 
             $stage = $pipeline->stages()->first();
 
+            if (! $stage) {
+                return response()->json([
+                    'error' => 'The default pipeline has no stages configured. Please contact an administrator.',
+                ], 422);
+            }
+
             $data['lead_pipeline_id'] = $pipeline->id;
 
             $data['lead_pipeline_stage_id'] = $stage->id;
@@ -88,16 +100,15 @@ class WebFormController extends Controller
             $data['lead_value'] = request('leads.lead_value') ?: 0;
 
             if (! request('leads.lead_source_id')) {
-                $source = $this->sourceRepository->findOneByField('name', 'Web Form');
+                $source = $this->sourceRepository->findOneByField('name', 'Web Form')
+                    ?? $this->sourceRepository->first();
 
-                if (! $source) {
-                    $source = $this->sourceRepository->first();
-                }
-
-                $data['lead_source_id'] = $source->id;
+                // Gracefully handle missing source: assign null rather than throwing NPE
+                $data['lead_source_id'] = $source?->id;
             }
 
-            $data['lead_type_id'] = request('leads.lead_type_id') ?: $this->typeRepository->first()->id;
+            $firstType = $this->typeRepository->first();
+            $data['lead_type_id'] = request('leads.lead_type_id') ?: $firstType?->id;
 
             $lead = $this->leadRepository->create($data);
 
@@ -125,7 +136,7 @@ class WebFormController extends Controller
         } else {
             return response()->json([
                 'redirect' => $webForm->submit_success_content,
-            ], 301);
+            ], 200);
         }
     }
 
@@ -150,11 +161,11 @@ class WebFormController extends Controller
     {
         $webForm = $this->webFormRepository->findOneByField('id', $id);
 
-        request()->merge(['id' => $webForm->form_id]);
-
         if (is_null($webForm)) {
             abort(404);
         }
+
+        request()->merge(['id' => $webForm->form_id]);
 
         return view('web_form::settings.web-forms.preview', compact('webForm'));
     }

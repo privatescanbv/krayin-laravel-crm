@@ -588,7 +588,7 @@ class LeadRepository extends Repository
         // Create a system activity for audit purposes
         $activityData = [
             'title' => 'System: Duplicate Lead Removed',
-            'comment' => "Removed duplicate lead \"{$duplicateLead->title}\" (ID: {$duplicateLead->id}) during merge operation.",
+            'comment' => "Removed duplicate lead \"{$duplicateLead->name}\" (ID: {$duplicateLead->id}) during merge operation.",
             'type' => 'system',
             'is_done' => 1,
             'user_id' => auth()->id() ?? 1,
@@ -601,7 +601,7 @@ class LeadRepository extends Repository
         Log::info('System activity created for duplicate removal', [
             'primary_lead_id' => $primaryLead->id,
             'removed_duplicate_id' => $duplicateLead->id,
-            'removed_duplicate_title' => $duplicateLead->title,
+            'removed_duplicate_title' => $duplicateLead->name,
             'activity_id' => $activity->id,
             'created_by' => auth()->id() ?? 1,
         ]);
@@ -620,7 +620,7 @@ class LeadRepository extends Repository
         // Create an activity note about the merge
         $activityData = [
             'title' => 'Lead Merged',
-            'comment' => "Lead #{$duplicateLead->id} ({$duplicateLead->title}) was merged into this lead.",
+            'comment' => "Lead #{$duplicateLead->id} ({$duplicateLead->name}) was merged into this lead.",
             'type' => 'note',
             'is_done' => 1,
             'user_id' => auth()->id() ?? 1,

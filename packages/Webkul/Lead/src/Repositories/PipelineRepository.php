@@ -120,10 +120,16 @@ class PipelineRepository extends Repository
             }
         }
 
+        // Resolve the first remaining stage once (after new stages are created) to avoid NPE
+        // in case all previous stages are removed.
+        $firstRemainingStage = $pipeline->fresh()->stages()->first();
+
         foreach ($previousStageIds as $stageId) {
-            $pipeline->leads()->where('lead_pipeline_stage_id', $stageId)->update([
-                'lead_pipeline_stage_id' => $pipeline->stages()->first()->id,
-            ]);
+            if ($firstRemainingStage) {
+                $pipeline->leads()->where('lead_pipeline_stage_id', $stageId)->update([
+                    'lead_pipeline_stage_id' => $firstRemainingStage->id,
+                ]);
+            }
 
             $this->stageRepository->delete($stageId);
         }

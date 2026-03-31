@@ -22,7 +22,6 @@ use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Type;
 use Webkul\Lead\Repositories\LeadRepository;
-use Webkul\User\Models\User;
 use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
@@ -97,8 +96,7 @@ class LeadController extends Controller
      */
     private function storeFromLeadForm(LeadForm $request, ?int $forceDepartmentId = null, bool $allowInvalidPhone = false): JsonResponse
     {
-        // TODO replace with auth()->id
-        $currentUserId = User::query()->first()?->id;
+        $currentUserId = auth()->id();
 
         try {
             $departmentId = $forceDepartmentId ?? Department::findPrivateScanId();

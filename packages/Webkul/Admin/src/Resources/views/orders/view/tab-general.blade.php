@@ -333,6 +333,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
+<<<<<<< HEAD
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Product</th>
                         <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Persoon</th>

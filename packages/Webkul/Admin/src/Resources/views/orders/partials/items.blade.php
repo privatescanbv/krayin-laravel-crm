@@ -271,14 +271,18 @@
                 getStatusLabel(status) {
                     const labels = {
                         'new': 'Nieuw',
-                        'planned': 'Ingepland'
+                        'planned': 'Ingepland',
+                        'won': 'Gewonnen',
+                        'lost': 'Verloren'
                     };
                     return labels[status] || status;
                 },
                 getStatusClass(status) {
                     const classes = {
                         'new': 'bg-neutral-bg text-gray-800',
-                        'planned': 'bg-green-100 text-green-800'
+                        'planned': 'bg-green-100 text-green-800',
+                        'won': 'bg-blue-100 text-blue-800',
+                        'lost': 'bg-red-100 text-red-800'
                     };
                     return classes[status] || 'bg-neutral-bg text-gray-800';
                 },

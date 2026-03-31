@@ -15,6 +15,7 @@ tests
 routes
 packages
 lang
+docs
 "
 
 for dir in $DIRS; do

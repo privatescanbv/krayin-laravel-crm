@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(array $parameters = [])
     {
+        $this->call(FolderSeeder::class);
         $this->call(TestPipelineSeeder::class);
         $this->call(LeadSourceSeeder::class);
         $this->call(LeadTypeSeeder::class);

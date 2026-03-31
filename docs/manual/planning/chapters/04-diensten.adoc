@@ -1,0 +1,63 @@
+== Diensten en beschikbaarheid
+
+=== Wat is een dienst (shift)?
+
+Een *dienst* bepaalt wanneer een resource beschikbaar is.
+Elke resource heeft één of meerdere diensten ingesteld door de beheerder.
+
+Een dienst bestaat uit:
+
+[cols="1,3", options="header"]
+|===
+| Instelling | Uitleg
+
+| *Periode*
+| De datumrange waarbinnen de dienst geldig is (bijv. 1 jan 2026 t/m 31 dec 2026).
+Een lege einddatum betekent dat de dienst oneindig geldig is.
+
+| *Beschikbaar*
+| Aan/uit schakelaar. Als de dienst is uitgeschakeld, is de resource niet beschikbaar in die periode.
+
+| *Tijdblokken per weekdag*
+| Per dag van de week (ma t/m zo) de uren waarop de resource beschikbaar is.
+Bijvoorbeeld: maandag 08:00–12:00 en 13:00–17:00.
+|===
+
+=== Hoe ziet beschikbaarheid eruit in het rooster?
+
+Stel dat een MRI-scanner elke maandag beschikbaar is van 8:00 tot 17:00,
+en er al een order staat ingepland van 10:00 tot 12:00.
+
+Dan ziet het rooster er op maandag zo uit:
+
+[cols="1,2", options="header"]
+|===
+| Tijdvak | Status
+
+| 8:00 – 10:00
+| Vrij (groen)
+
+| 10:00 – 12:00
+| Bezet (rood) — al geboekt voor een andere order
+
+| 12:00 – 17:00
+| Vrij (groen)
+|===
+
+=== Buiten dienst inplannen
+
+Sommige resources hebben de instelling *Buiten beschikbaarheid toestaan* ingeschakeld.
+Voor deze resources kan een boeking ook buiten de vaste dienst worden geplaatst.
+
+Dit is bedoeld voor flexibele resources of spoedgevallen.
+
+NOTE: Wil je een boeking buiten de dienst plaatsen en krijg je een foutmelding? Dan staat de instelling uitgeschakeld voor die resource. Neem contact op met de beheerder om de dienst aan te passen of een uitzondering toe te staan.
+
+=== Wat als een resource niet zichtbaar is?
+
+Een resource kan niet in de planner verschijnen als:
+
+* De resource is *inactief* — contact de beheerder.
+* De resource heeft *geen actieve dienst* voor de geselecteerde periode.
+* De filters zijn te streng ingesteld — wis de filters en klik opnieuw op *Zoeken*.
+* De resource is van een ander *type* dan het orderitem vereist — het type moet overeenkomen.

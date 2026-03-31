@@ -1,0 +1,29 @@
+= Handleiding Werkbakken — Privatescan CRM
+Privatescan
+:doctype: book
+:toc: left
+:toc-title: Inhoudsopgave
+:toclevels: 3
+:sectnums:
+:imagesdir: images
+:icons: font
+:lang: nl
+:revdate: 2026-03-31
+:revnumber: 1.0
+
+== Inleiding
+
+Deze handleiding beschrijft het *Werkbakken-dashboard* van het Privatescan CRM.
+De werkbakken zijn je dagelijkse startpunt: ze tonen precies welke taken er op jou of je team liggen te wachten, gegroepeerd per fase in het proces.
+
+De handleiding bestaat uit drie hoofdstukken:
+
+. *Wat zijn Werkbakken?* — uitleg van de pagina en de opbouw
+. *De werkbakken uitgelegd* — per werkbak wat erin zit en wanneer je hem gebruikt
+. *Werkwijze* — dagelijkse routine, filteren, afhandelen en taakoverdracht
+
+include::chapters/01-wat-zijn-werkbakken.adoc[]
+
+include::chapters/02-de-werkbakken.adoc[]
+
+include::chapters/03-werkwijze.adoc[]

@@ -1,0 +1,39 @@
+= Handleiding Sales & Orders — Privatescan CRM
+Privatescan
+:doctype: book
+:toc: left
+:toc-title: Inhoudsopgave
+:toclevels: 3
+:sectnums:
+:imagesdir: images
+:icons: font
+:lang: nl
+:revdate: 2026-03-31
+:revnumber: 1.0
+
+== Inleiding
+
+Deze handleiding beschrijft het *Sales & Orders-gedeelte* van het Privatescan CRM.
+De handleiding is bedoeld voor medewerkers die dagelijks werken met offerte-aanvragen en orders:
+het opvolgen van sales-kansen, aanmaken van orders en bijhouden van betalingen.
+
+De handleiding bestaat uit zes hoofdstukken:
+
+. *Navigeren naar Sales* — hoe je het Sales-gedeelte bereikt
+. *Sales Leads* — het kanbanbord met sales-kansen
+. *Orders Overzicht* — het kanbanbord met lopende orders en de fase-uitleg
+. *Order aanmaken* — stap voor stap een nieuwe order invullen
+. *Order detailpagina* — alles over de informatie en tabs op een order
+. *Betalingsoverzicht* — inzicht in openstaande betalingen
+
+include::chapters/01-navigatie.adoc[]
+
+include::chapters/02-sales-leads.adoc[]
+
+include::chapters/03-orders-overzicht.adoc[]
+
+include::chapters/04-order-aanmaken.adoc[]
+
+include::chapters/05-order-detail.adoc[]
+
+include::chapters/06-betalingsoverzicht.adoc[]

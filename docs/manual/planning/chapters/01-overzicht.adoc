@@ -1,0 +1,46 @@
+== Overzicht van de Resource Planner
+
+=== Wat is de Resource Planner?
+
+De *Resource Planner* is het planningsscherm van het Privatescan CRM.
+Hier zie je per week of maand wanneer scanapparaten en andere resources beschikbaar zijn,
+wanneer ze bezet zijn door andere orders, en kun je een order inplannen op een vrij tijdslot.
+
+Een *resource* is alles wat ingepland kan worden:
+
+[cols="1,3", options="header"]
+|===
+| Resource type | Voorbeelden
+
+| *MRI scanner*
+| MRI-apparaat bij een kliniek
+
+| *CT scanner*
+| CT-scanner bij een kliniek
+
+| *PET CT scanner*
+| Gecombineerde PET/CT scanner
+
+| *Artsen*
+| Radiologisch arts of specialist
+
+| *Cardiologie*
+| Cardioloog
+
+| *Röntgen*
+| Röntgenapparatuur
+
+| *Other*
+| Overige hulpmiddelen of diensten
+|===
+
+Elke resource is gekoppeld aan een *kliniek* en heeft *diensten (shifts)* ingesteld:
+de vaste tijdblokken per weekdag waarop de resource beschikbaar is.
+
+=== Navigeren naar de Resource Planner
+
+Klik in het zijbalkmenu op het *rooster-icoon* (twaalfde pictogram van boven) om naar de Monitor te gaan.
+
+image::../images/01-monitor-overzicht.png[Monitor Resource Planning overzicht]
+
+De pagina heet *Monitor Resource Planning* met de ondertitel _Bekijk alle resources en hun bezetting_.

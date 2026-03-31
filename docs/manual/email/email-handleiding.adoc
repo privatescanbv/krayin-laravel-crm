@@ -1,0 +1,33 @@
+= Handleiding E-mail — Privatescan CRM
+Privatescan
+:doctype: book
+:toc: left
+:toc-title: Inhoudsopgave
+:toclevels: 3
+:sectnums:
+:imagesdir: images
+:icons: font
+:lang: nl
+:revdate: 2026-03-31
+:revnumber: 1.0
+
+== Inleiding
+
+Deze handleiding beschrijft de *E-mailmodule* van het Privatescan CRM.
+De e-mailmodule is de plek waar alle inkomende en uitgaande e-mailcommunicatie wordt beheerd —
+van nieuwe websiteaanvragen tot kliniekbevestigingen en klantcorrespondentie.
+
+De handleiding bestaat uit vier hoofdstukken:
+
+. *Overzicht* — de mappenstructuur en hoe de inbox werkt
+. *E-mail lezen en afhandelen* — e-mails lezen, koppelen en verwerken
+. *E-mail opstellen en verzenden* — nieuw bericht schrijven, beantwoorden en doorsturen
+. *Werkwijze* — dagelijkse routine en tips voor een lege inbox
+
+include::chapters/01-overzicht.adoc[]
+
+include::chapters/02-email-lezen.adoc[]
+
+include::chapters/03-email-opstellen.adoc[]
+
+include::chapters/04-werkwijze.adoc[]

@@ -1,0 +1,33 @@
+= Handleiding Resource Planner — Privatescan CRM
+Privatescan
+:doctype: book
+:toc: left
+:toc-title: Inhoudsopgave
+:toclevels: 3
+:sectnums:
+:imagesdir: images
+:icons: font
+:lang: nl
+:revdate: 2026-03-31
+:revnumber: 1.0
+
+== Inleiding
+
+Deze handleiding beschrijft de *Resource Planner* van het Privatescan CRM.
+De Resource Planner is de plek waar je onderzoeken inplant op scanapparaten en andere resources bij de klinieken.
+Je ziet in één oogopslag wanneer een resource vrij of bezet is, en kunt met een paar klikken een boeking vastleggen.
+
+De handleiding bestaat uit vier hoofdstukken:
+
+. *Overzicht* — wat is de Resource Planner en wat zijn resources?
+. *De Monitor* — beschikbaarheid bekijken, filteren en navigeren
+. *Een order inplannen* — stap voor stap een onderzoek boeken op een resource
+. *Diensten en beschikbaarheid* — hoe werken shifts en wat als iets niet zichtbaar is?
+
+include::chapters/01-overzicht.adoc[]
+
+include::chapters/02-monitor.adoc[]
+
+include::chapters/03-inplannen.adoc[]
+
+include::chapters/04-diensten.adoc[]

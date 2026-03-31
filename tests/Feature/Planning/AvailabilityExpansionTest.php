@@ -5,6 +5,7 @@ namespace Tests\Feature\Planning;
 use App\Enums\ProductType as ProductTypeEnum;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductType;
@@ -14,12 +15,29 @@ use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Models\Shift;
 use Carbon\CarbonImmutable;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
 
+/**
+ * Resource tied to a seeded active clinic (required by monitor {@see \App\Repositories\ResourceRepository::queryWithActiveClinics()}).
+ */
+function resourceWithActiveClinic(): Resource
+{
+    $clinic = Clinic::query()->where('is_active', true)->firstOrFail();
+    $dept = ClinicDepartment::query()->where('clinic_id', $clinic->id)->first()
+        ?? ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+
+    return Resource::factory()->create([
+        'clinic_id'            => $clinic->id,
+        'clinic_department_id' => $dept->id,
+    ]);
+}
+
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     $this->salesLead = SalesLead::factory()->create();
 });
 
@@ -57,8 +75,8 @@ test('weekday map blocks expand to availability', function (): void {
     $data = $resp->json();
 
     expect($data)->toHaveKey('blocks')
-        ->toHaveKey('resources');
-    expect($data['resources'])->not->toBeEmpty('Should have resources');
+        ->toHaveKey('resources')
+        ->and($data['resources'])->not->toBeEmpty('Should have resources');
 
     $resourceBlocks = $data['blocks'][(string) $resource->id] ?? $data['blocks'][$resource->id] ?? [];
     expect($resourceBlocks)->not->toBeEmpty('Should have blocks for resource '.$resource->id);
@@ -112,8 +130,8 @@ test('availability with occupancy subtracts booked times', function (): void {
     $resp->assertOk();
     $data = $resp->json();
 
-    expect($data)->toHaveKey('blocks');
-    expect($data['blocks'])->not->toBeEmpty();
+    expect($data)->toHaveKey('blocks')
+        ->and($data['blocks'])->not->toBeEmpty();
 
     $resourceBlocks = $data['blocks'][(string) $resource->id] ?? $data['blocks'][$resource->id] ?? [];
     expect($resourceBlocks)->not->toBeEmpty('Should have blocks for resource '.$resource->id);
@@ -176,11 +194,11 @@ test('subtract intervals function', function (): void {
         }
     }
 
-    expect($result)->toHaveCount(2, 'Should have 2 availability blocks after subtraction');
-    expect($result[0]['from'])->toContain('T08:00');
-    expect($result[0]['to'])->toContain('T10:00');
-    expect($result[1]['from'])->toContain('T12:00');
-    expect($result[1]['to'])->toContain('T17:00');
+    expect($result)->toHaveCount(2, 'Should have 2 availability blocks after subtraction')
+        ->and($result[0]['from'])->toContain('T08:00')
+        ->and($result[0]['to'])->toContain('T10:00')
+        ->and($result[1]['from'])->toContain('T12:00')
+        ->and($result[1]['to'])->toContain('T17:00');
 });
 
 test('multiple resources with different shifts', function (): void {
@@ -254,7 +272,7 @@ test('multiple resources with different shifts', function (): void {
 test('resources with infinite duration shifts are shown in monitor', function (): void {
     $this->withoutMiddleware();
 
-    $resource = Resource::factory()->create();
+    $resource = resourceWithActiveClinic();
 
     Shift::query()->create([
         'resource_id'         => $resource->id,
@@ -288,21 +306,21 @@ test('resources with infinite duration shifts are shown in monitor', function ()
     expect($data['resources'])->not->toBeEmpty();
 
     $ourResource = collect($data['resources'])->firstWhere('id', $resource->id);
-    expect($ourResource)->not->toBeNull('Our resource should be included in the response');
-    expect($ourResource['name'])->toBe($resource->name);
-    expect($ourResource['has_infinite_duration'])->toBeTrue();
-    expect($ourResource['shifts_count'])->toBe(1);
-    expect($ourResource)->toHaveKey('allow_outside_availability');
+    expect($ourResource)->not->toBeNull('Our resource should be included in the response')
+        ->and($ourResource['name'])->toBe($resource->name)
+        ->and($ourResource['has_infinite_duration'])->toBeTrue()
+        ->and($ourResource['shifts_count'])->toBe(1)
+        ->and($ourResource)->toHaveKey('allow_outside_availability')
+        ->and($data['blocks'])->toHaveKey($resource->id);
 
-    expect($data['blocks'])->toHaveKey($resource->id);
     $resourceBlocks = $data['blocks'][$resource->id];
     expect($resourceBlocks)->not->toBeEmpty()->toHaveCount(7);
 
     foreach (['1', '2', '3', '4', '5'] as $day) {
         $dayKey = $start->copy()->addDays((int) $day - 1)->format('Y-m-d');
-        expect($resourceBlocks)->toHaveKey($dayKey);
-        expect($resourceBlocks[$dayKey])->not->toBeEmpty();
-        expect(collect($resourceBlocks[$dayKey])->contains(fn ($b) => $b['type'] === 'available'))
+        expect($resourceBlocks)->toHaveKey($dayKey)
+            ->and($resourceBlocks[$dayKey])->not->toBeEmpty()
+            ->and(collect($resourceBlocks[$dayKey])->contains(fn($b) => $b['type'] === 'available'))
             ->toBeTrue();
     }
 
@@ -312,7 +330,7 @@ test('resources with infinite duration shifts are shown in monitor', function ()
 test('resources with finite duration shifts are shown when active', function (): void {
     $this->withoutMiddleware();
 
-    $resource = Resource::factory()->create();
+    $resource = resourceWithActiveClinic();
 
     Shift::query()->create([
         'resource_id'         => $resource->id,
@@ -341,20 +359,20 @@ test('resources with finite duration shifts are shown when active', function ():
     expect($data['resources'])->not->toBeEmpty();
 
     $ourResource = collect($data['resources'])->firstWhere('id', $resource->id);
-    expect($ourResource)->not->toBeNull('Our resource should be included in the response');
-    expect($ourResource['has_infinite_duration'])->toBeFalse();
-    expect($ourResource['shifts_count'])->toBe(1);
-    expect($ourResource)->toHaveKey('allow_outside_availability');
+    expect($ourResource)->not->toBeNull('Our resource should be included in the response')
+        ->and($ourResource['has_infinite_duration'])->toBeFalse()
+        ->and($ourResource['shifts_count'])->toBe(1)
+        ->and($ourResource)->toHaveKey('allow_outside_availability')
+        ->and($data['blocks'])->toHaveKey($resource->id);
 
-    expect($data['blocks'])->toHaveKey($resource->id);
     $resourceBlocks = $data['blocks'][$resource->id];
     expect($resourceBlocks)->not->toBeEmpty();
 
     foreach (['1', '2'] as $day) {
         $dayKey = $start->copy()->addDays((int) $day - 1)->format('Y-m-d');
-        expect($resourceBlocks)->toHaveKey($dayKey);
-        expect($resourceBlocks[$dayKey])->not->toBeEmpty();
-        expect(collect($resourceBlocks[$dayKey])->contains(fn ($b) => $b['type'] === 'available'))
+        expect($resourceBlocks)->toHaveKey($dayKey)
+            ->and($resourceBlocks[$dayKey])->not->toBeEmpty()
+            ->and(collect($resourceBlocks[$dayKey])->contains(fn($b) => $b['type'] === 'available'))
             ->toBeTrue();
     }
 
@@ -364,7 +382,7 @@ test('resources with finite duration shifts are shown when active', function ():
 test('resources with expired shifts are not shown', function (): void {
     $this->withoutMiddleware();
 
-    $resource = Resource::factory()->create();
+    $resource = resourceWithActiveClinic();
 
     Shift::query()->create([
         'resource_id'         => $resource->id,
@@ -390,15 +408,15 @@ test('resources with expired shifts are not shown', function (): void {
     $data = $resp->json();
 
     expect(collect($data['resources'])->firstWhere('id', $resource->id))
-        ->toBeNull('Expired resource should NOT be included in the response');
-    expect($data['blocks'])->not->toHaveKey($resource->id, 'Expired resource should NOT have blocks');
+        ->toBeNull('Expired resource should NOT be included in the response')
+        ->and($data['blocks'])->not->toHaveKey($resource->id, 'Expired resource should NOT have blocks');
 });
 
 test('order monitor resource types include overridden resource type on order item', function (): void {
     $this->withoutMiddleware();
 
-    $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
-    $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
+    $mri = ResourceType::where('name', ResourceTypeEnum::MRI_SCANNER->label())->firstOrFail();
+    $pet = ResourceType::where('name', ResourceTypeEnum::PET_CT_SCANNER->label())->firstOrFail();
 
     $product = Product::factory()->create(['resource_type_id' => $mri->id]);
 
@@ -430,8 +448,8 @@ test('resolved product type for planning follows order item resource type overri
         ['description' => '']
     );
 
-    $mri = ResourceType::factory()->create(['name' => ResourceTypeEnum::MRI_SCANNER->label()]);
-    $pet = ResourceType::factory()->create(['name' => ResourceTypeEnum::PET_CT_SCANNER->label()]);
+    $mri = ResourceType::where('name', ResourceTypeEnum::MRI_SCANNER->label())->firstOrFail();
+    $pet = ResourceType::where('name', ResourceTypeEnum::PET_CT_SCANNER->label())->firstOrFail();
 
     $mriProductType = ProductType::query()->where('name', ProductTypeEnum::MRI_SCAN->label())->firstOrFail();
     $product = Product::factory()->create([

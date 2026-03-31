@@ -21,11 +21,16 @@ class RoleSeeder extends Seeder
 
         $defaultLocale = $parameters['locale'] ?? config('app.locale');
 
-        // Insert Administrator role
+        [$administratorName, $administratorDescription] = match ($defaultLocale) {
+            'nl'    => ['Beheerder', 'Volledige toegang tot alle onderdelen van het systeem.'],
+            default => ['Administrator', 'Full access to all areas of the system.'],
+        };
+
+        // Insert Administrator role (labels were previously from removed installer package)
         DB::table('roles')->insert([
             'id'              => 1,
-            'name'            => trans('installer::app.seeders.user.role.administrator', [], $defaultLocale),
-            'description'     => trans('installer::app.seeders.user.role.administrator-role', [], $defaultLocale),
+            'name'            => $administratorName,
+            'description'     => $administratorDescription,
             'permission_type' => 'all',
             'permissions'     => null,
         ]);

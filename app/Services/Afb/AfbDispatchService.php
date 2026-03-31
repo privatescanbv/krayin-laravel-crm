@@ -60,7 +60,7 @@ class AfbDispatchService
 
     public function queueLateBookingForOrder(Order $order): int
     {
-        if (! in_array($order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true)) {
+        if (! $this->isInDispatchableStage($order)) {
             return 0;
         }
 
@@ -105,7 +105,7 @@ class AfbDispatchService
         $unsentOrders = collect($orderIds)
             ->map(fn (int $id) => $orders->get($id))
             ->filter(fn (?Order $order) => $order !== null)
-            ->filter(fn (Order $order) => in_array($order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true))
+            ->filter(fn (Order $order) => $this->isInDispatchableStage($order))
             ->filter(fn (Order $order) => ! $this->isAlreadySentToDepartment((int) $order->id, $departmentId)
                 || $this->hasUnincludedActiveItems((int) $order->id, $departmentId))
             ->values();
@@ -245,61 +245,33 @@ class AfbDispatchService
     }
 
     /**
-     * Handmatige AFB nodig: late-booking venster, planning met afdeling, en nog niet overal succesvol verstuurd.
+     * Handmatige AFB nodig: juiste status, late-booking venster, planning met afdeling, en nog niet overal succesvol verstuurd.
      */
     public function needsManualLateAfb(Order $order): bool
     {
+        if (! $this->isInDispatchableStage($order)) {
+            return false;
+        }
+
         if (! $this->shouldSendAsLateBooking($order)) {
             return false;
         }
 
-        // Active-item departments (items with resource_orderitem records)
         $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
 
-        // Also include departments that previously received a successful dispatch — items may
-        // have been marked LOST since then (their resource_orderitem records are deleted by the
-        // observer, so they no longer appear in getUniqueDepartmentIdsForOrder).
-        $previouslyDispatchedIds = DB::table('afb_person_documents')
-            ->join('afb_dispatches', 'afb_dispatches.id', '=', 'afb_person_documents.afb_dispatch_id')
-            ->where('afb_person_documents.order_id', $order->id)
-            ->where('afb_dispatches.status', AfbDispatchStatus::SUCCESS->value)
-            ->pluck('afb_dispatches.clinic_department_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
-
-        $allDepartmentIds = array_values(array_unique(array_merge($departmentIds, $previouslyDispatchedIds)));
-
-        if ($allDepartmentIds === []) {
-            return false;
-        }
-
-        foreach ($allDepartmentIds as $departmentId) {
-            if (! $this->isAlreadySentToDepartment((int) $order->id, (int) $departmentId)) {
-                return true;
-            }
-
-            // Already sent, but order items changed after the last dispatch (added or removed) →
-            // replacement AFB needed with updated content.
-            if ($this->hasUnincludedActiveItems((int) $order->id, (int) $departmentId)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
     }
 
     /**
      * Geeft de AVB dispatch-gereedheid terug voor weergave op de order view.
      *
-     * @return array{is_ready: bool, is_late: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
+     * @return array{is_ready: bool, is_late: bool, needs_manual_send: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
      */
     public function getAvbDispatchReadiness(Order $order): array
     {
         $reasons = [];
 
-        if (! in_array($order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true)) {
+        if (! $this->isInDispatchableStage($order)) {
             $reasons[] = 'Order staat niet in de juiste status voor AFB dispatch';
         }
 
@@ -307,8 +279,8 @@ class AfbDispatchService
             $reasons[] = 'Geen eerste onderzoekdatum ingesteld';
         }
 
-        $hasDepartments = $this->getUniqueDepartmentIdsForOrder((int) $order->id) !== [];
-        if (! $hasDepartments) {
+        $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
+        if ($departmentIds === []) {
             $reasons[] = 'Geen kliniekafdelingen gekoppeld aan order items';
         }
 
@@ -318,6 +290,7 @@ class AfbDispatchService
 
         $isReady = empty($reasons);
         $isLate = $isReady && $this->shouldSendAsLateBooking($order);
+        $needsManualSend = $isLate && $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
 
         $plannedAt = null;
         if ($order->first_examination_at && ! Carbon::parse($order->first_examination_at)->isPast()) {
@@ -327,10 +300,11 @@ class AfbDispatchService
         }
 
         return [
-            'is_ready'   => $isReady,
-            'is_late'    => $isLate,
-            'planned_at' => $plannedAt,
-            'reasons'    => $reasons,
+            'is_ready'          => $isReady,
+            'is_late'           => $isLate,
+            'needs_manual_send' => $needsManualSend,
+            'planned_at'        => $plannedAt,
+            'reasons'           => $reasons,
         ];
     }
 
@@ -446,6 +420,50 @@ class AfbDispatchService
             'user_type' => 'user',
             'clinic_id' => $clinic->id,
         ]);
+    }
+
+    private function isInDispatchableStage(Order $order): bool
+    {
+        return in_array((int) $order->pipeline_stage_id, PipelineStage::getAfbDispatchAllowedStageIds(), true);
+    }
+
+    /**
+     * Returns true when at least one department still needs an AFB for this order.
+     * Includes previously dispatched departments where items have since changed.
+     *
+     * @param  array<int, int>  $activeDepartmentIds
+     */
+    private function hasPendingAfbForDepartments(int $orderId, array $activeDepartmentIds): bool
+    {
+        // Also include departments that previously received a successful dispatch — items may
+        // have been marked LOST since then.
+        $previouslyDispatchedIds = DB::table('afb_person_documents')
+            ->join('afb_dispatches', 'afb_dispatches.id', '=', 'afb_person_documents.afb_dispatch_id')
+            ->where('afb_person_documents.order_id', $orderId)
+            ->where('afb_dispatches.status', AfbDispatchStatus::SUCCESS->value)
+            ->pluck('afb_dispatches.clinic_department_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $allDepartmentIds = array_values(array_unique(array_merge($activeDepartmentIds, $previouslyDispatchedIds)));
+
+        if ($allDepartmentIds === []) {
+            return false;
+        }
+
+        foreach ($allDepartmentIds as $departmentId) {
+            if (! $this->isAlreadySentToDepartment($orderId, (int) $departmentId)) {
+                return true;
+            }
+
+            if ($this->hasUnincludedActiveItems($orderId, (int) $departmentId)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function syncToMailDisk(string $path): void

@@ -2,6 +2,9 @@
 
 namespace App\Services\InboundLeads;
 
+use App\Enums\LeadChannel;
+use App\Enums\LeadSource;
+use App\Enums\LeadType;
 use App\Enums\PersonSalutation;
 use App\Support\EmailNormalizer;
 use App\Support\PhoneNormalizer;
@@ -126,94 +129,17 @@ class InboundLeadPayloadMapper
      */
     private function mapLeadSourceId(?string $leadSource): int
     {
-        $leadSourceLower = strtolower(trim((string) $leadSource));
-
-        $sourceMap = [
-            // Key variants (from older implementations/cookies)
-            'bodyscannl'     => 1,
-            'privatescannl'  => 2,
-            'mriscannl'      => 3,
-            'ccsvionlinenl'  => 4,
-            'ccsvionlinecom' => 5,
-
-            // Label variants (from DB seed + Sugar import mapping)
-            'bodyscan.nl'                  => 1,
-            'privatescan.nl'               => 2,
-            'mri-scan.nl'                  => 3,
-            'ccsvi-online.nl'              => 4,
-            'ccsvi-online.com'             => 5,
-            'google zoeken'                => 6,
-            'adwords'                      => 7,
-            'krant telegraaf'              => 8,
-            'krant spits'                  => 9,
-            'krant regionaal'              => 10,
-            'krant overige dagbladen'      => 11,
-            'krant redactioneel'           => 12,
-            'magazine dito'                => 13,
-            'magazine humo belgie'         => 14,
-            'dokterdokter.nl'              => 15,
-            'vrouw.nl'                     => 16,
-            'dito-magazine.nl'             => 17,
-            'groupdeal.nl'                 => 18,
-            'marktplaats'                  => 19,
-            'zorgplanet.nl'                => 20,
-            'linkpartner'                  => 21,
-            'youtube'                      => 22,
-            'linkedin'                     => 23,
-            'twitter'                      => 24,
-            'facebook'                     => 25,
-            'rtl business class'           => 26,
-            'nieuwsbrief'                  => 27,
-            'bestaande klant'              => 28,
-            'zakenrelatie'                 => 29,
-            'vrienden, familie, kennissen' => 30,
-            'collega'                      => 31,
-            'anders'                       => 32,
-            'wegener webshop'              => 33,
-            'herniapoli.nl'                => 34,
-        ];
-
-        if (isset($sourceMap[$leadSourceLower])) {
-            return $sourceMap[$leadSourceLower];
-        }
-
-        // Default: Anders
-        return 32;
+        return LeadSource::idFromInbound($leadSource);
     }
 
     private function mapLeadChannelId(?string $kanaal): int
     {
-        $kanaalLower = strtolower(trim((string) $kanaal));
-        $kanaalLower = str_replace('socialmedia', 'social media', $kanaalLower);
-        $kanaalLower = str_replace('e-mail', 'email', $kanaalLower);
-
-        $channelMap = [
-            'telefoon'     => 1,     // Telefoon
-            'website'      => 2,      // Website
-            'email'        => 3,        // E-mail
-            'tel-en-tel'   => 4,   // Tel-en-Tel
-            'agenten'      => 5,      // Agenten
-            'partners'     => 6,     // Partners
-            'social media' => 7, // Social media
-            'webshop'      => 8,      // Webshop
-            'campagne'     => 9,     // Campagne
-        ];
-
-        return $channelMap[$kanaalLower] ?? 2;
+        return LeadChannel::idFromInbound($kanaal);
     }
 
     private function mapLeadTypeId(?string $type): int
     {
-        $typeLower = strtolower(trim((string) $type));
-
-        $typeMap = [
-            'preventie' => 1,
-            'gericht'   => 2,
-            'operatie'  => 3,
-            'overig'    => 4,
-        ];
-
-        return $typeMap[$typeLower] ?? 4;
+        return LeadType::idFromInbound($type);
     }
 
     private function nullIfEmpty(mixed $value): ?string

@@ -292,16 +292,21 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Initialize the default role ID by looking up the 'Beheerder' role
+     * Initialize the default role ID (administrator: Beheerder/Administrator from RoleSeeder, or id 1).
      *
      * @throws Exception
      */
     private function initializeDefaultRole(): void
     {
-        $role = Role::where('name', 'Beheerder')->first();
+        $role = Role::where('name', 'Beheerder')->first()
+            ?? Role::where('name', 'Administrator')->first()
+            ?? Role::find(1);
 
         if (! $role) {
-            throw new Exception('Role "Beheerder" not found. Please ensure the role exists in the database.');
+            throw new Exception(
+                'No administrator role found. Run `php artisan db:seed` (RoleSeeder). '.
+                'Expected role name "Beheerder" or "Administrator", or roles.id = 1.'
+            );
         }
 
         $this->defaultRoleId = $role->id;

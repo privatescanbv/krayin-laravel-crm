@@ -2,25 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Enums\LeadChannel;
+use App\Enums\LeadSource;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class LeadChannelSeeder extends BaseSeeder
+class LeadSourceSeeder extends BaseSeeder
 {
     public function run(array $parameters = []): void
     {
-        $this->truncateTables(['lead_channels']);
+        $this->truncateTables(['lead_sources']);
         $now = Carbon::now();
         $rows = [];
-        foreach (LeadChannel::cases() as $channel) {
+        foreach (LeadSource::cases() as $source) {
             $rows[] = [
-                'id'         => $channel->value,
-                'name'       => $channel->databaseName(),
+                'id'         => $source->value,
+                'name'       => $source->databaseName(),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
         }
-        DB::table('lead_channels')->insert($rows);
+        DB::table('lead_sources')->insert($rows);
     }
 }

@@ -14,8 +14,11 @@ class DatabaseSeeder extends Seeder
     public function run(array $parameters = [])
     {
         $this->call(TestPipelineSeeder::class);
-        $this->call(TestLeadSourceTypeSeeder::class);
+        $this->call(LeadSourceSeeder::class);
+        $this->call(LeadTypeSeeder::class);
+        $this->call(LeadChannelSeeder::class);
         $this->call(DutchLocaleSeeder::class);
+        $this->call(DepartmentSeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(UserSeeder::class);
         $this->call(ClinicSeeder::class);

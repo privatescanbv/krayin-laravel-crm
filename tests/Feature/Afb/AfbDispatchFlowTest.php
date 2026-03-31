@@ -5,7 +5,6 @@ use App\Enums\AfbDispatchType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PersonSalutation;
 use App\Enums\PipelineStage;
-use App\Enums\PipelineType;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\Address;
@@ -32,7 +31,6 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 use Webkul\Installer\Http\Middleware\CanInstall;
-use Webkul\Lead\Models\Stage;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
@@ -397,9 +395,6 @@ test('order view shows manual afb banner when late booking and not yet sent', fu
     $examAt = now()->addHours(10);
     $context = createOrderForClinic($examAt);
 
-    $stage = Stage::query()->whereHas('pipeline', fn ($q) => $q->where('type', PipelineType::ORDER))->firstOrFail();
-    $context['order']->update(['pipeline_stage_id' => $stage->id]);
-
     expect(app(AfbDispatchService::class)->needsManualLateAfb($context['order']->fresh()))->toBeTrue();
 
     $response = $this->get(route('admin.orders.view', $context['order']->id));
@@ -470,9 +465,6 @@ test('order view shows manual afb banner again after new order item added post d
 
     $examAt = now()->addHours(10);
     $context = createOrderForClinic($examAt);
-
-    $stage = Stage::query()->whereHas('pipeline', fn ($q) => $q->where('type', PipelineType::ORDER))->firstOrFail();
-    $context['order']->update(['pipeline_stage_id' => $stage->id]);
 
     // Haal de bestaande orderregel IDs op (die wél in de vorige AFB zaten)
     $existingItemIds = $context['order']->orderItems()->pluck('id')->toArray();

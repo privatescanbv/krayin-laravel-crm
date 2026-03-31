@@ -20,7 +20,7 @@ class TestPipelineSeeder extends Seeder
         $pipelines = [
             [
                 'id'           => 1,
-                'name'         => 'Privatescan Lead',
+                'name'         => 'Privatescan',
                 'is_default'   => 1,
                 'type'         => PipelineType::LEAD->value,
                 'rotten_days'  => 30,
@@ -38,7 +38,7 @@ class TestPipelineSeeder extends Seeder
             ],
             [
                 'id'           => 3,
-                'name'         => 'Privatescan Sales',
+                'name'         => 'Privatescan',
                 'is_default'   => 1,
                 'type'         => PipelineType::BACKOFFICE->value,
                 'rotten_days'  => 30,

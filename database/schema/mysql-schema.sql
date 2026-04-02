@@ -81,6 +81,56 @@ CREATE TABLE `addresses` (
   CONSTRAINT `addresses_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `afb_dispatches`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `afb_dispatches` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint unsigned NOT NULL,
+  `clinic_department_id` bigint unsigned DEFAULT NULL,
+  `email_id` int unsigned DEFAULT NULL,
+  `type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sent_at` timestamp NULL DEFAULT NULL,
+  `last_attempt_at` timestamp NULL DEFAULT NULL,
+  `attempt` smallint unsigned NOT NULL DEFAULT '1',
+  `error_message` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `afb_dispatches_email_id_foreign` (`email_id`),
+  KEY `afb_dispatches_clinic_id_status_created_at_index` (`clinic_id`,`status`,`created_at`),
+  KEY `afb_dispatches_clinic_department_id_foreign` (`clinic_department_id`),
+  CONSTRAINT `afb_dispatches_clinic_department_id_foreign` FOREIGN KEY (`clinic_department_id`) REFERENCES `clinic_departments` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `afb_dispatches_clinic_id_foreign` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `afb_dispatches_email_id_foreign` FOREIGN KEY (`email_id`) REFERENCES `emails` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `afb_person_documents`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `afb_person_documents` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `afb_dispatch_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned NOT NULL,
+  `order_item_ids` json DEFAULT NULL,
+  `person_id` int unsigned DEFAULT NULL,
+  `patient_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sent_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `afb_dispatch_orders_afb_dispatch_id_foreign` (`afb_dispatch_id`),
+  KEY `afb_dispatch_orders_person_id_foreign` (`person_id`),
+  KEY `afb_dispatch_orders_clinic_id_order_id_index` (`order_id`),
+  KEY `afb_dispatch_orders_order_id_sent_at_index` (`order_id`,`sent_at`),
+  CONSTRAINT `afb_dispatch_orders_afb_dispatch_id_foreign` FOREIGN KEY (`afb_dispatch_id`) REFERENCES `afb_dispatches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `afb_dispatch_orders_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `afb_dispatch_orders_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `anamnesis`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -228,6 +278,22 @@ CREATE TABLE `call_statuses` (
   CONSTRAINT `call_statuses_activity_id_foreign` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`) ON DELETE CASCADE,
   CONSTRAINT `call_statuses_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `call_statuses_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `clinic_departments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `clinic_departments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint unsigned NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `clinic_departments_clinic_id_foreign` (`clinic_id`),
+  CONSTRAINT `clinic_departments_clinic_id_foreign` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `clinic_partner_product`;
@@ -638,6 +704,21 @@ CREATE TABLE `lead_channels` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `lead_marketing_data`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lead_marketing_data` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `lead_id` int unsigned NOT NULL,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `lead_marketing_data_lead_id_key_index` (`lead_id`,`key`),
+  CONSTRAINT `lead_marketing_data_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `lead_persons`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -677,7 +758,7 @@ CREATE TABLE `lead_pipelines` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `is_default` tinyint(1) NOT NULL DEFAULT '0',
-  `type` enum('lead','workflow','order') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'lead',
+  `type` enum('lead','workflow','order') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'lead',
   `rotten_days` int NOT NULL DEFAULT '30',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -768,7 +849,7 @@ CREATE TABLE `leads` (
   `updated_by` int unsigned DEFAULT NULL,
   `mri_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `diagnosis_form_id` int unsigned DEFAULT NULL,
-  `diagnoseform_pdf_url` text COLLATE utf8mb4_unicode_ci,
+  `diagnoseform_pdf_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `national_identification_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'BSN',
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -805,7 +886,7 @@ DROP TABLE IF EXISTS `marketing_campaigns`;
 CREATE TABLE `marketing_campaigns` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `external_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `external_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` tinyint(1) NOT NULL DEFAULT '0',
   `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -871,13 +952,13 @@ CREATE TABLE `order_items` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `order_id` bigint unsigned NOT NULL,
   `product_id` int unsigned NOT NULL,
-  `product_type_id` bigint unsigned DEFAULT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `resource_type_id` bigint unsigned DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `person_id` int unsigned DEFAULT NULL,
   `quantity` int unsigned NOT NULL,
   `total_price` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `currency` varchar(3) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `currency` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
   `created_by` int unsigned DEFAULT NULL,
   `updated_by` int unsigned DEFAULT NULL,
@@ -889,12 +970,12 @@ CREATE TABLE `order_items` (
   KEY `order_items_created_by_foreign` (`created_by`),
   KEY `order_items_updated_by_foreign` (`updated_by`),
   KEY `order_items_person_id_foreign` (`person_id`),
-  KEY `order_items_product_type_id_foreign` (`product_type_id`),
+  KEY `order_items_resource_type_id_foreign` (`resource_type_id`),
   CONSTRAINT `order_items_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `order_items_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_items_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE SET NULL,
   CONSTRAINT `order_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `order_items_product_type_id_foreign` FOREIGN KEY (`product_type_id`) REFERENCES `product_types` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `order_items_resource_type_id_foreign` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_types` (`id`) ON DELETE SET NULL,
   CONSTRAINT `order_items_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -909,12 +990,30 @@ CREATE TABLE `order_number_sequences` (
   PRIMARY KEY (`year`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `order_payments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_payments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `method` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `paid_at` date DEFAULT NULL,
+  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EUR',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_payments_order_id_foreign` (`order_id`),
+  CONSTRAINT `order_payments_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `orders`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `orders` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `order_number` varchar(9) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `order_number` varchar(9) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `sales_lead_id` bigint unsigned NOT NULL,
   `user_id` int unsigned DEFAULT NULL,
@@ -922,6 +1021,8 @@ CREATE TABLE `orders` (
   `total_price` decimal(12,2) NOT NULL DEFAULT '0.00',
   `confirmation_letter_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `pipeline_stage_id` int unsigned DEFAULT NULL,
+  `lost_reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `closed_at` date DEFAULT NULL,
   `first_examination_at` datetime DEFAULT NULL,
   `created_by` int unsigned DEFAULT NULL,
   `updated_by` int unsigned DEFAULT NULL,
@@ -1062,10 +1163,10 @@ CREATE TABLE `patient_notifications` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `patient_id` int unsigned NOT NULL,
   `dismissable` tinyint(1) NOT NULL DEFAULT '0',
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `summary` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `summary` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `entity_names` json DEFAULT NULL,
-  `reference_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reference_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `reference_id` bigint unsigned NOT NULL,
   `read_at` datetime DEFAULT NULL,
   `dismissed_at` datetime DEFAULT NULL,
@@ -1090,9 +1191,9 @@ DROP TABLE IF EXISTS `person_preferences`;
 CREATE TABLE `person_preferences` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `person_id` int unsigned NOT NULL,
-  `key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `value` json NOT NULL,
-  `value_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `is_system_managed` tinyint(1) NOT NULL DEFAULT '0',
   `created_by` int unsigned DEFAULT NULL,
   `updated_by` int unsigned DEFAULT NULL,
@@ -1163,7 +1264,7 @@ CREATE TABLE `persons` (
   `user_id` int unsigned DEFAULT NULL,
   `keycloak_user_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `preferred_language` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `preferred_language` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `onboarding_completed_at` datetime DEFAULT NULL,
   `password` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_by` int unsigned DEFAULT NULL,
@@ -1287,9 +1388,9 @@ DROP TABLE IF EXISTS `purchase_prices`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `purchase_prices` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `priceable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `priceable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `priceable_id` bigint unsigned NOT NULL,
-  `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'main',
+  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'main',
   `purchase_price_misc` decimal(10,2) DEFAULT NULL,
   `purchase_price_doctor` decimal(10,2) DEFAULT NULL,
   `purchase_price_cardiology` decimal(10,2) DEFAULT NULL,
@@ -1356,6 +1457,7 @@ CREATE TABLE `resources` (
   `external_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `resource_type_id` bigint unsigned NOT NULL,
   `clinic_id` bigint unsigned DEFAULT NULL,
+  `clinic_department_id` bigint unsigned DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `allow_outside_availability` tinyint(1) NOT NULL DEFAULT '0',
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -1370,6 +1472,8 @@ CREATE TABLE `resources` (
   KEY `resources_resource_type_id_foreign` (`resource_type_id`),
   KEY `resources_clinic_id_foreign` (`clinic_id`),
   KEY `resources_external_id_index` (`external_id`),
+  KEY `resources_clinic_department_id_foreign` (`clinic_department_id`),
+  CONSTRAINT `resources_clinic_department_id_foreign` FOREIGN KEY (`clinic_department_id`) REFERENCES `clinic_departments` (`id`) ON DELETE SET NULL,
   CONSTRAINT `resources_clinic_id_foreign` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`) ON DELETE SET NULL,
   CONSTRAINT `resources_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `resources_resource_type_id_foreign` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_types` (`id`) ON DELETE RESTRICT,
@@ -1913,3 +2017,15 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (242,'2026_03_08_dr
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (243,'2026_03_09_100000_add_allow_outside_availability_to_resources_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (244,'2026_03_09_200000_add_person_id_to_activities_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (245,'2026_03_09_210000_drop_person_activities_table',3);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (246,'2026_03_12_000001_create_order_payments_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (247,'2026_03_16_000001_add_lost_reason_and_closed_at_to_orders_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (248,'2026_03_23_100000_add_afb_status_columns_to_orders_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (249,'2026_03_23_100100_create_afb_dispatch_tables',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (250,'2026_03_26_000001_create_clinic_departments_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (251,'2026_03_26_000002_add_clinic_department_id_to_resources_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (252,'2026_03_26_000003_add_clinic_department_id_to_afb_tables',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (253,'2026_03_26_000004_drop_afb_sent_columns_from_orders_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (254,'2026_03_26_000005_refactor_afb_person_documents',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (255,'2026_03_27_000000_replace_order_items_product_type_with_resource_type',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (256,'2026_03_27_000001_add_order_item_ids_to_afb_person_documents',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (257,'2026_03_28_000000_create_lead_marketing_data_table',4);

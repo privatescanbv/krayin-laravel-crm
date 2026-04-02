@@ -6,19 +6,28 @@ IMAGE_NAME="keycloak"
 GITHUB_USERNAME="privatescanbv"
 REPO_NAME="krayin-laravel-crm"
 GITHUB_REGISTRY="ghcr.io"
-TAG="latest"
+
+BRANCH="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+SHORT_SHA=$(git rev-parse --short HEAD)
 
 ./doc.sh
 
-# Bouw de Docker image met een specifieke Dockerfile
-docker build --platform linux/amd64 -t $IMAGE_NAME -f ./.docker/keycloak/Dockerfile .
+docker build --platform linux/amd64 \
+  -t $IMAGE_NAME \
+  -f docker/php/Dockerfile .
 
-# Tag de Docker image voor GitHub Container Registry
-docker tag $IMAGE_NAME $GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME:$TAG
+FULL_IMAGE="$GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME"
 
-echo "Docker image $IMAGE_NAME tag to GitHub Packages at $GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME."
+if [ "$BRANCH" = "development" ]; then
+  docker tag $IMAGE_NAME $FULL_IMAGE:latest
+  docker push $FULL_IMAGE:latest
 
-# Push de Docker image naar GitHub Container Registry
-docker push $GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME:$TAG
+elif [ "$BRANCH" = "main" ]; then
+  # immutable tag
+  docker tag $IMAGE_NAME $FULL_IMAGE:prod-$SHORT_SHA
+  docker push $FULL_IMAGE:prod-$SHORT_SHA
 
-echo "Docker image $IMAGE_NAME pushed to GitHub Packages at $GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME:$TAG."
+  # moving production pointer
+  docker tag $IMAGE_NAME $FULL_IMAGE:prod
+  docker push $FULL_IMAGE:prod
+fi

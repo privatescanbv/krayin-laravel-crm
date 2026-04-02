@@ -168,7 +168,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
                 ]);
             });
         } catch (Exception $e) {
-            $this->logError('Import failed: '.$e->getMessage());
+            $this->logError('Import failed: '.$e->getMessage(), ['connection' => $connection]);
 
             return 1;
         }

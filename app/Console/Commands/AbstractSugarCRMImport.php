@@ -133,9 +133,18 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function testConnection(string $connection): void
     {
-        //        $this->info('Testing database connection...');
-        DB::connection($connection)->getPdo();
-        //        $this->info('✓ Database connection successful');
+        $config = config("database.connections.{$connection}");
+        $this->info("Testing connection [{$connection}]: {$config['host']}:{$config['port']} / {$config['database']}");
+        try {
+            DB::connection($connection)->getPdo();
+            $this->info("✓ Connection [{$connection}] successful");
+        } catch (Exception $e) {
+            throw new Exception(
+                "Cannot connect to [{$connection}] ({$config['host']}:{$config['port']} / {$config['database']}): {$e->getMessage()}",
+                0,
+                $e
+            );
+        }
     }
 
     /**
@@ -441,10 +450,6 @@ abstract class AbstractSugarCRMImport extends Command
 
     private function ensureLogRunHasStarted(): bool
     {
-        if (! $this->currentImportRun) {
-            parent::warn('Logging, will import operation has not been started yet');
-        }
-
         return ! is_null($this->currentImportRun);
     }
 }

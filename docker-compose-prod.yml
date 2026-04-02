@@ -26,9 +26,9 @@ services:
     networks:
       public:
         aliases:
-          - sso.dev.privatescan.nl
-          - newcrm.dev.privatescan.nl
-          - patient.dev.privatescan.nl
+          - "sso.${PRIVATESCAN_BASE_DOMAIN}"
+          - "newcrm.${PRIVATESCAN_BASE_DOMAIN}"
+          - "patient.${PRIVATESCAN_BASE_DOMAIN}"
 
   crm:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
@@ -42,7 +42,7 @@ services:
       - .env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.crm.rule=Host("newcrm.dev.privatescan.nl")
+      - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.crm.entrypoints=https
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.certresolver=myresolver
@@ -60,7 +60,7 @@ services:
       # Middleware: expliciete headers doorgeven
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.dev.privatescan.nl
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
     volumes:
@@ -76,7 +76,8 @@ services:
     container_name: mysql
     ports:
       - '3307:3306'
-    command: --skip-host-cache --skip-name-resolve --socket=/tmp/mysql.sock
+#    command: --skip-host-cache --skip-name-resolve --socket=/tmp/mysql.sock
+    command: --skip-host-cache --skip-name-resolve
     environment:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
       MYSQL_ROOT_HOST: '%'
@@ -107,7 +108,7 @@ services:
       UPLOAD_LIMIT: 300M
     labels:
       - traefik.enable=true
-      - traefik.http.routers.pma.rule=Host("phpmyadmin.dev.privatescan.nl")
+      - traefik.http.routers.pma.rule=Host("phpmyadmin.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.pma.entrypoints=https
       - traefik.http.routers.pma.tls=true
       - traefik.http.routers.pma.tls.certresolver=myresolver
@@ -128,11 +129,11 @@ services:
     ports:
       - "81:80"
     environment:
-      SITE_URL: 'https://suitecrm.dev.privatescan.nl'
+      SITE_URL: 'https://suitecrm.${PRIVATESCAN_BASE_DOMAIN}'
     labels:
       - traefik.enable=true
       - traefik.docker.network=public
-      - traefik.http.routers.suitecrm.rule=Host("suitecrm.dev.privatescan.nl")
+      - traefik.http.routers.suitecrm.rule=Host("suitecrm.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.suitecrm.entrypoints=https
       - traefik.http.routers.suitecrm.tls=true
       - traefik.http.routers.suitecrm.tls.certresolver=myresolver
@@ -140,7 +141,7 @@ services:
       - traefik.http.services.suitecrm-svc.loadbalancer.server.port=80
       - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Host=suitecrm.dev.privatescan.nl
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Host=suitecrm.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.http.routers.suitecrm.middlewares=suitecrm-forward@docker
       - logging=promtail
     networks:
@@ -160,9 +161,9 @@ services:
       WWWUSER: '${WWWUSER}'
       WWWGROUP: '${WWWGROUP}'
       APP_NAME: 'PrivateForms'
-      APP_ENV: 'production'
-      APP_KEY: 'base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg='
-      API_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg="
+      API_KEY_1: "${FORMS_API_KEY}"
       APP_DEBUG: 'false'
       APP_URL: "$PATIENT_PORTAL_URL"
       ASSET_URL: "$PATIENT_PORTAL_URL"
@@ -172,14 +173,14 @@ services:
       APP_MAINTENANCE_DRIVER: 'file'
       PHP_CLI_SERVER_WORKERS: 4
       BCRYPT_ROUNDS: 12
-      LOG_CHANNEL: 'stack'
+      LOG_CHANNEL: "${LOG_CHANNEL:-stack}"
       LOG_LEVEL: 'info'
       DB_CONNECTION: 'mysql'
       DB_HOST: 'mysql'
       DB_PORT: '3306'
       DB_DATABASE: 'forms'
       DB_USERNAME: 'formadmin'
-      DB_PASSWORD: 'FUC16A-qsh(<d!io'
+      DB_PASSWORD: "${FORMS_DB_PASSWORD}"
       APP_TIMEZONE: 'UTC'
       SESSION_DRIVER: 'file'
       SESSION_LIFETIME: 120
@@ -192,8 +193,8 @@ services:
       CACHE_STORE: 'database'
       MEMCACHED_HOST: '127.0.0.1'
       FORWARD_REDIS_PORT: 6379
-      KEYCLOAK_BASE_URL: 'https://sso.dev.privatescan.nl'
-      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
+      KEYCLOAK_BASE_URL: 'https://sso.${PRIVATESCAN_BASE_DOMAIN}'
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_CLIENT_ID: 'patient-app'
       KEYCLOAK_LOAD_USER_FROM_DATABASE: 'false'
       KEYCLOAK_APPEND_DECODED_TOKEN: 'true'
@@ -201,11 +202,11 @@ services:
       KEYCLOAK_LEEWAY: 60
       KEYCLOAK_CLIENT_SECRET: "$PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET"
       CRM_API_KEY: "${API_KEY_1}"
-      CRM_API_URL: "https://newcrm.dev.privatescan.nl/api/"
+      CRM_API_URL: "${APP_URL}/api/"
     labels:
       - traefik.enable=true
       # Patient portal router
-      - traefik.http.routers.patient.rule=Host("patient.dev.privatescan.nl")
+      - traefik.http.routers.patient.rule=Host("patient.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.patient.entrypoints=https
       - traefik.http.routers.patient.tls=true
       - traefik.http.routers.patient.tls.certresolver=myresolver
@@ -224,7 +225,7 @@ services:
       # service (exact 1)
 #      - traefik.http.services.patient-svc.loadbalancer.server.port=80
       # clinic - does not work yet
-#      - traefik.http.routers.clinic.rule=Host("clinic.dev.privatescan.nl")
+#      - traefik.http.routers.clinic.rule=Host("clinic.${PRIVATESCAN_BASE_DOMAIN}")
 #      - traefik.http.routers.clinic.entrypoints=https
 #      - traefik.http.routers.clinic.tls=true
 #      - traefik.http.routers.clinic.tls.certresolver=myresolver
@@ -232,10 +233,10 @@ services:
       # Middlewares
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.dev.privatescan.nl
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.${PRIVATESCAN_BASE_DOMAIN}
 #      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
 #      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Host=clinic.dev.privatescan.nl
+#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Host=clinic.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
     networks:
@@ -284,8 +285,8 @@ services:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
       - GF_INSTALL_PLUGINS=
-      - GF_SERVER_ROOT_URL=https://logs.dev.privatescan.nl
-      - GF_SERVER_DOMAIN=logs.dev.privatescan.nl
+      - GF_SERVER_ROOT_URL=https://logs.${PRIVATESCAN_BASE_DOMAIN}
+      - GF_SERVER_DOMAIN=logs.${PRIVATESCAN_BASE_DOMAIN}
     volumes:
       - grafana-data:/var/lib/grafana
     networks:
@@ -293,7 +294,7 @@ services:
       - public
     labels:
       - traefik.enable=true
-      - traefik.http.routers.grafana.rule=Host("logs.dev.privatescan.nl")
+      - traefik.http.routers.grafana.rule=Host("logs.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.grafana.entrypoints=https
       - traefik.http.routers.grafana.tls=true
       - traefik.http.routers.grafana.tls.certresolver=myresolver
@@ -304,7 +305,7 @@ services:
       - loki
 
   keycloak:
-    image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:latest
+    image: quay.io/keycloak/keycloak:24.0
     container_name: keycloak
     restart: unless-stopped
     env_file:
@@ -314,7 +315,7 @@ services:
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
-      KC_HOSTNAME: sso.dev.privatescan.nl
+      KC_HOSTNAME: sso.${PRIVATESCAN_BASE_DOMAIN}
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
@@ -333,7 +334,7 @@ services:
         condition: service_healthy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.keycloak.rule=Host("sso.dev.privatescan.nl")
+      - traefik.http.routers.keycloak.rule=Host("sso.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.keycloak.entrypoints=https
       - traefik.http.routers.keycloak.tls=true
       - traefik.http.routers.keycloak.tls.certresolver=myresolver
@@ -342,7 +343,7 @@ services:
       - traefik.http.services.keycloak-svc.loadbalancer.server.port=8080
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.dev.privatescan.nl
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
 #    healthcheck:

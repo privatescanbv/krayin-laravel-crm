@@ -1,4 +1,4 @@
-FROM docker.io/node:20-bullseye AS vite
+FROM docker.io/node:22-bookworm AS vite
 ARG APP_ENV=production
 WORKDIR /build
 COPY ./ ./
@@ -23,7 +23,7 @@ ENV APP_ENV=${APP_ENV}
 
 # --- Add Yarn + NodeJS (for frontend builds or tooling) - for Vite server
 RUN if [ "$APP_ENV" = "local" ]; then \
-      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+      curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
       apt-get install -y nodejs && \
       corepack enable && \
       corepack prepare yarn@stable --activate && \

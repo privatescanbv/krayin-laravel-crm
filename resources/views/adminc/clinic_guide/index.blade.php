@@ -147,14 +147,7 @@
                                     </a>
                                 </div>
 
-                                <div v-if="item.patient.emails && item.patient.emails.length" class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                    <a :href="'mailto:' + item.patient.emails[0].value" class="hover:text-indigo-600">
-                                        @{{ item.patient.emails[0].value }}
-                                    </a>
-                                </div>
+
                             </div>
 
                             <div v-if="!item.patient" class="text-sm text-gray-400 dark:text-gray-500 italic">
@@ -173,6 +166,7 @@
                                         <span class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></span>
                                         <span>@{{ oi.product_name || 'Onbekend product' }}</span>
                                         <span v-if="oi.quantity > 1" class="text-gray-400">x@{{ oi.quantity }}</span>
+                                        <span v-if="oi.start_time" class="text-gray-400 ml-1">(@{{ oi.start_time }})</span>
                                     </li>
                                 </ul>
                             </div>

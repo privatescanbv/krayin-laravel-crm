@@ -45,7 +45,7 @@ class ClinicGuideController extends Controller
                         $q->whereHas('partnerProducts', function ($q) {
                             $q->whereHas('clinics');
                         });
-                    })->with(['product', 'person']);
+                    })->with(['product', 'person', 'resourceOrderItems']);
                 },
                 'stage',
                 'user',
@@ -123,6 +123,7 @@ class ClinicGuideController extends Controller
                             'product_name' => $item->product?->name,
                             'person_name'  => $item->person?->name,
                             'quantity'     => $item->quantity,
+                            'start_time'   => $item->resourceOrderItems->sortBy('from')->first()?->from?->format('H:i'),
                         ]),
                         'order_url'      => $orderUrl,
                     ];

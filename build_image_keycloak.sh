@@ -14,7 +14,7 @@ SHORT_SHA=$(git rev-parse --short HEAD)
 
 docker build --platform linux/amd64 \
   -t $IMAGE_NAME \
-  -f docker/php/Dockerfile .
+  -f ./.docker/keycloak/Dockerfile .
 
 FULL_IMAGE="$GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME"
 

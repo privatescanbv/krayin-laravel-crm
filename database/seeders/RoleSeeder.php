@@ -42,6 +42,7 @@ class RoleSeeder extends Seeder
             'description'     => 'Medewerker met beperkte rechten voor afdelingswerkzaamheden',
             'permission_type' => 'custom',
             'permissions'     => json_encode([
+                'operational-dashboard',
                 'dashboard',
                 'leads',
                 'leads.create',
@@ -100,6 +101,7 @@ class RoleSeeder extends Seeder
             'description'     => 'Kliniek begeleider met toegang tot dagplanning en basisrechten',
             'permission_type' => 'custom',
             'permissions'     => json_encode([
+                'operational-dashboard',
                 'dashboard',
                 'leads',
                 'leads.view',

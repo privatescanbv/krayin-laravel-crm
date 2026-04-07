@@ -309,6 +309,16 @@
     </form>
 
     @if($activity->lead)
+    <!-- Mail dialog component (hidden button, listens for open-email-dialog event from call status form) -->
+    <x-admin::activities.actions.mail
+        :entity="$activity->lead"
+        entity-control-name="lead_id"
+        :show-button="false"
+        :activity-id="$activity->id"
+    />
+    @endif
+
+    @if($activity->lead)
     <!-- Lead Afvoeren Modal -->
     <x-admin::modal ref="leadAfvoerenModal">
         <x-slot:header>

@@ -76,6 +76,7 @@ class Email extends Model implements EmailContract
         'lead_id',
         'sales_lead_id',
         'clinic_id',
+        'activity_id',
         'created_at',
         'updated_at',
     ];

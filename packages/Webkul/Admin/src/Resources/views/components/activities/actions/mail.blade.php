@@ -373,6 +373,7 @@
                             ALGEMEEN: @json(EmailTemplateType::ALGEMEEN->value),
                             ORDER: @json(EmailTemplateType::ORDER->value),
                             GVL: @json(EmailTemplateType::GVL->value),
+                            PATIENT: @json(EmailTemplateType::PATIENT->value),
                         },
                     }
                 },

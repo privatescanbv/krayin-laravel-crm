@@ -358,9 +358,7 @@
                         return this.activities
                             .filter(activity => activity.type === this.activityTypeFilter)
                             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                    }
-
-                    if (this.selectedType == 'planned') {
+                    } else if (this.selectedType == 'planned') {
                         return this.activities
                             .filter(activity => ! activity.is_done && !['email', 'patient_message'].includes(activity.type))
                             .slice()
@@ -369,11 +367,9 @@
                                 const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
                                 return aTime - bTime;
                             });
-                    }
-                    if (this.selectedType == 'file') {
+                    } else if (this.selectedType == 'file') {
                         return this.activities.filter(activity => activity.type == 'file');
-                    }
-                    if (this.selectedType == 'system') {
+                    } else if (this.selectedType == 'system') {
                         return this.activities.filter(activity => activity.type == 'system');
                     }
 

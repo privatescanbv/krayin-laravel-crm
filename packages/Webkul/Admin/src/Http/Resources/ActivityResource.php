@@ -40,6 +40,8 @@ class ActivityResource extends JsonResource
             'files'           => is_array($this->files) ? $this->files : ActivityFileResource::collection($this->files),
             'location'        => $this->location,
             'linked_entity_type' => (isset($this->emailLinkedEntityType)) ? $this->emailLinkedEntityType: '',
+            'activity_label'     => data_get($this->resource, 'activity_title', null),
+            'activity_type'      => data_get($this->resource, 'activity_type', null),
             'publish_to_portal' => (bool) data_get($this->resource, 'publish_to_portal', false),
             'entity_source'   => data_get($this->resource, 'entity_source', null),
             'created_at'      => $this->created_at,

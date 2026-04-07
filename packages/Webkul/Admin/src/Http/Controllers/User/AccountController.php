@@ -35,7 +35,7 @@ class AccountController extends Controller
             'last_name'        => 'required',
             'email'            => 'email|unique:users,email,'.$user->id,
             'password'         => 'nullable|min:6|confirmed',
-            'current_password' => 'required|min:6',
+            'current_password' => 'nullable|min:6',
             'image.*'          => 'nullable|mimes:bmp,jpeg,jpg,png,webp',
         ]);
 
@@ -52,10 +52,12 @@ class AccountController extends Controller
         // Normalize composite name field expected by backend
         $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
-        if (! Hash::check($data['current_password'], $user->password)) {
-            session()->flash('warning', trans('admin::app.account.edit.invalid-password'));
+        if (! empty($data['password'])) {
+            if (empty($data['current_password']) || ! Hash::check($data['current_password'], $user->password)) {
+                session()->flash('warning', trans('admin::app.account.edit.invalid-password'));
 
-            return redirect()->back();
+                return redirect()->back();
+            }
         }
 
         if (isset($data['role_id']) || isset($data['view_permission'])) {

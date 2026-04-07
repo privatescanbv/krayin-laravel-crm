@@ -191,6 +191,15 @@ export default {
                         after: "{field} gelecekte veya bugün olmalıdır.",
                     },
                 },
+
+                nl: {
+                    ...nl,
+                    messages: {
+                        ...nl.messages,
+                        phone: "Dit {field} moet een geldig telefoonnummer zijn.",
+                        after: "Het {field} moet een datum in de toekomst of vandaag zijn.",
+                    },
+                },
             }),
 
             validateOnBlur: true,

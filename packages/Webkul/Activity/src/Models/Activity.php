@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\EmailProxy;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\User\Models\GroupProxy;
@@ -155,6 +156,11 @@ class Activity extends Model implements ActivityContract
     public function callStatuses()
     {
         return $this->hasMany(CallStatus::class, 'activity_id');
+    }
+
+    public function emails()
+    {
+        return $this->hasMany(EmailProxy::modelClass(), 'activity_id');
     }
 
     /**

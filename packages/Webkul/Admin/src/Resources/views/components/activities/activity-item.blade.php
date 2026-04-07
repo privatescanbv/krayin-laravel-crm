@@ -115,8 +115,11 @@
                             <span class="icon-contact text-[10px]"></span>
                         </span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'"
-                              class="icon-activity ml-1 text-xs text-activity-note-text"
-                              title="E-mail gekoppeld aan activiteit"></span>
+                              class="ml-2 inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+                              :title="'Activiteit: ' + (activity.activity_label || '')">
+                            <span class="icon-activity text-[10px]"></span>
+                            <span v-if="activity.activity_label">@{{ activity.activity_label }}</span>
+                        </span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'"
                               class="icon-activity ml-1 text-xs text-activity-note-text"
                               title="E-mail gekoppeld aan sales"></span>

@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Concerns;
 
 use Illuminate\Support\Collection;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
@@ -60,30 +61,43 @@ trait ConcatsEmailActivities
             return $activities;
         }
 
-        $mapped = $emails->map(function (Email $email) use ($user, $attachmentRepository) {
+        // Bulk-load linked activities to avoid N+1
+        $activityIds = $emails->pluck('activity_id')->filter()->unique()->values()->all();
+        $activities = $activityIds
+            ? Activity::whereIn('id', $activityIds)->get()->keyBy('id')
+            : collect();
+
+        $mapped = $emails->map(function (Email $email) use ($user, $attachmentRepository, $activities) {
             $subject = $email->getThreadChain()->pluck('subject')
                 ->implode(' / ');
+
+            $linkedActivity = $email->activity_id ? ($activities[$email->activity_id] ?? null) : null;
+
+            $linkedEntityType = $linkedActivity
+                ? 'activity'
+                : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown'))));
+
             return (object) [
-                'id'            => $email->id,
-                'parent_id'     => $email->parent_id,
-                'title'         => $subject,
-                'type'          => 'email',
-                'is_done'       => 1,
-                'is_read'       => $email->is_read,
-                'comment'       => $email->reply,
-                'schedule_from' => null,
-                'schedule_to'   => null,
-                'user'          => $user,
-                'group'         => null,
-                'location'      => null,
-                'additional'    => [
+                'id'             => $email->id,
+                'parent_id'      => $email->parent_id,
+                'title'          => $subject,
+                'type'           => 'email',
+                'is_done'        => 1,
+                'is_read'        => $email->is_read,
+                'comment'        => $email->reply,
+                'schedule_from'  => null,
+                'schedule_to'    => null,
+                'user'           => $user,
+                'group'          => null,
+                'location'       => null,
+                'additional'     => [
                     'folders' => $email->folder_id ? [Folder::find($email->folder_id)?->name] : [],
                     'from'    => $this->toArray($email->from),
                     'to'      => $this->toArray($email->reply_to),
                     'cc'      => $this->toArray($email->cc),
                     'bcc'     => $this->toArray($email->bcc),
                 ],
-                'files'         => $attachmentRepository->findWhere(['email_id' => $email->id])->map(function ($attachment) {
+                'files'          => $attachmentRepository->findWhere(['email_id' => $email->id])->map(function ($attachment) {
                     return (object) [
                         'id'                  => $attachment->id,
                         'name'                => $attachment->name,
@@ -94,9 +108,12 @@ trait ConcatsEmailActivities
                         'updated_at'          => $attachment->updated_at,
                     ];
                 })->toArray(),
-                'emailLinkedEntityType' => ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))),
-                'created_at'    => $email->created_at,
-                'updated_at'    => $email->updated_at,
+                'emailLinkedEntityType' => $linkedEntityType,
+                'activity_id'    => $email->activity_id,
+                'activity_title' => $linkedActivity?->title,
+                'activity_type'  => $linkedActivity?->type?->value,
+                'created_at'     => $email->created_at,
+                'updated_at'     => $email->updated_at,
             ];
         });
 

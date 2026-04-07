@@ -130,7 +130,7 @@
                             type="password"
                             name="current_password"
                             :label="trans('admin::app.account.edit.current-password')"
-                            rules="required|min:6"
+                            rules="min:6"
                             :placeholder="trans('admin::app.account.edit.current-password')"
                         />
 

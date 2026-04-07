@@ -11,8 +11,7 @@ class TestSeeder extends BaseSeeder
     public function run($parameters = []): void
     {
         $this->call([
-            TestPipelineSeeder::class,
-            TestAttributeSeeder::class,
+            PipelineSeeder::class,
             DepartmentSeeder::class,
             ResourceTypeSeeder::class,
             LeadChannelSeeder::class,

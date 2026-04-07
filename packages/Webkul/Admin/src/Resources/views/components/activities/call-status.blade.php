@@ -171,6 +171,8 @@
 
                 if (data.send_email) {
                     window.dispatchEvent(new CustomEvent('open-email-dialog', { detail: { defaultEmail: data.default_email || null, activityId: data.activity_id } }));
+                } else {
+                    window.location.reload();
                 }
                 return false;
             } catch (e2) {

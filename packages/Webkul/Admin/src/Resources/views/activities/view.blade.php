@@ -225,6 +225,12 @@
             document.addEventListener('DOMContentLoaded', function() {
                 if (typeof app !== 'undefined') {
                     app.mixin({
+                        mounted() {
+                            this.$emitter.on('on-activity-added', () => {
+                                window.location.reload();
+                            });
+                        },
+
                         data() {
                             return {
                                 leadAfvoerenData: {

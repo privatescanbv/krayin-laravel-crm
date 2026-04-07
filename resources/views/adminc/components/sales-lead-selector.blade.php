@@ -25,7 +25,8 @@
     <script type="module">
         app.component('v-sales-lead-selector', {
             template: '#v-sales-lead-selector-template',
-            props: ['name','label','placeholder','currentValue','currentLabel','canAddNew','searchRoute'],
+            // selectionChangeCallback: optional name of window.adminc[fn](selectedItem, componentRootEl)
+            props: ['name','label','placeholder','currentValue','currentLabel','canAddNew','searchRoute','selectionChangeCallback'],
             emits: ['select','remove','create-new','change','update:value'],
             computed: {
                 resolvedSearchRoute() {
@@ -51,6 +52,10 @@
                     const first = Array.isArray(items) && items.length ? items[0] : null;
                     this.$emit('change', first);
                     this.$emit('update:value', first ? first.id : null);
+                    const cbName = this.selectionChangeCallback;
+                    if (cbName && window.adminc && typeof window.adminc[cbName] === 'function') {
+                        window.adminc[cbName](first, this.$el);
+                    }
                 }
             }
         });

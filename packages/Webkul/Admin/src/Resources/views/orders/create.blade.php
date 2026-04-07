@@ -3,6 +3,32 @@
         Order aanmaken
     </x-slot>
 
+    @push('scripts')
+        <script>
+            window.adminc = window.adminc || {};
+            /**
+             * VeeValidate (v-field) houdt waarden bij los van het DOM; alleen .value zetten
+             * synchroniseert niet. Events triggeren dezelfde handlers als typen.
+             */
+            window.adminc.setNativeInputValueSyncingVeeValidate = function (input, value) {
+                if (! input) {
+                    return;
+                }
+                input.value = value;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            };
+            window.adminc.syncOrderTitleFromSalesLeadSelection = function (selectedItem, componentEl) {
+                if (! selectedItem || selectedItem.name == null || selectedItem.name === '') {
+                    return;
+                }
+                const form = componentEl && componentEl.closest ? componentEl.closest('form') : null;
+                const titleInput = form && form.querySelector('input[name="title"]');
+                window.adminc.setNativeInputValueSyncingVeeValidate(titleInput, selectedItem.name);
+            };
+        </script>
+    @endpush
+
     @include('adminc.components.sales-lead-selector')
 
     <x-admin::form :action="route('admin.orders.store')" method="POST">
@@ -32,6 +58,7 @@
                         name="title"
                         label="Titel"
                         rules="required"
+                        :value="old('title', $defaultOrderTitle ?? '')"
                     />
 
                     <x-adminc::components.field
@@ -49,6 +76,7 @@
                         :current-value="{{ json_encode($salesLeadId ?? old('sales_lead_id')) }}"
                         current-label="{{ e($salesLeadName ?? '') }}"
                         :can-add-new="false"
+                        selection-change-callback="syncOrderTitleFromSalesLeadSelection"
                     />
                 </div>
             </div>

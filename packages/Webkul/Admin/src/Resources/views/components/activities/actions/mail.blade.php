@@ -54,12 +54,12 @@
             {!! view_render_event('admin.components.activities.actions.mail.form_controls.before') !!}
 
             <x-admin::form
-                v-slot="{ meta, errors, handleSubmit }"
+                v-slot="{ meta, errors }"
                 enctype="multipart/form-data"
                 as="div"
             >
                 <form
-                    @submit="handleSubmit($event, save)"
+                    @submit.prevent="directSubmit"
                     ref="mailActionForm"
                 >
                     {!! view_render_event('admin.components.activities.actions.mail.form_controls.modal.before') !!}
@@ -277,12 +277,14 @@
                                     for="file-upload"
                                 ></label>
 
-                                <x-admin::button
+                                <button
+                                    type="button"
                                     class="primary-button"
-                                    :title="trans('admin::app.components.activities.actions.mail.send-btn')"
-                                    ::loading="isStoring"
-                                    ::disabled="isStoring"
-                                />
+                                    :disabled="isStoring"
+                                    @click="directSubmit"
+                                >
+                                    @lang('admin::app.components.activities.actions.mail.send-btn')
+                                </button>
                             </div>
 
                             {!! view_render_event('admin.components.activities.actions.mail.form_controls.modal.footer.save_button.after') !!}
@@ -919,6 +921,20 @@
                         emailField.focus();
                     }
                 },
+
+                  directSubmit() {
+                      // Sync TinyMCE content to textarea before reading FormData.
+                      window.tinymce?.triggerSave?.();
+
+                      this.save({}, {
+                          resetForm: () => {},
+                          setErrors: (errors) => {
+                              Object.values(errors).flat().forEach(msg => {
+                                  this.$emitter.emit('add-flash', { type: 'error', message: msg });
+                              });
+                          },
+                      });
+                  },
 
                   save(params, { resetForm, setErrors  }) {
                       this.isStoring = true;

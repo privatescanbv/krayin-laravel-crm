@@ -245,3 +245,14 @@ test('order item total_price uses provided value when not zero', function () {
         'total_price' => 250.00, // Custom price, not 200.00 (100.00 * 2)
     ]);
 });
+
+test('order create form prefills title from sales lead name when sales_lead_id is set', function () {
+    $salesLead = SalesLead::factory()->create([
+        'name' => 'OrderCreateTitlePrefill2026',
+    ]);
+
+    $response = $this->get(route('admin.orders.create', ['sales_lead_id' => $salesLead->id]));
+
+    $response->assertOk();
+    $response->assertSee('OrderCreateTitlePrefill2026', false);
+});

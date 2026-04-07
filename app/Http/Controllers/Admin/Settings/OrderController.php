@@ -250,16 +250,19 @@ class OrderController extends SimpleEntityController
         $salesLeadId = $request->get('sales_lead_id') ?? old('sales_lead_id');
 
         $salesLeadName = null;
+        $defaultOrderTitle = null;
         if ($salesLeadId) {
             $salesLead = SalesLead::with('lead')->find($salesLeadId);
-            $salesLeadName = $salesLead
-                ? $salesLead->name.($salesLead->lead ? ' ('.$salesLead->lead->name.')' : '')
-                : null;
+            if ($salesLead) {
+                $salesLeadName = $salesLead->name.($salesLead->lead ? ' ('.$salesLead->lead->name.')' : '');
+                $defaultOrderTitle = $salesLead->name;
+            }
         }
 
         return view($this->createView, [
-            'salesLeadId'   => $salesLeadId,
-            'salesLeadName' => $salesLeadName,
+            'salesLeadId'       => $salesLeadId,
+            'salesLeadName'     => $salesLeadName,
+            'defaultOrderTitle' => $defaultOrderTitle,
         ]);
     }
 

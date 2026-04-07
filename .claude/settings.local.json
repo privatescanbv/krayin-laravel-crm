@@ -48,7 +48,8 @@
       "Bash(npm install:*)",
       "Bash(npm show:*)",
       "Bash(/dev/null grep:*)",
-      "Bash(2)"
+      "Bash(2)",
+      "Bash(chmod +x:*)"
     ]
   }
 }

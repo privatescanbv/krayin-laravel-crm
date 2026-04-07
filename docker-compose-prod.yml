@@ -85,10 +85,11 @@ services:
       MYSQL_USER: '${DB_USERNAME}'
       MYSQL_PASSWORD: '${DB_PASSWORD}'
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      FORMS_DB_PASSWORD: '${FORMS_DB_PASSWORD}'
     volumes:
       - 'sail-mysql:/var/lib/mysql'
 #      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-      - '/home/apps/docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
+      - '/home/apps/docker/mysql/init-forms.sh:/docker-entrypoint-initdb.d/21-init-forms.sh'
     networks:
       - backend
 #    healthcheck:
@@ -222,21 +223,10 @@ services:
       # === BASIC AUTH MIDDLEWARE ===
       - traefik.http.middlewares.patient-apidocs-auth.basicauth.users=${CRM_APIDOCS_AUTH}
       - traefik.http.services.patient-svc.loadbalancer.server.port=80
-      # service (exact 1)
-#      - traefik.http.services.patient-svc.loadbalancer.server.port=80
-      # clinic - does not work yet
-#      - traefik.http.routers.clinic.rule=Host("clinic.${PRIVATESCAN_BASE_DOMAIN}")
-#      - traefik.http.routers.clinic.entrypoints=https
-#      - traefik.http.routers.clinic.tls=true
-#      - traefik.http.routers.clinic.tls.certresolver=myresolver
-#      - traefik.http.services.clinic.loadbalancer.server.port=80
       # Middlewares
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.${PRIVATESCAN_BASE_DOMAIN}
-#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
-#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-#      - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Host=clinic.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
     networks:

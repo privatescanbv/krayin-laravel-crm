@@ -35,7 +35,8 @@ rm docker-compose.yml
 
 # Kopieer init-bestand uit container (pas pad aan als nodig)
 docker cp temp-crm:/docker/mysql/init-n8n.sql ./docker/mysql/init-n8n.sql
-docker cp temp-crm:/docker/mysql/init-forms.sql ./docker/mysql/init-forms.sql
+docker cp temp-crm:/docker/mysql/init-forms.sh ./docker/mysql/init-forms.sh
+chmod +x ./docker/mysql/init-forms.sh
 docker cp temp-crm:/docker/docker-compose.yml ./docker-compose.yml
 #docker cp temp-crm:/docker/.env.prod ./.env
 docker cp temp-crm:/docker/.env.keycloak.prod ./.env.keycloak

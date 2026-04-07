@@ -204,6 +204,9 @@ services:
       KEYCLOAK_CLIENT_SECRET: "$PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET"
       CRM_API_KEY: "${API_KEY_1}"
       CRM_API_URL: "${APP_URL}/api/"
+      TWILIO_ACCOUNT_SID: "${FORMS_TWILIO_ACCOUNT_SID}"
+      TWILIO_AUTH_TOKEN: "${FORMS_TWILIO_AUTH_TOKEN}"
+      TWILIO_VERIFY_SID: "${FORMS_TWILIO_VERIFY_SID}"
     labels:
       - traefik.enable=true
       # Patient portal router

@@ -352,12 +352,6 @@ return [
         'url'        => config('services.portal.patient.web_url'),
         'sort'       => 15,
         'icon-class' => 'icon-forward',
-    ], [
-        'key'        => 'clinic_portal',
-        'name'       => 'Clinic Portaal',
-        'url'        => config('services.portal.clinic.web_url'),
-        'sort'       => 16,
-        'icon-class' => 'icon-forward',
     ],
 
     /**

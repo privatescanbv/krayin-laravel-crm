@@ -90,6 +90,27 @@ class SalesLead extends Model
         return $this->belongsTo(Lead::class);
     }
 
+    /**
+     * Label for selects/lists: sales name plus lead name in parentheses only when it adds disambiguation.
+     */
+    public function labelWithLeadSuffix(): string
+    {
+        $salesName = trim((string) ($this->name ?? ''));
+        $lead = $this->lead;
+
+        if (! $lead) {
+            return $salesName !== '' ? $salesName.' (Geen lead)' : 'Geen lead';
+        }
+
+        $leadName = trim((string) ($lead->name ?? ''));
+
+        if ($leadName === '' || $leadName === $salesName) {
+            return $salesName !== '' ? $salesName : $leadName;
+        }
+
+        return $salesName.' ('.$leadName.')';
+    }
+
     // Quote relation removed
 
     /**

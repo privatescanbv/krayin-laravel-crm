@@ -61,17 +61,17 @@ trait ConcatsEmailActivities
             return $activities;
         }
 
-        // Bulk-load linked activities to avoid N+1
+        // Bulk-load activities linked to emails to avoid N+1
         $activityIds = $emails->pluck('activity_id')->filter()->unique()->values()->all();
-        $activities = $activityIds
+        $linkedActivities = $activityIds
             ? Activity::whereIn('id', $activityIds)->get()->keyBy('id')
             : collect();
 
-        $mapped = $emails->map(function (Email $email) use ($user, $attachmentRepository, $activities) {
+        $mapped = $emails->map(function (Email $email) use ($user, $attachmentRepository, $linkedActivities) {
             $subject = $email->getThreadChain()->pluck('subject')
                 ->implode(' / ');
 
-            $linkedActivity = $email->activity_id ? ($activities[$email->activity_id] ?? null) : null;
+            $linkedActivity = $email->activity_id ? ($linkedActivities[$email->activity_id] ?? null) : null;
             $folder = $email->folder_id ? Folder::find($email->folder_id) : null;
 
             $linkedEntityType = $linkedActivity

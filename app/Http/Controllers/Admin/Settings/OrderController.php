@@ -254,7 +254,7 @@ class OrderController extends SimpleEntityController
         if ($salesLeadId) {
             $salesLead = SalesLead::with('lead')->find($salesLeadId);
             if ($salesLead) {
-                $salesLeadName = $salesLead->name.($salesLead->lead ? ' ('.$salesLead->lead->name.')' : '');
+                $salesLeadName = $salesLead->labelWithLeadSuffix();
                 $defaultOrderTitle = $salesLead->name;
             }
         }
@@ -1023,7 +1023,7 @@ class OrderController extends SimpleEntityController
         $orderDefaultEmail = $this->orderMailService->getDefaultEmail($entity);
 
         $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
-            return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
+            return [$salesLead->id => $salesLead->labelWithLeadSuffix()];
         })->toArray();
 
         // Get persons from the sales lead (only from salesLead.persons, not from lead.persons)

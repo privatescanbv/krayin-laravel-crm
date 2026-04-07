@@ -50,7 +50,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::KLANT_ADVISEREN_START                         => [['Nieuwe lead, bellen', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::KLANT_ADVISEREN_START_HERNIA                  => [['Nieuwe lead, bellen - geen MRI / overig', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::KLANT_ADVISEREN_OPVOLGEN                      => [],
-            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA               => [['Nieuwe lead, bellen - MRI', $defaultDescription, ActivityType::TASK, 1]],
+            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA               => [['Nieuwe lead, bellen - MRI', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA         => [['Klant levert MRI beelden aan, verwerken', $defaultDescription, ActivityType::TASK, 30]],
             PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA             => [['Klant adviseren met MRI beelden', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::SALES_DOCTOR_ASSESSMENT_HERNIA                => [['Casus bij arts ter beoordeling', $defaultDescription, ActivityType::TASK, 3]],

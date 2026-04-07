@@ -206,6 +206,25 @@ HTML,
 HTML,
             ],
 
+            // ── Behandelovereenkomst ───────────────────────────────────────────────
+            // Variables: customer_name, order_reference, order_title, datum_afspraak,
+            //            tijd_afspraak, plaats_afspraak, afspraken_tabel
+            [
+                'name'        => 'Behandelovereenkomst',
+                'code'        => 'treatment-agreement',
+                'type'        => $order,
+                'language'    => $nl,
+                'departments' => null,
+                'subject'     => 'Uw behandelingsovereenkomst {{ order_reference }}',
+                'content'     => <<<'HTML'
+<p>Beste {{ customer_name }},</p>
+<p>Hierbij bevestigen wij uw afspraak voor order <strong>{{ order_reference }}</strong> ({{ order_title }}).</p>
+{{ afspraken_tabel }}
+<p>Heeft u vragen? Neem dan gerust contact met ons op.</p>
+<p>Met vriendelijke groet,<br>Privatescan</p>
+HTML,
+            ],
+
         ];
     }
 

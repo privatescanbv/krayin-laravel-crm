@@ -43,6 +43,7 @@ class UserSeeder extends Seeder
             'esther@privatescan.nl'        => '8A115dc@d4Ab',
             'rowain@privatescan.nl'        => '8A115dc@d4Ab',
             'safak@privatescan.nl'         => '8A115dc@d4Ab',
+            'lianne@privatescan.nl'        => '8A115dc@d4Ab',
         ];
     }
 
@@ -249,7 +250,17 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupHerniaId,
                 'signature'       => $this->signatureTemplate('Safak', 'Sel', 'safak@privatescan.nl'),
             ],
-
+            [
+                'first_name'      => 'Lianne',
+                'last_name'       => 'de Gelder',
+                'email'           => 'lianne@privatescan.nl',
+                'password'        => $passwords['lianne@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 2,
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupPrivatescanId,
+                'signature'       => $this->signatureTemplate('Lianne', 'de Gelder', 'lianne@privatescan.nl'),
+            ],
         ];
 
         // Create users and assign to groups

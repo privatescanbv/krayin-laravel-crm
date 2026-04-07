@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Departments;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use Illuminate\Database\Seeder;
@@ -30,6 +31,8 @@ class EmailTemplateSeeder extends Seeder
         $gvl = EmailTemplateType::GVL->value;
         $patient = EmailTemplateType::PATIENT->value;
 
+        $allDepartments = Departments::allValues();
+
         return [
 
             // ── Activiteit aangemaakt ─────────────────────────────────────────────
@@ -39,7 +42,7 @@ class EmailTemplateSeeder extends Seeder
                 'code'        => 'activity-created',
                 'type'        => $lead,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Nieuwe activiteit voor {{ lead.name }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ user.first_name }},</p>
@@ -56,7 +59,7 @@ HTML,
                 'code'        => 'activity-modified',
                 'type'        => $lead,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Activiteit gewijzigd voor {{ lead.name }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ user.first_name }},</p>
@@ -73,7 +76,7 @@ HTML,
                 'code'        => 'reply',
                 'type'        => $algemeen,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Re: uw bericht',
                 'content'     => <<<'HTML'
 <p>Beste,</p>
@@ -88,7 +91,7 @@ HTML,
                 'code'        => 'reply-de',
                 'type'        => $algemeen,
                 'language'    => $de,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Re: Ihre Nachricht',
                 'content'     => <<<'HTML'
 <p>Sehr geehrte Damen und Herren,</p>
@@ -103,7 +106,7 @@ HTML,
                 'code'        => 'reply-en',
                 'type'        => $algemeen,
                 'language'    => $en,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Re: your message',
                 'content'     => <<<'HTML'
 <p>Dear,</p>
@@ -120,7 +123,7 @@ HTML,
                 'code'        => 'appointment-confirmation',
                 'type'        => $order,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Bevestiging afspraak {{ order_reference }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ customer_name }},</p>
@@ -138,7 +141,7 @@ HTML,
                 'code'        => 'informatief-met-gvl',
                 'type'        => $gvl,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Informatie en GVL-formulier voor {{ person.name }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ person.first_name }},</p>
@@ -157,7 +160,7 @@ HTML,
                 'code'        => 'patient-portal-notification',
                 'type'        => $patient,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Uw patiëntportaal is beschikbaar',
                 'content'     => <<<'HTML'
 <p>Beste {{ person.first_name }},</p>
@@ -175,7 +178,7 @@ HTML,
                 'code'        => 'create-user',
                 'type'        => $algemeen,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Welkom bij Privatescan CRM',
                 'content'     => <<<'HTML'
 <p>Beste {{ user.first_name }},</p>
@@ -194,7 +197,7 @@ HTML,
                 'code'        => null,
                 'type'        => $order,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Order {{ order_reference }} | {{ order_title }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ customer_name }},</p>
@@ -214,7 +217,7 @@ HTML,
                 'code'        => 'treatment-agreement',
                 'type'        => $order,
                 'language'    => $nl,
-                'departments' => null,
+                'departments' => $allDepartments,
                 'subject'     => 'Uw behandelingsovereenkomst {{ order_reference }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ customer_name }},</p>

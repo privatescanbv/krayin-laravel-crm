@@ -11,7 +11,7 @@ beforeEach(function () {
 
 test('getDefaultPipeline returns default workflow pipeline when exists', function () {
 
-    $this->assertEquals(2, $this->pipelineRepository->getLeadPipelines()->count());
+    $this->assertEquals(3, $this->pipelineRepository->getLeadPipelines()->count());
     $result = $this->pipelineRepository->getDefaultPipeline(PipelineType::BACKOFFICE);
 
     expect($result)->not->toBeNull()

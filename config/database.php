@@ -112,8 +112,8 @@ return [
 
         'sugarcrm' => [
             'driver'         => 'mysql',
-            'host'           => env('SUGARCRM_DB_HOST', 'mysql'),
-            'port'           => env('SUGARCRM_DB_PORT', '3308'),
+            'host'           => env('SUGARCRM_DB_HOST', 'mysql_crm'),
+            'port'           => env('SUGARCRM_DB_PORT', '3306'),
             'database'       => env('SUGARCRM_DB_DATABASE', 'scrm_privatesuite9'),
             'username'       => env('SUGARCRM_DB_USERNAME', 'root'),
             'password'       => env('SUGARCRM_DB_PASSWORD', 'rootpassword'),

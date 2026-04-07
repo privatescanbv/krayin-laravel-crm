@@ -28,6 +28,7 @@ services:
           - sso.local.privatescan.nl
           - crm.local.privatescan.nl
           - patient.local.privatescan.nl
+          - phpmyadmin.local.privatescan.nl
 
   crm:
     build:
@@ -118,6 +119,29 @@ services:
         - '-p${DB_PASSWORD}'
       retries: 3
       timeout: 5s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql_crm
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: '${DB_PASSWORD}'
+      UPLOAD_LIMIT: 300M
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pma.rule=Host("phpmyadmin.local.privatescan.nl")
+      - traefik.http.routers.pma.entrypoints=https
+      - traefik.http.routers.pma.tls=true
+      - traefik.http.services.pma.loadbalancer.server.port=80
+      - traefik.docker.network=public
+    networks:
+      - backend
+      - public
+    depends_on:
+      - mysql_crm
 
   mailpit:
     image: 'axllent/mailpit:latest'

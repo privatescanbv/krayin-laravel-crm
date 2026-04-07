@@ -405,7 +405,7 @@ class Person extends Model implements PersonContract
         if ($this->first_name) {
             $parts[] = trim($this->first_name);
         }
-        array_merge($parts, $this->getFullLastNameParts());
+        $parts = array_merge($parts, $this->getFullLastNameParts());
 
         if (! $this->is_active) {
             $parts[] = '[Inactief]';

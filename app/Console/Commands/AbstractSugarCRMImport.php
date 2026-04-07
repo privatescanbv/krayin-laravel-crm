@@ -134,13 +134,14 @@ abstract class AbstractSugarCRMImport extends Command
     protected function testConnection(string $connection): void
     {
         $config = config("database.connections.{$connection}");
-        $this->info("Testing connection [{$connection}]: {$config['host']}:{$config['port']} / {$config['database']}");
+        $host = ($config['host'] ?? null) ? "{$config['host']}:{$config['port']}" : $config['driver'];
+        $this->info("Testing connection [{$connection}]: {$host} / {$config['database']}");
         try {
             DB::connection($connection)->getPdo();
             $this->info("✓ Connection [{$connection}] successful");
         } catch (Exception $e) {
             throw new Exception(
-                "Cannot connect to [{$connection}] ({$config['host']}:{$config['port']} / {$config['database']}): {$e->getMessage()}",
+                "Cannot connect to [{$connection}] ({$host} / {$config['database']}): {$e->getMessage()}",
                 0,
                 $e
             );

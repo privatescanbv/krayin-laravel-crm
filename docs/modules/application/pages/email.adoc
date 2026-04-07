@@ -185,47 +185,19 @@ De email composer ondersteunt een fullscreen modus voor een betere schrijfervari
 
 ==== Technische Details: Email Templates
 
-===== Template Locatie
+===== Opslag
 
-Email templates worden automatisch gedetecteerd en geladen vanuit de volgende directory:
+Templates staan in de database (`email_templates`) en worden beheerd via *Instellingen → E-mailsjablonen*.
 
-[source]
-----
-resources/views/adminc/email_templates/
-----
+De initiële templates voor een nieuwe installatie staan in `database/seeders/EmailTemplateSeeder.php` —
+pas dit bestand aan om de standaard onderwerpregel en inhoud te wijzigen vóór de eerste oplevering.
+Na installatie worden templates beheerd via de admin UI.
 
-===== Template Structuur
-
-Templates moeten voldoen aan de volgende structuur:
-
-* **Bestandsformaat**: `.blade.php` bestanden
-* **Layout Gebruik**: Templates moeten de gemeenschappelijke layout gebruiken via `@extends('adminc.email_templates.base.layout')`
-* **Content Sectie**: Template content moet worden geplaatst in een `@section('content')` blok
-* **Subdirectories**: Templates kunnen worden georganiseerd in subdirectories (bijvoorbeeld `order/order_mail.blade.php`)
-
-Voorbeeld template structuur:
-
-[source,php]
-----
-@extends('adminc.email_templates.base.layout')
-
-@section('content')
-    <p>Geachte heer/mevrouw {{ $lastname }},</p>
-
-    <p>
-        [Template content hier]
-    </p>
-@endsection
-----
-
-===== Automatische Template Detectie
-
-Het systeem scant automatisch de template directory en maakt alle beschikbare templates beschikbaar:
-
-* **Scan Proces**: Bij het openen van de email composer worden alle `.blade.php` bestanden in de root van de template directory gescand
-* **Dynamische Lijst**: Nieuwe templates worden automatisch gedetecteerd zonder code wijzigingen
-* **Template Namen**: Bestandsnamen worden automatisch geformatteerd als leesbare labels (bijvoorbeeld `reply.blade.php` wordt "Reply")
-* **Subdirectories**: Templates kunnen worden georganiseerd in subdirectories voor betere structuur, maar voor automatische detectie moeten ze in de root directory staan of handmatig worden geregistreerd
+[NOTE]
+====
+Single source of truth voor codes: `app/Enums/EmailTemplateCode.php`. +
+Tabelstructuur: zie <<db_structure.adoc#,Database structuur>>.
+====
 
 ===== Variabele Resolutie
 

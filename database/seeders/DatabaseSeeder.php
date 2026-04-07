@@ -32,5 +32,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CampaignSeeder::class);
         $this->call(PartnerProductSeeder::class);
         $this->call(WorkflowSeeder::class);
+        $this->call(EmailTemplateSeeder::class);
     }
 }

@@ -49,7 +49,8 @@
       "Bash(npm show:*)",
       "Bash(/dev/null grep:*)",
       "Bash(2)",
-      "Bash(chmod +x:*)"
+      "Bash(chmod +x:*)",
+      "Bash(vendor/bin/sail artisan:*)"
     ]
   }
 }

@@ -21,6 +21,7 @@ class TestSeeder extends BaseSeeder
             ClinicSeeder::class,
             RoleSeeder::class,
             UserTestSeeder::class,
+            EmailTemplateSeeder::class,
         ], $parameters);
 
         // Ensure departments and groups are properly linked for testing

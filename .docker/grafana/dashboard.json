@@ -18,7 +18,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 0,
+    "id": 1,
     "links": [],
     "panels": [
         {
@@ -450,7 +450,7 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
+                "w": 24,
                 "x": 0,
                 "y": 48
             },
@@ -490,9 +490,9 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 48
+                "w": 24,
+                "x": 0,
+                "y": 56
             },
             "id": 7,
             "options": {
@@ -559,12 +559,12 @@
         ]
     },
     "time": {
-        "from": "now-15m",
+        "from": "now-3h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 3
+    "version": 4
 }

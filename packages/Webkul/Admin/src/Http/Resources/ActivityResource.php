@@ -42,6 +42,7 @@ class ActivityResource extends JsonResource
             'linked_entity_type' => (isset($this->emailLinkedEntityType)) ? $this->emailLinkedEntityType: '',
             'activity_label'     => data_get($this->resource, 'activity_title', null),
             'activity_type'      => data_get($this->resource, 'activity_type', null),
+            'folder_name'        => data_get($this->resource, 'folder_name', null),
             'publish_to_portal' => (bool) data_get($this->resource, 'publish_to_portal', false),
             'entity_source'   => data_get($this->resource, 'entity_source', null),
             'created_at'      => $this->created_at,
@@ -69,10 +70,11 @@ class ActivityResource extends JsonResource
             $data['call_status_summary'] = $summary;
             $data['call_statuses'] = $items->sortBy('created_at')->values()->map(function ($cs) {
                 return [
-                    'status' => is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null),
+                    'id'          => $cs->id,
+                    'status'      => is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null),
                     'omschrijving' => $cs->omschrijving,
-                    'created_at' => $cs->created_at,
-                    'creator' => $cs->creator ? ['name' => $cs->creator->name] : null,
+                    'created_at'  => $cs->created_at,
+                    'creator'     => $cs->creator ? ['name' => $cs->creator->name] : null,
                 ];
             });
         }

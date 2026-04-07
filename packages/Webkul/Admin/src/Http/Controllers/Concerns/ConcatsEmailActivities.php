@@ -72,6 +72,7 @@ trait ConcatsEmailActivities
                 ->implode(' / ');
 
             $linkedActivity = $email->activity_id ? ($activities[$email->activity_id] ?? null) : null;
+            $folder = $email->folder_id ? Folder::find($email->folder_id) : null;
 
             $linkedEntityType = $linkedActivity
                 ? 'activity'
@@ -91,7 +92,7 @@ trait ConcatsEmailActivities
                 'group'          => null,
                 'location'       => null,
                 'additional'     => [
-                    'folders' => $email->folder_id ? [Folder::find($email->folder_id)?->name] : [],
+                    'folders' => $folder ? [$folder->name] : [],
                     'from'    => $this->toArray($email->from),
                     'to'      => $this->toArray($email->reply_to),
                     'cc'      => $this->toArray($email->cc),
@@ -112,6 +113,7 @@ trait ConcatsEmailActivities
                 'activity_id'    => $email->activity_id,
                 'activity_title' => $linkedActivity?->title,
                 'activity_type'  => $linkedActivity?->type?->value,
+                'folder_name'    => $folder?->name,
                 'created_at'     => $email->created_at,
                 'updated_at'     => $email->updated_at,
             ];

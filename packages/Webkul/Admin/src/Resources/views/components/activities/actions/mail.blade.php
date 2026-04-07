@@ -108,6 +108,9 @@
                                 ::value="entity.id"
                             />
 
+                            <!-- Activity Id (set when mail is sent from an activity context) -->
+                            <input v-if="resolvedActivityId" type="hidden" name="activity_id" :value="resolvedActivityId">
+
                             <!-- To -->
                             <x-admin::form.control-group>
                                 <div class="relative">
@@ -347,10 +350,10 @@
                         // Local copy of defaultTemplate prop that can be mutated
                         currentDefaultTemplate: this.defaultTemplate || '',
                         showCC: false,
-
                         showBCC: false,
-
                         isStoring: false,
+                        isFullscreen: false,
+                        resolvedActivityId: this.activityId || null,
 
                         entityEmails: [],
 
@@ -449,54 +452,29 @@
 
               methods: {
                   async loadTemplates() {
-                      // Use entity type override if provided (e.g., from order mail, gvl)
+                      let entityType;
+
                       if (this.entityTypeOverride) {
-                          const entityType = this.entityTypeOverride;
-                          try {
-                              const response = await this.$axios.get('{{ route('admin.mail.templates') }}', {
-                                  params: {
-                                      entity_type: entityType
-                                  }
-                              });
-                              const templates = response.data?.data || response.data || [];
-                              this.emailTemplates = Array.isArray(templates) ? templates : [];
-                          } catch (error) {
-                              this.emailTemplates = [];
+                          entityType = this.entityTypeOverride;
+                      } else {
+                          const controlName = (this.entityControlName || '').toString().toLowerCase();
+                          const entityTypeStr = (this.entity?.entity_type || this.entity?.type || '').toString().toLowerCase();
+
+                          if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
+                              entityType = this.templateTypes.ORDER;
+                          } else if (controlName === 'lead_id' || entityTypeStr === 'lead' || entityTypeStr === 'leads') {
+                              entityType = this.templateTypes.LEAD;
+                          } else if (controlName === 'sales_lead_id') {
+                              entityType = this.templateTypes.ORDER;
+                          } else {
+                              entityType = this.templateTypes.LEAD;
                           }
-                          return;
-                      }
-
-                      // Determine entity type based on entityControlName or entity type
-                      const controlName = (this.entityControlName || '').toString().toLowerCase();
-                      const entityTypeStr = (this.entity?.entity_type || this.entity?.type || '').toString().toLowerCase();
-
-                      let entityType = this.templateTypes.LEAD; // Default to LEAD for leads (which includes ALGEMEEN)
-
-                      // Check for orders (sales_lead_id from order context)
-                      if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
-                          entityType = this.templateTypes.ORDER;
-                      }
-                      // Check for leads - LEAD type includes ALGEMEEN templates
-                      else if (controlName === 'lead_id' || entityTypeStr === 'lead' || entityTypeStr === 'leads') {
-                          entityType = this.templateTypes.LEAD; // LEAD type returns both LEAD and ALGEMEEN templates
-                      }
-                      // Check for orders (when sales_lead_id is used in order context)
-                      else if (controlName === 'sales_lead_id') {
-                          // Default to order for sales_lead_id when opened from order edit page
-                          entityType = this.templateTypes.ORDER;
-                      }
-                      // Default fallback: use LEAD (which includes ALGEMEEN)
-                      else {
-                          entityType = this.templateTypes.LEAD;
                       }
 
                       try {
                           const response = await this.$axios.get('{{ route('admin.mail.templates') }}', {
-                              params: {
-                                  entity_type: entityType
-                              }
+                              params: { entity_type: entityType }
                           });
-                          // Handle different response structures
                           const templates = response.data?.data || response.data || [];
                           this.emailTemplates = Array.isArray(templates) ? templates : [];
                       } catch (error) {
@@ -578,7 +556,6 @@
 
                       // PRIORITY 3: Fallbacks - if nested lead object exists
                       if (!entities.lead && this.entity?.lead?.id) {
-                          console.log('Using nested lead', this.entity.lead.id);
                           addEntity('lead', this.entity.lead.id);
                       }
 
@@ -671,7 +648,23 @@
                   removeTinyMCE() {
                       tinymce?.remove?.();
                   },
-                  openModal(type) {
+
+                  toggleFullscreen() {
+                      this.isFullscreen = !this.isFullscreen;
+                      const modalEl = this.$refs.mailActivityModal?.$el;
+                      if (modalEl) {
+                          const panel = modalEl.querySelector('[class*="rounded-lg"]') || modalEl.firstElementChild;
+                          if (panel) {
+                              panel.classList.toggle('!fixed', this.isFullscreen);
+                              panel.classList.toggle('!inset-0', this.isFullscreen);
+                              panel.classList.toggle('!max-w-none', this.isFullscreen);
+                              panel.classList.toggle('!h-screen', this.isFullscreen);
+                              panel.classList.toggle('!rounded-none', this.isFullscreen);
+                          }
+                      }
+                  },
+
+                  openModal() {
                       this.openModalWithPayload({});
                   },
 
@@ -751,18 +744,8 @@
                               }
                           }
 
-                          // Inject activity_id hidden input if provided
-                          const formEl = this.$refs.mailActionForm;
-                          if (formEl && (activityId || this.activityId)) {
-                              let hidden = formEl.querySelector('input[name="activity_id"]');
-                              if (!hidden) {
-                                  hidden = document.createElement('input');
-                                  hidden.type = 'hidden';
-                                  hidden.name = 'activity_id';
-                                  formEl.appendChild(hidden);
-                              }
-                              hidden.value = activityId || this.activityId;
-                          }
+                              // Resolve activity_id (from payload or prop)
+                          this.resolvedActivityId = activityId || this.activityId || null;
 
                           // Add attachments if provided (sequentially to avoid race conditions)
                           if (attachments && Array.isArray(attachments) && attachments.length > 0) {

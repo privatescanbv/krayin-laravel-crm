@@ -14,7 +14,7 @@
     )) . ']';
 @endphp
 
-<div class="flex gap-2" v-for="(activity, index) in filteredActivities" :key="activity.id">
+<div class="flex gap-2" v-for="activity in filteredActivities" :key="activity.id">
     {!! view_render_event('admin.components.activities.content.activity.item.icon.before') !!}
 
     {!! view_render_event('admin.components.activities.content.activity.item.details.before') !!}
@@ -50,7 +50,7 @@
             {!! view_render_event('admin.components.activities.content.activity.item.title.before') !!}
 
             <!-- Activity Title -->
-            <div class="flex flex-1 flex-row items-center gap-4 align-middle border-b py-1" v-if="activity.title">
+            <div class="flex flex-1 flex-row items-center gap-4 border-b py-1" v-if="activity.title">
                 <template v-if="activity.type !== 'system'">
                     <a class="flex cursor-pointer flex-wrap grow items-center gap-1 font-medium hover:underline dark:text-white"
                         :class="{
@@ -71,7 +71,7 @@
                         class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-error dark:bg-red-900/30 dark:text-red-400">
                         Te laat
                     </span>
-                    <span v-else
+                    <span v-else-if="activity.schedule_from"
                         class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                         Gepland
                     </span>
@@ -102,15 +102,15 @@
                     <span v-if="activity.publish_to_portal"
                           class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"
                           title="Gepubliceerd in patiëntportaal">Portaal</span>
-                    <span v-if="activity.is_done == 1 || activity.is_done === true"
+                    <span v-if="activity.is_done == 1"
                           class="icon-tick ml-1 text-base text-status-active-text" title="Afgerond"></span>
-<span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"
+                        <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'"
                               class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                               title="E-mail gekoppeld aan lead">
                             <span class="icon-activity text-[10px]"></span>
                         </span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'person'"
-                              class="dark:text-slate-2 00 ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800"
+                              class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                               title="E-mail gekoppeld aan persoon">
                             <span class="icon-contact text-[10px]"></span>
                         </span>
@@ -120,9 +120,16 @@
                             <span class="icon-activity text-[10px]"></span>
                             <span v-if="activity.activity_label">@{{ activity.activity_label }}</span>
                         </span>
+                        <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'clinic'"
+                              class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
+                              title="E-mail gekoppeld aan kliniek">
+                            <span class="icon-activity text-[10px]"></span>
+                        </span>
                         <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'"
-                              class="icon-activity ml-1 text-xs text-activity-note-text"
-                              title="E-mail gekoppeld aan sales"></span>
+                              class="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200"
+                              title="E-mail gekoppeld aan sales">
+                            <span class="icon-activity text-[10px]"></span>
+                        </span>
                         <span v-else-if="activity.type === 'email'"
                               class="icon-activity ml-1 text-xs text-activity-note-text"
                               title="E-mail gekoppeld aan onbekend"></span>
@@ -209,7 +216,7 @@
                     </div>
                     <div v-if="activity.__showCallDetails && activity.call_statuses?.length"
                         class="mt-2 rounded border p-2 dark:border-gray-800">
-                        <div v-for="cs in activity.call_statuses" :key="cs.created_at"
+                        <div v-for="cs in activity.call_statuses" :key="cs.id || cs.created_at"
                             class="border-b py-1 text-xs last:border-b-0 dark:border-gray-800">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
@@ -234,7 +241,7 @@
 
         <!-- Activity More Options -->
         <template v-if="activity.type != 'system'">
-            {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.after') !!}
+            {!! view_render_event('admin.components.activities.content.activity.item.more_actions.dropdown.before') !!}
 
             <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
                 <x-slot:toggle>

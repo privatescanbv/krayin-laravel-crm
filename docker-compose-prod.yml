@@ -65,7 +65,7 @@ services:
       - logging=promtail
     volumes:
       - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
-      - '/home/apps/crm_storage:/usr/share/nginx/html/storage/app/public'
+      - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app/public'
     networks:
       - backend
       - public
@@ -88,8 +88,7 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
       FORMS_DB_PASSWORD: '${FORMS_DB_PASSWORD}'
     volumes:
-      - 'sail-mysql:/var/lib/mysql'
-#      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+      - '/home/apps/storage/mysql:/var/lib/mysql'
       - '/home/apps/docker/mysql/init-forms.sh:/docker-entrypoint-initdb.d/21-init-forms.sh'
     networks:
       - backend
@@ -370,8 +369,6 @@ networks:
     external: true
 
 volumes:
-  sail-mysql:
-    driver: local
   loki-data:
     driver: local
   grafana-data:

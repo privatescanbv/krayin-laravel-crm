@@ -236,6 +236,8 @@ services:
       - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
+    volumes:
+      - '/home/apps/storage/forms:/usr/share/nginx/html/storage/app/public'
     networks:
       - backend
       - public

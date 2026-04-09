@@ -65,6 +65,7 @@ services:
       - logging=promtail
     volumes:
       - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
+      - '/home/apps/crm_storage:/usr/share/nginx/html/storage/app/public'
     networks:
       - backend
       - public

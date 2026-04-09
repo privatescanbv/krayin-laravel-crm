@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\PipelineStage;
 use App\Traits\HasAuditTrail;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,5 +45,17 @@ class ResourceOrderItem extends Model
     public function orderItem(): BelongsTo
     {
         return $this->belongsTo(OrderItem::class, 'orderitem_id');
+    }
+
+    public function scopeOnDate(Builder $query, Carbon $date): Builder
+    {
+        return $query->whereDate('from', $date->toDateString());
+    }
+
+    public function scopeForAfbDispatch(Builder $query): Builder
+    {
+        return $query
+            ->whereHas('resource', fn ($q) => $q->whereNotNull('clinic_department_id'))
+            ->whereHas('orderItem.order', fn ($q) => $q->whereIn('pipeline_stage_id', PipelineStage::getAfbDispatchAllowedStageIds()));
     }
 }

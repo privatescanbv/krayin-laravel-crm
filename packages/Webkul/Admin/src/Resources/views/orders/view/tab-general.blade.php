@@ -3,7 +3,7 @@
     'afbNeedsManualBanner' => false,
     'afbHasBatchSuccess' => false,
     'afbSendUrl' => null,
-    'avbDispatchReadiness' => ['is_ready' => false, 'is_late' => false, 'planned_at' => null, 'reasons' => []],
+    'avbDispatchReadiness' => ['is_ready' => false, 'is_late' => false, 'is_all_sent' => false, 'needs_manual_send' => false, 'planned_at' => null, 'reasons' => []],
 ])
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
@@ -146,25 +146,30 @@
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">AFB status</h3>
 
-        {{-- AVB dispatch status --}}
+        {{-- AFB dispatch status --}}
         @php
             $avbReady   = $avbDispatchReadiness['is_ready'];
-            $avbLate    = $avbDispatchReadiness['is_late'];
             $avbPlanned = $avbDispatchReadiness['planned_at'];
             $avbReasons = $avbDispatchReadiness['reasons'];
+            $afbNeedsManualSending = $avbDispatchReadiness['needs_manual_send'];
+            $afbAllSent = $avbDispatchReadiness['is_all_sent'];
         @endphp
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
-            @if ($avbReady && $avbLate)
+            @if ($afbNeedsManualSending)
                 <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                     ⚠ Klaar voor dispatch (handmatig verzenden vereist)
                 </span>
-            @elseif ($avbReady)
+            @elseif ($afbAllSent)
                 <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    ✓ Verzonden
+                </span>
+            @elseif ($avbReady)
+                <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                     ✓ Klaar voor dispatch
                 </span>
                 @if ($avbPlanned)
                     <span class="text-xs text-gray-500 dark:text-gray-400">
-                        Gepland op {{ $avbPlanned->format('d-m-Y') }} om {{ $avbPlanned->format('H:i') }}
+                        Batch gepland op {{ $avbPlanned->format('d-m-Y') }} om {{ $avbPlanned->format('H:i') }}
                     </span>
                 @endif
             @else

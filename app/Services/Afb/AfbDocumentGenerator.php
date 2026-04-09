@@ -64,36 +64,6 @@ class AfbDocumentGenerator
     /**
      * @return array{html: string, person: ?Person}
      */
-    public function renderHtmlForOrderAndClinic(Order $order, Clinic $clinic): array
-    {
-        $order->loadMissing([
-            'user',
-            'salesLead.user',
-            'salesLead.contactPerson.address',
-            'salesLead.persons.address',
-            'orderItems.person.address',
-            'orderItems.product.partnerProducts.clinics',
-            'orderItems.resourceOrderItems.resource.clinic',
-        ]);
-
-        $examinations = $this->extractClinicExaminations($order, $clinic->id);
-        $person = $this->resolvePerson($order, $examinations);
-        $anamnesis = $this->resolveAnamnesis($order, $person);
-
-        $html = view('adminc.afb.document', [
-            'afb'   => $this->buildViewData($order, $clinic, $person, $anamnesis, $examinations),
-            'order' => $order,
-        ])->render();
-
-        return [
-            'html'   => $html,
-            'person' => $person,
-        ];
-    }
-
-    /**
-     * @return array{html: string, person: ?Person}
-     */
     public function renderHtmlForOrderAndDepartment(Order $order, ClinicDepartment $department): array
     {
         $department->loadMissing('clinic');
@@ -183,42 +153,6 @@ class AfbDocumentGenerator
             'clinic_anamnesis' => $this->emptyToNull($anamnesis?->comment_clinic),
             'extra_info'       => $this->emptyToNull($anamnesis?->description),
         ];
-    }
-
-    /**
-     * @return Collection<int, array{
-     *     start_at: Carbon,
-     *     date: string,
-     *     appointment_time: string,
-     *     start_time: string,
-     *     clinic_product_description: string,
-     *     order_item_person_id: ?int
-     * }>
-     */
-    private function extractClinicExaminations(Order $order, int $clinicId): Collection
-    {
-        return $order->orderItems
-            ->flatMap(function ($item) use ($clinicId) {
-                return $item->resourceOrderItems
-                    ->filter(fn (ResourceOrderItem $resourceOrderItem) => (int) $resourceOrderItem->resource?->clinic_id === $clinicId)
-                    ->map(function (ResourceOrderItem $resourceOrderItem) use ($item, $clinicId) {
-                        $start = $resourceOrderItem->from
-                            ? Carbon::parse($resourceOrderItem->from)
-                            : Carbon::parse($item->order?->first_examination_at ?? now());
-
-                        return [
-                            'start_at'                      => $start,
-                            'date'                          => $start->format('d-m-Y'),
-                            'appointment_time'              => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
-                            'start_time'                    => $start->format('H:i'),
-                            'clinic_product_description'    => $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId)
-                                ?: ($item->getProductDescription() ?: $item->getProductName() ?: '-'),
-                            'order_item_person_id'  => $item->person_id ? (int) $item->person_id : null,
-                        ];
-                    });
-            })
-            ->sortBy(fn (array $row) => $row['start_at'])
-            ->values();
     }
 
     /**

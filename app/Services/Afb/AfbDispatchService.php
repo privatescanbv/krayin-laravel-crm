@@ -12,6 +12,7 @@ use App\Models\AfbPersonDocument;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ResourceOrderItem;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -31,27 +32,15 @@ class AfbDispatchService
 
     public function queueDailyBatchDispatches(Carbon $date): int
     {
-        $pairs = DB::table('orders')
-            ->join('order_items', 'order_items.order_id', '=', 'orders.id')
-            ->join('resource_orderitem', 'resource_orderitem.orderitem_id', '=', 'order_items.id')
-            ->join('resources', 'resources.id', '=', 'resource_orderitem.resource_id')
-            ->whereDate('resource_orderitem.from', $date->toDateString())
-            ->whereNotNull('resources.clinic_department_id')
-            ->whereIn('orders.pipeline_stage_id', PipelineStage::getAfbDispatchAllowedStageIds())
-            ->select('orders.id as order_id', 'resources.clinic_department_id')
-            ->distinct()
-            ->get();
-
-        $groupedOrderIds = [];
-
-        foreach ($pairs as $pair) {
-            $departmentId = (int) $pair->clinic_department_id;
-            $groupedOrderIds[$departmentId] ??= [];
-            $groupedOrderIds[$departmentId][] = (int) $pair->order_id;
-        }
+        $groupedOrderIds = ResourceOrderItem::onDate($date)
+            ->forAfbDispatch()
+            ->with(['resource:id,clinic_department_id', 'orderItem:id,order_id'])
+            ->get()
+            ->groupBy(fn ($roi) => (int) $roi->resource->clinic_department_id)
+            ->map(fn ($rois) => $rois->pluck('orderItem.order_id')->map(fn ($id) => (int) $id)->unique()->values()->all())
+            ->all();
 
         foreach ($groupedOrderIds as $departmentId => $orderIds) {
-            $orderIds = array_values(array_unique($orderIds));
             SendAfbDispatchJob::dispatch($departmentId, $orderIds, AfbDispatchType::BATCH->value);
         }
 
@@ -60,11 +49,7 @@ class AfbDispatchService
 
     public function queueLateBookingForOrder(Order $order): int
     {
-        if (! $this->isInDispatchableStage($order)) {
-            return 0;
-        }
-
-        if (! $this->shouldSendAsLateBooking($order)) {
+        if (! $this->getAvbDispatchReadiness($order)['is_late']) {
             return 0;
         }
 
@@ -241,42 +226,27 @@ class AfbDispatchService
             return false;
         }
 
-        return now()->diffInSeconds($examAt, false) <= 86400;
+        return now()->diffInHours($examAt) <= 24;
     }
 
     /**
-     * Handmatige AFB nodig: juiste status, late-booking venster, planning met afdeling, en nog niet overal succesvol verstuurd.
-     */
-    public function needsManualLateAfb(Order $order): bool
-    {
-        if (! $this->isInDispatchableStage($order)) {
-            return false;
-        }
-
-        if (! $this->shouldSendAsLateBooking($order)) {
-            return false;
-        }
-
-        $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
-
-        return $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
-    }
-
-    /**
-     * Geeft de AVB dispatch-gereedheid terug voor weergave op de order view.
+     * Geeft de AFB dispatch-gereedheid terug voor weergave op de order view.
      *
-     * @return array{is_ready: bool, is_late: bool, needs_manual_send: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
+     * @return array{is_ready: bool, is_late: bool, is_all_sent: bool, needs_manual_send: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
      */
     public function getAvbDispatchReadiness(Order $order): array
     {
         $reasons = [];
+        $examAt = $order->first_examination_at ? Carbon::parse($order->first_examination_at) : null;
 
         if (! $this->isInDispatchableStage($order)) {
             $reasons[] = 'Order staat niet in de juiste status voor AFB dispatch';
         }
 
-        if (! $order->first_examination_at) {
+        if (! $examAt) {
             $reasons[] = 'Geen eerste onderzoekdatum ingesteld';
+        } elseif ($examAt->isPast()) {
+            $reasons[] = 'Eerste onderzoekdatum is verstreken';
         }
 
         $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
@@ -284,24 +254,25 @@ class AfbDispatchService
             $reasons[] = 'Geen kliniekafdelingen gekoppeld aan order items';
         }
 
-        if ($order->first_examination_at && Carbon::parse($order->first_examination_at)->isPast()) {
-            $reasons[] = 'Eerste onderzoekdatum is verstreken';
-        }
-
         $isReady = empty($reasons);
         $isLate = $isReady && $this->shouldSendAsLateBooking($order);
         $needsManualSend = $isLate && $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
 
-        $plannedAt = null;
-        if ($order->first_examination_at && ! Carbon::parse($order->first_examination_at)->isPast()) {
-            $plannedAt = Carbon::parse($order->first_examination_at)
-                ->subDay()
-                ->setTime(6, 0, 0);
-        }
+        $isAllSent = $isReady
+            && ! $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds)
+            && AfbPersonDocument::query()
+                ->where('order_id', $order->id)
+                ->whereHas('dispatch', fn ($q) => $q->where('status', AfbDispatchStatus::SUCCESS->value))
+                ->exists();
+
+        $plannedAt = ($examAt && ! $examAt->isPast())
+            ? $examAt->copy()->subDay()->setTime(6, 0, 0)
+            : null;
 
         return [
             'is_ready'          => $isReady,
             'is_late'           => $isLate,
+            'is_all_sent'       => $isAllSent,
             'needs_manual_send' => $needsManualSend,
             'planned_at'        => $plannedAt,
             'reasons'           => $reasons,

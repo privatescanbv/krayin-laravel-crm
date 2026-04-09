@@ -171,19 +171,16 @@
             <tr>
                 <td class="label">Datum</td>
                 <td>{{ $order->first_examination_at?->format('d-m-Y') ?: '-' }}</td>
-                <td class="label">Ankunft</td>
-                <td>{{ $order->first_examination_at?->format('H:i') ?: '-' }}</td>
-                <td class="label">Start</td>
-                <td>{{ $afb['first_examination_start'] }}</td>
             </tr>
             @forelse ($afb['examinations'] as $exam)
                 <tr>
-                    <td colspan="6">{!! nl2br(e($exam['clinic_product_description'])) !!}</td>
+                    <td class="label" style="width: 10%;">{{ $exam['start_time'] }}</td>
+                    <td>{!! nl2br(e($exam['clinic_product_description'])) !!}</td>
                 </tr>
             @empty
 {{--                Technical error, this case should never happen --}}
                 <tr>
-                    <td colspan="4">Keine Untersuchungen für diese Klinik geplant.</td>
+                    <td colspan="2">Keine Untersuchungen für diese Klinik geplant.</td>
                 </tr>
             @endforelse
         </table>

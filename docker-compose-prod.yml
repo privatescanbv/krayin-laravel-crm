@@ -90,6 +90,7 @@ services:
     volumes:
       - '/home/apps/storage/mysql:/var/lib/mysql'
       - '/home/apps/docker/mysql/init-forms.sh:/docker-entrypoint-initdb.d/21-init-forms.sh'
+      - '/home/apps/docker/mysql/init-suitecrm.sh:/docker-entrypoint-initdb.d/22-init-forms.sh'
     networks:
       - backend
 #    healthcheck:

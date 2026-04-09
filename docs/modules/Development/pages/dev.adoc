@@ -145,7 +145,7 @@ Beter is rechtstreeks van de oude server naar de nieuwe met scp, maar er zijn no
 - https://phpmyadmin.dev.privatescan.nl -> maak database aan met naam `sugarcrm_privatesuite9`
 
 4. **Importeren in MySQL docker**
-- `sudo docker exec -i mysql mysql -u root -p[SUGARCRM_DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./2026-02-05.sql`
+- `sudo docker exec -i mysql mysql -u root -p'[SUGARCRM_DB_PASSWORD]'' scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./2026-02-05.sql`
 (DB_PASSWORD is te vinden in .env.prod SUGARCRM_DB_PASSWORD, van Github Project Krayin-laravel-crm)
 
 Note: dit is exclusief de e-mail attachments, zie daarvoor rsync command.

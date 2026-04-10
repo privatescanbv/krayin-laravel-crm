@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\PurchasePriceType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
@@ -68,7 +69,7 @@ test('resolvedPurchasePrice uses order item when it has purchase price', functio
         'product_id' => $this->product->id,
     ]);
     $item->purchasePrice()->create([
-        'type'                       => 'main',
+        'type'                       => PurchasePriceType::MAIN,
         'purchase_price_misc'        => 25.00,
         'purchase_price_doctor'      => 25.00,
         'purchase_price_cardiology'  => 25.00,
@@ -101,7 +102,7 @@ test('resolvedPurchasePrice cascades: order item overrides only set fields, rest
         'product_id' => $this->product->id,
     ]);
     $item->purchasePrice()->create([
-        'type'                  => 'main',
+        'type'                  => PurchasePriceType::MAIN,
         'purchase_price_doctor' => 99.00,
         'purchase_price'        => 99.00,
     ]);
@@ -189,7 +190,7 @@ test('resolvedPurchasePrice uses order item zero over explicit zero from partner
         'product_id' => $this->product->id,
     ]);
     $item->purchasePrice()->create([
-        'type'                       => 'main',
+        'type'                       => PurchasePriceType::MAIN,
         'purchase_price_misc'        => 0,
         'purchase_price_doctor'      => 0,
         'purchase_price_cardiology'  => 0,

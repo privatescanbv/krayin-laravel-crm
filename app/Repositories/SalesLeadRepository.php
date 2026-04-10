@@ -62,20 +62,7 @@ class SalesLeadRepository extends Repository
                 // If an existing SalesLead is in won/lost, do not create an order here; creation is only for new SalesLeads
             }
 
-            // Determine the appropriate workflow pipeline stage
-            $pipelineStageId = $this->getWorkflowPipelineStageId($lead);
-
-            // Create the SalesLead
-            $salesLead = SalesLead::create([
-                'name'              => $lead->name,
-                'description'       => $lead->description,
-                'pipeline_stage_id' => $pipelineStageId,
-                'lead_id'           => $lead->id,
-                'user_id'           => $lead->user_id,
-            ]);
-
-            // Copy persons from lead to sales lead
-            $this->copyPersonsFromLead($salesLead, $lead);
+            $salesLead = $this->createSalesLeadFromLead($lead, [], []);
 
             // Create initial order for this sales lead
             $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name, $lead->department);
@@ -95,6 +82,19 @@ class SalesLeadRepository extends Repository
         }
     }
 
+    /**
+     * Same SalesLead creation + {@see SalesLead::copyFromLead} (persons, contact person, anamnesis) as
+     * {@see self::createFromWonLead}, but without creating an order or system activity.
+     * Used when the order is created separately (e.g. Sugar order import with external metadata).
+     *
+     * @param  array<string, mixed>  $attributeOverrides  Merged over defaults (e.g. pipeline_stage_id, name, lost_reason, closed_at)
+     * @param  array{created_at?: string|null, updated_at?: string|null}  $timestamps
+     */
+    public function createFromLeadForOrderImport(Lead $lead, array $attributeOverrides = [], array $timestamps = []): SalesLead
+    {
+        return $this->createSalesLeadFromLead($lead, $attributeOverrides, $timestamps);
+    }
+
     public function resolveEmailVariablesById($salesId): array
     {
         return $this->resolveEmailVariables($this->find($salesId));
@@ -110,6 +110,46 @@ class SalesLeadRepository extends Repository
         return Anamnesis::where('lead_id', $leadId)
             ->whereIn('person_id', $personIds)
             ->get();
+    }
+
+    /**
+     * Persist SalesLead from Lead defaults + overrides, optional historical timestamps, then copy persons from lead.
+     *
+     * @param  array<string, mixed>  $attributeOverrides
+     * @param  array{created_at?: string|null, updated_at?: string|null}  $timestamps
+     */
+    private function createSalesLeadFromLead(Lead $lead, array $attributeOverrides, array $timestamps): SalesLead
+    {
+        $data = array_merge([
+            'name'              => $lead->name,
+            'description'       => $lead->description,
+            'pipeline_stage_id' => $this->getWorkflowPipelineStageId($lead),
+            'lead_id'           => $lead->id,
+            'user_id'           => $lead->user_id,
+        ], $attributeOverrides);
+
+        $salesLead = new SalesLead($data);
+
+        $hasHistoricalTimestamps = ! empty($timestamps['created_at']) || ! empty($timestamps['updated_at']);
+
+        if ($hasHistoricalTimestamps) {
+            $salesLead->timestamps = false;
+            if (! empty($timestamps['created_at'])) {
+                $salesLead->setAttribute('created_at', $timestamps['created_at']);
+            }
+            if (! empty($timestamps['updated_at'])) {
+                $salesLead->setAttribute('updated_at', $timestamps['updated_at']);
+            }
+            $salesLead->saveQuietly();
+            $salesLead->timestamps = true;
+        } else {
+            // Normal save so model observers run (e.g. won-lead → sales lead workflow)
+            $salesLead->save();
+        }
+
+        $this->copyPersonsFromLead($salesLead, $lead);
+
+        return $salesLead->fresh();
     }
 
     private function resolveEmailVariables(SalesLead $sales): array

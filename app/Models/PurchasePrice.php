@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\PurchasePriceType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * @mixin IdeHelperPurchasePrice
+ *
+ * @property PurchasePriceType $type
  */
 class PurchasePrice extends Model
 {
@@ -23,6 +26,7 @@ class PurchasePrice extends Model
     ];
 
     protected $casts = [
+        'type'                      => PurchasePriceType::class,
         'purchase_price_misc'       => 'decimal:2',
         'purchase_price_doctor'     => 'decimal:2',
         'purchase_price_cardiology' => 'decimal:2',

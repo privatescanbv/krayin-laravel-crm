@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductReports;
+use App\Enums\PurchasePriceType;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Abstracts\BaseProduct;
 use Exception;
@@ -116,12 +117,14 @@ class PartnerProduct extends BaseProduct
 
     public function purchasePrice(): MorphOne
     {
-        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'main');
+        return $this->morphOne(PurchasePrice::class, 'priceable')
+            ->where('type', PurchasePriceType::MAIN);
     }
 
     public function relatedPurchasePrice(): MorphOne
     {
-        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'related');
+        return $this->morphOne(PurchasePrice::class, 'priceable')
+            ->where('type', PurchasePriceType::RELATED);
     }
 
     public function clinics()

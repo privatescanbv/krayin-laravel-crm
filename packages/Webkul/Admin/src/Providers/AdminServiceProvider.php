@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Providers;
 
+use App\Models\OrderItem;
+use App\Models\PartnerProduct;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\AliasLoader;
@@ -48,10 +50,12 @@ class AdminServiceProvider extends ServiceProvider
         $this->app->bind(ExceptionHandler::class, Handler::class);
 
         Relation::morphMap([
-            'leads'         => Lead::class,
-            'organizations' => Organization::class,
-            'persons'       => Person::class,
-            'products'      => Product::class,
+            'leads'            => Lead::class,
+            'organizations'    => Organization::class,
+            'persons'          => Person::class,
+            'products'         => Product::class,
+            'order_items'      => OrderItem::class,
+            'partner_products' => PartnerProduct::class,
         ]);
 
         $this->app->register(EventServiceProvider::class);

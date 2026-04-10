@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\OrderItemStatus;
 use App\Enums\ProductType as ProductTypeEnum;
+use App\Enums\PurchasePriceType;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Builder;
@@ -175,7 +176,8 @@ class OrderItem extends Model
 
     public function purchasePrice(): MorphOne
     {
-        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'main');
+        return $this->morphOne(PurchasePrice::class, 'priceable')
+            ->where('type', PurchasePriceType::MAIN);
     }
 
     /**
@@ -225,7 +227,8 @@ class OrderItem extends Model
 
     public function invoicePurchasePrice(): MorphOne
     {
-        return $this->morphOne(PurchasePrice::class, 'priceable')->where('type', 'invoice');
+        return $this->morphOne(PurchasePrice::class, 'priceable')
+            ->where('type', PurchasePriceType::INVOICE);
     }
 
     public function resourceOrderItems(): HasMany

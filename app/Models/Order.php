@@ -36,6 +36,7 @@ class Order extends Model
     protected $table = 'orders';
 
     protected $fillable = [
+        'external_id',
         'order_number',
         'title',
         'total_price',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderItemDataGrid;
 use App\Enums\Currency;
 use App\Enums\OrderItemStatus;
+use App\Enums\PurchasePriceType;
 use App\Models\OrderItem;
 use App\Models\PurchasePrice;
 use App\Models\ResourceType;
@@ -135,7 +136,7 @@ class OrderItemController extends SimpleEntityController
     protected function saveInvoicePurchasePrice(OrderItem $entity, Request $request): void
     {
         $suffixes = PurchasePrice::priceSuffixes();
-        $data = ['type' => 'invoice'];
+        $data = ['type' => PurchasePriceType::INVOICE];
         $total = 0;
         foreach ($suffixes as $suffix) {
             $value = floatval($request->input('invoice_purchase_price_'.$suffix, 0));
@@ -143,7 +144,7 @@ class OrderItemController extends SimpleEntityController
             $total += $value;
         }
         $data['purchase_price'] = $total;
-        $entity->invoicePurchasePrice()->updateOrCreate(['type' => 'invoice'], $data);
+        $entity->invoicePurchasePrice()->updateOrCreate(['type' => PurchasePriceType::INVOICE], $data);
     }
 
     protected function getCreateSuccessMessage(): string

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\Currency;
 use App\Enums\ProductReports;
+use App\Enums\PurchasePriceType;
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
 use App\Models\PurchasePrice;
@@ -168,9 +169,9 @@ class PartnerProductSeeder extends BaseSeeder
 
         PurchasePrice::updateOrCreate(
             [
-                'priceable_type' => PartnerProduct::class,
-                'priceable_id'   => $partnerProduct->id,
-                'type'           => 'main',
+                'priceable_type'   => $partnerProduct->getMorphClass(),
+                'priceable_id'     => $partnerProduct->id,
+                'type'             => PurchasePriceType::MAIN,
             ],
             [
                 'purchase_price_misc'       => $purchaseMisc,

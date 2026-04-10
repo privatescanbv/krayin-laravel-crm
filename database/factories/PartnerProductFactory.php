@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PurchasePriceType;
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
 use App\Models\ResourceType;
@@ -45,7 +46,7 @@ class PartnerProductFactory extends Factory
             $clinic = $this->faker->randomFloat(2, 0, 100);
             $radio = $this->faker->randomFloat(2, 0, 120);
             $partnerProduct->purchasePrice()->create([
-                'type'                       => 'main',
+                'type'                       => PurchasePriceType::MAIN,
                 'purchase_price_misc'        => $misc,
                 'purchase_price_doctor'      => $doctor,
                 'purchase_price_cardiology'  => $cardio,
@@ -60,7 +61,7 @@ class PartnerProductFactory extends Factory
             $rClinic = $this->faker->randomFloat(2, 0, 50);
             $rRadio = $this->faker->randomFloat(2, 0, 60);
             $partnerProduct->relatedPurchasePrice()->create([
-                'type'                       => 'related',
+                'type'                       => PurchasePriceType::RELATED,
                 'purchase_price_misc'        => $rMisc,
                 'purchase_price_doctor'      => $rDoctor,
                 'purchase_price_cardiology'  => $rCardio,

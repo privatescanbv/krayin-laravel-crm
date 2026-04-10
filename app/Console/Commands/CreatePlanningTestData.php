@@ -2,30 +2,26 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Clinic;
-use App\Models\ProductType;
-use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Models\Shift;
-use App\Repositories\ClinicRepository;
+use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
-use Webkul\Product\Models\ProductGroup;
 
 class CreatePlanningTestData extends Command
 {
+    private const AUTO_GENERATED_TEST_SHIFT_NOTES = 'Auto-generated test shift';
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
     protected $signature = 'planning:create-test-data
-                            {--clinic-id= : ID van bestaande kliniek (optioneel)}
-                            {--resource-type=Artsen : Type resource om aan te maken}
-                            {--count=3 : Aantal resources om aan te maken}';
+                            {--resource-type=Artsen : Type resource om aan te maken}';
 
     /**
      * The console command description.
@@ -41,35 +37,26 @@ class CreatePlanningTestData extends Command
     {
         $this->info('🚀 Aanmaken van planning test data...');
 
-        // 1. Kliniek ophalen of aanmaken
-        $clinic = $this->getOrCreateClinic();
-        $this->info("✅ Kliniek: {$clinic->name} (ID: {$clinic->id})");
-
-        // 2. Resource Type ophalen of aanmaken
         $resourceType = $this->getOrCreateResourceType();
         $this->info("✅ Resource Type: {$resourceType->name} (ID: {$resourceType->id})");
 
-        // 3. retrieve all existing resources of the specified type
-        $resources = Resource::all();
+        $resources = app(ResourceRepository::class)->queryWithActiveClinics()->get();
+        $this->info('✅ Resources (actieve klinieken): '.count($resources).' stuks');
 
-        // 4. Shifts aanmaken voor resources (08:00 - 17:00 op verschillende dagen)
         $this->createShiftsForResources($resources);
 
-        // 5. Voorbeeld mail aanmaken (ongelezen, niet assigned)
         $this->createExampleEmail();
 
         $this->info('');
         $this->info('🎉 Alle test data succesvol aangemaakt!');
         $this->info('');
         $this->info('📋 Overzicht:');
-        $this->info("   • Kliniek: {$clinic->name} (ID: {$clinic->id})");
         $this->info("   • Resource Type: {$resourceType->name} (ID: {$resourceType->id})");
-        $this->info('   • Resources: '.count($resources).' stuks');
+        $this->info('   • Resources: '.count($resources).' stuks (alleen actieve klinieken)');
         $this->info('   • E-mail: Voorbeeld ongelezen e-mail aangemaakt');
         $this->info('');
         $this->info('🔗 Je kunt nu plannen met:');
         $this->info("   • Resource Type ID: {$resourceType->id}");
-        $this->info("   • Clinic ID: {$clinic->id}");
         $this->info('   • E-mail: Bekijk in admin/mail/inbox');
     }
 
@@ -83,35 +70,6 @@ class CreatePlanningTestData extends Command
         $folder = Folder::where('name', 'inbox')->first();
 
         return $folder ? $folder->id : null;
-    }
-
-    private function getOrCreateClinic(): Clinic
-    {
-        $clinicId = $this->option('clinic-id');
-
-        if ($clinicId) {
-            $clinic = Clinic::find($clinicId);
-            if (! $clinic) {
-                $this->error("Kliniek met ID {$clinicId} niet gevonden!");
-                exit(1);
-            }
-
-            return $clinic;
-        }
-
-        // Zoek bestaande kliniek of maak nieuwe aan
-        $clinic = app(ClinicRepository::class)->allActive()->first();
-        if (! $clinic) {
-            $clinic = Clinic::create([
-                'name'        => 'Test Kliniek Amsterdam',
-                'website_url' => 'https://testkliniek.nl',
-                'emails'      => ['info@testkliniek.nl'],
-                'phones'      => ['+31 20 123 4567'],
-                'is_active'   => true,
-            ]);
-        }
-
-        return $clinic;
     }
 
     private function getOrCreateResourceType(?string $name = null): ResourceType
@@ -129,67 +87,37 @@ class CreatePlanningTestData extends Command
         return $resourceType;
     }
 
-    private function getOrCreateProductType(string $name): ProductType
-    {
-        $productType = ProductType::where('name', $name)->first();
-        if (! $productType) {
-            $productType = ProductType::create([
-                'name'        => $name,
-                'description' => "Product type: {$name}",
-            ]);
-        }
-
-        return $productType;
-    }
-
-    private function getOrCreateProductGroup(string $name): ProductGroup
-    {
-        $productGroup = ProductGroup::where('name', $name)->first();
-        if (! $productGroup) {
-            $productGroup = ProductGroup::create([
-                'name'        => $name,
-                'description' => "Product group: {$name}",
-            ]);
-        }
-
-        return $productGroup;
-    }
-
     private function createShiftsForResources(Collection $resources): void
     {
+        $weekdayTimeBlocks = [];
+        for ($d = 1; $d <= 5; $d++) {
+            $weekdayTimeBlocks[$d] = [['from' => '08:00', 'to' => '17:00']];
+        }
+
+        $periodStart = Carbon::today()->toDateString();
         $totalShifts = 0;
-        $resources->each(function ($resource) use (&$totalShifts) {
-            logger()->info("Creating shifts for resource ID: {$resource->id}");
-            // Kies een paar verschillende komende dagen
-            $dates = [
-                Carbon::today()->addDays(5),
-                Carbon::today()->addDays(21),
-                Carbon::today()->addDays(60),
-            ];
 
-            foreach ($dates as $date) {
-                // dayOfWeekIso: 1 (ma) t/m 7 (zo)
-                $weekday = $date->dayOfWeekIso;
+        foreach ($resources as $resource) {
+            logger()->info("Creating shift for resource ID: {$resource->id}");
 
-                $timeBlocks = [
-                    $weekday => [
-                        ['from' => '08:00', 'to' => '17:00'],
-                    ],
-                ];
+            Shift::query()
+                ->where('resource_id', $resource->id)
+                ->where('notes', self::AUTO_GENERATED_TEST_SHIFT_NOTES)
+                ->delete();
 
-                Shift::create([
-                    'resource_id'         => $resource->id,
-                    'available'           => true,
-                    'notes'               => 'Auto-generated test shift',
-                    'period_start'        => $date->toDateString(),
-                    'period_end'          => null,
-                    'weekday_time_blocks' => $timeBlocks,
-                ]);
+            Shift::create([
+                'resource_id'         => $resource->id,
+                'available'           => true,
+                'notes'               => self::AUTO_GENERATED_TEST_SHIFT_NOTES,
+                'period_start'        => $periodStart,
+                'period_end'          => null,
+                'weekday_time_blocks' => $weekdayTimeBlocks,
+            ]);
 
-                $totalShifts++;
-            }
-            $this->info('✅ Shifts aangemaakt: '.$totalShifts.' (08:00 - 17:00)');
-        });
+            $totalShifts++;
+        }
+
+        $this->info("✅ Shifts aangemaakt: {$totalShifts} (ma–vr 08:00–17:00, per resource)");
     }
 
     private function createExampleEmail(): void

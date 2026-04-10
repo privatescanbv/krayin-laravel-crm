@@ -404,7 +404,7 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
         ->and((float) $resolved->purchase_price_cardiology)->toBe(2.25);
 });
 
-test('does not create invoice PurchasePrice when Sugar inv fields are empty', function () {
+test('creates zero PurchasePrice rows when Sugar inv fields are empty so resolved price ignores catalog', function () {
     Person::factory()->create(['external_id' => 'contact-noinv']);
 
     insertSugarOrder('order-noinv-001');
@@ -421,8 +421,12 @@ test('does not create invoice PurchasePrice when Sugar inv fields are empty', fu
     runOrderImport();
 
     $item = Order::where('external_id', 'order-noinv-001')->first()->orderItems->first();
-    expect($item->invoicePurchasePrice)->toBeNull()
-        ->and($item->purchasePrice)->toBeNull();
+    expect($item->invoicePurchasePrice)->not->toBeNull()
+        ->and($item->purchasePrice)->not->toBeNull()
+        ->and((float) $item->purchasePrice->purchase_price)->toBe(0.0);
+
+    $resolved = $item->fresh(['product.partnerProducts.purchasePrice'])->resolvedPurchasePrice();
+    expect((float) $resolved->purchase_price)->toBe(0.0);
 });
 
 test('imports inv_purchase_total_c only into MAIN and resolved purchase total', function () {

@@ -182,15 +182,34 @@ class OrderItem extends Model
 
     /**
      * Returns the effective purchase price for this order item.
-     * Resolution order per field: 1. order item, 2. product, 3. partner product.
-     * Null means "don't override" (use next level). All null = 0.
+     *
+     * When a MAIN {@see PurchasePrice} exists on the line (e.g. from SugarCRM import or admin),
+     * only that row is used — no per-field fallback to the catalog product or partner products.
+     * Otherwise resolution order per field is: 1. product, 2. partner products (summed).
      */
     public function resolvedPurchasePrice(): object
     {
+        $suffixes = PurchasePrice::priceSuffixes();
+        $orderItemPrice = $this->relationLoaded('purchasePrice')
+            ? $this->purchasePrice
+            : $this->purchasePrice()->first();
+
+        if ($orderItemPrice !== null) {
+            $data = [];
+            $total = 0.0;
+            foreach ($suffixes as $suffix) {
+                $field = 'purchase_price_'.$suffix;
+                $value = (float) ($orderItemPrice->{$field} ?? 0);
+                $data[$field] = (string) round($value, 2);
+                $total += $value;
+            }
+            $data['purchase_price'] = (string) round($total, 2);
+
+            return (object) $data;
+        }
+
         $this->loadMissing(['product.partnerProducts.purchasePrice']);
 
-        $suffixes = PurchasePrice::priceSuffixes();
-        $orderItemPrice = $this->purchasePrice;
         $product = $this->product;
         $productPrice = $product && method_exists($product, 'purchasePrice') ? $product->purchasePrice : null;
 
@@ -211,11 +230,10 @@ class OrderItem extends Model
         $total = 0.0;
         foreach ($suffixes as $suffix) {
             $field = 'purchase_price_'.$suffix;
-            $orderItemValue = $orderItemPrice?->{$field} ?? null;
             $productValue = $productPrice?->{$field} ?? null;
             $partnerProductValue = $partnerProductTotals[$suffix] ?? null;
 
-            $value = $orderItemValue ?? $productValue ?? $partnerProductValue ?? 0;
+            $value = $productValue ?? $partnerProductValue ?? 0;
             $value = (float) $value;
             $data[$field] = (string) round($value, 2);
             $total += $value;

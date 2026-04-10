@@ -430,16 +430,14 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         ]);
 
                         $purchasePayload = $this->orderItemPurchasePayloadFromSugarRow($row);
-                        if ($purchasePayload !== null) {
-                            $orderItem->invoicePurchasePrice()->updateOrCreate(
-                                ['type' => PurchasePriceType::INVOICE],
-                                array_merge(['type' => PurchasePriceType::INVOICE], $purchasePayload)
-                            );
-                            $orderItem->purchasePrice()->updateOrCreate(
-                                ['type' => PurchasePriceType::MAIN],
-                                array_merge(['type' => PurchasePriceType::MAIN], $purchasePayload)
-                            );
-                        }
+                        $orderItem->invoicePurchasePrice()->updateOrCreate(
+                            ['type' => PurchasePriceType::INVOICE],
+                            array_merge(['type' => PurchasePriceType::INVOICE], $purchasePayload)
+                        );
+                        $orderItem->purchasePrice()->updateOrCreate(
+                            ['type' => PurchasePriceType::MAIN],
+                            array_merge(['type' => PurchasePriceType::MAIN], $purchasePayload)
+                        );
 
                         $itemsCreated++;
                     }
@@ -616,16 +614,26 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Build order-item purchase price attributes from SuiteCRM row custom fields (authoritative inkoop),
-     * or null if nothing to import.
+     * Build order-item purchase price attributes from SuiteCRM row custom fields (authoritative inkoop).
      *
-     * Aligns component sum to Sugar total (remainder in misc). Uses explicit 0.0 for empty buckets so
-     * {@see OrderItem::resolvedPurchasePrice()} does not fall back to product/partner defaults.
+     * When Sugar sends no inv_* values, returns explicit zeros so {@see OrderItem::resolvedPurchasePrice()}
+     * uses the line only and does not fall back to catalog product / partner product prices.
      *
-     * @return array<string, float>|null
+     * Aligns component sum to Sugar total (remainder in misc).
+     *
+     * @return array<string, float>
      */
-    private function orderItemPurchasePayloadFromSugarRow(object $row): ?array
+    private function orderItemPurchasePayloadFromSugarRow(object $row): array
     {
+        $empty = [
+            'purchase_price_misc'       => 0.0,
+            'purchase_price_doctor'     => 0.0,
+            'purchase_price_cardiology' => 0.0,
+            'purchase_price_clinic'     => 0.0,
+            'purchase_price_radiology'  => 0.0,
+            'purchase_price'            => 0.0,
+        ];
+
         $miscRaw = $this->sugarMoneyAmount($row->inv_purchase_other_c ?? null);
         $cardio = $this->sugarMoneyAmount($row->inv_purchase_cardio_c ?? null);
         $clinic = $this->sugarMoneyAmount($row->inv_purchase_clinic_c ?? null);
@@ -636,7 +644,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $hasTotal = $totalFromSugar !== null;
 
         if (! $hasComponent && ! $hasTotal) {
-            return null;
+            return $empty;
         }
 
         $sumSugarComponents = ($miscRaw ?? 0.0) + ($cardio ?? 0.0) + ($clinic ?? 0.0) + ($radio ?? 0.0);
@@ -646,12 +654,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $misc = round(($miscRaw ?? 0.0) + $remainder, 2);
 
         return [
-            'purchase_price_misc'        => $misc,
-            'purchase_price_doctor'      => 0.0,
-            'purchase_price_cardiology'  => $cardio ?? 0.0,
-            'purchase_price_clinic'      => $clinic ?? 0.0,
-            'purchase_price_radiology'   => $radio ?? 0.0,
-            'purchase_price'             => $total,
+            'purchase_price_misc'       => $misc,
+            'purchase_price_doctor'     => 0.0,
+            'purchase_price_cardiology' => $cardio ?? 0.0,
+            'purchase_price_clinic'     => $clinic ?? 0.0,
+            'purchase_price_radiology'  => $radio ?? 0.0,
+            'purchase_price'            => $total,
         ];
     }
 

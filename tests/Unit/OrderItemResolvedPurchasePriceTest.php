@@ -85,7 +85,7 @@ test('resolvedPurchasePrice uses order item when it has purchase price', functio
         ->and((float) $resolved->purchase_price)->toBe(125.0);
 });
 
-test('resolvedPurchasePrice cascades: order item overrides only set fields, rest from partner product', function () {
+test('resolvedPurchasePrice uses only order item MAIN row when present, not partner product fields', function () {
     $order = Order::factory()->create();
     $pp = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
     $pp->purchasePrice->update([
@@ -109,11 +109,12 @@ test('resolvedPurchasePrice cascades: order item overrides only set fields, rest
 
     $resolved = $item->resolvedPurchasePrice();
 
-    expect((float) $resolved->purchase_price_misc)->toBe(10.0)
+    expect((float) $resolved->purchase_price_misc)->toBe(0.0)
         ->and((float) $resolved->purchase_price_doctor)->toBe(99.0)
-        ->and((float) $resolved->purchase_price_cardiology)->toBe(30.0)
-        ->and((float) $resolved->purchase_price_clinic)->toBe(40.0)
-        ->and((float) $resolved->purchase_price_radiology)->toBe(50.0);
+        ->and((float) $resolved->purchase_price_cardiology)->toBe(0.0)
+        ->and((float) $resolved->purchase_price_clinic)->toBe(0.0)
+        ->and((float) $resolved->purchase_price_radiology)->toBe(0.0)
+        ->and((float) $resolved->purchase_price)->toBe(99.0);
 });
 
 test('resolvedPurchasePrice returns zeros when all levels are null', function () {

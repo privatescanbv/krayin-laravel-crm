@@ -5,7 +5,9 @@ namespace App\Enums;
 enum FormType: string
 {
     case PrivateScan = 'privatescan';
-    case HerniaPoli = 'herniapoli';
+    /** Diagnose form from website webhook by lead */
+    case HerniaDiagnosisForm = 'herniapoli';
+    case HerniaNarcoseForm = 'hernianarcose';
 
     public static function values(): array
     {

@@ -2,18 +2,13 @@
 
 namespace App\Services;
 
-use App\Enums\Departments;
 use App\Enums\FormStatus;
 use App\Models\Anamnesis;
-use App\Models\Department;
-use App\Models\Order;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 /**
@@ -97,56 +92,6 @@ class FormService
         $status = $this->getFormStatus($formId)['status'];
 
         return FormStatus::mapFrom($status);
-    }
-
-    /**
-     * Create a form request via the forms API.
-     *
-     * @throws Exception
-     */
-    public function createFormRequest(Order $order, Person $person): array
-    {
-        $formData = $this->buildFormRequestData($order, $person);
-
-        Log::warning('TODO: only supporting GVL form for the first person');
-        $url = $this->buildApiUrl('/api/forms');
-
-        Log::info('FormService: Creating form request', [
-            'order_id'      => $order->id,
-            'url'           => $url,
-            'method'        => 'POST',
-            'request_body'  => $formData,
-        ]);
-
-        $response = $this->makeRequest('post', $url, ['url' => $url], $formData);
-        $result = $this->parseResponse($response, ['url' => $url], true);
-
-        // Check for HTML response (authentication failure)
-        if ($result['is_html']) {
-            return [
-                'status'   => $result['status'],
-                'response' => null,
-            ];
-        }
-
-        if (! $response->successful()) {
-            return [
-                'status'   => $result['status'],
-                'response' => null,
-            ];
-        }
-
-        Log::info('FormService: Forms API success', [
-            'status'         => $result['status'],
-            'has_data_key'   => isset($result['json']['data']),
-            'has_data_id'    => isset($result['json']['data']['id']),
-            'response_keys'  => is_array($result['json']) ? array_keys($result['json']) : null,
-        ]);
-
-        return [
-            'status'   => $result['status'],
-            'response' => $result['json'],
-        ];
     }
 
     /**
@@ -291,25 +236,6 @@ class FormService
         }
 
         return null;
-    }
-
-    /**
-     * Get GVL form download URL.
-     *
-     * @param  string|null  $gvlFormLink  The GVL form link URL
-     * @return string|null The download URL or null if form ID cannot be extracted
-     */
-    public function getFormDownloadUrl(?string $gvlFormLink): ?string
-    {
-        $formId = $this->extractFormIdFromUrl($gvlFormLink);
-
-        if (! $formId) {
-            return null;
-        }
-
-        $frontendUrl = rtrim(config('services.portal.patient.web_url'), '/');
-
-        return $frontendUrl.'/patient/forms/download/'.$formId.'/false';
     }
 
     /**
@@ -488,92 +414,4 @@ class FormService
             ]);
     }
 
-    /**
-     * Build the form request data array.
-     *
-     * @throws Exception if no default email could be found
-     */
-    protected function buildFormRequestData(Order $order, Person $person): array
-    {
-        $email = $person->findDefaultEmail();
-        if (! $email) {
-            throw new Exception('Person has no email address');
-        }
-
-        $birthday = $person->date_of_birth
-            ? $person->date_of_birth->format('d-m-Y')
-            : '01-01-1900'; // Fallback if birthday is missing (API requires it)
-
-        // Determine MRI and CT scan needs based on order items
-        $mriResearch = $this->hasMriResearch($order) ? 'Ja' : 'Nee';
-        $ctScan = $this->hasCtScan($order) ? 'Ja' : 'Nee';
-
-        // Use name if first_name/last_name are not available
-        $firstName = $person->first_name ?? '';
-        $lastName = $person->last_name ?? '';
-
-        if (empty($firstName) && empty($lastName) && ! empty($person->name)) {
-            // Try to split name if we only have full name
-            $nameParts = explode(' ', $person->name, 2);
-            $firstName = $nameParts[0] ?? '';
-            $lastName = $nameParts[1] ?? $firstName;
-        }
-
-        return [
-            'user_crm_id'     => $person->id,
-            'user_firstname'  => $firstName ?: 'Onbekend',
-            'user_lastname'   => $lastName ?: 'Onbekend',
-            'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
-            'user_email'      => $email,
-            'user_birthday'   => $birthday,
-            'mri_research'    => $mriResearch,
-            'ct_scan'         => $ctScan,
-            'form_type'       => $this->mapDepartmentToFormType($order->salesLead->getDepartment()),
-        ];
-    }
-
-    /**
-     * Check if order contains MRI research products.
-     */
-    protected function hasMriResearch(Order $order): bool
-    {
-        $items = $order->orderItems ?? collect();
-        if (! $items instanceof Collection) {
-            $items = collect($items);
-        }
-
-        foreach ($items as $item) {
-            $productName = strtolower($item->product->name ?? '');
-            if (str_contains($productName, 'mri')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if order contains CT scan products.
-     */
-    protected function hasCtScan(Order $order): bool
-    {
-        $items = $order->orderItems ?? collect();
-        if (! $items instanceof Collection) {
-            $items = collect($items);
-        }
-
-        foreach ($items as $item) {
-            $productName = strtolower($item->product->name ?? '');
-            if (str_contains($productName, 'ct') || str_contains($productName, 'ct-scan')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function mapDepartmentToFormType(Department $department): string
-    {
-        return $department->isHernia() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value;
-    }
 }

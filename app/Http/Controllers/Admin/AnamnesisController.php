@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Departments;
+use App\Enums\FormType;
 use App\Enums\NotificationReferenceType;
 use App\Events\PatientNotifyEvent;
 use App\Helpers\Comparable;
@@ -504,7 +504,7 @@ class AnamnesisController extends Controller
 
     public function mapFormTypeFromDepartment(?Department $department): string
     {
-        return $department && $department->isHernia() ? Departments::HERNIA->key() : Departments::PRIVATESCAN->key();
+        return $department && $department->isHernia() ? FormType::HerniaNarcoseForm->value : FormType::PrivateScan->value;
     }
 
     /**

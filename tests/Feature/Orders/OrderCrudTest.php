@@ -66,6 +66,52 @@ test('can update order', function () {
     ]);
 });
 
+test('can update order clearing user_id when select submits empty string', function () {
+    $assignee = makeUser();
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'user_id'       => $assignee->id,
+    ]);
+
+    $payload = [
+        'title'         => $order->title,
+        'total_price'   => $order->total_price,
+        'sales_lead_id' => $salesLead->id,
+        'user_id'       => '',
+        '_method'       => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), $payload);
+    $response->assertOk();
+
+    expect($order->fresh()->user_id)->toBeNull();
+});
+
+test('can update order invoice_number and is_business', function () {
+    $order = Order::factory()->create([
+        'invoice_number' => null,
+        'is_business'    => false,
+    ]);
+    $salesLead = SalesLead::factory()->create();
+
+    $payload = [
+        'title'           => $order->title,
+        'total_price'     => $order->total_price,
+        'sales_lead_id'   => $salesLead->id,
+        'invoice_number'  => 'INV-2026-42',
+        'is_business'     => true,
+        '_method'         => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), $payload);
+    $response->assertOk();
+
+    $order->refresh();
+    expect($order->invoice_number)->toBe('INV-2026-42');
+    expect($order->is_business)->toBeTrue();
+});
+
 test('can delete order', function () {
     $order = Order::factory()->create();
 

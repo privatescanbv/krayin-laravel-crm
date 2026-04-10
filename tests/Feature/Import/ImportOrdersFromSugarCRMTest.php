@@ -4,10 +4,15 @@ namespace Tests\Feature;
 
 use App\Enums\LostReason;
 use App\Enums\OrderItemStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentType;
 use App\Enums\PipelineStage;
+use App\Enums\PurchasePriceType;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderPayment;
+use App\Models\PartnerProduct;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Schema\Blueprint;
@@ -35,6 +40,7 @@ beforeEach(function () {
         'leads_pcrm_salesorder_c',
         'pcrm_salesorow_contacts_c',
         'pcrm_salesoalesorderrow_c',
+        'pcrm_salesorderrow_cstm',
         'pcrm_salesorderrow',
         'pcrm_salesorder_cstm',
         'pcrm_salesorder',
@@ -64,6 +70,12 @@ beforeEach(function () {
         $table->string('reden_afvoeren_c')->nullable();
         $table->tinyInteger('op_een_factuur_c')->default(0);
         $table->string('d_wfl_status_c')->nullable();
+        $table->string('aankomsttijd_c', 5)->nullable();
+        $table->decimal('betaald_vooruit_c', 14, 6)->nullable();
+        $table->decimal('betaald_kliniek_c', 14, 6)->nullable();
+        $table->decimal('openstaand_c', 14, 6)->nullable();
+        $table->string('betaal_status_c')->nullable();
+        $table->string('pin_contant_c')->nullable();
     });
 
     Schema::connection('sugarcrm')->create('pcrm_salesorderrow', function (Blueprint $table) {
@@ -74,6 +86,15 @@ beforeEach(function () {
         $table->string('resource_type')->nullable();
         $table->string('producttemplate_id_c')->nullable();
         $table->integer('deleted')->default(0);
+    });
+
+    Schema::connection('sugarcrm')->create('pcrm_salesorderrow_cstm', function (Blueprint $table) {
+        $table->string('id_c')->primary();
+        $table->decimal('inv_purchase_other_c', 10, 2)->nullable();
+        $table->decimal('inv_purchase_cardio_c', 10, 2)->nullable();
+        $table->decimal('inv_purchase_clinic_c', 10, 2)->nullable();
+        $table->decimal('inv_purchase_radio_c', 10, 2)->nullable();
+        $table->decimal('inv_purchase_total_c', 10, 2)->nullable();
     });
 
     // Join table: order → rows
@@ -102,7 +123,16 @@ beforeEach(function () {
 function insertSugarOrder(string $id, array $overrides = []): void
 {
     // Fields belonging to pcrm_salesorder_cstm, not pcrm_salesorder
-    $cstmKeys = ['reden_afvoeren_c', 'op_een_factuur_c', 'd_wfl_status_c'];
+    $cstmKeys = [
+        'reden_afvoeren_c',
+        'op_een_factuur_c',
+        'd_wfl_status_c',
+        'betaald_vooruit_c',
+        'betaald_kliniek_c',
+        'openstaand_c',
+        'betaal_status_c',
+        'pin_contant_c',
+    ];
 
     $cstmOverrides = array_intersect_key($overrides, array_flip($cstmKeys));
     $soOverrides = array_diff_key($overrides, array_flip($cstmKeys));
@@ -120,10 +150,15 @@ function insertSugarOrder(string $id, array $overrides = []): void
     ], $soOverrides));
 
     DB::connection('sugarcrm')->table('pcrm_salesorder_cstm')->insert(array_merge([
-        'id_c'             => $id,
-        'reden_afvoeren_c' => null,
-        'op_een_factuur_c' => 0,
-        'd_wfl_status_c'   => 'eindeproces',
+        'id_c'                => $id,
+        'reden_afvoeren_c'    => null,
+        'op_een_factuur_c'    => 0,
+        'd_wfl_status_c'      => 'eindeproces',
+        'betaald_vooruit_c'   => null,
+        'betaald_kliniek_c'   => null,
+        'openstaand_c'        => null,
+        'betaal_status_c'     => null,
+        'pin_contant_c'       => null,
     ], $cstmOverrides));
 }
 
@@ -150,6 +185,18 @@ function linkRowToContact(string $rowId, string $contactExternalId): void
         'pcrm_sales4bd9ontacts_ida' => $contactExternalId,
         'deleted'                   => 0,
     ]);
+}
+
+function insertSugarRowCstm(string $rowId, array $overrides = []): void
+{
+    DB::connection('sugarcrm')->table('pcrm_salesorderrow_cstm')->insert(array_merge([
+        'id_c'                  => $rowId,
+        'inv_purchase_other_c'  => null,
+        'inv_purchase_cardio_c' => null,
+        'inv_purchase_clinic_c' => null,
+        'inv_purchase_radio_c'  => null,
+        'inv_purchase_total_c'  => null,
+    ], $overrides));
 }
 
 function linkOrderToSugarLead(string $orderId, string $sugarLeadId): void
@@ -318,6 +365,128 @@ test('order row resolves product by exact CRM name when template id has no match
         ->and($order->orderItems->first()->product_id)->toBe($product->id);
 });
 
+test('imports invoice purchase prices from Sugar order row cstm', function () {
+    Person::factory()->create(['external_id' => 'contact-inv-1']);
+
+    insertSugarOrder('order-inv-001');
+    insertSugarRow('order-inv-001', 'row-inv-001');
+    insertSugarRowCstm('row-inv-001', [
+        'inv_purchase_other_c'  => 1.5,
+        'inv_purchase_cardio_c' => 2.25,
+        'inv_purchase_clinic_c' => 3,
+        'inv_purchase_radio_c'  => 4.25,
+        'inv_purchase_total_c'  => 11,
+    ]);
+    linkRowToContact('row-inv-001', 'contact-inv-1');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-inv-001')->first()->orderItems->first();
+    $inv = $item->invoicePurchasePrice;
+    $main = $item->purchasePrice;
+
+    expect($inv)->not->toBeNull()
+        ->and($inv->type)->toBe(PurchasePriceType::INVOICE)
+        ->and((float) $inv->purchase_price_misc)->toBe(1.5)
+        ->and((float) $inv->purchase_price_cardiology)->toBe(2.25)
+        ->and((float) $inv->purchase_price_clinic)->toBe(3.0)
+        ->and((float) $inv->purchase_price_radiology)->toBe(4.25)
+        ->and((float) $inv->purchase_price)->toBe(11.0)
+        ->and((float) $inv->purchase_price_doctor)->toBe(0.0);
+
+    expect($main)->not->toBeNull()
+        ->and($main->type)->toBe(PurchasePriceType::MAIN)
+        ->and((float) $main->purchase_price)->toBe(11.0);
+
+    $resolved = $item->fresh(['product.partnerProducts.purchasePrice'])->resolvedPurchasePrice();
+    expect((float) $resolved->purchase_price)->toBe(11.0)
+        ->and((float) $resolved->purchase_price_misc)->toBe(1.5)
+        ->and((float) $resolved->purchase_price_cardiology)->toBe(2.25);
+});
+
+test('does not create invoice PurchasePrice when Sugar inv fields are empty', function () {
+    Person::factory()->create(['external_id' => 'contact-noinv']);
+
+    insertSugarOrder('order-noinv-001');
+    insertSugarRow('order-noinv-001', 'row-noinv-001');
+    insertSugarRowCstm('row-noinv-001', [
+        'inv_purchase_other_c'  => null,
+        'inv_purchase_cardio_c' => null,
+        'inv_purchase_clinic_c' => null,
+        'inv_purchase_radio_c'  => null,
+        'inv_purchase_total_c'  => null,
+    ]);
+    linkRowToContact('row-noinv-001', 'contact-noinv');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-noinv-001')->first()->orderItems->first();
+    expect($item->invoicePurchasePrice)->toBeNull()
+        ->and($item->purchasePrice)->toBeNull();
+});
+
+test('imports inv_purchase_total_c only into MAIN and resolved purchase total', function () {
+    Person::factory()->create(['external_id' => 'contact-totalonly']);
+
+    insertSugarOrder('order-totalonly-001');
+    insertSugarRow('order-totalonly-001', 'row-totalonly-001');
+    insertSugarRowCstm('row-totalonly-001', [
+        'inv_purchase_other_c'  => null,
+        'inv_purchase_cardio_c' => null,
+        'inv_purchase_clinic_c' => null,
+        'inv_purchase_radio_c'  => null,
+        'inv_purchase_total_c'  => 99.5,
+    ]);
+    linkRowToContact('row-totalonly-001', 'contact-totalonly');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-totalonly-001')->first()->orderItems->first();
+
+    expect((float) $item->purchasePrice->purchase_price)->toBe(99.5)
+        ->and((float) $item->purchasePrice->purchase_price_misc)->toBe(99.5)
+        ->and((float) $item->invoicePurchasePrice->purchase_price)->toBe(99.5);
+
+    $resolved = $item->fresh(['product.partnerProducts.purchasePrice'])->resolvedPurchasePrice();
+    expect((float) $resolved->purchase_price)->toBe(99.5)
+        ->and((float) $resolved->purchase_price_misc)->toBe(99.5);
+});
+
+test('Sugar purchase prices override partner product in resolvedPurchasePrice', function () {
+    Person::factory()->create(['external_id' => 'contact-sugarpp']);
+
+    $product = Product::where('name', 'TB1 Business Class')->first();
+    $pp = PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $pp->purchasePrice->update([
+        'purchase_price_misc'        => 100,
+        'purchase_price_doctor'      => 100,
+        'purchase_price_cardiology'  => 100,
+        'purchase_price_clinic'      => 100,
+        'purchase_price_radiology'   => 100,
+        'purchase_price'             => 500,
+    ]);
+
+    insertSugarOrder('order-sugarpp-001');
+    insertSugarRow('order-sugarpp-001', 'row-sugarpp-001');
+    insertSugarRowCstm('row-sugarpp-001', [
+        'inv_purchase_other_c'  => 10,
+        'inv_purchase_cardio_c' => 10,
+        'inv_purchase_clinic_c' => 10,
+        'inv_purchase_radio_c'  => 10,
+        'inv_purchase_total_c'  => 40,
+    ]);
+    linkRowToContact('row-sugarpp-001', 'contact-sugarpp');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-sugarpp-001')->first()->orderItems->first();
+    $resolved = $item->fresh(['product.partnerProducts.purchasePrice'])->resolvedPurchasePrice();
+
+    expect((float) $resolved->purchase_price)->toBe(40.0)
+        ->and((float) $resolved->purchase_price_misc)->toBe(10.0)
+        ->and((float) $resolved->purchase_price_cardiology)->toBe(10.0);
+});
+
 test('orders entered before 2025 are excluded by the date filter', function () {
     insertSugarOrder('order-old-001', [
         'date_entered'  => '2024-12-31 23:59:59',
@@ -346,4 +515,55 @@ test('dry run does not persist any data', function () {
     expect($exit)->toBe(0)
         ->and(Order::where('external_id', 'order-dryrun-001')->exists())->toBeFalse()
         ->and(SalesLead::count())->toBe(0);
+});
+
+test('imports Sugar advance payment as OrderPayment', function () {
+    insertSugarOrder('order-pay-adv-001', [
+        'betaald_vooruit_c' => 2206.0,
+        'betaal_status_c'   => 'volledig',
+        'date_closed'       => '2025-08-20',
+    ]);
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pay-adv-001')->first();
+    expect($order)->not->toBeNull();
+
+    $payments = OrderPayment::where('order_id', $order->id)->get();
+    expect($payments)->toHaveCount(1);
+
+    $p = $payments->first();
+    expect($p->type)->toBe(PaymentType::ADVANCE)
+        ->and($p->method)->toBe(PaymentMethod::BANK)
+        ->and((float) $p->amount)->toBe(2206.0)
+        ->and($p->currency)->toBe('EUR')
+        ->and($p->paid_at?->format('Y-m-d'))->toBe('2025-08-20');
+});
+
+test('imports Sugar clinic payment with pin_contant mapping', function () {
+    insertSugarOrder('order-pay-clinic-001', [
+        'betaald_kliniek_c' => 50.0,
+        'pin_contant_c'     => 'contant',
+    ]);
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pay-clinic-001')->first();
+    $p = OrderPayment::where('order_id', $order->id)->sole();
+
+    expect($p->type)->toBe(PaymentType::PAYED_IN_CLINIC)
+        ->and($p->method)->toBe(PaymentMethod::CASH)
+        ->and((float) $p->amount)->toBe(50.0);
+});
+
+test('does not create OrderPayments when Sugar payment amounts are empty', function () {
+    insertSugarOrder('order-pay-none-001', [
+        'betaald_vooruit_c' => null,
+        'betaald_kliniek_c' => null,
+    ]);
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pay-none-001')->first();
+    expect(OrderPayment::where('order_id', $order->id)->count())->toBe(0);
 });

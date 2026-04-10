@@ -38,6 +38,8 @@ class Order extends Model
     protected $fillable = [
         'external_id',
         'order_number',
+        'invoice_number',
+        'is_business',
         'title',
         'total_price',
         'pipeline_stage_id',
@@ -61,6 +63,7 @@ class Order extends Model
         'sales_lead_id'                    => 'integer',
         'user_id'                          => 'integer',
         'combine_order'                    => 'boolean',
+        'is_business'                      => 'boolean',
         'created_by'                       => 'integer',
         'updated_by'                       => 'integer',
     ];
@@ -75,6 +78,8 @@ class Order extends Model
             'sales_lead_id'        => 'required|integer|exists:salesleads,id',
             'user_id'              => 'nullable|integer|exists:users,id',
             'combine_order'        => 'boolean',
+            'invoice_number'       => 'nullable|string|max:255',
+            'is_business'          => 'boolean',
         ];
     }
 

@@ -1152,6 +1152,8 @@ class OrderController extends SimpleEntityController
             'sales_lead_id'        => ['required', 'integer', 'exists:salesleads,id'],
             'user_id'              => ['nullable', 'integer', 'exists:users,id'],
             'combine_order'        => ['nullable', 'boolean'],
+            'invoice_number'       => ['nullable', 'string', 'max:255'],
+            'is_business'          => ['nullable', 'boolean'],
             'first_examination_at' => ['nullable', 'date'],
             'items'                => ['nullable', 'array'],
             'items.*.product_id'   => ['nullable', 'integer', 'exists:products,id'],
@@ -1190,6 +1192,14 @@ class OrderController extends SimpleEntityController
 
     protected function transformPayload(array $payload, ?int $id = null): array
     {
+        // Optional user select submits ""; MySQL FK rejects that — must be NULL when cleared.
+        if (array_key_exists('user_id', $payload)) {
+            $userId = $payload['user_id'];
+            $payload['user_id'] = ($userId === '' || $userId === null)
+                ? null
+                : (int) $userId;
+        }
+
         // Compute total from items if provided; otherwise default to 0 for create without items
         if (! empty($payload['items']) && is_array($payload['items'])) {
             $sum = 0;

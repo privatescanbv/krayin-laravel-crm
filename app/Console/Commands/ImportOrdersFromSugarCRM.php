@@ -4,10 +4,14 @@ namespace App\Console\Commands;
 
 use App\Enums\LostReason;
 use App\Enums\OrderItemStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentType;
 use App\Enums\PipelineStage;
+use App\Enums\PurchasePriceType;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\SalesLead;
 use App\Repositories\SalesLeadRepository;
 use Exception;
@@ -57,7 +61,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $limit = (int) $this->option('limit');
         $orderIds = $this->option('order-ids');
         $dryRun = $this->option('dry-run');
-
         $this->info('Starting order import from SugarCRM...');
         $this->infoV("Connection: {$connection}");
         $this->infoV("Table: {$table}");
@@ -100,6 +103,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'cstm.reden_afvoeren_c',
                         'cstm.op_een_factuur_c',
                         'cstm.d_wfl_status_c',
+                        'cstm.aankomsttijd_c',
+                        'cstm.betaald_vooruit_c',
+                        'cstm.betaald_kliniek_c',
+                        'cstm.openstaand_c',
+                        'cstm.betaal_status_c',
+                        'cstm.pin_contant_c',
                         'lead_rel.sugar_lead_id',
                     ])
                     ->where('so.deleted', 0)
@@ -203,7 +212,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $rowsByOrder = $this->fetchOrderRows($connection, $orderIds);
 
         // Orders table
-        $headers = ['External ID', 'Order#', 'Name', 'Amount', 'Stage', 'Lost Reason', 'Rows', 'Status'];
+        $headers = ['External ID', 'Order#', 'Name', 'Amount', 'Stage', 'Lost Reason', 'First exam', 'Rows', 'Status'];
         $rows = [];
 
         foreach ($records as $record) {
@@ -217,6 +226,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $record->amount ?? '0',
                 $record->sales_stage ?? 'N/A',
                 $record->reden_afvoeren_c ?? '',
+                $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c) ?? '—',
                 $orderRows->count(),
                 $alreadyDone ? '✓ skip' : '✗ new',
             ];
@@ -382,7 +392,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'pipeline_stage_id'    => $orderStage->id(),
                         'lost_reason'          => $lostReason,
                         'closed_at'            => $closedAt,
-                        'first_examination_at' => $this->parseSugarDate($record->datum_onderzoek_1),
+                        'first_examination_at' => $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c),
                         'sales_lead_id'        => $salesLead->id,
                         'combine_order'        => (bool) ($record->op_een_factuur_c ?? false),
                     ], [
@@ -409,7 +419,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             continue;
                         }
 
-                        OrderItem::create([
+                        $orderItem = OrderItem::create([
                             'order_id'    => $order->id,
                             'person_id'   => $person?->id,
                             'product_id'  => $product->id,
@@ -418,12 +428,27 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             'quantity'    => 1,
                             'status'      => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? ''),
                         ]);
+
+                        $purchasePayload = $this->orderItemPurchasePayloadFromSugarRow($row);
+                        if ($purchasePayload !== null) {
+                            $orderItem->invoicePurchasePrice()->updateOrCreate(
+                                ['type' => PurchasePriceType::INVOICE],
+                                array_merge(['type' => PurchasePriceType::INVOICE], $purchasePayload)
+                            );
+                            $orderItem->purchasePrice()->updateOrCreate(
+                                ['type' => PurchasePriceType::MAIN],
+                                array_merge(['type' => PurchasePriceType::MAIN], $purchasePayload)
+                            );
+                        }
+
                         $itemsCreated++;
                     }
 
                     if ($itemsCreated === 0 && $orderRows->isNotEmpty()) {
                         $this->warn("Order {$record->id}: imported with 0 line items (no matching products for any row).");
                     }
+
+                    $this->syncOrderPaymentsFromSugar($order, $record);
                 });
 
                 $imported++;
@@ -486,6 +511,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $rows = DB::connection($connection)
             ->table('pcrm_salesoalesorderrow_c as rel')
             ->join('pcrm_salesorderrow as sor', 'sor.id', '=', 'rel.pcrm_sales509drderrow_idb')
+            ->leftJoin('pcrm_salesorderrow_cstm as row_cstm', 'row_cstm.id_c', '=', 'sor.id')
             ->leftJoin('pcrm_salesorow_contacts_c as rc', function ($join) {
                 $join->on('rc.pcrm_sales80b3rderrow_idb', '=', 'sor.id')
                     ->where('rc.deleted', '=', 0);
@@ -499,12 +525,39 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 'sor.resource_type',
                 'sor.producttemplate_id_c',
                 'rc.pcrm_sales4bd9ontacts_ida as contact_id',
+                'row_cstm.inv_purchase_other_c as inv_purchase_other_c',
+                'row_cstm.inv_purchase_cardio_c as inv_purchase_cardio_c',
+                'row_cstm.inv_purchase_clinic_c as inv_purchase_clinic_c',
+                'row_cstm.inv_purchase_radio_c as inv_purchase_radio_c',
+                'row_cstm.inv_purchase_total_c as inv_purchase_total_c',
             ])
             ->where('sor.deleted', 0)
             ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds)
             ->get();
 
         return $rows->groupBy('order_id');
+    }
+
+    /**
+     * Combine datum_onderzoek_1 (date) with aankomsttijd_c (HH:MM varchar) into a full datetime string.
+     * Falls back to date-only when the time field is absent or malformed.
+     */
+    private function parseSugarExaminationAt(mixed $date, mixed $time): ?string
+    {
+        $parsed = $this->parseSugarDate($date);
+        if ($parsed === null) {
+            return null;
+        }
+
+        // parseSugarDate returns 'Y-m-d H:i:s'; take only the date part before appending HH:MM time
+        $dateOnly = substr($parsed, 0, 10);
+
+        // Accept HH:MM, H:MM, HH.MM, H.MM (dot or colon separator, optional leading zero)
+        if (! empty($time) && preg_match('/^(\d{1,2})[.:](\d{2})$/', trim((string) $time), $m)) {
+            return $dateOnly.' '.str_pad($m[1], 2, '0', STR_PAD_LEFT).':'.$m[2].':00';
+        }
+
+        return $parsed;
     }
 
     /**
@@ -560,6 +613,155 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         return LostReason::tryFrom($reden);
+    }
+
+    /**
+     * Build order-item purchase price attributes from SuiteCRM row custom fields (authoritative inkoop),
+     * or null if nothing to import.
+     *
+     * Aligns component sum to Sugar total (remainder in misc). Uses explicit 0.0 for empty buckets so
+     * {@see OrderItem::resolvedPurchasePrice()} does not fall back to product/partner defaults.
+     *
+     * @return array<string, float>|null
+     */
+    private function orderItemPurchasePayloadFromSugarRow(object $row): ?array
+    {
+        $miscRaw = $this->sugarMoneyAmount($row->inv_purchase_other_c ?? null);
+        $cardio = $this->sugarMoneyAmount($row->inv_purchase_cardio_c ?? null);
+        $clinic = $this->sugarMoneyAmount($row->inv_purchase_clinic_c ?? null);
+        $radio = $this->sugarMoneyAmount($row->inv_purchase_radio_c ?? null);
+        $totalFromSugar = $this->sugarMoneyAmount($row->inv_purchase_total_c ?? null);
+
+        $hasComponent = $miscRaw !== null || $cardio !== null || $clinic !== null || $radio !== null;
+        $hasTotal = $totalFromSugar !== null;
+
+        if (! $hasComponent && ! $hasTotal) {
+            return null;
+        }
+
+        $sumSugarComponents = ($miscRaw ?? 0.0) + ($cardio ?? 0.0) + ($clinic ?? 0.0) + ($radio ?? 0.0);
+        $total = $totalFromSugar !== null ? $totalFromSugar : round($sumSugarComponents, 2);
+
+        $remainder = round($total - $sumSugarComponents, 2);
+        $misc = round(($miscRaw ?? 0.0) + $remainder, 2);
+
+        return [
+            'purchase_price_misc'        => $misc,
+            'purchase_price_doctor'      => 0.0,
+            'purchase_price_cardiology'  => $cardio ?? 0.0,
+            'purchase_price_clinic'      => $clinic ?? 0.0,
+            'purchase_price_radiology'   => $radio ?? 0.0,
+            'purchase_price'             => $total,
+        ];
+    }
+
+    private function sugarMoneyAmount(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
+    }
+
+    /**
+     * Create {@see OrderPayment} rows from SuiteCRM order custom fields (pcrm_salesorder_cstm).
+     */
+    private function syncOrderPaymentsFromSugar(Order $order, object $record): void
+    {
+        if ($this->output->isVeryVerbose() && ! empty($record->betaal_status_c)) {
+            $this->line("  Sugar betaal_status_c={$record->betaal_status_c} (order {$record->id})");
+        }
+
+        $paidAt = $this->orderPaymentPaidAtFromSugar($order, $record);
+
+        $advance = $this->sugarMoneyAmount($record->betaald_vooruit_c ?? null);
+        if ($advance !== null && $advance > 0) {
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'amount'   => $advance,
+                'type'     => PaymentType::ADVANCE,
+                'method'   => PaymentMethod::BANK,
+                'paid_at'  => $paidAt,
+                'currency' => 'EUR',
+            ]);
+        }
+
+        $clinic = $this->sugarMoneyAmount($record->betaald_kliniek_c ?? null);
+        if ($clinic !== null && $clinic > 0) {
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'amount'   => $clinic,
+                'type'     => PaymentType::PAYED_IN_CLINIC,
+                'method'   => $this->paymentMethodFromSugarPinContant($record->pin_contant_c ?? null),
+                'paid_at'  => $paidAt,
+                'currency' => 'EUR',
+            ]);
+        }
+
+        if ($this->output->isVerbose()) {
+            $this->maybeLogOpenstaandVersusOrderTotal($order, $record, ($advance ?? 0.0) + ($clinic ?? 0.0));
+        }
+    }
+
+    private function orderPaymentPaidAtFromSugar(Order $order, object $record): ?string
+    {
+        if ($order->closed_at) {
+            return $order->closed_at->format('Y-m-d');
+        }
+
+        $entered = $this->parseSugarDate($record->date_entered ?? null);
+
+        return $entered ? substr($entered, 0, 10) : null;
+    }
+
+    /**
+     * Sugar pin_contant_c: tekst ("pin"/"contant") of vlag; default PIN bij twijfel.
+     */
+    private function paymentMethodFromSugarPinContant(mixed $value): PaymentMethod
+    {
+        if ($value === null || $value === '') {
+            return PaymentMethod::PIN;
+        }
+
+        $s = strtolower(trim((string) $value));
+
+        if ($s === '' || is_numeric($s)) {
+            return PaymentMethod::PIN;
+        }
+
+        return match (true) {
+            str_contains($s, 'contant'),
+            str_contains($s, 'cash'),
+            $s === 'c' => PaymentMethod::CASH,
+            str_contains($s, 'pin'),
+            str_contains($s, 'debit'),
+            $s === 'p' => PaymentMethod::PIN,
+            default    => PaymentMethod::PIN,
+        };
+    }
+
+    private function maybeLogOpenstaandVersusOrderTotal(Order $order, object $record, float $importedPaidSum): void
+    {
+        $openstaand = $this->sugarMoneyAmount($record->openstaand_c ?? null);
+        if ($openstaand === null) {
+            return;
+        }
+
+        $total = round((float) ($order->total_price ?? 0), 2);
+        if ($total <= 0) {
+            return;
+        }
+
+        $expectedOutstanding = round(max(0, $total - $importedPaidSum), 2);
+        if (abs($openstaand - $expectedOutstanding) > 0.02) {
+            $this->warn(sprintf(
+                'Order %s: openstaand_c=%s vs (total_price - imported payments)≈%s — check data.',
+                $order->external_id ?? $order->id,
+                $openstaand,
+                $expectedOutstanding
+            ));
+        }
     }
 
     /**

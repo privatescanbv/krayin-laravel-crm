@@ -7,6 +7,9 @@ use App\Enums\PaymentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Patient Payments
+ */
 class OrderPayment extends Model
 {
     protected $table = 'order_payments';

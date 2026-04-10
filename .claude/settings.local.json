@@ -53,7 +53,8 @@
       "Bash(vendor/bin/sail artisan:*)",
       "mcp__laravel-boost__database-connections",
       "mcp__laravel-boost__database-query",
-      "mcp__laravel-boost__database-schema"
+      "mcp__laravel-boost__database-schema",
+      "Bash(docker exec:*)"
     ]
   }
 }

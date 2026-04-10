@@ -179,6 +179,23 @@ use Webkul\Lead\Models\Stage;
                                 <option value="0" {{ !$orders->combine_order ? 'selected' : '' }}>Nee</option>
                             </x-adminc::components.field>
 
+                            <x-adminc::components.field
+                                type="text"
+                                name="invoice_number"
+                                label="Factuurnummer"
+                                value="{{ $orders->invoice_number }}"
+                            />
+
+                            <x-adminc::components.field
+                                type="select"
+                                name="is_business"
+                                label="Zakelijk"
+                                value="{{ $orders->is_business ? '1' : '0' }}"
+                            >
+                                <option value="1" {{ $orders->is_business ? 'selected' : '' }}>Ja</option>
+                                <option value="0" {{ ! $orders->is_business ? 'selected' : '' }}>Nee</option>
+                            </x-adminc::components.field>
+
                             <!-- Owner -->
                             <div class="flex-1">
                                 @php

@@ -139,6 +139,20 @@
                     {{ $order->combine_order ? 'Ja' : 'Nee' }}
                 </span>
             </div>
+
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Factuurnummer</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->invoice_number ?: '-' }}
+                </span>
+            </div>
+
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Zakelijk</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->is_business ? 'Ja' : 'Nee' }}
+                </span>
+            </div>
         </div>
     </div>
 

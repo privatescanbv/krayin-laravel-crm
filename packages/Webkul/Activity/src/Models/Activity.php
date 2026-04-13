@@ -263,15 +263,18 @@ class Activity extends Model implements ActivityContract
      * Resolve all persons associated with this activity via any known relation:
      * direct person_id FK, lead, sales lead, or order → sales lead.
      *
+     * When person_id is explicitly set the activity is assigned to that single
+     * person -- return only that person (no fallback to broader relations).
+     *
      * @return Collection<int, Person>
      */
     public function getPatientsFromActivity(): Collection
     {
-        $persons = collect();
-
         if ($this->person_id) {
-            $persons = $persons->merge($this->person ? [$this->person] : []);
+            return collect($this->person ? [$this->person] : [])->values();
         }
+
+        $persons = collect();
 
         if ($this->lead_id) {
             $persons = $persons->merge($this->lead?->persons ?? collect());
@@ -320,16 +323,23 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * Scope activities related to a person via any of the known relations:
-     * direct person_id FK, lead, sales lead, or order.
+     * Scope activities related to a person.
+     *
+     * When person_id is explicitly set, only that person can see the activity.
+     * When person_id is null, visibility is inferred from lead, sales lead, or order.
      */
     public function scopeForPerson(Builder $query, Person $person): Builder
     {
         return $query->where(function (Builder $q) use ($person) {
             $q->where('person_id', $person->id)
-                ->orWhereHas('lead.persons', fn (Builder $sub) => $sub->whereKey($person->id))
-                ->orWhereHas('salesLead.persons', fn (Builder $sub) => $sub->whereKey($person->id))
-                ->orWhereHas('order.salesLead.persons', fn (Builder $sub) => $sub->whereKey($person->id));
+                ->orWhere(function (Builder $sub) use ($person) {
+                    $sub->whereNull('person_id')
+                        ->where(function (Builder $inner) use ($person) {
+                            $inner->whereHas('lead.persons', fn (Builder $s) => $s->whereKey($person->id))
+                                ->orWhereHas('salesLead.persons', fn (Builder $s) => $s->whereKey($person->id))
+                                ->orWhereHas('order.salesLead.persons', fn (Builder $s) => $s->whereKey($person->id));
+                        });
+                });
         });
     }
 

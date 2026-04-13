@@ -259,7 +259,11 @@ class EmailController extends Controller
 
             return Storage::download($attachment->path, $downloadName);
         } catch (Exception $e) {
-            session()->flash('error', $e->getMessage());
+            Log::error('EmailController@download: Error downloading attachment', [
+                'attachment_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            session()->flash('error', trans('admin::app.mail.download-failed'));
 
             return redirect()->back();
         }
@@ -517,13 +521,11 @@ class EmailController extends Controller
             Log::error('Error in email templates.get endpoint', [
                 'error'          => $e->getMessage(),
                 'trace'          => $e->getTraceAsString(),
-                'request_params' => request()->all(),
             ]);
 
             return response()->json([
                 'error'   => __('messages.email.server_error'),
-                'message' => $e->getMessage(),
-                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+
             ], 500);
         }
     }
@@ -596,9 +598,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'error'   => __('messages.email.template_render_error'),
-                'message' => $e->getMessage(),
-                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 404);
+                ], 500);
         }
     }
 
@@ -651,8 +651,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'error'   => __('messages.email.template_render_error'),
-                'message' => $e->getMessage(),
-                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+
             ], 500);
         }
     }
@@ -706,8 +705,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'error'   => __('messages.email.template_render_error'),
-                'message' => $e->getMessage(),
-                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+
             ], 500);
         }
     }

@@ -28,6 +28,12 @@ class StoreOrderConfirmationPdf
     {
         $order = $event->order;
 
+        // When combine_order is false, per-person PDFs are created via the
+        // confirmation wizard (markPersonAsSent). Skip the single-PDF path.
+        if ($order->combine_order === false) {
+            return;
+        }
+
         if (empty($order->confirmation_letter_content)) {
             Log::warning('Ignoring PDF generation for order without confirmation letter content', [
                 'order_id' => $order->id,
@@ -48,38 +54,33 @@ class StoreOrderConfirmationPdf
 
     private function storeConfirmationPdfActivity(Order $order, ?int $userId): Activity
     {
-        // Generate PDF content
         $html = mb_convert_encoding($order->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
         $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
             ->setPaper('A4')
             ->output();
 
-        // Create the activity first to get an ID for the file path
         $activity = $this->activityRepository->create([
-            'type'                => ActivityType::FILE,
-            'title'               => 'Orderbevestiging PDF',
-            'comment'             => 'Automatisch gegenereerde orderbevestiging',
-            'is_done'             => true,
-            'publish_to_portal'   => true,
-            'user_id'             => $userId,
-            'order_id'            => $order->id,
-            'additional'          => [
+            'type'              => ActivityType::FILE,
+            'title'             => 'Orderbevestiging PDF',
+            'comment'           => 'Automatisch gegenereerde orderbevestiging',
+            'is_done'           => true,
+            'publish_to_portal' => true,
+            'user_id'           => $userId,
+            'order_id'          => $order->id,
+            'additional'        => [
                 'document_type' => 'order_confirmation',
             ],
         ]);
 
-        // Store the PDF file
         $fileName = 'order-bevestiging-'.$order->id.'-'.date('Y-m-d').'.pdf';
         $filePath = 'activities/'.$activity->id.'/'.$fileName;
         $this->documentStorage->put($filePath, $pdfContent);
 
-        // Create the file record linked to the activity
         $activity->files()->create([
             'name' => $fileName,
             'path' => $filePath,
         ]);
 
-        // Notify all patients linked to the order
         $this->notifyPatients($order, $activity, $userId);
 
         return $activity;

@@ -3,17 +3,25 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
+use App\Enums\ActivityType;
 use App\Enums\Currency;
 use App\Enums\LostReason;
+use App\Enums\NotificationReferenceType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
+use App\Events\PatientNotifyEvent;
+use App\Services\Storage\DocumentStorage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Contact\Models\Person;
 use App\Http\Requests\Admin\OrderPaymentRequest;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderPayment;
+use App\Models\OrderPersonConfirmation;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
@@ -746,13 +754,48 @@ class OrderController extends SimpleEntityController
             'salesLead.persons',
             'salesLead.contactPerson',
             'orderChecks',
+            'personConfirmations',
         ]);
 
         $orderEmailOptions = $this->orderMailService->getEmailOptions($order);
 
+        $personsStatus = [];
+        $combineOrder = $order->combine_order !== false;
+
+        if (! $combineOrder && $order->salesLead) {
+            $persons = $order->salesLead->persons;
+            $confirmations = $order->personConfirmations->keyBy('person_id');
+
+            foreach ($persons as $person) {
+                $confirmation = $confirmations->get($person->id);
+                $hasFiles = Activity::query()
+                    ->where('order_id', $order->id)
+                    ->where('person_id', $person->id)
+                    ->where('type', ActivityType::FILE)
+                    ->exists();
+
+                $defaultEmail = collect($person->emails ?? [])
+                    ->firstWhere('is_default', true)['value']
+                    ?? collect($person->emails ?? [])->first()['value']
+                    ?? null;
+
+                $personsStatus[] = [
+                    'id'            => $person->id,
+                    'name'          => $person->name,
+                    'email'         => $defaultEmail,
+                    'letter_saved'  => $confirmation?->isLetterSaved() ?? false,
+                    'has_files'     => $hasFiles,
+                    'email_sent'    => $confirmation?->isEmailSent() ?? false,
+                    'email_sent_at' => $confirmation?->email_sent_at?->toIso8601String(),
+                ];
+            }
+        }
+
         return view('admin::orders.confirm', [
             'orders'            => $order,
             'orderEmailOptions' => $orderEmailOptions,
+            'combineOrder'      => $combineOrder,
+            'personsStatus'     => $personsStatus,
         ]);
     }
 
@@ -899,6 +942,251 @@ class OrderController extends SimpleEntityController
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'inline; filename="order-bevestiging-preview.pdf"',
         ]);
+    }
+
+    // ---- Per-person confirmation endpoints (combine_order = false) ----
+
+    public function personsConfirmationStatus(int $orderId): JsonResponse
+    {
+        $order = Order::with(['salesLead.persons', 'personConfirmations'])->findOrFail($orderId);
+
+        if (! $order->salesLead) {
+            return response()->json(['data' => []]);
+        }
+
+        $confirmations = $order->personConfirmations->keyBy('person_id');
+        $persons = $order->salesLead->persons;
+
+        $data = $persons->map(function (Person $person) use ($order, $confirmations) {
+            $confirmation = $confirmations->get($person->id);
+            $hasFiles = Activity::query()
+                ->where('order_id', $order->id)
+                ->where('person_id', $person->id)
+                ->where('type', ActivityType::FILE)
+                ->exists();
+
+            $defaultEmail = collect($person->emails ?? [])
+                ->firstWhere('is_default', true)['value']
+                ?? collect($person->emails ?? [])->first()['value']
+                ?? null;
+
+            return [
+                'id'            => $person->id,
+                'name'          => $person->name,
+                'email'         => $defaultEmail,
+                'letter_saved'  => $confirmation?->isLetterSaved() ?? false,
+                'has_files'     => $hasFiles,
+                'email_sent'    => $confirmation?->isEmailSent() ?? false,
+                'email_sent_at' => $confirmation?->email_sent_at?->toIso8601String(),
+            ];
+        });
+
+        return response()->json([
+            'data'           => $data->values(),
+            'all_confirmed'  => $order->allPersonsConfirmed(),
+        ]);
+    }
+
+    public function getPersonConfirmationTemplateContent(Request $request, int $orderId, int $personId): JsonResponse
+    {
+        $templateIdentifier = $request->query('template');
+
+        if (! $templateIdentifier) {
+            return response()->json(['error' => 'Template identifier is required'], 400);
+        }
+
+        try {
+            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities([
+                'order'  => $orderId,
+                'person' => $personId,
+            ]);
+
+            $template = EmailTemplate::byCode($templateIdentifier)
+                ->orWhere('name', $templateIdentifier)
+                ->first();
+
+            if (! $template) {
+                return response()->json([
+                    'error'   => 'Template not found',
+                    'message' => "Template '{$templateIdentifier}' does not exist in database",
+                ], 404);
+            }
+
+            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
+
+            return response()->json(['data' => ['content' => $content]]);
+        } catch (Exception $e) {
+            Log::error('Per-person confirmation template error', [
+                'order_id'  => $orderId,
+                'person_id' => $personId,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function savePersonConfirmationLetter(Request $request, int $orderId, int $personId): JsonResponse
+    {
+        $request->validate(['content' => 'required|string']);
+
+        Order::findOrFail($orderId);
+        Person::findOrFail($personId);
+
+        $confirmation = OrderPersonConfirmation::updateOrCreate(
+            ['order_id' => $orderId, 'person_id' => $personId],
+            ['confirmation_letter_content' => $request->input('content')]
+        );
+
+        return response()->json([
+            'message' => 'Orderbevestiging voor persoon opgeslagen.',
+            'data'    => ['content' => $confirmation->confirmation_letter_content],
+        ]);
+    }
+
+    public function previewPersonConfirmationPdf(Request $request, int $orderId, int $personId): Response
+    {
+        Order::findOrFail($orderId);
+
+        $request->validate(['content' => 'required|string']);
+
+        $binary = $this->pdfBinaryFromHtml($request->input('content'));
+
+        return response($binary, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="order-bevestiging-preview.pdf"',
+        ]);
+    }
+
+    public function personMailPreview(int $orderId, int $personId): JsonResponse
+    {
+        $order = Order::with([
+            'orderItems.product',
+            'orderItems.person',
+            'salesLead.lead',
+            'salesLead.contactPerson',
+        ])->findOrFail($orderId);
+
+        $person = Person::findOrFail($personId);
+
+        $confirmation = OrderPersonConfirmation::where('order_id', $orderId)
+            ->where('person_id', $personId)
+            ->first();
+
+        if (! $confirmation || empty($confirmation->confirmation_letter_content)) {
+            return response()->json([
+                'message' => 'De brief voor deze persoon moet eerst worden gegenereerd.',
+            ], 422);
+        }
+
+        $mailData = $this->orderMailService->buildMailData($order, $person);
+
+        $defaultEmail = collect($person->emails ?? [])
+            ->firstWhere('is_default', true)['value']
+            ?? collect($person->emails ?? [])->first()['value']
+            ?? null;
+
+        $emailOptions = [];
+        foreach ($person->emails ?? [] as $email) {
+            if (! empty($email['value'])) {
+                $emailOptions[] = [
+                    'value'      => $email['value'],
+                    'is_default' => ! empty($email['is_default']),
+                ];
+            }
+        }
+
+        return response()->json(array_merge($mailData, [
+            'default_email' => $defaultEmail,
+            'emails'        => $emailOptions,
+            'person_name'   => $person->name,
+        ]));
+    }
+
+    public function markPersonAsSent(Request $request, int $orderId, int $personId): JsonResponse
+    {
+        $order = Order::with('salesLead.lead.department')->findOrFail($orderId);
+        $person = Person::findOrFail($personId);
+
+        $confirmation = OrderPersonConfirmation::where('order_id', $orderId)
+            ->where('person_id', $personId)
+            ->first();
+
+        if (! $confirmation || empty($confirmation->confirmation_letter_content)) {
+            return response()->json(['message' => 'Geen brief gevonden voor deze persoon.'], 422);
+        }
+
+        if ($confirmation->isEmailSent()) {
+            return response()->json(['message' => 'Deze persoon is al bevestigd.'], 422);
+        }
+
+        try {
+            $this->storePersonConfirmationPdf($order, $person, $confirmation, auth()->id());
+        } catch (Throwable $e) {
+            Log::error('Failed to create per-person confirmation PDF', [
+                'order_id'  => $orderId,
+                'person_id' => $personId,
+                'error'     => $e->getMessage(),
+            ]);
+        }
+
+        $confirmation->update(['email_sent_at' => now()]);
+
+        $allDone = $order->allPersonsConfirmed();
+
+        if ($allDone) {
+            $order->update([
+                'pipeline_stage_id' => Order::orderSendByDepartmentStageId($order->salesLead?->lead?->department),
+            ]);
+
+            OrderMarkedAsSent::dispatch($order, auth()->id());
+        }
+
+        return response()->json([
+            'message'       => 'Persoon bevestigd.',
+            'all_confirmed' => $allDone,
+        ]);
+    }
+
+    private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
+    {
+        $html = mb_convert_encoding($confirmation->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
+        $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
+            ->setPaper('A4')
+            ->output();
+
+        $activityRepository = app(ActivityRepository::class);
+        $documentStorage = app(DocumentStorage::class);
+
+        $activity = $activityRepository->create([
+            'type'              => ActivityType::FILE,
+            'title'             => 'Orderbevestiging PDF – '.$person->name,
+            'comment'           => 'Automatisch gegenereerde orderbevestiging voor '.$person->name,
+            'is_done'           => true,
+            'publish_to_portal' => true,
+            'user_id'           => $userId,
+            'order_id'          => $order->id,
+            'person_id'         => $person->id,
+            'additional'        => ['document_type' => 'order_confirmation'],
+        ]);
+
+        $fileName = 'order-bevestiging-'.$order->id.'-'.$person->id.'-'.date('Y-m-d').'.pdf';
+        $filePath = 'activities/'.$activity->id.'/'.$fileName;
+        $documentStorage->put($filePath, $pdfContent);
+
+        $activity->files()->create([
+            'name' => $fileName,
+            'path' => $filePath,
+        ]);
+
+        PatientNotifyEvent::dispatch(
+            $person->id,
+            'Orderbevestiging #'.$order->id,
+            NotificationReferenceType::FILE,
+            $activity->id,
+            false,
+            $userId
+        );
     }
 
     /**
@@ -1049,7 +1337,7 @@ class OrderController extends SimpleEntityController
         // Model = Order
         // Eager-load relations needed for planning button visibility and planning info
         $order->load([
-            'orderItems.product.productGroup', // Load productGroup for name_with_path
+            'orderItems.product.productGroup',
             'orderItems.product.partnerProducts' => function ($q) {
                 $q->select('partner_products.id', 'partner_products.product_id', 'partner_products.resource_type_id');
             },
@@ -1057,6 +1345,7 @@ class OrderController extends SimpleEntityController
             'orderItems.person',
             'salesLead',
             'orderChecks',
+            'personConfirmations',
         ]);
 
         // Load salesLead nested relations separately if salesLead exists

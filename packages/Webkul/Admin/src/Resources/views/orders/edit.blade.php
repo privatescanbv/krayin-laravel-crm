@@ -48,6 +48,12 @@ use Webkul\Lead\Models\Stage;
                             PipelineStage::ORDER_INGEPLAND_HERNIA->id(),
                         ];
                         $mailDisabled = !in_array($orders->pipeline_stage_id, $wachtenStageIds);
+
+                        $isCombineOrder = $orders->combine_order !== false;
+                        $confirmProgress = null;
+                        if (!$isCombineOrder && $orders->sales_lead_id) {
+                            $confirmProgress = $orders->confirmationProgress();
+                        }
                     @endphp
                     @if ($orders->sales_lead_id)
                         <a
@@ -56,7 +62,15 @@ use Webkul\Lead\Models\Stage;
                             @if($mailDisabled) aria-disabled="true" tabindex="-1" @endif
                             title="{{ $mailDisabled ? 'Eerst order op Ingepland zetten' : '' }}"
                         >
-                            Afspraak bevestigen
+                            @if ($confirmProgress && $confirmProgress['total'] > 0)
+                                @if ($confirmProgress['confirmed'] >= $confirmProgress['total'])
+                                    <span class="mr-1 text-green-600">&#10003;</span>Afspraak bevestigd
+                                @else
+                                    Afspraak bevestigen ({{ $confirmProgress['confirmed'] }}/{{ $confirmProgress['total'] }})
+                                @endif
+                            @else
+                                Afspraak bevestigen
+                            @endif
                         </a>
                     @endif
 

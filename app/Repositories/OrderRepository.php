@@ -36,7 +36,7 @@ class OrderRepository extends Repository
      * Resolve email template variables from order.
      * Returns an array of variables that can be used in email templates.
      */
-    public function resolveEmailVariablesForOrder(int $orderId): array
+    public function resolveEmailVariablesForOrder(int $orderId, ?int $personId = null): array
     {
         $order = $this->with([
             'orderItems.resourceOrderItems.resource.clinic.address',
@@ -60,12 +60,10 @@ class OrderRepository extends Repository
             'customer_name'    => $this->resolveCustomerName($order),
         ];
 
-        // Resolve appointment variables from resource order items
-        $appointmentVariables = $this->resolveAppointmentVariables($order);
+        $appointmentVariables = $this->resolveAppointmentVariables($order, $personId);
         $variables = array_merge($variables, $appointmentVariables);
 
-        // Render appointments table
-        $variables['afspraken_tabel'] = $this->renderAppointmentsTable($order);
+        $variables['afspraken_tabel'] = $this->renderAppointmentsTable($order, $personId);
 
         return $variables;
     }
@@ -121,7 +119,7 @@ class OrderRepository extends Repository
      * Resolve appointment-related variables from order.
      * Extracts the first appointment details for template variables.
      */
-    private function resolveAppointmentVariables(Order $order): array
+    private function resolveAppointmentVariables(Order $order, ?int $filterPersonId = null): array
     {
         $variables = [
             'datum_afspraak'    => '',
@@ -130,9 +128,12 @@ class OrderRepository extends Repository
             'datum_bevestiging' => '',
         ];
 
-        // Find the first resource order item (appointment) across all order items
         $firstAppointment = null;
         foreach ($order->orderItems ?? [] as $orderItem) {
+            if ($filterPersonId !== null && $orderItem->person_id !== $filterPersonId) {
+                continue;
+            }
+
             foreach ($orderItem->resourceOrderItems ?? [] as $resourceOrderItem) {
                 if ($resourceOrderItem->from) {
                     if (! $firstAppointment || $resourceOrderItem->from < $firstAppointment->from) {
@@ -187,10 +188,9 @@ class OrderRepository extends Repository
     /**
      * Render appointments table using Blade template.
      */
-    private function renderAppointmentsTable(Order $order): string
+    private function renderAppointmentsTable(Order $order, ?int $filterPersonId = null): string
     {
-        // Prepare appointments data grouped by person
-        $appointmentsByPerson = $this->prepareAppointmentsByPerson($order);
+        $appointmentsByPerson = $this->prepareAppointmentsByPerson($order, $filterPersonId);
 
         return view('adminc.email_templates.order.order_items_appointments_table', [
             'appointmentsByPerson' => $appointmentsByPerson,
@@ -199,13 +199,18 @@ class OrderRepository extends Repository
 
     /**
      * Prepare appointments data grouped by person.
+     * When $filterPersonId is provided, only items for that person are included.
      */
-    private function prepareAppointmentsByPerson(Order $order): array
+    private function prepareAppointmentsByPerson(Order $order, ?int $filterPersonId = null): array
     {
         $appointmentsByPerson = [];
         $items = $order->orderItems ?? collect();
 
         foreach ($items as $item) {
+            if ($filterPersonId !== null && $item->person_id !== $filterPersonId) {
+                continue;
+            }
+
             $personId = $item->person_id ?? 'unknown';
             $personName = $item->person->name ?? 'Onbekend';
 

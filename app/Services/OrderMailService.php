@@ -22,11 +22,11 @@ class OrderMailService
         private readonly CrmMailService $crmMailService
     ) {}
 
-    public function buildMailData(Order $order): array
+    public function buildMailData(Order $order, ?Person $person = null): array
     {
         $template = $this->ensureTemplateExists();
 
-        $variables = $this->buildTemplateVariables($order);
+        $variables = $this->buildTemplateVariables($order, $person);
 
         $subject = $this->interpolate($template->subject ?? '', $variables);
         $body = $this->interpolate($template->content ?? '', $variables);
@@ -180,10 +180,8 @@ class OrderMailService
 HTML;
     }
 
-    protected function buildTemplateVariables(Order $order): array
+    protected function buildTemplateVariables(Order $order, ?Person $person = null): array
     {
-        // Compose-only: do NOT create external form requests here.
-        // If a link already exists on anamnesis, include it; otherwise omit the section.
         $formLink = $this->getExistingFormLink($order);
         $formLinkSection = '';
 
@@ -192,7 +190,6 @@ HTML;
             $formLinkSection = '<p>Om uw order te kunnen verwerken, verzoeken wij u vriendelijk om <a href="'.$safeLink.'" style="color: #007bff; text-decoration: underline;">graag dit GVL formulier in te vullen</a>.</p>';
         }
 
-        // Load order items with resource planner data
         $order->load([
             'orderItems.resourceOrderItems.resource.clinic.address',
             'orderItems.resourceOrderItems.resource.resourceType',
@@ -200,14 +197,16 @@ HTML;
             'orderItems.product',
         ]);
 
+        $personId = $person?->id;
+
         return [
             'order_reference'        => (string) $order->id,
             'order_title'            => e($order->title ?? ''),
             'order_status'           => e($order->status?->label() ?? ''),
             'order_total'            => $this->formatCurrency($order->total_price),
-            'order_summary_table'    => $this->renderItemsTable($order),
-            'appointments_by_person' => $this->renderAppointmentsByPerson($order),
-            'customer_name'          => e($this->resolveCustomerName($order)),
+            'order_summary_table'    => $this->renderItemsTable($order, $personId),
+            'appointments_by_person' => $this->renderAppointmentsByPerson($order, $personId),
+            'customer_name'          => $person ? e($person->name) : e($this->resolveCustomerName($order)),
             'approval_instructions'  => 'Geef uw akkoord door op deze e-mail te reageren of telefonisch contact met ons op te nemen.',
             'company_signature'      => e(config('app.name', 'Privatescan')),
             'default_email'          => $this->getDefaultEmail($order),
@@ -246,7 +245,7 @@ HTML;
         return null;
     }
 
-    protected function renderItemsTable(Order $order): string
+    protected function renderItemsTable(Order $order, ?int $filterPersonId = null): string
     {
         $items = $order->orderItems ?: collect();
 
@@ -254,40 +253,53 @@ HTML;
             $items = collect($items);
         }
 
+        if ($filterPersonId !== null) {
+            $items = $items->where('person_id', $filterPersonId)->values();
+        }
+
         if ($items->isEmpty()) {
             return '<p>Er zijn nog geen orderregels toegevoegd.</p>';
         }
 
         $rows = '';
+        $showPersonColumn = $filterPersonId === null;
 
         foreach ($items as $item) {
             $productName = e($item->product->name ?? 'Onbekend product');
             $quantity = (int) ($item->quantity ?? 0);
             $price = $this->formatCurrency($item->total_price ?? 0);
-            $personName = e($item->person->name ?? '-');
 
-            $rows .= sprintf(
-                '<tr>'
-                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">%s</td>'
-                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">%s</td>'
-                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">%s</td>'
-                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">%s</td>'
-                .'</tr>',
-                $productName,
-                $quantity,
-                $price,
-                $personName
-            );
+            $rows .= '<tr>'
+                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.$productName.'</td>'
+                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">'.$quantity.'</td>'
+                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">'.$price.'</td>';
+
+            if ($showPersonColumn) {
+                $rows .= '<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.e($item->person->name ?? '-').'</td>';
+            }
+
+            $rows .= '</tr>';
         }
 
-        $rows .= sprintf(
-            '<tr>'
-            .'<td colspan="2" style="padding:8px; text-align:right; font-weight:600;">Totaal</td>'
-            .'<td style="padding:8px; text-align:right; font-weight:600;">%s</td>'
-            .'<td></td>'
-            .'</tr>',
-            $this->formatCurrency($order->total_price ?? 0)
-        );
+        $totalPrice = $filterPersonId !== null
+            ? $this->formatCurrency($items->sum('total_price'))
+            : $this->formatCurrency($order->total_price ?? 0);
+
+        $colspanTotal = $showPersonColumn ? 2 : 2;
+
+        $rows .= '<tr>'
+            .'<td colspan="'.$colspanTotal.'" style="padding:8px; text-align:right; font-weight:600;">Totaal</td>'
+            .'<td style="padding:8px; text-align:right; font-weight:600;">'.$totalPrice.'</td>';
+
+        if ($showPersonColumn) {
+            $rows .= '<td></td>';
+        }
+
+        $rows .= '</tr>';
+
+        $personHeader = $showPersonColumn
+            ? '<th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Voor</th>'
+            : '';
 
         return <<<HTML
 <table style="width:100%; border-collapse:collapse; margin:16px 0;">
@@ -296,7 +308,7 @@ HTML;
             <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Product</th>
             <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;">Aantal</th>
             <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;">Prijs</th>
-            <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Voor</th>
+            {$personHeader}
         </tr>
     </thead>
     <tbody>
@@ -306,7 +318,7 @@ HTML;
 HTML;
     }
 
-    protected function renderAppointmentsByPerson(Order $order): string
+    protected function renderAppointmentsByPerson(Order $order, ?int $filterPersonId = null): string
     {
         $items = $order->orderItems ?: collect();
 
@@ -314,11 +326,14 @@ HTML;
             $items = collect($items);
         }
 
+        if ($filterPersonId !== null) {
+            $items = $items->where('person_id', $filterPersonId)->values();
+        }
+
         if ($items->isEmpty()) {
             return '<p>Er zijn nog geen afspraken ingepland.</p>';
         }
 
-        // Group appointments by person
         $appointmentsByPerson = [];
 
         foreach ($items as $item) {

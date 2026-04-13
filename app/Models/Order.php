@@ -212,6 +212,55 @@ class Order extends Model
         return $this->hasMany(AfbPersonDocument::class);
     }
 
+    public function personConfirmations(): HasMany
+    {
+        return $this->hasMany(OrderPersonConfirmation::class);
+    }
+
+    /**
+     * Check whether every person on the sales lead has a confirmed (email sent) record.
+     */
+    public function allPersonsConfirmed(): bool
+    {
+        if (! $this->salesLead) {
+            return false;
+        }
+
+        $personIds = $this->salesLead->persons()->pluck('persons.id');
+
+        if ($personIds->isEmpty()) {
+            return false;
+        }
+
+        $confirmedCount = $this->personConfirmations()
+            ->whereIn('person_id', $personIds)
+            ->whereNotNull('email_sent_at')
+            ->count();
+
+        return $confirmedCount >= $personIds->count();
+    }
+
+    /**
+     * Count how many persons have been confirmed vs total on this order.
+     *
+     * @return array{confirmed: int, total: int}
+     */
+    public function confirmationProgress(): array
+    {
+        if (! $this->salesLead) {
+            return ['confirmed' => 0, 'total' => 0];
+        }
+
+        $personIds = $this->salesLead->persons()->pluck('persons.id');
+
+        $confirmed = $this->personConfirmations()
+            ->whereIn('person_id', $personIds)
+            ->whereNotNull('email_sent_at')
+            ->count();
+
+        return ['confirmed' => $confirmed, 'total' => $personIds->count()];
+    }
+
     /**
      * Returns the latest successful AfbPersonDocument per (person_id, clinic_department_id) combination.
      * Use this as the single source of truth for AFB display logic across views.

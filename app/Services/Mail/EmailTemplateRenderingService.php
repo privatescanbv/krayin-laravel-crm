@@ -155,17 +155,15 @@ class EmailTemplateRenderingService
 
         // Resolve order variables (highest priority for order templates)
         if ($orderId) {
-            $orderVariables = $this->orderRepository->resolveEmailVariablesForOrder($orderId);
+            $orderVariables = $this->orderRepository->resolveEmailVariablesForOrder($orderId, $personId);
 
             if (! empty($orderVariables)) {
                 $variables = array_merge($variables, $orderVariables);
 
-                // Render order items table (needs order object)
                 if (isset($variables['order'])) {
-                    $variables['order_items_table'] = $this->renderOrderItemsTable($variables['order']);
+                    $variables['order_items_table'] = $this->renderOrderItemsTable($variables['order'], $personId);
                 }
 
-                // If order has sales lead, also resolve sales lead variables
                 if (isset($variables['order']) && $variables['order']->salesLead) {
                     $salesLeadId = $variables['order']->salesLead->id;
                     if ($variables['order']->salesLead->lead) {
@@ -347,11 +345,13 @@ class EmailTemplateRenderingService
 
     /**
      * Render order items table HTML using Blade template.
+     * When $personId is provided, only items belonging to that person are shown.
      */
-    private function renderOrderItemsTable(Order $order): string
+    private function renderOrderItemsTable(Order $order, ?int $personId = null): string
     {
         return view('adminc.email_templates.order.order_items_table', [
-            'order' => $order,
+            'order'    => $order,
+            'personId' => $personId,
         ])->render();
     }
 

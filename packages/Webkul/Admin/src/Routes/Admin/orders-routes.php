@@ -39,6 +39,14 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::post('{orderId}/confirmation/preview-pdf', 'previewConfirmationLetterPdf')->name('admin.orders.confirmation.preview-pdf');
     Route::get('{orderId}/confirmation/export-pdf', 'exportConfirmationLetterPDF')->name('admin.orders.confirmation.export-pdf');
 
+    // Per-person confirmation routes (combine_order = false)
+    Route::get('{orderId}/confirmation/persons-status', 'personsConfirmationStatus')->name('admin.orders.confirmation.persons-status');
+    Route::get('{orderId}/confirmation/person/{personId}/template-content', 'getPersonConfirmationTemplateContent')->name('admin.orders.confirmation.person.template-content');
+    Route::post('{orderId}/confirmation/person/{personId}/save', 'savePersonConfirmationLetter')->name('admin.orders.confirmation.person.save');
+    Route::post('{orderId}/confirmation/person/{personId}/preview-pdf', 'previewPersonConfirmationPdf')->name('admin.orders.confirmation.person.preview-pdf');
+    Route::post('{orderId}/confirmation/person/{personId}/sent', 'markPersonAsSent')->name('admin.orders.confirmation.person.sent');
+    Route::get('{orderId}/confirmation/person/{personId}/mail-preview', 'personMailPreview')->name('admin.orders.confirmation.person.mail-preview');
+
     // Order checks routes
     Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');
     Route::put('{orderId}/checks/{checkId}', 'updateCheck')->name('admin.orders.checks.update');

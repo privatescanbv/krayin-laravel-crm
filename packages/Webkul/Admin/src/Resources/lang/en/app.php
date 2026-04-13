@@ -2026,6 +2026,7 @@ return [
         'delete-failed'       => 'Email can not be deleted.',
         'move-success'        => 'Email moved successfully.',
         'move-failed'         => 'Email could not be moved.',
+        'download-failed'     => 'Attachment could not be downloaded.',
 
         'view' => [
             'title'                      => 'Mails',

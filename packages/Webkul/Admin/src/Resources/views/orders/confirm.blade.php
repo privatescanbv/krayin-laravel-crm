@@ -36,321 +36,404 @@
                 :sales-lead-id="{{ $orders->sales_lead_id ?? 'null' }}"
                 :initial-content='@json($orders->confirmation_letter_content ?? null)'
                 :emails='@json($orderEmailOptions ?? [])'
+                :combine-order='@json($combineOrder)'
+                :initial-persons-status='@json($personsStatus ?? [])'
                 view-url="{{ route('admin.orders.view', $orders->id) }}"
             ></v-appointment-wizard>
         </div>
     </div>
 
     @pushOnce('scripts')
-        {{-- Step 1: Orderbevestiging template --}}
         <script type="text/x-template" id="v-appointment-wizard-template">
             <div>
-                {{-- Step indicator --}}
-                <div class="flex items-center border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-                    <template v-for="(step, index) in steps" :key="index">
-                        <button
-                            type="button"
-                            class="flex items-center gap-2 text-sm font-medium transition-colors"
-                            :class="[
-                                currentStep === index
-                                    ? 'text-brandColor'
-                                    : currentStep > index
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : 'text-gray-400 dark:text-gray-500'
-                            ]"
-                            @click="goToStep(index)"
-                            :disabled="index > currentStep"
-                        >
-                            <span
-                                class="flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors"
-                                :class="[
-                                    currentStep === index
-                                        ? 'border-brandColor bg-brandColor text-white'
-                                        : currentStep > index
-                                            ? 'border-green-500 bg-green-500 text-white'
-                                            : 'border-gray-300 dark:border-gray-600'
-                                ]"
+                {{-- Person overview (only for non-combined orders) --}}
+                <div v-if="!combineOrder && !selectedPerson">
+                    <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Bevestiging per persoon</h3>
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            Doorloop de stappen voor elke persoon. De order wordt als verstuurd gemarkeerd wanneer alle personen zijn bevestigd.
+                        </p>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-800">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Persoon</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Brief</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Bestanden</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actie</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+                                    <tr v-for="person in personsStatus" :key="person.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                            @{{ person.name }}
+                                            <div v-if="person.email" class="text-xs text-gray-500 dark:text-gray-400">@{{ person.email }}</div>
+                                        </td>
+                                        <td class="px-4 py-4 text-center">
+                                            <span v-if="person.letter_saved" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
+                                            <span v-else class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-center">
+                                            <span v-if="person.has_files" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
+                                            <span v-else class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-center">
+                                            <span v-if="person.email_sent" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
+                                            <span v-else class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                            <button v-if="person.email_sent" type="button" class="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400" disabled>
+                                                <span>&#10003;</span> Voltooid
+                                            </button>
+                                            <button v-else type="button" @click="startPersonWizard(person)" class="primary-button text-xs !px-3 !py-1.5">
+                                                @{{ person.letter_saved ? 'Hervat' : 'Start' }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-6 flex items-center justify-between">
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                <span class="font-medium">@{{ confirmedCount }}</span> van <span class="font-medium">@{{ personsStatus.length }}</span> personen bevestigd
+                            </div>
+                            <button
+                                v-if="allConfirmed && !isMarkingOrderSent"
+                                type="button"
+                                class="primary-button"
+                                @click="goToOrderView"
                             >
-                                <span v-if="currentStep > index">&#10003;</span>
-                                <span v-else>@{{ index + 1 }}</span>
-                            </span>
-                            <span>@{{ step }}</span>
-                        </button>
-                        <div v-if="index < steps.length - 1" class="mx-3 h-px w-8 bg-gray-300 dark:bg-gray-600"></div>
-                    </template>
+                                Terug naar order
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {{-- Step content --}}
-                <div class="p-6">
-                    {{-- STEP 1: Orderbevestiging --}}
-                    <div v-show="currentStep === 0">
-                        <div class="space-y-6">
-                            <div class="flex flex-col gap-1">
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Orderbevestiging</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Genereer de orderbevestiging(en). Gebruik Preview om het resultaat als PDF te bekijken. Deze zal als pdf beschikbaar worden gesteld in het patiëntportaal.
-                                </p>
-                            </div>
+                {{-- Wizard (combined or per-person) --}}
+                <div v-if="combineOrder || selectedPerson">
+                    {{-- Per-person header --}}
+                    <div v-if="selectedPerson" class="flex items-center gap-3 border-b border-gray-200 px-6 py-3 dark:border-gray-800 bg-blue-50 dark:bg-blue-900/20">
+                        <button type="button" @click="exitPersonWizard" class="text-sm font-medium text-brandColor hover:underline">&larr; Terug naar overzicht</button>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">|</span>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">@{{ selectedPerson.name }}</span>
+                    </div>
 
-                            <div class="space-y-4">
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-1">
+                    {{-- Step indicator --}}
+                    <div class="flex items-center border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                        <template v-for="(step, index) in steps" :key="index">
+                            <button
+                                type="button"
+                                class="flex items-center gap-2 text-sm font-medium transition-colors"
+                                :class="[
+                                    currentStep === index
+                                        ? 'text-brandColor'
+                                        : currentStep > index
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : 'text-gray-400 dark:text-gray-500'
+                                ]"
+                                @click="goToStep(index)"
+                                :disabled="index > currentStep"
+                            >
+                                <span
+                                    class="flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors"
+                                    :class="[
+                                        currentStep === index
+                                            ? 'border-brandColor bg-brandColor text-white'
+                                            : currentStep > index
+                                                ? 'border-green-500 bg-green-500 text-white'
+                                                : 'border-gray-300 dark:border-gray-600'
+                                    ]"
+                                >
+                                    <span v-if="currentStep > index">&#10003;</span>
+                                    <span v-else>@{{ index + 1 }}</span>
+                                </span>
+                                <span>@{{ step }}</span>
+                            </button>
+                            <div v-if="index < steps.length - 1" class="mx-3 h-px w-8 bg-gray-300 dark:bg-gray-600"></div>
+                        </template>
+                    </div>
+
+                    {{-- Step content --}}
+                    <div class="p-6">
+                        {{-- STEP 1: Orderbevestiging --}}
+                        <div v-show="currentStep === 0">
+                            <div class="space-y-6">
+                                <div class="flex flex-col gap-1">
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Orderbevestiging</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        Genereer de orderbevestiging<span v-if="selectedPerson"> voor @{{ selectedPerson.name }}</span>. Gebruik Preview om het resultaat als PDF te bekijken. Deze zal als pdf beschikbaar worden gesteld in het patiëntportaal.
+                                    </p>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
+                                            <select
+                                                v-model="confirmationTemplate"
+                                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                            >
+                                                <option value="">Selecteer een template</option>
+                                                <option v-for="t in confirmationTemplates" :key="t.code || t.name" :value="t.code || t.name">
+                                                    @{{ t.label }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-end gap-2">
+                                            <button type="button" @click="generateLetter" :disabled="!confirmationTemplate || isGenerating" class="primary-button">
+                                                <span v-if="isGenerating">Bezig...</span>
+                                                <span v-else>Genereer brief</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="letterContent" class="space-y-4">
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Brief inhoud</label>
+                                            <textarea
+                                                id="confirmation-letter-editor"
+                                                v-model="letterContent"
+                                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                                rows="12"
+                                            ></textarea>
+                                            <v-tinymce selector="textarea#confirmation-letter-editor" :field="confirmationLetterField"></v-tinymce>
+                                        </div>
+
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <button type="button" @click="previewConfirmationPdf" :disabled="!letterContent || previewPdfLoading" class="secondary-button">
+                                                <span v-if="previewPdfLoading">Preview laden...</span>
+                                                <span v-else>Preview</span>
+                                            </button>
+                                        </div>
+
+                                        <div v-if="previewPdfBlobUrl" class="mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <iframe
+                                                :src="previewPdfBlobUrl"
+                                                class="h-[min(70vh,640px)] w-full border-0 bg-gray-100 dark:bg-gray-800"
+                                                title="PDF preview orderbevestiging"
+                                            ></iframe>
+                                        </div>
+                                    </div>
+
+                                    <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <i class="icon-document text-4xl text-gray-300 dark:text-gray-600"></i>
+                                            <p class="text-lg font-medium">Nog geen brief gegenereerd</p>
+                                            <p class="text-sm">Selecteer een template en klik op "Genereer brief" om te beginnen</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- STEP 2: Bestanden uploaden --}}
+                        <div v-show="currentStep === 1">
+                            <div class="space-y-6">
+                                <div class="flex flex-col gap-1">
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Bestanden uploaden</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        Upload bestanden als activiteit<span v-if="selectedPerson"> voor @{{ selectedPerson.name }}</span>. Standaard worden ze gedeeld via het patiëntportaal; je kunt dat per upload uitzetten.
+                                    </p>
+                                </div>
+
+                                {{-- Uploaded files list --}}
+                                <div v-if="uploadedFiles.length" class="space-y-2">
+                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Geüploade bestanden</h4>
+                                    <div v-for="(file, i) in uploadedFiles" :key="i" class="flex items-center gap-3 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
+                                        <span class="icon-file text-lg text-green-600"></span>
+                                        <span class="text-sm text-gray-800 dark:text-gray-200">@{{ file.title || file.filename }}</span>
+                                        <span class="ml-auto text-xs text-green-600 font-medium">Geüpload</span>
+                                    </div>
+                                </div>
+
+                                {{-- Upload form --}}
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                                    <x-adminc::components.field type="text" name="file_title" label="Titel" />
+                                    <x-adminc::components.field type="textarea" name="file_comment" label="Omschrijving" />
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bestand(en)</label>
+                                        <input
+                                            type="file"
+                                            ref="fileInput"
+                                            multiple
+                                            class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Je kunt meerdere bestanden tegelijk selecteren.</p>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <label class="flex cursor-pointer items-center gap-2">
+                                            <input type="checkbox" v-model="publishToPortal" @change="onPublishChange" class="h-4 w-4 shrink-0 rounded border-gray-300" />
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Publiceren in patiëntportaal</span>
+                                        </label>
+                                        {{-- Person selector only shown for combined orders --}}
+                                        <div v-if="publishToPortal && combineOrder" class="mt-3">
+                                            <div v-if="loadingPersons" class="text-sm text-gray-500">Personen laden...</div>
+                                            <div v-else-if="persons.length > 1">
+                                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Deel met persoon</label>
+                                                <select v-model="selectedPersonId" class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                                    <option value="" disabled>Selecteer een persoon</option>
+                                                    <option v-for="person in persons" :key="person.id" :value="person.id">@{{ person.name }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div v-if="publishToPortal && selectedPerson" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                            Wordt gedeeld met: <span class="font-medium">@{{ selectedPerson.name }}</span>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" @click="uploadFile" :disabled="isUploadingFile" class="primary-button">
+                                        <span v-if="isUploadingFile">Uploaden...</span>
+                                        <span v-else>Upload geselecteerde bestanden</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- STEP 3: Email versturen --}}
+                        <div v-show="currentStep === 2">
+                            <div class="space-y-6">
+                                <div class="flex flex-col gap-1">
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Email versturen</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        Stel de bevestigingsmail op en verstuur deze<span v-if="selectedPerson"> naar @{{ selectedPerson.name }}</span>.
+                                    </p>
+                                </div>
+
+                                <div class="space-y-4">
+                                    {{-- To --}}
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aan <span class="text-red-500">*</span></label>
+                                        <div class="flex items-center gap-2">
+                                            <select v-if="entityEmails.length" v-model="emailTo" class="flex-1 rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                                <option value="" disabled>Selecteer een e-mailadres</option>
+                                                <option v-for="mail in entityEmails" :key="mail.value" :value="mail.value">
+                                                    @{{ mail.value }} <span v-if="mail.is_default">(standaard)</span>
+                                                </option>
+                                            </select>
+                                            <input v-else type="email" v-model="emailTo" placeholder="E-mailadres invoeren" class="flex-1 rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                        </div>
+                                    </div>
+
+                                    {{-- CC toggle --}}
+                                    <div class="flex gap-4 text-sm">
+                                        <button type="button" @click="showCC = !showCC" class="font-medium text-brandColor hover:underline">CC</button>
+                                        <button type="button" @click="showBCC = !showBCC" class="font-medium text-brandColor hover:underline">BCC</button>
+                                    </div>
+
+                                    <div v-if="showCC">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CC</label>
+                                        <input type="text" v-model="emailCC" placeholder="E-mailadressen (komma-gescheiden)" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                    </div>
+
+                                    <div v-if="showBCC">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">BCC</label>
+                                        <input type="text" v-model="emailBCC" placeholder="E-mailadressen (komma-gescheiden)" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                    </div>
+
+                                    {{-- Template --}}
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
-                                        <select
-                                            v-model="confirmationTemplate"
-                                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                        >
-                                            <option value="">Selecteer een template</option>
-                                            <option v-for="t in confirmationTemplates" :key="t.code || t.name" :value="t.code || t.name">
+                                        <select v-model="emailSelectedTemplate" @change="loadEmailTemplate" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                            <option value="">Geen template</option>
+                                            <option v-for="t in emailTemplates" :key="t.code || t.name" :value="t.code || t.name">
                                                 @{{ t.label }}
                                             </option>
                                         </select>
                                     </div>
-                                    <div class="flex items-end gap-2">
-                                        <button type="button" @click="generateLetter" :disabled="!confirmationTemplate || isGenerating" class="primary-button">
-                                            <span v-if="isGenerating">Bezig...</span>
-                                            <span v-else>Genereer brief</span>
-                                        </button>
-                                    </div>
-                                </div>
 
-                                <div v-if="letterContent" class="space-y-4">
+                                    {{-- Subject --}}
                                     <div>
-                                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Brief inhoud</label>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp <span class="text-red-500">*</span></label>
+                                        <input type="text" v-model="emailSubject" placeholder="Onderwerp" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                    </div>
+
+                                    {{-- Body --}}
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht <span class="text-red-500">*</span></label>
                                         <textarea
-                                            id="confirmation-letter-editor"
-                                            v-model="letterContent"
-                                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                            id="wizard-email-editor"
+                                            v-model="emailBody"
+                                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                             rows="12"
                                         ></textarea>
-                                        <v-tinymce selector="textarea#confirmation-letter-editor" :field="confirmationLetterField"></v-tinymce>
+                                        <v-tinymce selector="textarea#wizard-email-editor" :field="emailBodyField"></v-tinymce>
                                     </div>
 
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <button type="button" @click="previewConfirmationPdf" :disabled="!letterContent || previewPdfLoading" class="secondary-button">
-                                            <span v-if="previewPdfLoading">Preview laden...</span>
-                                            <span v-else>Preview</span>
-                                        </button>
-                                    </div>
-
-                                    <div v-if="previewPdfBlobUrl" class="mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                                        <iframe
-                                            :src="previewPdfBlobUrl"
-                                            class="h-[min(70vh,640px)] w-full border-0 bg-gray-100 dark:bg-gray-800"
-                                            title="PDF preview orderbevestiging"
-                                        ></iframe>
-                                    </div>
-                                </div>
-
-                                <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <i class="icon-document text-4xl text-gray-300 dark:text-gray-600"></i>
-                                        <p class="text-lg font-medium">Nog geen brief gegenereerd</p>
-                                        <p class="text-sm">Selecteer een template en klik op "Genereer brief" om te beginnen</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- STEP 2: Bestanden uploaden --}}
-                    <div v-show="currentStep === 1">
-                        <div class="space-y-6">
-                            <div class="flex flex-col gap-1">
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Bestanden uploaden</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Upload bestanden als activiteit. Standaard worden ze gedeeld via het patiëntportaal; je kunt dat per upload uitzetten.
-                                </p>
-                            </div>
-
-                            {{-- Uploaded files list --}}
-                            <div v-if="uploadedFiles.length" class="space-y-2">
-                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Geüploade bestanden</h4>
-                                <div v-for="(file, i) in uploadedFiles" :key="i" class="flex items-center gap-3 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
-                                    <span class="icon-file text-lg text-green-600"></span>
-                                    <span class="text-sm text-gray-800 dark:text-gray-200">@{{ file.title || file.filename }}</span>
-                                    <span class="ml-auto text-xs text-green-600 font-medium">Geüpload</span>
-                                </div>
-                            </div>
-
-                            {{-- Upload form --}}
-                            <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-                                <x-adminc::components.field type="text" name="file_title" label="Titel" />
-                                <x-adminc::components.field type="textarea" name="file_comment" label="Omschrijving" />
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bestand(en)</label>
-                                    <input
-                                        type="file"
-                                        ref="fileInput"
-                                        multiple
-                                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Je kunt meerdere bestanden tegelijk selecteren.</p>
-                                </div>
-
-                                <div class="mt-4">
-                                    <label class="flex cursor-pointer items-center gap-2">
-                                        <input type="checkbox" v-model="publishToPortal" @change="onPublishChange" class="h-4 w-4 shrink-0 rounded border-gray-300" />
-                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Publiceren in patiëntportaal</span>
-                                    </label>
-                                    <div v-if="publishToPortal" class="mt-3">
-                                        <div v-if="loadingPersons" class="text-sm text-gray-500">Personen laden...</div>
-                                        <div v-else-if="persons.length > 1">
-                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Deel met persoon</label>
-                                            <select v-model="selectedPersonId" class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                                                <option value="" disabled>Selecteer een persoon</option>
-                                                <option v-for="person in persons" :key="person.id" :value="person.id">@{{ person.name }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button type="button" @click="uploadFile" :disabled="isUploadingFile" class="primary-button">
-                                    <span v-if="isUploadingFile">Uploaden...</span>
-                                    <span v-else>Upload geselecteerde bestanden</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- STEP 3: Email versturen --}}
-                    <div v-show="currentStep === 2">
-                        <div class="space-y-6">
-                            <div class="flex flex-col gap-1">
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Email versturen</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Stel de bevestigingsmail op en verstuur deze naar de patiënt.
-                                </p>
-                            </div>
-
-                            <div class="space-y-4">
-                                {{-- To --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aan <span class="text-red-500">*</span></label>
-                                    <div class="flex items-center gap-2">
-                                        <select v-if="entityEmails.length" v-model="emailTo" class="flex-1 rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                            <option value="" disabled>Selecteer een e-mailadres</option>
-                                            <option v-for="mail in entityEmails" :key="mail.value" :value="mail.value">
-                                                @{{ mail.value }} <span v-if="mail.is_default">(standaard)</span>
-                                            </option>
-                                        </select>
-                                        <input v-else type="email" v-model="emailTo" placeholder="E-mailadres invoeren" class="flex-1 rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
-                                    </div>
-                                </div>
-
-                                {{-- CC toggle --}}
-                                <div class="flex gap-4 text-sm">
-                                    <button type="button" @click="showCC = !showCC" class="font-medium text-brandColor hover:underline">CC</button>
-                                    <button type="button" @click="showBCC = !showBCC" class="font-medium text-brandColor hover:underline">BCC</button>
-                                </div>
-
-                                <div v-if="showCC">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CC</label>
-                                    <input type="text" v-model="emailCC" placeholder="E-mailadressen (komma-gescheiden)" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
-                                </div>
-
-                                <div v-if="showBCC">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">BCC</label>
-                                    <input type="text" v-model="emailBCC" placeholder="E-mailadressen (komma-gescheiden)" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
-                                </div>
-
-                                {{-- Template --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
-                                    <select v-model="emailSelectedTemplate" @change="loadEmailTemplate" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                        <option value="">Geen template</option>
-                                        <option v-for="t in emailTemplates" :key="t.code || t.name" :value="t.code || t.name">
-                                            @{{ t.label }}
-                                        </option>
-                                    </select>
-                                </div>
-
-                                {{-- Subject --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp <span class="text-red-500">*</span></label>
-                                    <input type="text" v-model="emailSubject" placeholder="Onderwerp" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
-                                </div>
-
-                                {{-- Body --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht <span class="text-red-500">*</span></label>
-                                    <textarea
-                                        id="wizard-email-editor"
-                                        v-model="emailBody"
-                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                        rows="12"
-                                    ></textarea>
-                                    <v-tinymce selector="textarea#wizard-email-editor" :field="emailBodyField"></v-tinymce>
-                                </div>
-
-                                {{-- Attachments --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bijlagen</label>
-                                    <input
-                                        type="file"
-                                        ref="emailAttachmentInput"
-                                        multiple
-                                        @change="onEmailAttachmentChange"
-                                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200"
-                                    />
-                                    <div v-if="emailAttachments.length" class="mt-2 space-y-1">
-                                        <div v-for="(att, i) in emailAttachments" :key="i" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                            <span class="icon-attachment text-lg"></span>
-                                            <span>@{{ att.name }}</span>
-                                            <button type="button" @click="removeEmailAttachment(i)" class="text-red-500 hover:text-red-700 text-xs ml-auto">Verwijderen</button>
+                                    {{-- Attachments --}}
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bijlagen</label>
+                                        <input
+                                            type="file"
+                                            ref="emailAttachmentInput"
+                                            multiple
+                                            @change="onEmailAttachmentChange"
+                                            class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200"
+                                        />
+                                        <div v-if="emailAttachments.length" class="mt-2 space-y-1">
+                                            <div v-for="(att, i) in emailAttachments" :key="i" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <span class="icon-attachment text-lg"></span>
+                                                <span>@{{ att.name }}</span>
+                                                <button type="button" @click="removeEmailAttachment(i)" class="text-red-500 hover:text-red-700 text-xs ml-auto">Verwijderen</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- Navigation --}}
-                <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-6 py-4">
-                    <button
-                        v-if="currentStep > 0"
-                        type="button"
-                        class="secondary-button"
-                        @click="currentStep--"
-                    >
-                        Vorige
-                    </button>
-                    <div v-else></div>
-
-                    <div class="flex items-center gap-2">
+                    {{-- Navigation --}}
+                    <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-6 py-4">
                         <button
-                            v-if="currentStep === 1"
+                            v-if="currentStep > 0"
                             type="button"
                             class="secondary-button"
-                            @click="skipStep"
+                            @click="currentStep--"
                         >
-                            Overslaan
+                            Vorige
                         </button>
+                        <div v-else></div>
 
-                        <button
-                            v-if="currentStep < steps.length - 1"
-                            type="button"
-                            class="primary-button"
-                            :disabled="isSavingLetter || isUploadingFile"
-                            @click="nextStep"
-                        >
-                            <span v-if="isSavingLetter">Opslaan...</span>
-                            <span v-else-if="isUploadingFile">Uploaden...</span>
-                            <span v-else>Volgende</span>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button
+                                v-if="currentStep === 1"
+                                type="button"
+                                class="secondary-button"
+                                @click="skipStep"
+                            >
+                                Overslaan
+                            </button>
 
-                        <button
-                            v-if="currentStep === steps.length - 1"
-                            type="button"
-                            class="primary-button"
-                            :disabled="isSendingEmail"
-                            @click="sendEmail"
-                        >
-                            <span v-if="isSendingEmail">Versturen...</span>
-                            <span v-else>Verstuur email</span>
-                        </button>
+                            <button
+                                v-if="currentStep < steps.length - 1"
+                                type="button"
+                                class="primary-button"
+                                :disabled="isSavingLetter || isUploadingFile"
+                                @click="nextStep"
+                            >
+                                <span v-if="isSavingLetter">Opslaan...</span>
+                                <span v-else-if="isUploadingFile">Uploaden...</span>
+                                <span v-else>Volgende</span>
+                            </button>
+
+                            <button
+                                v-if="currentStep === steps.length - 1"
+                                type="button"
+                                class="primary-button"
+                                :disabled="isSendingEmail"
+                                @click="sendEmail"
+                            >
+                                <span v-if="isSendingEmail">Versturen...</span>
+                                <span v-else>Verstuur email</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -365,6 +448,8 @@
                     salesLeadId: { type: Number, default: null },
                     initialContent: { type: String, default: '' },
                     emails: { type: Array, default: () => [] },
+                    combineOrder: { type: Boolean, default: true },
+                    initialPersonsStatus: { type: Array, default: () => [] },
                     viewUrl: { type: String, required: true },
                 },
 
@@ -373,10 +458,15 @@
                         currentStep: 0,
                         steps: ['Orderbevestiging', 'Bestanden uploaden', 'Email versturen'],
 
+                        // Per-person state
+                        selectedPerson: null,
+                        personsStatus: JSON.parse(JSON.stringify(this.initialPersonsStatus || [])),
+                        isMarkingOrderSent: false,
+
                         // Step 1
                         confirmationTemplates: [],
                         confirmationTemplate: '',
-                        letterContent: this.initialContent || '',
+                        letterContent: this.combineOrder ? (this.initialContent || '') : '',
                         isGenerating: false,
                         isSavingLetter: false,
                         previewPdfBlobUrl: null,
@@ -409,7 +499,7 @@
 
                 watch: {
                     currentStep(newVal) {
-                        if (newVal === 1 && this.publishToPortal) {
+                        if (newVal === 1 && this.publishToPortal && this.combineOrder) {
                             this.loadPortalPersons();
                         }
                     },
@@ -429,6 +519,12 @@
                                 this.emailBody = content;
                             },
                         };
+                    },
+                    confirmedCount() {
+                        return this.personsStatus.filter(p => p.email_sent).length;
+                    },
+                    allConfirmed() {
+                        return this.personsStatus.length > 0 && this.personsStatus.every(p => p.email_sent);
                     },
                 },
 
@@ -462,6 +558,73 @@
                         if (index <= this.currentStep) {
                             this.currentStep = index;
                         }
+                    },
+
+                    goToOrderView() {
+                        window.location.href = this.viewUrl;
+                    },
+
+                    // ---- Per-person overview ----
+
+                    startPersonWizard(person) {
+                        this.selectedPerson = person;
+                        this.currentStep = 0;
+                        this.letterContent = '';
+                        this.uploadedFiles = [];
+                        this.emailTo = person.email || '';
+                        this.emailBody = '';
+                        this.emailSubject = '';
+                        this.emailSelectedTemplate = '';
+                        this.emailAttachments = [];
+                        this.emailAttachmentFiles = [];
+                        this.previewPdfBlobUrl = null;
+
+                        // Load existing letter content if saved
+                        this.loadPersonLetterContent(person.id);
+                    },
+
+                    exitPersonWizard() {
+                        this.selectedPerson = null;
+                        this.currentStep = 0;
+                        this.letterContent = '';
+                        this.refreshPersonsStatus();
+                    },
+
+                    async loadPersonLetterContent(personId) {
+                        try {
+                            const resp = await fetch(`/admin/orders/${this.orderId}/confirmation/persons-status`, {
+                                headers: { 'Accept': 'application/json' },
+                            });
+                            const data = await resp.json();
+                            const personData = (data.data || []).find(p => p.id === personId);
+                            if (personData) {
+                                // Update status in our local array
+                                const idx = this.personsStatus.findIndex(p => p.id === personId);
+                                if (idx !== -1) {
+                                    this.personsStatus.splice(idx, 1, personData);
+                                }
+                            }
+                        } catch (e) { /* non-critical */ }
+
+                        // Try to load saved letter from the person confirmation
+                        try {
+                            const confirmation = this.personsStatus.find(p => p.id === personId);
+                            if (confirmation && confirmation.letter_saved) {
+                                // The letter content is stored server-side; we need to fetch it
+                                // For now we'll let the user re-generate or it will be loaded
+                                // when they previously saved via the save endpoint
+                            }
+                        } catch (e) { /* non-critical */ }
+                    },
+
+                    async refreshPersonsStatus() {
+                        try {
+                            const resp = await fetch(`/admin/orders/${this.orderId}/confirmation/persons-status`, {
+                                headers: { 'Accept': 'application/json' },
+                            });
+                            const data = await resp.json();
+                            this.personsStatus = data.data || [];
+                        } catch (e) { /* non-critical */ }
                     },
 
                     hasPendingFiles() {
@@ -528,7 +691,13 @@
                         if (!this.confirmationTemplate) return;
                         this.isGenerating = true;
                         try {
-                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/template-content?template=${this.confirmationTemplate}`, {
+                            let url;
+                            if (this.selectedPerson) {
+                                url = `/admin/orders/${this.orderId}/confirmation/person/${this.selectedPerson.id}/template-content?template=${this.confirmationTemplate}`;
+                            } else {
+                                url = `/admin/orders/${this.orderId}/confirmation/template-content?template=${this.confirmationTemplate}`;
+                            }
+                            const response = await fetch(url, {
                                 headers: { 'Accept': 'application/json' },
                             });
                             if (!response.ok) {
@@ -555,7 +724,13 @@
                         }
                         this.isSavingLetter = true;
                         try {
-                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/save`, {
+                            let url;
+                            if (this.selectedPerson) {
+                                url = `/admin/orders/${this.orderId}/confirmation/person/${this.selectedPerson.id}/save`;
+                            } else {
+                                url = `/admin/orders/${this.orderId}/confirmation/save`;
+                            }
+                            const response = await fetch(url, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.getCsrfToken() },
                                 body: JSON.stringify({ content }),
@@ -583,7 +758,13 @@
                         }
                         this.previewPdfLoading = true;
                         try {
-                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/preview-pdf`, {
+                            let url;
+                            if (this.selectedPerson) {
+                                url = `/admin/orders/${this.orderId}/confirmation/person/${this.selectedPerson.id}/preview-pdf`;
+                            } else {
+                                url = `/admin/orders/${this.orderId}/confirmation/preview-pdf`;
+                            }
+                            const response = await fetch(url, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -617,7 +798,9 @@
                         if (!this.publishToPortal) {
                             return;
                         }
-                        this.loadPortalPersons();
+                        if (this.combineOrder) {
+                            this.loadPortalPersons();
+                        }
                     },
 
                     loadPortalPersons() {
@@ -680,7 +863,11 @@
                                 formData.append('comment', comment);
                                 formData.append('file', file);
                                 formData.append('publish_to_portal', this.publishToPortal ? '1' : '0');
-                                if (this.publishToPortal && this.selectedPersonId) {
+
+                                // For per-person flow, auto-set person_id
+                                if (this.selectedPerson) {
+                                    formData.append('person_ids[]', String(this.selectedPerson.id));
+                                } else if (this.publishToPortal && this.selectedPersonId) {
                                     formData.append('person_ids[]', String(this.selectedPersonId));
                                 }
 
@@ -744,7 +931,13 @@
 
                     async loadMailPreview() {
                         try {
-                            const response = await fetch(`/admin/orders/${this.orderId}/mail/preview`, {
+                            let url;
+                            if (this.selectedPerson) {
+                                url = `/admin/orders/${this.orderId}/confirmation/person/${this.selectedPerson.id}/mail-preview`;
+                            } else {
+                                url = `/admin/orders/${this.orderId}/mail/preview`;
+                            }
+                            const response = await fetch(url, {
                                 headers: { 'Accept': 'application/json' },
                             });
                             const payload = await response.json();
@@ -768,7 +961,6 @@
 
                             this.emailSubject = payload.subject || '';
 
-                            // Set default template for email
                             const defaultTpl = 'appointment-confirmation';
                             if (this.emailTemplates.some(t => (t.code || t.name) === defaultTpl)) {
                                 this.emailSelectedTemplate = defaultTpl;
@@ -778,7 +970,6 @@
                                 this.$nextTick(() => this.setTinyMCEContent('wizard-email-editor', payload.body));
                             }
 
-                            // Auto-add PDF attachment if available
                             if (payload.attachments?.length) {
                                 for (const att of payload.attachments) {
                                     if (att.url && att.filename) {
@@ -810,6 +1001,7 @@
                         const entities = {};
                         if (this.salesLeadId) entities.sales_lead = this.salesLeadId;
                         if (this.orderId) entities.order = this.orderId;
+                        if (this.selectedPerson) entities.person = this.selectedPerson.id;
 
                         if (Object.keys(entities).length === 0) {
                             this.emitFlash('error', 'Geen entities gevonden voor template');
@@ -901,21 +1093,48 @@
 
                             this.emitFlash('success', response.data.message || 'Email verstuurd');
 
-                            // Mark order as sent
-                            try {
-                                await fetch(`/admin/orders/${this.orderId}/status/sent`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        'X-CSRF-TOKEN': this.getCsrfToken(),
-                                    },
-                                });
-                            } catch (e) { /* non-critical */ }
+                            if (this.selectedPerson) {
+                                // Per-person flow: mark this person as sent
+                                try {
+                                    const sentResp = await fetch(`/admin/orders/${this.orderId}/confirmation/person/${this.selectedPerson.id}/sent`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'X-CSRF-TOKEN': this.getCsrfToken(),
+                                        },
+                                    });
+                                    const sentData = await sentResp.json();
 
-                            // Redirect to order view
-                            setTimeout(() => {
-                                window.location.href = this.viewUrl;
-                            }, 500);
+                                    if (sentData.all_confirmed) {
+                                        this.emitFlash('success', 'Alle personen zijn bevestigd. Order is als verstuurd gemarkeerd.');
+                                        setTimeout(() => {
+                                            window.location.href = this.viewUrl;
+                                        }, 1000);
+                                        return;
+                                    }
+                                } catch (e) { /* non-critical */ }
+
+                                // Return to person overview
+                                this.isSendingEmail = false;
+                                this.exitPersonWizard();
+                            } else {
+                                // Combined flow: mark entire order as sent
+                                try {
+                                    await fetch(`/admin/orders/${this.orderId}/status/sent`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'X-CSRF-TOKEN': this.getCsrfToken(),
+                                        },
+                                    });
+                                } catch (e) { /* non-critical */ }
+
+                                setTimeout(() => {
+                                    window.location.href = this.viewUrl;
+                                }, 500);
+                            }
                         } catch (error) {
                             this.isSendingEmail = false;
                             const errors = error.response?.data?.errors;

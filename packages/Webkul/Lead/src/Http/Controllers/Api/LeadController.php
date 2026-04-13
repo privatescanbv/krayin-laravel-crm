@@ -247,10 +247,8 @@ class LeadController extends Controller
                 'errors' => [$e->getMessage()],
             ], 400);
         } catch (Exception $e) {
-            Log::error('Could not store lead ', [
+            Log::error('Could not store lead', [
                 'error' => $e->getMessage(),
-                'data' => $request->all(),
-                'trace' => $e->getTrace(),
             ]);
 
             return response()->json([

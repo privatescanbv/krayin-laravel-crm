@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -30,6 +31,11 @@ class Handler extends ExceptionHandler
             return;
         }
         $this->reportable(function (Throwable $e) {
+            // 404s niet loggen — vervuilen de logs met browser-probes (favicon, logo.png, etc.)
+            if ($e instanceof NotFoundHttpException) {
+                return false;
+            }
+
             try {
                 // Log all exceptions that are reported
                 Log::error('Exception reported', [

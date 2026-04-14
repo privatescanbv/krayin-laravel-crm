@@ -35,6 +35,11 @@ class EmailResource extends JsonResource
             'reference_ids' => $this->reference_ids,
             'person'        => $this->person ? new PersonResource($this->person) : null,
             'lead'          => $this->lead ? new LeadResource($this->lead) : null,
+            'order_id'      => $this->order_id,
+            'order'         => $this->order ? [
+                'id'    => $this->order->id,
+                'title' => $this->order->title ?? $this->order->name ?? null,
+            ] : null,
             'parent_id'     => $this->parent_id,
             'parent'        => $this->parent ? new EmailResource($this->parent) : null,
             'attachments'   => EmailAttachmentResource::collection($this->attachments),

@@ -2478,6 +2478,21 @@ return [
        ],
    ],
 
+    'sales' => [
+        'view' => [
+            'delete-btn' => 'Sales verwijderen',
+
+            'delete-confirm' => [
+                'title'   => 'Sales verwijderen',
+                'message' => 'Weet je zeker dat je ":name" wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.',
+                'confirm' => 'Verwijderen',
+                'cancel'  => 'Annuleren',
+            ],
+
+            'delete-failed' => 'Het verwijderen van de sales is mislukt.',
+        ],
+    ],
+
     'dashboard' => [
         'index' => [
             'title' => 'Dashboard',

@@ -33,6 +33,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
@@ -42,8 +43,10 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 use Webkul\Activity\Models\Activity;
+use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Core\Traits\PDFHandler;
+use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Models\StageProxy;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -51,7 +54,7 @@ use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
 {
-    use PDFHandler;
+    use ConcatsEmailActivities, PDFHandler;
 
     public function __construct(
         protected OrderRepository $orderRepository,
@@ -63,6 +66,7 @@ class OrderController extends SimpleEntityController
         protected PipelineCookieService $pipelineCookieService,
         private EmailTemplateRenderingService $emailTemplateRenderingService,
         private AfbDispatchService $afbDispatchService,
+        private readonly AttachmentRepository $attachmentRepository,
     ) {
         parent::__construct($orderRepository);
 
@@ -399,11 +403,21 @@ class OrderController extends SimpleEntityController
 
         $query = $order->activities();
 
-        if (request()->has('is_done')) {
-            $query->where('is_done', (int) request('is_done'));
+        $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
+
+        if (! is_null($isDoneFilter)) {
+            $query->where('is_done', $isDoneFilter);
         }
 
-        return ActivityResource::collection($query->get());
+        $activities = $query->get();
+
+        $merged = $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository);
+
+        if (! is_null($isDoneFilter)) {
+            $merged = $merged->filter(fn ($a) => (int) $a->is_done === $isDoneFilter)->values();
+        }
+
+        return ActivityResource::collection($merged);
     }
 
     public function emailsDetach(int $id): JsonResponse
@@ -721,6 +735,27 @@ class OrderController extends SimpleEntityController
         ], 200);
     }
 
+    public function confirm(int $orderId): View
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $order->load([
+            'orderItems.product.productGroup',
+            'orderItems.person',
+            'salesLead.lead',
+            'salesLead.persons',
+            'salesLead.contactPerson',
+            'orderChecks',
+        ]);
+
+        $orderEmailOptions = $this->orderMailService->getEmailOptions($order);
+
+        return view('admin::orders.confirm', [
+            'orders'            => $order,
+            'orderEmailOptions' => $orderEmailOptions,
+        ]);
+    }
+
     /**
      * Get list of available order confirmation templates.
      */
@@ -845,6 +880,25 @@ class OrderController extends SimpleEntityController
         $fileName = 'order-bevestiging-'.$order->id.'-'.date('Y-m-d');
 
         return $this->downloadPDF($order->confirmation_letter_content, $fileName);
+    }
+
+    /**
+     * Inline PDF preview for the confirmation letter (same render as export, without persisting).
+     */
+    public function previewConfirmationLetterPdf(Request $request, int $orderId): Response
+    {
+        $this->orderRepository->findOrFail($orderId);
+
+        $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        $binary = $this->pdfBinaryFromHtml($request->input('content'));
+
+        return response($binary, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="order-bevestiging-preview.pdf"',
+        ]);
     }
 
     /**

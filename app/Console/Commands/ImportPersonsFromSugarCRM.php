@@ -122,35 +122,47 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                         ->groupBy('c.id');
                 } else {
                     $sql = $sql->groupBy('c.id')
-                        ->orderBy('c.date_entered', 'desc'); // Nieuwste eerst
+                        ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
+                        ->orderBy('c.id', 'asc'); // Secundaire sort voor deterministische paginatie
                     if ($limit > 0) {
                         $sql = $sql->limit($limit);
                     }
                 }
                 $this->infoVV($sql->toRawSql());
-                // Fail fast if the query execution errors
-                try {
-                    $records = $sql->get();
-                } catch (Exception $e) {
-                    $this->error('Query failed: '.$e->getMessage());
-                    throw $e; // crash the script as requested
-                }
 
-                $this->info('Found '.$records->count().' records to import');
+                // Dry-run en list-invalid-phones laden alles in één keer (kleine queries)
+                if ($listInvalidPhones || $dryRun) {
+                    try {
+                        $records = $sql->get();
+                    } catch (Exception $e) {
+                        $this->error('Query failed: '.$e->getMessage());
+                        throw $e;
+                    }
 
-                if ($listInvalidPhones) {
-                    $this->showInvalidPhoneRecords($records);
+                    $this->info('Found '.$records->count().' records to import');
 
-                    return;
-                }
+                    if ($listInvalidPhones) {
+                        $this->showInvalidPhoneRecords($records);
 
-                if ($dryRun) {
+                        return;
+                    }
+
                     $this->showDryRunResults($records);
 
                     return;
                 }
 
-                $this->importRecords($records);
+                // Echte import: tel eerst, dan chunked verwerken om geheugenoverloop te voorkomen
+                try {
+                    $total = $sql->getCountForPagination();
+                } catch (Exception $e) {
+                    $this->error('Count query failed: '.$e->getMessage());
+                    throw $e;
+                }
+
+                $this->info('Found '.$total.' records to import');
+
+                $this->importRecords($sql, $total);
             });
         } catch (Exception $e) {
             $this->error('Error: '.$e->getMessage());
@@ -253,11 +265,11 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Import records
+     * Import records in chunks to prevent memory exhaustion on large datasets.
      */
-    private function importRecords($records)
+    private function importRecords($query, int $total)
     {
-        $bar = $this->output->createProgressBar($records->count());
+        $bar = $this->output->createProgressBar($total);
         $bar->start();
 
         $imported = 0;
@@ -268,130 +280,142 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $firstErrors = [];
 
         $attributeValueRepo = app(AttributeValueRepository::class);
-        foreach ($records as $record) {
-            try {
-                // Validate required fields (lot first names are empty in SugarCRM)
-                if (empty($record->id) || empty($record->last_name)) {
-                    $this->warn("Skipping record with missing required fields: ID={$record->id}, First Name={$record->first_name}, Last Name={$record->last_name}");
-                    $skipped++;
-                    $skippedMissingRequired++;
-                    $bar->advance();
 
-                    continue;
-                }
+        $query->chunk(500, function ($records) use (
+            &$imported,
+            &$skipped,
+            &$errors,
+            &$skippedMissingRequired,
+            &$skippedAlreadyExisting,
+            &$firstErrors,
+            $bar
+        ) {
+            foreach ($records as $record) {
+                try {
+                    // Validate required fields (lot first names are empty in SugarCRM)
+                    if (empty($record->id) || empty($record->last_name)) {
+                        $this->warn("Skipping record with missing required fields: ID={$record->id}, First Name={$record->first_name}, Last Name={$record->last_name}");
+                        $skipped++;
+                        $skippedMissingRequired++;
+                        $bar->advance();
 
-                // Check if person already exists by external_id
-                $existingPerson = Person::where('external_id', $record->id)->first();
-                if ($existingPerson) {
-                    $skipped++;
-                    $skippedAlreadyExisting++;
-                    $this->infoV("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
-                    $bar->advance();
-
-                    continue;
-                }
-                // Build phones array from available SugarCRM fields with sanitization
-                $phones = [];
-                if (! empty($record->phone_work)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, ContactLabel::Eigen->value);
-                    if ($value !== '') {
-                        $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => true];
+                        continue;
                     }
-                }
-                if (! empty($record->phone_mobile)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, ContactLabel::Eigen->value);
-                    if ($value !== '') {
-                        $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
+
+                    // Check if person already exists by external_id
+                    $existingPerson = Person::where('external_id', $record->id)->first();
+                    if ($existingPerson) {
+                        $skipped++;
+                        $skippedAlreadyExisting++;
+                        $this->infoV("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
+                        $bar->advance();
+
+                        continue;
                     }
-                }
-                if (! empty($record->phone_home)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, ContactLabel::Eigen->value);
-                    if ($value !== '') {
-                        $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
+                    // Build phones array from available SugarCRM fields with sanitization
+                    $phones = [];
+                    if (! empty($record->phone_work)) {
+                        [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, ContactLabel::Eigen->value);
+                        if ($value !== '') {
+                            $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => true];
+                        }
                     }
-                }
-                if (! empty($record->phone_other)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, ContactLabel::Eigen->value);
-                    if ($value !== '') {
-                        $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
+                    if (! empty($record->phone_mobile)) {
+                        [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, ContactLabel::Eigen->value);
+                        if ($value !== '') {
+                            $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
+                        }
                     }
-                }
+                    if (! empty($record->phone_home)) {
+                        [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, ContactLabel::Eigen->value);
+                        if ($value !== '') {
+                            $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
+                        }
+                    }
+                    if (! empty($record->phone_other)) {
+                        [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, ContactLabel::Eigen->value);
+                        if ($value !== '') {
+                            $phones[] = ['label' => ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
+                        }
+                    }
 
-                $emails = [];
-                if (! empty($record->email_primary)) {
-                    $this->validateEmailOrFail($record->email_primary, 'primary');
-                    $emails[] = ['label' => ContactLabel::Eigen->value, 'value' => $record->email_primary, 'is_default' => true];
-                } elseif (! empty($record->email_any)) {
-                    $this->validateEmailOrFail($record->email_any, 'secundair');
-                    $emails[] = ['label' => ContactLabel::Eigen->value, 'value' => $record->email_any, 'is_default' => true];
-                }
+                    $emails = [];
+                    if (! empty($record->email_primary)) {
+                        $this->validateEmailOrFail($record->email_primary, 'primary');
+                        $emails[] = ['label' => ContactLabel::Eigen->value, 'value' => $record->email_primary, 'is_default' => true];
+                    } elseif (! empty($record->email_any)) {
+                        $this->validateEmailOrFail($record->email_any, 'secundair');
+                        $emails[] = ['label' => ContactLabel::Eigen->value, 'value' => $record->email_any, 'is_default' => true];
+                    }
 
-                $gender = $this->mapGenderFromSugar($record->gender_c ?? null);
+                    $gender = $this->mapGenderFromSugar($record->gender_c ?? null);
 
-                $person = $this->createEntityWithTimestamps(Person::class, [
-                    'external_id'         => $record->id,
-                    'emails'              => $emails,
-                    'phones'              => $phones,
-                    'initials'            => $record->voorletters_c ?? '',
-                    'salutation'          => $this->mapSalutationFromGender($gender),
-                    'first_name'          => $record->first_name ?? '',
-                    'last_name'           => $record->last_name ?? '',
-                    'lastname_prefix'     => $record->tussenvoegsel_c ?? '',
-                    'married_name'        => $record->meisjesnaam_c ?? '',
-                    'married_name_prefix' => $record->aang_tussenv_c ?? null,
-                    'gender'              => $gender,
-                    'date_of_birth'       => $record->birthdate ?? null,
-                ], [
-                    'created_at' => $this->parseSugarDate($record->date_entered),
-                    'updated_at' => $this->parseSugarDate($record->date_modified),
-                ]);
-
-                // Create/update primary address for person if present
-                if ($record->primary_huisnr_c && $record->primary_address_postalcode) {
-                    $address = Address::create([
-                        'street'              => $record->primary_address_street ?? null,
-                        'house_number'        => $record->primary_huisnr_c,
-                        'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
-                        'postal_code'         => $record->primary_address_postalcode,
-                        'state'               => $record->primary_address_state ?? null,
-                        'city'                => $record->primary_address_city ?? null,
-                        'country'             => $record->primary_address_country ?? null,
+                    $person = $this->createEntityWithTimestamps(Person::class, [
+                        'external_id'         => $record->id,
+                        'emails'              => $emails,
+                        'phones'              => $phones,
+                        'initials'            => $record->voorletters_c ?? '',
+                        'salutation'          => $this->mapSalutationFromGender($gender),
+                        'first_name'          => $record->first_name ?? '',
+                        'last_name'           => $record->last_name ?? '',
+                        'lastname_prefix'     => $record->tussenvoegsel_c ?? '',
+                        'married_name'        => $record->meisjesnaam_c ?? '',
+                        'married_name_prefix' => $record->aang_tussenv_c ?? null,
+                        'gender'              => $gender,
+                        'date_of_birth'       => $record->birthdate ?? null,
+                    ], [
+                        'created_at' => $this->parseSugarDate($record->date_entered),
+                        'updated_at' => $this->parseSugarDate($record->date_modified),
                     ]);
-                    $person->update(['address_id' => $address->id]);
+
+                    // Create/update primary address for person if present
+                    if ($record->primary_huisnr_c && $record->primary_address_postalcode) {
+                        $address = Address::create([
+                            'street'              => $record->primary_address_street ?? null,
+                            'house_number'        => $record->primary_huisnr_c,
+                            'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
+                            'postal_code'         => $record->primary_address_postalcode,
+                            'state'               => $record->primary_address_state ?? null,
+                            'city'                => $record->primary_address_city ?? null,
+                            'country'             => $record->primary_address_country ?? null,
+                        ]);
+                        $person->update(['address_id' => $address->id]);
+                    }
+                    // Note: PersonAttributeKeys enum values can be used here for additional attributes
+                    // $attributeValueRepo->save([
+                    //     'entity_type' => 'persons',
+                    //     'entity_id'   => $person->id,
+                    //     PersonAttributeKeys::NICKNAME->value => $record->roepnaam_c ?? '',
+                    //     PersonAttributeKeys::GENDER->value   => $record->gender_c ?? '',
+                    // ]);
+                    $imported++;
+                    $bar->advance();
+                } catch (Exception $e) {
+                    $errors++;
+                    $recordLabel = trim(implode(' ', array_filter([
+                        $record->first_name,
+                        $record->tussenvoegsel_c ?? '',
+                        $record->last_name,
+                        $record->aang_tussenv_c ?? '',
+                        $record->meisjesnaam_c ?? '',
+                        $record->voorletters_c ?? '',
+                    ])));
+                    $this->logError('Failed to import person', [
+                        'record_id'          => $record->id ?? 'unknown',
+                        'record_description' => $recordLabel,
+                        'error'              => $e->getMessage(),
+                    ]);
+                    if (count($firstErrors) < 5) {
+                        $firstErrors[] = [
+                            'id'      => $record->id ?? 'unknown',
+                            'message' => $e->getMessage(),
+                        ];
+                    }
+                    $bar->advance();
                 }
-                // Note: PersonAttributeKeys enum values can be used here for additional attributes
-                // $attributeValueRepo->save([
-                //     'entity_type' => 'persons',
-                //     'entity_id'   => $person->id,
-                //     PersonAttributeKeys::NICKNAME->value => $record->roepnaam_c ?? '',
-                //     PersonAttributeKeys::GENDER->value   => $record->gender_c ?? '',
-                // ]);
-                $imported++;
-                $bar->advance();
-            } catch (Exception $e) {
-                $errors++;
-                $recordLabel = trim(implode(' ', array_filter([
-                    $record->first_name,
-                    $record->tussenvoegsel_c ?? '',
-                    $record->last_name,
-                    $record->aang_tussenv_c ?? '',
-                    $record->meisjesnaam_c ?? '',
-                    $record->voorletters_c ?? '',
-                ])));
-                $this->logError('Failed to import person', [
-                    'record_id'          => $record->id ?? 'unknown',
-                    'record_description' => $recordLabel,
-                    'error'              => $e->getMessage(),
-                ]);
-                if (count($firstErrors) < 5) {
-                    $firstErrors[] = [
-                        'id'      => $record->id ?? 'unknown',
-                        'message' => $e->getMessage(),
-                    ];
-                }
-                $bar->advance();
             }
-        }
+        }); // end chunk
+
         $bar->finish();
         $this->newLine(2);
         $this->info('Import completed!');

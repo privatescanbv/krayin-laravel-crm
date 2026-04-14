@@ -20,6 +20,7 @@ trait ConcatsEmailActivities
         $query = match ($entityType) {
             'lead'   => Email::forLeadThread($entityId),
             'sales'  => Email::forSalesLeadThread($entityId),
+            'order'  => Email::forOrderThread($entityId),
             'clinic' => Email::forClinicThread($entityId),
             'person' => $this->personThreadQuery($entityId),
             default  => null,
@@ -31,11 +32,17 @@ trait ConcatsEmailActivities
     private function personThreadQuery(int $personId)
     {
         $person = Person::findOrFail($personId);
+        $salesLeadIds = $person->salesLeads->pluck('id')->toArray();
+
+        $orderIds = ! empty($salesLeadIds)
+            ? \App\Models\Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id')->toArray()
+            : [];
 
         return Email::forPersonThread(
             $personId,
             $person->leads->pluck('id')->toArray(),
-            $person->salesLeads->pluck('id')->toArray(),
+            $salesLeadIds,
+            $orderIds,
         );
     }
 
@@ -76,7 +83,7 @@ trait ConcatsEmailActivities
 
             $linkedEntityType = $linkedActivity
                 ? 'activity'
-                : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown'))));
+                : ($email->order_id ? 'order' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))));
 
             return (object) [
                 'id'             => $email->id,

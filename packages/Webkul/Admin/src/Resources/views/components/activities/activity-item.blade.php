@@ -130,6 +130,11 @@
                               title="E-mail gekoppeld aan sales">
                             <span class="icon-activity text-[10px]"></span>
                         </span>
+                        <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'order'"
+                              class="ml-2 inline-flex items-center gap-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                              title="E-mail gekoppeld aan order">
+                            <span class="icon-activity text-[10px]"></span>
+                        </span>
                         <span v-else-if="activity.type === 'email'"
                               class="icon-activity ml-1 text-xs text-activity-note-text"
                               title="E-mail gekoppeld aan onbekend"></span>

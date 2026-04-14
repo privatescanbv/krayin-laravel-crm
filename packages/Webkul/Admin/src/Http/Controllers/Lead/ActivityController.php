@@ -8,6 +8,7 @@ use App\Models\Department;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
@@ -73,13 +74,8 @@ class ActivityController extends Controller
             // Ensure person_id is not saved when storing activity for a lead
             $request->request->remove('person_id');
 
-            // Convert empty strings to null for foreign key constraints
             $data = $request->all();
-            foreach (['user_id'] as $field) {
-                if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
-                    $data[$field] = null;
-                }
-            }
+            Activity::normalizeForeignKeys($data);
 
             // Always load the lead for department validation
             try {

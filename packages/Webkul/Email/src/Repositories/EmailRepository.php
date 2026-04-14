@@ -74,6 +74,9 @@ class EmailRepository extends Repository
             if($parent->clinic_id) {
                 $data['clinic_id'] = $parent->clinic_id;
             }
+            if($parent->order_id) {
+                $data['order_id'] = $parent->order_id;
+            }
         }
 
         $isDraft = $data['is_draft'] ?? false;

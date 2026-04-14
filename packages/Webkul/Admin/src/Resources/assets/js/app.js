@@ -3,8 +3,6 @@
  */
 import.meta.glob(["../images/**", "../fonts/**"]);
 
-import markerSDK from '@marker.io/browser';
-
 /**
  * Main vue bundler.
  */
@@ -499,10 +497,24 @@ if (typeof window !== 'undefined') {
 }
 
 (async () => {
-    await markerSDK.loadWidget({
-        project: '69c4f36fee5027410256aa51',
-        useNativeScreenshot: true,
-    });
+    const cfg = typeof window !== "undefined" ? window.__markerIo : null;
+
+    if (!cfg?.enabled || !cfg?.project) {
+        return;
+    }
+
+    try {
+        const { default: markerSDK } = await import("@marker.io/browser");
+
+        await markerSDK.loadWidget({
+            project: cfg.project,
+            useNativeScreenshot: true,
+        });
+    } catch (e) {
+        if (import.meta.env.DEV) {
+            console.warn("[Marker.io] widget not loaded:", e);
+        }
+    }
 })();
 
 export default app;

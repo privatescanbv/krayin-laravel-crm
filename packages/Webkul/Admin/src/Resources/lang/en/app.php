@@ -2463,6 +2463,21 @@ return [
         ],
     ],
 
+    'sales' => [
+        'view' => [
+            'delete-btn' => 'Delete Sales',
+
+            'delete-confirm' => [
+                'title'   => 'Delete Sales',
+                'message' => 'Are you sure you want to delete ":name"? This action cannot be undone.',
+                'confirm' => 'Delete',
+                'cancel'  => 'Cancel',
+            ],
+
+            'delete-failed' => 'Failed to delete sales.',
+        ],
+    ],
+
     'dashboard' => [
         'index' => [
             'title' => 'Dashboard',

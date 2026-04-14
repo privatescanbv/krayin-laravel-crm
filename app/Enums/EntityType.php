@@ -53,6 +53,11 @@ enum EntityType: string
         };
     }
 
+    /**
+     * Note: requirement is that you name the relation key always as this method is returning. For now used in relation for Email
+     *
+     * @return string database column name
+     */
     public function getForeignKey(): string
     {
         return match ($this) {

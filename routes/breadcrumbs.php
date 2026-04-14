@@ -209,6 +209,16 @@ Breadcrumbs::for('orders.edit', function (BreadcrumbTrail $trail, $order) {
     $trail->push('Order bewerken', route('admin.orders.edit', $order->id));
 });
 
+// Orders > Confirm
+Breadcrumbs::for('orders.confirm', function (BreadcrumbTrail $trail, $order) {
+    $trail->parent('orders');
+    if ($order->salesLead) {
+        $trail->push($order->salesLead->name, route('admin.sales-leads.view', $order->salesLead->id));
+    }
+    $trail->push('Order bewerken', route('admin.orders.edit', $order->id));
+    $trail->push('Afspraak bevestigen', route('admin.orders.confirm', $order->id));
+});
+
 // Settings
 Breadcrumbs::for('settings', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.layouts.settings'), route('admin.settings.index'));

@@ -6,10 +6,12 @@ use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Enums\EntityType;
 use App\Enums\WebhookType;
+use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Models\CallStatus;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\ActivityStatusService;
 use App\Services\patientmessages\PatientMessageService;
 use App\Services\WebhookService;
 use Exception;
@@ -24,18 +26,16 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
-use Webkul\Contact\Models\Person;
-use Webkul\Lead\Models\Lead;
 use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
-use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
-use App\Services\ActivityStatusService;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\Group;
 use Webkul\User\Repositories\GroupRepository;
@@ -43,6 +43,7 @@ use Webkul\User\Repositories\GroupRepository;
 class ActivityController extends Controller
 {
     use HandlesReturnUrl;
+
     /**
      * Create a new controller instance.
      *
@@ -53,7 +54,7 @@ class ActivityController extends Controller
         protected FileRepository $fileRepository,
         protected AttributeRepository $attributeRepository,
         protected WebhookService $webhookService,
-        protected ?ViewService $viewService = null,
+        protected ?ViewService $viewService,
         private readonly PatientMessageService $patientMessageService
     ) {}
 
@@ -106,7 +107,7 @@ class ActivityController extends Controller
     public function personsForEntity(Request $request): JsonResponse
     {
         $entityType = $request->query('entity_type');
-        $entityId   = (int) $request->query('entity_id');
+        $entityId = (int) $request->query('entity_id');
 
         $nameSelect = array_map(fn ($f) => "persons.{$f}", array_merge(['id'], Person::NAME_FIELDS));
 
@@ -146,7 +147,7 @@ class ActivityController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        if(ActivityType::PATIENT_MESSAGE->value == $activity->type?->value) {
+        if (ActivityType::PATIENT_MESSAGE->value == $activity->type?->value) {
             $this->patientMessageService->markAllMessagesAsReadForEmployee($activity);
         }
 
@@ -173,7 +174,7 @@ class ActivityController extends Controller
         logger()->info('Activity store data', $data);
 
         // If lead_id is set, ensure we do not also bind a person via pivot
-        if (!empty($data['lead_id'])) {
+        if (! empty($data['lead_id'])) {
             unset($data['person_id']);
         }
 
@@ -181,12 +182,7 @@ class ActivityController extends Controller
         $personIds = array_filter(array_map('intval', (array) ($data['person_ids'] ?? [])));
         unset($data['person_ids']);
 
-        // Convert empty strings to null for foreign key constraints
-        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
-            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
-                $data[$field] = null;
-            }
-        }
+        Activity::normalizeForeignKeys($data);
 
         // VeeValidate sends boolean false as the string "false" via FormData,
         // which PHP casts to true. Normalize using filter_var to get a proper boolean.
@@ -199,15 +195,15 @@ class ActivityController extends Controller
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
-            'is_done' => (request('type') == ActivityType::NOTE->value || request('type') == ActivityType::FILE->value ) ? 1 : 0,
+            'is_done' => (request('type') == ActivityType::NOTE->value || request('type') == ActivityType::FILE->value) ? 1 : 0,
         ]));
 
         // Link selected persons: use person_id FK for the primary person when no other entity is set
-        if (!empty($personIds)) {
-            $hasPrimaryEntity = !empty($data['lead_id']) || !empty($data['sales_lead_id'])
-                || !empty($data['order_id']) || !empty($data['clinic_id']);
+        if (! empty($personIds)) {
+            $hasPrimaryEntity = collect(EntityType::haveActivities())
+                ->contains(fn (EntityType $e) => ! empty($data[$e->getForeignKey()]));
 
-            if (!$hasPrimaryEntity && !$activity->person_id) {
+            if (! $hasPrimaryEntity && ! $activity->person_id) {
                 // Set the first person as the primary FK, link the rest via pivot
                 $primaryPersonId = array_shift($personIds);
                 $activity->update(['person_id' => $primaryPersonId]);
@@ -250,15 +246,15 @@ class ActivityController extends Controller
 
         // Determine which entity this activity belongs to — driven by EntityType enum
         $relatedEntityType = EntityType::resolveFromActivity($activity);
-        $relatedEntity     = $relatedEntityType
+        $relatedEntity = $relatedEntityType
             ? $activity->{$relatedEntityType->getRelation()}
             : null;
 
         if ($relatedEntityType && ! $relatedEntity) {
             Log::error('Activity entity relation resolved to null', [
-                'activity_id'  => $activity->id,
-                'entity_type'  => $relatedEntityType->value,
-                'foreign_key'  => $relatedEntityType->getForeignKey(),
+                'activity_id'   => $activity->id,
+                'entity_type'   => $relatedEntityType->value,
+                'foreign_key'   => $relatedEntityType->getForeignKey(),
                 'foreign_value' => $activity->{$relatedEntityType->getForeignKey()},
             ]);
         }
@@ -288,7 +284,7 @@ class ActivityController extends Controller
             // Only allow user_id change if:
             // 1. Current user is the assigned user, OR
             // 2. Current user has takeover permission
-            if ($activity->user_id && $activity->user_id != $currentUser->id && !$currentUser->hasPermission('activities.takeover')) {
+            if ($activity->user_id && $activity->user_id != $currentUser->id && ! $currentUser->hasPermission('activities.takeover')) {
                 if (request()->ajax()) {
                     return response()->json([
                         'message' => 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.',
@@ -296,6 +292,7 @@ class ActivityController extends Controller
                 }
 
                 session()->flash('error', 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.');
+
                 return redirect()->back();
             }
         }
@@ -315,6 +312,7 @@ class ActivityController extends Controller
                 }
 
                 session()->flash('error', $validator->errors()->first('user_id'));
+
                 return redirect()->back();
             }
         }
@@ -323,12 +321,7 @@ class ActivityController extends Controller
 
         $data = request()->all();
 
-        // Convert empty strings to null for foreign key constraints
-        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
-            if (isset($data[$field]) && ($data[$field] === '')) {
-                $data[$field] = null;
-            }
-        }
+        Activity::normalizeForeignKeys($data);
 
         // VeeValidate sends boolean false as the string "false" via FormData,
         // which PHP casts to true. Normalize using filter_var to get a proper boolean.
@@ -350,7 +343,7 @@ class ActivityController extends Controller
             // TODO refactor this code, simplify
             // If status explicitly provided
             if ($requestedStatus === ActivityStatus::DONE->value) {
-                if (!$activity->is_done) {
+                if (! $activity->is_done) {
                     $activity->is_done = 1;
                     $didChange = true;
                 }
@@ -383,16 +376,16 @@ class ActivityController extends Controller
                     }
                     if (request()->ajax()) {
                         $labels = [
-                            ActivityStatus::ACTIVE->value => 'Actief',
+                            ActivityStatus::ACTIVE->value      => 'Actief',
                             ActivityStatus::IN_PROGRESS->value => 'In behandeling',
-                            ActivityStatus::ON_HOLD->value => 'On hold',
-                            ActivityStatus::EXPIRED->value => 'Verlopen',
-                            ActivityStatus::DONE->value => 'Afgerond',
+                            ActivityStatus::ON_HOLD->value     => 'On hold',
+                            ActivityStatus::EXPIRED->value     => 'Verlopen',
+                            ActivityStatus::DONE->value        => 'Afgerond',
                         ];
 
                         return response()->json([
-                            'message' => 'Deze status is niet mogelijk voor de huidige datumrange.',
-                            'status'  => $computed->value,
+                            'message'      => 'Deze status is niet mogelijk voor de huidige datumrange.',
+                            'status'       => $computed->value,
                             'status_label' => $labels[$computed->value] ?? $computed->value,
                         ], 422);
                     }
@@ -419,15 +412,15 @@ class ActivityController extends Controller
         // Send webhook if activity is marked as done
         if (isset($data['is_done']) && $data['is_done']) {
             $this->webhookService->sendWebhook([
-                'type' => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
+                'type'     => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
                 'activity' => [
-                    'id' => $activity->id,
-                    'type' => $activity->type,
-                    'title' => $activity->title,
-                    'comment' => $activity->comment,
+                    'id'            => $activity->id,
+                    'type'          => $activity->type,
+                    'title'         => $activity->title,
+                    'comment'       => $activity->comment,
                     'schedule_from' => $activity->schedule_from,
-                    'schedule_to' => $activity->schedule_to,
-                    'lead_id' => $activity->lead_id,
+                    'schedule_to'   => $activity->schedule_to,
+                    'lead_id'       => $activity->lead_id,
                 ],
             ],
                 WebhookType::LEAD_ACTIVITY_IS_DONE);
@@ -489,15 +482,15 @@ class ActivityController extends Controller
             // Send webhook if activity is marked as done
             if ($massUpdateRequest->input('value')) {
                 $this->webhookService->sendWebhook([
-                    'type' => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
+                    'type'     => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
                     'activity' => [
-                        'id' => $activity->id,
-                        'type' => $activity->type,
-                        'title' => $activity->title,
-                        'comment' => $activity->comment,
+                        'id'            => $activity->id,
+                        'type'          => $activity->type,
+                        'title'         => $activity->title,
+                        'comment'       => $activity->comment,
                         'schedule_from' => $activity->schedule_from,
-                        'schedule_to' => $activity->schedule_to,
-                        'lead_id' => $activity->lead_id,
+                        'schedule_to'   => $activity->schedule_to,
+                        'lead_id'       => $activity->lead_id,
                     ],
                 ],
                     WebhookType::LEAD_ACTIVITY_IS_DONE);
@@ -530,6 +523,7 @@ class ActivityController extends Controller
             }
 
             $downloadName = basename($file->path);
+
             return Storage::disk($disk)->download($file->path, $downloadName);
         } catch (Exception $exception) {
             Log::warning('Activity file download failed: '.$exception->getMessage(), [
@@ -570,13 +564,14 @@ class ActivityController extends Controller
                 return redirect($returnUrl);
             }
 
-            if (!is_null($leadId)) {
+            if (! is_null($leadId)) {
                 return redirect()->route('admin.leads.view', $leadId);
             } else {
                 return redirect()->route('admin.contacts.persons.view', $firstPersonId);
             }
         } catch (Exception $exception) {
             logger()->error('Could not delete activity: '.$exception->getMessage());
+
             return response()->json([
                 'message' => trans('admin::app.activities.destroy-failed'),
             ], 400);
@@ -612,15 +607,15 @@ class ActivityController extends Controller
     /**
      * Ensure group_id is set for lead activities by auto-determining from lead's department.
      *
-     * @param array $data Activity data (passed by reference)
+     * @param  array  $data  Activity data (passed by reference)
      * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|null
      */
     private function ensureGroupIdForLeadActivity(array &$data)
     {
         // If lead_id is provided, group_id is required
-        if (!empty($data['lead_id'])) {
+        if (! empty($data['lead_id'])) {
             $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
-            if (!isset($data['group_id']) || !$data['group_id']) {
+            if (! isset($data['group_id']) || ! $data['group_id']) {
                 try {
                     $data['group_id'] = Department::getGroupIdForLead($lead);
                 } catch (Exception $e) {
@@ -630,18 +625,20 @@ class ActivityController extends Controller
                         ], 422);
                     }
                     session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+
                     return redirect()->back();
                 }
             } else {
                 // Validate provided group_id belongs to the same department as the lead
                 $group = Group::query()->find($data['group_id']);
-                if (!$group || ($group->department_id !== $lead->department_id)) {
+                if (! $group || ($group->department_id !== $lead->department_id)) {
                     if (request()->ajax()) {
                         return response()->json([
                             'message' => 'De opgegeven groep komt niet overeen met het departement van de lead.',
                         ], 422);
                     }
                     session()->flash('error', 'De opgegeven groep komt niet overeen met het departement van de lead.');
+
                     return redirect()->back();
                 }
             }
@@ -651,14 +648,14 @@ class ActivityController extends Controller
     }
 
     /**
-     * @param Activity $activity
      * @return bool true, if entity has changed and needs saving
      */
-    private function updateStatus(Activity $activity) :bool
+    private function updateStatus(Activity $activity): bool
     {
         if ($activity->is_done) {
             if (($activity->status?->value ?? null) !== ActivityStatus::DONE->value) {
                 $activity->status = ActivityStatus::DONE;
+
                 return true;
             }
         } else {
@@ -666,11 +663,12 @@ class ActivityController extends Controller
             $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, ActivityStatus::ACTIVE);
             if (($activity->status?->value ?? null) !== $computed->value) {
                 $activity->status = $computed;
+
                 return true;
             }
         }
+
         return false;
 
     }
-
 }

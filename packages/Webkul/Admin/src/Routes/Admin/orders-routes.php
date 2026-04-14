@@ -29,12 +29,14 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
     Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
     Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
+    Route::get('{orderId}/confirm', 'confirm')->name('admin.orders.confirm');
     Route::post('{id}/send-afb', 'sendAfb')->name('admin.orders.send_afb');
 
     // Order confirmation letter routes
     Route::get('confirmation/templates', 'getConfirmationTemplates')->name('admin.orders.confirmation.templates');
     Route::get('{orderId}/confirmation/template-content', 'getConfirmationTemplateContent')->name('admin.orders.confirmation.template-content');
     Route::post('{orderId}/confirmation/save', 'saveConfirmationLetter')->name('admin.orders.confirmation.save');
+    Route::post('{orderId}/confirmation/preview-pdf', 'previewConfirmationLetterPdf')->name('admin.orders.confirmation.preview-pdf');
     Route::get('{orderId}/confirmation/export-pdf', 'exportConfirmationLetterPDF')->name('admin.orders.confirmation.export-pdf');
 
     // Order checks routes

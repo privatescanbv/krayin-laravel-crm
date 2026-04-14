@@ -181,7 +181,7 @@
             >
                 <span class="icon-delete text-base"></span>
 
-                <span>@lang('admin::app.leads.view.delete-btn')</span>
+                <span>@lang('admin::app.sales.view.delete-btn')</span>
             </button>
         </script>
 

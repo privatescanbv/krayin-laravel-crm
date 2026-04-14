@@ -5,6 +5,7 @@ namespace Webkul\Activity\Models;
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Enums\AppointmentTimeFilter;
+use App\Enums\EntityType;
 use App\Enums\PatientMessageSenderType;
 use App\Models\CallStatus;
 use App\Models\Clinic;
@@ -81,6 +82,63 @@ class Activity extends Model implements ActivityContract
         'person_id',
         'external_id',
     ];
+
+    /**
+     * Entity foreign key columns (derived from EntityType enum).
+     *
+     * @return string[]
+     */
+    public static function entityForeignKeys(): array
+    {
+        return array_map(
+            fn (EntityType $e) => $e->getForeignKey(),
+            EntityType::cases(),
+        );
+    }
+
+    /**
+     * All foreign key columns on the activities table (entity + assignment).
+     *
+     * @return string[]
+     */
+    public static function foreignKeyFields(): array
+    {
+        return array_merge(
+            self::entityForeignKeys(),
+            ['user_id', 'group_id'],
+        );
+    }
+
+    /**
+     * Normalize FK values in a data array:
+     * - empty strings / null -> null
+     * - numeric strings -> int
+     * - zero -> null for entity FKs
+     */
+    public static function normalizeForeignKeys(array &$data): void
+    {
+        $entityFks = self::entityForeignKeys();
+
+        foreach (self::foreignKeyFields() as $field) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            if ($data[$field] === '' || $data[$field] === null) {
+                $data[$field] = null;
+
+                continue;
+            }
+
+            if (is_numeric($data[$field])) {
+                $data[$field] = (int) $data[$field];
+            }
+
+            if (in_array($field, $entityFks, true) && $data[$field] === 0) {
+                $data[$field] = null;
+            }
+        }
+    }
 
     /**
      * Get the user that owns the activity.

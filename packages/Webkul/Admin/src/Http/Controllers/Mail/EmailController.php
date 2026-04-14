@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Mail;
 
+use App\Enums\EmailTemplateType;
 use App\Services\Mail\EmailTemplateRenderingService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -16,14 +17,13 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\EmailResource;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
-use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\EmailTemplate\Models\EmailTemplate;
-use App\Enums\EmailTemplateType;
 
 class EmailController extends Controller
 {
@@ -33,24 +33,22 @@ class EmailController extends Controller
      * @return void
      */
     public function __construct(
-        protected EmailRepository                          $emailRepository,
-        protected AttachmentRepository                     $attachmentRepository,
-        protected FolderRepository                         $folderRepository,
-        readonly private EmailTemplateRenderingService     $emailTemplateRenderingService,
-    )
-    {
-    }
+        protected EmailRepository $emailRepository,
+        protected AttachmentRepository $attachmentRepository,
+        protected FolderRepository $folderRepository,
+        readonly private EmailTemplateRenderingService $emailTemplateRenderingService,
+    ) {}
 
     /**
      * Display a listing of the resource.
      */
     public function index(): View|JsonResponse|RedirectResponse
     {
-        if (!request('route')) {
+        if (! request('route')) {
             return redirect()->route('admin.mail.index', ['route' => 'inbox']);
         }
 
-        if (!bouncer()->hasPermission('mail')) {
+        if (! bouncer()->hasPermission('mail')) {
             abort(401, 'This action is unauthorized');
         }
 
@@ -71,6 +69,7 @@ class EmailController extends Controller
                 }
 
                 $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+
                 return view('admin::mail.index', compact('hierarchicalFolders'));
         }
     }
@@ -84,7 +83,7 @@ class EmailController extends Controller
     {
         try {
             $email = $this->emailRepository
-                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'salesLead', 'clinic'])
+                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'salesLead', 'clinic', 'order'])
                 ->findOrFail(request('id'));
 
             if (request('route') == 'draft') {
@@ -113,10 +112,11 @@ class EmailController extends Controller
     public function store()
     {
         $this->validate(request(), [
-            'reply_to' => 'required|array|min:1',
+            'reply_to'   => 'required|array|min:1',
             'reply_to.*' => 'email',
-            'reply' => 'required',
-            'subject' => 'required',
+            'reply'      => 'required',
+            'subject'    => 'required',
+            'order_id'   => 'nullable|integer|exists:orders,id',
         ]);
 
         Event::dispatch('email.create.before');
@@ -132,7 +132,7 @@ class EmailController extends Controller
 
         if (request()->ajax()) {
             return response()->json([
-                'data' => new EmailResource($email),
+                'data'    => new EmailResource($email),
                 'message' => trans('admin::app.mail.create-success'),
             ]);
         }
@@ -151,7 +151,7 @@ class EmailController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function update($id)
@@ -160,7 +160,7 @@ class EmailController extends Controller
 
         $data = request()->all();
 
-        if (!is_null(request('is_draft'))) {
+        if (! is_null(request('is_draft'))) {
             $folderName = request('is_draft') ? 'draft' : 'outbox';
             $folder = Folder::where('name', $folderName)->first();
             if ($folder) {
@@ -172,7 +172,7 @@ class EmailController extends Controller
 
         Event::dispatch('email.update.after', $email);
 
-        if (!is_null(request('is_draft')) && !request('is_draft')) {
+        if (! is_null(request('is_draft')) && ! request('is_draft')) {
             try {
                 // Centralized send logic (folder behavior kept as-is: move to inbox).
                 $crmMailService = app(\App\Services\Mail\CrmMailService::class);
@@ -181,7 +181,7 @@ class EmailController extends Controller
             }
         }
 
-        if (!is_null(request('is_draft'))) {
+        if (! is_null(request('is_draft'))) {
             if (request('is_draft')) {
                 session()->flash('success', trans('admin::app.mail.saved-to-draft'));
 
@@ -201,7 +201,7 @@ class EmailController extends Controller
             }
 
             return response()->json([
-                'data' => new EmailResource($emailForResource),
+                'data'    => new EmailResource($emailForResource),
                 'message' => trans('admin::app.mail.update-success'),
             ]);
         }
@@ -213,9 +213,6 @@ class EmailController extends Controller
 
     /**
      * Update the email status.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
      */
     public function updateStatus(int $id): JsonResponse
     {
@@ -249,7 +246,7 @@ class EmailController extends Controller
     /**
      * Download file from storage
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\View\View
      */
     public function download($id)
@@ -309,7 +306,7 @@ class EmailController extends Controller
         $email = $this->emailRepository->findOrFail($id);
 
         try {
-            Event::dispatch('email.' . request('type') . '.before', $id);
+            Event::dispatch('email.'.request('type').'.before', $id);
 
             $parentId = $email->parent_id;
 
@@ -328,7 +325,7 @@ class EmailController extends Controller
                 $this->emailRepository->delete($id);
             }
 
-            Event::dispatch('email.' . request('type') . '.after', $id);
+            Event::dispatch('email.'.request('type').'.after', $id);
 
             if (request()->ajax()) {
                 return response()->json([
@@ -380,7 +377,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'message' => trans('admin::app.mail.move-success'),
-                'data' => [
+                'data'    => [
                     'folder_name' => $folder->name,
                 ],
             ]);
@@ -400,7 +397,7 @@ class EmailController extends Controller
 
         try {
             foreach ($mails as $email) {
-                Event::dispatch('email.' . $massDestroyRequest->input('type') . '.before', $email->id);
+                Event::dispatch('email.'.$massDestroyRequest->input('type').'.before', $email->id);
 
                 if ($massDestroyRequest->input('type') == 'trash') {
                     $trashFolder = Folder::where('name', EmailFolderEnum::TRASH->getFolderName())->first();
@@ -415,7 +412,7 @@ class EmailController extends Controller
                     $this->emailRepository->delete($email->id);
                 }
 
-                Event::dispatch('email.' . $massDestroyRequest->input('type') . '.after', $email->id);
+                Event::dispatch('email.'.$massDestroyRequest->input('type').'.after', $email->id);
             }
 
             return response()->json([
@@ -449,8 +446,6 @@ class EmailController extends Controller
      * - `language` (string|array): Filter by language (nl, de, en)
      * - `code` (string): Filter by template code
      * - `search` (string): Search in name and code fields
-     *
-     * @return JsonResponse
      */
     public function get(): JsonResponse
     {
@@ -504,12 +499,12 @@ class EmailController extends Controller
             // Map to response format
             $data = $templates->map(function ($template) {
                 return [
-                    'id' => $template->id,
-                    'name' => $template->name,
-                    'code' => $template->code ?? $template->name,
-                    'label' => $template->name,
-                    'type' => $template->type,
-                    'language' => $template->language,
+                    'id'          => $template->id,
+                    'name'        => $template->name,
+                    'code'        => $template->code ?? $template->name,
+                    'label'       => $template->name,
+                    'type'        => $template->type,
+                    'language'    => $template->language,
                     'departments' => $template->departments ?? [],
                 ];
             })->toArray();
@@ -520,17 +515,239 @@ class EmailController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error in email templates.get endpoint', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error'          => $e->getMessage(),
+                'trace'          => $e->getTraceAsString(),
                 'request_params' => request()->all(),
             ]);
 
             return response()->json([
-                'error' => __('messages.email.server_error'),
+                'error'   => __('messages.email.server_error'),
                 'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
             ], 500);
         }
+    }
+
+    /**
+     * Get list of available email templates.
+     *
+     * @deprecated Use get() instead for more flexible filtering
+     */
+    public function getTemplates(): JsonResponse
+    {
+        return $this->get();
+    }
+
+    /**
+     * Get rendered email template content.
+     */
+    public function getTemplateContent(): JsonResponse
+    {
+        $templateCode = request()->query('template');
+        $leadId = request()->query('lead_id');
+        $personId = request()->query('person_id');
+        $salesLeadId = request()->query('sales_lead_id');
+
+        if (! $templateCode) {
+            return response()->json([
+                'error' => 'email_template_identifier is required',
+            ], 400);
+        }
+
+        if (is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
+            return response()->json([
+                'error' => __('messages.email.entity_required'),
+            ], 400);
+        }
+
+        try {
+            $template = EmailTemplate::byCode($templateCode)->first();
+
+            if (! $template) {
+                return response()->json([
+                    'error'   => __('messages.email.template_not_found'),
+                    'message' => "Template with code '{$templateCode}' does not exist in database",
+                ], 404);
+            }
+
+            $entities = array_filter([
+                'lead'       => $leadId,
+                'person'     => $personId,
+                'sales_lead' => $salesLeadId,
+            ]);
+
+            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
+            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
+            $subject = $this->emailTemplateRenderingService->interpolateTemplate($template->subject, $variables);
+
+            return response()->json([
+                'data' => [
+                    'content' => $content,
+                    'subject' => $subject,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Template rendering error: '.$e->getMessage(), [
+                'template'  => $templateCode,
+                'lead_id'   => $leadId ?? null,
+                'person_id' => $personId ?? null,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error'   => __('messages.email.template_render_error'),
+                'message' => $e->getMessage(),
+                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 404);
+        }
+    }
+
+    /**
+     * Get template content body.
+     * Accepts entities array format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
+     */
+    public function getTemplateContentBody(): JsonResponse
+    {
+        $request = request();
+        $templateCode = $request->input('email_template_identifier');
+        $entities = $request->input('entities', []);
+
+        if (! $templateCode) {
+            return response()->json([
+                'error' => 'email_template_identifier is required',
+            ], 400);
+        }
+
+        if (empty($entities)) {
+            return response()->json([
+                'error' => 'entities array is required',
+            ], 400);
+        }
+
+        try {
+            $template = EmailTemplate::byCode($templateCode)->first();
+
+            if (! $template) {
+                return response()->json([
+                    'error'   => __('messages.email.template_not_found'),
+                    'message' => "Template with code '{$templateCode}' does not exist in database",
+                ], 404);
+            }
+
+            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
+            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
+
+            return response()->json([
+                'data' => [
+                    'content' => $content,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Template body rendering error: '.$e->getMessage(), [
+                'template'  => $templateCode,
+                'entities'  => $entities,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error'   => __('messages.email.template_render_error'),
+                'message' => $e->getMessage(),
+                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Get template content subject.
+     * Accepts entities array format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
+     */
+    public function getTemplateContentSubject(): JsonResponse
+    {
+        $request = request();
+        $templateCode = $request->input('email_template_identifier');
+        $entities = $request->input('entities', []);
+
+        if (! $templateCode) {
+            return response()->json([
+                'error' => 'email_template_identifier is required',
+            ], 400);
+        }
+
+        if (empty($entities)) {
+            return response()->json([
+                'error' => 'entities array is required',
+            ], 400);
+        }
+
+        try {
+            $template = EmailTemplate::byCode($templateCode)->first();
+
+            if (! $template) {
+                return response()->json([
+                    'error'   => __('messages.email.template_not_found'),
+                    'message' => "Template with code '{$templateCode}' does not exist in database",
+                ], 404);
+            }
+
+            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
+            $subject = $this->emailTemplateRenderingService->interpolateTemplate($template->subject, $variables);
+
+            return response()->json([
+                'data' => [
+                    'subject' => $subject,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Template subject rendering error: '.$e->getMessage(), [
+                'template'  => $templateCode,
+                'entities'  => $entities,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error'   => __('messages.email.template_render_error'),
+                'message' => $e->getMessage(),
+                'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Transform the email data to activity resource.
+     *
+     * @param  array  $data
+     * @return ActivityResource
+     */
+    public function transformToActivity($data)
+    {
+        return new ActivityResource((object) [
+            'id'            => $data['id'],
+            'parent_id'     => $data['parent_id'],
+            'title'         => $data['subject'],
+            'type'          => 'email',
+            'is_done'       => 1,
+            'is_read'       => $data['is_read'] ?? 0,
+            'comment'       => $data['reply'],
+            'schedule_from' => null,
+            'schedule_to'   => null,
+            'user'          => auth()->guard('user')->user(),
+            'user_id'       => auth()->guard('user')->id(),
+            'group'         => null,
+            'participants'  => [],
+            'location'      => null,
+            'additional'    => json_encode([
+                'folders' => $data['folders'],
+                'from'    => $data['from'],
+                'to'      => $data['reply_to'],
+                'cc'      => $data['cc'],
+                'bcc'     => $data['bcc'],
+            ]),
+            'files'         => array_map(function ($attachment) {
+                return (object) $attachment;
+            }, $data['attachments']),
+            'created_at'    => $data['created_at'],
+            'updated_at'    => $data['updated_at'],
+        ]);
     }
 
     /**
@@ -573,7 +790,7 @@ class EmailController extends Controller
             $departmentsArray = array_filter(array_map('trim', $departmentsFilter));
         }
 
-        if (!empty($departmentsArray)) {
+        if (! empty($departmentsArray)) {
             $query->where(function ($q) use ($departmentsArray) {
                 // Templates with no departments (available to all)
                 $q->whereNull('departments')
@@ -585,226 +802,5 @@ class EmailController extends Controller
                 }
             });
         }
-    }
-
-    /**
-     * Get list of available email templates.
-     * @deprecated Use get() instead for more flexible filtering
-     */
-    public function getTemplates(): JsonResponse
-    {
-        return $this->get();
-    }
-
-    /**
-     * Get rendered email template content.
-     */
-    public function getTemplateContent(): JsonResponse
-    {
-        $templateCode = request()->query('template');
-        $leadId = request()->query('lead_id');
-        $personId = request()->query('person_id');
-        $salesLeadId = request()->query('sales_lead_id');
-
-        if (!$templateCode) {
-            return response()->json([
-                'error' => 'email_template_identifier is required',
-            ], 400);
-        }
-
-        if (is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
-            return response()->json([
-                'error' => __('messages.email.entity_required'),
-            ], 400);
-        }
-
-        try {
-            $template = EmailTemplate::byCode($templateCode)->first();
-
-            if (!$template) {
-                return response()->json([
-                    'error' => __('messages.email.template_not_found'),
-                    'message' => "Template with code '{$templateCode}' does not exist in database",
-                ], 404);
-            }
-
-            $entities = array_filter([
-                'lead'       => $leadId,
-                'person'     => $personId,
-                'sales_lead' => $salesLeadId,
-            ]);
-
-            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
-            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
-            $subject = $this->emailTemplateRenderingService->interpolateTemplate($template->subject, $variables);
-
-            return response()->json([
-                'data' => [
-                    'content' => $content,
-                    'subject' => $subject,
-                ],
-            ]);
-        } catch (Exception $e) {
-            Log::error('Template rendering error: ' . $e->getMessage(), [
-                'template' => $templateCode,
-                'lead_id' => $leadId ?? null,
-                'person_id' => $personId ?? null,
-                'exception' => $e,
-            ]);
-
-            return response()->json([
-                'error' => __('messages.email.template_render_error'),
-                'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 404);
-        }
-    }
-
-    /**
-     * Get template content body.
-     * Accepts entities array format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
-     */
-    public function getTemplateContentBody(): JsonResponse
-    {
-        $request = request();
-        $templateCode = $request->input('email_template_identifier');
-        $entities = $request->input('entities', []);
-
-        if (!$templateCode) {
-            return response()->json([
-                'error' => 'email_template_identifier is required',
-            ], 400);
-        }
-
-        if (empty($entities)) {
-            return response()->json([
-                'error' => 'entities array is required',
-            ], 400);
-        }
-
-        try {
-            $template = EmailTemplate::byCode($templateCode)->first();
-
-            if (!$template) {
-                return response()->json([
-                    'error' => __('messages.email.template_not_found'),
-                    'message' => "Template with code '{$templateCode}' does not exist in database",
-                ], 404);
-            }
-
-            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
-            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
-
-            return response()->json([
-                'data' => [
-                    'content' => $content,
-                ],
-            ]);
-        } catch (Exception $e) {
-            Log::error('Template body rendering error: ' . $e->getMessage(), [
-                'template' => $templateCode,
-                'entities' => $entities,
-                'exception' => $e,
-            ]);
-
-            return response()->json([
-                'error' => __('messages.email.template_render_error'),
-                'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 500);
-        }
-    }
-
-    /**
-     * Get template content subject.
-     * Accepts entities array format: ['lead' => 123, 'person' => 456, 'sales_lead' => 789]
-     */
-    public function getTemplateContentSubject(): JsonResponse
-    {
-        $request = request();
-        $templateCode = $request->input('email_template_identifier');
-        $entities = $request->input('entities', []);
-
-        if (!$templateCode) {
-            return response()->json([
-                'error' => 'email_template_identifier is required',
-            ], 400);
-        }
-
-        if (empty($entities)) {
-            return response()->json([
-                'error' => 'entities array is required',
-            ], 400);
-        }
-
-        try {
-            $template = EmailTemplate::byCode($templateCode)->first();
-
-            if (!$template) {
-                return response()->json([
-                    'error' => __('messages.email.template_not_found'),
-                    'message' => "Template with code '{$templateCode}' does not exist in database",
-                ], 404);
-            }
-
-            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
-            $subject = $this->emailTemplateRenderingService->interpolateTemplate($template->subject, $variables);
-
-            return response()->json([
-                'data' => [
-                    'subject' => $subject,
-                ],
-            ]);
-        } catch (Exception $e) {
-            Log::error('Template subject rendering error: ' . $e->getMessage(), [
-                'template' => $templateCode,
-                'entities' => $entities,
-                'exception' => $e,
-            ]);
-
-            return response()->json([
-                'error' => __('messages.email.template_render_error'),
-                'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 500);
-        }
-    }
-
-    /**
-     * Transform the email data to activity resource.
-     *
-     * @param  array  $data
-     * @return ActivityResource
-     */
-    public function transformToActivity($data)
-    {
-        return new ActivityResource((object) [
-            'id'            => $data['id'],
-            'parent_id'     => $data['parent_id'],
-            'title'         => $data['subject'],
-            'type'          => 'email',
-            'is_done'       => 1,
-            'is_read'       => $data['is_read'] ?? 0,
-            'comment'       => $data['reply'],
-            'schedule_from' => null,
-            'schedule_to'   => null,
-            'user'          => auth()->guard('user')->user(),
-            'user_id'       => auth()->guard('user')->id(),
-            'group'         => null,
-            'participants'  => [],
-            'location'      => null,
-            'additional'    => json_encode([
-                'folders' => $data['folders'],
-                'from'    => $data['from'],
-                'to'      => $data['reply_to'],
-                'cc'      => $data['cc'],
-                'bcc'     => $data['bcc'],
-            ]),
-            'files'         => array_map(function ($attachment) {
-                return (object) $attachment;
-            }, $data['attachments']),
-            'created_at'    => $data['created_at'],
-            'updated_at'    => $data['updated_at'],
-        ]);
     }
 }

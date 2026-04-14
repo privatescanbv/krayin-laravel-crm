@@ -15,35 +15,39 @@
     {!! view_render_event('admin.mail.view.action_mail.before', ['email' => $email]) !!}
 
     <div class="flex flex-col gap-6">
-        <!-- When a relationship exists: Panel 2 only (current link + reset) -->
+        <!-- When a relationship exists: show all linked entities -->
         <template v-if="hasRelationships">
             <div class="flex flex-col gap-2">
                 <label class="font-semibold text-gray-800 dark:text-gray-300">
                     Gekoppeld aan
                 </label>
-                <div class="flex items-center justify-between rounded-md border p-3 dark:border-gray-700 dark:bg-gray-800">
+                <div
+                    v-for="link in linkedEntities"
+                    :key="link.type + '-' + link.id"
+                    class="flex items-center justify-between rounded-md border p-3 dark:border-gray-700 dark:bg-gray-800"
+                >
                     <a
-                        v-if="currentLink?.url"
-                        :href="currentLink.url"
+                        v-if="link.url"
+                        :href="link.url"
                         class="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
                     >
                         <span class="icon-link text-gray-600 dark:text-gray-300"></span>
                         <div class="text-sm">
                             <div class="font-medium text-gray-900 dark:text-gray-100">
-                                @{{ currentLink?.label }}
+                                @{{ link.label }}
                             </div>
                             <div class="text-gray-500 dark:text-gray-400">
-                                @{{ currentLink?.subtitle }}
+                                @{{ link.subtitle }}
                             </div>
                         </div>
                     </a>
                     <button
                         type="button"
-                        @click="resetLink"
+                        @click="unlinkSingle(link.type)"
                         class="flex items-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
                     >
                         <span class="icon-trash"></span>
-                        Verwijder koppeling
+                        Ontkoppel
                     </button>
                 </div>
             </div>
@@ -134,68 +138,76 @@
 
         computed: {
             hasRelationships() {
-                // Prefer backend accessor; fallback to checking individual foreign keys
                 if (this.email && Object.prototype.hasOwnProperty.call(this.email, 'has_relationships')) {
                     return !!this.email.has_relationships;
                 }
-                return !!(this.email?.person_id || this.email?.lead_id || this.email?.sales_lead_id || this.email?.activity_id);
+                return !!(this.email?.person_id || this.email?.lead_id || this.email?.sales_lead_id || this.email?.activity_id || this.email?.order_id);
             },
 
             senderEmail() {
-                // Prefer backend accessor; fallback to checking from field
                 if (this.email && Object.prototype.hasOwnProperty.call(this.email, 'sender_email')) {
                     return this.email.sender_email;
                 }
                 return this.email?.from || '';
             },
 
-            currentLink() {
+            linkedEntities() {
+                const links = [];
                 if (this.email?.lead_id && this.email?.lead) {
-                    return {
+                    links.push({
                         type: 'lead',
                         id: this.email.lead_id,
                         label: this.email.lead.name || [this.email.lead.first_name, this.email.lead.last_name].filter(Boolean).join(' '),
                         subtitle: 'Lead',
                         url: '{{ route('admin.leads.view', ':id') }}'.replace(':id', this.email.lead_id),
-                    };
+                    });
                 }
                 if (this.email?.sales_lead_id && this.email?.sales_lead) {
-                    return {
+                    links.push({
                         type: 'sales_lead',
                         id: this.email.sales_lead_id,
                         label: this.email.sales_lead.name,
                         subtitle: 'Sales',
                         url: '{{ route('admin.sales-leads.view', ':id') }}'.replace(':id', this.email.sales_lead_id),
-                    };
+                    });
+                }
+                if (this.email?.order_id && this.email?.order) {
+                    links.push({
+                        type: 'order',
+                        id: this.email.order_id,
+                        label: this.email.order.title || this.email.order.name || ('Order #' + this.email.order_id),
+                        subtitle: 'Order',
+                        url: '{{ route('admin.orders.view', ':id') }}'.replace(':id', this.email.order_id),
+                    });
                 }
                 if (this.email?.person_id && this.email?.person) {
-                    return {
+                    links.push({
                         type: 'person',
                         id: this.email.person_id,
                         label: this.email.person.name || [this.email.person.first_name, this.email.person.last_name].filter(Boolean).join(' '),
                         subtitle: 'Contact',
                         url: '{{ route('admin.contacts.persons.view', ':id') }}'.replace(':id', this.email.person_id),
-                    };
+                    });
                 }
                 if (this.email?.clinic_id && this.email?.clinic) {
-                    return {
+                    links.push({
                         type: 'clinic',
                         id: this.email.clinic_id,
                         label: this.email.clinic.name,
                         subtitle: 'Clinic',
                         url: '{{ route('admin.clinics.view', ':id') }}'.replace(':id', this.email.clinic_id),
-                    };
+                    });
                 }
                 if (this.email?.activity_id && this.email?.activity) {
-                    return {
+                    links.push({
                         type: 'activity',
                         id: this.email.activity_id,
                         label: this.email.activity.title || this.email.activity.name || ('Activiteit #' + this.email.activity_id),
                         subtitle: 'Activiteit',
                         url: '{{ route('admin.activities.view', ':id') }}'.replace(':id', this.email.activity_id),
-                    };
+                    });
                 }
-                return null;
+                return links;
             },
         },
 
@@ -217,6 +229,11 @@
                 this.email.clinic = @json($email->clinic);
                 this.email.clinic_id = {{ $email->clinic_id ?? 'null' }};
             @endif
+
+            @if ($email->order)
+                this.email.order = @json($email->order);
+                this.email.order_id = {{ $email->order_id ?? 'null' }};
+            @endif
         },
 
         methods: {
@@ -230,6 +247,7 @@
                             sales_lead_id: null,
                             clinic_id: null,
                             activity_id: null,
+                            order_id: null,
                         }).then(response => {
                             this.email.person = null;
                             this.email.person_id = null;
@@ -241,6 +259,8 @@
                             this.email.clinic_id = null;
                             this.email.activity = null;
                             this.email.activity_id = null;
+                            this.email.order = null;
+                            this.email.order_id = null;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                             window.location.reload();
                         });
@@ -468,6 +488,36 @@
                 }
             },
 
+            unlinkOrder() {
+                this.$emitter.emit('open-confirm-modal', {
+                    agree: () => {
+                        this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                            _method: 'PUT',
+                            order_id: null,
+                        })
+                            .then(response => {
+                                this.email.order = null;
+                                this.email.order_id = null;
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                window.location.reload();
+                            })
+                            .catch(error => {});
+                    },
+                });
+            },
+
+            unlinkSingle(entityType) {
+                const map = {
+                    lead: () => this.unlinkLead(),
+                    sales_lead: () => this.unlinkSalesLead(),
+                    person: () => this.unlinkContact(),
+                    clinic: () => this.unlinkClinic(),
+                    activity: () => this.unlinkActivity(),
+                    order: () => this.unlinkOrder(),
+                };
+                if (map[entityType]) map[entityType]();
+            },
+
             unlinkEntity(entityType) {
                 if (entityType === 'lead') {
                     this.unlinkLead();
@@ -479,6 +529,8 @@
                     this.unlinkClinic();
                 } else if (entityType === 'activity') {
                     this.resetLink();
+                } else if (entityType === 'order') {
+                    this.unlinkOrder();
                 }
             },
 

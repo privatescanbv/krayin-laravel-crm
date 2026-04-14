@@ -78,10 +78,7 @@ class ActivityRepository extends Repository
      */
     public function update(array $data, $id, $attribute = 'id')
     {
-        // Convert empty lead_id to null for foreign key constraint
-        if (isset($data['lead_id']) && $data['lead_id'] === '') {
-            $data['lead_id'] = null;
-        }
+        Activity::normalizeForeignKeys($data);
 
         $activity = parent::update($data, $id);
 

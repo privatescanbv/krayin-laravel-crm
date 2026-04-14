@@ -24,6 +24,9 @@
                 }
                 const form = componentEl && componentEl.closest ? componentEl.closest('form') : null;
                 const titleInput = form && form.querySelector('input[name="title"]');
+                if (titleInput && titleInput.value.trim() !== '') {
+                    return;
+                }
                 window.adminc.setNativeInputValueSyncingVeeValidate(titleInput, selectedItem.name);
             };
         </script>

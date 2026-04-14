@@ -26,7 +26,10 @@
         app.component('v-tinymce', {
             template: '#v-tinymce-template',
 
-            props: ['selector', 'field'],
+            props: {
+                selector: { type: String, required: true },
+                field: { type: Object, default: null },
+            },
 
             data() {
                 return {
@@ -39,9 +42,7 @@
             },
 
             mounted() {
-                this.destroyTinymceInstance();
-
-                this.init();
+                this.scheduleInit();
 
                 this.$emitter.on('change-theme', (theme) => {
                     this.destroyTinymceInstance();
@@ -49,21 +50,52 @@
                     this.currentSkin = (theme === 'dark') ? 'oxide-dark' : 'oxide';
                     this.currentContentCSS = (theme === 'dark') ? 'dark' : 'default';
 
-                    this.init();
+                    this.scheduleInit();
                 });
             },
 
+            beforeUnmount() {
+                this.destroyTinymceInstance();
+            },
+
             methods: {
+                scheduleInit(retriesLeft = 60) {
+                    this.$nextTick(() => {
+                        if (typeof window.tinymce === 'undefined') {
+                            if (retriesLeft > 0) {
+                                window.setTimeout(() => this.scheduleInit(retriesLeft - 1), 50);
+                            }
+
+                            return;
+                        }
+
+                        if (! document.querySelector(this.selector)) {
+                            if (retriesLeft > 0) {
+                                window.setTimeout(() => this.scheduleInit(retriesLeft - 1), 50);
+                            }
+
+                            return;
+                        }
+
+                        this.destroyTinymceInstance();
+                        this.init();
+                    });
+                },
+
                 destroyTinymceInstance() {
-                    if (! tinymce.activeEditor) {
+                    if (typeof window.tinymce === 'undefined') {
                         return;
                     }
 
-                    tinymce.activeEditor.destroy();
+                    const target = document.querySelector(this.selector);
+
+                    if (target && target.id && tinymce.get(target.id)) {
+                        tinymce.get(target.id).remove();
+                    }
                 },
 
                 init() {
-                    let self = this;
+                    const vm = this;
 
                     let tinyMCEHelper = {
                         initTinyMCE: function(extraConfiguration) {
@@ -77,8 +109,8 @@
                                 uploadRoute: '{{ route('admin.tinymce.upload') }}',
                                 csrfToken: '{{ csrf_token() }}',
                                 ...extraConfiguration,
-                                skin: self.currentSkin,
-                                content_css: self.currentContentCSS,
+                                skin: vm.currentSkin,
+                                content_css: vm.currentContentCSS,
                             };
 
                             const image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
@@ -173,7 +205,7 @@
                     };
 
                     tinyMCEHelper.initTinyMCE({
-                        selector: this.selector,
+                        selector: vm.selector,
                         plugins: 'media wordcount save fullscreen code table lists link',
                         toolbar: '{{ $showPlaceholders ? 'placeholders | ' : '' }}bold italic strikethrough forecolor backcolor alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
                         directionality: 'ltr',
@@ -210,7 +242,11 @@
                             @endif
 
                             ['change', 'paste', 'keyup'].forEach((event) => {
-                                editor.on(event, () => this.field.onInput(editor.getContent()));
+                                editor.on(event, () => {
+                                    if (vm.field && typeof vm.field.onInput === 'function') {
+                                        vm.field.onInput(editor.getContent());
+                                    }
+                                });
                             });
                         }
                     });

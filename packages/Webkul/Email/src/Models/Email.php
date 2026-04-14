@@ -75,6 +75,7 @@ class Email extends Model implements EmailContract
         'parent_id',
         'lead_id',
         'sales_lead_id',
+        'order_id',
         'clinic_id',
         'activity_id',
         'created_at',
@@ -118,6 +119,14 @@ class Email extends Model implements EmailContract
     public function salesLead()
     {
         return $this->belongsTo(SalesLead::class, 'sales_lead_id');
+    }
+
+    /**
+     * Get the order.
+     */
+    public function order()
+    {
+        return $this->belongsTo(\App\Models\Order::class);
     }
 
     /**
@@ -323,7 +332,7 @@ class Email extends Model implements EmailContract
      */
     public function getHasRelationshipsAttribute(): bool
     {
-        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id;
+        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id || $this->order_id;
     }
 
     /**
@@ -421,18 +430,31 @@ class Email extends Model implements EmailContract
 
     public function scopeForSalesLeadThread(Builder $query, int $salesLeadId): Builder
     {
-        return $query->latestPerThread(fn ($q, $t) => $q->where("{$t}.sales_lead_id", $salesLeadId));
+        return $query->latestPerThread(fn ($q, $t) => $q
+            ->where("{$t}.sales_lead_id", $salesLeadId)
+            ->orWhereIn("{$t}.order_id", function ($sub) use ($salesLeadId) {
+                $sub->select('id')->from('orders')->where('sales_lead_id', $salesLeadId);
+            })
+        );
     }
 
-    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds, array $salesLeadIds = []): Builder
+    public function scopeForOrderThread(Builder $query, int $orderId): Builder
     {
-        return $query->latestPerThread(function ($q, $t) use ($personId, $leadIds, $salesLeadIds) {
+        return $query->latestPerThread(fn ($q, $t) => $q->where("{$t}.order_id", $orderId));
+    }
+
+    public function scopeForPersonThread(Builder $query, int $personId, array $leadIds, array $salesLeadIds = [], array $orderIds = []): Builder
+    {
+        return $query->latestPerThread(function ($q, $t) use ($personId, $leadIds, $salesLeadIds, $orderIds) {
             $q->where("{$t}.person_id", $personId);
             if (! empty($leadIds)) {
                 $q->orWhereIn("{$t}.lead_id", $leadIds);
             }
             if (! empty($salesLeadIds)) {
                 $q->orWhereIn("{$t}.sales_lead_id", $salesLeadIds);
+            }
+            if (! empty($orderIds)) {
+                $q->orWhereIn("{$t}.order_id", $orderIds);
             }
         });
     }
@@ -447,7 +469,12 @@ class Email extends Model implements EmailContract
     public function scopeForSalesLeadThreadAndUnread(Builder $query, int $salesLeadId): Builder
     {
         return $query
-            ->allInThread(fn ($q, $t) => $q->where("{$t}.sales_lead_id", $salesLeadId))
+            ->allInThread(fn ($q, $t) => $q
+                ->where("{$t}.sales_lead_id", $salesLeadId)
+                ->orWhereIn("{$t}.order_id", function ($sub) use ($salesLeadId) {
+                    $sub->select('id')->from('orders')->where('sales_lead_id', $salesLeadId);
+                })
+            )
             ->where('is_read', 0);
     }
 

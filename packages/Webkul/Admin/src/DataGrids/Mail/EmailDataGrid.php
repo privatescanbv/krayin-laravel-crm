@@ -54,11 +54,14 @@ class EmailDataGrid extends DataGrid
                 'persons.married_name_prefix as person_married_name_prefix',
                 'persons.married_name as person_married_name',
                 DB::raw('salesleads.name as sales_name'),
+                'emails.order_id',
+                DB::raw('orders.title as order_title'),
                 DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
                 DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
                 DB::raw('CASE
                     WHEN emails.person_id IS NOT NULL THEN "person"
                     WHEN emails.lead_id IS NOT NULL THEN "lead"
+                    WHEN emails.order_id IS NOT NULL THEN "order"
                     WHEN emails.sales_lead_id IS NOT NULL THEN "sales"
                     ELSE "N/A"
                 END as entity_type'),
@@ -68,12 +71,14 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('tags', 'tags.id', '=', 'email_tags.tag_id')
             ->leftJoin('leads', 'emails.lead_id', '=', 'leads.id')
             ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
+            ->leftJoin('orders', 'emails.order_id', '=', 'orders.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
             ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
             ->groupBy(
                 'emails.id',
                 'leads.first_name', 'leads.lastname_prefix', 'leads.last_name', 'leads.married_name_prefix', 'leads.married_name',
                 'persons.first_name', 'persons.lastname_prefix', 'persons.last_name', 'persons.married_name_prefix', 'persons.married_name',
+                'orders.title',
                 'emails.is_read',
                 'emails.created_at'
             )
@@ -266,6 +271,7 @@ class EmailDataGrid extends DataGrid
                 ['label' => 'Alles', 'value' => ''],
                 ['label' => 'Lead', 'value' => 'lead'],
                 ['label' => 'Persoon', 'value' => 'person'],
+                ['label' => 'Order', 'value' => 'order'],
                 ['label' => 'Sales', 'value' => 'sales'],
                 ['label' => 'N/A', 'value' => 'N/A'],
             ],
@@ -321,6 +327,11 @@ class EmailDataGrid extends DataGrid
                             $parts[] = '/ '.implode(' ', array_filter($marriedParts));
                         }
                         $display = !empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->person_id);
+                        $label = e($display);
+                        break;
+                    case 'order':
+                        $route = route('admin.orders.view', $row->order_id);
+                        $display = $row->order_title ?: ('#'.$row->order_id);
                         $label = e($display);
                         break;
                     case 'sales':

@@ -2,6 +2,7 @@
 
 namespace App\Services\Activities;
 
+use App\Enums\ActivityType;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
@@ -59,12 +60,18 @@ class ActivityGroupResolver
             ]);
         }
 
-        // Fallback: Privatescan group
-        Log::warning('ActivityGroupResolver: could not resolve group from entity, defaulting to Privatescan', [
-            'lead_id'       => $activity->lead_id,
-            'sales_lead_id' => $activity->sales_lead_id,
-            'order_id'      => $activity->order_id,
-        ]);
+        // Fallback: Privatescan group, ignore warning message for system (for person)
+        if ($activity->type !== ActivityType::SYSTEM) {
+            Log::warning('ActivityGroupResolver: could not resolve group from entity, defaulting to Privatescan', [
+                'name'          => $activity->title,
+                'type'          => $activity->type->value,
+                'lead_id'       => $activity->lead_id,
+                'sales_lead_id' => $activity->sales_lead_id,
+                'order_id'      => $activity->order_id,
+                'person_id'     => $activity->person_id,
+                'clinic_id'     => $activity->clinic_id,
+            ]);
+        }
 
         try {
             $privateScanDeptId = Department::findPrivateScanId();

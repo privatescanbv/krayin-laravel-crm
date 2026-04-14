@@ -45,6 +45,36 @@ trait PDFHandler
     }
 
     /**
+     * Render HTML to PDF bytes (same pipeline as downloadPDF, without forcing download).
+     */
+    protected function pdfBinaryFromHtml(string $html): string
+    {
+        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+
+        if (in_array($direction = app()->getLocale(), ['ar', 'he'])) {
+            $mPDF = new Mpdf([
+                'margin_left'   => 0,
+                'margin_right'  => 0,
+                'margin_top'    => 0,
+                'margin_bottom' => 0,
+            ]);
+
+            $mPDF->SetDirectionality($direction);
+
+            $mPDF->SetDisplayMode('fullpage');
+
+            $mPDF->WriteHTML($this->adjustArabicAndPersianContent($html));
+
+            return $mPDF->Output('', 'S');
+        }
+
+        return PDF::loadHTML($this->adjustArabicAndPersianContent($html))
+            ->setPaper('A4', 'portrait')
+            ->set_option('defaultFont', 'Courier')
+            ->output();
+    }
+
+    /**
      * Adjust arabic and persian content.
      *
      * @return string

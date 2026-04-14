@@ -1,5 +1,4 @@
 @php
-use App\Enums\EmailTemplateType;
 use App\Enums\PipelineStage;
 use App\Models\SalesLead;
 use Webkul\Lead\Models\Stage;
@@ -51,15 +50,14 @@ use Webkul\Lead\Models\Stage;
                         $mailDisabled = !in_array($orders->pipeline_stage_id, $wachtenStageIds);
                     @endphp
                     @if ($orders->sales_lead_id)
-                        <button
-                            type="button"
+                        <a
+                            href="{{ route('admin.orders.confirm', $orders->id) }}"
                             class="secondary-button {{ $mailDisabled ? 'pointer-events-none opacity-60' : '' }}"
-                            id="order-compose-mail"
-                            {{ $mailDisabled ? 'disabled' : '' }}
+                            @if($mailDisabled) aria-disabled="true" tabindex="-1" @endif
                             title="{{ $mailDisabled ? 'Eerst order op Ingepland zetten' : '' }}"
                         >
                             Afspraak bevestigen
-                        </button>
+                        </a>
                     @endif
 
                     <button
@@ -255,33 +253,10 @@ use Webkul\Lead\Models\Stage;
                         </div>
                     </template>
 
-                    <template #confirmation>
-                        <v-order-confirmation :order-id="{{ $orders->id }}"
-                                              :initial-content='@json($orders->confirmation_letter_content ?? null)'></v-order-confirmation>
-                    </template>
                 </v-order-tabs>
             </div>
         </div>
     </x-admin::form>
-
-      @if ($orders->sales_lead_id)
-          @php
-              $orderMailEntity = [
-                  'id'   => $orders->sales_lead_id,
-                  'name' => $orders->salesLead?->name,
-              ];
-          @endphp
-
-          <x-admin::activities.actions.mail
-              :entity="$orderMailEntity"
-              entity-control-name="sales_lead_id"
-              :emails="$orderEmailOptions ?? []"
-              store-url="{{ route('admin.sales-leads.emails.store', ['id' => $orders->sales_lead_id]) }}"
-              :show-button="false"
-              :default-template="'appointment-confirmation'"
-              :order-id="$orders->id"
-          />
-                            @endif
 
     @pushOnce('scripts')
         @php
@@ -315,16 +290,6 @@ use Webkul\Lead\Models\Stage;
                         Checks ({{ $completedChecks }}/{{ $totalChecks }})
                     </button>
 
-                    <button type="button"
-                            :class="[
-                                'py-4 px-1 border-b-2 text-sm font-medium transition-colors duration-200',
-                                activeTab === 'confirmation'
-                                  ? 'text-brandColor border-brandColor'
-                                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
-                            ]"
-                            @click="activeTab = 'confirmation'">
-                        Orderbevestiging
-                    </button>
                 </div>
 
                 <div class="p-6">
@@ -334,10 +299,6 @@ use Webkul\Lead\Models\Stage;
 
                     <div v-show="activeTab === 'checks'">
                         <slot name="checks"></slot>
-                    </div>
-
-                    <div v-show="activeTab === 'confirmation'">
-                        <slot name="confirmation"></slot>
                     </div>
                 </div>
             </div>
@@ -419,73 +380,6 @@ use Webkul\Lead\Models\Stage;
                     form.submit();
                 }
 
-                // Compose order mail button via delegation (robust to re-renders)
-                if (e.target && e.target.id === 'order-compose-mail') {
-                    e.preventDefault();
-
-                    const button = e.target;
-                    if (button.dataset.loading === 'true') {
-                        return;
-                    }
-
-                    const endpoint = "{{ route('admin.orders.mail.preview', ['orderId' => $orders->id]) }}";
-
-                    const emitFlash = (type, message) => {
-                        try {
-                            const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
-                            if (emitter) {
-                                emitter.emit('add-flash', { type, message });
-                            } else {
-                                console[type === 'error' ? 'error' : 'log'](message);
-                            }
-                        } catch (err) {
-                            console.error('[OrderEdit] Flash emit failed', err, message);
-                        }
-                    };
-
-                    const handleOrderMail = async () => {
-                        try {
-                            button.dataset.loading = 'true';
-                            const originalLabel = button.dataset.originalLabel || button.textContent.trim();
-                            button.dataset.originalLabel = originalLabel;
-                            button.textContent = 'Bezig...';
-                            button.classList.add('pointer-events-none', 'opacity-60');
-
-                            const response = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
-                            const payload = await response.json().catch(() => ({}));
-
-                            if (!response.ok) {
-                                throw new Error(payload?.message || 'Kon order mail niet voorbereiden.');
-                            }
-
-                            window.dispatchEvent(new CustomEvent('open-email-dialog', {
-                                detail: {
-                                    defaultEmail: payload.default_email || null,
-                                    subject: payload.subject || '',
-                                    body: payload.body || '',
-                                    emails: payload.emails || [],
-                                    attachments: payload.attachments || [],
-                                    entity_type: @json(EmailTemplateType::ORDER->value),
-                                    default_template: 'appointment-confirmation',
-                                },
-                            }));
-
-                            if (!payload.default_email) {
-                                emitFlash('info', 'Geen standaard e-mailadres gevonden. Vul het adres handmatig in.');
-                            }
-                        } catch (error) {
-                            emitFlash('error', error?.message || 'Voorbereiden van de ordermail is mislukt.');
-                        } finally {
-                            button.dataset.loading = 'false';
-                            button.textContent = button.dataset.originalLabel || 'Maak order mail';
-                            button.classList.remove('pointer-events-none', 'opacity-60');
-                        }
-                    };
-
-                    handleOrderMail().catch(() => {
-                        // Error already handled in try-catch
-                    });
-                }
             });
 
             // Register v-order-tabs
@@ -524,97 +418,6 @@ use Webkul\Lead\Models\Stage;
                     console.error('[OrderEdit] SalesLead init error', err);
                 }
             };
-
-              const initOrderMailCompose = () => {
-                  try {
-                      const button = document.getElementById('order-compose-mail');
-                      if (!button || button.dataset.bound === 'true') {
-                          return;
-                      }
-
-                      const endpoint = "{{ route('admin.orders.mail.preview', ['orderId' => $orders->id]) }}";
-
-                      const emitFlash = (type, message) => {
-                          try {
-                              const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
-                              if (emitter) {
-                                  emitter.emit('add-flash', {type, message});
-                              } else {
-                                  console[type === 'error' ? 'error' : 'log'](message);
-                              }
-                          } catch (err) {
-                              console.error('[OrderEdit] Flash emit failed', err, message);
-                          }
-                      };
-
-                      button.addEventListener('click', async () => {
-                          if (button.dataset.loading === 'true') {
-                              return;
-                          }
-
-                          button.dataset.loading = 'true';
-                          const originalLabel = button.dataset.originalLabel || button.textContent.trim();
-                          button.dataset.originalLabel = originalLabel;
-                          button.textContent = 'Bezig...';
-                          button.classList.add('pointer-events-none', 'opacity-60');
-
-                          try {
-                              const response = await fetch(endpoint, {headers: {'Accept': 'application/json'}});
-                              const payload = await response.json();
-
-                              if (!response.ok) {
-                                  throw new Error(payload?.message || 'Kon order mail niet voorbereiden.');
-                              }
-
-                              const detail = {
-                                  defaultEmail: payload.default_email || null,
-                                  subject: payload.subject || '',
-                                  body: payload.body || '',
-                                  emails: payload.emails || [],
-                                  attachments: payload.attachments || [],
-                                  entity_type: @json(EmailTemplateType::ORDER->value),
-                                  default_template: 'appointment-confirmation',
-                              };
-
-                              let handled = false;
-                              const handlers = window.__mailDialogHandlers;
-                              if (Array.isArray(handlers) && handlers.length) {
-                                  handlers.forEach((handler) => {
-                                      try {
-                                          handler(detail);
-                                          handled = true;
-                                      } catch (handlerError) {
-                                          console.error('[OrderEdit] Mail handler error', handlerError);
-                                      }
-                                  });
-                              }
-
-                              if (!handled) {
-                                  window.dispatchEvent(new CustomEvent('open-email-dialog', {detail}));
-                              }
-
-                              if (!payload.default_email) {
-                                  emitFlash('info', 'Geen standaard e-mailadres gevonden. Vul het adres handmatig in.');
-                              } else {
-                                  emitFlash('success', 'Ordermail is voor je klaargezet.');
-                              }
-                          } catch (error) {
-                              emitFlash('error', error?.message || 'Voorbereiden van de ordermail is mislukt.');
-                              if (!window.app && typeof alert === 'function') {
-                                  alert(error?.message || 'Voorbereiden van de ordermail is mislukt.');
-                              }
-                          } finally {
-                              button.dataset.loading = 'false';
-                              button.textContent = button.dataset.originalLabel || 'Maak order mail';
-                              button.classList.remove('pointer-events-none', 'opacity-60');
-                          }
-                      });
-
-                      button.dataset.bound = 'true';
-                  } catch (err) {
-                      console.error('[OrderEdit] Mail compose init error', err);
-                  }
-              };
 
             // Debug logging for redirect buttons and submission flow
             const initOrderEditDebug = () => {
@@ -675,54 +478,10 @@ use Webkul\Lead\Models\Stage;
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
                     initOrderEditDebug();
-                      initOrderMailCompose();
-
-                    // After email stored, mark order as sent (min JS: one small call)
-                    try {
-                        const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
-                        if (emitter && !window.__orderMailStatusBound) {
-                            emitter.on('on-activity-added', async () => {
-                                try {
-                                    await fetch("{{ route('admin.orders.status.sent', ['orderId' => $orders->id]) }}", {
-                                        method: 'POST',
-                                        headers: {
-                                            'X-Requested-With': 'XMLHttpRequest',
-                                            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')) || (document.querySelector('input[name="_token"]')?.value) || ''
-                                        }
-                                    });
-                                } catch (e) {
-                                    // ignore quietly; user can still continue
-                                }
-                            });
-                            window.__orderMailStatusBound = true;
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
                 }, {once: true});
             } else {
                 initOrderEditSalesLead();
                 initOrderEditDebug();
-                  initOrderMailCompose();
-
-                // After email stored, mark order as sent
-                try {
-                    const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
-                    if (emitter && !window.__orderMailStatusBound) {
-                        emitter.on('on-activity-added', async () => {
-                            try {
-                                await fetch("{{ route('admin.orders.status.sent', ['orderId' => $orders->id]) }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')) || (document.querySelector('input[name="_token"]')?.value) || ''
-                                    }
-                                });
-                            } catch (e) {}
-                        });
-                        window.__orderMailStatusBound = true;
-                    }
-                } catch (e) {}
             }
         </script>
 
@@ -926,348 +685,6 @@ use Webkul\Lead\Models\Stage;
             });
         </script>
 
-        <!-- Order Confirmation Component -->
-        <script type="text/x-template" id="v-order-confirmation-template">
-            <div class="space-y-6">
-                <div class="flex flex-col gap-1">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Orderbevestiging</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Genereer en beheer de orderbevestiging voor deze order.
-                    </p>
-                </div>
-
-                <div class="space-y-4">
-                    <!-- Template Selection -->
-                    <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Template
-                            </label>
-                            <select
-                                v-model="selectedTemplate"
-                                @change="loadTemplate"
-                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                            >
-                                <option value="">Selecteer een template</option>
-                                <option
-                                    v-for="template in templates"
-                                    :key="template.code || template.name"
-                                    :value="template.code || template.name"
-                                >
-                                    @{{ template.label }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="flex items-end gap-2">
-                            <button
-                                type="button"
-                                @click="generateLetter"
-                                :disabled="!selectedTemplate || isLoading"
-                                class="primary-button"
-                            >
-                                <span v-if="isLoading">Bezig...</span>
-                                <span v-else>Genereer brief</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Content Editor -->
-                    <div v-if="letterContent" class="space-y-4">
-                        <x-admin::form.control-group>                            <v-field
-                                v-slot="{ field }"
-                                name="confirmation_letter_content"
-                            >
-                                <textarea
-                                    id="confirmation-letter-editor"
-                                    v-bind="field"
-                                    v-model="letterContent"
-                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    rows="15"
-                                ></textarea>
-                                <x-admin::tinymce
-                                    selector="textarea#confirmation-letter-editor"
-                                    ::field="field"
-                                />
-                            </v-field>
-                            <x-admin::form.control-group.label>
-                                Brief inhoud
-                            </x-admin::form.control-group.label>
-
-                        </x-admin::form.control-group>
-
-                        <div class="flex items-center gap-2">
-                            <button
-                                type="button"
-                                @click="saveLetter"
-                                :disabled="isSaving"
-                                class="primary-button"
-                            >
-                                <span v-if="isSaving">Opslaan...</span>
-                                <span v-else>Opslaan</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                @click="exportPDF"
-                                :disabled="!letterContent || isExporting"
-                                class="secondary-button"
-                            >
-                                <span v-if="isExporting">Exporteren...</span>
-                                <span v-else>Exporteer naar PDF</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Empty State -->
-                    <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
-                        <div class="flex flex-col items-center gap-3">
-                            <i class="icon-document text-4xl text-gray-300 dark:text-gray-600"></i>
-                            <p class="text-lg font-medium">Nog geen brief gegenereerd</p>
-                            <p class="text-sm">Selecteer een template en klik op "Genereer brief" om te beginnen</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </script>
-
-        <script type="module">
-            app.component('v-order-confirmation', {
-                template: '#v-order-confirmation-template',
-                props: ['orderId', 'initialContent'],
-                data() {
-                    return {
-                        templates: [],
-                        selectedTemplate: '',
-                        letterContent: this.initialContent || '',
-                        isLoading: false,
-                        isSaving: false,
-                        isExporting: false,
-                    };
-                },
-                mounted() {
-                    this.loadTemplates();
-                    // Initialize TinyMCE if initial content exists
-                    if (this.letterContent) {
-                        this.$nextTick(() => {
-                            this.initTinyMCE();
-                        });
-                    }
-                },
-                watch: {
-                    letterContent(newContent) {
-                        // Update TinyMCE content when letterContent changes
-                        if (newContent && window.tinymce) {
-                            this.$nextTick(() => {
-                                const editor = window.tinymce.get('confirmation-letter-editor');
-                                if (editor && !editor.removed) {
-                                    editor.setContent(newContent);
-                                }
-                            });
-                        }
-                    }
-                },
-                methods: {
-                    async loadTemplates() {
-                        try {
-                            const response = await fetch('{{ route('admin.mail.templates') }}?entity_type=order', {
-                                headers: {
-                                    'Accept': 'application/json',
-                                },
-                            });
-                            const data = await response.json();
-                            this.templates = data.data || [];
-                        } catch (error) {
-                            console.error('Error loading templates:', error);
-                            this.showNotification('Fout bij laden templates', 'error');
-                        }
-                    },
-                    async loadTemplate() {
-                        if (!this.selectedTemplate) {
-                            return;
-                        }
-                        // Template will be loaded when generating
-                    },
-                    async generateLetter() {
-                        if (!this.selectedTemplate) {
-                            this.showNotification('Selecteer eerst een template', 'error');
-                            return;
-                        }
-
-                        this.isLoading = true;
-                        try {
-                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/template-content?template=${this.selectedTemplate}`, {
-                                headers: {
-                                    'Accept': 'application/json',
-                                },
-                            });
-
-                            if (!response.ok) {
-                                const error = await response.json();
-                                throw new Error(error.message || 'Fout bij genereren brief');
-                            }
-
-                            const data = await response.json();
-                            this.letterContent = data.data.content || '';
-                            // Initialize or update TinyMCE with new content
-                            this.$nextTick(() => {
-                                this.setTinyMCEContent(this.letterContent);
-                            });
-                            this.showNotification('Brief gegenereerd', 'success');
-                        } catch (error) {
-                            console.error('Error generating letter:', error);
-                            this.showNotification(error.message || 'Fout bij genereren brief', 'error');
-                        } finally {
-                            this.isLoading = false;
-                        }
-                    },
-                    async saveLetter() {
-                        // Get content from TinyMCE if available
-                        const content = this.getTinyMCEContent();
-                        if (!content) {
-                            this.showNotification('Geen inhoud om op te slaan', 'error');
-                            return;
-                        }
-
-                        this.isSaving = true;
-                        try {
-                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                                || document.querySelector('input[name="_token"]')?.value
-                                || '';
-
-                            const response = await fetch(`/admin/orders/${this.orderId}/confirmation/save`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken,
-                                },
-                                body: JSON.stringify({
-                                    content: content,
-                                }),
-                            });
-
-                            if (!response.ok) {
-                                const error = await response.json();
-                                throw new Error(error.message || 'Fout bij opslaan');
-                            }
-
-                            // Update letterContent with saved content
-                            this.letterContent = content;
-                            this.showNotification('Brief opgeslagen', 'success');
-                        } catch (error) {
-                            console.error('Error saving letter:', error);
-                            this.showNotification(error.message || 'Fout bij opslaan brief', 'error');
-                        } finally {
-                            this.isSaving = false;
-                        }
-                    },
-                    async exportPDF() {
-                        // Get content from TinyMCE if available
-                        const content = this.getTinyMCEContent();
-                        if (!content) {
-                            this.showNotification('Geen inhoud om te exporteren', 'error');
-                            return;
-                        }
-
-                        // Save content first to ensure PDF has latest version
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                            || document.querySelector('input[name="_token"]')?.value
-                            || '';
-
-                        try {
-                            await fetch(`/admin/orders/${this.orderId}/confirmation/save`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken,
-                                },
-                                body: JSON.stringify({
-                                    content: content,
-                                }),
-                            });
-                        } catch (error) {
-                            console.error('Error saving before export:', error);
-                        }
-
-                        this.isExporting = true;
-                        try {
-                            const url = `/admin/orders/${this.orderId}/confirmation/export-pdf`;
-                            window.location.href = url;
-                            this.showNotification('PDF wordt gedownload', 'success');
-                        } catch (error) {
-                            console.error('Error exporting PDF:', error);
-                            this.showNotification('Fout bij exporteren PDF', 'error');
-                        } finally {
-                            setTimeout(() => {
-                                this.isExporting = false;
-                            }, 1000);
-                        }
-                    },
-                    initTinyMCE() {
-                        // TinyMCE will be initialized by the x-admin::tinymce component
-                        // This method can be used for any additional setup if needed
-                        if (window.tinymce) {
-                            const editor = window.tinymce.get('confirmation-letter-editor');
-                            if (editor && !editor.removed && this.letterContent) {
-                                editor.setContent(this.letterContent);
-                            }
-                        }
-                    },
-                    setTinyMCEContent(content, retries = 25) {
-                        if (!content || !content.trim()) return;
-
-                        if (window.tinymce) {
-                            try {
-                                const editor = window.tinymce.get('confirmation-letter-editor');
-                                if (editor && !editor.removed && editor.initialized) {
-                                    editor.setContent(content);
-                                    // Also update v-model
-                                    this.letterContent = content;
-                                    return;
-                                }
-                            } catch (e) {
-                                // Editor not ready yet
-                            }
-                        }
-
-                        // Retry if TinyMCE not ready yet
-                        if (retries > 0) {
-                            setTimeout(() => this.setTinyMCEContent(content, retries - 1), 200);
-                        }
-                    },
-                    getTinyMCEContent() {
-                        if (window.tinymce) {
-                            try {
-                                const editor = window.tinymce.get('confirmation-letter-editor');
-                                if (editor && !editor.removed && editor.initialized) {
-                                    return editor.getContent();
-                                }
-                            } catch (e) {
-                                // Editor not available, fall back to v-model
-                            }
-                        }
-                        // Fallback to v-model content
-                        return this.letterContent || '';
-                    },
-                    showNotification(message, type = 'info') {
-                        try {
-                            const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
-                            if (emitter) {
-                                emitter.emit('add-flash', { type, message });
-                            } else {
-                                console[type === 'error' ? 'error' : 'log'](message);
-                            }
-                        } catch (err) {
-                            console.error('[OrderConfirmation] Flash emit failed', err, message);
-                            // Fallback to console if emitter fails
-                            console[type === 'error' ? 'error' : 'log'](message);
-                        }
-                    },
-                },
-            });
-        </script>
     @endPushOnce
 </x-admin::layouts>
 

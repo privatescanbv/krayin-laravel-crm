@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings\Clinic;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\Request;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -48,13 +49,8 @@ class ActivityController extends Controller
         $request->request->remove('lead_id');
         $request->request->remove('person_id');
 
-        // Convert empty strings to null for foreign key constraints
         $data = $request->all();
-        foreach (['user_id', 'group_id'] as $field) {
-            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
-                $data[$field] = null;
-            }
-        }
+        Activity::normalizeForeignKeys($data);
 
         // Check clinic exists
         $clinic = $this->clinicRepository->findOrFail($id);

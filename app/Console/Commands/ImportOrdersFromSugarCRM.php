@@ -455,13 +455,15 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $errors++;
                 $this->logError('Failed to import order', [
                     'record_id'    => $record->id ?? 'unknown',
+                    'order_num'    => $record->order_num ?? 'unknown',
                     'record_label' => $record->name ?? 'unknown',
                     'error'        => $e->getMessage(),
                 ]);
                 if (count($firstErrors) < 5) {
                     $firstErrors[] = [
-                        'id'      => $record->id ?? 'unknown',
-                        'message' => $e->getMessage(),
+                        'id'        => $record->id ?? 'unknown',
+                        'order_num' => $record->order_num ?? 'unknown',
+                        'message'   => $e->getMessage(),
                     ];
                 }
                 $bar->advance();
@@ -490,7 +492,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             $this->line('');
             $this->warn('First errors:');
             foreach ($firstErrors as $err) {
-                $this->warn("  - ID={$err['id']}: {$err['message']}");
+                $this->warn("  - ID={$err['id']} (order_num={$err['order_num']}): {$err['message']}");
             }
         }
     }

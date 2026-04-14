@@ -79,4 +79,12 @@ return [
         ],
     ],
 
+    /*
+    | Marker.io feedback widget (admin panel). Disabled by default; enable only when needed.
+    */
+    'marker_io' => [
+        'enabled'    => filter_var(env('MARKER_IO_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'project_id' => env('MARKER_IO_PROJECT_ID', '69c4f36fee5027410256aa51'),
+    ],
+
 ];

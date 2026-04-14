@@ -37,7 +37,7 @@ test('lead name: with married name', function () {
         'married_name' => 'Vries',
     ]);
 
-    expect($lead->name)->toBe('Jan Jansen / Vries');
+    expect($lead->name)->toBe('Jan Vries - Jansen');
 });
 
 test('lead name: with all name parts', function () {
@@ -49,5 +49,5 @@ test('lead name: with all name parts', function () {
         'married_name'        => 'Vries',
     ]);
 
-    expect($lead->name)->toBe('Jan van Jansen / van de Vries');
+    expect($lead->name)->toBe('Jan van de Vries - van Jansen');
 });

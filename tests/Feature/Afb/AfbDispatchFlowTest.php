@@ -160,7 +160,7 @@ test('afb generator maps crm fields into afb layout', function () {
         ->toContain('Evidia - Augusta Klinik')
         ->toContain('ORD-TEST-1001')
         ->toContain('Lara')
-        ->toContain('Muller / de Boer')
+        ->toContain('de Boer - Muller')
         ->toContain('MRT HWS zonder KM')
         ->toContain('Ja')
         ->toContain('Nein')

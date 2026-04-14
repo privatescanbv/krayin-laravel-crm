@@ -113,7 +113,7 @@ test('kanban board loads without database column errors', function () {
 
     $foundLead = collect($leads)->firstWhere('id', $lead->id);
     expect($foundLead)->not->toBeNull()
-        ->and($foundLead['name'])->toBe('Jan van Jansen / van de Vries')
+        ->and($foundLead['name'])->toBe('Jan van de Vries - van Jansen')
         ->and($foundLead['first_name'])->toBe('Jan')
         ->and($foundLead['last_name'])->toBe('Jansen')
         ->and($foundLead['rotten_days'])->toBeInt();
@@ -382,15 +382,10 @@ test('lead model correctly computes name and rotten_days attributes', function (
     $loadedLead = Lead::find($lead->id);
 
     // Verify computed attributes work correctly
-    expect($loadedLead->name)->toBe('Jan van Jansen / van de Vries')
+    expect($loadedLead->name)->toBe('Jan van de Vries - van Jansen')
         ->and($loadedLead->rotten_days)->toBeInt()
         ->and($loadedLead->getAppends())->toContain('name')
         ->and($loadedLead->getAppends())->toContain('rotten_days')
         ->and($loadedLead->mri_status_label)->toBeString()
         ->and($loadedLead->lost_reason_label)->toBeString();
-    // rotten_days can be negative for old leads, so just check it's an integer
-
-    // Verify the attributes are in the appends array
-
-    // Verify other computed attributes work (these are not in appends but are accessors)
 });

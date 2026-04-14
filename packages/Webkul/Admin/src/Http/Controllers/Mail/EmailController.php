@@ -170,6 +170,8 @@ class EmailController extends Controller
 
         $email = $this->emailRepository->update($data, request('id') ?? $id);
 
+        $this->moveToProcessedIfLinked($email, $data);
+
         Event::dispatch('email.update.after', $email);
 
         if (! is_null(request('is_draft')) && ! request('is_draft')) {
@@ -354,6 +356,19 @@ class EmailController extends Controller
             session()->flash('error', trans('admin::app.mail.delete-failed'));
 
             return redirect()->back();
+        }
+    }
+
+    /**
+     * Move email to "Verwerkt" folder when it is linked to an entity and currently in an inbox-type folder.
+     */
+    private function moveToProcessedIfLinked($email, array $data): void
+    {
+        $entityFields = ['lead_id', 'sales_lead_id', 'person_id', 'clinic_id', 'order_id'];
+        $hasEntityLink = collect($entityFields)->contains(fn ($field) => ! empty($data[$field]));
+
+        if ($hasEntityLink) {
+            $this->emailRepository->moveToProcessedIfInbox($email->id);
         }
     }
 

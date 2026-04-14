@@ -123,6 +123,38 @@ class EmailRepository extends Repository
     }
 
     /**
+     * Move email to "Verwerkt" folder if it is currently in an inbox-type folder.
+     */
+    public function moveToProcessedIfInbox(int $emailId): void
+    {
+        $email = $this->find($emailId);
+
+        if (! $email) {
+            return;
+        }
+
+        $inboxFolderNames = [
+            EmailFolderEnum::INBOX->getFolderName(),
+            EmailFolderEnum::PRIVATESCAN_WEBFORM->getFolderName(),
+            EmailFolderEnum::HERNIA_WEBFORM->getFolderName(),
+            EmailFolderEnum::CLINICS->getFolderName(),
+            EmailFolderEnum::NEWSLETTER->getFolderName(),
+        ];
+
+        $currentFolder = Folder::find($email->folder_id);
+
+        if (! $currentFolder || ! in_array($currentFolder->name, $inboxFolderNames, true)) {
+            return;
+        }
+
+        $processedFolder = Folder::where('name', EmailFolderEnum::PROCESSED->getFolderName())->first();
+
+        if ($processedFolder) {
+            parent::update(['folder_id' => $processedFolder->id], $emailId);
+        }
+    }
+
+    /**
      * Sanitize emails.
      *
      * @return array

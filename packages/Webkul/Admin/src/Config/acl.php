@@ -277,27 +277,27 @@ return [
     ], [
         'key'   => 'settings.clinics',
         'name'  => 'Klinieken',
-        'route' => 'admin.settings.clinics.index',
+        'route' => 'admin.clinics.index',
         'sort'  => 1,
     ], [
         'key'   => 'settings.clinics.view',
         'name'  => 'admin::app.acl.view',
-        'route' => ['admin.settings.clinics.view', 'admin.settings.clinics.view'],
+        'route' => ['admin.clinics.view', 'admin.clinics.view'],
         'sort'  => 1,
     ], [
         'key'   => 'settings.clinics.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.settings.clinics.create', 'admin.settings.clinics.store'],
+        'route' => ['admin.clinics.create', 'admin.clinics.store'],
         'sort'  => 2,
     ], [
         'key'   => 'settings.clinics.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.settings.clinics.edit', 'admin.settings.clinics.update'],
+        'route' => ['admin.clinics.edit', 'admin.clinics.update'],
         'sort'  => 3,
     ], [
         'key'   => 'settings.clinics.delete',
         'name'  => 'admin::app.acl.delete',
-        'route' => ['admin.settings.clinics.delete'],
+        'route' => ['admin.clinics.delete'],
         'sort'  => 4,
     ], [
         'key'   => 'settings.resources',

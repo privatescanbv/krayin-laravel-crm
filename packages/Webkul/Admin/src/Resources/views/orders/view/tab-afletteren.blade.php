@@ -1,6 +1,7 @@
 @props(['order'])
 
 @php
+    use App\Enums\OrderItemStatus;
     use App\Enums\OrderPurchaseStatus;
 
     $priceFields = [
@@ -34,6 +35,10 @@
     ];
 
     foreach (($order->orderItems ?? collect()) as $item) {
+        if ($item->status === OrderItemStatus::LOST) {
+            continue;
+        }
+
         $purchaseTotal = $asAmount($item->resolvedPurchasePrice()->purchase_price);
         $invoiceTotal  = $asAmount($item->invoicePurchasePrice?->purchase_price);
         $status = OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal);

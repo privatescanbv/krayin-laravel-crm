@@ -25,6 +25,7 @@ use Throwable;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Contact\Models\Organization;
+use Webkul\Contact\Traits\HasPersonName;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
@@ -37,7 +38,7 @@ use App\Services\LeadStatusTransitionValidator;
 
 class Lead extends Model implements LeadContract
 {
-    use HasDefaultContactInfo, HasFactory, LogsActivity, SoftDeletes;
+    use HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SoftDeletes;
 
     protected $casts = [
         'closed_at'           => 'datetime',
@@ -572,23 +573,7 @@ class Lead extends Model implements LeadContract
             $parts[] = trim($this->first_name);
         }
 
-        if ($this->lastname_prefix) {
-            $parts[] = trim($this->lastname_prefix);
-        }
-
-        if ($this->last_name) {
-            $parts[] = trim($this->last_name);
-        }
-        if(!empty($this->married_name)) {
-            $marriedNameParts = [];
-            if ($this->married_name_prefix) {
-                $marriedNameParts[] = trim($this->married_name_prefix);
-            }
-            if ($this->married_name) {
-                $marriedNameParts[] = trim($this->married_name);
-            }
-            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
-        }
+        $parts = array_merge($parts, $this->getFullLastNameParts());
 
         return implode(' ', array_filter($parts));
     }

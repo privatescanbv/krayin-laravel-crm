@@ -26,13 +26,14 @@ use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
+use Webkul\Contact\Traits\HasPersonName;
 use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 
 class Person extends Model implements PersonContract
 {
-    use CustomAttribute, HasDefaultContactInfo, HasFactory, LogsActivity, SoftDeletes;
+    use CustomAttribute, HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SoftDeletes;
 
     /**
      * Database columns required to compute the name accessor (getNameAttribute).
@@ -414,40 +415,6 @@ class Person extends Model implements PersonContract
         return implode(' ', array_filter($parts));
     }
 
-    /**
-     * Get the full name attribute.
-     */
-    public function getFullLastNameParts(): array
-    {
-        $parts = [];
-        if ($this->lastname_prefix) {
-            $parts[] = trim($this->lastname_prefix);
-        }
-        $rawLastName = $this->attributes['last_name'] ?? null;
-        if ($rawLastName) {
-            $parts[] = trim($rawLastName);
-        }
-        if (! empty($this->married_name)) {
-            $marriedNameParts = [];
-            if ($this->married_name_prefix) {
-                $marriedNameParts[] = trim($this->married_name_prefix);
-            }
-            if ($this->married_name) {
-                $marriedNameParts[] = trim($this->married_name);
-            }
-            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
-        }
-
-        return $parts;
-    }
-
-    /**
-     * Get the full name attribute.
-     */
-    public function getFullLastNameAttribute(): string
-    {
-        return implode(' ', array_filter($this->getFullLastNameParts()));
-    }
 
     /**
      * Calculate and return the age of the person based on date_of_birth

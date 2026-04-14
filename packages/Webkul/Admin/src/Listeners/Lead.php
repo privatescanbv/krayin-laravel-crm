@@ -23,8 +23,12 @@ class Lead
             return;
         }
 
+        $emailId = (int) request('email_id');
+
         $this->emailRepository->update([
             'lead_id' => $lead->id,
-        ], request('email_id'));
+        ], $emailId);
+
+        $this->emailRepository->moveToProcessedIfInbox($emailId);
     }
 }

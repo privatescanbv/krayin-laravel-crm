@@ -115,21 +115,23 @@ HTML,
 HTML,
             ],
 
-            // ── Afspraakbevestiging ───────────────────────────────────────────────
+            // ── Afspraakbevestiging TB NL ───────────────────────────────────────────────
             // Variables: customer_name, order_reference, order_title, datum_afspraak,
             //            tijd_afspraak, plaats_afspraak, afspraken_tabel
             [
-                'name'        => 'Afspraakbevestiging',
-                'code'        => 'appointment-confirmation',
+                'name'        => 'Afspraakbevestiging TB plus bloed NL',
+                'code'        => 'appointment-tb-blood-email-nl',
                 'type'        => $order,
                 'language'    => $nl,
                 'departments' => $allDepartments,
-                'subject'     => 'Bevestiging afspraak {{ order_reference }}',
+                'subject'     => 'Bevestiging afspraak {{ order_number }}',
                 'content'     => <<<'HTML'
-<p>Beste {{ customer_name }},</p>
-<p>Hierbij bevestigen wij uw afspraak voor order <strong>{{ order_reference }}</strong> ({{ order_title }}).</p>
-{{ afspraken_tabel }}
+<<p>Beste {{ customer_name }},</p>
+<p>Hierbij bevestigen wij de door u aan Privatescan verstrekte opdracht voor het laten uitvoeren van een Total Bodyscan met aanvullend bloedonderzoek in {{ plaats_afspraak }}.<br>De complete orderbevestiging en de gezondheidsvragenlijst vindt u terug in het pati&euml;ntportaal. Graag ontvangen we zo spoedig mogelijk, bij voorkeur per e-mail, uw akkoord voor de geplande onderzoeken alsmede de door u ingevulde gezondheidsvragenlijst(en).</p>
+<p><a title="Inloggen" href="https://patient.dev.privatescan.nl" target="_blank" rel="noopener"><strong>Inloggen pati&euml;ntportaal</strong></a></p>
+<p>{{ order.first_examination_at}}</p>
 <p>Heeft u vragen? Neem dan gerust contact met ons op.</p>
+<p>{{ order_items_table }}</p>
 <p>Met vriendelijke groet,<br>Privatescan</p>
 HTML,
             ],

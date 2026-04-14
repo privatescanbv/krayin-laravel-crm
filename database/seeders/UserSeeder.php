@@ -44,6 +44,7 @@ class UserSeeder extends Seeder
             'rowain@privatescan.nl'        => '8A115dc@d4Ab',
             'safak@privatescan.nl'         => '8A115dc@d4Ab',
             'lianne@privatescan.nl'        => '8A115dc@d4Ab',
+            'anja@privatescan.nl'          => '8A115dc@d4Ab',
         ];
     }
 
@@ -260,6 +261,17 @@ class UserSeeder extends Seeder
                 'view_permission' => 'group', // Restricted to group view
                 'group_id'        => $groupPrivatescanId,
                 'signature'       => $this->signatureTemplate('Lianne', 'de Gelder', 'lianne@privatescan.nl'),
+            ],
+            [
+                'first_name'      => 'Anja',
+                'last_name'       => 'Brunner',
+                'email'           => 'anja@privatescan.nl',
+                'password'        => $passwords['anja@privatescan.nl'],
+                'status'          => 1, // Medewerker Afdeling role
+                'role_id'         => 2,
+                'view_permission' => 'group', // Restricted to group view
+                'group_id'        => $groupHerniaIdId,
+                'signature'       => $this->signatureTemplate('Anja', 'Brunner', 'anja@privatescan.nl'),
             ],
         ];
 

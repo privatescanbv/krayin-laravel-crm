@@ -120,7 +120,7 @@ test('label attribute returns person name when person is linked', function () {
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
 
-    $person = Person::factory()->create(['first_name' => 'Maria', 'last_name' => 'Smit']);
+    $person = Person::factory()->create(['first_name' => 'Maria', 'last_name' => 'Smit', 'is_active' => true]);
     $lead = Lead::factory()->create();
 
     $lead->attachPersons([$person->id]);
@@ -141,7 +141,7 @@ test('createMissingAnamnesis uses person name not lead name', function () {
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
 
-    $person = Person::factory()->create(['first_name' => 'Piet', 'last_name' => 'Jansen']);
+    $person = Person::factory()->create(['first_name' => 'Piet', 'last_name' => 'Jansen', 'is_active' => true]);
     $lead = Lead::factory()->create(['first_name' => 'Lead', 'last_name' => 'Persoon']);
 
     $lead->attachPersons([$person->id]);

@@ -96,12 +96,16 @@ class SalesLeadController extends Controller
                 continue;
             }
 
-            $query = SalesLead::with(['stage', 'lead', 'user', 'orders'])
+            $query = SalesLead::with(['stage', 'lead', 'user', 'orders', 'persons.organization'])
+                ->withCount([
+                    'activities as open_activities_count' => fn ($q) => $q->where('is_done', 0),
+                    'emails as unread_emails_count'       => fn ($q) => $q->where('is_read', 0),
+                ])
                 ->where('pipeline_stage_id', $stage->id);
             $salesLeads = $query->get();
 
             $salesLeads = $salesLeads->map(function ($salesLead) {
-                $person = $salesLead->persons()->first();
+                $person = $salesLead->persons->first();
 
                 $stagePayload = $salesLead->stage ? [
                     'id'      => $salesLead->stage->id,

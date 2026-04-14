@@ -155,6 +155,10 @@ class SalesLead extends Model
      */
     public function getOpenActivitiesCountAttribute(): int
     {
+        if (isset($this->attributes['open_activities_count'])) {
+            return (int) $this->attributes['open_activities_count'];
+        }
+
         return (int) $this->activities()->where('is_done', 0)->count();
     }
 
@@ -163,6 +167,10 @@ class SalesLead extends Model
      */
     public function getUnreadEmailsCountAttribute(): int
     {
+        if (isset($this->attributes['unread_emails_count'])) {
+            return (int) $this->attributes['unread_emails_count'];
+        }
+
         return (int) $this->emails()->where('is_read', 0)->count();
     }
 
@@ -317,6 +325,14 @@ class SalesLead extends Model
      */
     public function getPersonsCountAttribute(): int
     {
+        if ($this->relationLoaded('persons')) {
+            return $this->persons->count();
+        }
+
+        if (isset($this->attributes['persons_count'])) {
+            return (int) $this->attributes['persons_count'];
+        }
+
         return (int) $this->persons()->count();
     }
 
@@ -325,6 +341,10 @@ class SalesLead extends Model
      */
     public function hasMultiplePersons(): bool
     {
+        if ($this->relationLoaded('persons')) {
+            return $this->persons->count() > 1;
+        }
+
         return $this->persons()->count() > 1;
     }
 

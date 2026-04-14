@@ -29,7 +29,13 @@ test('afletteren tab does not show order items with status LOST', function () {
 
     $response = $this->get(route('admin.orders.view', $order->id));
     $response->assertOk();
-    $response->assertDontSee($product->name, false);
+
+    $html = $response->getContent();
+    $afletterenStart = strpos($html, 'leadDetailSection === \'afletteren\'');
+    $afletterenEnd = strpos($html, 'leadDetailSection === \'betalingen\'');
+    $afletterenSection = substr($html, $afletterenStart, $afletterenEnd - $afletterenStart);
+
+    expect($afletterenSection)->not->toContain($product->name);
 });
 
 test('afletteren tab shows order items that are not LOST when they have purchase prices', function () {

@@ -41,7 +41,15 @@ class ActivityResource extends JsonResource
             'activity_label'     => data_get($this->resource, 'activity_title', null),
             'activity_type'      => data_get($this->resource, 'activity_type', null),
             'folder_name'        => data_get($this->resource, 'folder_name', null),
-            'publish_to_portal'  => (bool) data_get($this->resource, 'publish_to_portal', false),
+            'publish_to_portal'  => $this->resource instanceof \Webkul\Activity\Models\Activity
+                ? $this->resource->portalPersons->isNotEmpty()
+                : (bool) data_get($this->resource, 'publish_to_portal', false),
+            'is_published_to_portal' => $this->resource instanceof \Webkul\Activity\Models\Activity
+                ? $this->resource->portalPersons->isNotEmpty()
+                : (bool) data_get($this->resource, 'publish_to_portal', false),
+            'portal_persons'     => $this->resource instanceof \Webkul\Activity\Models\Activity
+                ? $this->resource->portalPersons->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values()
+                : [],
             'entity_source'      => data_get($this->resource, 'entity_source', null),
             'created_at'         => $this->created_at,
             'updated_at'         => $this->updated_at,

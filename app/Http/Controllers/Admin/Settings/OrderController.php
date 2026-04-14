@@ -13,10 +13,6 @@ use App\Enums\PaymentType;
 use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
-use App\Services\Storage\DocumentStorage;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Webkul\Activity\Repositories\ActivityRepository;
-use Webkul\Contact\Models\Person;
 use App\Http\Requests\Admin\OrderPaymentRequest;
 use App\Models\Order;
 use App\Models\OrderCheck;
@@ -34,6 +30,8 @@ use App\Services\OrderStatusService;
 use App\Services\OrderStatusTransitionValidator;
 use App\Services\PipelineCookieService;
 use App\Services\StageTransitionAttributes;
+use App\Services\Storage\DocumentStorage;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -51,8 +49,10 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 use Webkul\Activity\Models\Activity;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
@@ -417,7 +417,7 @@ class OrderController extends SimpleEntityController
             $query->where('is_done', $isDoneFilter);
         }
 
-        $activities = $query->get();
+        $activities = $query->with('portalPersons')->get();
 
         $merged = $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository);
 
@@ -1148,47 +1148,6 @@ class OrderController extends SimpleEntityController
         ]);
     }
 
-    private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
-    {
-        $html = mb_convert_encoding($confirmation->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
-        $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
-            ->setPaper('A4')
-            ->output();
-
-        $activityRepository = app(ActivityRepository::class);
-        $documentStorage = app(DocumentStorage::class);
-
-        $activity = $activityRepository->create([
-            'type'              => ActivityType::FILE,
-            'title'             => 'Orderbevestiging PDF – '.$person->name,
-            'comment'           => 'Automatisch gegenereerde orderbevestiging voor '.$person->name,
-            'is_done'           => true,
-            'publish_to_portal' => true,
-            'user_id'           => $userId,
-            'order_id'          => $order->id,
-            'person_id'         => $person->id,
-            'additional'        => ['document_type' => 'order_confirmation'],
-        ]);
-
-        $fileName = 'order-bevestiging-'.$order->id.'-'.$person->id.'-'.date('Y-m-d').'.pdf';
-        $filePath = 'activities/'.$activity->id.'/'.$fileName;
-        $documentStorage->put($filePath, $pdfContent);
-
-        $activity->files()->create([
-            'name' => $fileName,
-            'path' => $filePath,
-        ]);
-
-        PatientNotifyEvent::dispatch(
-            $person->id,
-            'Orderbevestiging #'.$order->id,
-            NotificationReferenceType::FILE,
-            $activity->id,
-            false,
-            $userId
-        );
-    }
-
     /**
      * Get GVL form status.
      */
@@ -1600,5 +1559,47 @@ class OrderController extends SimpleEntityController
             'order'         => $order,
             'customer_name' => $customerName,
         ];
+    }
+
+    private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
+    {
+        $html = mb_convert_encoding($confirmation->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
+        $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
+            ->setPaper('A4')
+            ->output();
+
+        $activityRepository = app(ActivityRepository::class);
+        $documentStorage = app(DocumentStorage::class);
+
+        $activity = $activityRepository->create([
+            'type'              => ActivityType::FILE,
+            'title'             => 'Orderbevestiging PDF – '.$person->name,
+            'comment'           => 'Automatisch gegenereerde orderbevestiging voor '.$person->name,
+            'is_done'           => true,
+            'user_id'           => $userId,
+            'order_id'          => $order->id,
+            'person_id'         => $person->id,
+            'additional'        => ['document_type' => 'order_confirmation'],
+        ]);
+
+        $fileName = 'order-bevestiging-'.$order->id.'-'.$person->id.'-'.date('Y-m-d').'.pdf';
+        $filePath = 'activities/'.$activity->id.'/'.$fileName;
+        $documentStorage->put($filePath, $pdfContent);
+
+        $activity->files()->create([
+            'name' => $fileName,
+            'path' => $filePath,
+        ]);
+
+        $activity->portalPersons()->attach($person->id);
+
+        PatientNotifyEvent::dispatch(
+            $person->id,
+            'Orderbevestiging #'.$order->id,
+            NotificationReferenceType::FILE,
+            $activity->id,
+            false,
+            $userId
+        );
     }
 }

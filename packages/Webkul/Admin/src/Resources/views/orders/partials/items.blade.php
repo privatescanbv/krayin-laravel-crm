@@ -37,7 +37,7 @@
                 </x-admin::table.tbody>
             </x-admin::table>
 
-            <span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addItem">Regel toevoegen</span>
+            <button type="button" class="mt-2 inline-flex items-center gap-1 rounded-md bg-brandColor px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:opacity-90" @click="addItem">Regel toevoegen</button>
         </div>
     </script>
 

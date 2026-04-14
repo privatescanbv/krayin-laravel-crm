@@ -21,9 +21,6 @@ class ActivityRepository extends Repository
 
     /**
      * Get a query builder for patient portal activities of a given type for a person.
-     *
-     * Only returns activities with publish_to_portal = true that are linked to the
-     * person via any known relation: direct, lead, sales lead, or order.
      */
     public function queryPatientActivitiesForPerson(
         Person $person,
@@ -34,20 +31,13 @@ class ActivityRepository extends Repository
         $now = $now ?: now();
 
         return Activity::query()
-            ->publishedToPortal()
+            ->publishedToPortalForPerson($person)
             ->ofType($type)
-            ->forPerson($person)
             ->scheduleTimeFilter($filter, $now);
     }
 
     /**
-     * Paginate document files (FILE activities) for a person.
-     *
-     * Returns published FILE activities linked to the person via any known relation:
-     * direct person_id FK, lead, sales lead, or order.
-     *
-     * @param  string|null  $documentType  Optional filter on activity.additional.document_type.
-     * @param  int|null  $orderIdFilter  Optional: restrict to a specific order_id.
+     * Paginate document files (FILE activities) published to a person's portal.
      */
     public function paginateDocumentFilesForPerson(
         Person $person,
@@ -59,8 +49,7 @@ class ActivityRepository extends Repository
             ->with(['activity'])
             ->whereHas('activity', function (Builder $q) use ($person, $documentType, $orderIdFilter) {
                 $q->ofType(ActivityType::FILE)
-                    ->publishedToPortal()
-                    ->forPerson($person);
+                    ->publishedToPortalForPerson($person);
 
                 if ($documentType !== null && $documentType !== '') {
                     $q->where('additional->document_type', $documentType);

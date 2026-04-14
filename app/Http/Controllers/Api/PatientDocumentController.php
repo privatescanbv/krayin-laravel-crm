@@ -24,10 +24,7 @@ class PatientDocumentController extends Controller
     ) {}
 
     /**
-     * Get all documents for a patient (FILE activities with publish_to_portal = true).
-     *
-     * Documents are linked to the patient via any known relation:
-     * person_id FK, lead, sales lead, or order.
+     * Get all documents for a patient (FILE activities published to their portal via pivot).
      *
      * @group Patient documents
      *
@@ -125,8 +122,7 @@ class PatientDocumentController extends Controller
         $accessible = Activity::query()
             ->where('id', $file->activity_id)
             ->ofType(ActivityType::FILE)
-            ->publishedToPortal()
-            ->forPerson($person)
+            ->publishedToPortalForPerson($person)
             ->exists();
 
         if (! $accessible) {

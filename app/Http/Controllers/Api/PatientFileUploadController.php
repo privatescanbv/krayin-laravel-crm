@@ -64,12 +64,12 @@ class PatientFileUploadController extends Controller
             'comment'            => $request->input('description'),
             'name'               => $request->input('name'),
             'type'               => ActivityType::FILE->value,
-            'publish_to_portal'  => true,
             'is_done'            => false,
             'file'               => $request->file('file'),
         ]);
 
         $activity->update(['person_id' => $person->id]);
+        $activity->portalPersons()->attach($person->id);
 
         return response()->json(['message' => 'File uploaded successfully', 'id' => $activity->id], 201);
     }

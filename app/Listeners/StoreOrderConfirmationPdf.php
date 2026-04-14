@@ -64,7 +64,6 @@ class StoreOrderConfirmationPdf
             'title'             => 'Orderbevestiging PDF',
             'comment'           => 'Automatisch gegenereerde orderbevestiging',
             'is_done'           => true,
-            'publish_to_portal' => true,
             'user_id'           => $userId,
             'order_id'          => $order->id,
             'additional'        => [
@@ -80,6 +79,11 @@ class StoreOrderConfirmationPdf
             'name' => $fileName,
             'path' => $filePath,
         ]);
+
+        $personIds = $order->salesLead?->persons()->pluck('persons.id')->toArray() ?? [];
+        if (! empty($personIds)) {
+            $activity->syncPortalPersons($personIds);
+        }
 
         $this->notifyPatients($order, $activity, $userId);
 
@@ -100,7 +104,7 @@ class StoreOrderConfirmationPdf
                 'Orderbevestiging #'.$order->id,
                 NotificationReferenceType::FILE,
                 $activity->id,
-                false,
+                true,
                 $userId
             );
         }

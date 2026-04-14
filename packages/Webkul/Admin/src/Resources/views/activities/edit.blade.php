@@ -249,7 +249,7 @@
                             name="publish_to_portal"
                             label="Publiceren in patiëntportaal"
                             value="1"
-                            :checked="old('publish_to_portal', $activity->publish_to_portal)"
+                            :checked="old('publish_to_portal', $activity->portalPersons->isNotEmpty())"
                         />
                     @endif
 

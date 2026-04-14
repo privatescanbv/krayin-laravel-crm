@@ -61,7 +61,6 @@
     </div>
 
     <!-- Stages Navigation -->
-    <!-- Stages Navigation -->
     @include('admin::leads.view.stages',[
         'overridePipeline' => $order->stage->pipeline,
         'overrideStage' => $order->stage,

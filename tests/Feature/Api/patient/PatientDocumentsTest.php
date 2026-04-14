@@ -32,36 +32,31 @@ it('returns paginated documents for a patient', function () {
         'sales_lead_id' => $salesLead->id,
     ]);
 
-    // should not be visible: not publish_to_portal
+    // should not be visible: no portal persons
     /** @var Activity $activity */
     $activity1 = Activity::query()->create([
-        'title'             => 'MRI uitslag knie',
-        'type'              => 'file',
-        'comment'           => null,
-        'schedule_from'     => now(),
-        'schedule_to'       => now(),
-        'is_done'           => 1,
-        'publish_to_portal' => false,
-        'order_id'          => $order->id,
-        'additional'        => [
-            'document_type' => 'report',
-        ],
+        'title'         => 'MRI uitslag knie',
+        'type'          => 'file',
+        'comment'       => null,
+        'schedule_from' => now(),
+        'schedule_to'   => now(),
+        'is_done'       => 1,
+        'order_id'      => $order->id,
+        'additional'    => ['document_type' => 'report'],
     ]);
 
     /** @var Activity $activity */
     $activity = Activity::query()->create([
-        'title'             => 'MRI uitslag knie',
-        'type'              => 'file',
-        'comment'           => null,
-        'schedule_from'     => now(),
-        'schedule_to'       => now(),
-        'is_done'           => 1,
-        'publish_to_portal' => true,
-        'order_id'          => $order->id,
-        'additional'        => [
-            'document_type' => 'report',
-        ],
+        'title'         => 'MRI uitslag knie',
+        'type'          => 'file',
+        'comment'       => null,
+        'schedule_from' => now(),
+        'schedule_to'   => now(),
+        'is_done'       => 1,
+        'order_id'      => $order->id,
+        'additional'    => ['document_type' => 'report'],
     ]);
+    $activity->portalPersons()->attach($person->id);
 
     /** @var ActivityFile $file */
     $file = ActivityFile::query()->create([
@@ -141,17 +136,22 @@ it('forbids accessing another patient documents with a keycloak token', function
 
 // ─── FILE activity via person relations ───────────────────────────────────
 
-function makeFileActivity(array $attrs = []): Activity
+function makeFileActivity(array $attrs = [], array $portalPersonIds = []): Activity
 {
-    return Activity::query()->create(array_merge([
-        'title'             => 'Test Document',
-        'type'              => 'file',
-        'schedule_from'     => now(),
-        'schedule_to'       => now(),
-        'is_done'           => 1,
-        'publish_to_portal' => true,
-        'additional'        => ['document_type' => 'report'],
+    $activity = Activity::query()->create(array_merge([
+        'title'         => 'Test Document',
+        'type'          => 'file',
+        'schedule_from' => now(),
+        'schedule_to'   => now(),
+        'is_done'       => 1,
+        'additional'    => ['document_type' => 'report'],
     ], $attrs));
+
+    if (! empty($portalPersonIds)) {
+        $activity->portalPersons()->attach($portalPersonIds);
+    }
+
+    return $activity;
 }
 
 function makeFileRecord(Activity $activity, string $name = 'doc.pdf'): ActivityFile
@@ -169,7 +169,7 @@ it('returns file activity linked directly via person_id FK', function () {
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
-    $activity = makeFileActivity(['person_id' => $person->id]);
+    $activity = makeFileActivity(['person_id' => $person->id], [$person->id]);
     $file = makeFileRecord($activity);
 
     $response = $this->getJson(
@@ -192,7 +192,7 @@ it('returns file activity linked via sales_lead persons', function () {
     $salesLead = SalesLead::factory()->create();
     $salesLead->persons()->attach($person->id);
 
-    $activity = makeFileActivity(['sales_lead_id' => $salesLead->id]);
+    $activity = makeFileActivity(['sales_lead_id' => $salesLead->id], [$person->id]);
     $file = makeFileRecord($activity, 'saleslead-doc.pdf');
 
     $response = $this->getJson(
@@ -214,7 +214,7 @@ it('returns file activity linked via lead persons', function () {
     $lead = Lead::factory()->create();
     $lead->persons()->attach($person->id);
 
-    $activity = makeFileActivity(['lead_id' => $lead->id]);
+    $activity = makeFileActivity(['lead_id' => $lead->id], [$person->id]);
     $file = makeFileRecord($activity, 'lead-doc.pdf');
 
     $response = $this->getJson(
@@ -227,13 +227,13 @@ it('returns file activity linked via lead persons', function () {
     $response->assertJsonPath('data.0.id', $file->id);
 });
 
-it('excludes file activity with publish_to_portal false', function () {
+it('excludes file activity without portal persons', function () {
     config(['api.keys' => ['test-api-key']]);
 
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
-    $activity = makeFileActivity(['publish_to_portal' => false, 'person_id' => $person->id]);
+    $activity = makeFileActivity(['person_id' => $person->id]);
     makeFileRecord($activity);
 
     $response = $this->getJson(
@@ -257,10 +257,10 @@ it('order_id filter scopes documents to that order only', function () {
     $orderA = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
     $orderB = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
 
-    $activityA = makeFileActivity(['order_id' => $orderA->id]);
+    $activityA = makeFileActivity(['order_id' => $orderA->id], [$person->id]);
     $fileA = makeFileRecord($activityA, 'order-a.pdf');
 
-    $activityB = makeFileActivity(['order_id' => $orderB->id]);
+    $activityB = makeFileActivity(['order_id' => $orderB->id], [$person->id]);
     makeFileRecord($activityB, 'order-b.pdf');
 
     $response = $this->getJson(
@@ -287,7 +287,7 @@ it('group label uses order title when activity has an order_id', function () {
         'title'         => 'MRI Knie',
     ]);
 
-    $activity = makeFileActivity(['order_id' => $order->id]);
+    $activity = makeFileActivity(['order_id' => $order->id], [$person->id]);
     makeFileRecord($activity);
 
     $response = $this->getJson(
@@ -306,7 +306,7 @@ it('download works for file activity linked via person_id FK', function () {
     $keycloakUserId = (string) Str::uuid();
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
-    $activity = makeFileActivity(['person_id' => $person->id]);
+    $activity = makeFileActivity(['person_id' => $person->id], [$person->id]);
     $file = makeFileRecord($activity);
 
     Storage::disk('local')->put($file->path, 'fake-content');
@@ -336,4 +336,42 @@ it('download returns 404 for file activity not linked to patient', function () {
     );
 
     $response->assertNotFound();
+});
+
+it('per-person portal visibility: person B cannot see person A documents on same order', function () {
+    config(['api.keys' => ['test-api-key']]);
+
+    $keycloakA = (string) Str::uuid();
+    $keycloakB = (string) Str::uuid();
+
+    $personA = Person::factory()->create(['keycloak_user_id' => $keycloakA, 'is_active' => true]);
+    $personB = Person::factory()->create(['keycloak_user_id' => $keycloakB, 'is_active' => true]);
+
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach([$personA->id, $personB->id]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'combine_order' => false,
+    ]);
+
+    $activity = makeFileActivity([
+        'order_id'  => $order->id,
+        'person_id' => $personA->id,
+    ], [$personA->id]);
+    makeFileRecord($activity, 'person-a-doc.pdf');
+
+    $responseA = $this->getJson(
+        "/api/patient/{$keycloakA}/documents",
+        ['X-API-KEY' => 'test-api-key']
+    );
+    $responseA->assertOk();
+    $responseA->assertJsonPath('meta.total', 1);
+
+    $responseB = $this->getJson(
+        "/api/patient/{$keycloakB}/documents",
+        ['X-API-KEY' => 'test-api-key']
+    );
+    $responseB->assertOk();
+    $responseB->assertJsonPath('meta.total', 0);
 });

@@ -15,6 +15,7 @@ use App\Models\SalesLead;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use Webkul\Contact\Models\Person;
@@ -51,7 +52,6 @@ class Activity extends Model implements ActivityContract
         'assigned_at'   => 'datetime',
         'additional'    => 'array',
         'is_done'              => 'boolean',
-        'publish_to_portal'  => 'boolean',
         'type'         => ActivityType::class,
         'status'       => ActivityStatus::class,
     ];
@@ -70,7 +70,6 @@ class Activity extends Model implements ActivityContract
         'schedule_from',
         'schedule_to',
         'is_done',
-        'publish_to_portal',
         'status',
         'user_id',
         'assigned_at',
@@ -209,6 +208,28 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
+     * Persons who can see this activity in the patient portal.
+     */
+    public function portalPersons(): BelongsToMany
+    {
+        return $this->belongsToMany(Person::class, 'activity_portal_persons')
+            ->withTimestamps();
+    }
+
+    public function isPublishedToPortal(): bool
+    {
+        return $this->portalPersons()->exists();
+    }
+
+    /**
+     * Sync the portal persons pivot. Replaces any existing entries.
+     */
+    public function syncPortalPersons(array $personIds): void
+    {
+        $this->portalPersons()->sync($personIds);
+    }
+
+    /**
      * Call statuses linked to this activity.
      */
     public function callStatuses()
@@ -261,7 +282,7 @@ class Activity extends Model implements ActivityContract
 
     /**
      * Resolve all persons associated with this activity via any known relation:
-     * direct person_id FK, lead, sales lead, or order → sales lead.
+     * direct person_id FK, lead, sales lead, or order -> sales lead.
      *
      * When person_id is explicitly set the activity is assigned to that single
      * person -- return only that person (no fallback to broader relations).
@@ -291,6 +312,21 @@ class Activity extends Model implements ActivityContract
         return $persons->unique('id')->values();
     }
 
+    /**
+     * Get the persons who should see this activity in the patient portal.
+     * Uses the pivot if populated; falls back to getPatientsFromActivity for legacy.
+     */
+    public function getPortalPatients(): Collection
+    {
+        $pivotPersons = $this->portalPersons;
+
+        if ($pivotPersons->isNotEmpty()) {
+            return $pivotPersons;
+        }
+
+        return $this->getPatientsFromActivity();
+    }
+
     public function getIsReadAttribute(): bool
     {
         if ($this->type === ActivityType::PATIENT_MESSAGE) {
@@ -307,11 +343,19 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * Scope activities that are published to the patient portal.
+     * Scope activities that are published to the patient portal (shared with at least one person).
      */
     public function scopePublishedToPortal(Builder $query): Builder
     {
-        return $query->where('publish_to_portal', true);
+        return $query->whereHas('portalPersons');
+    }
+
+    /**
+     * Scope activities published to the portal for a specific person.
+     */
+    public function scopePublishedToPortalForPerson(Builder $query, Person $person): Builder
+    {
+        return $query->whereHas('portalPersons', fn (Builder $q) => $q->where('activity_portal_persons.person_id', $person->id));
     }
 
     /**

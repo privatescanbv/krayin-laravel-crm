@@ -13,32 +13,44 @@ use Webkul\Contact\Models\Person;
 
 class CreatePatientMessageFromActivityAction
 {
+    /**
+     * Notify portal persons after an activity has been published to the portal.
+     * Call this after syncing the activity_portal_persons pivot.
+     */
+    public static function notifyPortalPersons(Activity $activity, ?int $userId = null): void
+    {
+        if ($activity->type != ActivityType::FILE) {
+            return;
+        }
+
+        $patients = $activity->portalPersons;
+
+        if ($patients->isEmpty()) {
+            return;
+        }
+
+        $entityName = ActivityFile::query()->where('activity_id', $activity->id)->value('name') ?? $activity->title;
+
+        foreach ($patients as $patient) {
+            logger()->info("CreatePatientMessageFromActivityAction: Notifying Person ID: {$patient->id} for Activity ID: {$activity->id}");
+            PatientNotifyEvent::dispatch(
+                $patient->id,
+                $entityName,
+                NotificationReferenceType::FILE,
+                $activity->id,
+                true,
+                $userId ?? auth()->id()
+            );
+        }
+    }
+
     public function handle(Activity $activity, string $action, ?Person $person = null): void
     {
         if ((($activity->additional ?? [])['skip_patient_message_creation'] ?? false)) {
             return;
         }
-        if ($activity->isDirty('publish_to_portal') && $activity->publish_to_portal) {
-            if ($activity->type == ActivityType::FILE) {
 
-                $patients = $activity->getPatientsFromActivity();
-
-                foreach ($patients as $patient) {
-                    logger()->info("CreatePatientMessageFromActivityAction #$action: Creating notification for Activity ID: ".$activity->id.' linked to Person ID: '.$patient->id);
-                    $entityName = (ActivityFile::query()->where('activity_id', $activity->id)->value('name') ?? $activity->title);
-                    PatientNotifyEvent::dispatch(
-                        $patient->id,
-                        $entityName,
-                        NotificationReferenceType::FILE,
-                        $activity->id,
-                        true,
-                        auth()->id()
-                    );
-                }
-            } else {
-                logger()->warning('Unknown activity type for portal publication: '.$activity->type->value);
-            }
-        } elseif ($activity->type == ActivityType::PATIENT_MESSAGE) {
+        if ($activity->type == ActivityType::PATIENT_MESSAGE) {
 
             // Check if there is already a linked PatientMessage (to avoid infinite loops with PatientMessageObserver)
             if ($activity->patientMessages()->exists()) {

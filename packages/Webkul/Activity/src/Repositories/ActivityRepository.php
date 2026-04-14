@@ -369,7 +369,7 @@ class ActivityRepository extends Repository
             ->with(['activity'])
             ->whereHas('activity', function ($q) use ($orderIds, $documentType) {
                 $q->where('type', ActivityType::FILE->value)
-                    ->where('publish_to_portal', true)
+                    ->whereHas('portalPersons')
                     ->whereIn('order_id', $orderIds);
 
                 if (is_string($documentType) && $documentType !== '') {

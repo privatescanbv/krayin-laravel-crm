@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Activity;
 
+use App\Actions\Activities\CreatePatientMessageFromActivityAction;
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Enums\EntityType;
@@ -140,7 +141,7 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'files'])->findOrFail($id);
+        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'files', 'portalPersons'])->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
@@ -182,34 +183,34 @@ class ActivityController extends Controller
         $personIds = array_filter(array_map('intval', (array) ($data['person_ids'] ?? [])));
         unset($data['person_ids']);
 
-        Activity::normalizeForeignKeys($data);
+        $publishToPortal = filter_var($data['publish_to_portal'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        unset($data['publish_to_portal']);
 
-        // VeeValidate sends boolean false as the string "false" via FormData,
-        // which PHP casts to true. Normalize using filter_var to get a proper boolean.
-        $data['publish_to_portal'] = filter_var($data['publish_to_portal'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        Activity::normalizeForeignKeys($data);
 
         // Ensure group_id is set and valid for lead activities
         $result = $this->ensureGroupIdForLeadActivity($data);
         if ($result !== null) {
-            return $result; // Return error response if group_id could not be determined
+            return $result;
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => (request('type') == ActivityType::NOTE->value || request('type') == ActivityType::FILE->value) ? 1 : 0,
         ]));
 
-        // Link selected persons: use person_id FK for the primary person when no other entity is set
-        if (! empty($personIds)) {
-            $hasPrimaryEntity = collect(EntityType::haveActivities())
-                ->contains(fn (EntityType $e) => ! empty($data[$e->getForeignKey()]));
+        // Set person_id FK when explicitly provided
+        if (! empty($personIds) && ! $activity->person_id) {
+            $activity->update(['person_id' => $personIds[0]]);
+        }
 
-            if (! $hasPrimaryEntity && ! $activity->person_id) {
-                // Set the first person as the primary FK, link the rest via pivot
-                $primaryPersonId = array_shift($personIds);
-                $activity->update(['person_id' => $primaryPersonId]);
+        // Sync portal persons pivot and notify
+        if ($publishToPortal) {
+            $portalPersonIds = ! empty($personIds) ? $personIds : $activity->getPatientsFromActivity()->pluck('id')->all();
+
+            if (! empty($portalPersonIds)) {
+                $activity->syncPortalPersons($portalPersonIds);
+                CreatePatientMessageFromActivityAction::notifyPortalPersons($activity);
             }
-
-            // Extra person_ids beyond the primary FK are no longer stored (pivot removed)
         }
 
         $didChange = $this->updateStatus($activity);
@@ -236,7 +237,7 @@ class ActivityController extends Controller
      */
     public function edit(int $id): View
     {
-        $activity = $this->activityRepository->findOrFail($id);
+        $activity = $this->activityRepository->with('portalPersons')->findOrFail($id);
 
         $groups = app(GroupRepository::class)->all();
 
@@ -323,15 +324,25 @@ class ActivityController extends Controller
 
         Activity::normalizeForeignKeys($data);
 
-        // VeeValidate sends boolean false as the string "false" via FormData,
-        // which PHP casts to true. Normalize using filter_var to get a proper boolean.
+        $publishToPortal = null;
         if (array_key_exists('publish_to_portal', $data)) {
-            $data['publish_to_portal'] = filter_var($data['publish_to_portal'], FILTER_VALIDATE_BOOLEAN);
+            $publishToPortal = filter_var($data['publish_to_portal'], FILTER_VALIDATE_BOOLEAN);
+            unset($data['publish_to_portal']);
         }
 
         $requestedStatus = isset($data['status']) ? (string) $data['status'] : null;
 
         $activity = $this->activityRepository->update($data, $id);
+
+        if ($publishToPortal === true && ! $activity->isPublishedToPortal()) {
+            $portalPersonIds = $activity->getPatientsFromActivity()->pluck('id')->all();
+            if (! empty($portalPersonIds)) {
+                $activity->syncPortalPersons($portalPersonIds);
+                CreatePatientMessageFromActivityAction::notifyPortalPersons($activity);
+            }
+        } elseif ($publishToPortal === false) {
+            $activity->portalPersons()->detach();
+        }
 
         // Synchronize is_done and status both ways
         $didChange = false;

@@ -57,7 +57,7 @@ class OrderRepository extends Repository
             'order_title'      => $order->title ?? '',
             'order_status'     => $order->stage?->name ?? '',
             'order_total'      => $order->total_price ?? 0,
-            'customer_name'    => $this->resolveCustomerName($order),
+            'customer_name'    => $this->resolveCustomerName($order, $personId),
         ];
 
         $appointmentVariables = $this->resolveAppointmentVariables($order, $personId);
@@ -271,11 +271,17 @@ class OrderRepository extends Repository
     /**
      * Resolve customer name from order.
      */
-    private function resolveCustomerName(Order $order): string
+    private function resolveCustomerName(Order $order, ?int $personId = null): string
     {
+        if ($personId) {
+            $person = Person::find($personId);
+            if ($person && $person->name) {
+                return $person->name;
+            }
+        }
+
         $person = $order->salesLead?->contactPerson;
         if (! $person) {
-            // Fallback to the first person attached to the lead, if available
             $person = $order->salesLead?->lead?->persons()?->first();
         }
 

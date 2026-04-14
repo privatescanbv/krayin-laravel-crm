@@ -84,7 +84,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         ->and($lead->emails[0]['is_default'])->toBe(true);
 
     // Create and attach a person to trigger anamnesis creation
-    $person = Person::factory()->create(['user_id' => $lead->user_id]);
+    $person = Person::factory()->create(['user_id' => $lead->user_id, 'is_active' => true]);
     $lead->attachPersons([$person->id]);
 
     // Assert: Check anamnesis was created after person attachment

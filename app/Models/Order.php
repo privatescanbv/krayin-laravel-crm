@@ -48,6 +48,7 @@ class Order extends Model
         'first_examination_at',
         'sales_lead_id',
         'user_id',
+        'clinic_coordinator_user_id',
         'combine_order',
         'confirmation_letter_content',
         'created_by',
@@ -62,6 +63,7 @@ class Order extends Model
         'lost_reason'                      => LostReason::class,
         'sales_lead_id'                    => 'integer',
         'user_id'                          => 'integer',
+        'clinic_coordinator_user_id'       => 'integer',
         'combine_order'                    => 'boolean',
         'is_business'                      => 'boolean',
         'created_by'                       => 'integer',
@@ -71,15 +73,16 @@ class Order extends Model
     public static function rules(): array
     {
         return [
-            'title'                => 'required|string|max:255',
-            'total_price'          => 'required|numeric|min:0',
-            'pipeline_stage_id'    => 'nullable|integer|exists:lead_pipeline_stages,id',
-            'first_examination_at' => 'nullable|date',
-            'sales_lead_id'        => 'required|integer|exists:salesleads,id',
-            'user_id'              => 'nullable|integer|exists:users,id',
-            'combine_order'        => 'boolean',
-            'invoice_number'       => 'nullable|string|max:255',
-            'is_business'          => 'boolean',
+            'title'                         => 'required|string|max:255',
+            'total_price'                   => 'required|numeric|min:0',
+            'pipeline_stage_id'             => 'nullable|integer|exists:lead_pipeline_stages,id',
+            'first_examination_at'          => 'nullable|date',
+            'sales_lead_id'                 => 'required|integer|exists:salesleads,id',
+            'user_id'                       => 'nullable|integer|exists:users,id',
+            'clinic_coordinator_user_id'    => 'nullable|integer|exists:users,id',
+            'combine_order'                 => 'boolean',
+            'invoice_number'                => 'nullable|string|max:255',
+            'is_business'                   => 'boolean',
         ];
     }
 
@@ -185,6 +188,11 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function clinicCoordinator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'clinic_coordinator_user_id');
     }
 
     public function lead(): ?Lead

@@ -70,6 +70,10 @@
                     <span>Toegewezen aan:</span>
                     <span>{{ $order->user?->name }}</span>
                 </div>
+{{--                <div class="flex justify-between">--}}
+{{--                    <span>Kliniek Begeleidster:</span>--}}
+{{--                    <span>{{ $order->clinicCoordinator?->name ?? '-' }}</span>--}}
+{{--                </div>--}}
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $order->created_at->format('d-m-Y') }}</span>

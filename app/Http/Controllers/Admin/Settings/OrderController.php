@@ -1449,17 +1449,18 @@ class OrderController extends SimpleEntityController
         }
 
         $request->validate([
-            'title'                => ['required', 'string', 'max:255'],
-            'total_price'          => ['nullable', 'numeric', 'min:0'],
-            'sales_lead_id'        => ['required', 'integer', 'exists:salesleads,id'],
-            'user_id'              => ['nullable', 'integer', 'exists:users,id'],
-            'combine_order'        => ['nullable', 'boolean'],
-            'invoice_number'       => ['nullable', 'string', 'max:255'],
-            'is_business'          => ['nullable', 'boolean'],
-            'first_examination_at' => ['nullable', 'date'],
-            'items'                => ['nullable', 'array'],
-            'items.*.product_id'   => ['nullable', 'integer', 'exists:products,id'],
-            'items.*.person_id'    => [
+            'title'                         => ['required', 'string', 'max:255'],
+            'total_price'                   => ['nullable', 'numeric', 'min:0'],
+            'sales_lead_id'                 => ['required', 'integer', 'exists:salesleads,id'],
+            'user_id'                       => ['nullable', 'integer', 'exists:users,id'],
+            'clinic_coordinator_user_id'    => ['nullable', 'integer', 'exists:users,id'],
+            'combine_order'                 => ['nullable', 'boolean'],
+            'invoice_number'                => ['nullable', 'string', 'max:255'],
+            'is_business'                   => ['nullable', 'boolean'],
+            'first_examination_at'          => ['nullable', 'date'],
+            'items'                         => ['nullable', 'array'],
+            'items.*.product_id'            => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.person_id'             => [
                 'required_with:items.*.product_id',
                 'nullable',
                 'integer',
@@ -1500,6 +1501,11 @@ class OrderController extends SimpleEntityController
             $payload['user_id'] = ($userId === '' || $userId === null)
                 ? null
                 : (int) $userId;
+        }
+
+        if (array_key_exists('clinic_coordinator_user_id', $payload)) {
+            $val = $payload['clinic_coordinator_user_id'];
+            $payload['clinic_coordinator_user_id'] = ($val === '' || $val === null) ? null : (int) $val;
         }
 
         // Compute total from items if provided; otherwise default to 0 for create without items

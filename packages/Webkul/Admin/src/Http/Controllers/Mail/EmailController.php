@@ -170,6 +170,8 @@ class EmailController extends Controller
 
         $email = $this->emailRepository->update($data, request('id') ?? $id);
 
+        // Note: when is_draft is set, $data['folder_id'] is already overridden to draft/outbox
+        // above, so $email is now in draft — moveToProcessedIfInbox will no-op, which is intentional.
         $this->moveToProcessedIfLinked($email, $data);
 
         Event::dispatch('email.update.after', $email);
@@ -362,7 +364,7 @@ class EmailController extends Controller
     /**
      * Move email to "Verwerkt" folder when it is linked to an entity and currently in an inbox-type folder.
      */
-    private function moveToProcessedIfLinked($email, array $data): void
+    private function moveToProcessedIfLinked(\Webkul\Email\Models\Email $email, array $data): void
     {
         $entityFields = ['lead_id', 'sales_lead_id', 'person_id', 'clinic_id', 'order_id'];
         $hasEntityLink = collect($entityFields)->contains(fn ($field) => ! empty($data[$field]));

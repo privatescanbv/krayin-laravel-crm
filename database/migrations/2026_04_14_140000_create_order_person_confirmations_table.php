@@ -14,7 +14,7 @@ return new class extends Migration
 
         Schema::create('order_person_confirmations', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('order_id');
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->unsignedInteger('person_id');
             $table->longText('confirmation_letter_content')->nullable();
             $table->timestamp('email_sent_at')->nullable();
@@ -22,7 +22,6 @@ return new class extends Migration
 
             $table->unique(['order_id', 'person_id']);
 
-            $table->foreign('order_id')->references('id')->on('orders')->cascadeOnDelete();
             $table->foreign('person_id')->references('id')->on('persons')->cascadeOnDelete();
         });
     }

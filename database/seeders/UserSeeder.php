@@ -270,7 +270,7 @@ class UserSeeder extends Seeder
                 'status'          => 1, // Medewerker Afdeling role
                 'role_id'         => 2,
                 'view_permission' => 'group', // Restricted to group view
-                'group_id'        => $groupHerniaIdId,
+                'group_id'        => $groupHerniaId,
                 'signature'       => $this->signatureTemplate('Anja', 'Brunner', 'anja@privatescan.nl'),
             ],
         ];

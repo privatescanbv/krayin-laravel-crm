@@ -3,6 +3,7 @@
 namespace Webkul\Email\Repositories;
 
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Email\Contracts\Email;
 use Webkul\Email\Models\Email as EmailModel;
@@ -149,9 +150,13 @@ class EmailRepository extends Repository
 
         $processedFolder = Folder::where('name', EmailFolderEnum::PROCESSED->getFolderName())->first();
 
-        if ($processedFolder) {
-            parent::update(['folder_id' => $processedFolder->id], $emailId);
+        if (! $processedFolder) {
+            Log::warning('EmailRepository: "Verwerkt" folder not found, email not moved to processed.', ['email_id' => $emailId]);
+
+            return;
         }
+
+        parent::update(['folder_id' => $processedFolder->id], $emailId);
     }
 
     /**

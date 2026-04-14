@@ -228,6 +228,23 @@ use Webkul\Lead\Models\Stage;
                                     @endforeach
                                 </x-adminc::components.field>
                             </div>
+
+                            <!-- Clinic Coordinator -->
+{{--                            <div class="flex-1">--}}
+{{--                                @php $currentClinicCoordinatorId = $orders->clinic_coordinator_user_id; @endphp--}}
+{{--                                <x-adminc::components.field--}}
+{{--                                    type="select"--}}
+{{--                                    name="clinic_coordinator_user_id"--}}
+{{--                                    value="{{ $currentClinicCoordinatorId }}"--}}
+{{--                                    label="Kliniek Begeleidster"--}}
+{{--                                >--}}
+{{--                                    <option value="">-- Kies gebruiker --</option>--}}
+{{--                                    @foreach ($userOptions as $user)--}}
+{{--                                        <option--}}
+{{--                                            value="{{ $user->id }}" {{ ($currentClinicCoordinatorId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>--}}
+{{--                                    @endforeach--}}
+{{--                                </x-adminc::components.field>--}}
+{{--                            </div>--}}
                             </div>
 
                             @if(isset($missingPersonsWarning) && $missingPersonsWarning)

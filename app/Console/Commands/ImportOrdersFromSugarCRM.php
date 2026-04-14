@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Product\Models\Product;
+use Webkul\User\Models\User;
 
 class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 {
@@ -109,6 +110,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'cstm.openstaand_c',
                         'cstm.betaal_status_c',
                         'cstm.pin_contant_c',
+                        'cstm.user_id_c',
+                        'so.assigned_user_id',
                         'lead_rel.sugar_lead_id',
                     ])
                     ->where('so.deleted', 0)
@@ -385,16 +388,18 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                     // Create the Order
                     $order = $this->createEntityWithTimestamps(Order::class, [
-                        'external_id'          => $record->id,
-                        'order_number'         => $record->order_num ?? null,
-                        'title'                => $record->name ?? "Order {$record->order_num}",
-                        'total_price'          => $record->amount ?? 0,
-                        'pipeline_stage_id'    => $orderStage->id(),
-                        'lost_reason'          => $lostReason,
-                        'closed_at'            => $closedAt,
-                        'first_examination_at' => $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c),
-                        'sales_lead_id'        => $salesLead->id,
-                        'combine_order'        => (bool) ($record->op_een_factuur_c ?? false),
+                        'external_id'                  => $record->id,
+                        'order_number'                 => $record->order_num ?? null,
+                        'title'                        => $record->name ?? "Order {$record->order_num}",
+                        'total_price'                  => $record->amount ?? 0,
+                        'pipeline_stage_id'            => $orderStage->id(),
+                        'lost_reason'                  => $lostReason,
+                        'closed_at'                    => $closedAt,
+                        'first_examination_at'         => $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c),
+                        'sales_lead_id'                => $salesLead->id,
+                        'user_id'                      => $this->mapSugarUserToId($record->assigned_user_id ?? null),
+                        'clinic_coordinator_user_id'   => $this->mapSugarUserToId($record->user_id_c ?? null),
+                        'combine_order'                => (bool) ($record->op_een_factuur_c ?? false),
                     ], [
                         'created_at' => $this->parseSugarDate($record->date_entered),
                         'updated_at' => $this->parseSugarDate($record->date_modified),
@@ -683,28 +688,30 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             $this->line("  Sugar betaal_status_c={$record->betaal_status_c} (order {$record->id})");
         }
 
-        $paidAt = $this->orderPaymentPaidAtFromSugar($order, $record);
-
         $advance = $this->sugarMoneyAmount($record->betaald_vooruit_c ?? null);
         if ($advance !== null && $advance > 0) {
+            $enteredDate = $this->parseSugarDate($record->date_entered ?? null);
+
             OrderPayment::create([
                 'order_id' => $order->id,
                 'amount'   => $advance,
                 'type'     => PaymentType::ADVANCE,
                 'method'   => PaymentMethod::BANK,
-                'paid_at'  => $paidAt,
+                'paid_at'  => $enteredDate ? substr($enteredDate, 0, 10) : null,
                 'currency' => 'EUR',
             ]);
         }
 
         $clinic = $this->sugarMoneyAmount($record->betaald_kliniek_c ?? null);
         if ($clinic !== null && $clinic > 0) {
+            $examDate = $this->parseSugarDate($record->datum_onderzoek_1 ?? null);
+
             OrderPayment::create([
                 'order_id' => $order->id,
                 'amount'   => $clinic,
                 'type'     => PaymentType::PAYED_IN_CLINIC,
                 'method'   => $this->paymentMethodFromSugarPinContant($record->pin_contant_c ?? null),
-                'paid_at'  => $paidAt,
+                'paid_at'  => $examDate ? substr($examDate, 0, 10) : null,
                 'currency' => 'EUR',
             ]);
         }
@@ -712,17 +719,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         if ($this->output->isVerbose()) {
             $this->maybeLogOpenstaandVersusOrderTotal($order, $record, ($advance ?? 0.0) + ($clinic ?? 0.0));
         }
-    }
-
-    private function orderPaymentPaidAtFromSugar(Order $order, object $record): ?string
-    {
-        if ($order->closed_at) {
-            return $order->closed_at->format('Y-m-d');
-        }
-
-        $entered = $this->parseSugarDate($record->date_entered ?? null);
-
-        return $entered ? substr($entered, 0, 10) : null;
     }
 
     /**
@@ -824,6 +820,15 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Sugar order rows can reference contacts not on the CRM lead; attach them and create anamnesis via {@see SalesLead::attachPersons}.
      */
+    private function mapSugarUserToId(?string $sugarUserId): ?int
+    {
+        if (empty($sugarUserId)) {
+            return null;
+        }
+
+        return User::where('external_id', $sugarUserId)->first()?->id;
+    }
+
     private function attachSugarOrderPersonsToSalesLead(SalesLead $salesLead, Collection $personsByExternalId): void
     {
         if ($personsByExternalId->isEmpty()) {

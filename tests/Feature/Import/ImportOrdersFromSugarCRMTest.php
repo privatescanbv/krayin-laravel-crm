@@ -62,6 +62,7 @@ beforeEach(function () {
         $table->date('datum_onderzoek_1')->nullable();
         $table->dateTime('date_entered')->nullable();
         $table->dateTime('date_modified')->nullable();
+        $table->string('assigned_user_id')->nullable();
         $table->integer('deleted')->default(0);
     });
 
@@ -76,6 +77,7 @@ beforeEach(function () {
         $table->decimal('openstaand_c', 14, 6)->nullable();
         $table->string('betaal_status_c')->nullable();
         $table->string('pin_contant_c')->nullable();
+        $table->string('user_id_c')->nullable();
     });
 
     Schema::connection('sugarcrm')->create('pcrm_salesorderrow', function (Blueprint $table) {
@@ -132,21 +134,23 @@ function insertSugarOrder(string $id, array $overrides = []): void
         'openstaand_c',
         'betaal_status_c',
         'pin_contant_c',
+        'user_id_c',
     ];
 
     $cstmOverrides = array_intersect_key($overrides, array_flip($cstmKeys));
     $soOverrides = array_diff_key($overrides, array_flip($cstmKeys));
 
     DB::connection('sugarcrm')->table('pcrm_salesorder')->insert(array_merge([
-        'id'            => $id,
-        'name'          => "Order {$id}",
-        'order_num'     => 202500001,
-        'amount'        => 1500.00,
-        'sales_stage'   => 'Gewonnen',
-        'date_closed'   => '2025-06-01',
-        'date_entered'  => '2025-01-15 10:00:00',
-        'date_modified' => '2025-01-15 10:00:00',
-        'deleted'       => 0,
+        'id'               => $id,
+        'name'             => "Order {$id}",
+        'order_num'        => 202500001,
+        'amount'           => 1500.00,
+        'sales_stage'      => 'Gewonnen',
+        'date_closed'      => '2025-06-01',
+        'date_entered'     => '2025-01-15 10:00:00',
+        'date_modified'    => '2025-01-15 10:00:00',
+        'assigned_user_id' => null,
+        'deleted'          => 0,
     ], $soOverrides));
 
     DB::connection('sugarcrm')->table('pcrm_salesorder_cstm')->insert(array_merge([
@@ -159,6 +163,7 @@ function insertSugarOrder(string $id, array $overrides = []): void
         'openstaand_c'        => null,
         'betaal_status_c'     => null,
         'pin_contant_c'       => null,
+        'user_id_c'           => null,
     ], $cstmOverrides));
 }
 
@@ -521,10 +526,11 @@ test('dry run does not persist any data', function () {
         ->and(SalesLead::count())->toBe(0);
 });
 
-test('imports Sugar advance payment as OrderPayment', function () {
+test('imports Sugar advance payment as OrderPayment with date_entered as paid_at', function () {
     insertSugarOrder('order-pay-adv-001', [
         'betaald_vooruit_c' => 2206.0,
         'betaal_status_c'   => 'volledig',
+        'date_entered'      => '2025-03-10 09:00:00',
         'date_closed'       => '2025-08-20',
     ]);
 
@@ -541,7 +547,7 @@ test('imports Sugar advance payment as OrderPayment', function () {
         ->and($p->method)->toBe(PaymentMethod::BANK)
         ->and((float) $p->amount)->toBe(2206.0)
         ->and($p->currency)->toBe('EUR')
-        ->and($p->paid_at?->format('Y-m-d'))->toBe('2025-08-20');
+        ->and($p->paid_at?->format('Y-m-d'))->toBe('2025-03-10');
 });
 
 test('imports Sugar clinic payment with pin_contant mapping', function () {
@@ -558,6 +564,47 @@ test('imports Sugar clinic payment with pin_contant mapping', function () {
     expect($p->type)->toBe(PaymentType::PAYED_IN_CLINIC)
         ->and($p->method)->toBe(PaymentMethod::CASH)
         ->and((float) $p->amount)->toBe(50.0);
+});
+
+test('imports Sugar clinic payment with datum_onderzoek_1 as paid_at', function () {
+    insertSugarOrder('order-pay-clinic-date-001', [
+        'betaald_kliniek_c'  => 75.0,
+        'pin_contant_c'      => 'pin',
+        'datum_onderzoek_1'  => '2025-07-15',
+    ]);
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pay-clinic-date-001')->first();
+    expect($order)->not->toBeNull();
+
+    $p = OrderPayment::where('order_id', $order->id)->sole();
+    expect($p->type)->toBe(PaymentType::PAYED_IN_CLINIC)
+        ->and($p->method)->toBe(PaymentMethod::PIN)
+        ->and((float) $p->amount)->toBe(75.0)
+        ->and($p->paid_at?->format('Y-m-d'))->toBe('2025-07-15');
+});
+
+test('payment dates differ for advance and clinic on same order', function () {
+    insertSugarOrder('order-pay-both-001', [
+        'betaald_vooruit_c'  => 100.0,
+        'betaald_kliniek_c'  => 50.0,
+        'pin_contant_c'      => 'pin',
+        'date_entered'       => '2025-02-01 08:30:00',
+        'datum_onderzoek_1'  => '2025-06-20',
+    ]);
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pay-both-001')->first();
+    $payments = OrderPayment::where('order_id', $order->id)->get();
+    expect($payments)->toHaveCount(2);
+
+    $adv = $payments->firstWhere('type', PaymentType::ADVANCE);
+    $cli = $payments->firstWhere('type', PaymentType::PAYED_IN_CLINIC);
+
+    expect($adv->paid_at?->format('Y-m-d'))->toBe('2025-02-01')
+        ->and($cli->paid_at?->format('Y-m-d'))->toBe('2025-06-20');
 });
 
 test('does not create OrderPayments when Sugar payment amounts are empty', function () {

@@ -44,6 +44,7 @@ beforeEach(function () {
         'pcrm_salesorderrow',
         'pcrm_salesorder_cstm',
         'pcrm_salesorder',
+        'aos_products',
     ];
 
     foreach ($tables as $tbl) {
@@ -116,6 +117,13 @@ beforeEach(function () {
     Schema::connection('sugarcrm')->create('leads_pcrm_salesorder_c', function (Blueprint $table) {
         $table->string('leads_p903eeads_ida')->nullable(); // Sugar lead UUID
         $table->string('leads_p5ae2rder_idb')->nullable(); // Sugar salesorder UUID
+        $table->integer('deleted')->default(0);
+    });
+
+    // Sugar product catalog (used to resolve overridden row names back to original product names)
+    Schema::connection('sugarcrm')->create('aos_products', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable();
         $table->integer('deleted')->default(0);
     });
 });

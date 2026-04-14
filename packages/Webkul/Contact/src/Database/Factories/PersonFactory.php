@@ -25,7 +25,8 @@ class PersonFactory extends Factory
     public function definition()
     {
         return [
-            'name'             => $this->faker->name(),
+            'first_name'       => $this->faker->firstName(),
+            'last_name'        => $this->faker->lastName(),
             'emails'           => [['value' => $this->faker->unique()->safeEmail(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
             'phones'           => [], // Empty by default to avoid conflicts in tests
             'is_active'        => false,

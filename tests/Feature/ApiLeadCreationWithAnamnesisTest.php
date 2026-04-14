@@ -88,9 +88,10 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     $lead->attachPersons([$person->id]);
 
     // Assert: Check anamnesis was created after person attachment
+    // The anamnesis name is based on the Person's name, not the Lead's name.
     $this->assertDatabaseHas('anamnesis', [
         'lead_id'   => $leadId,
-        'name'      => 'Anamnesis voor '.$lead->name,
+        'name'      => 'Anamnesis voor '.$person->name,
         'person_id' => $person->id,
     ]);
 

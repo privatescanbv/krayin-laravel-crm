@@ -322,6 +322,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     : collect();
 
                 $productsByName = $this->productsByNameForSugarRows($orderRows);
+                $productsByNormalizedName = $productsByName->mapWithKeys(
+                    fn (Product $p, string $name) => [$this->normalizeProductName($name) => $p]
+                );
 
                 // Look up the imported CRM Lead via the Sugar lead UUID
                 $crmLead = ! empty($record->sugar_lead_id)
@@ -346,6 +349,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $personsByExternalId,
                     $productsByExternalId,
                     $productsByName,
+                    $productsByNormalizedName,
                     $salesStage,
                     $orderStage,
                     $lostReason,
@@ -410,15 +414,16 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     // Create OrderItems
                     foreach ($orderRows as $row) {
                         $person = $row->contact_id ? ($personsByExternalId->get($row->contact_id) ?? null) : null;
-                        $product = $this->resolveProductForSugarRow($row, $productsByExternalId, $productsByName);
+                        $product = $this->resolveProductForSugarRow($row, $productsByExternalId, $productsByName, $productsByNormalizedName);
 
                         if ($product === null) {
                             $this->warn(sprintf(
-                                'Skipping Sugar order row (no CRM product): order=%s row=%s name=%s template_id=%s',
+                                'Skipping Sugar order row (no CRM product): order=%s row=%s name="%s" template_id=%s template_name="%s"',
                                 $record->id,
                                 $row->id ?? '',
                                 $row->name ?? '',
-                                $row->producttemplate_id_c ?? ''
+                                $row->producttemplate_id_c ?? '',
+                                $row->product_template_name ?? ''
                             ));
 
                             continue;
@@ -521,6 +526,10 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $join->on('rc.pcrm_sales80b3rderrow_idb', '=', 'sor.id')
                     ->where('rc.deleted', '=', 0);
             })
+            ->leftJoin('aos_products as pt', function ($join) {
+                $join->on('pt.id', '=', 'sor.producttemplate_id_c')
+                    ->where('pt.deleted', '=', 0);
+            })
             ->select([
                 'rel.pcrm_salesb9a7esorder_ida as order_id',
                 'sor.id',
@@ -529,6 +538,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 'sor.sales_stage',
                 'sor.resource_type',
                 'sor.producttemplate_id_c',
+                'pt.name as product_template_name',
                 'rc.pcrm_sales4bd9ontacts_ida as contact_id',
                 'row_cstm.inv_purchase_other_c as inv_purchase_other_c',
                 'row_cstm.inv_purchase_cardio_c as inv_purchase_cardio_c',
@@ -777,8 +787,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
      */
     private function productsByNameForSugarRows(Collection $orderRows): Collection
     {
-        $names = $orderRows->pluck('name')
-            ->map(fn ($n) => trim((string) $n))
+        // Collect both the (possibly overridden) row name and the original product template name.
+        $names = $orderRows->flatMap(fn ($row) => [
+            trim((string) ($row->name ?? '')),
+            trim((string) ($row->product_template_name ?? '')),
+        ])
             ->filter()
             ->unique()
             ->values()
@@ -788,10 +801,31 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return collect();
         }
 
-        return Product::query()
+        // Build the initial collection keyed by exact product name.
+        $byName = Product::query()
             ->whereIn('name', $names)
             ->get()
             ->keyBy(fn (Product $p) => $p->name);
+
+        // For any row name that did not yield an exact match, try to load CRM products
+        // whose normalized name matches (e.g. "TB1 Royal+ Bodyscan" → "TB1 Royal Bodyscan").
+        $unmatchedNames = collect($names)->reject(fn ($n) => $byName->has($n));
+
+        if ($unmatchedNames->isNotEmpty()) {
+            $normalizedToRaw = $unmatchedNames->mapWithKeys(
+                fn ($n) => [$this->normalizeProductName($n) => $n]
+            );
+
+            // Load all products and check normalized names; only do this when there are unmatched rows.
+            Product::all()->each(function (Product $p) use ($byName, $normalizedToRaw) {
+                $normalizedProductName = $this->normalizeProductName($p->name);
+                if ($normalizedToRaw->has($normalizedProductName) && ! $byName->has($p->name)) {
+                    $byName->put($p->name, $p);
+                }
+            });
+        }
+
+        return $byName;
     }
 
     /**
@@ -799,9 +833,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
      *
      * @param  Collection<string, Product>  $productsByExternalId
      * @param  Collection<string, Product>  $productsByName
+     * @param  Collection<string, Product>  $productsByNormalizedName
      */
-    private function resolveProductForSugarRow(object $row, Collection $productsByExternalId, Collection $productsByName): ?Product
+    private function resolveProductForSugarRow(object $row, Collection $productsByExternalId, Collection $productsByName, Collection $productsByNormalizedName): ?Product
     {
+        // 1. Match by Sugar product template UUID → Product.external_id (most reliable)
         if (! empty($row->producttemplate_id_c)) {
             $byId = $productsByExternalId->get($row->producttemplate_id_c);
             if ($byId !== null) {
@@ -809,12 +845,50 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             }
         }
 
+        // 2. Match by the row name (may be overridden in Sugar by the user)
         $label = trim((string) ($row->name ?? ''));
         if ($label !== '') {
-            return $productsByName->get($label);
+            $byName = $productsByName->get($label);
+            if ($byName !== null) {
+                return $byName;
+            }
+        }
+
+        // 3. Fall back to the original product template name from Sugar (handles overridden row names
+        //    when producttemplate_id_c is set but external_id lookup fails)
+        $templateName = trim((string) ($row->product_template_name ?? ''));
+        if ($templateName !== '') {
+            $byTemplateName = $productsByName->get($templateName);
+            if ($byTemplateName !== null) {
+                return $byTemplateName;
+            }
+        }
+
+        // 4. Normalized name match: strip '+' and collapse whitespace (handles "Royal+ Bodyscan" → "Royal Bodyscan")
+        if ($label !== '') {
+            $byNormalized = $productsByNormalizedName->get($this->normalizeProductName($label));
+            if ($byNormalized !== null) {
+                return $byNormalized;
+            }
+        }
+        if ($templateName !== '') {
+            return $productsByNormalizedName->get($this->normalizeProductName($templateName));
         }
 
         return null;
+    }
+
+    /**
+     * Normalize a product name for fuzzy matching:
+     * strips '+' characters and collapses whitespace to handle Sugar overrides
+     * like "TB1 Royal+ Bodyscan" matching CRM product "TB1 Royal Bodyscan".
+     */
+    private function normalizeProductName(string $name): string
+    {
+        $normalized = str_replace('+', ' ', $name);
+        $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
+
+        return strtolower(trim($normalized));
     }
 
     /**

@@ -200,6 +200,6 @@ class Anamnesis extends Model
 
     public function getLabelAttribute(): string
     {
-        return $this->lead?->title ?? $this->sales?->name ?? 'Onbekend';
+        return $this->person?->name ?? $this->lead?->title ?? $this->sales?->name ?? 'Onbekend';
     }
 }

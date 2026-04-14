@@ -609,7 +609,7 @@ class Lead extends Model implements LeadContract
                     ],
                     [
                         'id' => Str::uuid(),
-                        'name' => 'Anamnesis voor ' . $this->name,
+                        'name' => 'Anamnesis voor ' . Person::findOrFail($personId)->name,
                         'created_by' => auth()->id() ?? $this->user_id ?? 1,
                         'updated_by' => auth()->id() ?? $this->user_id ?? 1,
                     ]

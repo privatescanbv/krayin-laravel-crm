@@ -119,7 +119,8 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                     $normalizedIds = preg_split('/[\s,]+/', (string) $personIds, -1, PREG_SPLIT_NO_EMPTY);
 
                     $sql = $sql->whereIn('c.id', $normalizedIds)
-                        ->groupBy('c.id');
+                        ->groupBy('c.id')
+                        ->orderBy('c.id', 'asc');
                 } else {
                     $sql = $sql->groupBy('c.id')
                         ->orderBy('c.date_entered', 'desc') // Nieuwste eerst

@@ -31,8 +31,10 @@ class PersonObserver
             DB::table('persons')->where('id', $person->id)->update(['created_by' => auth()->id()]);
         }
 
-        // Invalidate duplicate cache for this person
-        $this->duplicateCacheService->invalidatePersonCache($person->id);
+        // Invalidate duplicate cache for this person (skipped during bulk imports)
+        if (! config('import.skip_duplicate_cache', false)) {
+            $this->duplicateCacheService->invalidatePersonCache($person->id);
+        }
 
         // Do not support for create person
         //        $this->ensurePortalAccountOnCreate($person);
@@ -64,9 +66,9 @@ class PersonObserver
             DB::table('persons')->where('id', $person->id)->update(['updated_by' => auth()->id()]);
         }
 
-        // Invalidate duplicate cache for this person if relevant fields changed
+        // Invalidate duplicate cache for this person if relevant fields changed (skipped during bulk imports)
         $duplicateRelevantFields = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
-        if ($person->wasChanged($duplicateRelevantFields)) {
+        if (! config('import.skip_duplicate_cache', false) && $person->wasChanged($duplicateRelevantFields)) {
             $this->duplicateCacheService->invalidatePersonCache($person->id);
         }
 
@@ -81,8 +83,10 @@ class PersonObserver
      */
     public function deleted(Person $person): void
     {
-        // Invalidate duplicate cache for this person
-        $this->duplicateCacheService->invalidatePersonCache($person->id);
+        // Invalidate duplicate cache for this person (skipped during bulk imports)
+        if (! config('import.skip_duplicate_cache', false)) {
+            $this->duplicateCacheService->invalidatePersonCache($person->id);
+        }
 
         $this->deletePortalAccount($person, 'deleted');
     }

@@ -240,9 +240,15 @@ class LeadObserver
 
     /**
      * Invalidate duplicate cache for a lead and related leads.
+     * Skipped during bulk imports to avoid thousands of individual cache calls;
+     * a single rebuild runs after the import completes.
      */
     private function invalidateDuplicateCache(Lead $lead): void
     {
+        if (config('import.skip_duplicate_cache', false)) {
+            return;
+        }
+
         try {
             $cacheService = app(LeadDuplicateCacheService::class);
             $cacheService->invalidateLeadCache($lead->id);

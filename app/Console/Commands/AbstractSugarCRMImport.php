@@ -10,6 +10,7 @@ use DateTimeInterface;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -249,17 +250,19 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function executeImport(bool $dryRun, callable $importLogic)
     {
-        // Disable webhooks during import to prevent external notifications
+        // Disable webhooks and duplicate-cache invalidation during import
         if (! $dryRun) {
             $this->disableWebhooks();
+            $this->disableDuplicateCache();
         }
 
         try {
             return $importLogic();
         } finally {
-            // Always re-enable webhooks after import, even if an error occurred
+            // Always restore state after import, even if an error occurred
             if (! $dryRun) {
                 $this->enableWebhooks();
+                $this->enableDuplicateCache();
             }
         }
     }
@@ -447,6 +450,27 @@ abstract class AbstractSugarCRMImport extends Command
     {
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');
+    }
+
+    /**
+     * Suppress per-record duplicate-cache invalidations during import.
+     * Observers check import.skip_duplicate_cache before calling Cache::forget().
+     * A single cache rebuild is scheduled after the import completes.
+     */
+    private function disableDuplicateCache(): void
+    {
+        Config::set('import.skip_duplicate_cache', true);
+        $this->info('🔕 Duplicate cache invalidation suppressed for import operation');
+    }
+
+    /**
+     * Re-enable duplicate-cache invalidation after import.
+     * The caller (e.g. reset_prod.sh) is responsible for triggering a cache rebuild afterwards.
+     */
+    private function enableDuplicateCache(): void
+    {
+        Config::set('import.skip_duplicate_cache', false);
+        $this->info('🔔 Duplicate cache invalidation re-enabled');
     }
 
     private function ensureLogRunHasStarted(): bool

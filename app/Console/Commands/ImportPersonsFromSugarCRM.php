@@ -291,6 +291,11 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
             &$firstErrors,
             $bar
         ) {
+            // Pre-fetch all existing external_ids for this chunk in one query (avoids N+1)
+            $existingExternalIds = Person::whereIn('external_id', $records->pluck('id'))
+                ->pluck('external_id')
+                ->flip();
+
             foreach ($records as $record) {
                 try {
                     // Validate required fields (lot first names are empty in SugarCRM)
@@ -303,12 +308,11 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                         continue;
                     }
 
-                    // Check if person already exists by external_id
-                    $existingPerson = Person::where('external_id', $record->id)->first();
-                    if ($existingPerson) {
+                    // Check if person already exists by external_id (O(1) lookup from pre-fetched set)
+                    if (isset($existingExternalIds[$record->id])) {
                         $skipped++;
                         $skippedAlreadyExisting++;
-                        $this->infoV("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
+                        $this->infoV("Skipping existing person with external_id={$record->id}");
                         $bar->advance();
 
                         continue;
@@ -380,7 +384,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                             'city'                => $record->primary_address_city ?? null,
                             'country'             => $record->primary_address_country ?? null,
                         ]);
-                        $person->update(['address_id' => $address->id]);
+                        DB::table('persons')->where('id', $person->id)->update(['address_id' => $address->id]);
                     }
                     // Note: PersonAttributeKeys enum values can be used here for additional attributes
                     // $attributeValueRepo->save([

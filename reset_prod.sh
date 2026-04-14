@@ -24,10 +24,9 @@ run() {
 
 run ./reset_base.sh prod &&
 run php artisan import:persons ${PERSON_LIMIT_ARG} &&
-run php artisan keycloak:sync-users &&
-run php artisan planning:create-test-data &&
 run php artisan import:leads ${LEAD_LIMIT_ARG} &&
 run php artisan import:orders &&
 run php artisan import:email-attachment-files &&
+run php artisan planning:create-test-data &&
 run php artisan import:send-report &&
 run php artisan duplicates:refresh-cache --clear

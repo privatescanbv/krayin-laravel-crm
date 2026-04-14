@@ -590,15 +590,18 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $emailAttachmentsImported = 0;
         $emailAttachmentsSkipped = 0;
 
+        // Pre-fetch all existing external_ids for this batch in one query (avoids N+1)
+        $existingExternalIds = Lead::whereIn('external_id', $records->pluck('id'))
+            ->pluck('external_id')
+            ->flip();
+
         foreach ($records as $record) {
             try {
                 $lead = null; // initialize for linter and downstream usage
-                // Check if lead already exists by external_id
-                $existingLead = Lead::where('external_id', $record->id)->first();
-                if ($existingLead) {
+                // Check if lead already exists by external_id (O(1) lookup from pre-fetched set)
+                if (isset($existingExternalIds[$record->id])) {
                     $skipped++;
                     $skippedAlreadyExisting++;
-                    //                    $this->info("Skipping existing lead with external_id={$record->id} (already imported as #{$existingLead->id})");
                     $this->bar->advance();
 
                     continue;
@@ -701,7 +704,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                             'city'                => $record->primary_address_city ?? null,
                             'country'             => $record->primary_address_country ?? null,
                         ]);
-                        $lead->update(['address_id' => $address->id]);
+                        DB::table('leads')->where('id', $lead->id)->update(['address_id' => $address->id]);
                     }
 
                     // Attach persons to lead using many-to-many relationship

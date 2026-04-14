@@ -115,3 +115,39 @@ test('it allows multiple anamnesis for different lead-person combinations', func
 
     // Each combination should have exactly one anamnesis
 });
+
+test('label attribute returns person name when person is linked', function () {
+    $this->seed(TestSeeder::class);
+    $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
+
+    $person = Person::factory()->create(['first_name' => 'Maria', 'last_name' => 'Smit']);
+    $lead = Lead::factory()->create();
+
+    $lead->attachPersons([$person->id]);
+    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->first();
+
+    expect($anamnesis->label)->toBe('Maria Smit');
+});
+
+test('label attribute falls back to Onbekend when no person or lead info', function () {
+    $lead = Lead::factory()->create();
+    $anamnesis = Anamnesis::factory()->create(['lead_id' => $lead->id, 'person_id' => null]);
+
+    // Without a linked person, label should not be 'Maria Smit' or similar
+    expect($anamnesis->label)->not->toBe('');
+});
+
+test('createMissingAnamnesis uses person name not lead name', function () {
+    $this->seed(TestSeeder::class);
+    $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
+
+    $person = Person::factory()->create(['first_name' => 'Piet', 'last_name' => 'Jansen']);
+    $lead = Lead::factory()->create(['first_name' => 'Lead', 'last_name' => 'Persoon']);
+
+    $lead->attachPersons([$person->id]);
+
+    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
+
+    expect($anamnesis->name)->toBe('Anamnesis voor Piet Jansen')
+        ->and($anamnesis->name)->not->toContain('Lead Persoon');
+});

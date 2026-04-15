@@ -38,7 +38,7 @@ services:
         WWWGROUP: '${WWWGROUP:-1000}'
         WWWUSER: '${WWWUSER:-1000}'
         APP_ENV: 'local'
-    image: sail-8.3/crm
+    image: sail/crm
     container_name: crm
     stdin_open: true
     tty: true

@@ -47,7 +47,7 @@ class AdminServiceProvider extends ServiceProvider
 
         Blade::anonymousComponentPath(__DIR__.'/../Resources/views/components', 'admin');
 
-        $this->app->bind(ExceptionHandler::class, Handler::class);
+        $this->app->singleton(ExceptionHandler::class, Handler::class);
 
         Relation::morphMap([
             'leads'            => Lead::class,

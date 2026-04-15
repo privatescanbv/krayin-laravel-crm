@@ -48,7 +48,7 @@ $registerAuthenticatedApiRoutes = function () {
         Route::post('{leadId}/notes', [LeadNoteController::class, 'store']);
 
         // Lead activities
-        Route::post('{id}/activities', [ActivityController::class, 'store'])->name('admin.leads.activities.store');
+        Route::post('{id}/activities', [ActivityController::class, 'store'])->name('api.leads.activities.store');
         Route::get('{id}/activities', [ActivityController::class, 'index']);
 
         // Lead forms

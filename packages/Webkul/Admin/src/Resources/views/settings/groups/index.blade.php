@@ -294,7 +294,7 @@
                     updateOrCreate(params, {resetForm, setErrors}) {
                         this.isProcessing = true;
 
-                        this.$axios.post(params.id ? `{{ route('admin.settings.groups.update', '') }}/${params.id}` : "{{ route('admin.settings.groups.store') }}", {
+                        this.$axios.post(params.id ? `{{ route('admin.settings.groups.update', ['id' => '__ID__']) }}`.replace('__ID__', params.id) : "{{ route('admin.settings.groups.store') }}", {
                             ...params,
                             _method: params.id ? 'put' : 'post'
                         }, {

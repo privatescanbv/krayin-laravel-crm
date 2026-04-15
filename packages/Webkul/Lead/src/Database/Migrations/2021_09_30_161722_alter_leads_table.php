@@ -26,13 +26,8 @@ return new class extends Migration
                 'leads.lead_pipeline_stage_id' => DB::raw($tablePrefix.'leads.lead_stage_id'),
             ]);
 
-        Schema::table('leads', function (Blueprint $table) use ($tablePrefix) {
-            // SQLite doesn't support dropping foreign keys, so skip this for SQLite
-            if (DB::getDriverName() !== 'sqlite') {
-                if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign($tablePrefix.'leads_lead_stage_id_foreign');
-            }
-            }
+        Schema::table('leads', function (Blueprint $table) {
+            $table->dropForeign(['lead_stage_id']);
             $table->dropColumn('lead_stage_id');
         });
     }
@@ -45,12 +40,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('leads', function (Blueprint $table) {
-            // SQLite doesn't support dropping foreign keys, so skip this for SQLite
-            if (DB::getDriverName() !== 'sqlite') {
-                if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign(DB::getTablePrefix().'leads_lead_pipeline_stage_id_foreign');
-            }
-            }
+            $table->dropForeign(['lead_pipeline_stage_id']);
             $table->dropColumn('lead_pipeline_stage_id');
 
             $table->integer('lead_stage_id')->unsigned();

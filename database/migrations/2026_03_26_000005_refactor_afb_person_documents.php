@@ -8,16 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $driver = Schema::getConnection()->getDriverName();
-
-        if ($driver !== 'sqlite') {
-            Schema::table('afb_dispatch_orders', function (Blueprint $table) {
-                $table->dropForeign(['clinic_id']);
-                $table->dropForeign(['clinic_department_id']);
-            });
-        }
-
         Schema::table('afb_dispatch_orders', function (Blueprint $table) {
+            $table->dropIndex(['clinic_id', 'order_id']);
+            $table->dropForeign(['clinic_id']);
+            $table->dropForeign(['clinic_department_id']);
             $table->dropColumn(['clinic_id', 'clinic_department_id']);
         });
 

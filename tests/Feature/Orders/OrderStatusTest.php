@@ -10,6 +10,7 @@ use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Services\OrderStatusService;
 use App\Services\OrderStatusTransitionValidator;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Webkul\Lead\Models\Stage as LeadStage;
@@ -20,9 +21,8 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->orderStatusService = app(OrderStatusService::class);
 
-    $this->plannableResourceType = ResourceType::factory()->create([
-        'name' => ResourceTypeEnum::MRI_SCANNER->label(),
-    ]);
+    $this->seed(TestSeeder::class);
+    $this->plannableResourceType = ResourceType::where('name', ResourceTypeEnum::MRI_SCANNER->label())->firstOrFail();
 });
 
 test('order stage is voorbereiden when not all plannable items are planned', function () {

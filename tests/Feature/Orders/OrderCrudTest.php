@@ -6,13 +6,13 @@ use App\Enums\OrderItemStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
+use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
-use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
-    test()->withoutMiddleware(CanInstall::class);
+    $this->seed(TestSeeder::class);
 
     $user = makeUser();
     $this->actingAs($user, 'user');

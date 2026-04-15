@@ -83,7 +83,7 @@ class ImpersonationService
         if (! $isStart) {
             $startedAt = session('impersonating.started_at');
             if ($startedAt) {
-                $additional['duration_seconds'] = now()->diffInSeconds(Carbon::parse($startedAt));
+                $additional['duration_seconds'] = (int) round(now()->diffInSeconds(Carbon::parse($startedAt)));
             }
         }
 

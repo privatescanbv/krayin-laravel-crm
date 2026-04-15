@@ -37,13 +37,13 @@ class SalesLeadListener
 
         // Check if the pipeline was recently updated (within last 5 seconds)
         // This prevents double updates when AttributeValueObserver has already updated the pipeline
-        $recentlyUpdated = $lead->updated_at && $lead->updated_at->diffInSeconds(now()) < 5;
+        $recentlyUpdated = $lead->updated_at && (int) round($lead->updated_at->diffInSeconds(now())) < 5;
 
         if ($recentlyUpdated) {
             Log::info('SalesLeadListener: Skipping update - lead was recently updated', [
                 'lead_id'     => $lead->id,
                 'updated_at'  => $lead->updated_at,
-                'seconds_ago' => $lead->updated_at->diffInSeconds(now()),
+                'seconds_ago' => (int) round($lead->updated_at->diffInSeconds(now())),
             ]);
 
             return;

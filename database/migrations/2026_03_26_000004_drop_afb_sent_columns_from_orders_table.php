@@ -9,10 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
-                $table->dropForeign(['afb_sent_to_clinic_department_id']);
-                $table->dropForeign(['afb_sent_to_clinic_id']);
-            }
+            $table->dropForeign(['afb_sent_to_clinic_department_id']);
+            $table->dropForeign(['afb_sent_to_clinic_id']);
             $table->dropColumn([
                 'afb_sent_at',
                 'afb_sent_type',

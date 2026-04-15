@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
+use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
 use App\Http\Controllers\Admin\Settings\OrderController;
 use App\Http\Controllers\Admin\Settings\OrderItemController;
 use App\Http\Controllers\Admin\Settings\OrderPaymentController;
-use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
-use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
+use Illuminate\Support\Facades\Route;
 
 /**
  * Orders routes (top-level, not under settings).
@@ -21,7 +21,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::get('edit/{id}', 'edit')->name('admin.orders.edit');
     Route::put('edit/{id}', 'update')->name('admin.orders.update');
     Route::put('{id}/stage', 'updateStage')->name('admin.orders.stage.update');
-    Route::delete('', 'destroy')->name('admin.orders.delete');
+    Route::delete('', 'destroy')->name('admin.orders.bulk_delete');
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
     Route::post('{orderId}/gvl-form', 'attachGvlForm')->name('admin.orders.gvl-form.attach');
     Route::delete('{orderId}/gvl-form', 'detachGvlForm')->name('admin.orders.gvl-form.detach');
@@ -77,7 +77,7 @@ Route::controller(OrderItemController::class)->prefix('order-items')->group(func
     Route::post('create', 'store')->name('admin.order_items.store');
     Route::get('edit/{id}', 'edit')->name('admin.order_items.edit');
     Route::put('edit/{id}', 'update')->name('admin.order_items.update');
-    Route::delete('', 'destroy')->name('admin.order_items.delete');
+    Route::delete('', 'destroy')->name('admin.order_items.bulk_delete');
     Route::delete('{id}', 'destroy')->name('admin.order_items.delete');
     Route::get('partner-purchase-prices/{productId}', 'getPartnerPurchasePrices')
         ->name('admin.order_items.partner_purchase_prices');
@@ -102,5 +102,3 @@ Route::middleware(['user'])->controller(ResourcePlanningMonitorController::class
     Route::get('order/{orderId}/resource-types', 'orderResourceTypes')->name('admin.planning.monitor.order.resource_types');
     Route::post('order-item/{orderItemId}/book', 'bookOrderItem')->name('admin.planning.monitor.order_item.book');
 });
-
-

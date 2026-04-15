@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Settings\ClinicDepartmentController;
 use App\Http\Controllers\Admin\Settings\DepartmentController;
 use App\Http\Controllers\Admin\Settings\ImportLogController;
 use App\Http\Controllers\Admin\Settings\ImportRunController;
+use App\Http\Controllers\Admin\Settings\MarketingCampaignController;
 use App\Http\Controllers\Admin\Settings\ProductTypeController;
 use App\Http\Controllers\Admin\Settings\ResourceController;
 use App\Http\Controllers\Admin\Settings\ResourceTypeController;
@@ -17,8 +18,6 @@ use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
 use Webkul\Admin\Http\Controllers\Settings\EmailTemplateController;
 use Webkul\Admin\Http\Controllers\Settings\GroupController;
-use Webkul\Admin\Http\Controllers\Settings\LocationController;
-use App\Http\Controllers\Admin\Settings\MarketingCampaignController;
 use Webkul\Admin\Http\Controllers\Settings\Marketing\EventController;
 use Webkul\Admin\Http\Controllers\Settings\PipelineController;
 use Webkul\Admin\Http\Controllers\Settings\RoleController;
@@ -68,7 +67,7 @@ Route::prefix('settings')->group(function () {
         Route::get('{id}/afb-person-documents/{personDocumentId}/download', 'downloadAfbDocument')
             ->name('admin.clinics.afb_person_documents.download');
         // Some datagrid actions may send DELETE to base path; support both
-        Route::delete('', 'destroy')->name('admin.clinics.delete');
+        Route::delete('', 'destroy')->name('admin.clinics.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.clinics.delete');
 
         // Clinic Activities
@@ -100,7 +99,7 @@ Route::prefix('settings')->group(function () {
         Route::post('create', 'store')->name('admin.clinic_departments.store');
         Route::get('edit/{id}', 'edit')->name('admin.clinic_departments.edit');
         Route::put('edit/{id}', 'update')->name('admin.clinic_departments.update');
-        Route::delete('', 'destroy')->name('admin.clinic_departments.delete');
+        Route::delete('', 'destroy')->name('admin.clinic_departments.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.clinic_departments.delete');
     });
 
@@ -121,7 +120,7 @@ Route::prefix('settings')->group(function () {
         Route::get('edit/{id}', 'edit')->name('admin.settings.product_types.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.product_types.update');
         Route::get('search', 'search')->name('admin.settings.product_types.search');
-        Route::delete('', 'destroy')->name('admin.settings.product_types.delete');
+        Route::delete('', 'destroy')->name('admin.settings.product_types.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.product_types.delete');
     });
 
@@ -131,7 +130,7 @@ Route::prefix('settings')->group(function () {
     Route::controller(ImportRunController::class)->prefix('import-runs')->group(function () {
         Route::get('', 'index')->name('admin.settings.import-runs.index');
         Route::get('view/{id}', 'view')->name('admin.settings.import-runs.view');
-        Route::delete('', 'destroy')->name('admin.settings.import-runs.delete');
+        Route::delete('', 'destroy')->name('admin.settings.import-runs.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.import-runs.delete');
     });
 
@@ -141,7 +140,7 @@ Route::prefix('settings')->group(function () {
     Route::controller(ImportLogController::class)->prefix('import-logs')->group(function () {
         Route::get('', 'index')->name('admin.settings.import-logs.index');
         Route::get('view/{id}', 'view')->name('admin.settings.import-logs.view');
-        Route::delete('', 'destroy')->name('admin.settings.import-logs.delete');
+        Route::delete('', 'destroy')->name('admin.settings.import-logs.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.import-logs.delete');
     });
 
@@ -155,10 +154,9 @@ Route::prefix('settings')->group(function () {
         Route::get('edit/{id}', 'edit')->name('admin.settings.resource_types.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.resource_types.update');
         Route::get('search', 'search')->name('admin.settings.resource_types.search');
-        Route::delete('', 'destroy')->name('admin.settings.resource_types.delete');
+        Route::delete('', 'destroy')->name('admin.settings.resource_types.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.resource_types.delete');
     });
-
 
     /**
      * Resource routes.
@@ -170,7 +168,7 @@ Route::prefix('settings')->group(function () {
         Route::post('create', 'store')->name('admin.settings.resources.store');
         Route::get('edit/{id}', 'edit')->name('admin.settings.resources.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.resources.update');
-        Route::delete('', 'destroy')->name('admin.settings.resources.delete');
+        Route::delete('', 'destroy')->name('admin.settings.resources.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.resources.delete');
 
         // Nested: Resource Shifts
@@ -180,7 +178,7 @@ Route::prefix('settings')->group(function () {
             Route::post('create', 'store')->name('admin.settings.resources.shifts.store');
             Route::get('edit/{id}', 'edit')->name('admin.settings.resources.shifts.edit');
             Route::put('edit/{id}', 'update')->name('admin.settings.resources.shifts.update');
-            Route::delete('', 'destroy')->name('admin.settings.resources.shifts.delete');
+            Route::delete('', 'destroy')->name('admin.settings.resources.shifts.bulk_delete');
             Route::delete('{id}', 'destroy')->name('admin.settings.resources.shifts.delete');
         });
 
@@ -224,21 +222,21 @@ Route::prefix('settings')->group(function () {
     /**
      * WebForms Routes. - DISABLED FOR NOW
      */
-//    Route::controller(WebFormController::class)->prefix('web-forms')->group(function () {
-//        Route::group(['middleware' => ['user']], function () {
-//            Route::get('', 'index')->name('admin.settings.web_forms.index');
-//
-//            Route::get('create', 'create')->name('admin.settings.web_forms.create');
-//
-//            Route::post('create', 'store')->name('admin.settings.web_forms.store');
-//
-//            Route::get('edit/{id?}', 'edit')->name('admin.settings.web_forms.edit');
-//
-//            Route::put('edit/{id}', 'update')->name('admin.settings.web_forms.update');
-//
-//            Route::delete('{id}', 'destroy')->name('admin.settings.web_forms.delete');
-//        });
-//    });
+    //    Route::controller(WebFormController::class)->prefix('web-forms')->group(function () {
+    //        Route::group(['middleware' => ['user']], function () {
+    //            Route::get('', 'index')->name('admin.settings.web_forms.index');
+    //
+    //            Route::get('create', 'create')->name('admin.settings.web_forms.create');
+    //
+    //            Route::post('create', 'store')->name('admin.settings.web_forms.store');
+    //
+    //            Route::get('edit/{id?}', 'edit')->name('admin.settings.web_forms.edit');
+    //
+    //            Route::put('edit/{id}', 'update')->name('admin.settings.web_forms.update');
+    //
+    //            Route::delete('{id}', 'destroy')->name('admin.settings.web_forms.delete');
+    //        });
+    //    });
 
     /**
      * Workflows Routes.

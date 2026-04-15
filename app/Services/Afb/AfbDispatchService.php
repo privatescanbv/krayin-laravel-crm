@@ -226,7 +226,8 @@ class AfbDispatchService
             return false;
         }
 
-        return now()->diffInHours($examAt) <= 24;
+        // Avoid Carbon 3 float diffInHours edge cases: compare against a fixed horizon.
+        return $examAt->lessThanOrEqualTo(now()->copy()->addHours(24));
     }
 
     /**

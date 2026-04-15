@@ -6,6 +6,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Routing\Route;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -18,6 +19,8 @@ abstract class TestCase extends BaseTestCase
 
         // Set locale to English for consistent test messages
         app()->setLocale('en');
+
+        $this->assertApplicationRoutesHaveUniqueNames();
 
         // Disable CSRF token verification for tests
         $this->withoutMiddleware(VerifyCsrfToken::class);
@@ -58,5 +61,44 @@ abstract class TestCase extends BaseTestCase
 
         // Use default mail receiver driver instead of microsoft-graph to prevent GraphMailService instantiation
         config(['mail-receiver.default' => 'webklex-imap']);
+    }
+
+    /**
+     * Duplicate ->name() registrations cause route() to resolve only one URI; parameters like id are
+     * emitted as query strings (?id=) so the wrong route matches and controllers return 302 redirects.
+     */
+    protected function assertApplicationRoutesHaveUniqueNames(): void
+    {
+        /** @var array<string, list<string>> $byName */
+        $byName = [];
+
+        foreach ($this->app['router']->getRoutes() as $route) {
+            $name = $route->getName();
+            if ($name === null || $name === '') {
+                continue;
+            }
+
+            $byName[$name][] = $this->formatRouteForDuplicateMessage($route);
+        }
+
+        $duplicates = array_filter($byName, fn (array $routes): bool => count($routes) > 1);
+
+        $message = "Duplicate named routes break route() URL generation (tests often see 302 instead of 200). Each ->name() must be unique.\n";
+        foreach ($duplicates as $name => $lines) {
+            $message .= sprintf("  '%s' (%d): %s\n", $name, count($lines), implode(' | ', $lines));
+        }
+
+        $this->assertEmpty($duplicates, $message);
+    }
+
+    protected function formatRouteForDuplicateMessage(Route $route): string
+    {
+        $verbs = $route->methods();
+        $verb = $verbs[0] ?? '?';
+        $domain = $route->getDomain();
+        $uri = ltrim($route->uri(), '/');
+        $domainPrefix = $domain !== null ? $domain.'/' : '';
+
+        return strtoupper($verb).' '.$domainPrefix.$uri;
     }
 }

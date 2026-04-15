@@ -8,11 +8,16 @@ use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\ResourceType;
 use App\Models\SalesLead;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(TestSeeder::class);
+});
 
 test('updating to a won stage marks all non-lost order items as won', function () {
     $order = Order::factory()->create([
@@ -105,10 +110,7 @@ test('updating to a won stage dispatches order.update_stage.after event', functi
 });
 
 test('touching order does not downgrade from order akkoord when plannable items are WON', function () {
-    $plannableResourceType = ResourceType::factory()->create([
-        'name' => ResourceTypeEnum::MRI_SCANNER->label(),
-    ]);
-
+    $plannableResourceType = ResourceType::where('name', ResourceTypeEnum::MRI_SCANNER->label())->firstOrFail();
     $salesLead = SalesLead::factory()->create();
     $productWithPartner = Product::factory()->create();
     PartnerProduct::factory()->create([

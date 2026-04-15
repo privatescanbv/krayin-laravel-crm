@@ -340,7 +340,7 @@
 
                         this.$axios.post(
                             isUpdating
-                            ? `{{ route('admin.settings.marketing.events.update', '') }}/${paramas.id}`
+                            ? `{{ route('admin.settings.marketing.events.update', ['id' => '__ID__']) }}`.replace('__ID__', paramas.id)
                             : '{{ route('admin.settings.marketing.events.store') }}',
                             paramas
                         )

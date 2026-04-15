@@ -131,9 +131,9 @@ class Lead extends AbstractReporting
      */
     public function getAverageLeadsPerDay($startDate, $endDate): float
     {
-        $days = $startDate->diffInDays($endDate);
+        $days = (int) round($startDate->diffInDays($endDate));
 
-        if ($days == 0) {
+        if ($days === 0) {
             return 0;
         }
 

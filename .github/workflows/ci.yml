@@ -1,14 +1,13 @@
-name: CI
+name: privatescan crm build and test
 
 on:
   push:
     branches:
-      - development
-      - main
+      - '**'
+
   pull_request:
     branches:
-      - development
-      - main
+      - '**'
 
 jobs:
   tests-and-ui:
@@ -31,7 +30,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
+          php-version: 8.5
           extensions: curl, gd, intl, mbstring, openssl, pdo, pdo_mysql, tokenizer, zip
           ini-values: error_reporting=E_ALL
           tools: composer:v2

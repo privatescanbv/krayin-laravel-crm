@@ -115,15 +115,10 @@ return new class extends Migration
         DB::statement('UPDATE addresses SET lead_id = NULL, person_id = NULL, organization_id = NULL');
 
         // Step 5: Drop old foreign key constraints and columns from addresses table
-        if ($driver !== 'sqlite') {
-            Schema::table('addresses', function (Blueprint $table) {
-                $table->dropForeign(['lead_id']);
-                $table->dropForeign(['person_id']);
-                $table->dropForeign(['organization_id']);
-            });
-        }
-
         Schema::table('addresses', function (Blueprint $table) {
+            $table->dropForeign(['lead_id']);
+            $table->dropForeign(['person_id']);
+            $table->dropForeign(['organization_id']);
             $table->dropColumn(['lead_id', 'person_id', 'organization_id']);
         });
     }

@@ -9,9 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('emails', function (Blueprint $table) {
-            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
-                $table->dropForeign(['activity_id']);
-            }
+            $table->dropForeign(['activity_id']);
             $table->dropColumn('activity_id');
         });
     }

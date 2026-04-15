@@ -17,7 +17,7 @@ use Webkul\Lead\Models\Lead;
 class FormService
 {
     public function __construct(
-        readonly private LeadAndSalesService $leadAndSalesService
+        private readonly LeadAndSalesService $leadAndSalesService
     ) {}
 
     public function getOpenForms(int $patientId): int

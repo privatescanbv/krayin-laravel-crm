@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;

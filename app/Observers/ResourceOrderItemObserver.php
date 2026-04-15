@@ -25,7 +25,7 @@ class ResourceOrderItemObserver
         $order = $resourceOrderItem->orderItem?->order;
         if ($order) {
             $examFrom = $resourceOrderItem->from;
-            if ($examFrom && ! $examFrom->isPast() && now()->diffInSeconds($examFrom, false) <= 86400) {
+            if ($examFrom && ! $examFrom->isPast() && (int) round(now()->diffInSeconds($examFrom, false)) <= 86400) {
                 $this->afbDispatchService->queueLateBookingForOrder($order);
             }
         }

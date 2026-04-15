@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
 use App\Services\FormService;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Webkul\Activity\Models\Activity;
@@ -14,6 +15,7 @@ use Webkul\Contact\Models\Person;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     config(['api.keys' => ['test-api-key']]);
 
     // Mock FormService so tests don't make real HTTP calls to the forms API.

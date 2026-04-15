@@ -61,7 +61,7 @@ class CallStatusController extends Controller
                $originalTo = $activity->schedule_to;
 
                if ($originalFrom) {
-                   $diff = $originalTo && $originalFrom ? $originalTo->diffInDays($originalFrom) : 0;
+                   $diff = $originalTo && $originalFrom ? (int) round($originalTo->diffInDays($originalFrom)) : 0;
                    $activity->schedule_from = now()->addDays($days);
                    if ($originalTo) {
                        $activity->schedule_to = $activity->schedule_from->copy()->addDays($diff);

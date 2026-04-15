@@ -496,9 +496,10 @@ class Lead extends Model implements LeadContract
             return 0;
         }
 
-        $rottenDate = $this->created_at->addDays($this->pipeline->rotten_days);
+        $rottenDate = $this->created_at->clone()->addDays((int) $this->pipeline->rotten_days);
 
-        return $rottenDate->diffInDays(Carbon::now(), false);
+        // Carbon 3 returns float from diffInDays(); consumers expect whole days as int.
+        return (int) round($rottenDate->diffInDays(Carbon::now(), false));
     }
 
     public function getContactPersonOrFirstPerson(): ?Person    {

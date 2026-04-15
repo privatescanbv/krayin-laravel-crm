@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Enums\ActivityType;
 use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStage;
+use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
+use Database\Seeders\TestSeeder;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -16,40 +19,14 @@ use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\Type;
 use Webkul\User\Models\User;
 
+beforeEach(function (): void {
+    $this->seed(TestSeeder::class);
+    // Order::firstOrderStageId() returns hardcoded stage IDs from PipelineStage enum.
+    // Create the minimum required: orders pipeline (ID 6) + ORDER_CONFIRM stage (ID 30).
+});
+
 test('lead won creates sales lead and order', function (): void {
     // Arrange: create a pipeline with a won stage at the end
-    $pipeline = Pipeline::factory()->create();
-    $stageNew = Stage::create([
-        'name'             => 'New',
-        'lead_pipeline_id' => $pipeline->id,
-        'code'             => 'new',
-        'sort_order'       => 1,
-        'is_won'           => false,
-        'is_lost'          => false,
-    ]);
-    $stageWon = Stage::create([
-        'name'             => 'Won',
-        'lead_pipeline_id' => $pipeline->id,
-        'code'             => 'won',
-        'sort_order'       => 100,
-        'is_won'           => true,
-        'is_lost'          => false,
-    ]);
-
-    // Create workflow pipeline and its first stage for SalesLead
-    $workflowPipeline = Pipeline::factory()->create([
-        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-        'name' => 'Privatescan Workflow',
-        'type' => 'workflow',
-    ]);
-    $workflowFirstStage = Stage::create([
-        'name'             => 'Bestelling voorbereiden',
-        'lead_pipeline_id' => $workflowPipeline->id,
-        'code'             => 'bestelling-voorbereiden',
-        'sort_order'       => 1,
-        'is_won'           => false,
-        'is_lost'          => false,
-    ]);
 
     // Create required related models for the lead
     $user = User::factory()->create();
@@ -67,8 +44,8 @@ test('lead won creates sales lead and order', function (): void {
 
     // Create lead manually to avoid factory stage creation issues
     $lead = new Lead([
-        'lead_pipeline_id'       => $pipeline->id,
-        'lead_pipeline_stage_id' => $stageNew->id,
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
+        'lead_pipeline_stage_id' => PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN->id(),
         'status'                 => 1,
         'first_name'             => 'John',
         'last_name'              => 'Doe',
@@ -87,7 +64,7 @@ test('lead won creates sales lead and order', function (): void {
 
     // Act: transition lead to won stage (triggers LeadObserver@updated)
     $lead->update([
-        'lead_pipeline_stage_id' => $stageWon->id,
+        'lead_pipeline_stage_id' => PipelineStage::WON->id(),
     ]);
 
     // Assert: a SalesLead exists and is linked to the Lead
@@ -99,7 +76,7 @@ test('lead won creates sales lead and order', function (): void {
     $this->assertNotNull($salesLead, 'SalesLead not created for won lead');
 
     // Assert: SalesLead has the correct pipeline stage ID (first stage of workflow pipeline)
-    $this->assertEquals($workflowFirstStage->id, $salesLead->pipeline_stage_id, 'SalesLead should have the first stage of the Privatescan workflow pipeline');
+    $this->assertEquals(PipelineStage::SALES_IN_BEHANDELING->id(), $salesLead->pipeline_stage_id, 'SalesLead should have the first stage of the Privatescan workflow pipeline');
 
     // Assert: an Order exists for the SalesLead with default values
     $this->assertDatabaseHas('orders', [
@@ -147,29 +124,6 @@ test('lead won does not create sales lead when one exists in non-won/lost stage'
         'is_lost'          => false,
     ]);
 
-    // Create workflow pipeline and its stages for SalesLead
-    $workflowPipeline = Pipeline::factory()->create([
-        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-        'name' => 'Privatescan Workflow',
-        'type' => 'workflow',
-    ]);
-    $workflowFirstStage = Stage::create([
-        'name'             => 'Bestelling voorbereiden',
-        'lead_pipeline_id' => $workflowPipeline->id,
-        'code'             => 'bestelling-voorbereiden',
-        'sort_order'       => 1,
-        'is_won'           => false,
-        'is_lost'          => false,
-    ]);
-    $workflowWonStage = Stage::create([
-        'name'             => 'Order Won',
-        'lead_pipeline_id' => $workflowPipeline->id,
-        'code'             => 'order-won',
-        'sort_order'       => 2,
-        'is_won'           => true,
-        'is_lost'          => false,
-    ]);
-
     // Create required related models for the lead
     $user = User::factory()->create();
     $source = Source::create(['name' => 'Website']);
@@ -208,7 +162,7 @@ test('lead won does not create sales lead when one exists in non-won/lost stage'
     $existingSalesLead = SalesLead::create([
         'name'              => $lead->name,
         'description'       => $lead->description,
-        'pipeline_stage_id' => $workflowFirstStage->id, // Non-won/lost stage
+        'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id(), // Non-won/lost stage
         'lead_id'           => $lead->id,
         'user_id'           => $lead->user_id,
     ]);
@@ -224,7 +178,7 @@ test('lead won does not create sales lead when one exists in non-won/lost stage'
     $this->assertEquals($existingSalesLead->id, $salesLeads->first()->id, 'Should be the existing SalesLead');
 
     // Assert: the existing SalesLead is still in the non-won/lost stage
-    $this->assertEquals($workflowFirstStage->id, $salesLeads->first()->pipeline_stage_id, 'SalesLead should still be in the non-won/lost stage');
+    $this->assertEquals(PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id(), $salesLeads->first()->pipeline_stage_id, 'SalesLead should still be in the non-won/lost stage');
 
     // Assert: no new order was created (since no new SalesLead was created)
     $orders = Order::where('sales_lead_id', $existingSalesLead->id)->get();
@@ -232,47 +186,6 @@ test('lead won does not create sales lead when one exists in non-won/lost stage'
 });
 
 test('lead won creates sales lead when existing one is in won/lost stage', function (): void {
-    // Arrange: create a pipeline with a won stage at the end
-    $pipeline = Pipeline::factory()->create();
-    $stageNew = Stage::create([
-        'name'             => 'New',
-        'lead_pipeline_id' => $pipeline->id,
-        'code'             => 'new',
-        'sort_order'       => 1,
-        'is_won'           => false,
-        'is_lost'          => false,
-    ]);
-    $stageWon = Stage::create([
-        'name'             => 'Won',
-        'lead_pipeline_id' => $pipeline->id,
-        'code'             => 'won',
-        'sort_order'       => 100,
-        'is_won'           => true,
-        'is_lost'          => false,
-    ]);
-
-    // Create workflow pipeline and its stages for SalesLead
-    $workflowPipeline = Pipeline::factory()->create([
-        'id'   => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value,
-        'name' => 'Privatescan Workflow',
-        'type' => 'workflow',
-    ]);
-    $workflowFirstStage = Stage::create([
-        'name'             => 'Bestelling voorbereiden',
-        'lead_pipeline_id' => $workflowPipeline->id,
-        'code'             => 'bestelling-voorbereiden',
-        'sort_order'       => 1,
-        'is_won'           => false,
-        'is_lost'          => false,
-    ]);
-    $workflowWonStage = Stage::create([
-        'name'             => 'Order Won',
-        'lead_pipeline_id' => $workflowPipeline->id,
-        'code'             => 'order-won',
-        'sort_order'       => 2,
-        'is_won'           => true,
-        'is_lost'          => false,
-    ]);
 
     // Create required related models for the lead
     $user = User::factory()->create();
@@ -290,8 +203,8 @@ test('lead won creates sales lead when existing one is in won/lost stage', funct
 
     // Create lead manually to avoid factory stage creation issues
     $lead = new Lead([
-        'lead_pipeline_id'       => $pipeline->id,
-        'lead_pipeline_stage_id' => $stageNew->id,
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
+        'lead_pipeline_stage_id' => PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value,
         'status'                 => 1,
         'first_name'             => 'John',
         'last_name'              => 'Doe',
@@ -312,14 +225,14 @@ test('lead won creates sales lead when existing one is in won/lost stage', funct
     $existingSalesLead = SalesLead::create([
         'name'              => $lead->name,
         'description'       => $lead->description,
-        'pipeline_stage_id' => $workflowWonStage->id, // Won stage
+        'pipeline_stage_id' => PipelineStage::SALES_MET_SUCCES_AFGEROND->id(), // Won stage
         'lead_id'           => $lead->id,
         'user_id'           => $lead->user_id,
     ]);
 
     // Act: transition lead to won stage (should create a new SalesLead)
     $lead->update([
-        'lead_pipeline_stage_id' => $stageWon->id,
+        'lead_pipeline_stage_id' => PipelineStage::WON->id(),
     ]);
 
     // Assert: two SalesLeads exist (the existing won one and a new one)
@@ -328,7 +241,7 @@ test('lead won creates sales lead when existing one is in won/lost stage', funct
 
     // Assert: the new SalesLead is in the first stage of the workflow pipeline
     $newSalesLead = $salesLeads->where('id', '!=', $existingSalesLead->id)->first();
-    $this->assertEquals($workflowFirstStage->id, $newSalesLead->pipeline_stage_id, 'New SalesLead should be in the first stage of the workflow pipeline');
+    $this->assertEquals(PipelineStage::SALES_IN_BEHANDELING->id(), $newSalesLead->pipeline_stage_id, 'New SalesLead should be in the first stage of the workflow pipeline');
 
     // Assert: no order is created for the existing SalesLead in won/lost stage (order creation only happens for newly created SalesLeads)
     $existingOrder = Order::where('sales_lead_id', $existingSalesLead->id)->first();

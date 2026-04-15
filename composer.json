@@ -10,44 +10,42 @@
     "require": {
         "php": "^8.4",
         "barryvdh/laravel-dompdf": "^3.0",
-        "diglactic/laravel-breadcrumbs": "^8.0",
         "doctrine/dbal": "^3.0",
         "enshrined/svg-sanitize": "^0.22.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "khaled.alshamaa/ar-php": "^6.3",
-        "knuckleswtf/scribe": "^5.6",
-        "konekt/concord": "^1.10",
-        "laravel/framework": "^10.0",
-        "laravel/sanctum": "^3.2",
-        "laravel/socialite": "^5.23",
-        "laravel/tinker": "^2.5",
-        "laravel/ui": "^4.5",
+        "knuckleswtf/scribe": "^5.9",
+        "konekt/concord": "^1.17.2",
+        "laravel/framework": "^13.5",
+        "laravel/sanctum": "^4.3",
+        "laravel/socialite": "^5.26",
+        "laravel/tinker": "^3.0",
+        "laravel/ui": "^4.6",
         "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
-        "prettus/l5-repository": "^2.7.9",
-        "sentry/sentry-laravel": "^4.15",
-        "smalot/pdfparser": "^2.11",
-        "webklex/laravel-imap": "^5.3"
+        "prettus/l5-repository": "^2.10",
+        "sentry/sentry-laravel": "^4.25",
+        "smalot/pdfparser": "^2.12",
+        "webklex/laravel-imap": "^6.2"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.6",
-        "barryvdh/laravel-ide-helper": "^3.1",
-        "behat/behat": "^3.22",
-        "fakerphp/faker": "^1.9.1",
+        "barryvdh/laravel-debugbar": "^4.2",
+        "barryvdh/laravel-ide-helper": "^3.7",
+        "behat/behat": "^3.30",
+        "fakerphp/faker": "^1.24",
         "friends-of-behat/mink-extension": "^2.7",
         "krayin/krayin-package-generator": "dev-master",
         "larastan/larastan": "*",
-        "laravel/boost": "^1.8",
-        "laravel/pint": "^1.16",
-        "laravel/sail": "^1.0.1",
-        "laravel/telescope": "^5.14",
-        "mockery/mockery": "^1.4.2",
-        "nunomaduro/collision": "^7.0",
-        "pestphp/pest": "^2.6",
-        "pestphp/pest-plugin-laravel": "^2.1",
-        "phpunit/phpunit": "^10.0",
-        "spatie/laravel-ignition": "^2.0",
-        "tightenco/duster": "^3.2"
+        "laravel/boost": "^2.4",
+        "laravel/pint": "^v1.29",
+        "laravel/sail": "^v1.57",
+        "laravel/telescope": "^5.20",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.9",
+        "pestphp/pest": "^4.6",
+        "pestphp/pest-plugin-laravel": "^4.1",
+        "phpunit/phpunit": "^12.5",
+        "tightenco/duster": "^3.4"
     },
     "config": {
         "optimize-autoloader": true,
@@ -94,6 +92,113 @@
         }
     },
     "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "konekt/concord",
+                "version": "1.17.2",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/artkonekt/concord/zipball/51c03f53420941dce7cc28fbd5767615ed291073"
+                },
+                "require": {
+                    "php": "^8.1",
+                    "illuminate/support": "^10.49|^11.46.2|^12.38|^13.0",
+                    "illuminate/console": "^10.49|^11.46.2|^12.38|^13.0",
+                    "konekt/enum": "^2.1|^3.0|^4.0",
+                    "konekt/enum-eloquent": "^1.7"
+                },
+                "autoload": {
+                    "files": [
+                        "src/Support/functions.php"
+                    ],
+                    "psr-4": {
+                        "Konekt\\Concord\\": "src"
+                    }
+                },
+                "extra": {
+                    "laravel": {
+                        "providers": [
+                            "Konekt\\Concord\\ConcordServiceProvider"
+                        ],
+                        "aliases": {
+                            "Concord": "Konekt\\Concord\\Facades\\Concord",
+                            "Helper": "Konekt\\Concord\\Facades\\Helper"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "konekt/enum-eloquent",
+                "version": "1.10.1",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/artkonekt/enum-eloquent/zipball/ebfbc29706c407eb98fdabd90c38501315d99ec7"
+                },
+                "require": {
+                    "php": "^8.0",
+                    "konekt/enum": "^2.0.2 || ^3.0 | ^4.0",
+                    "illuminate/database": "^8.75|9.*|10.*|11.*|12.*|^13.0"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Konekt\\Enum\\Eloquent\\": "src/"
+                    }
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "prettus/laravel-validation",
+                "version": "1.7.1",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/andersao/laravel-validator/zipball/fc6ecaaedb482767592eba2a4178792437c86bda"
+                },
+                "require": {
+                    "php": ">=5.4.0",
+                    "illuminate/support": "~5.4|^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/validation": "~5.4|^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Prettus\\Validator\\": "src/Prettus/Validator/"
+                    }
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "prettus/l5-repository",
+                "version": "2.10.2",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/andersao/l5-repository/zipball/27835088f92f42d73cc7f4f98b9386ddba709dcf"
+                },
+                "require": {
+                    "php": "^8.1",
+                    "illuminate/http": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/config": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/support": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/database": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/pagination": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/console": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/filesystem": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "illuminate/validation": "~5.0|~6.0|~7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                    "prettus/laravel-validation": "~1.1|~1.2|~1.3|~1.4|~1.5|~1.6|~1.7"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Prettus\\Repository\\": "src/Prettus/Repository/"
+                    }
+                }
+            }
+        },
         {
             "type": "path",
             "url": "packages/*/*",

@@ -71,7 +71,7 @@ trait ResourceAvailabilityTrait
                 $currentEnd = CarbonImmutable::parse($current['to']);
                 $blockStart = CarbonImmutable::parse($block['from']);
 
-                if ($blockStart->diffInMinutes($currentEnd) <= 1) {
+                if ((int) round($blockStart->diffInMinutes($currentEnd)) <= 1) {
                     $current['to'] = $block['to'];
                 } else {
                     $merged[] = $current;

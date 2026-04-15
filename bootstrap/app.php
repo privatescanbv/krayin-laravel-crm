@@ -1,57 +1,143 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Create The Application
-|--------------------------------------------------------------------------
-|
-| The first thing we will do is create a new Laravel application instance
-| which serves as the "glue" for all the components of Laravel, and is
-| the IoC container for the system binding all of the various parts.
-|
-*/
-
+use App\Console\Kernel as ConsoleKernel;
+use App\Http\Kernel as HttpKernel;
+use App\Http\Middleware\ApiKeyAuth;
+use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\BouncerPermissionMiddleware;
+use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\EnsureKeycloakPatientMatchesRoute;
+use App\Http\Middleware\PreventRequestsDuringMaintenance;
+use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\TrimStrings;
+use App\Http\Middleware\TrustProxies;
+use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
+use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-$app = new Application(
-    $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
-);
+/** @var Application $app */
+$app = Application::configure(basePath: dirname(__DIR__))
+    ->withEvents(false)
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->redirectGuestsTo(fn () => route('admin.session.create'));
 
-/*
-|--------------------------------------------------------------------------
-| Bind Important Interfaces
-|--------------------------------------------------------------------------
-|
-| Next, we need to bind some important interfaces into the container so
-| we will be able to resolve them when needed. The kernels serve the
-| incoming requests to this application from both the web and CLI.
-|
-*/
+        $middleware->replace(
+            \Illuminate\Http\Middleware\TrustProxies::class,
+            TrustProxies::class,
+        );
 
-$app->singleton(
-    Illuminate\Contracts\Http\Kernel::class,
-    App\Http\Kernel::class
-);
+        $middleware->replace(
+            \Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
+            PreventRequestsDuringMaintenance::class,
+        );
 
-$app->singleton(
-    Illuminate\Contracts\Console\Kernel::class,
-    App\Console\Kernel::class
-);
+        $middleware->replace(
+            \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
+            TrimStrings::class,
+        );
 
-$app->singleton(
-    Illuminate\Contracts\Debug\ExceptionHandler::class,
-    App\Exceptions\Handler::class
-);
+        $middleware->remove(\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class);
 
-/*
-|--------------------------------------------------------------------------
-| Return The Application
-|--------------------------------------------------------------------------
-|
-| This script returns the application instance. The instance is given to
-| the calling script so we can separate the building of the instances
-| from the actual running of the application and sending responses.
-|
-*/
+        $middleware->replaceInGroup(
+            'web',
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            EncryptCookies::class,
+        );
+
+        $middleware->replaceInGroup(
+            'web',
+            \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
+            VerifyCsrfToken::class,
+        );
+
+        $middleware->statefulApi();
+        $middleware->throttleApi('api');
+
+        $middleware->alias([
+            'auth'               => Authenticate::class,
+            'guest'              => RedirectIfAuthenticated::class,
+            'api.key'            => ApiKeyAuth::class,
+            'patient.self'       => EnsureKeycloakPatientMatchesRoute::class,
+            'bouncer.permission' => BouncerPermissionMiddleware::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->dontFlash([
+            'current_password',
+            'password',
+            'password_confirmation',
+        ]);
+
+        $exceptions->dontReport([
+            NotFoundHttpException::class,
+        ]);
+
+        $exceptions->reportable(function (\Throwable $e) {
+            if (app()->runningInConsole()) {
+                return;
+            }
+
+            try {
+                Log::error('Exception reported', [
+                    'exception' => get_class($e),
+                    'message'   => $e->getMessage(),
+                    'file'      => $e->getFile(),
+                    'line'      => $e->getLine(),
+                    'trace'     => $e->getTraceAsString(),
+                    'url'       => optional(request())->fullUrl(),
+                    'method'    => optional(request())->method(),
+                    'user_id'   => optional(optional(auth()->guard('user'))->user())->id,
+                ]);
+            } catch (\Exception $logException) {
+                Log::error('Could not log reported exception', ['exception' => $logException->getMessage()]);
+            }
+
+            return false;
+        });
+
+        $exceptions->respond(function (Response $response, \Throwable $e, Request $request) {
+            if ($response->getStatusCode() !== 500) {
+                return $response;
+            }
+
+            try {
+                Log::error('500 Internal Server Error', [
+                    'exception'    => get_class($e),
+                    'message'      => $e->getMessage(),
+                    'file'         => $e->getFile(),
+                    'line'         => $e->getLine(),
+                    'trace'        => $e->getTraceAsString(),
+                    'url'          => optional($request)->fullUrl(),
+                    'method'       => optional($request)->method(),
+                    'ip'           => optional($request)->ip(),
+                    'user_id'      => optional(optional(auth()->guard('user'))->user())->id,
+                    'request_data' => optional($request)->all(),
+                    'headers'      => optional(optional($request)->headers)->all(),
+                    'session_id'   => optional(session())->getId(),
+                ]);
+            } catch (\Exception $logException) {
+                Log::error('Could not log 500 response', ['exception' => $logException->getMessage()]);
+            }
+
+            return $response;
+        });
+    })
+    ->create();
+
+$app->singleton(HttpKernelContract::class, HttpKernel::class);
+$app->singleton(ConsoleKernelContract::class, ConsoleKernel::class);
 
 return $app;

@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Webkul\Contact\Models\Person;
@@ -16,6 +17,7 @@ use Webkul\Contact\Models\Person;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     Config::set('api.keys', ['valid-api-key-123']);
 });
 

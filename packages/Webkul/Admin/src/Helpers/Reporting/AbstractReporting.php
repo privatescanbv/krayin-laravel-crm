@@ -109,8 +109,8 @@ abstract class AbstractReporting
             $this->setEndDate(request()->date('end'));
         }
 
-        // Calculate the duration of the current period
-        $periodDuration = $this->startDate->diffInDays($this->endDate);
+        // Calculate the duration of the current period (Carbon 3 may return float from diffInDays)
+        $periodDuration = (int) round($this->startDate->diffInDays($this->endDate));
 
         // If start and end are the same date, use a default 30-day period
         if ($periodDuration === 0) {
@@ -128,8 +128,8 @@ abstract class AbstractReporting
      */
     private function setLastEndDate(): void
     {
-        // Calculate the duration of the current period
-        $periodDuration = $this->startDate->diffInDays($this->endDate);
+        // Calculate the duration of the current period (Carbon 3 may return float from diffInDays)
+        $periodDuration = (int) round($this->startDate->diffInDays($this->endDate));
 
         // If start and end are the same date, use a default 30-day period
         if ($periodDuration === 0) {
@@ -188,7 +188,7 @@ abstract class AbstractReporting
     public function getTimeInterval($startDate, $endDate, $dateColumn, $period)
     {
         if ($period == 'auto') {
-            $totalMonths = $startDate->diffInMonths($endDate) + 1;
+            $totalMonths = (int) round($startDate->diffInMonths($endDate)) + 1;
 
             /**
              * If the difference between the start and end date is more than 5 months
@@ -263,7 +263,7 @@ abstract class AbstractReporting
     {
         $intervals = [];
 
-        $totalMonths = $startDate->diffInMonths($endDate) + 1;
+        $totalMonths = (int) round($startDate->diffInMonths($endDate)) + 1;
 
         /**
          * If the difference between the start and end date is less than 5 months
@@ -308,7 +308,7 @@ abstract class AbstractReporting
 
         $endWeekDay = Carbon::createFromTimeString(core()->xWeekRange($endDate, 1).' 23:59:59');
 
-        $totalWeeks = $startWeekDay->diffInWeeks($endWeekDay);
+        $totalWeeks = (int) round($startWeekDay->diffInWeeks($endWeekDay));
 
         /**
          * If the difference between the start and end date is less than 6 weeks
@@ -351,7 +351,7 @@ abstract class AbstractReporting
     {
         $intervals = [];
 
-        $totalDays = $startDate->diffInDays($endDate) + 1;
+        $totalDays = (int) round($startDate->diffInDays($endDate)) + 1;
 
         for ($i = 0; $i < $totalDays; $i++) {
             $intervalStartDate = clone $startDate;

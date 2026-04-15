@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
@@ -66,6 +67,17 @@ class Handler extends ExceptionHandler
     {
         $response = parent::render($request, $exception);
 
+        // When APP_DEBUG is false, never expose exception class, SQL, paths, or stack traces in JSON.
+        if ($this->shouldSanitizeJsonErrorResponse($request, $response)) {
+            $status = $response->getStatusCode();
+
+            return response()->json([
+                'message' => $status === 503
+                    ? 'Service temporarily unavailable.'
+                    : 'Server Error',
+            ], $status);
+        }
+
         // Log all 500 errors with full stack trace
         if ($response->getStatusCode() === 500) {
             try {
@@ -89,5 +101,33 @@ class Handler extends ExceptionHandler
         }
 
         return $response;
+    }
+
+    /**
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Symfony\Component\HttpFoundation\Response  $response
+     */
+    private function shouldSanitizeJsonErrorResponse($request, $response): bool
+    {
+        // When debug is enabled, keep Laravel's detailed JSON errors for local development.
+        if (config('app.debug')) {
+            return false;
+        }
+
+        if (! $request->expectsJson() && ! $request->is('api/*')) {
+            return false;
+        }
+
+        if ($response->getStatusCode() < 500) {
+            return false;
+        }
+
+        if (! $response instanceof JsonResponse) {
+            return false;
+        }
+
+        $data = $response->getData(true);
+
+        return is_array($data) && array_key_exists('exception', $data);
     }
 }

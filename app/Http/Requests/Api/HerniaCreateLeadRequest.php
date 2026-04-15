@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Rules\MarketingCampaignExternalIdExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
 
@@ -16,7 +17,7 @@ class HerniaCreateLeadRequest extends FormRequest
     {
         return [
             // NOTE: despite the name, this is the external_id of a Marketing Campaign (marketing_campaigns.external_id)
-            'campaign_id'      => ['required', 'string', 'exists:marketing_campaigns,external_id'],
+            'campaign_id'      => ['required', 'string', new MarketingCampaignExternalIdExists()],
             'lead_source'      => ['required', 'string'],
             'kanaal_c'         => ['required', 'string'],
             'soort_aanvraag_c' => ['required', 'string'],

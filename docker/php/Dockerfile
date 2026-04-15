@@ -15,7 +15,7 @@ RUN rm -rf flows
 RUN mv /build/certs /certs
 RUN ./build.sh ${APP_ENV}
 
-FROM ghcr.io/privatescanbv/dockerbase/php:8.3-fpm-bullseye
+FROM ghcr.io/privatescanbv/dockerbase/php:8.5-fpm-bookworm
 ARG APP_ENV=production
 ARG WWWGROUP=1000
 ARG WWWUSER=1000
@@ -54,6 +54,9 @@ COPY --from=vite /build/storage/app/scribe ./storage/app/scribe
 
 ENV VIEW_COMPILED_PATH=/usr/share/nginx/html/storage/framework/views
 
+
+# Install missing PHP extensions required by dependencies
+RUN docker-php-ext-install calendar
 
 # Install Composer and PHP dependencies (ensure vendor/autoload.php exists)
 ENV COMPOSER_ALLOW_SUPERUSER=1

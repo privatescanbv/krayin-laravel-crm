@@ -378,6 +378,28 @@ test('order row resolves product by exact CRM name when template id has no match
         ->and($order->orderItems->first()->product_id)->toBe($product->id);
 });
 
+test('order row resolves product via partner product name when Sugar line differs from catalog Product name', function () {
+    $product = Product::factory()->create(['name' => 'TB1 catalog internal label']);
+    PartnerProduct::factory()->create([
+        'product_id' => $product->id,
+        'name'       => 'TB1 Royal Bodyscan',
+        'active'     => true,
+    ]);
+
+    insertSugarOrder('order-pp-name-001');
+    insertSugarRow('order-pp-name-001', 'row-pp-001', [
+        'name'                 => 'TB1 Royal+ Bodyscan',
+        'producttemplate_id_c' => 'unknown-sugar-template-uuid',
+    ]);
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pp-name-001')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->product_id)->toBe($product->id);
+});
+
 test('imports invoice purchase prices from Sugar order row cstm', function () {
     Person::factory()->create(['external_id' => 'contact-inv-1']);
 

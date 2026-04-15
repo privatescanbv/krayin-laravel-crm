@@ -2113,6 +2113,12 @@ return [
     ],
 
     'common' => [
+        'internal-server-error' => 'Interne serverfout',
+        'forbidden-error'       => 'Verboden',
+        'unauthenticated'       => 'Niet geauthenticeerd',
+        'resource-not-found'    => 'Resource niet gevonden',
+        'something-went-wrong'  => 'Er is iets misgegaan',
+
         'custom-attributes' => [
             'add-more' => 'Meer toevoegen',
             'address' => 'Adres',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Rules\MarketingCampaignExternalIdExists;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PrivatescanCreateLeadRequest extends FormRequest
@@ -54,7 +55,7 @@ class PrivatescanCreateLeadRequest extends FormRequest
             'select_interesse' => ['nullable', 'string'],
             'personen'         => ['nullable'],
             // NOTE: despite the name, this is the external_id of a Marketing Campaign (marketing_campaigns.external_id)
-            'campaign_id'      => ['nullable', 'string', 'exists:marketing_campaigns,external_id'],
+            'campaign_id'      => ['nullable', 'string', new MarketingCampaignExternalIdExists(allowEmpty: true)],
         ];
     }
 

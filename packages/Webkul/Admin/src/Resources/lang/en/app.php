@@ -2073,6 +2073,12 @@ return [
     ],
 
     'common' => [
+        'internal-server-error' => 'Internal Server Error',
+        'forbidden-error'       => 'Forbidden',
+        'unauthenticated'       => 'Unauthenticated',
+        'resource-not-found'    => 'Resource Not Found',
+        'something-went-wrong'  => 'Something went wrong',
+
         'custom-attributes' => [
             'add-more'             => 'Add More',
             'address'              => 'Address',

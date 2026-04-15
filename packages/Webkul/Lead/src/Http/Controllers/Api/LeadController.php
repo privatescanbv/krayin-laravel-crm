@@ -183,11 +183,12 @@ class LeadController extends Controller
         $hasRemovedInvalidPhones = false;
         $invalidPhones = [];
 
-        if (! isset($normalized['first_name']) || trim((string) $normalized['first_name']) === '') {
-            $normalized['first_name'] = '-';
-        }
         if ($allowInvalidPhone) {
             $normalized = $request->all();
+
+            if (! isset($normalized['first_name']) || trim((string) $normalized['first_name']) === '') {
+                $normalized['first_name'] = '-';
+            }
 
             [$normalized, $invalidPhones] = $this->stripInvalidPhones($normalized);
             $hasRemovedInvalidPhones = ! empty($invalidPhones);

@@ -17,6 +17,8 @@ use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
@@ -49,7 +51,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             TrimStrings::class,
         );
 
-        $middleware->remove(\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class);
+        $middleware->remove(ConvertEmptyStringsToNull::class);
 
         $middleware->replaceInGroup(
             'web',
@@ -59,7 +61,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         $middleware->replaceInGroup(
             'web',
-            \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
+            PreventRequestForgery::class,
             VerifyCsrfToken::class,
         );
 
@@ -85,7 +87,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             NotFoundHttpException::class,
         ]);
 
-        $exceptions->reportable(function (\Throwable $e) {
+        $exceptions->reportable(function (Throwable $e) {
             if (app()->runningInConsole()) {
                 return;
             }
@@ -101,14 +103,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
                     'method'    => optional(request())->method(),
                     'user_id'   => optional(optional(auth()->guard('user'))->user())->id,
                 ]);
-            } catch (\Exception $logException) {
+            } catch (Exception $logException) {
                 Log::error('Could not log reported exception', ['exception' => $logException->getMessage()]);
             }
 
             return false;
         });
 
-        $exceptions->respond(function (Response $response, \Throwable $e, Request $request) {
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             if ($response->getStatusCode() !== 500) {
                 return $response;
             }
@@ -128,7 +130,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
                     'headers'      => optional(optional($request)->headers)->all(),
                     'session_id'   => optional(session())->getId(),
                 ]);
-            } catch (\Exception $logException) {
+            } catch (Exception $logException) {
                 Log::error('Could not log 500 response', ['exception' => $logException->getMessage()]);
             }
 

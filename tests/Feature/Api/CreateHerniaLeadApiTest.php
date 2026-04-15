@@ -52,6 +52,22 @@ test('POST api/leads/hernia creates a lead', function () {
         ->and($lead->lead_type_id)->toBe(3); // Operatie
 });
 
+test('POST api/leads/hernia rejects unknown marketing campaign external_id', function () {
+    $payload = [
+        'campaign_id'      => '00000000-0000-0000-0000-000000000000',
+        'lead_source'      => 'Herniapoli.nl',
+        'kanaal_c'         => 'website',
+        'soort_aanvraag_c' => 'operatie',
+        'first_name'       => 'Jan',
+        'last_name'        => 'Jansen',
+        'email1'           => 'jan.jansen@example.com',
+    ];
+
+    $this->postJson('/api/leads/hernia', $payload)
+        ->assertStatus(422)
+        ->assertJsonStructure(['errors']);
+});
+
 test('POST api/leads/hernia rejects unknown properties (additionalProperties=false)', function () {
     $payload = [
         'campaign_id'      => '69b238c0-e630-b733-2bb3-4fd85ff554da',

@@ -25,6 +25,17 @@ class OrderNumberGenerator
                 ->first();
 
             $lastNumber = (int) ($sequence?->last_number ?? 0);
+
+            // Guard against sequences that drifted behind due to direct inserts (e.g. imports).
+            $maxInOrders = DB::table('orders')
+                ->where('order_number', 'like', $year.'%')
+                ->max(DB::raw('CAST(order_number AS UNSIGNED)'));
+
+            if ($maxInOrders) {
+                $maxFromOrders = (int) $maxInOrders - ($year * 100000);
+                $lastNumber = max($lastNumber, $maxFromOrders);
+            }
+
             $next = $lastNumber + 1;
 
             DB::table('order_number_sequences')

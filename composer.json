@@ -10,6 +10,7 @@
     "require": {
         "php": "^8.4",
         "barryvdh/laravel-dompdf": "^3.0",
+        "diglactic/laravel-breadcrumbs": "^10.0",
         "doctrine/dbal": "^3.0",
         "enshrined/svg-sanitize": "^0.22.0",
         "guzzlehttp/guzzle": "^7.0.1",

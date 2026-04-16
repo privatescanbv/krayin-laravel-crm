@@ -372,10 +372,6 @@ Bij wijzigingen aan variabelen: pas de constant aan en werk deze tabel bij.
 | `{{ form_link_section }}`
 | Complete HTML sectie met formulierlink indien aanwezig
 
-| Order
-| `{{ order.* }}`
-| Nested toegang tot Order attributen, bijv. `{{ order.id }}`
-
 |===
 
 ==== Belangrijke Noot

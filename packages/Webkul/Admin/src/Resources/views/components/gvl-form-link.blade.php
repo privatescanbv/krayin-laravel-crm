@@ -10,14 +10,10 @@
     'leadId' => null,
 ])
 @php
+    use App\Support\GvlFormLink;
+
     $showNoPortalWarning = $personId && ! $personHasPortalAccount && $gvlFormLink;
-    $useImpersonationLink = $personId
-        && $personHasPortalAccount
-        && bouncer()->hasPermission('contacts.persons.impersonate')
-        && $gvlFormLink;
-    $openFormUrl = $useImpersonationLink
-        ? route('admin.contacts.persons.impersonate-and-open-form', $personId) . '?redirect=' . urlencode($gvlFormLink)
-        : $gvlFormLink;
+    $openFormUrl = GvlFormLink::adminOpenUrl($gvlFormLink, $personId ? (int) $personId : null, (bool) $personHasPortalAccount);
 @endphp
 
 <x-admin::form.control-group>

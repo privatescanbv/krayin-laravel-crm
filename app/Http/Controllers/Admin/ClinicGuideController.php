@@ -7,6 +7,7 @@ use App\Enums\PipelineStage;
 use App\Http\Controllers\Controller;
 use App\Models\AfbPersonDocument;
 use App\Models\Order;
+use App\Support\GvlFormLink;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -117,7 +118,7 @@ class ClinicGuideController extends Controller
                             'phones'        => $person->phones ?? [],
                             'emails'        => $person->emails ?? [],
                         ] : null,
-                        'gvl_form_link'  => $gvlFormLink,
+                        'gvl_form_link'  => GvlFormLink::adminOpenUrlForPerson($gvlFormLink, $person),
                         'afb_documents'  => $afbDocuments,
                         'order_items'    => $items->map(fn ($item) => [
                             'product_name' => $item->product?->name,

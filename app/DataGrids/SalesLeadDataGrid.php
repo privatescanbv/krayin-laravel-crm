@@ -109,6 +109,15 @@ class SalesLeadDataGrid extends DataGrid
             'searchable' => true,
             'sortable'   => true,
             'width'      => '300px',
+            'closure'    => function ($row) {
+                if (empty($row->description)) {
+                    return '';
+                }
+
+                $escaped = e($row->description);
+
+                return '<span title="'.$escaped.'" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'.$escaped.'</span>';
+            },
         ]);
 
         $this->addColumn([

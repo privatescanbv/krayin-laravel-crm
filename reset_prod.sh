@@ -3,7 +3,7 @@
 # Run as -> nohup bash reset_prod.sh 2>&1 &
 
 # Ask for import limit (default -1 means no limit)
-read -p "Enter import limit (-1 = no limit) [ -1 ]: " IMPORT_LIMIT
+#read -p "Enter import limit (-1 = no limit) [ -1 ]: " IMPORT_LIMIT
 IMPORT_LIMIT=${IMPORT_LIMIT:--1}
 
 if [ "$IMPORT_LIMIT" = "-1" ]; then

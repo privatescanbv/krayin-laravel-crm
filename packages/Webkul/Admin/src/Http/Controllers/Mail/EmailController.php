@@ -18,7 +18,6 @@ use Webkul\Admin\DataGrids\Mail\EmailDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
-use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\EmailResource;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
@@ -727,44 +726,6 @@ class EmailController extends Controller
 
             ], 500);
         }
-    }
-
-    /**
-     * Transform the email data to activity resource.
-     *
-     * @param  array  $data
-     * @return ActivityResource
-     */
-    public function transformToActivity($data)
-    {
-        return new ActivityResource((object) [
-            'id'            => $data['id'],
-            'parent_id'     => $data['parent_id'],
-            'title'         => $data['subject'],
-            'type'          => 'email',
-            'is_done'       => 1,
-            'is_read'       => $data['is_read'] ?? 0,
-            'comment'       => $data['reply'],
-            'schedule_from' => null,
-            'schedule_to'   => null,
-            'user'          => auth()->guard('user')->user(),
-            'user_id'       => auth()->guard('user')->id(),
-            'group'         => null,
-            'participants'  => [],
-            'location'      => null,
-            'additional'    => json_encode([
-                'folders' => $data['folders'],
-                'from'    => $data['from'],
-                'to'      => $data['reply_to'],
-                'cc'      => $data['cc'],
-                'bcc'     => $data['bcc'],
-            ]),
-            'files'         => array_map(function ($attachment) {
-                return (object) $attachment;
-            }, $data['attachments']),
-            'created_at'    => $data['created_at'],
-            'updated_at'    => $data['updated_at'],
-        ]);
     }
 
     /**

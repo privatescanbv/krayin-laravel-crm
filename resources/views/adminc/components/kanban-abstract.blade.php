@@ -1137,19 +1137,17 @@
                                     : (this.entityType === 'order' ? 'order' : 'lead');
                                 const message = await window.buildOpenActivitiesConfirmMessage(this
                                     .$axios, lead.id, openCount, activityType);
-                                const confirmClose = await new Promise((resolve) => {
-                                    resolve(window.confirm(message));
-                                });
-
-                                if (!confirmClose) {
-                                    // Revert UI count since we optimistically incremented earlier
-                                    this.stageLeads[stage.id].leads.meta.total = this
-                                        .stageLeads[stage.id].leads.meta.total - 1;
-                                    return;
-                                }
-
-                                await this.updateLeadStage(lead.id, stage.id, {
-                                    close_open_activities: true
+                                this.$emitter.emit('open-confirm-modal', {
+                                    message,
+                                    agree: () => {
+                                        this.updateLeadStage(lead.id, stage.id, {
+                                            close_open_activities: true
+                                        });
+                                    },
+                                    disagree: () => {
+                                        this.stageLeads[stage.id].leads.meta.total = this
+                                            .stageLeads[stage.id].leads.meta.total - 1;
+                                    },
                                 });
                                 return;
                             }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run met:
-# nohup bash reset_data.sh > reset_data.log 2>&1 &
+# sudo bash -c 'cd /home/apps && nohup bash reset_data.sh > /home/apps/reset_data.log 2>&1 &'
 
 set -e
 

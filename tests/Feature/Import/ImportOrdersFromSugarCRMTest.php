@@ -98,7 +98,7 @@ beforeEach(function () {
         $table->decimal('inv_purchase_clinic_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_radio_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_total_c', 10, 2)->nullable();
-        $table->text('afb_omschrijving_c')->nullable();
+        $table->text('afb_description_c')->nullable();
     });
 
     // Join table: order → rows
@@ -210,7 +210,7 @@ function insertSugarRowCstm(string $rowId, array $overrides = []): void
         'inv_purchase_clinic_c' => null,
         'inv_purchase_radio_c'  => null,
         'inv_purchase_total_c'  => null,
-        'afb_omschrijving_c'    => null,
+        'afb_description_c'    => null,
     ], $overrides));
 }
 

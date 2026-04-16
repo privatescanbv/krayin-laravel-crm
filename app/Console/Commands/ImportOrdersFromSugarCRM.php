@@ -445,7 +445,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             'person_id'       => $person?->id,
                             'product_id'      => $product->id,
                             'name'            => $row->name ?? null,
-                            'afb_description' => ! empty($row->afb_omschrijving_c) ? trim($row->afb_omschrijving_c) : null,
+                            'afb_description' => ! empty($row->afb_description_c) ? trim($row->afb_description_c) : null,
                             'total_price'     => $row->sales_price ?? 0,
                             'quantity'        => 1,
                             'status'          => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? ''),
@@ -557,7 +557,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 'row_cstm.inv_purchase_clinic_c as inv_purchase_clinic_c',
                 'row_cstm.inv_purchase_radio_c as inv_purchase_radio_c',
                 'row_cstm.inv_purchase_total_c as inv_purchase_total_c',
-                'row_cstm.afb_omschrijving_c as afb_omschrijving_c',
+                'row_cstm.afb_description_c as afb_description_c',
             ])
             ->where('sor.deleted', 0)
             ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds)

@@ -304,14 +304,11 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
 
     $lead = Lead::factory()->create();
     $person = Person::factory()->create();
-    $lead->persons()->attach($person->id);
+    $lead->attachPersons([$person->id]);
 
     $originalLink = 'https://forms.example.com/forms/123';
-    $anamnesis = Anamnesis::factory()->create([
-        'lead_id'       => $lead->id,
-        'person_id'     => $person->id,
-        'gvl_form_link' => $originalLink,
-    ]);
+    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
+    $anamnesis->update(['gvl_form_link' => $originalLink]);
 
     Http::fake([
         'http://forms/api/forms/123' => Http::response([], 200),
@@ -342,14 +339,11 @@ test('gvl form stays linked to anamnesis when forms api responds with error', fu
 
     $lead = Lead::factory()->create();
     $person = Person::factory()->create();
-    $lead->persons()->attach($person->id);
+    $lead->attachPersons([$person->id]);
 
     $originalLink = 'https://forms.example.com/forms/456';
-    $anamnesis = Anamnesis::factory()->create([
-        'lead_id'       => $lead->id,
-        'person_id'     => $person->id,
-        'gvl_form_link' => $originalLink,
-    ]);
+    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
+    $anamnesis->update(['gvl_form_link' => $originalLink]);
 
     Http::fake([
         'http://forms/api/forms/456' => Http::response(['message' => 'not found'], 404),

@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\LeadMarketingData;
 use App\Services\LeadValidationService;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
+use function Laravel\Prompts\warning;
 
 class LeadController extends Controller
 {
@@ -64,6 +65,7 @@ class LeadController extends Controller
      * Create a Hernia lead from the inbound (Gravity Forms) payload schema.
      *
      * @response 201 {"message":"Lead created successfully.","lead_id":123,"data":{"id":123}}
+     * @throws Exception internal server error, missing lead_id from first request
      */
     public function storeHernia(HerniaCreateLeadRequest $inbound): JsonResponse
     {
@@ -77,17 +79,20 @@ class LeadController extends Controller
 
         $response = $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId(), allowInvalidPhone: true);
 
-        if ($response->getStatusCode() === 201 && ! empty($marketingData)) {
-            $leadId = json_decode($response->getContent(), true)['lead_id'] ?? null;
-            if ($leadId) {
-                foreach ($marketingData as $key => $value) {
-                    LeadMarketingData::create([
-                        'lead_id' => $leadId,
-                        'key'     => $key,
-                        'value'   => $value,
-                    ]);
-                }
+        if ($response->isSuccessful() && ! empty($marketingData)) {
+            $jsonResponse = json_decode($response->getContent(), true);
+            $leadId = $jsonResponse['lead_id'] ?? throw new Exception('Could not store marketing data, missing lead_id in response', ['response_create_lead' => $jsonResponse]);
+            foreach ($marketingData as $key => $value) {
+                LeadMarketingData::create([
+                    'lead_id' => $leadId,
+                    'key' => $key,
+                    'value' => $value,
+                ]);
             }
+        } else if(empty($marketingData)) {
+            Log::warning('Missing marketing data in POST api/leads/hernia request', [
+                'request_data' => $validated,
+            ]);
         }
 
         return $response;

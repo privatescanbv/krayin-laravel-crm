@@ -51,15 +51,16 @@ X-API-KEY: {{API_KEY}}
     "kanaal_c": "website",
     "soort_aanvraag_c": "operatie",
     "salutation": "",
-    "first_name": "",
-    "last_name": "BB",
+    "first_name": "bb2",
+    "last_name": "BB2",
     "birthdate": "",
     "email1": "mark@markyourmedia.nl",
     "phone_mobile": "0742509558",
     "primary_huisnr_c": "",
     "primary_huisnr_toevoeging_c": "",
     "primary_address_postalcode": "",
-    "description": "Test hernia"
+    "description": "Test hernia",
+    "gad_source" : "Test marketing data gad_source"
 }
 
 

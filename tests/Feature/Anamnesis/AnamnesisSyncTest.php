@@ -18,29 +18,23 @@ it('can show the sync anamnesis page with older anamneses', function () {
     // Arrange
     $person = Person::factory()->create();
 
-    // Oudere anamnesis
+    // Oudere anamnesis — attach triggert pivot model dat de anamnesis aanmaakt
     $leadOld = Lead::factory()->create();
-    $leadOld->persons()->attach($person->id);
-
-    $anamnesisOld = Anamnesis::factory()->create([
-        'person_id'  => $person->id,
-        'lead_id'    => $leadOld->id,
-        'created_at' => now()->subDays(10),
-        'height'     => 180,
-        'weight'     => 80,
-    ]);
+    $leadOld->attachPersons([$person->id]);
+    $anamnesisOld = Anamnesis::where('lead_id', $leadOld->id)->where('person_id', $person->id)->firstOrFail();
+    $anamnesisOld->height = 180;
+    $anamnesisOld->weight = 80;
+    $anamnesisOld->created_at = now()->subDays(10);
+    $anamnesisOld->save();
 
     // Nieuwe anamnesis (current)
     $leadNew = Lead::factory()->create();
-    $leadNew->persons()->attach($person->id);
-
-    $anamnesisNew = Anamnesis::factory()->create([
-        'person_id'  => $person->id,
-        'lead_id'    => $leadNew->id,
-        'created_at' => now(),
-        'height'     => null, // Empty, to be filled
-        'weight'     => 75, // Different value
-    ]);
+    $leadNew->attachPersons([$person->id]);
+    $anamnesisNew = Anamnesis::where('lead_id', $leadNew->id)->where('person_id', $person->id)->firstOrFail();
+    $anamnesisNew->height = null;
+    $anamnesisNew->weight = 75;
+    $anamnesisNew->created_at = now();
+    $anamnesisNew->save();
 
     // Act
     $response = get(route('admin.leads.sync-anamnesis-to-older-update', $anamnesisNew->person_id));
@@ -62,29 +56,23 @@ it('can sync specific fields from older anamnesis', function () {
 
     // Oudere anamnesis
     $leadOld = Lead::factory()->create();
-    $leadOld->persons()->attach($person->id);
-
-    $anamnesisOld = Anamnesis::factory()->create([
-        'person_id'  => $person->id,
-        'lead_id'    => $leadOld->id,
-        'created_at' => now()->subDay(),
-        'height'     => 180,
-        'weight'     => 80,
-        'metals'     => 1,
-    ]);
+    $leadOld->attachPersons([$person->id]);
+    $anamnesisOld = Anamnesis::where('lead_id', $leadOld->id)->where('person_id', $person->id)->firstOrFail();
+    $anamnesisOld->height = 180;
+    $anamnesisOld->weight = 80;
+    $anamnesisOld->metals = 1;
+    $anamnesisOld->created_at = now()->subDay();
+    $anamnesisOld->save();
 
     // Nieuwe anamnesis (current)
     $leadNew = Lead::factory()->create();
-    $leadNew->persons()->attach($person->id);
-
-    $anamnesisNew = Anamnesis::factory()->create([
-        'person_id'  => $person->id,
-        'lead_id'    => $leadNew->id,
-        'created_at' => now(),
-        'height'     => 170, // To remain current
-        'weight'     => 70,  // To be updated
-        'metals'     => 0,   // To be updated
-    ]);
+    $leadNew->attachPersons([$person->id]);
+    $anamnesisNew = Anamnesis::where('lead_id', $leadNew->id)->where('person_id', $person->id)->firstOrFail();
+    $anamnesisNew->height = 170;
+    $anamnesisNew->weight = 70;
+    $anamnesisNew->metals = 0;
+    $anamnesisNew->created_at = now();
+    $anamnesisNew->save();
 
     $data = [
         'choice' => [

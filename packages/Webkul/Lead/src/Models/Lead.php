@@ -10,6 +10,7 @@ use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\LeadMarketingData;
+use App\Models\LeadPerson;
 use App\Traits\HasDefaultContactInfo;
 use BackedEnum;
 use Carbon\Carbon;
@@ -311,17 +312,17 @@ class Lead extends Model implements LeadContract
     }
     /**
      * Attach persons to this lead.
+     * Uses firstOrCreate so the LeadPerson::created event only fires for new records,
+     * which in turn creates the anamnesis automatically.
      */
-    public function attachPersons(array $personIds)
+    public function attachPersons(array $personIds): void
     {
         foreach ($personIds as $personId) {
-            DB::table('lead_persons')->insertOrIgnore([
-                'lead_id' => $this->id,
+            LeadPerson::firstOrCreate([
+                'lead_id'   => $this->id,
                 'person_id' => $personId,
             ]);
         }
-
-        $this->createMissingAnamnesis($personIds);
     }
 
     /**
@@ -402,6 +403,7 @@ class Lead extends Model implements LeadContract
     public function persons()
     {
         return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id')
+            ->using(LeadPerson::class)
             ->withPivot(['lead_id', 'person_id']);
     }
 
@@ -577,38 +579,6 @@ class Lead extends Model implements LeadContract
         $parts = array_merge($parts, $this->getFullLastNameParts());
 
         return implode(' ', array_filter($parts));
-    }
-
-    /**
-     * Create missing anamnesis records for this lead and the given person IDs.
-     * Uses database-level unique constraint protection to prevent duplicates.
-     */
-    private function createMissingAnamnesis(array $personIds): void
-    {
-        foreach ($personIds as $personId) {
-            try {
-                // Use firstOrCreate to prevent race conditions and duplicates
-                Anamnesis::firstOrCreate(
-                    [
-                        'lead_id' => $this->id,
-                        'person_id' => $personId,
-                    ],
-                    [
-                        'id' => Str::uuid(),
-                        'name' => 'Anamnesis voor ' . Person::findOrFail($personId)->name,
-                        'created_by' => auth()->id() ?? $this->user_id ?? 1,
-                        'updated_by' => auth()->id() ?? $this->user_id ?? 1,
-                    ]
-                );
-            } catch (Exception $e) {
-                // Log error but continue with other person IDs
-                Log::error('Failed to create anamnesis for lead-person combination', [
-                    'lead_id' => $this->id,
-                    'person_id' => $personId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
     }
 
     public function findAnamnesisByPersonId(int $personId): Anamnesis

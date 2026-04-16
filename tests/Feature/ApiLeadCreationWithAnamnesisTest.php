@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ContactLabel;
 use App\Models\Anamnesis;
+use App\Models\LeadPerson;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
@@ -382,6 +383,27 @@ test('API lead creation with anamnesis height and weight fields', function () {
         ->and($anamnesis->metals)->toBe(false)
         ->and($anamnesis->claustrophobia)->toBe(false)
         ->and($anamnesis->allergies)->toBe(false);
+});
+
+test('attaching the same person twice creates only one anamnesis record', function () {
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    $lead->attachPersons([$person->id]);
+    $lead->attachPersons([$person->id]); // second call must be a no-op
+
+    expect(Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->count())->toBe(1);
+});
+
+test('LeadPerson pivot model creates anamnesis on created event', function () {
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    expect(Anamnesis::where('lead_id', $lead->id)->count())->toBe(0);
+
+    LeadPerson::create(['lead_id' => $lead->id, 'person_id' => $person->id]);
+
+    expect(Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->count())->toBe(1);
 });
 
 test('API lead creation without height and weight fields should work', function () {

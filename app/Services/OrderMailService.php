@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EmailTemplateCode;
 use App\Helpers\ValueNormalizer;
 use App\Models\Anamnesis;
 use App\Models\Order;
@@ -16,15 +17,13 @@ use Webkul\EmailTemplate\Models\EmailTemplate;
 
 class OrderMailService
 {
-    public const TEMPLATE_NAME = 'order mail';
-
     public function __construct(
         private readonly CrmMailService $crmMailService
     ) {}
 
     public function buildMailData(Order $order, ?Person $person = null): array
     {
-        $template = $this->ensureTemplateExists();
+        $template = EmailTemplate::byCodeEnum(EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL)->firstOrFail();
 
         $variables = $this->buildTemplateVariables($order, $person);
 
@@ -38,6 +37,16 @@ class OrderMailService
             'emails'         => $this->getEmailOptions($order),
             'template_id'    => $template->id,
         ];
+    }
+
+    /**
+     * Variables for the acknowledge-order-mail template (admin template API + preview parity).
+     *
+     * @return array<string, mixed>
+     */
+    public function templateVariablesForAcknowledgeOrder(Order $order, ?Person $person = null): array
+    {
+        return $this->buildTemplateVariables($order, $person);
     }
 
     public function getEmailOptions(Order $order): array
@@ -153,31 +162,6 @@ class OrderMailService
             'sales_lead_id' => $salesLeadId,
             'person_id'     => $personId,
         ], false, EmailFolderEnum::SENT);
-    }
-
-    protected function ensureTemplateExists(): EmailTemplate
-    {
-        $template = EmailTemplate::firstOrCreate(
-            ['name' => self::TEMPLATE_NAME],
-            [
-                'subject' => 'Order {{ order_reference }} | {{ order_title }}',
-                'content' => $this->defaultTemplateContent(),
-            ]
-        );
-
-        return $template;
-    }
-
-    protected function defaultTemplateContent(): string
-    {
-        return <<<'HTML'
-<p>Beste {{ customer_name }},</p>
-<p>Hierbij bevestigen wij uw afspraak(en) voor order {{ order_reference }} ({{ order_title }}).</p>
-{{ appointments_by_person }}
-{{ form_link_section }}
-<p>{{ approval_instructions }}</p>
-<p>Met vriendelijke groet,<br>{{ company_signature }}</p>
-HTML;
     }
 
     protected function buildTemplateVariables(Order $order, ?Person $person = null): array

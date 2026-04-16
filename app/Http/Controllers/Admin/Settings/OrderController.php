@@ -1542,30 +1542,30 @@ class OrderController extends SimpleEntityController
         return 'Verwijderen mislukt.';
     }
 
-    /**
-     * Build template variables for order confirmation templates.
-     */
-    protected function buildOrderTemplateVariables(Order $order): array
-    {
-        // Resolve customer name from sales lead
-        $customerName = 'heer/mevrouw';
-        if ($order->salesLead) {
-            if ($order->salesLead->contactPerson) {
-                $person = $order->salesLead->contactPerson;
-                $customerName = trim(($person->first_name ?? '').' '.($person->last_name ?? ''));
-                if (empty($customerName)) {
-                    $customerName = $person->name ?? 'heer/mevrouw';
-                }
-            } elseif ($order->salesLead->lead) {
-                $customerName = $order->salesLead->lead->name ?? 'heer/mevrouw';
-            }
-        }
-
-        return [
-            'order'         => $order,
-            'customer_name' => $customerName,
-        ];
-    }
+    //    /**
+    //     * Build template variables for order confirmation templates.
+    //     */
+    //    protected function buildOrderTemplateVariables(Order $order): array
+    //    {
+    //        // Resolve customer name from sales lead
+    //        $customerName = 'heer/mevrouw';
+    //        if ($order->salesLead) {
+    //            if ($order->salesLead->contactPerson) {
+    //                $person = $order->salesLead->contactPerson;
+    //                $customerName = trim(($person->first_name ?? '').' '.($person->last_name ?? ''));
+    //                if (empty($customerName)) {
+    //                    $customerName = $person->name ?? 'heer/mevrouw';
+    //                }
+    //            } elseif ($order->salesLead->lead) {
+    //                $customerName = $order->salesLead->lead->name ?? 'heer/mevrouw';
+    //            }
+    //        }
+    //
+    //        return [
+    //            'order'         => $order,
+    //            'customer_name' => $customerName,
+    //        ];
+    //    }
 
     private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
     {

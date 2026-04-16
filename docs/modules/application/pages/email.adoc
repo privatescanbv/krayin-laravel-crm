@@ -319,6 +319,63 @@ Bij wijzigingen aan variabelen: pas de constant aan en werk deze tabel bij.
 | Order
 | `{{ order.* }}`
 | Nested toegang tot Order attributen, bijv. `{{ order.id }}`
+
+| Order
+| `{{ order_reference }}`
+| Order ID als referentienummer
+
+| Order
+| `{{ order_title }}`
+| Titel van de order
+
+| Order
+| `{{ order_status }}`
+| Status van de order (leesbaar label)
+
+| Order
+| `{{ order_total }}`
+| Totaalbedrag van de order
+
+| Order
+| `{{ order_summary_table }}`
+| HTML tabel met orderregels, optioneel gefilterd op persoon
+
+| Order
+| `{{ appointments_by_person }}`
+| HTML overzicht van afspraken gegroepeerd per persoon
+
+| Order
+| `{{ customer_name }}`
+| Naam van de klant of gekoppelde persoon
+
+| Order
+| `{{ approval_instructions }}`
+| Standaard tekst met instructie voor akkoord geven
+
+| Order
+| `{{ company_signature }}`
+| Naam van de organisatie uit configuratie
+
+| Order
+| `{{ default_email }}`
+| Standaard e-mailadres gekoppeld aan de order
+
+| Order
+| `{{ current_date }}`
+| Huidige datum in formaat dd-mm-jjjj
+
+| Order
+| `{{ form_link }}`
+| Link naar formulier indien beschikbaar
+
+| Order
+| `{{ form_link_section }}`
+| Complete HTML sectie met formulierlink indien aanwezig
+
+| Order
+| `{{ order.* }}`
+| Nested toegang tot Order attributen, bijv. `{{ order.id }}`
+
 |===
 
 ==== Belangrijke Noot

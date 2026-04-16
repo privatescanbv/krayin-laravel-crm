@@ -13,4 +13,5 @@ enum EmailTemplateCode: string
     case INFORMATIEF_MET_GVL = 'informatief-met-gvl';
     case PATIENT_PORTAL_NOTIFICATION = 'patient-portal-notification';
     case CREATE_USER = 'create-user';
+    case ACKNOWLEDGE_ORDER_MAIL = 'acknowledge-order-mail';
 }

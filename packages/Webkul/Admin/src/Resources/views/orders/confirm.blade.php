@@ -1,4 +1,5 @@
 @php
+    use App\Enums\EmailTemplateCode;
     use App\Enums\EmailTemplateType;
 @endphp
 <x-admin::layouts>
@@ -8,18 +9,21 @@
 
     <div class="flex flex-col gap-4">
         {{-- TinyMCE scripts + hidden boot editor must live inside #app so <v-tinymce> mounts --}}
-        <div class="pointer-events-none fixed left-[-9999px] top-0 h-px w-px overflow-hidden opacity-0" aria-hidden="true">
+        <div class="pointer-events-none fixed left-[-9999px] top-0 h-px w-px overflow-hidden opacity-0"
+             aria-hidden="true">
             <textarea id="__order-confirm-tinymce-boot" tabindex="-1"></textarea>
-            <x-admin::tinymce selector="textarea#__order-confirm-tinymce-boot" />
+            <x-admin::tinymce selector="textarea#__order-confirm-tinymce-boot"/>
         </div>
 
         {{-- Header --}}
-        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div
+            class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 <x-admin::breadcrumbs name="orders.confirm" :entity="$orders"/>
                 <div class="flex items-center gap-3">
                     <div class="text-xl font-bold dark:text-gray-300">Afspraak bevestigen</div>
-                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                    <span
+                        class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                         #{{ $orders->name }}
                     </span>
                 </div>
@@ -51,7 +55,8 @@
                     <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white">Bevestiging per persoon</h3>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            Doorloop de stappen voor elke persoon. De order wordt als verstuurd gemarkeerd wanneer alle personen zijn bevestigd.
+                            Doorloop de stappen voor elke persoon. De order wordt als verstuurd gemarkeerd wanneer alle
+                            personen zijn bevestigd.
                         </p>
                     </div>
 
@@ -59,48 +64,71 @@
                         <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-800">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Persoon</th>
-                                        <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Brief</th>
-                                        <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Bestanden</th>
-                                        <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</th>
-                                        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actie</th>
-                                    </tr>
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        Persoon
+                                    </th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        Brief
+                                    </th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        Bestanden
+                                    </th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        Email
+                                    </th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        Actie
+                                    </th>
+                                </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                                    <tr v-for="person in personsStatus" :key="person.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                                            @{{ person.name }}
-                                            <div v-if="person.email" class="text-xs text-gray-500 dark:text-gray-400">@{{ person.email }}</div>
-                                        </td>
-                                        <td class="px-4 py-4 text-center">
-                                            <span v-if="person.letter_saved" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
-                                            <span v-else class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
-                                        </td>
-                                        <td class="px-4 py-4 text-center">
-                                            <span v-if="person.has_files" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
-                                            <span v-else class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
-                                        </td>
-                                        <td class="px-4 py-4 text-center">
-                                            <span v-if="person.email_sent" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
-                                            <span v-else class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
-                                        </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                            <button v-if="person.email_sent" type="button" class="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400" disabled>
-                                                <span>&#10003;</span> Voltooid
-                                            </button>
-                                            <button v-else type="button" @click="startPersonWizard(person)" class="primary-button text-xs !px-3 !py-1.5">
-                                                @{{ person.letter_saved ? 'Hervat' : 'Start' }}
-                                            </button>
-                                        </td>
-                                    </tr>
+                                <tr v-for="person in personsStatus" :key="person.id"
+                                    class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                        @{{ person.name }}
+                                        <div v-if="person.email" class="text-xs text-gray-500 dark:text-gray-400">@{{
+                                            person.email }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span v-if="person.letter_saved"
+                                              class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
+                                        <span v-else
+                                              class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span v-if="person.has_files"
+                                              class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
+                                        <span v-else
+                                              class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span v-if="person.email_sent"
+                                              class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">&#10003;</span>
+                                        <span v-else
+                                              class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                        <button v-if="person.email_sent" type="button"
+                                                class="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                                                disabled>
+                                            <span>&#10003;</span> Voltooid
+                                        </button>
+                                        <button v-else type="button" @click="startPersonWizard(person)"
+                                                class="primary-button text-xs !px-3 !py-1.5">
+                                            @{{ person.letter_saved ? 'Hervat' : 'Start' }}
+                                        </button>
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div class="mt-6 flex items-center justify-between">
                             <div class="text-sm text-gray-600 dark:text-gray-400">
-                                <span class="font-medium">@{{ confirmedCount }}</span> van <span class="font-medium">@{{ personsStatus.length }}</span> personen bevestigd
+                                <span class="font-medium">@{{ confirmedCount }}</span> van <span class="font-medium">@{{ personsStatus.length }}</span>
+                                personen bevestigd
                             </div>
                             <button
                                 v-if="allConfirmed && !isMarkingOrderSent"
@@ -117,10 +145,14 @@
                 {{-- Wizard (combined or per-person) --}}
                 <div v-if="combineOrder || selectedPerson">
                     {{-- Per-person header --}}
-                    <div v-if="selectedPerson" class="flex items-center gap-3 border-b border-gray-200 px-6 py-3 dark:border-gray-800 bg-blue-50 dark:bg-blue-900/20">
-                        <button type="button" @click="exitPersonWizard" class="text-sm font-medium text-brandColor hover:underline">&larr; Terug naar overzicht</button>
+                    <div v-if="selectedPerson"
+                         class="flex items-center gap-3 border-b border-gray-200 px-6 py-3 dark:border-gray-800 bg-blue-50 dark:bg-blue-900/20">
+                        <button type="button" @click="exitPersonWizard"
+                                class="text-sm font-medium text-brandColor hover:underline">&larr; Terug naar overzicht
+                        </button>
                         <span class="text-sm text-gray-500 dark:text-gray-400">|</span>
-                        <span class="text-sm font-medium text-gray-900 dark:text-white">@{{ selectedPerson.name }}</span>
+                        <span
+                            class="text-sm font-medium text-gray-900 dark:text-white">@{{ selectedPerson.name }}</span>
                     </div>
 
                     {{-- Step indicator --}}
@@ -154,7 +186,8 @@
                                 </span>
                                 <span>@{{ step }}</span>
                             </button>
-                            <div v-if="index < steps.length - 1" class="mx-3 h-px w-8 bg-gray-300 dark:bg-gray-600"></div>
+                            <div v-if="index < steps.length - 1"
+                                 class="mx-3 h-px w-8 bg-gray-300 dark:bg-gray-600"></div>
                         </template>
                     </div>
 
@@ -166,26 +199,32 @@
                                 <div class="flex flex-col gap-1">
                                     <h3 class="text-lg font-medium text-gray-900 dark:text-white">Orderbevestiging</h3>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Genereer de orderbevestiging<span v-if="selectedPerson"> voor @{{ selectedPerson.name }}</span>. Gebruik Preview om het resultaat als PDF te bekijken. Deze zal als pdf beschikbaar worden gesteld in het patiëntportaal.
+                                        Genereer de orderbevestiging<span v-if="selectedPerson"> voor @{{ selectedPerson.name }}</span>.
+                                        Gebruik Preview om het resultaat als PDF te bekijken. Deze zal als pdf
+                                        beschikbaar worden gesteld in het patiëntportaal.
                                     </p>
                                 </div>
 
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-4">
                                         <div class="flex-1">
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
                                             <select
                                                 v-model="confirmationTemplate"
                                                 class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                             >
                                                 <option value="">Selecteer een template</option>
-                                                <option v-for="t in confirmationTemplates" :key="t.code || t.name" :value="t.code || t.name">
+                                                <option v-for="t in confirmationTemplates" :key="t.code || t.name"
+                                                        :value="t.code || t.name">
                                                     @{{ t.label }}
                                                 </option>
                                             </select>
                                         </div>
                                         <div class="flex items-end gap-2">
-                                            <button type="button" @click="generateLetter" :disabled="!confirmationTemplate || isGenerating" class="primary-button">
+                                            <button type="button" @click="generateLetter"
+                                                    :disabled="!confirmationTemplate || isGenerating"
+                                                    class="primary-button">
                                                 <span v-if="isGenerating">Bezig...</span>
                                                 <span v-else>Genereer brief</span>
                                             </button>
@@ -194,24 +233,30 @@
 
                                     <div v-if="letterContent" class="space-y-4">
                                         <div>
-                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Brief inhoud</label>
+                                            <label
+                                                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Brief
+                                                inhoud</label>
                                             <textarea
                                                 id="confirmation-letter-editor"
                                                 v-model="letterContent"
                                                 class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                                 rows="12"
                                             ></textarea>
-                                            <v-tinymce selector="textarea#confirmation-letter-editor" :field="confirmationLetterField"></v-tinymce>
+                                            <v-tinymce selector="textarea#confirmation-letter-editor"
+                                                       :field="confirmationLetterField"></v-tinymce>
                                         </div>
 
                                         <div class="flex flex-wrap items-center gap-2">
-                                            <button type="button" @click="previewConfirmationPdf" :disabled="!letterContent || previewPdfLoading" class="secondary-button">
+                                            <button type="button" @click="previewConfirmationPdf"
+                                                    :disabled="!letterContent || previewPdfLoading"
+                                                    class="secondary-button">
                                                 <span v-if="previewPdfLoading">Preview laden...</span>
                                                 <span v-else>Preview</span>
                                             </button>
                                         </div>
 
-                                        <div v-if="previewPdfBlobUrl" class="mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <div v-if="previewPdfBlobUrl"
+                                             class="mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
                                             <iframe
                                                 :src="previewPdfBlobUrl"
                                                 class="h-[min(70vh,640px)] w-full border-0 bg-gray-100 dark:bg-gray-800"
@@ -224,7 +269,8 @@
                                         <div class="flex flex-col items-center gap-3">
                                             <i class="icon-document text-4xl text-gray-300 dark:text-gray-600"></i>
                                             <p class="text-lg font-medium">Nog geen brief gegenereerd</p>
-                                            <p class="text-sm">Selecteer een template en klik op "Genereer brief" om te beginnen</p>
+                                            <p class="text-sm">Selecteer een template en klik op "Genereer brief" om te
+                                                beginnen</p>
                                         </div>
                                     </div>
                                 </div>
@@ -235,16 +281,21 @@
                         <div v-show="currentStep === 1">
                             <div class="space-y-6">
                                 <div class="flex flex-col gap-1">
-                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Bestanden uploaden</h3>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Bestanden
+                                        uploaden</h3>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Upload bestanden als activiteit<span v-if="selectedPerson"> voor @{{ selectedPerson.name }}</span>. Standaard worden ze gedeeld via het patiëntportaal; je kunt dat per upload uitzetten.
+                                        Upload bestanden als activiteit<span v-if="selectedPerson"> voor @{{ selectedPerson.name }}</span>.
+                                        Standaard worden ze gedeeld via het patiëntportaal; je kunt dat per upload
+                                        uitzetten.
                                     </p>
                                 </div>
 
                                 {{-- Uploaded files list --}}
                                 <div v-if="uploadedFiles.length" class="space-y-2">
-                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Geüploade bestanden</h4>
-                                    <div v-for="(file, i) in uploadedFiles" :key="i" class="flex items-center gap-3 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
+                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Geüploade
+                                        bestanden</h4>
+                                    <div v-for="(file, i) in uploadedFiles" :key="i"
+                                         class="flex items-center gap-3 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
                                         <span class="icon-file text-lg text-green-600"></span>
                                         <span class="text-sm text-gray-800 dark:text-gray-200">@{{ file.title || file.filename }}</span>
                                         <span class="ml-auto text-xs text-green-600 font-medium">Geüpload</span>
@@ -253,8 +304,9 @@
 
                                 {{-- Upload form --}}
                                 <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-                                    <x-adminc::components.field type="text" name="file_title" label="Titel" />
-                                    <x-adminc::components.field type="textarea" name="file_comment" label="Omschrijving" />
+                                    <x-adminc::components.field type="text" name="file_title" label="Titel"/>
+                                    <x-adminc::components.field type="textarea" name="file_comment"
+                                                                label="Omschrijving"/>
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bestand(en)</label>
@@ -264,31 +316,42 @@
                                             multiple
                                             class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200"
                                         />
-                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Je kunt meerdere bestanden tegelijk selecteren.</p>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Je kunt meerdere
+                                            bestanden tegelijk selecteren.</p>
                                     </div>
 
                                     <div class="mt-4">
                                         <label class="flex cursor-pointer items-center gap-2">
-                                            <input type="checkbox" v-model="publishToPortal" @change="onPublishChange" class="h-4 w-4 shrink-0 rounded border-gray-300" />
+                                            <input type="checkbox" v-model="publishToPortal" @change="onPublishChange"
+                                                   class="h-4 w-4 shrink-0 rounded border-gray-300"/>
                                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Publiceren in patiëntportaal</span>
                                         </label>
                                         {{-- Person selector only shown for combined orders --}}
                                         <div v-if="publishToPortal && combineOrder" class="mt-3">
-                                            <div v-if="loadingPersons" class="text-sm text-gray-500">Personen laden...</div>
+                                            <div v-if="loadingPersons" class="text-sm text-gray-500">Personen laden...
+                                            </div>
                                             <div v-else-if="persons.length > 1">
-                                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Deel met persoon</label>
-                                                <select v-model="selectedPersonId" class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                                <label
+                                                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Deel
+                                                    met persoon</label>
+                                                <select v-model="selectedPersonId"
+                                                        class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                                                     <option value="" disabled>Selecteer een persoon</option>
-                                                    <option v-for="person in persons" :key="person.id" :value="person.id">@{{ person.name }}</option>
+                                                    <option v-for="person in persons" :key="person.id"
+                                                            :value="person.id">@{{ person.name }}
+                                                    </option>
                                                 </select>
                                             </div>
                                         </div>
-                                        <div v-if="publishToPortal && selectedPerson" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                            Wordt gedeeld met: <span class="font-medium">@{{ selectedPerson.name }}</span>
+                                        <div v-if="publishToPortal && selectedPerson"
+                                             class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                            Wordt gedeeld met: <span
+                                                class="font-medium">@{{ selectedPerson.name }}</span>
                                         </div>
                                     </div>
 
-                                    <button type="button" @click="uploadFile" :disabled="isUploadingFile" class="primary-button">
+                                    <button type="button" @click="uploadFile" :disabled="isUploadingFile"
+                                            class="primary-button">
                                         <span v-if="isUploadingFile">Uploaden...</span>
                                         <span v-else>Upload geselecteerde bestanden</span>
                                     </button>
@@ -309,40 +372,48 @@
                                 <div class="space-y-4">
                                     {{-- To --}}
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aan <span class="text-red-500">*</span></label>
-                                        <div class="flex items-center gap-2">
-                                            <select v-if="entityEmails.length" v-model="emailTo" class="flex-1 rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                                <option value="" disabled>Selecteer een e-mailadres</option>
-                                                <option v-for="mail in entityEmails" :key="mail.value" :value="mail.value">
-                                                    @{{ mail.value }} <span v-if="mail.is_default">(standaard)</span>
-                                                </option>
-                                            </select>
-                                            <input v-else type="email" v-model="emailTo" placeholder="E-mailadres invoeren" class="flex-1 rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
-                                        </div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aan
+                                            <span class="text-red-500">*</span></label>
+                                        <v-email-combobox
+                                            v-model="emailTo"
+                                            :suggestions="entityEmails"
+                                            placeholder="E-mailadres invoeren"
+                                            name="emailTo"
+                                        ></v-email-combobox>
                                     </div>
 
                                     {{-- CC toggle --}}
                                     <div class="flex gap-4 text-sm">
-                                        <button type="button" @click="showCC = !showCC" class="font-medium text-brandColor hover:underline">CC</button>
-                                        <button type="button" @click="showBCC = !showBCC" class="font-medium text-brandColor hover:underline">BCC</button>
+                                        <button type="button" @click="showCC = !showCC"
+                                                class="font-medium text-brandColor hover:underline">CC
+                                        </button>
+                                        <button type="button" @click="showBCC = !showBCC"
+                                                class="font-medium text-brandColor hover:underline">BCC
+                                        </button>
                                     </div>
 
                                     <div v-if="showCC">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CC</label>
-                                        <input type="text" v-model="emailCC" placeholder="E-mailadressen (komma-gescheiden)" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                        <input type="text" v-model="emailCC"
+                                               placeholder="E-mailadressen (komma-gescheiden)"
+                                               class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"/>
                                     </div>
 
                                     <div v-if="showBCC">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">BCC</label>
-                                        <input type="text" v-model="emailBCC" placeholder="E-mailadressen (komma-gescheiden)" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                        <input type="text" v-model="emailBCC"
+                                               placeholder="E-mailadressen (komma-gescheiden)"
+                                               class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"/>
                                     </div>
 
                                     {{-- Template --}}
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template</label>
-                                        <select v-model="emailSelectedTemplate" @change="loadEmailTemplate" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                        <select v-model="emailSelectedTemplate" @change="loadEmailTemplate"
+                                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                                             <option value="">Geen template</option>
-                                            <option v-for="t in emailTemplates" :key="t.code || t.name" :value="t.code || t.name">
+                                            <option v-for="t in emailTemplates" :key="t.code || t.name"
+                                                    :value="t.code || t.name">
                                                 @{{ t.label }}
                                             </option>
                                         </select>
@@ -350,20 +421,24 @@
 
                                     {{-- Subject --}}
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp <span class="text-red-500">*</span></label>
-                                        <input type="text" v-model="emailSubject" placeholder="Onderwerp" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" />
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp
+                                            <span class="text-red-500">*</span></label>
+                                        <input type="text" v-model="emailSubject" placeholder="Onderwerp"
+                                               class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"/>
                                     </div>
 
                                     {{-- Body --}}
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht
+                                            <span class="text-red-500">*</span></label>
                                         <textarea
                                             id="wizard-email-editor"
                                             v-model="emailBody"
                                             class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                             rows="12"
                                         ></textarea>
-                                        <v-tinymce selector="textarea#wizard-email-editor" :field="emailBodyField"></v-tinymce>
+                                        <v-tinymce selector="textarea#wizard-email-editor"
+                                                   :field="emailBodyField"></v-tinymce>
                                     </div>
 
                                     {{-- Attachments --}}
@@ -377,10 +452,14 @@
                                             class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200"
                                         />
                                         <div v-if="emailAttachments.length" class="mt-2 space-y-1">
-                                            <div v-for="(att, i) in emailAttachments" :key="i" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                            <div v-for="(att, i) in emailAttachments" :key="i"
+                                                 class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                                 <span class="icon-attachment text-lg"></span>
                                                 <span>@{{ att.name }}</span>
-                                                <button type="button" @click="removeEmailAttachment(i)" class="text-red-500 hover:text-red-700 text-xs ml-auto">Verwijderen</button>
+                                                <button type="button" @click="removeEmailAttachment(i)"
+                                                        class="text-red-500 hover:text-red-700 text-xs ml-auto">
+                                                    Verwijderen
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -390,7 +469,8 @@
                     </div>
 
                     {{-- Navigation --}}
-                    <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-6 py-4">
+                    <div
+                        class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-6 py-4">
                         <button
                             v-if="currentStep > 0"
                             type="button"
@@ -444,13 +524,13 @@
                 template: '#v-appointment-wizard-template',
 
                 props: {
-                    orderId: { type: Number, required: true },
-                    salesLeadId: { type: Number, default: null },
-                    initialContent: { type: String, default: '' },
-                    emails: { type: Array, default: () => [] },
-                    combineOrder: { type: Boolean, default: true },
-                    initialPersonsStatus: { type: Array, default: () => [] },
-                    viewUrl: { type: String, required: true },
+                    orderId: {type: Number, required: true},
+                    salesLeadId: {type: Number, default: null},
+                    initialContent: {type: String, default: ''},
+                    emails: {type: Array, default: () => []},
+                    combineOrder: {type: Boolean, default: true},
+                    initialPersonsStatus: {type: Array, default: () => []},
+                    viewUrl: {type: String, required: true},
                 },
 
                 data() {
@@ -548,7 +628,7 @@
                     emitFlash(type, message) {
                         try {
                             const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
-                            if (emitter) emitter.emit('add-flash', { type, message });
+                            if (emitter) emitter.emit('add-flash', {type, message});
                         } catch (e) {
                             console[type === 'error' ? 'error' : 'log'](message);
                         }
@@ -593,7 +673,7 @@
                     async loadPersonLetterContent(personId) {
                         try {
                             const resp = await fetch(`/admin/orders/${this.orderId}/confirmation/persons-status`, {
-                                headers: { 'Accept': 'application/json' },
+                                headers: {'Accept': 'application/json'},
                             });
                             const data = await resp.json();
                             const personData = (data.data || []).find(p => p.id === personId);
@@ -604,7 +684,8 @@
                                     this.personsStatus.splice(idx, 1, personData);
                                 }
                             }
-                        } catch (e) { /* non-critical */ }
+                        } catch (e) { /* non-critical */
+                        }
 
                         // Try to load saved letter from the person confirmation
                         try {
@@ -614,17 +695,19 @@
                                 // For now we'll let the user re-generate or it will be loaded
                                 // when they previously saved via the save endpoint
                             }
-                        } catch (e) { /* non-critical */ }
+                        } catch (e) { /* non-critical */
+                        }
                     },
 
                     async refreshPersonsStatus() {
                         try {
                             const resp = await fetch(`/admin/orders/${this.orderId}/confirmation/persons-status`, {
-                                headers: { 'Accept': 'application/json' },
+                                headers: {'Accept': 'application/json'},
                             });
                             const data = await resp.json();
                             this.personsStatus = data.data || [];
-                        } catch (e) { /* non-critical */ }
+                        } catch (e) { /* non-critical */
+                        }
                     },
 
                     hasPendingFiles() {
@@ -677,8 +760,8 @@
 
                     async loadConfirmationTemplates() {
                         try {
-                            const response = await fetch('{{ route("admin.mail.templates") }}?entity_type=order', {
-                                headers: { 'Accept': 'application/json' },
+                            const response = await fetch('{{ route("admin.mail.templates") }}?entity_type={{ urlencode(EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value) }}', {
+                                headers: {'Accept': 'application/json'},
                             });
                             const data = await response.json();
                             this.confirmationTemplates = data.data || [];
@@ -698,7 +781,7 @@
                                 url = `/admin/orders/${this.orderId}/confirmation/template-content?template=${this.confirmationTemplate}`;
                             }
                             const response = await fetch(url, {
-                                headers: { 'Accept': 'application/json' },
+                                headers: {'Accept': 'application/json'},
                             });
                             if (!response.ok) {
                                 const err = await response.json();
@@ -732,8 +815,12 @@
                             }
                             const response = await fetch(url, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.getCsrfToken() },
-                                body: JSON.stringify({ content }),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': this.getCsrfToken()
+                                },
+                                body: JSON.stringify({content}),
                             });
                             if (!response.ok) {
                                 const err = await response.json();
@@ -772,7 +859,7 @@
                                     'X-CSRF-TOKEN': this.getCsrfToken(),
                                     'X-Requested-With': 'XMLHttpRequest',
                                 },
-                                body: JSON.stringify({ content }),
+                                body: JSON.stringify({content}),
                             });
                             if (!response.ok) {
                                 const err = await response.json().catch(() => ({}));
@@ -810,7 +897,7 @@
 
                         this.loadingPersons = true;
                         this.$axios.get("{{ route('admin.activities.persons-for-entity') }}", {
-                            params: { entity_type: 'order', entity_id: this.orderId }
+                            params: {entity_type: 'order', entity_id: this.orderId}
                         }).then(response => {
                             this.persons = response.data.data ?? [];
                             if (this.persons.length === 1) {
@@ -920,7 +1007,7 @@
                     async loadEmailTemplates() {
                         try {
                             const response = await this.$axios.get('{{ route("admin.mail.templates") }}', {
-                                params: { entity_type: @json(EmailTemplateType::ORDER->value) }
+                                params: {entity_type: @json(EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value)},
                             });
                             const templates = response.data?.data || response.data || [];
                             this.emailTemplates = Array.isArray(templates) ? templates : [];
@@ -938,7 +1025,7 @@
                                 url = `/admin/orders/${this.orderId}/mail/preview`;
                             }
                             const response = await fetch(url, {
-                                headers: { 'Accept': 'application/json' },
+                                headers: {'Accept': 'application/json'},
                             });
                             const payload = await response.json();
                             if (!response.ok) {
@@ -961,7 +1048,7 @@
 
                             this.emailSubject = payload.subject || '';
 
-                            const defaultTpl = 'appointment-confirmation';
+                            const defaultTpl = @json(EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value);
                             if (this.emailTemplates.some(t => (t.code || t.name) === defaultTpl)) {
                                 this.emailSelectedTemplate = defaultTpl;
                                 this.$nextTick(() => this.loadEmailTemplate());
@@ -987,9 +1074,9 @@
                             const response = await fetch(url);
                             if (!response.ok) return;
                             const blob = await response.blob();
-                            const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
+                            const file = new File([blob], filename, {type: blob.type || 'application/pdf'});
                             this.emailAttachmentFiles.push(file);
-                            this.emailAttachments.push({ name: filename });
+                            this.emailAttachments.push({name: filename});
                         } catch (e) {
                             // Non-critical
                         }
@@ -1035,7 +1122,7 @@
                         const files = Array.from(event.target.files || []);
                         files.forEach(f => {
                             this.emailAttachmentFiles.push(f);
-                            this.emailAttachments.push({ name: f.name });
+                            this.emailAttachments.push({name: f.name});
                         });
                         event.target.value = '';
                     },
@@ -1088,7 +1175,7 @@
 
                         try {
                             const response = await this.$axios.post("{{ route('admin.mail.store') }}", formData, {
-                                headers: { 'Content-Type': 'multipart/form-data' },
+                                headers: {'Content-Type': 'multipart/form-data'},
                             });
 
                             this.emitFlash('success', response.data.message || 'Email verstuurd');
@@ -1114,7 +1201,8 @@
                                         }, 1000);
                                         return;
                                     }
-                                } catch (e) { /* non-critical */ }
+                                } catch (e) { /* non-critical */
+                                }
 
                                 // Return to person overview
                                 this.isSendingEmail = false;
@@ -1129,7 +1217,8 @@
                                             'X-CSRF-TOKEN': this.getCsrfToken(),
                                         },
                                     });
-                                } catch (e) { /* non-critical */ }
+                                } catch (e) { /* non-critical */
+                                }
 
                                 setTimeout(() => {
                                     window.location.href = this.viewUrl;
@@ -1161,7 +1250,8 @@
                                     editor.setContent(content);
                                     return;
                                 }
-                            } catch (e) { /* not ready */ }
+                            } catch (e) { /* not ready */
+                            }
                         }
                         if (retries > 0) {
                             setTimeout(() => this.setTinyMCEContent(editorId, content, retries - 1), 200);
@@ -1175,11 +1265,81 @@
                                 if (editor && !editor.removed && editor.initialized) {
                                     return editor.getContent();
                                 }
-                            } catch (e) { /* fallback */ }
+                            } catch (e) { /* fallback */
+                            }
                         }
                         if (editorId === 'confirmation-letter-editor') return this.letterContent || '';
                         if (editorId === 'wizard-email-editor') return this.emailBody || '';
                         return '';
+                    },
+                },
+            });
+        </script>
+
+        {{-- v-email-combobox: editable email input with suggestion dropdown --}}
+        <script type="text/x-template" id="v-email-combobox-template">
+            <div class="relative flex-1">
+                <input
+                    type="email"
+                    :name="name"
+                    :value="inputValue"
+                    :placeholder="placeholder"
+                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                    @input="onInput"
+                    @focus="onFocus"
+                    @blur="onBlur"
+                    autocomplete="off"
+                />
+                <ul
+                    v-if="isOpen && suggestions.length"
+                    class="absolute z-50 mt-1 w-full rounded border border-gray-200 bg-white shadow-md dark:border-gray-700 dark:bg-gray-900"
+                >
+                    <li
+                        v-for="s in suggestions"
+                        :key="s.value"
+                        class="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                        @mousedown.prevent="selectSuggestion(s)"
+                    >
+                        @{{ s.value }}<span v-if="s.is_default" class="ml-1 text-xs text-gray-400">(standaard)</span>
+                    </li>
+                </ul>
+            </div>
+        </script>
+
+        <script type="module">
+            app.component('v-email-combobox', {
+                template: '#v-email-combobox-template',
+                props: {
+                    modelValue: {type: String, default: ''},
+                    suggestions: {type: Array, default: () => []},
+                    placeholder: {type: String, default: ''},
+                    name: {type: String, default: ''},
+                },
+                data() {
+                    return {inputValue: this.modelValue, isOpen: false};
+                },
+                watch: {
+                    modelValue(val) {
+                        this.inputValue = val;
+                    },
+                },
+                methods: {
+                    onInput(e) {
+                        this.inputValue = e.target.value;
+                        this.$emit('update:modelValue', e.target.value);
+                    },
+                    onFocus() {
+                        if (this.suggestions.length) this.isOpen = true;
+                    },
+                    onBlur() {
+                        setTimeout(() => {
+                            this.isOpen = false;
+                        }, 150);
+                    },
+                    selectSuggestion(s) {
+                        this.inputValue = s.value;
+                        this.$emit('update:modelValue', s.value);
+                        this.isOpen = false;
                     },
                 },
             });

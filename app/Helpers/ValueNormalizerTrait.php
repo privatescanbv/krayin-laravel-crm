@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use BackedEnum;
+use DateTimeInterface;
 
 trait ValueNormalizerTrait
 {
@@ -22,7 +23,7 @@ trait ValueNormalizerTrait
             return null;
         }
 
-        if ($value instanceof \DateTimeInterface) {
+        if ($value instanceof DateTimeInterface) {
             return $value;
         }
 

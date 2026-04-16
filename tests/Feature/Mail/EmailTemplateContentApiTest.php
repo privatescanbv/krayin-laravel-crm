@@ -1,8 +1,10 @@
 <?php
 
+use App\Enums\EmailTemplateCode;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use App\Models\Anamnesis;
+use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
@@ -152,7 +154,7 @@ test('it returns template body with sales lead entity', function () {
     $template = EmailTemplate::factory()->create([
         'name'     => 'sales-lead-template',
         'code'     => 'sales-lead-template',
-        'type'     => EmailTemplateType::ORDER->value,
+        'type'     => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
         'language' => EmailTemplateLanguage::NEDERLANDS->value,
         'subject'  => 'Order Template',
         'content'  => '<p>Order content</p>',
@@ -350,4 +352,38 @@ test('it returns template body with gvl template and person entity', function ()
     expect($content)->toContain('Person')
         ->and($content)->toContain('https://example.com/gvl-form/12345')
         ->and($content)->not->toContain('{{ $gvl_form_link }}');
+});
+
+test('it merges acknowledge-order-mail variables from OrderMailService for order entity', function () {
+    $person = Person::factory()->create([
+        'first_name' => 'Test',
+        'last_name'  => 'User',
+    ]);
+    $salesLead = SalesLead::factory()->create([
+        'contact_person_id' => $person->id,
+    ]);
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+    ]);
+
+    EmailTemplate::factory()->create([
+        'name'     => 'Afspraak bevestiging API test',
+        'code'     => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value,
+        'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+        'language' => EmailTemplateLanguage::NEDERLANDS->value,
+        'subject'  => 'Order {{ order_reference }}',
+        'content'  => '<p>{{ approval_instructions }}</p>',
+    ]);
+
+    $response = $this->postJson(route('admin.mail.template_content_body'), [
+        'email_template_identifier' => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value,
+        'entities'                  => [
+            'order' => $order->id,
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    $content = $response->json('data.content');
+    expect($content)->toContain('Geef uw akkoord')
+        ->and($content)->not->toContain('{{ approval_instructions }}');
 });

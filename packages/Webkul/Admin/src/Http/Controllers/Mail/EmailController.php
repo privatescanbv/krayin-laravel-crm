@@ -3,10 +3,13 @@
 namespace Webkul\Admin\Http\Controllers\Mail;
 
 use App\Enums\EmailTemplateType;
+use App\Services\Mail\CrmMailService;
 use App\Services\Mail\EmailTemplateRenderingService;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +22,7 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\EmailResource;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
@@ -36,7 +40,7 @@ class EmailController extends Controller
         protected EmailRepository $emailRepository,
         protected AttachmentRepository $attachmentRepository,
         protected FolderRepository $folderRepository,
-        readonly private EmailTemplateRenderingService $emailTemplateRenderingService,
+        private readonly EmailTemplateRenderingService $emailTemplateRenderingService,
     ) {}
 
     /**
@@ -77,7 +81,7 @@ class EmailController extends Controller
     /**
      * Display a resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function view()
     {
@@ -107,7 +111,7 @@ class EmailController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store()
     {
@@ -125,7 +129,7 @@ class EmailController extends Controller
         $data = request()->all();
 
         // Centralized mail flow (store + send) via App service.
-        $crmMailService = app(\App\Services\Mail\CrmMailService::class);
+        $crmMailService = app(CrmMailService::class);
         $email = $crmMailService->createAndMaybeSend($data, (bool) request('is_draft'), EmailFolderEnum::SENT);
 
         Event::dispatch('email.create.after', $email);
@@ -152,7 +156,7 @@ class EmailController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update($id)
     {
@@ -179,7 +183,7 @@ class EmailController extends Controller
         if (! is_null(request('is_draft')) && ! request('is_draft')) {
             try {
                 // Centralized send logic (folder behavior kept as-is: move to inbox).
-                $crmMailService = app(\App\Services\Mail\CrmMailService::class);
+                $crmMailService = app(CrmMailService::class);
                 $crmMailService->sendEmail($email, EmailFolderEnum::INBOX);
             } catch (Exception $e) {
             }
@@ -200,7 +204,7 @@ class EmailController extends Controller
         if (request()->ajax()) {
             /** @var mixed $emailForResource */
             $emailForResource = $email;
-            if ($email instanceof \Illuminate\Database\Eloquent\Model) {
+            if ($email instanceof Model) {
                 $emailForResource = $email->refresh();
             }
 
@@ -238,7 +242,7 @@ class EmailController extends Controller
     /**
      * Run process inbound parse email.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function inboundParse(InboundEmailProcessor $inboundEmailProcessor)
     {
@@ -251,7 +255,7 @@ class EmailController extends Controller
      * Download file from storage
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function download($id)
     {
@@ -265,7 +269,7 @@ class EmailController extends Controller
         } catch (Exception $e) {
             Log::error('EmailController@download: Error downloading attachment', [
                 'attachment_id' => $id,
-                'error' => $e->getMessage(),
+                'error'         => $e->getMessage(),
             ]);
             session()->flash('error', trans('admin::app.mail.download-failed'));
 
@@ -364,7 +368,7 @@ class EmailController extends Controller
     /**
      * Move email to "Verwerkt" folder when it is linked to an entity and currently in an inbox-type folder.
      */
-    private function moveToProcessedIfLinked(\Webkul\Email\Models\Email $email, array $data): void
+    private function moveToProcessedIfLinked(Email $email, array $data): void
     {
         $entityFields = ['lead_id', 'sales_lead_id', 'person_id', 'clinic_id', 'order_id'];
         $hasEntityLink = collect($entityFields)->contains(fn ($field) => ! empty($data[$field]));
@@ -455,11 +459,9 @@ class EmailController extends Controller
      * Get list of available email templates with filtering support.
      *
      * Query Parameters:
-     * - `entity_type` (string): Filter by entity type (lead, order, algemeen, gvl)
-     *   - 'lead': Returns both 'lead' and 'algemeen' templates
-     *   - 'order': Returns only 'order' templates
-     *   - 'algemeen': Returns only 'algemeen' templates
-     *   - 'gvl': Returns only 'gvl' templates
+     * - `entity_type` (string): Must be a {@see EmailTemplateType} value; resolves DB types via
+     *   {@see EmailTemplateType::tryResolveTemplateTypeFilter()} (e.g. lead → lead + algemeen).
+     *   Unknown strings apply no type filter (same as omitting the parameter).
      * - `departments` (string|array): Filter by departments (comma-separated or array)
      *   - Templates with no departments are included (available to all)
      *   - Templates matching at least one department are included
@@ -534,7 +536,7 @@ class EmailController extends Controller
                 'data' => $data,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error in email templates.get endpoint', [
                 'error'          => $e->getMessage(),
                 'trace'          => $e->getTraceAsString(),
@@ -615,7 +617,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'error'   => __('messages.email.template_render_error'),
-                ], 500);
+            ], 500);
         }
     }
 
@@ -766,28 +768,14 @@ class EmailController extends Controller
     }
 
     /**
-     * Apply entity type filter to query.
-     * This maintains backward compatibility with the old entity_type parameter.
+     * Apply entity type filter to query (see {@see EmailTemplateType::tryResolveTemplateTypeFilter}).
      */
     private function applyEntityTypeFilter($query, string $entityType): void
     {
-        switch ($entityType) {
-            case EmailTemplateType::LEAD->value:
-                // For leads, show 'lead' and 'algemeen' templates
-                $query->whereIn('type', [EmailTemplateType::LEAD->value, EmailTemplateType::ALGEMEEN->value]);
-                break;
-            case EmailTemplateType::ORDER->value:
-                // For orders, show only 'order' templates
-                $query->where('type', EmailTemplateType::ORDER->value);
-                break;
-            case EmailTemplateType::ALGEMEEN->value:
-                // For general, show only 'algemeen' templates
-                $query->where('type', EmailTemplateType::ALGEMEEN->value);
-                break;
-            case EmailTemplateType::GVL->value:
-                // For GVL, show only 'gvl' templates
-                $query->where('type', EmailTemplateType::GVL->value);
-                break;
+        $types = EmailTemplateType::tryResolveTemplateTypeFilter($entityType);
+
+        if ($types !== null) {
+            $query->whereIn('type', $types);
         }
     }
 

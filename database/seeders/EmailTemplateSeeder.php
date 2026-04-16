@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\Departments;
+use App\Enums\EmailTemplateCode;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use Illuminate\Database\Seeder;
@@ -27,7 +28,6 @@ class EmailTemplateSeeder extends Seeder
 
         $lead = EmailTemplateType::LEAD->value;
         $algemeen = EmailTemplateType::ALGEMEEN->value;
-        $order = EmailTemplateType::ORDER->value;
         $gvl = EmailTemplateType::GVL->value;
         $patient = EmailTemplateType::PATIENT->value;
 
@@ -121,7 +121,7 @@ HTML,
             [
                 'name'        => 'Afspraakbevestiging TB plus bloed NL',
                 'code'        => 'appointment-tb-blood-email-nl',
-                'type'        => $order,
+                'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
                 'language'    => $nl,
                 'departments' => $allDepartments,
                 'subject'     => 'Bevestiging afspraak {{ order_number }}',
@@ -197,7 +197,7 @@ HTML,
             [
                 'name'        => 'order mail',
                 'code'        => null,
-                'type'        => $order,
+                'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
                 'language'    => $nl,
                 'departments' => $allDepartments,
                 'subject'     => 'Order {{ order_reference }} | {{ order_title }}',
@@ -217,7 +217,7 @@ HTML,
             [
                 'name'        => 'Behandelovereenkomst',
                 'code'        => 'treatment-agreement',
-                'type'        => $order,
+                'type'        => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
                 'language'    => $nl,
                 'departments' => $allDepartments,
                 'subject'     => 'Uw behandelingsovereenkomst {{ order_reference }}',
@@ -227,6 +227,22 @@ HTML,
 {{ afspraken_tabel }}
 <p>Heeft u vragen? Neem dan gerust contact met ons op.</p>
 <p>Met vriendelijke groet,<br>Privatescan</p>
+HTML,
+            ],
+            [
+                'name'        => 'Afspraak bevestiging',
+                'code'        => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL,
+                'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Order {{ order_reference }} | {{ order_title }}',
+                'content'     => <<<'HTML'
+<p>Beste {{ customer_name }},</p>
+<p>Hierbij bevestigen wij uw afspraak(en) voor order {{ order_reference }} ({{ order_title }}).</p>
+{{ appointments_by_person }}
+{{ form_link_section }}
+<p>{{ approval_instructions }}</p>
+<p>Met vriendelijke groet,<br>{{ company_signature }}</p>
 HTML,
             ],
 

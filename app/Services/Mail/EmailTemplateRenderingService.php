@@ -9,10 +9,13 @@ use App\Models\Order;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
+use App\Services\OrderMailService;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\View;
 use ReflectionClass;
 use ReflectionException;
+use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -49,18 +52,26 @@ class EmailTemplateRenderingService
             'sales_lead.*'   => 'Nested toegang tot alle SalesLead attributen',
         ],
         'order' => [
-            'order_reference'    => 'Order ID als referentienummer',
-            'order_title'        => 'Titel van de order',
-            'order_status'       => 'Status van de order (leesbaar label)',
-            'order_total'        => 'Totaalbedrag van de order',
-            'customer_name'      => 'Klantnaam (via contactpersoon of lead)',
-            'datum_afspraak'     => 'Datum eerste afspraak (bijv. "15 januari 2025")',
-            'tijd_afspraak'      => 'Tijdstip eerste afspraak (bijv. "14:00")',
-            'plaats_afspraak'    => 'Locatie eerste afspraak (kliniek + adres)',
-            'datum_bevestiging'  => 'Bevestigingsdeadline (3 dagen voor afspraak)',
-            'afspraken_tabel'    => 'HTML tabel met alle afspraken gegroepeerd per persoon',
-            'order_items_table'  => 'HTML tabel met alle orderregels',
-            'order.*'            => 'Nested toegang tot alle Order attributen, bijv. {{ order.id }}',
+            'order_reference'         => 'Order ID als referentienummer',
+            'order_title'             => 'Titel van de order',
+            'order_status'            => 'Status van de order (leesbaar label)',
+            'order_total'             => 'Totaalbedrag van de order (order mail: geformatteerd)',
+            'customer_name'           => 'Klantnaam (via contactpersoon of lead)',
+            'datum_afspraak'          => 'Datum eerste afspraak (bijv. "15 januari 2025")',
+            'tijd_afspraak'           => 'Tijdstip eerste afspraak (bijv. "14:00")',
+            'plaats_afspraak'         => 'Locatie eerste afspraak (kliniek + adres)',
+            'datum_bevestiging'       => 'Bevestigingsdeadline (3 dagen voor afspraak)',
+            'afspraken_tabel'         => 'HTML tabel met alle afspraken gegroepeerd per persoon',
+            'order_items_table'       => 'HTML tabel met alle orderregels',
+            'order_summary_table'     => 'HTML orderregels (OrderMailService)',
+            'appointments_by_person'  => 'HTML afspraken per persoon (OrderMailService)',
+            'form_link_section'       => 'Optionele GVL-formulierparagraaf (OrderMailService)',
+            'form_link'               => 'Geëscape GVL-link (OrderMailService)',
+            'approval_instructions'   => 'Vaste akkoordtekst (OrderMailService)',
+            'company_signature'       => 'App-naam als ondertekening (OrderMailService)',
+            'current_date'            => 'Datum dd-mm-jjjj (OrderMailService)',
+            'default_email'           => 'Standaard e-mailadres order (OrderMailService)',
+            'order.*'                 => 'Nested toegang tot alle Order attributen, bijv. {{ order.id }}',
         ],
     ];
 
@@ -70,6 +81,7 @@ class EmailTemplateRenderingService
         private readonly PersonRepository $personRepository,
         private readonly SalesLeadRepository $salesLeadRepository,
         private readonly OrderRepository $orderRepository,
+        private readonly Application $application,
     ) {}
 
     /**
@@ -230,6 +242,20 @@ class EmailTemplateRenderingService
             }
         }
 
+        // Order mail placeholders (appointments_by_person, form_link_section, …) — same as OrderMailService
+        $orderForMail = $variables['order'] ?? null;
+        if (! $orderForMail instanceof Order && $orderId) {
+            $orderForMail = Order::find($orderId);
+        }
+        if ($orderForMail instanceof Order) {
+            $personForMail = null;
+            if ($personId) {
+                $resolved = $variables['person'] ?? $this->personRepository->find($personId);
+                $personForMail = $resolved instanceof Person ? $resolved : Person::find($personId);
+            }
+            $variables = array_merge($variables, $this->orderMailService()->templateVariablesForAcknowledgeOrder($orderForMail, $personForMail));
+        }
+
         return $variables;
     }
 
@@ -314,6 +340,14 @@ class EmailTemplateRenderingService
         ])->render();
 
         return $this->emailRenderingService->rendInlineCss($htmlContent);
+    }
+
+    /**
+     * Resolved lazily to avoid a container cycle: CrmMailService → this service → OrderMailService → CrmMailService.
+     */
+    private function orderMailService(): OrderMailService
+    {
+        return $this->application->make(OrderMailService::class);
     }
 
     /**

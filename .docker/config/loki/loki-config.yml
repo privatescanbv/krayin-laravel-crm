@@ -44,7 +44,7 @@ frontend:
 
 compactor:
   working_directory: /loki/compactor
-  shared_store: filesystem
   retention_enabled: true
+  delete_request_store: filesystem
   compaction_interval: 10m
   retention_delete_delay: 2h

@@ -25,6 +25,7 @@ run() {
 }
 
 run ./reset_base.sh prod &&
+run php artisan storage:link &&
 run php artisan import:persons ${PERSON_LIMIT_ARG} &&
 run php artisan import:leads ${LEAD_LIMIT_ARG} &&
 run php artisan import:orders &&

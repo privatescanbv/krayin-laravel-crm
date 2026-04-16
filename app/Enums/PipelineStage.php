@@ -516,6 +516,27 @@ enum PipelineStage: string
         ];
     }
 
+    /**
+     * Stage IDs at or after "Uitgevoerd, wachten op rapporten".
+     * AFB dispatch is no longer actionable from this point onwards,
+     * so "Niet klaar voor dispatch" should not be shown.
+     *
+     * @return list<int>
+     */
+    public static function getStageIdsAtOrAfterExecution(): array
+    {
+        return [
+            self::ORDER_UITGEVOERD->id(),
+            self::ORDER_RAPPORTEN_ONTVANGEN->id(),
+            self::ORDER_GEWONNEN->id(),
+            self::ORDER_VERLOREN->id(),
+            self::ORDER_UITGEVOERD_HERNIA->id(),
+            self::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->id(),
+            self::ORDER_GEWONNEN_HERNIA->id(),
+            self::ORDER_VERLOREN_HERNIA->id(),
+        ];
+    }
+
     // Used for operational grids:
 
     public static function getFrontOfficeStageIds(): array

@@ -1,3 +1,4 @@
+@php use App\Enums\PipelineStage; @endphp
 @props([
     'order',
     'afbNeedsManualBanner' => false,
@@ -21,16 +22,19 @@
                         @else
                             .
                         @endif
-                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om 06:00 verstuurd;
+                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om 06:00
+                        verstuurd;
                         binnen dit venster moet u de AFB nu zelf versturen naar de kliniek.
                     </p>
                     @if ($afbHasBatchSuccess)
                         <p class="text-xs text-amber-800 dark:text-amber-200/90">
-                            Er is al een succesvolle batch-verzending voor deze order geregistreerd; controleer of een extra individuele verzending nog nodig is.
+                            Er is al een succesvolle batch-verzending voor deze order geregistreerd; controleer of een
+                            extra individuele verzending nog nodig is.
                         </p>
                     @else
                         <p class="text-xs text-amber-800 dark:text-amber-200/90">
-                            Er is nog geen succesvolle batch-AFB voor deze order geregistreerd voor de betreffende afdeling(en).
+                            Er is nog geen succesvolle batch-AFB voor deze order geregistreerd voor de betreffende
+                            afdeling(en).
                         </p>
                     @endif
                 </div>
@@ -107,7 +111,8 @@
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Betaling klant</span>
                 @php $paymentStatus = $order->paymentStatus(); @endphp
-                <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $paymentStatus->badgeClass() }}">
+                <span
+                    class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $paymentStatus->badgeClass() }}">
                     {{ $paymentStatus->label() }}
                 </span>
             </div>
@@ -121,7 +126,8 @@
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Inkoop status</span>
                 @php $purchaseStatus = $order->purchaseStatus(); @endphp
-                <span class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $purchaseStatus->badgeClass() }}">
+                <span
+                    class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $purchaseStatus->badgeClass() }}">
                     {{ $purchaseStatus->label() }}
                 </span>
             </div>
@@ -166,18 +172,22 @@
             $avbReasons = $avbDispatchReadiness['reasons'];
             $afbNeedsManualSending = $avbDispatchReadiness['needs_manual_send'];
             $afbAllSent = $avbDispatchReadiness['is_all_sent'];
+            $isPostExecution = in_array((int) $order->pipeline_stage_id, PipelineStage::getStageIdsAtOrAfterExecution(), true);
         @endphp
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
             @if ($afbNeedsManualSending)
-                <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                <span
+                    class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                     ⚠ Klaar voor dispatch (handmatig verzenden vereist)
                 </span>
             @elseif ($afbAllSent)
-                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                <span
+                    class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
                     ✓ Verzonden
                 </span>
             @elseif ($avbReady)
-                <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                <span
+                    class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                     ✓ Klaar voor dispatch
                 </span>
                 @if ($avbPlanned)
@@ -185,8 +195,9 @@
                         Batch gepland op {{ $avbPlanned->format('d-m-Y') }} om {{ $avbPlanned->format('H:i') }}
                     </span>
                 @endif
-            @else
-                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+            @elseif (!$isPostExecution)
+                <span
+                    class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
                     ✗ Niet klaar voor dispatch
                 </span>
                 @if (!empty($avbReasons))
@@ -207,13 +218,16 @@
                         @php $dispatch = $afbSentPerDepartment->get($department->id); @endphp
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2 min-w-0">
-                                <a href="{{ route('admin.clinics.view', $department->clinic_id) }}" class="text-gray-700 hover:underline dark:text-gray-300 shrink-0">{{ $department->clinic?->name }}</a>
+                                <a href="{{ route('admin.clinics.view', $department->clinic_id) }}"
+                                   class="text-gray-700 hover:underline dark:text-gray-300 shrink-0">{{ $department->clinic?->name }}</a>
                                 <span class="text-gray-400">›</span>
-                                <a href="{{ route('admin.clinic_departments.edit', $department->id) }}" class="text-gray-500 hover:underline dark:text-gray-400 truncate">{{ $department->name }}</a>
+                                <a href="{{ route('admin.clinic_departments.edit', $department->id) }}"
+                                   class="text-gray-500 hover:underline dark:text-gray-400 truncate">{{ $department->name }}</a>
                             </div>
                             @if($dispatch)
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
                                         ✓ Verzonden {{ $dispatch->sent_at->format('d-m-Y H:i') }}
                                     </span>
                                     <a href="{{ route('admin.clinic-guide.afb-pdf.view', ['personDocumentId' => $dispatch->id]) }}"
@@ -223,7 +237,8 @@
                                     </a>
                                 </div>
                             @else
-                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400 shrink-0">
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400 shrink-0">
                                     Nog niet verzonden
                                 </span>
                             @endif
@@ -284,43 +299,44 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="border-b border-gray-200 dark:border-gray-700">
-                            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Product</th>
-                            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Persoon</th>
-                            <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Aantal</th>
-                            <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Prijs</th>
-                            <th class="px-2 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
-                        </tr>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Product</th>
+                        <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Persoon</th>
+                        <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Aantal</th>
+                        <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Prijs</th>
+                        <th class="px-2 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        @foreach($order->orderItems as $item)
-                            @php
-                                $statusClasses = $item->status?->badgeClass() ?? 'bg-neutral-bg text-gray-800';
-                            @endphp
-                            <tr class="border-b border-gray-100 dark:border-gray-800">
-                                <td class="px-2 py-2 text-gray-800 dark:text-white">
-                                    {{ $item->getProductName() ?: '-' }}
-                                </td>
-                                <td class="px-2 py-2 text-gray-800 dark:text-white">
-                                    {{ $item->person?->name ?? '-' }}
-                                </td>
-                                <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
-                                    {{ $item->quantity }}
-                                </td>
-                                <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
-                                    &euro; {{ number_format($item->total_price ?? 0, 2, ',', '.') }}
-                                </td>
-                                <td class="px-2 py-2 text-center">
-                                    @if($item->status)
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full {{ $statusClasses }}">
+                    @foreach($order->orderItems as $item)
+                        @php
+                            $statusClasses = $item->status?->badgeClass() ?? 'bg-neutral-bg text-gray-800';
+                        @endphp
+                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                            <td class="px-2 py-2 text-gray-800 dark:text-white">
+                                {{ $item->getProductName() ?: '-' }}
+                            </td>
+                            <td class="px-2 py-2 text-gray-800 dark:text-white">
+                                {{ $item->person?->name ?? '-' }}
+                            </td>
+                            <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
+                                {{ $item->quantity }}
+                            </td>
+                            <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
+                                &euro; {{ number_format($item->total_price ?? 0, 2, ',', '.') }}
+                            </td>
+                            <td class="px-2 py-2 text-center">
+                                @if($item->status)
+                                    <span
+                                        class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full {{ $statusClasses }}">
                                             {{ $item->status->label() }}
                                         </span>
-                                    @else
-                                        <span class="text-gray-400 text-xs">-</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
                     </tbody>
                 </table>
             </div>

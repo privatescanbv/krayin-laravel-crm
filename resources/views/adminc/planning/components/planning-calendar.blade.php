@@ -423,7 +423,7 @@
                         height: height + 'px',
                         backgroundColor: `rgba(${this.hexToRgb(color)}, 0.15)`,
                         borderColor: `rgba(${this.hexToRgb(color)}, 0.3)`,
-                        color: this.getContrastColor(color)
+                        color: color
                     };
 
                     // If block has overlapping layout info, apply width and left position

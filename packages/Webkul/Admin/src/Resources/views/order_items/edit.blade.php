@@ -57,6 +57,14 @@
                     rules=""
                 />
 
+                <x-adminc::components.field
+                    type="textarea"
+                    name="afb_description"
+                    label="AFB omschrijving (overschrijft kliniek AFB omschrijving)"
+                    value="{{ $order_items->afb_description }}"
+                    rules=""
+                />
+
                 <input type="hidden" name="order_id" value="{{ $order_items->order_id }}">
 
                 @include('adminc.components.product-selector')

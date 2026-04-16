@@ -102,6 +102,7 @@ class OrderItemController extends SimpleEntityController
             'resource_type_id' => ['nullable', 'integer', 'exists:resource_types,id'],
             'name'             => ['nullable', 'string', 'max:255'],
             'description'      => ['nullable', 'string'],
+            'afb_description'  => ['nullable', 'string'],
             'person_id'        => ['required', 'integer', 'exists:persons,id'],
             'quantity'         => ['required', 'integer', 'min:1'],
             'total_price'      => ['nullable', 'numeric', 'min:0'],

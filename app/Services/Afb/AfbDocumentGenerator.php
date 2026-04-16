@@ -183,7 +183,8 @@ class AfbDocumentGenerator
                             'date'                          => $start->format('d-m-Y'),
                             'appointment_time'              => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
                             'start_time'                    => $start->format('H:i'),
-                            'clinic_product_description'    => ($clinicId ? $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId) : null)
+                            'clinic_product_description'    => $this->emptyToNull($item->afb_description)
+                                ?: ($clinicId ? $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId) : null)
                                 ?: ($item->getProductDescription() ?: $item->getProductName() ?: '-'),
                             'order_item_person_id'  => $item->person_id ? (int) $item->person_id : null,
                         ];

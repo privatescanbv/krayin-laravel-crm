@@ -33,6 +33,7 @@ class OrderItem extends Model
         'resource_type_id',
         'name',
         'description',
+        'afb_description',
         'person_id',
         'quantity',
         'total_price',

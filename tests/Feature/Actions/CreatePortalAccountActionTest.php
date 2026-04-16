@@ -2,7 +2,7 @@
 
 use App\Actions\Persons\CreatePortalAccountAction;
 use App\Services\Keycloak\KeycloakService;
-use App\Services\Mail\PatientMailService;
+use App\Services\Mail\CrmMailService;
 use App\Services\PersonKeycloakService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Config;
@@ -43,23 +43,18 @@ test('sends welcome mail and links email to person when portal account is create
     $keycloakService->shouldReceive('getRealmLoginUrl')
         ->andReturn('https://sso.local.privatescan.nl/realms/crm/protocol/openid-connect/auth?redirect_uri=test');
 
-    $patientMailService = app(PatientMailService::class);
+    $crmMailService = app(CrmMailService::class);
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $patientMailService);
+    $action = new CreatePortalAccountAction($personKeycloakService, $crmMailService);
 
     $result = $action->execute($person);
 
     expect($result['success'])->toBeTrue();
 
-    // Verify email was queued using EmailMailable (same as EmailController)
-    Mail::assertQueued(EmailMailable::class, function (EmailMailable $mail) use ($person) {
-        return $mail->email->person_id === $person->id
-            && $mail->email->subject === 'Welkom bij het Privatescan patiëntportaal';
-    });
+    Mail::assertQueued(EmailMailable::class, 1);
 
-    $emails = Email::where('person_id', $person->id)->get();
-    expect($emails)->toHaveCount(1)
-        ->and($emails->first()->subject)->toBe('Welkom bij het Privatescan patiëntportaal');
+    $email = Email::where('person_id', $person->id)->firstOrFail();
+    expect($email->subject)->toBe('Welkom bij het Privatescan patiëntportaal');
 });
 
 test('temporary password in flash message matches password in welcome email', function () {
@@ -84,9 +79,9 @@ test('temporary password in flash message matches password in welcome email', fu
             'generated_password' => $expectedPassword,
         ]);
 
-    $patientMailService = app(PatientMailService::class);
+    $crmMailService = app(CrmMailService::class);
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $patientMailService);
+    $action = new CreatePortalAccountAction($personKeycloakService, $crmMailService);
 
     $result = $action->execute($person);
 
@@ -94,8 +89,10 @@ test('temporary password in flash message matches password in welcome email', fu
     expect($result['success'])->toBeTrue()
         ->and($result['message'])->toContain($expectedPassword);
 
-    // 2) Wachtwoord in de opgeslagen email body (reply veld)
-    $email = Email::where('person_id', $person->id)->firstOrFail();
+    // 2) Wachtwoord in de welkomstmail
+    $email = Email::where('person_id', $person->id)
+        ->where('subject', 'Welkom bij het Privatescan patiëntportaal')
+        ->firstOrFail();
 
     expect($email->reply)->toContain($expectedPassword);
 });
@@ -128,9 +125,9 @@ test('temporary password in flash message matches password in email when using r
     $this->app->instance(\App\Actions\Keycloak\AddKeycloakUserAction::class, $addKeycloakUserAction);
 
     $personKeycloakService = app(PersonKeycloakService::class);
-    $patientMailService = app(PatientMailService::class);
+    $crmMailService = app(CrmMailService::class);
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $patientMailService);
+    $action = new CreatePortalAccountAction($personKeycloakService, $crmMailService);
 
     $result = $action->execute($person);
 
@@ -144,16 +141,45 @@ test('temporary password in flash message matches password in email when using r
     preg_match('/Tijdelijk wachtwoord: (.+)$/', $result['message'], $matches);
     $tooltipPassword = $matches[1] ?? null;
 
-    // 3) Wachtwoord in de email body
-    $email = Email::where('person_id', $person->id)->firstOrFail();
-    preg_match('/<strong>Tijdelijk wachtwoord<\/strong>:<br>\s*<strong>(.+?)<\/strong>/', $email->reply, $emailMatches);
-    $emailPassword = $emailMatches[1] ?? null;
+    // 3) Wachtwoord in de welkomstmail body
+    $email = Email::where('person_id', $person->id)
+        ->where('subject', 'Welkom bij het Privatescan patiëntportaal')
+        ->firstOrFail();
 
-    expect($tooltipPassword)->not->toBeNull('Tooltip message moet het wachtwoord bevatten')
-        ->and($emailPassword)->not->toBeNull('Email body moet het wachtwoord bevatten')
-        ->and($tooltipPassword)->toBe($keycloakPassword, 'Tooltip wachtwoord moet gelijk zijn aan wat naar Keycloak ging')
-        ->and($emailPassword)->toBe($keycloakPassword, 'Email wachtwoord moet gelijk zijn aan wat naar Keycloak ging')
-        ->and($tooltipPassword)->toBe($emailPassword, 'Tooltip en email wachtwoord moeten identiek zijn');
+    expect($tooltipPassword)->not->toBeNull()
+        ->and($tooltipPassword)->toBe($keycloakPassword)
+        ->and($email->reply)->toContain($keycloakPassword);
+});
+
+test('does not queue mail when sendAccountEmails is false (sync path)', function () {
+    /** @var Person $person */
+    $person = Person::factory()->create([
+        'emails' => [
+            ['value' => 'sync-nomail@example.com', 'label' => 'eigen', 'is_default' => true],
+        ],
+        'is_active'        => false,
+        'keycloak_user_id' => null,
+    ]);
+
+    $personKeycloakService = Mockery::mock(PersonKeycloakService::class);
+    $personKeycloakService->shouldReceive('create')
+        ->once()
+        ->andReturn([
+            'success'            => true,
+            'keycloak_user_id'   => 'kc-sync-no-mail',
+            'generated_password' => 'SyncPass123!',
+        ]);
+
+    $crmMailService = app(CrmMailService::class);
+
+    $action = new CreatePortalAccountAction($personKeycloakService, $crmMailService);
+
+    $result = $action->execute($person, null, null, false);
+
+    expect($result['success'])->toBeTrue();
+
+    Mail::assertNothingQueued();
+    expect(Email::where('person_id', $person->id)->count())->toBe(0);
 });
 
 test('links welcome mail to lead when lead is provided', function () {
@@ -182,18 +208,16 @@ test('links welcome mail to lead when lead is provided', function () {
     $keycloakService->shouldReceive('getRealmLoginUrl')
         ->andReturn('https://sso.local.privatescan.nl/realms/crm/protocol/openid-connect/auth?redirect_uri=test');
 
-    $patientMailService = app(PatientMailService::class);
+    $crmMailService = app(CrmMailService::class);
 
-    $action = new CreatePortalAccountAction($personKeycloakService, $patientMailService);
+    $action = new CreatePortalAccountAction($personKeycloakService, $crmMailService);
 
     $result = $action->execute($person, null, $lead);
 
     expect($result['success'])->toBeTrue();
 
-    // With the new prioritization logic, if lead_id is set, person_id is removed
-    // So we should search by lead_id only
     $emails = Email::where('lead_id', $lead->id)->get();
 
-    expect($emails)->toHaveCount(1)
-        ->and($emails->first()->subject)->toBe('Welkom bij het Privatescan patiëntportaal');
+    expect($emails)->toHaveCount(1);
+    expect($emails->first()->subject)->toBe('Welkom bij het Privatescan patiëntportaal');
 });

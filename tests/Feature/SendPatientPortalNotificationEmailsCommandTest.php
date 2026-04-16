@@ -3,6 +3,7 @@
 use App\Models\PatientNotification;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
@@ -28,6 +29,10 @@ test('it sends one notification email per patient and updates last_notified_by_e
         'dismissed_at'              => null,
         'last_notified_by_email_at' => null,
     ]);
+
+    $person->forceFill([
+        'patient_portal_notify_scheduled_at' => Carbon::now()->subMinute(),
+    ])->save();
 
     $this->artisan('patient:send-notification-email')->assertExitCode(0);
 

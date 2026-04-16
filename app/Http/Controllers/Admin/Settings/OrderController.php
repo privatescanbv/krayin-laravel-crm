@@ -23,7 +23,7 @@ use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
 use App\Services\Afb\AfbDispatchService;
 use App\Services\FormService;
-use App\Services\Mail\EmailTemplateRenderingService;
+use App\Services\Mail\CrmMailService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
 use App\Services\OrderStatusService;
@@ -55,7 +55,6 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Email\Repositories\AttachmentRepository;
-use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Models\StageProxy;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Product\Models\Product;
@@ -72,7 +71,7 @@ class OrderController extends SimpleEntityController
         protected SalesLeadRepository $salesLeadRepository,
         protected FormService $formService,
         protected PipelineCookieService $pipelineCookieService,
-        private EmailTemplateRenderingService $emailTemplateRenderingService,
+        private readonly CrmMailService $crmMailService,
         private AfbDispatchService $afbDispatchService,
         private readonly AttachmentRepository $attachmentRepository,
     ) {
@@ -841,32 +840,14 @@ class OrderController extends SimpleEntityController
         }
 
         try {
-            // Build entities array with order
-            $entities = [
-                'order' => $orderId,
-            ];
-
-            // Resolve variables from entities
-            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities($entities);
-
-            // Get template from database
-            $template = EmailTemplate::byCode($templateIdentifier)
-                ->orWhere('name', $templateIdentifier)
-                ->first();
-
-            if (! $template) {
-                return response()->json([
-                    'error'   => 'Template not found',
-                    'message' => "Template with code or name '{$templateIdentifier}' does not exist in database",
-                ], 404);
-            }
-
-            // Render template with layout
-            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
+            $rendered = $this->crmMailService->renderHtmlForEntities(
+                $templateIdentifier,
+                ['order' => $orderId]
+            );
 
             return response()->json([
                 'data' => [
-                    'content' => $content,
+                    'content' => $rendered['html'],
                 ],
             ]);
         } catch (Exception $e) {
@@ -880,7 +861,7 @@ class OrderController extends SimpleEntityController
                 'error'   => 'Template not found or error rendering template',
                 'message' => $e->getMessage(),
                 'trace'   => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 500);
+            ], str_contains($e->getMessage(), 'not found') ? 404 : 500);
         }
     }
 
@@ -996,25 +977,12 @@ class OrderController extends SimpleEntityController
         }
 
         try {
-            $variables = $this->emailTemplateRenderingService->resolveVariablesFromEntities([
-                'order'  => $orderId,
-                'person' => $personId,
-            ]);
+            $rendered = $this->crmMailService->renderHtmlForEntities(
+                $templateIdentifier,
+                ['order' => $orderId, 'person' => $personId]
+            );
 
-            $template = EmailTemplate::byCode($templateIdentifier)
-                ->orWhere('name', $templateIdentifier)
-                ->first();
-
-            if (! $template) {
-                return response()->json([
-                    'error'   => 'Template not found',
-                    'message' => "Template '{$templateIdentifier}' does not exist in database",
-                ], 404);
-            }
-
-            $content = $this->emailTemplateRenderingService->renderTemplateToHTML($template, $variables);
-
-            return response()->json(['data' => ['content' => $content]]);
+            return response()->json(['data' => ['content' => $rendered['html']]]);
         } catch (Exception $e) {
             Log::error('Per-person confirmation template error', [
                 'order_id'  => $orderId,
@@ -1022,7 +990,10 @@ class OrderController extends SimpleEntityController
                 'error'     => $e->getMessage(),
             ]);
 
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(
+                ['error' => $e->getMessage()],
+                str_contains($e->getMessage(), 'not found') ? 404 : 500
+            );
         }
     }
 

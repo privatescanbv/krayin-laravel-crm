@@ -40,7 +40,8 @@ class CreatePatientNotification
 
                 if ($existing) {
                     $existing->update([
-                        'entity_names' => array_merge($existing->entity_names ?? [], [$event->entityName]),
+                        'entity_names'              => array_merge($existing->entity_names ?? [], [$event->entityName]),
+                        'last_notified_by_email_at' => null,
                     ]);
 
                     return;
@@ -71,8 +72,9 @@ class CreatePatientNotification
 
                 if ($existing) {
                     $existing->update([
-                        'reference_id' => $event->referenceId,
-                        'entity_names' => array_merge($existing->entity_names ?? [], [$event->entityName]),
+                        'reference_id'              => $event->referenceId,
+                        'entity_names'              => array_merge($existing->entity_names ?? [], [$event->entityName]),
+                        'last_notified_by_email_at' => null,
                     ]);
 
                     return;

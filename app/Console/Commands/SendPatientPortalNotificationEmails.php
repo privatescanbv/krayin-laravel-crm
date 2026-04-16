@@ -2,19 +2,25 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\EmailTemplateCode;
 use App\Models\PatientNotification;
 use App\Services\Mail\CrmMailService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Throwable;
 use Webkul\Contact\Models\Person;
 
+/**
+ * Sends email notifications to patient if there is new content.
+ * Only in a window of 2 hours, max 1 email. (can be configured)
+ */
 class SendPatientPortalNotificationEmails extends Command
 {
     protected $signature = 'patient:send-notification-email';
 
-    protected $description = 'Send notification emails to patients when something is ready in the patient portal.';
+    protected $description = 'Send digest notification emails when due (patient portal new content).';
 
     public function __construct(
         private readonly CrmMailService $crmMailService
@@ -24,62 +30,101 @@ class SendPatientPortalNotificationEmails extends Command
 
     public function handle(): int
     {
-        $patientIds = PatientNotification::forMailNotification()
-            ->select('patient_id')
-            ->distinct()
-            ->pluck('patient_id');
+        $portalUrl = (string) config('services.portal.patient.web_url', '');
 
-        if ($patientIds->isEmpty()) {
-            $this->info('No patient notifications pending for email.');
+        $persons = Person::query()
+            ->whereNotNull('patient_portal_notify_scheduled_at')
+            ->where('patient_portal_notify_scheduled_at', '<=', now())
+            ->whereExists(function ($q) {
+                $q->selectRaw('1')
+                    ->from('patient_notifications')
+                    ->whereColumn('patient_notifications.patient_id', 'persons.id')
+                    ->whereNull('patient_notifications.dismissed_at')
+                    ->whereNull('patient_notifications.last_notified_by_email_at');
+            })
+            ->get();
+
+        if ($persons->isEmpty()) {
+            $this->info('No patient portal digest emails due.');
 
             return Command::SUCCESS;
         }
 
-        $portalUrl = (string) config('services.portal.patient.web_url', '');
+        $failed = false;
 
-        foreach ($patientIds as $patientId) {
-            $person = Person::query()->find($patientId);
-
-            if (! $person) {
-                Log::warning('Patient notification email skipped: person not found', [
-                    'patient_id' => $patientId,
-                ]);
-
-                continue;
-            }
-
-            $recipientEmail = $person->findDefaultEmail();
-
-            if (! $recipientEmail) {
-                Log::warning('Patient notification email skipped: no default email', [
-                    'patient_id' => $patientId,
-                ]);
-
-                continue;
-            }
-
+        foreach ($persons as $person) {
             try {
-                DB::transaction(function () use ($person, $patientId, $portalUrl) {
-                    $this->crmMailService->sendToPersonTemplate($person, 'patient-portal-notification', [
-                        'lastname'   => (string) ($person->last_name ?? ''),
-                        'portal_url' => $portalUrl,
-                        'person'     => $person,
-                    ], isNotify: true);
+                $this->sendForPerson($person, $portalUrl);
+            } catch (RuntimeException $e) {
+                if (str_contains($e->getMessage(), 'Email template')) {
+                    $this->error($e->getMessage());
+                    Log::error('Patient portal digest: template missing', ['error' => $e->getMessage()]);
 
-                    PatientNotification::forPatient($patientId)
-                        ->forMailNotification()
-                        ->update([
-                            'last_notified_by_email_at' => now(),
-                        ]);
-                });
+                    return Command::FAILURE;
+                }
+                $failed = true;
+                Log::error('Failed sending patient portal digest email', [
+                    'patient_id' => $person->id,
+                    'error'      => $e->getMessage(),
+                ]);
             } catch (Throwable $e) {
-                Log::error('Failed sending patient portal notification email', [
-                    'patient_id' => $patientId,
+                $failed = true;
+                Log::error('Failed sending patient portal digest email', [
+                    'patient_id' => $person->id,
                     'error'      => $e->getMessage(),
                 ]);
             }
         }
 
-        return Command::SUCCESS;
+        return $failed ? Command::FAILURE : Command::SUCCESS;
+    }
+
+    private function sendForPerson(Person $person, string $portalUrl): void
+    {
+        $pendingExists = PatientNotification::query()
+            ->forPatient($person->id)
+            ->forMailNotification()
+            ->exists();
+
+        if (! $pendingExists) {
+            $person->forceFill(['patient_portal_notify_scheduled_at' => null])->save();
+
+            return;
+        }
+
+        $recipientEmail = $person->findDefaultEmail();
+
+        if (! $recipientEmail) {
+            Log::warning('Patient portal digest skipped: no default email', [
+                'patient_id' => $person->id,
+            ]);
+
+            return;
+        }
+        DB::transaction(function () use ($person, $portalUrl) {
+            if (! $this->crmMailService->sendToPersonTemplate(
+                $person,
+                EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT,
+                [
+                    'lastname'    => (string) ($person->last_name ?? ''),
+                    'portal_url'  => $portalUrl,
+                    'portal_link' => $portalUrl,
+                    'person'      => $person,
+                ], isNotify: true
+            )) {
+                return;
+            }
+
+            PatientNotification::forPatient($person->id)
+                ->forMailNotification()
+                ->update([
+                    'last_notified_by_email_at' => now(),
+                ]);
+
+            $person->forceFill([
+                'patient_portal_last_notify_email_at' => now(),
+                'patient_portal_notify_scheduled_at'  => null,
+            ])->save();
+        });
     }
 }

@@ -79,15 +79,17 @@ class Person extends Model implements PersonContract
      * @var array
      */
     protected $casts = [
-        'emails'                         => 'array',
-        'phones'                         => 'array',
-        'date_of_birth'                  => 'date',
-        'gender'                         => PersonGender::class,
-        'salutation'                     => PersonSalutation::class,
-        'is_active'                      => 'boolean',
-        'preferred_language'             => PreferredLanguage::class,
-        'national_identification_number' => EncryptedString::class,
-        'onboarding_completed_at'        => 'datetime',
+        'emails'                              => 'array',
+        'phones'                              => 'array',
+        'date_of_birth'                       => 'date',
+        'gender'                              => PersonGender::class,
+        'salutation'                          => PersonSalutation::class,
+        'is_active'                           => 'boolean',
+        'preferred_language'                  => PreferredLanguage::class,
+        'national_identification_number'      => EncryptedString::class,
+        'onboarding_completed_at'             => 'datetime',
+        'patient_portal_notify_scheduled_at'  => 'datetime',
+        'patient_portal_last_notify_email_at' => 'datetime',
     ];
 
     /**
@@ -129,6 +131,8 @@ class Person extends Model implements PersonContract
         'address_id',
         'preferred_language',
         'onboarding_completed_at',
+        'patient_portal_notify_scheduled_at',
+        'patient_portal_last_notify_email_at',
     ];
 
     /**
@@ -414,7 +418,6 @@ class Person extends Model implements PersonContract
 
         return implode(' ', array_filter($parts));
     }
-
 
     /**
      * Calculate and return the age of the person based on date_of_birth

@@ -159,25 +159,65 @@ HTML,
             // Variables: lastname, portal_url, person.first_name
             [
                 'name'        => 'Patiëntportaal notificatie',
-                'code'        => 'patient-portal-notification',
+                'code'        => EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION->value,
                 'type'        => $patient,
                 'language'    => $nl,
                 'departments' => $allDepartments,
-                'subject'     => 'Uw patiëntportaal is beschikbaar',
+                'subject'     => 'Welkom bij het Privatescan patiëntportaal',
+                'content'     => <<<'HTML'
+    <p>Regel uw zorgzaken nu makkelijk en betrouwbaar online via www.privatescan.nl.</p>
+    <p>Beste {{ person.first_name }},</p>
+    <p>Privatescan nodigt u van harte uit om uw eigen gezondheidsportaal te openen. Hierin kunt u online zelf:</p>
+    <ul>
+        <li>uw medisch dossier inzien,</li>
+        <li>uitslagen en afspraken inzien,</li>
+        <li>vragen stellen,</li>
+        <li>wijzigingen in uw gegevens (woonadres, e-mailadres en/of telefoonnummer) doorgeven.</li>
+    </ul>
+    <p><strong>Hoe opent u een gezondheidsportaal op Privatescan.nl?</strong></p>
+    <ol>
+        <li>Ga naar <a href="{{ portal_url }}" target="_blank" rel="noopener">{{ $loginUrl }}</a>.</li>
+        <li>Klik op de knop <strong>Inloggen</strong> op de hoofdpagina.</li>
+        <li>Log in met uw gegevens.</li>
+        <li>Logt u voor de eerste keer in? Dan wordt u gevraagd het contract met uw zorgverlener digitaal te ondertekenen.</li>
+    </ol>
+    <p>
+        De eerste keer kunt u inloggen met dit tijdelijke wachtwoord, die u daarna aanpast naar een eigen wachtwoord.
+        <strong>Tijdelijk wachtwoord</strong>:<br>
+        <strong>{{ $temporaryPassword }}</strong>
+    </p>
+    <p>Dankzij deze akkoordverklaring bent u ervan verzekerd dat de uitwisseling van uw gegevens met Privatescan/Herniapoli zorgvuldig en betrouwbaar is geregeld.</p>
+    <p><strong>Heeft u vragen?</strong><br>
+        U kunt op de ondersteuningspagina veelgestelde vragen en instructievideo’s raadplegen via
+        <a href="https://www.privatescan.nl" target="_blank" rel="noopener">www.privatescan.nl</a>.
+        Daarnaast kunt u telefonisch contact met ons opnemen.</p>
+    <p>Met vriendelijke groet,<br>
+        Privatescan / Herniapoli</p>
+HTML,
+            ],
+
+            // ── Patiëntportaal: nieuwe content (digest-mail) ───────────────────────
+            // Variables: person.first_name, portal_url, portal_link, lastname
+            [
+                'name'        => 'Patiëntportaal nieuwe content',
+                'code'        => EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT->value,
+                'type'        => $patient,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Nieuwe inhoud in uw patiëntportaal',
                 'content'     => <<<'HTML'
 <p>Beste {{ person.first_name }},</p>
-<p>Uw patiëntportaal is klaar voor gebruik. U kunt inloggen via de onderstaande link:</p>
-<p><a href="{{ portal_url }}">Naar het patiëntportaal</a></p>
-<p>Heeft u vragen? Neem dan gerust contact met ons op.</p>
+<p>Er staan nieuwe documenten, formulieren of verzoeken voor je klaar in jouw patiëntportaal.</p>
+<p>Klik hier om deze te bekijken:<br><a href="{{ portal_link }}">{{ portal_link }}</a></p>
 <p>Met vriendelijke groet,<br>Privatescan</p>
 HTML,
             ],
 
-            // ── Gebruiker aanmaken ────────────────────────────────────────────────
+            // ── Medewerker aanmaken ────────────────────────────────────────────────
             // Variables: user.first_name, user.last_name, user.email
             [
-                'name'        => 'Gebruiker aanmaken',
-                'code'        => 'create-user',
+                'name'        => 'Medewerker aanmaken',
+                'code'        => EmailTemplateCode::CREATE_USER->value,
                 'type'        => $algemeen,
                 'language'    => $nl,
                 'departments' => $allDepartments,
@@ -195,7 +235,7 @@ HTML,
             //            appointments_by_person, form_link_section, approval_instructions,
             //            company_signature
             [
-                'name'        => 'order mail',
+                'name'        => 'Order mail',
                 'code'        => null,
                 'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
                 'language'    => $nl,
@@ -245,7 +285,23 @@ HTML,
 <p>Met vriendelijke groet,<br>{{ company_signature }}</p>
 HTML,
             ],
-
+            [
+                'name'        => 'Patient notificatie er staat nieuwe content klaar',
+                'code'        => EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT,
+                'type'        => EmailTemplateType::PATIENT->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Nieuw bericht beschikbaar in uw patiëntenportaal',
+                'content'     => <<<'HTML'
+<p>Beste {{ customer_name }},</p>
+<p>Er staan nieuwe documenten, formulieren of verzoeken voor je klaar in jouw patiëntportaal.</p>
+<p>Klik hier om deze te bekijken:<br>
+{portal_link}</p>
+<p>Met vriendelijke groet,
+<br>{{ company_signature }}
+</p>
+HTML,
+            ],
         ];
     }
 

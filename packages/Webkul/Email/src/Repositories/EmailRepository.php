@@ -29,6 +29,10 @@ class EmailRepository extends Repository
         return Email::class;
     }
 
+    public function createWith(array $data, array $linkEmailToEntities): Email {
+        // TODO refactor later, keep this interface and remove create(data)
+        return $this->create(array_merge($data, $linkEmailToEntities));
+    }
     /**
      * Create.
      *

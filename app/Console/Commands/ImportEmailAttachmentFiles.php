@@ -191,10 +191,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 }
 
                 // Create target directory if it doesn't exist
-                $targetDir = dirname($targetPath);
-                if (! Storage::exists($targetDir)) {
-                    Storage::makeDirectory($targetDir);
-                }
+                File::ensureDirectoryExists(Storage::path(dirname($targetPath)), 0755);
 
                 // Copy the file
                 $sourceContent = File::get($sourceFile);

@@ -73,23 +73,27 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
 
     /**
      * Process messages from all folders.
-     * @throws Exception
      */
-    public function processMessagesFromAllFolders()
+    public function processMessagesFromAllFolders(): void
     {
-        $this->reconnect();
-        if (!$this->client) {
-            logger()->warning('IMAP client is not initialized. Skipping email processing.');
-            return; // Skip processing if client is not initialized (e.g., during testing)
-        }
-
         try {
-            $rootFolders = $this->client->getFolders();
-
-            $this->processMessagesFromLeafFolders($rootFolders);
+            $this->reconnect();
         } catch (Exception $e) {
-            throw new Exception($e->getMessage());
+            logger()->warning('Skipping inbound email processing: IMAP connection unavailable.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
         }
+
+        if (! $this->client) {
+            logger()->warning('IMAP client is not initialized. Skipping email processing.');
+
+            return;
+        }
+
+        $rootFolders = $this->client->getFolders();
+        $this->processMessagesFromLeafFolders($rootFolders);
     }
 
     /**

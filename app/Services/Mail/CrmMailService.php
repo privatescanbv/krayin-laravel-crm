@@ -2,8 +2,10 @@
 
 namespace App\Services\Mail;
 
+use App\Enums\EmailTemplateCode;
 use App\Enums\PersonPreferenceKey;
 use App\Models\PersonPreference;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
@@ -36,15 +38,12 @@ class CrmMailService
      *
      * @return array{subject: string, html: string, template: EmailTemplate}
      */
-    public function renderTemplate(string $templateIdentifier, array $variables = []): array
+    public function renderTemplate(EmailTemplateCode $templateIdentifier, array $variables = []): array
     {
-        $template = EmailTemplate::query()
-            ->where('code', $templateIdentifier)
-            ->orWhere('name', $templateIdentifier)
-            ->first();
+        $template = EmailTemplate::byCodeEnum($templateIdentifier)->firstOrFail();
 
         if (! $template) {
-            throw new RuntimeException("Email template '{$templateIdentifier}' not found.");
+            throw new RuntimeException("Email template '{$templateIdentifier->value}' not found.");
         }
 
         $rendered = $this->templateRendering->render($template, $variables);
@@ -54,45 +53,6 @@ class CrmMailService
             'html'     => $rendered['html'],
             'template' => $template,
         ];
-    }
-
-    /**
-     * Store + queue a system email to a person (patient/customer).
-     *
-     * @param  array{lead_id?: string|int|null, sales_lead_id?: string|int|null}  $links
-     */
-    public function sendToPersonHtml(Person $person, string $subject, string $htmlContent, array $links = []): EmailModel
-    {
-        $recipientEmail = $person->findDefaultEmailOrError();
-
-        $data = [
-            'subject'   => $subject,
-            'reply'     => $htmlContent,
-            'reply_to'  => [$recipientEmail], // recipient (stored in reply_to for system emails)
-            'name'      => $person->name,
-            'source'    => 'system',
-            'user_type' => 'user',
-            'person_id' => $person->id,
-        ];
-
-        if (array_key_exists('lead_id', $links) && $links['lead_id'] !== null) {
-            $data['lead_id'] = (string) $links['lead_id'];
-        } elseif (array_key_exists('sales_lead_id', $links) && $links['sales_lead_id'] !== null) {
-            $data['sales_lead_id'] = (string) $links['sales_lead_id'];
-        }
-
-        $email = $this->emailRepository->create($data);
-
-        Log::info('Sending CRM email to person', [
-            'person_id' => $person->id,
-            'email_id'  => $email->id,
-            'to'        => $recipientEmail,
-            'subject'   => $subject,
-        ]);
-
-        Mail::to($recipientEmail)->queue(new EmailMailable($email));
-
-        return $email;
     }
 
     /**
@@ -140,12 +100,43 @@ class CrmMailService
     }
 
     /**
+     * Render a template (looked up by code or name) with entity-resolved variables.
+     *
+     * @param  array<string, mixed>  $entities  e.g. ['order' => 42, 'person' => 7]
+     * @return array{subject: string, html: string}
+     *
+     * @throws RuntimeException when template not found
+     */
+    public function renderHtmlForEntities(string $codeOrName, array $entities): array
+    {
+        $template = EmailTemplate::byCode($codeOrName)
+            ->orWhere('name', $codeOrName)
+            ->first();
+
+        if (! $template) {
+            throw new RuntimeException("Email template '{$codeOrName}' not found.");
+        }
+
+        $variables = $this->templateRendering->resolveVariablesFromEntities($entities);
+        $html = $this->templateRendering->renderTemplateToHTML($template, $variables);
+        $subject = $this->templateRendering->interpolateTemplate($template->subject, $variables);
+
+        return ['subject' => $subject, 'html' => $html];
+    }
+
+    /**
      * Render a template and send it to a person.
      *
-     * @param  array{lead_id?: string|int|null, sales_lead_id?: string|int|null}  $links
+     * @param  array{lead_id?: string|int|null, sales_lead_id?: string|int|null}  $linkEmailToEntities
+     * @return true if email has been sent, otherwise false on failure
      */
-    public function sendToPersonTemplate(Person $person, string $templateIdentifier, array $variables = [], array $links = [], bool $isNotify = true): ?EmailModel
-    {
+    public function sendToPersonTemplate(
+        Person $person,
+        EmailTemplateCode $templateIdentifier,
+        array $variables = [],
+        array $linkEmailToEntities = [],
+        bool $isNotify = true
+    ): bool {
         if ($isNotify) {
             $emailEnabled = PersonPreference::getValueForPerson(
                 $person->id,
@@ -155,20 +146,64 @@ class CrmMailService
             if (! $emailEnabled) {
                 Log::info('Skipping email notification: person has disabled email notifications', [
                     'person_id' => $person->id,
-                    'template'  => $templateIdentifier,
+                    'template'  => $templateIdentifier->value,
                 ]);
 
-                return null;
+                return false;
             }
         }
-
         $rendered = $this->renderTemplate($templateIdentifier, $variables);
 
         return $this->sendToPersonHtml(
             $person,
             $rendered['subject'],
             $rendered['html'],
-            $links
+            $linkEmailToEntities
         );
+    }
+
+    /**
+     * Store + queue a system email to a person (patient/customer).
+     *
+     * @return true if email has been send, otherwise false on failure (e.g. no email address)
+     */
+    private function sendToPersonHtml(
+        Person $person,
+        string $subject,
+        string $htmlContent,
+        array $linkEmailToEntities
+    ): bool {
+        try {
+            $recipientEmail = $person->findDefaultEmailOrError();
+        } catch (Exception $e) {
+            Log::error('Failed to send email: person has no default email address', [
+                'person_id' => $person->id,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        $data = [
+            'subject'   => $subject,
+            'reply'     => $htmlContent,
+            'reply_to'  => [$recipientEmail], // recipient (stored in reply_to for system emails)
+            'name'      => $person->name,
+            'source'    => 'system',
+            'user_type' => 'user',
+            'person_id' => $person->id,
+        ];
+        $email = $this->emailRepository->createWith($data, $linkEmailToEntities);
+
+        Log::info('Sending CRM email to person', [
+            'person_id' => $person->id,
+            'email_id'  => $email->id,
+            'to'        => $recipientEmail,
+            'subject'   => $subject,
+        ]);
+
+        Mail::to($recipientEmail)->queue(new EmailMailable($email));
+
+        return true;
     }
 }

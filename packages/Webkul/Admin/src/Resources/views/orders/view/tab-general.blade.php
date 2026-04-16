@@ -268,7 +268,7 @@
 
                     <a href="{{ route('admin.sales-leads.view', $order->salesLead->id) }}"
                        class="font-medium text-brandColor hover:underline">
-                        {{ $order->salesLead->name }}
+                        {{ $order->salesLead->persons->first()?->name ?? $order->salesLead->name }}
                     </a>
                 </div>
             </div>
@@ -284,7 +284,7 @@
 
                     <a href="{{ route('admin.leads.view', $order->salesLead->lead->id) }}"
                        class="font-medium text-brandColor hover:underline">
-                        {{ $order->salesLead->lead->name }}
+                        {{ $order->salesLead->persons->first()?->name ?? $order->salesLead->lead->name }}
                     </a>
                 </div>
             </div>

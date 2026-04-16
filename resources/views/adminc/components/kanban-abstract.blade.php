@@ -213,9 +213,7 @@
                                                         <span class="text-sm font-medium truncate min-w-0">
                                                             @{{ element.persons && element.persons.length > 0
                                                                 ? element.persons[0]?.name
-                                                                : (element.first_name
-                                                                    ? `${element.first_name} ${element.last_name}`
-                                                                    : element.name)
+                                                                : element.name
                                                             }}
                                                         </span>
                                                     </div>

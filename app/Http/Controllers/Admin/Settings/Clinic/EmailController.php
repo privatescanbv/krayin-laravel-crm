@@ -14,20 +14,13 @@ class EmailController extends BaseEmailController
      */
     public function store()
     {
-        // Get clinic_id from route parameter
         $clinicId = request()->route('id');
 
-        // Ensure clinic_id is set from route parameter
         if ($clinicId) {
             request()->merge(['clinic_id' => $clinicId]);
         }
 
-        $response = json_decode(parent::store()->getContent(), true);
-
-        return response()->json([
-            'data'    => $this->transformToActivity($response['data']),
-            'message' => $response['message'],
-        ]);
+        return parent::store();
     }
 
     /**

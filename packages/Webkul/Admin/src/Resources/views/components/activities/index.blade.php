@@ -399,7 +399,7 @@
                     });
                 }
 
-                this.$emitter.on('on-activity-added', (activity) => this.activities.unshift(activity));
+                this.$emitter.on('on-activity-added', () => this.get());
             },
 
             methods: {

@@ -1,7 +1,5 @@
 <?php
 
-use App\Console\Kernel as ConsoleKernel;
-use App\Http\Kernel as HttpKernel;
 use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BouncerPermissionMiddleware;
@@ -12,22 +10,21 @@ use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
-use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Sentry\Laravel\Integration;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /** @var Application $app */
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withEvents(false)
+    ->withCommands([
+        __DIR__.'/../app/Console/Commands',
+    ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -96,30 +93,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
             }
 
             try {
+                $request = request();
                 Log::error('Exception reported', [
-                    'exception' => get_class($e),
-                    'message'   => $e->getMessage(),
-                    'file'      => $e->getFile(),
-                    'line'      => $e->getLine(),
-                    'trace'     => $e->getTraceAsString(),
-                    'url'       => optional(request())->fullUrl(),
-                    'method'    => optional(request())->method(),
-                    'user_id'   => optional(optional(auth()->guard('user'))->user())->id,
-                ]);
-            } catch (Exception $logException) {
-                Log::error('Could not log reported exception', ['exception' => $logException->getMessage()]);
-            }
-
-            return false;
-        });
-
-        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
-            if ($response->getStatusCode() !== 500) {
-                return $response;
-            }
-
-            try {
-                Log::error('500 Internal Server Error', [
                     'exception'    => get_class($e),
                     'message'      => $e->getMessage(),
                     'file'         => $e->getFile(),
@@ -134,15 +109,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
                     'session_id'   => optional(session())->getId(),
                 ]);
             } catch (Exception $logException) {
-                Log::error('Could not log 500 response', ['exception' => $logException->getMessage()]);
+                Log::error('Could not log reported exception', ['exception' => $logException->getMessage()]);
             }
 
-            return $response;
+            return false;
         });
     })
     ->create();
-
-$app->singleton(HttpKernelContract::class, HttpKernel::class);
-$app->singleton(ConsoleKernelContract::class, ConsoleKernel::class);
 
 return $app;

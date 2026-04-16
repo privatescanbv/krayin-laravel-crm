@@ -2,50 +2,13 @@
 
 namespace App\Console;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
+/**
+ * Schedule and commands are registered in bootstrap/app.php (withCommands)
+ * and routes/console.php (Schedule::command).
+ */
 class Kernel extends ConsoleKernel
 {
-    /**
-     * Define the application's command schedule.
-     */
-    protected function schedule(Schedule $schedule): void
-    {
-        $schedule->command('inbound-emails:process')->everyMinute();
-        $schedule->command('emails:sync-graph')->everyFiveMinutes();
-        $schedule->command('activities:release-overdue')->hourly();
-
-        // Keep activity statuses in sync each hour
-        $schedule->command('activities:sync-statuses')->hourly();
-
-        // Refresh duplicate caches (leads & persons) every hour
-        $schedule->command('duplicates:refresh-cache --clear')->hourly();
-
-        // Clean up old email logs daily
-        $schedule->command('emails:cleanup-logs')->daily();
-
-        // Delete emails older than retention period from Graph inbox
-        $schedule->command('emails:cleanup-graph-inbox')->daily();
-
-        // Notify patients daily about new portal items (AVG-safe, no details by email)
-        $schedule->command('patient:send-notification-email')
-            ->dailyAt('08:00')
-            ->withoutOverlapping();
-
-        // AFB: always send T-1 clinic batches once per day.
-        $schedule->command('afb:send-daily')
-            ->dailyAt('06:00')
-            ->withoutOverlapping();
-    }
-
-    /**
-     * Register the commands for the application.
-     */
-    protected function commands(): void
-    {
-        $this->load(__DIR__.'/Commands');
-
-        require base_path('routes/console.php');
-    }
+    //
 }

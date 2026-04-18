@@ -14,6 +14,14 @@ use Webkul\Core\Eloquent\Repository;
 
 class OrderRepository extends Repository
 {
+    protected $fieldSearchable = [
+        'order_number',
+        'title',
+        'user_id',
+        'user.name',
+        'pipeline_stage_id',
+    ];
+
     public function model(): string
     {
         return Order::class;

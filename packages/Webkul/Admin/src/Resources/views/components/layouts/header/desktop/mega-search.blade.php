@@ -166,6 +166,35 @@
                     </template>
                 </template>
 
+                <template v-if="activeTab == 'orders'">
+                    <template v-if="isLoading">
+                        <x-admin::shimmer.header.mega-search.leads />
+                    </template>
+
+                    <template v-else>
+                        <div class="grid max-h-[400px] overflow-y-auto">
+                            <template v-for="order in searchedResults.orders">
+                                <a
+                                    :href="'{{ route('admin.orders.view', ':id') }}'.replace(':id', order.id)"
+                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-neutral-bg dark:border-gray-800 dark:hover:bg-gray-950"
+                                >
+                                    <div class="grid place-content-start gap-1.5">
+                                        <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
+                                            @{{ order.order_number }} &mdash; @{{ order.title }}
+                                        </p>
+
+                                        <template v-if="order.stage && order.stage.name">
+                                            <span class="text-xs px-2 py-0.5 rounded bg-neutral-bg dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                                @{{ order.stage.name }}
+                                            </span>
+                                        </template>
+                                    </div>
+                                </a>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+
                 <template v-if="activeTab == 'persons'">
                     <template v-if="isLoading">
                         <x-admin::shimmer.header.mega-search.persons />
@@ -265,6 +294,23 @@
                             ],
                         },
 
+                        orders: {
+                            key: 'orders',
+                            title: "Orders",
+                            is_active: false,
+                            endpoint: "{{ route('admin.orders.search') }}",
+                            query_params: [
+                                {
+                                    search: 'order_number',
+                                    searchFields: 'order_number:like',
+                                },
+                                {
+                                    search: 'title',
+                                    searchFields: 'title:like',
+                                },
+                            ],
+                        },
+
                         persons: {
                             key: 'persons',
                             title: "@lang('admin::app.components.layouts.header.mega-search.tabs.persons')",
@@ -298,7 +344,8 @@
                     searchedResults: {
                         leads: [],
                         sales: [],
-                        persons: []
+                        orders: [],
+                        persons: [],
                     },
 
                     params: {
@@ -391,6 +438,10 @@
                             } else if (this.activeTab === 'persons') {
                                 this.params.search = `phone:${digits};`;
                                 this.params.searchFields = `phones:like;`;
+                            } else if (this.activeTab === 'orders') {
+                                // Order numbers are purely numeric (e.g. 202600001) — search on order_number
+                                this.params.search = `order_number:${newTerm};title:${newTerm};`;
+                                this.params.searchFields = `order_number:like;title:like;`;
                             } else if (this.activeTab === 'sales') {
                                 // skip for now, later maybe search on persons by phone
                             }

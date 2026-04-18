@@ -50,7 +50,10 @@ use Illuminate\View\View;
 use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
+use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
+use Webkul\Admin\Http\Resources\OrderLookupResource;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
@@ -61,7 +64,7 @@ use Webkul\Product\Models\Product;
 
 class OrderController extends SimpleEntityController
 {
-    use ConcatsEmailActivities, PDFHandler;
+    use ConcatsEmailActivities, HasAdvancedSearch, PDFHandler;
 
     public function __construct(
         protected OrderRepository $orderRepository,
@@ -1578,5 +1581,35 @@ class OrderController extends SimpleEntityController
             false,
             $userId
         );
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $result = $this->performAdvancedSearch(
+            repository: $this->orderRepository,
+            getFieldsSearchable: fn () => $this->orderRepository->getFieldsSearchable(),
+            eagerLoadRelations: ['stage', 'user'],
+            getResults: function ($repository) {
+                $repository->pushCriteria(app(RequestCriteria::class));
+                $this->applyPermissionFilter($repository);
+
+                return $repository->all();
+            },
+            resourceClass: OrderLookupResource::class,
+            queryParams: request()->query->all()
+        );
+
+        return $result instanceof AnonymousResourceCollection ? $result->response() : $result;
+    }
+
+    protected function getSearchConfig(): array
+    {
+        return [
+            'name_fields'                 => ['order_number', 'title'],
+            'supports_email_phone_search' => false,
+            'supports_user_name_search'   => false,
+            'enable_debug_logging'        => false,
+            'table_name'                  => 'orders',
+        ];
     }
 }

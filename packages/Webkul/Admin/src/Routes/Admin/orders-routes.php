@@ -17,6 +17,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::post('payment-overview', 'savePaymentOverview')->name('admin.orders.payment-overview.save');
     Route::get('create', 'create')->name('admin.orders.create');
     Route::post('create', 'store')->name('admin.orders.store');
+    Route::get('search', 'search')->name('admin.orders.search');
     Route::get('view/{id}', 'view')->name('admin.orders.view');
     Route::get('edit/{id}', 'edit')->name('admin.orders.edit');
     Route::put('edit/{id}', 'update')->name('admin.orders.update');

@@ -59,7 +59,8 @@
       "WebSearch",
       "Bash(xargs -I {} bash -c \"echo '=== {} ===' && head -50 {}\")",
       "Bash(xargs -I {} bash -c \"head -30 {}\")",
-      "Bash(xargs cat *)"
+      "Bash(xargs cat *)",
+      "mcp__laravel-boost__last-error"
     ]
   }
 }

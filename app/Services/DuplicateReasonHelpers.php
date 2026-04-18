@@ -39,6 +39,14 @@ trait DuplicateReasonHelpers
         return array_values(array_unique($values));
     }
 
+    /**
+     * Normalize a phone for duplicate UI (must match computeReasons / PhoneNormalizer::toDutchLocal).
+     */
+    private function normalizePhone(string $phone): string
+    {
+        return PhoneNormalizer::toDutchLocal($phone);
+    }
+
     private function getNameVariations(string $name): array
     {
         $variations = [$name];

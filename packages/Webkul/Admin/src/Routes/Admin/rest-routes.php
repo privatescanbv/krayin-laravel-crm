@@ -53,10 +53,6 @@ Route::get('demo/entity-selector', function () {
     return view('adminc.components.entity-selector-demo');
 })->name('admin.demo.entity-selector');
 
-Route::get('demo/js-test', function () {
-    return response()->file(base_path('test-js.html'));
-})->name('admin.demo.js-test')->withoutMiddleware(['user']);
-
 /**
  * User profile routes.
  */

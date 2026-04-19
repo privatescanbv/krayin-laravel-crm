@@ -31,6 +31,8 @@
         <server name="SESSION_DRIVER" value="array" />
         <!-- Use "0" to avoid any string-to-bool ambiguity in env parsing -->
         <server name="TELESCOPE_ENABLED" value="0" />
+        <!-- Disable Sentry during tests to prevent test exceptions from being reported -->
+        <server name="SENTRY_LARAVEL_DSN" value="" />
         <server name="TELESCOPE_DB_CONNECTION" value="sqlite" />
         <server name="DB_CONNECTION" value="sqlite" />
         <server name="DB_DATABASE" value=":memory:" />

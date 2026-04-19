@@ -47,14 +47,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
-use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
-use Webkul\Admin\Http\Resources\OrderLookupResource;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Admin\Http\Resources\OrderLookupResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Email\Repositories\AttachmentRepository;
@@ -1261,6 +1261,25 @@ class OrderController extends SimpleEntityController
         ]);
     }
 
+    public function search(Request $request): JsonResponse
+    {
+        $result = $this->performAdvancedSearch(
+            repository: $this->orderRepository,
+            getFieldsSearchable: fn () => $this->orderRepository->getFieldsSearchable(),
+            eagerLoadRelations: ['stage', 'user'],
+            getResults: function ($repository) {
+                $repository->pushCriteria(app(RequestCriteria::class));
+                $this->applyPermissionFilter($repository);
+
+                return $repository->all();
+            },
+            resourceClass: OrderLookupResource::class,
+            queryParams: request()->query->all()
+        );
+
+        return $result instanceof AnonymousResourceCollection ? $result->response() : $result;
+    }
+
     protected function getEditViewData(Request $request, Model $entity): array
     {
         /** @var Order $order */
@@ -1516,6 +1535,17 @@ class OrderController extends SimpleEntityController
         return 'Verwijderen mislukt.';
     }
 
+    protected function getSearchConfig(): array
+    {
+        return [
+            'name_fields'                 => ['order_number', 'title'],
+            'supports_email_phone_search' => false,
+            'supports_user_name_search'   => false,
+            'enable_debug_logging'        => false,
+            'table_name'                  => 'orders',
+        ];
+    }
+
     //    /**
     //     * Build template variables for order confirmation templates.
     //     */
@@ -1581,35 +1611,5 @@ class OrderController extends SimpleEntityController
             false,
             $userId
         );
-    }
-
-    public function search(Request $request): JsonResponse
-    {
-        $result = $this->performAdvancedSearch(
-            repository: $this->orderRepository,
-            getFieldsSearchable: fn () => $this->orderRepository->getFieldsSearchable(),
-            eagerLoadRelations: ['stage', 'user'],
-            getResults: function ($repository) {
-                $repository->pushCriteria(app(RequestCriteria::class));
-                $this->applyPermissionFilter($repository);
-
-                return $repository->all();
-            },
-            resourceClass: OrderLookupResource::class,
-            queryParams: request()->query->all()
-        );
-
-        return $result instanceof AnonymousResourceCollection ? $result->response() : $result;
-    }
-
-    protected function getSearchConfig(): array
-    {
-        return [
-            'name_fields'                 => ['order_number', 'title'],
-            'supports_email_phone_search' => false,
-            'supports_user_name_search'   => false,
-            'enable_debug_logging'        => false,
-            'table_name'                  => 'orders',
-        ];
     }
 }

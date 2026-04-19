@@ -38,8 +38,14 @@ return [
     'channels' => [
         'stack' => [
             'driver'            => 'stack',
-            'channels'          => ['stderr'],
+            'channels'          => ['stderr', 'sentry'],
             'ignore_exceptions' => false,
+        ],
+
+        'sentry' => [
+            'driver' => 'sentry',
+            'level' => 'error',
+            'bubble' => true,
         ],
 
         'single' => [

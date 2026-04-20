@@ -188,6 +188,7 @@ services:
       TWILIO_ACCOUNT_SID: "${FORMS_TWILIO_ACCOUNT_SID}"
       TWILIO_AUTH_TOKEN: "${FORMS_TWILIO_AUTH_TOKEN}"
       TWILIO_VERIFY_SID: "${FORMS_TWILIO_VERIFY_SID}"
+      PATIENT_MESSAGES_ENABLED: false
     labels:
       - traefik.enable=true
       # Patient portal router

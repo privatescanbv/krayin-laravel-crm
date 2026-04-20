@@ -7,14 +7,18 @@ use App\Enums\LostReason;
 use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\LeadMarketingData;
 use App\Models\LeadPerson;
+use App\Services\LeadStatusTransitionValidator;
 use App\Traits\HasDefaultContactInfo;
 use BackedEnum;
 use Carbon\Carbon;
+use Database\Factories\LeadFactory;
 use Exception;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,34 +26,32 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Contact\Models\Organization;
-use Webkul\Contact\Traits\HasPersonName;
 use Webkul\Contact\Models\Person;
+use Webkul\Contact\Traits\HasPersonName;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
-use Database\Factories\LeadFactory;
-use App\Models\Address;
-use App\Services\LeadStatusTransitionValidator;
 
 class Lead extends Model implements LeadContract
 {
     use HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SoftDeletes;
 
     protected $casts = [
-        'closed_at'           => 'datetime',
-        'date_of_birth'       => 'date',
-        'emails'              => 'array',
-        'phones'              => 'array',
-        'gender'              => PersonGender::class,
-        'salutation'          => PersonSalutation::class,
-        'mri_status'          => MRIStatus::class,
-        'lost_reason'         => LostReason::class,
+        'closed_at'                      => 'datetime',
+        'date_of_birth'                  => 'date',
+        'emails'                         => 'array',
+        'phones'                         => 'array',
+        'gender'                         => PersonGender::class,
+        'salutation'                     => PersonSalutation::class,
+        'mri_status'                     => MRIStatus::class,
+        'lost_reason'                    => LostReason::class,
         'national_identification_number' => EncryptedString::class,
     ];
 
@@ -152,11 +154,13 @@ class Lead extends Model implements LeadContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['gender'] = null;
+
             return;
         }
 
         if ($value instanceof BackedEnum) {
             $this->attributes['gender'] = $value->value;
+
             return;
         }
 
@@ -170,11 +174,13 @@ class Lead extends Model implements LeadContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['salutation'] = null;
+
             return;
         }
 
         if ($value instanceof BackedEnum) {
             $this->attributes['salutation'] = $value->value;
+
             return;
         }
 
@@ -188,11 +194,13 @@ class Lead extends Model implements LeadContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['mri_status'] = null;
+
             return;
         }
 
         if ($value instanceof BackedEnum) {
             $this->attributes['mri_status'] = $value->value;
+
             return;
         }
 
@@ -206,11 +214,13 @@ class Lead extends Model implements LeadContract
     {
         if ($value === '' || $value === null) {
             $this->attributes['lost_reason'] = null;
+
             return;
         }
 
         if ($value instanceof BackedEnum) {
             $this->attributes['lost_reason'] = $value->value;
+
             return;
         }
 
@@ -222,7 +232,8 @@ class Lead extends Model implements LeadContract
         return $this->lost_reason?->label() ?? '';
     }
 
-    public function getMRIStatusLabelAttribute(): string {
+    public function getMRIStatusLabelAttribute(): string
+    {
         return $this->mri_status?->label() ?? '-';
     }
 
@@ -234,7 +245,7 @@ class Lead extends Model implements LeadContract
     /**
      * Create a new factory instance for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     protected static function newFactory()
     {
@@ -276,6 +287,7 @@ class Lead extends Model implements LeadContract
             )->get();
         } catch (Exception $e) {
             Log::warning('Could not load persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
+
             return collect();
         }
     }
@@ -289,13 +301,14 @@ class Lead extends Model implements LeadContract
             return Anamnesis::where('lead_id', $this->id)->get();
         } catch (Exception $e) {
             Log::warning('Could not load anamnesis for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
+
             return collect();
         }
     }
 
     public function getAgeAttribute(): ?int
     {
-        if (!$this->date_of_birth) {
+        if (! $this->date_of_birth) {
             return null;
         }
 
@@ -310,6 +323,7 @@ class Lead extends Model implements LeadContract
 
         return null;
     }
+
     /**
      * Attach persons to this lead.
      * Uses firstOrCreate so the LeadPerson::created event only fires for new records,
@@ -334,7 +348,7 @@ class Lead extends Model implements LeadContract
         DB::table('lead_persons')->where('lead_id', $this->id)->delete();
 
         // Add new relationships
-        if (!empty($personIds)) {
+        if (! empty($personIds)) {
             $this->attachPersons($personIds);
         }
     }
@@ -378,7 +392,6 @@ class Lead extends Model implements LeadContract
     {
         return $this->hasMany(ActivityProxy::modelClass());
     }
-
 
     /**
      * Get the emails.
@@ -448,8 +461,9 @@ class Lead extends Model implements LeadContract
         return $this->belongsTo(Organization::class, 'organization_id');
     }
 
-    public function hasOrganization(): bool {
-        return !is_null($this->organization_id);
+    public function hasOrganization(): bool
+    {
+        return ! is_null($this->organization_id);
     }
 
     /**
@@ -476,10 +490,10 @@ class Lead extends Model implements LeadContract
         return $this->belongsTo(Person::class, 'contact_person_id');
     }
 
-    public function hasContactPerson(): bool {
-        return !is_null($this->contact_person_id);
+    public function hasContactPerson(): bool
+    {
+        return ! is_null($this->contact_person_id);
     }
-
 
     /**
      * Returns the rotten days
@@ -504,18 +518,39 @@ class Lead extends Model implements LeadContract
         return (int) round($rottenDate->diffInDays(Carbon::now(), false));
     }
 
-    public function getContactPersonOrFirstPerson(): ?Person    {
+    public function getContactPersonOrFirstPerson(): ?Person
+    {
         if ($this->hasContactPerson()) {
             return $this->contactPerson()->first();
         }
-        return $this->persons()->first();
+
+        $persons = $this->persons()->with('address')->get();
+        if ($persons->isEmpty()) {
+            return null;
+        }
+
+        $this->loadMissing(['address']);
+
+        $scored = $persons->map(fn (Person $person) => [
+            'person' => $person,
+            'score'  => LeadStatusTransitionValidator::calculateMatchScore($this, $person),
+        ]);
+
+        return $scored
+            ->sort(function (array $a, array $b): int {
+                $byScore = $b['score'] <=> $a['score'];
+                if ($byScore !== 0) {
+                    return $byScore;
+                }
+
+                return $b['person']->id <=> $a['person']->id;
+            })
+            ->first()['person'];
     }
 
     /**
      * Get all persons (contact person and linked persons) as a single collection.
      * Duplicates are removed based on person ID.
-     *
-     * @return Collection
      */
     public function getContactAndPersons(): Collection
     {
@@ -554,8 +589,7 @@ class Lead extends Model implements LeadContract
         try {
             $direct = (int) $this->emails()->where('is_read', 0)->count();
 
-            $activityEmailIds = app(DB::class)
-                ::table('emails')
+            $activityEmailIds = app(DB::class)::table('emails')
                 ->where('lead_id', $this->id)
                 ->where('is_read', 0)
                 ->count();
@@ -565,8 +599,6 @@ class Lead extends Model implements LeadContract
             return (int) $this->unread_emails_count;
         }
     }
-
-
 
     public function getNameAttribute($value): string
     {
@@ -611,15 +643,15 @@ class Lead extends Model implements LeadContract
         return $this->persons()->count() === 0;
     }
 
-    public function hasPotentialDuplicates() : bool
+    public function hasPotentialDuplicates(): bool
     {
-        return  $this->getPotentialDuplicatesCount() > 0;
+        return $this->getPotentialDuplicatesCount() > 0;
     }
 
-    public function getPotentialDuplicatesCount() : int
+    public function getPotentialDuplicatesCount(): int
     {
         // Only check for duplicates if the lead has basic required data
-        if (!$this->id || !$this->name) {
+        if (! $this->id || ! $this->name) {
             return 0;
         }
 
@@ -631,6 +663,7 @@ class Lead extends Model implements LeadContract
      * Uses the Department mapping function.
      *
      * @return int The group ID
+     *
      * @throws Exception if department mapping fails
      */
     public function getDefaultGroupId(): int
@@ -641,10 +674,9 @@ class Lead extends Model implements LeadContract
     /**
      * Override the update method to validate status transitions.
      *
-     * @param array $attributes
-     * @param array $options
      * @return bool
-     * @throws \Illuminate\Validation\ValidationException
+     *
+     * @throws ValidationException
      */
     public function update(array $attributes = [], array $options = [])
     {
@@ -662,9 +694,7 @@ class Lead extends Model implements LeadContract
     /**
      * Update the lead's stage with validation.
      *
-     * @param int $newStageId
-     * @return bool
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function updateStage(int $newStageId): bool
     {
@@ -674,13 +704,15 @@ class Lead extends Model implements LeadContract
         return $this->update(['lead_pipeline_stage_id' => $newStageId]);
     }
 
-    public function getSugarLinkAttribute() :?string
+    public function getSugarLinkAttribute(): ?string
     {
         if ($this->external_id) {
             $baseUrl = config('services.sugarcrm.base_url');
             $record = $this->external_id;
+
             return "{$baseUrl}index.php?module=Leads&offset=1&stamp=1758188884015851000&return_module=Leads&action=DetailView&record={$record}";
         }
+
         return null;
     }
 }

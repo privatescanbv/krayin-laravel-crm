@@ -345,6 +345,52 @@ class PersonRepository extends Repository
                     \Webkul\Activity\Models\Activity::where('person_id', $duplicatePerson->id)
                         ->update(['person_id' => $primaryPersonId]);
 
+                    // Transfer lead_persons pivot: attach duplicate's leads to primary, avoid duplicates
+                    $existingLeadIds = DB::table('lead_persons')
+                        ->where('person_id', $primaryPersonId)
+                        ->pluck('lead_id')
+                        ->all();
+
+                    DB::table('lead_persons')
+                        ->where('person_id', $duplicatePerson->id)
+                        ->whereNotIn('lead_id', $existingLeadIds)
+                        ->update(['person_id' => $primaryPersonId]);
+
+                    DB::table('lead_persons')
+                        ->where('person_id', $duplicatePerson->id)
+                        ->delete();
+
+                    // Transfer saleslead_persons pivot
+                    $existingSalesLeadIds = DB::table('saleslead_persons')
+                        ->where('person_id', $primaryPersonId)
+                        ->pluck('saleslead_id')
+                        ->all();
+
+                    DB::table('saleslead_persons')
+                        ->where('person_id', $duplicatePerson->id)
+                        ->whereNotIn('saleslead_id', $existingSalesLeadIds)
+                        ->update(['person_id' => $primaryPersonId]);
+
+                    DB::table('saleslead_persons')
+                        ->where('person_id', $duplicatePerson->id)
+                        ->delete();
+
+                    // Transfer contact_person_id on leads
+                    \Webkul\Lead\Models\Lead::where('contact_person_id', $duplicatePerson->id)
+                        ->update(['contact_person_id' => $primaryPersonId]);
+
+                    // Transfer contact_person_id on salesleads
+                    \App\Models\SalesLead::where('contact_person_id', $duplicatePerson->id)
+                        ->update(['contact_person_id' => $primaryPersonId]);
+
+                    // Transfer anamnesis records
+                    \App\Models\Anamnesis::where('person_id', $duplicatePerson->id)
+                        ->update(['person_id' => $primaryPersonId]);
+
+                    // Transfer patient messages
+                    \App\Models\PatientMessage::where('person_id', $duplicatePerson->id)
+                        ->update(['person_id' => $primaryPersonId]);
+
                     // Add merge note to primary person's activities
                     $this->addMergeNote($primaryPerson, $duplicatePerson);
                 } catch (Exception $e) {

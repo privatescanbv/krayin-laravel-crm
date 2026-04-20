@@ -104,7 +104,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   suitecrm:
-    image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.0
+    image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.1
     container_name: suitecrm
     ports:
       - "81:80"

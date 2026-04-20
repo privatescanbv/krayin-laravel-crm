@@ -1,4 +1,4 @@
-@php use App\Enums\PipelineStage; @endphp
+@php use App\Enums\Departments; use App\Enums\PipelineStage; @endphp
 @props([
     'order',
     'afbNeedsManualBanner' => false,
@@ -156,6 +156,13 @@
                 <span class="text-gray-500 dark:text-gray-400">Zakelijk</span>
                 <span class="font-medium text-gray-800 dark:text-white">
                     {{ $order->is_business ? 'Ja' : 'Nee' }}
+                </span>
+            </div>
+
+            <div class="flex flex-col">
+                <span class="text-gray-500 dark:text-gray-400">Afdeling</span>
+                <span class="font-medium text-gray-800 dark:text-white">
+                    {{ $order->isHerniapoli() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value }}
                 </span>
             </div>
         </div>

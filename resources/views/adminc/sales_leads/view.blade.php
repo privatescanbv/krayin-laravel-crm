@@ -198,7 +198,7 @@
                         type: String,
                         required: true,
                     },
-                    leadName: {
+                    salesName: {
                         type: String,
                         default: '',
                     },
@@ -226,8 +226,8 @@
 
                         this.$emitter.emit('open-confirm-modal', {
                             title: this.translations.title,
-                            message: this.translations.messageTemplate.replace(':name', this.leadName ? this
-                                .leadName : ''),
+                            message: this.translations.messageTemplate.replace(':name', this.salesName ? this
+                                .salesName : ''),
                             options: {
                                 btnDisagree: this.translations.cancel,
                                 btnAgree: this.translations.confirm,

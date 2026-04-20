@@ -2490,7 +2490,7 @@ return [
 
             'delete-confirm' => [
                 'title'   => 'Sales verwijderen',
-                'message' => 'Weet je zeker dat je ":name" wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.',
+                'message' => 'Weet je zeker dat je ":name" wilt verwijderen? Alle gekoppelde orders worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.',
                 'confirm' => 'Verwijderen',
                 'cancel'  => 'Annuleren',
             ],

@@ -462,13 +462,14 @@ class SalesLeadController extends Controller
         ]);
     }
 
-    public function delete($id)
+    public function delete($id): JsonResponse
     {
         $salesLead = SalesLead::findOrFail($id);
+
+        $salesLead->orders()->delete();
         $salesLead->delete();
 
-        return redirect()->route('admin.sales-leads.index')
-            ->with('success', __('messages.sales.deleted'));
+        return response()->json(['message' => __('messages.sales.deleted')]);
     }
 
     /**

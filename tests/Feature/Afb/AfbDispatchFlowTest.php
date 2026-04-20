@@ -669,6 +669,109 @@ test('daily afb command does not queue jobs for orders not in an allowed stage',
     Bus::assertNotDispatched(SendAfbDispatchJob::class);
 });
 
+// ---------------------------------------------------------------------------
+// Herniapoli — nooit AFB versturen
+// ---------------------------------------------------------------------------
+
+function createHerniaOrderForClinic(Carbon $examAt): array
+{
+    $context = createOrderForClinic($examAt);
+    $context['order']->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id()]);
+    $context['order'] = $context['order']->fresh();
+
+    return $context;
+}
+
+test('isHerniapoli returns true for hernia pipeline stage', function () {
+    $context = createHerniaOrderForClinic(now()->addDays(3));
+
+    expect($context['order']->isHerniapoli())->toBeTrue();
+});
+
+test('isHerniapoli returns false for privatescan pipeline stage', function () {
+    $context = createOrderForClinic(now()->addDays(3));
+
+    expect($context['order']->isHerniapoli())->toBeFalse();
+});
+
+test('getAvbDispatchReadiness returns is_herniapoli true with reason for hernia order', function () {
+    $service = app(AfbDispatchService::class);
+    $context = createHerniaOrderForClinic(now()->addDays(3));
+
+    $readiness = $service->getAvbDispatchReadiness($context['order']);
+
+    expect($readiness['is_herniapoli'])->toBeTrue()
+        ->and($readiness['is_ready'])->toBeFalse()
+        ->and($readiness['needs_manual_send'])->toBeFalse()
+        ->and($readiness['is_all_sent'])->toBeFalse()
+        ->and($readiness['reasons'])->toContain('Herniapoli orders ontvangen geen AFB');
+});
+
+test('getAvbDispatchReadiness returns is_herniapoli false for privatescan order', function () {
+    $service = app(AfbDispatchService::class);
+    $context = createOrderForClinic(now()->addDays(3));
+
+    $readiness = $service->getAvbDispatchReadiness($context['order']);
+
+    expect($readiness['is_herniapoli'])->toBeFalse();
+});
+
+test('queueLateBookingForOrder returns 0 and queues nothing for hernia order', function () {
+    $context = createHerniaOrderForClinic(now()->addHours(8));
+
+    // Observer mag een job hebben gedispatcht terwijl de stage nog Privatescan was; reset om dat te wissen.
+    Bus::fake();
+
+    $queued = app(AfbDispatchService::class)->queueLateBookingForOrder($context['order']);
+
+    expect($queued)->toBe(0);
+    Bus::assertNotDispatched(SendAfbDispatchJob::class);
+});
+
+test('sendDispatch skips hernia orders and creates empty success dispatch', function () {
+    Mail::fake();
+
+    $context = createHerniaOrderForClinic(now()->addDays(2)->setTime(10, 0));
+    $service = app(AfbDispatchService::class);
+
+    $dispatch = $service->sendDispatch(
+        departmentId: $context['department']->id,
+        orderIds: [$context['order']->id],
+        type: AfbDispatchType::INDIVIDUAL,
+        attempt: 1
+    );
+
+    expect($dispatch->status)->toBe(AfbDispatchStatus::SUCCESS)
+        ->and(AfbPersonDocument::where('order_id', $context['order']->id)->exists())->toBeFalse();
+
+    Mail::assertNotSent(EmailMailable::class);
+});
+
+test('send afb endpoint returns 422 for hernia order', function () {
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $context = createHerniaOrderForClinic(now()->addHours(8));
+
+    $response = $this->postJson(route('admin.orders.send_afb', $context['order']->id));
+
+    $response->assertStatus(422)
+        ->assertJsonFragment(['message' => 'AFB verzending is niet van toepassing voor Herniapoli orders.']);
+});
+
+test('order view shows niet van toepassing badge for hernia order', function () {
+    Bus::fake();
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $context = createHerniaOrderForClinic(now()->addHours(10));
+
+    $response = $this->get(route('admin.orders.view', $context['order']->id));
+
+    $response->assertOk();
+    $response->assertSee('Niet van toepassing', false);
+    $response->assertSee('Herniapoli orders ontvangen geen AFB', false);
+    $response->assertDontSee('AFB: handmatige verzending nodig', false);
+});
+
 test('late booking does not queue dispatch when order is not in an allowed stage', function () {
     Bus::fake();
 

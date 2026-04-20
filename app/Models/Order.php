@@ -347,6 +347,11 @@ class Order extends Model
         return (bool) $this->stage?->is_lost;
     }
 
+    public function isHerniapoli(): bool
+    {
+        return $this->stage?->lead_pipeline_id === PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value;
+    }
+
     public function getNameAttribute(): string
     {
         return $this->order_number.' '.$this->salesLead->name;

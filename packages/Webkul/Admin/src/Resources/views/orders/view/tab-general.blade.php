@@ -172,10 +172,15 @@
             $avbReasons = $avbDispatchReadiness['reasons'];
             $afbNeedsManualSending = $avbDispatchReadiness['needs_manual_send'];
             $afbAllSent = $avbDispatchReadiness['is_all_sent'];
+            $isHerniapoli = $avbDispatchReadiness['is_herniapoli'] ?? false;
             $isPostExecution = in_array((int) $order->pipeline_stage_id, PipelineStage::getStageIdsAtOrAfterExecution(), true);
         @endphp
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
-            @if ($afbNeedsManualSending)
+            @if ($isHerniapoli)
+                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                    Niet van toepassing — Herniapoli orders ontvangen geen AFB
+                </span>
+            @elseif ($afbNeedsManualSending)
                 <span
                     class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                     ⚠ Klaar voor dispatch (handmatig verzenden vereist)

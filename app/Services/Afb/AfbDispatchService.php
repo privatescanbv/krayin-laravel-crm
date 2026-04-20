@@ -49,6 +49,10 @@ class AfbDispatchService
 
     public function queueLateBookingForOrder(Order $order): int
     {
+        if ($order->isHerniapoli()) {
+            return 0;
+        }
+
         if (! $this->getAvbDispatchReadiness($order)['is_late']) {
             return 0;
         }
@@ -83,6 +87,7 @@ class AfbDispatchService
                 'salesLead.persons',
                 'orderItems.resourceOrderItems.resource.clinicDepartment',
                 'orderItems.person',
+                'stage',
             ])
             ->get()
             ->keyBy('id');
@@ -90,6 +95,7 @@ class AfbDispatchService
         $unsentOrders = collect($orderIds)
             ->map(fn (int $id) => $orders->get($id))
             ->filter(fn (?Order $order) => $order !== null)
+            ->filter(fn (Order $order) => ! $order->isHerniapoli())
             ->filter(fn (Order $order) => $this->isInDispatchableStage($order))
             ->filter(fn (Order $order) => ! $this->isAlreadySentToDepartment((int) $order->id, $departmentId)
                 || $this->hasUnincludedActiveItems((int) $order->id, $departmentId))
@@ -233,10 +239,22 @@ class AfbDispatchService
     /**
      * Geeft de AFB dispatch-gereedheid terug voor weergave op de order view.
      *
-     * @return array{is_ready: bool, is_late: bool, is_all_sent: bool, needs_manual_send: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
+     * @return array{is_ready: bool, is_late: bool, is_all_sent: bool, needs_manual_send: bool, is_herniapoli: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
      */
     public function getAvbDispatchReadiness(Order $order): array
     {
+        if ($order->isHerniapoli()) {
+            return [
+                'is_ready'          => false,
+                'is_late'           => false,
+                'is_all_sent'       => false,
+                'needs_manual_send' => false,
+                'is_herniapoli'     => true,
+                'planned_at'        => null,
+                'reasons'           => ['Herniapoli orders ontvangen geen AFB'],
+            ];
+        }
+
         $reasons = [];
         $examAt = $order->first_examination_at ? Carbon::parse($order->first_examination_at) : null;
 
@@ -275,6 +293,7 @@ class AfbDispatchService
             'is_late'           => $isLate,
             'is_all_sent'       => $isAllSent,
             'needs_manual_send' => $needsManualSend,
+            'is_herniapoli'     => false,
             'planned_at'        => $plannedAt,
             'reasons'           => $reasons,
         ];

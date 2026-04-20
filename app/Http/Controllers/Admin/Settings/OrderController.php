@@ -590,6 +590,11 @@ class OrderController extends SimpleEntityController
     public function sendAfb(int $id): JsonResponse
     {
         $order = Order::findOrFail($id);
+
+        if ($order->isHerniapoli()) {
+            return response()->json(['message' => 'AFB verzending is niet van toepassing voor Herniapoli orders.'], 422);
+        }
+
         try {
             $queued = $this->afbDispatchService->queueLateBookingForOrder($order);
 

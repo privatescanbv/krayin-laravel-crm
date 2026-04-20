@@ -75,7 +75,8 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
-     * Parse SugarCRM date format to our timezone
+     * Parse SugarCRM date format to our timezone.
+     * Custom date fields are stored in local (app) time.
      */
     protected function parseSugarDate($value): ?string
     {
@@ -83,18 +84,56 @@ abstract class AbstractSugarCRMImport extends Command
             return null;
         }
         try {
-            // Accept Carbon, DateTimeInterface, or string
             if ($value instanceof DateTimeInterface) {
                 return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
             }
 
-            // Parse SugarCRM date assuming it's already in the application timezone
-            // SugarCRM dates appear to be stored in local time, not UTC
+            // Custom date fields are stored in local (app) time, not UTC
             return Carbon::parse((string) $value, config('app.timezone'))
                 ->format('Y-m-d H:i:s');
         } catch (Throwable $e) {
             return null;
         }
+    }
+
+    /**
+     * Parse a SugarCRM UTC audit field (date_entered, date_modified) to app timezone.
+     * These standard Sugar fields are always stored in UTC regardless of Sugar locale settings.
+     */
+    protected function parseSugarUtcDate($value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+        try {
+            if ($value instanceof DateTimeInterface) {
+                return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
+            }
+
+            return Carbon::parse((string) $value, 'UTC')
+                ->setTimezone(config('app.timezone'))
+                ->format('Y-m-d H:i:s');
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Build a [created_at, updated_at] array from the standard Sugar UTC audit fields.
+     * Use this everywhere instead of calling parseSugarDate() on date_entered / date_modified.
+     *
+     * @param  string  $enteredField  Column name for creation timestamp (default: date_entered)
+     * @param  string  $modifiedField  Column name for modification timestamp (default: date_modified)
+     */
+    protected function parseSugarTimestamps(
+        object $record,
+        string $enteredField = 'date_entered',
+        string $modifiedField = 'date_modified'
+    ): array {
+        return [
+            'created_at' => $this->parseSugarUtcDate($record->$enteredField ?? null),
+            'updated_at' => $this->parseSugarUtcDate($record->$modifiedField ?? null),
+        ];
     }
 
     /**

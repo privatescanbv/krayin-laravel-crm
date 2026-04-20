@@ -75,6 +75,7 @@ beforeEach(function () {
         $table->string('aankomsttijd_c', 5)->nullable();
         $table->decimal('betaald_vooruit_c', 14, 6)->nullable();
         $table->decimal('betaald_kliniek_c', 14, 6)->nullable();
+        $table->dateTime('datum_betaling_vr_c')->nullable();
         $table->decimal('openstaand_c', 14, 6)->nullable();
         $table->string('betaal_status_c')->nullable();
         $table->string('pin_contant_c')->nullable();
@@ -140,6 +141,7 @@ function insertSugarOrder(string $id, array $overrides = []): void
         'd_wfl_status_c',
         'betaald_vooruit_c',
         'betaald_kliniek_c',
+        'datum_betaling_vr_c',
         'openstaand_c',
         'betaal_status_c',
         'pin_contant_c',
@@ -169,6 +171,7 @@ function insertSugarOrder(string $id, array $overrides = []): void
         'd_wfl_status_c'      => 'eindeproces',
         'betaald_vooruit_c'   => null,
         'betaald_kliniek_c'   => null,
+        'datum_betaling_vr_c' => '2025-03-10 09:00:00',
         'openstaand_c'        => null,
         'betaal_status_c'     => null,
         'pin_contant_c'       => null,
@@ -562,7 +565,8 @@ test('imports Sugar advance payment as OrderPayment with date_entered as paid_at
     insertSugarOrder('order-pay-adv-001', [
         'betaald_vooruit_c' => 2206.0,
         'betaal_status_c'   => 'volledig',
-        'date_entered'      => '2025-03-10 09:00:00',
+        'date_entered'      => '2025-02-10 09:00:00',
+        'datum_betaling_vr_c'      => '2025-03-10 09:00:00',
         'date_closed'       => '2025-08-20',
     ]);
 
@@ -622,7 +626,8 @@ test('payment dates differ for advance and clinic on same order', function () {
         'betaald_vooruit_c'  => 100.0,
         'betaald_kliniek_c'  => 50.0,
         'pin_contant_c'      => 'pin',
-        'date_entered'       => '2025-02-01 08:30:00',
+        'date_entered'       => '2025-01-01 08:30:00',
+        'datum_betaling_vr_c' => '2025-02-01 08:30:00',
         'datum_onderzoek_1'  => '2025-06-20',
     ]);
 

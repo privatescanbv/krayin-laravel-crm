@@ -519,7 +519,7 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     expect($lead)->not->toBeNull()
         ->and($lead->married_name)->toBe('Jansen')
         ->and($lead->married_name_prefix)->toBe('de')
-        ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
+        ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 15:41:07'); // UTC 13:41 → CEST 15:41 (UTC+2)
 
     // Address created and linked via address_id
     expect($lead->address_id)->not->toBeNull()

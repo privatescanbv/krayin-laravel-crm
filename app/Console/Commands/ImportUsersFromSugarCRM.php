@@ -225,10 +225,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         // Create new user with timestamps from SugarCRM
-        $timestamps = [
-            'created_at' => $this->parseSugarDate($sugarUser->date_entered),
-            'updated_at' => $this->parseSugarDate($sugarUser->date_modified),
-        ];
+        $timestamps = $this->parseSugarTimestamps($sugarUser);
 
         $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
 

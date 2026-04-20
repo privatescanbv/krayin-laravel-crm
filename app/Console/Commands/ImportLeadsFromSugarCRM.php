@@ -687,8 +687,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'lost_reason'            => $mapLostReason,
                         'user_id'                => $this->mapUser($record),
                     ], [
-                        'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
-                        'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
+                        ...$this->parseSugarTimestamps($record, 'lead_date_entered', 'lead_date_modified'),
                     ]);
 
                     // primariy key huisnummer
@@ -1125,15 +1124,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $anamnesis->timestamps = false;
         $anamnesis->fill($updateData);
 
-        // Set custom timestamps
-        $createdAtParsed = $this->parseSugarDate($amamnesisData->date_entered);
-        $updatedAtParsed = $this->parseSugarDate($amamnesisData->date_modified);
-
-        if ($createdAtParsed) {
-            $anamnesis->setAttribute('created_at', $createdAtParsed);
-        }
-        if ($updatedAtParsed) {
-            $anamnesis->setAttribute('updated_at', $updatedAtParsed);
+        // Set custom timestamps (date_entered / date_modified are UTC audit fields in Sugar)
+        foreach ($this->parseSugarTimestamps($amamnesisData) as $col => $val) {
+            if ($val !== null) {
+                $anamnesis->setAttribute($col, $val);
+            }
         }
 
         $anamnesis->saveQuietly();

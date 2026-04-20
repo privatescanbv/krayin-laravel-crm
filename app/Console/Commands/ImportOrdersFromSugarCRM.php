@@ -107,6 +107,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'cstm.d_wfl_status_c',
                         'cstm.aankomsttijd_c',
                         'cstm.betaald_vooruit_c',
+                        'cstm.datum_betaling_vr_c',
                         'cstm.betaald_kliniek_c',
                         'cstm.openstaand_c',
                         'cstm.betaal_status_c',
@@ -361,10 +362,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $closedAt,
                     $crmLead,
                 ) {
-                    $timestamps = [
-                        'created_at' => $this->parseSugarDate($record->date_entered),
-                        'updated_at' => $this->parseSugarDate($record->date_modified),
-                    ];
+                    $timestamps = $this->parseSugarTimestamps($record);
 
                     if ($crmLead !== null) {
                         // Same path as createFromWonLead (copyFromLead → persons + anamnesis), without auto-created order
@@ -409,10 +407,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'user_id'                      => $this->mapSugarUserToId($record->assigned_user_id ?? null),
                         'clinic_coordinator_user_id'   => $this->mapSugarUserToId($record->user_id_c ?? null),
                         'combine_order'                => (bool) ($record->op_een_factuur_c ?? false),
-                    ], [
-                        'created_at' => $this->parseSugarDate($record->date_entered),
-                        'updated_at' => $this->parseSugarDate($record->date_modified),
-                    ]);
+                    ], $this->parseSugarTimestamps($record));
 
                     $itemsCreated = 0;
 
@@ -713,7 +708,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $advance = $this->sugarMoneyAmount($record->betaald_vooruit_c ?? null);
         if ($advance !== null && $advance > 0) {
-            $enteredDate = $this->parseSugarDate($record->date_entered ?? null);
+            $enteredDate = $this->parseSugarUtcDate($record->datum_betaling_vr_c ?? null);
 
             OrderPayment::create([
                 'order_id' => $order->id,

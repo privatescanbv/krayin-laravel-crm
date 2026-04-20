@@ -369,8 +369,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                         'gender'              => $gender,
                         'date_of_birth'       => $record->birthdate ?? null,
                     ], [
-                        'created_at' => $this->parseSugarDate($record->date_entered),
-                        'updated_at' => $this->parseSugarDate($record->date_modified),
+                        ...$this->parseSugarTimestamps($record),
                     ]);
 
                     // Create/update primary address for person if present

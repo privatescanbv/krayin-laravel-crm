@@ -88,32 +88,35 @@ class SalesLeadController extends Controller
         $pipeline = $this->pipelineCookieService->getPipeline(PipelineType::BACKOFFICE, $request->pipeline_id);
 
         $stages = $pipeline->stages;
+
+        $filteredStages = $request->boolean('exclude_won_lost')
+            ? $stages->filter(fn ($s) => ! $s->is_won && ! $s->is_lost)
+            : $stages;
+
+        $allSalesLeads = SalesLead::with(['lead', 'user', 'orders', 'persons.organization'])
+            ->withCount([
+                'activities as open_activities_count' => fn ($q) => $q->where('is_done', 0),
+                'emails as unread_emails_count'       => fn ($q) => $q->where('is_read', 0),
+            ])
+            ->whereIn('pipeline_stage_id', $filteredStages->pluck('id'))
+            ->get()
+            ->groupBy('pipeline_stage_id');
+
         $data = [];
 
-        foreach ($stages as $stage) {
-            // Optionally skip stages that are marked won/lost when requested
-            if ($request->boolean('exclude_won_lost') && ($stage->is_won || $stage->is_lost)) {
-                continue;
-            }
+        foreach ($filteredStages as $stage) {
+            $stageSalesLeads = $allSalesLeads->get($stage->id, collect());
 
-            $query = SalesLead::with(['stage', 'lead', 'user', 'orders', 'persons.organization'])
-                ->withCount([
-                    'activities as open_activities_count' => fn ($q) => $q->where('is_done', 0),
-                    'emails as unread_emails_count'       => fn ($q) => $q->where('is_read', 0),
-                ])
-                ->where('pipeline_stage_id', $stage->id);
-            $salesLeads = $query->get();
+            $stagePayload = [
+                'id'      => $stage->id,
+                'name'    => $stage->name,
+                'code'    => $stage->code,
+                'is_won'  => (bool) $stage->is_won,
+                'is_lost' => (bool) $stage->is_lost,
+            ];
 
-            $salesLeads = $salesLeads->map(function ($salesLead) {
+            $salesLeads = $stageSalesLeads->map(function ($salesLead) use ($stagePayload) {
                 $person = $salesLead->persons->first();
-
-                $stagePayload = $salesLead->stage ? [
-                    'id'      => $salesLead->stage->id,
-                    'name'    => $salesLead->stage->name,
-                    'code'    => $salesLead->stage->code,
-                    'is_won'  => (bool) $salesLead->stage->is_won,
-                    'is_lost' => (bool) $salesLead->stage->is_lost,
-                ] : null;
 
                 return [
                     'id'                => $salesLead->id,

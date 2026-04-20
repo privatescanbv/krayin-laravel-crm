@@ -38,6 +38,7 @@ class PipelineForm extends FormRequest
             return [
                 'name'          => 'required',
                 'type'          => 'required|in:lead,workflow',
+                'stages'        => 'exactly_one_default_stage',
                 'stages.*.name' => 'unique_key',
                 'stages.*.code' => 'unique_key',
             ];
@@ -47,6 +48,7 @@ class PipelineForm extends FormRequest
             'name'          => 'required',
             'type'          => 'required|in:lead,workflow',
             'rotten_days'   => 'required',
+            'stages'        => 'exactly_one_default_stage',
             'stages.*.name' => 'unique_key',
             'stages.*.code' => 'unique_key',
         ];
@@ -60,7 +62,8 @@ class PipelineForm extends FormRequest
     public function messages()
     {
         return [
-            'stages.*.name.unique_key' => __('admin::app.settings.pipelines.duplicate-name'),
+            'stages.*.name.unique_key'              => __('admin::app.settings.pipelines.duplicate-name'),
+            'stages.exactly_one_default_stage'      => 'Elke pipeline moet precies één standaard-stage hebben.',
         ];
     }
 
@@ -85,6 +88,16 @@ class PipelineForm extends FormRequest
                 }
 
                 return true;
+            }
+        );
+
+        $validationFactory->extend(
+            'exactly_one_default_stage',
+            function ($attribute, $value, $parameters) {
+                $defaults = collect(request()->get('stages'))
+                    ->filter(fn ($stage) => ! empty($stage['is_default']));
+
+                return $defaults->count() === 1;
             }
         );
     }

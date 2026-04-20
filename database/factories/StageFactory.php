@@ -22,6 +22,7 @@ class StageFactory extends Factory
             'sort_order'       => $this->faker->numberBetween(1, 10),
             'is_won'           => false,
             'is_lost'          => false,
+            'is_default'       => false,
         ];
     }
 

@@ -28,6 +28,7 @@ class Stage extends Model implements StageContract
         'lead_pipeline_id',
         'is_won',
         'is_lost',
+        'is_default',
     ];
 
     /**
@@ -36,8 +37,9 @@ class Stage extends Model implements StageContract
      * @var array
      */
     protected $casts = [
-        'is_won' => 'boolean',
-        'is_lost' => 'boolean',
+        'is_won'     => 'boolean',
+        'is_lost'    => 'boolean',
+        'is_default' => 'boolean',
     ];
 
     /**

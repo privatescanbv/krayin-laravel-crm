@@ -141,8 +141,7 @@ test('can delete workflow lead', function () {
     ]);
 
     $response = $this->deleteJson(route('admin.sales-leads.delete', ['id' => $salesLead->id]));
-    // Controller redirects; just assert it didn't fail and row is gone
-    $response->assertStatus(302);
+    $response->assertOk();
 
     $this->assertDatabaseMissing('salesleads', [
         'id' => $salesLead->id,

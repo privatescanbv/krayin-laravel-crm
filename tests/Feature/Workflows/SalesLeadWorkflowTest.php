@@ -22,7 +22,8 @@ beforeEach(function () {
 });
 
 test('creating a sales lead at a stage with a workflow automatically creates an activity', function () {
-    $stage = PipelineStage::SALES_IN_BEHANDELING; // id=13, entity='sales'
+    // SALES_ORDER_PREVENTIE_HERNIA has a seeded workflow activity; SALES_IN_BEHANDELING intentionally has none
+    $stage = PipelineStage::SALES_ORDER_PREVENTIE_HERNIA; // id=16, entity='sales'
 
     $salesLead = SalesLead::factory()->create([
         'pipeline_stage_id' => $stage->id(),
@@ -32,21 +33,23 @@ test('creating a sales lead at a stage with a workflow automatically creates an 
 });
 
 test('updating a sales lead stage to one with a workflow automatically creates an activity', function () {
-    // Start at won stage — WorkflowSeeder skips won stages, so no activity is created on creation
+    // Start at a won stage — WorkflowSeeder skips won stages, so no activity is created on creation
     $salesLead = SalesLead::factory()->create([
-        'pipeline_stage_id' => PipelineStage::SALES_MET_SUCCES_AFGEROND->id(), // id=14, is_won, no workflow
+        'pipeline_stage_id' => PipelineStage::SALES_COMPLETE_HERNIA->id(), // id=28, is_won, no workflow
     ]);
 
     expect(Activity::where('sales_lead_id', $salesLead->id)->count())->toBe(0);
 
-    $salesLead->update(['pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id()]);
+    // SALES_ORDER_PREVENTIE_HERNIA has a seeded workflow activity; SALES_IN_BEHANDELING intentionally has none
+    $salesLead->update(['pipeline_stage_id' => PipelineStage::SALES_ORDER_PREVENTIE_HERNIA->id()]);
 
     expect(Activity::where('sales_lead_id', $salesLead->id)->count())->toBe(1);
 });
 
 test('setting a lead to won stage creates a sales lead with a workflow activity', function () {
-    // TestSeeder already seeds pipeline 3 (PIPELINE_PRIVATESCAN_SALES_ID) with stage 13 (SALES_IN_BEHANDELING)
-    // WorkflowSeeder already seeds a workflow for stage 13 that creates an activity
+    // TestSeeder seeds pipeline 4 (PIPELINE_HERNIA_SALES_ID) with stage 16 (SALES_ORDER_PREVENTIE_HERNIA)
+    // WorkflowSeeder seeds a workflow for stage 16 that creates an activity
+    // (SALES_IN_BEHANDELING / stage 13 has no auto-activities by design)
 
     // Create a custom lead pipeline with a won stage
     $pipeline = Pipeline::factory()->create();
@@ -67,8 +70,9 @@ test('setting a lead to won stage creates a sales lead with a workflow activity'
         'is_lost'          => false,
     ]);
 
-    // Use the department seeded by TestSeeder → getWorkflowPipelineStageId() will return stage 13
-    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+    // Use Hernia department → getWorkflowPipelineStageId() returns stage 16 (SALES_ORDER_PREVENTIE_HERNIA)
+    // which has a workflow activity seeded by WorkflowSeeder
+    $department = Department::where('name', Departments::HERNIA->value)->firstOrFail();
     $user = User::factory()->create();
     $source = Source::create(['name' => 'Website']);
     $type = Type::create(['name' => 'New Lead']);

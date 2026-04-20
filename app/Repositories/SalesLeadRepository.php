@@ -185,13 +185,13 @@ class SalesLeadRepository extends Repository
             if ($department->name === Departments::PRIVATESCAN->value) {
                 return $this->getFirstStageOfWorkflowPipeline(
                     PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value
-                ) ?? $defaultStageId;
+                );
             }
 
             if ($department->name === Departments::HERNIA->value) {
                 return $this->getFirstStageOfWorkflowPipeline(
                     PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value
-                ) ?? $defaultStageId;
+                );
             }
 
         } catch (Throwable $e) {
@@ -207,13 +207,11 @@ class SalesLeadRepository extends Repository
     /**
      * Get the first stage of a workflow pipeline.
      */
-    private function getFirstStageOfWorkflowPipeline(int $pipelineId): ?int
+    private function getFirstStageOfWorkflowPipeline(int $pipelineId): int
     {
-        $firstStage = Stage::where('lead_pipeline_id', $pipelineId)
-            ->orderBy('sort_order')
-            ->first();
-
-        return $firstStage?->id;
+        return Stage::where('lead_pipeline_id', $pipelineId)
+            ->where('is_default', true)
+            ->firstOrFail()->id;
     }
 
     /**

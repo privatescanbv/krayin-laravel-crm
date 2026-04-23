@@ -22,9 +22,9 @@
     <!-- Activity Details -->
     <div class="flex w-full items-start gap-4 rounded-xl border p-4 transition-all"
         :class="{
-            'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900': !isToday(activity.schedule_from) &&
+            'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900': !activity.is_done && !isToday(activity.schedule_from) &&
                 isPast(activity.schedule_from),
-            'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800': isToday(activity.schedule_from) || !
+            'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800': activity.is_done || isToday(activity.schedule_from) || !
                 isPast(activity.schedule_from)
         }">
 
@@ -54,8 +54,8 @@
                 <template v-if="activity.type !== 'system'">
                     <a class="flex cursor-pointer flex-wrap grow items-center gap-1 font-medium hover:underline dark:text-white"
                         :class="{
-                            'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                            'text-status-expired-text dark:text-red-400': !isToday(activity.schedule_from) && isPast(
+                            'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_from),
+                            'text-status-expired-text dark:text-red-400': !activity.is_done && !isToday(activity.schedule_from) && isPast(
                                 activity.schedule_from)
                         }"
                         :href="activity.type == 'email' ?
@@ -67,7 +67,7 @@
 
                         <!-- Status chip hidden per requirement -->
                     </a>
-                    <span v-if="!isToday(activity.schedule_from) && isPast(activity.schedule_from)"
+                    <span v-if="!activity.is_done && !isToday(activity.schedule_from) && isPast(activity.schedule_from)"
                         class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-error dark:bg-red-900/30 dark:text-red-400">
                         Te laat
                     </span>
@@ -77,10 +77,10 @@
                     </span>
                     <div v-if="activity.schedule_from" class="text-xs"
                         :class="{
-                            'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                            'text-status-expired-text dark:text-red-400': !isToday(activity.schedule_from) && isPast(
+                            'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_from),
+                            'text-status-expired-text dark:text-red-400': !activity.is_done && !isToday(activity.schedule_from) && isPast(
                                 activity.schedule_from),
-                            'text-gray-600 dark:text-gray-300': !(isToday(activity.schedule_from) || isPast(activity
+                            'text-gray-600 dark:text-gray-300': activity.is_done || !(isToday(activity.schedule_from) || isPast(activity
                                 .schedule_from))
                         }">
                         Vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}

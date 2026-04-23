@@ -1,4 +1,6 @@
 @php
+use Webkul\Marketing\Models\Campaign;
+
 // Marketing view - Lead & Campagne Details
 // Format date to Dutch format: "23 sept 2024"
 $createdDate = $lead->created_at;
@@ -11,13 +13,38 @@ $formattedDate = $createdDate->format('d') . ' ' . $monthNames[(int)$createdDate
 // Get lead data
 $requestType = $lead->type->name ?? 'Onbekend';
 $leadSource = $lead->source->name ?? 'Onbekend';
-$campaign = $lead->channel->name ?? 'Onbekend';
+$leadChannel = $lead->channel->name ?? 'Onbekend';
 $departementName = $lead->department->name ?? 'Onbekend';
+
+// Marketing campagne (CRM): `marketing_campaigns` via `external_id` — zelfde als API-veld `campaign_id`
+// (zie MarketingCampaignExternalIdExists). Niet verwarren met leadkanaal (`lead_channels`) of UTM `campaign`.
+$marketingDataByKey = $lead->marketingData->pluck('value', 'key');
+$campaignExternalId = $marketingDataByKey->get('campaign_id');
+$campaignExternalId = ($campaignExternalId !== null && $campaignExternalId !== '')
+    ? trim((string) $campaignExternalId)
+    : null;
+
+if ($campaignExternalId === null && filled($lead->description)) {
+    if (preg_match('/Campaign external_id:\s*(\S+)/i', (string) $lead->description, $m)) {
+        $campaignExternalId = $m[1];
+    }
+}
+
+$marketingCampaignModel = null;
+if ($campaignExternalId !== null) {
+    $marketingCampaignModel = Campaign::query()->where('external_id', $campaignExternalId)->first();
+}
+
+$marketingCampaignDisplay = match (true) {
+    $marketingCampaignModel !== null => $marketingCampaignModel->name,
+    $campaignExternalId !== null => 'Onbekende campagne · '.$campaignExternalId,
+    default => 'Geen',
+};
 
 // Check if lead is qualified (has stage and not lost/won, or has certain status)
 $isQualified = $lead->stage && !$lead->closed_at;
-// Check if campaign is active (has channel)
-$hasActiveCampaign = $lead->channel !== null;
+// Tag: er is een marketing campagne-id (CRM) bekend, niet “heeft een leadkanaal”
+$hasActiveCampaign = $marketingCampaignModel !== null || $campaignExternalId !== null;
 @endphp
 
 {!! view_render_event('admin.leads.view.marketing.before', ['lead' => $lead]) !!}
@@ -35,7 +62,7 @@ $hasActiveCampaign = $lead->channel !== null;
                 <!-- Title and Subtitle -->
                 <div class="flex flex-col gap-2">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Marketing Informatie</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Lead bron en campagne details</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Bron, kanaal, marketingcampagne (CRM) en afdeling</p>
 
                     <!-- Status Tags -->
                     <div class="flex items-center gap-3 mt-2">
@@ -57,12 +84,12 @@ $hasActiveCampaign = $lead->channel !== null;
             </div>
 
             <!-- Marketing Report Button -->
-            <button
-                type="button"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors">
-                <span class="icon-download text-base"></span>
-                <span class="text-sm font-medium">Marketing rapport</span>
-            </button>
+{{--            <button--}}
+{{--                type="button"--}}
+{{--                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 transition-colors">--}}
+{{--                <span class="icon-download text-base"></span>--}}
+{{--                <span class="text-sm font-medium">Marketing rapport</span>--}}
+{{--            </button>--}}
         </div>
     </div>
 
@@ -81,7 +108,7 @@ $hasActiveCampaign = $lead->channel !== null;
         </div>
 
         <!-- Three Column Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 p-4">
             <!-- Column 1: AANVRAAG TYPE -->
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-2 mb-2">
@@ -114,6 +141,12 @@ $hasActiveCampaign = $lead->channel !== null;
                     label="Bron voor lead"
                     value="{{ $leadSource }}"
                     readonly />
+
+                <x-adminc::components.field
+                    class="mb-1"
+                    label="Kanaal (contactroute)"
+                    value="{{ $leadChannel }}"
+                    readonly />
             </div>
 
             <!-- Column 3: MARKETING CAMPAGNE -->
@@ -125,11 +158,10 @@ $hasActiveCampaign = $lead->channel !== null;
                     <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">MARKETING CAMPAGNE</h4>
                 </div>
 
-                <!-- Campagne -->
                 <x-adminc::components.field
                     class="mb-1"
-                    label="Campagne"
-                    value="{{ $campaign }}"
+                    label="Marketing campagne (CRM)"
+                    value="{{ $marketingCampaignDisplay }}"
                     readonly />
             </div>
 
@@ -141,7 +173,6 @@ $hasActiveCampaign = $lead->channel !== null;
                     <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">AFDELING</h4>
                 </div>
 
-                <!-- Campagne -->
                 <x-adminc::components.field
                     class="mb-1"
                     label="Afdeling"
@@ -153,7 +184,7 @@ $hasActiveCampaign = $lead->channel !== null;
 </div>
 
 @php
-$marketingDataMap = $lead->marketingData->pluck('value', 'key');
+$marketingDataMap = $lead->marketingData->pluck('value', 'key')->except('campaign_id');
 @endphp
 
 @if($marketingDataMap->isNotEmpty())

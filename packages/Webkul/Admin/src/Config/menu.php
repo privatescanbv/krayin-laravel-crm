@@ -50,7 +50,6 @@ return [
         'icon-class' => 'icon-setting',
     ],
 
-
     [
         'key'        => 'orders',
         'name'       => 'Orders',
@@ -69,7 +68,7 @@ return [
         'params'     => ['route' => 'inbox'],
         'sort'       => 6,
         'icon-class' => 'icon-mail',
-],
+    ],
     /**
      * Activities.
      */
@@ -165,6 +164,7 @@ return [
         'icon-class' => 'icon-user',
     ], [
         'key'        => 'settings.clinics',
+        'acl'        => 'settings.clinics',
         'name'       => 'admin::app.layouts.clinics',
         'info'       => 'admin::app.layouts.clinics-info',
         'route'      => 'admin.clinics.index',
@@ -172,6 +172,7 @@ return [
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.clinics.admin',
+        'acl'        => 'settings.clinics',
         'name'       => 'admin::app.layouts.clinics',
         'info'       => 'admin::app.layouts.clinics-info',
         'route'      => 'admin.clinics.index',
@@ -179,6 +180,7 @@ return [
         'icon-class' => 'icon-settings-pipeline',
     ], [
         'key'        => 'settings.clinics.partner_products',
+        'acl'        => 'partner_products',
         'name'       => 'admin::app.layouts.partner_products',
         'info'       => 'admin::app.layouts.partner_products-info',
         'route'      => 'admin.partner_products.index',
@@ -186,14 +188,15 @@ return [
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.clinics.resources',
+        'acl'        => 'settings.resources',
         'name'       => 'admin::app.layouts.resources',
         'info'       => 'admin::app.layouts.resources-info',
         'route'      => 'admin.settings.resources.index',
-        'sort'       => 3
-        ,
+        'sort'       => 3,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.clinics.resource_types',
+        'acl'        => 'settings.resources',
         'name'       => 'admin::app.layouts.resource_types',
         'info'       => 'admin::app.layouts.resource_types-info',
         'route'      => 'admin.settings.resource_types.index',
@@ -201,6 +204,7 @@ return [
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.clinics.product_types',
+        'acl'        => 'settings.product_types',
         'name'       => 'admin::app.layouts.product_types',
         'info'       => 'admin::app.layouts.product_types-info',
         'route'      => 'admin.settings.product_types.index',
@@ -208,6 +212,7 @@ return [
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.clinics.departments',
+        'acl'        => 'settings.clinics',
         'name'       => 'Afdelingen',
         'info'       => 'Afdelingen per kliniek',
         'route'      => 'admin.clinic_departments.index',
@@ -335,7 +340,6 @@ return [
         'sort'       => 2,
         'icon-class' => 'icon-settings-tag',
     ],
-
 
     /**
      * Configuration.

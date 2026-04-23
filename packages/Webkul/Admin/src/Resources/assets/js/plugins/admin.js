@@ -120,11 +120,11 @@ export default {
                     M: tzMonth,
                     MM: tzMonth.toString().padStart(2, "0"),
                     MMM: new Date(tzYear, tzMonth - 1, 1).toLocaleString(
-                        "en-US",
+                        "nl-NL",
                         { month: "short" }
                     ),
                     MMMM: new Date(tzYear, tzMonth - 1, 1).toLocaleString(
-                        "en-US",
+                        "nl-NL",
                         { month: "long" }
                     ),
                     yy: tzYear.toString().slice(-2),

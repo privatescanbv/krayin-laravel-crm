@@ -2,12 +2,15 @@
 
 namespace Webkul\Email\Models;
 
+use App\Enums\EmailEntityLink;
 use App\Helpers\ValueNormalizer;
 use App\Models\Clinic;
+use App\Models\Order;
 use App\Models\SalesLead;
 use Exception;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
@@ -82,6 +85,68 @@ class Email extends Model implements EmailContract
         'updated_at',
     ];
 
+    /**
+     * Foreign keys on `emails` that mean this message is linked to a CRM entity.
+     *
+     * @see EmailEntityLink
+     *
+     * @return list<string>
+     */
+    public static function entityLinkForeignKeys(): array
+    {
+        return EmailEntityLink::foreignKeys();
+    }
+
+    /**
+     * SQL CASE expression for the primary linked entity label (datagrid `entity_type`).
+     * Case order follows {@see EmailEntityLink} declaration order.
+     */
+    public static function entityTypeCaseSql(string $alias = 'emails'): string
+    {
+        $whens = [];
+        foreach (EmailEntityLink::cases() as $link) {
+            $column = $link->getForeignKey();
+            $label = $link->value;
+            $whens[] = "WHEN {$alias}.{$column} IS NOT NULL THEN '{$label}'";
+        }
+
+        return 'CASE '.implode(' ', $whens)." ELSE 'N/A' END";
+    }
+
+    /**
+     * @param  Builder<Email>  $query
+     */
+    public function scopeWhereUnlinkedFromAllEntities(Builder $query): void
+    {
+        $table = $query->getModel()->getTable();
+        foreach (self::entityLinkForeignKeys() as $column) {
+            $query->whereNull("{$table}.{$column}");
+        }
+    }
+
+    /**
+     * @param  Builder<Email>  $query
+     */
+    public function scopeWhereLinkedToAnyEntity(Builder $query): void
+    {
+        $table = $query->getModel()->getTable();
+        $query->where(function (Builder $q) use ($table) {
+            foreach (self::entityLinkForeignKeys() as $column) {
+                $q->orWhereNotNull("{$table}.{$column}");
+            }
+        });
+    }
+
+    /**
+     * Apply the same "no entity link" semantics as {@see scopeWhereUnlinkedFromAllEntities} on a base query builder.
+     */
+    public static function applyUnlinkedFromAllEntitiesConstraints(QueryBuilder $query, string $alias = 'emails'): void
+    {
+        foreach (self::entityLinkForeignKeys() as $column) {
+            $query->whereNull("{$alias}.{$column}");
+        }
+    }
+
     protected static function booted()
     {
         static::creating(function (self $email) {
@@ -126,7 +191,7 @@ class Email extends Model implements EmailContract
      */
     public function order()
     {
-        return $this->belongsTo(\App\Models\Order::class);
+        return $this->belongsTo(Order::class);
     }
 
     /**
@@ -182,7 +247,7 @@ class Email extends Model implements EmailContract
      */
     public function getTimeAgoAttribute(): string
     {
-        if (!$this->created_at || empty($this->created_at)) {
+        if (! $this->created_at || empty($this->created_at)) {
             return 'Unknown';
         }
 
@@ -253,7 +318,7 @@ class Email extends Model implements EmailContract
 
             // Map-like format: {"email@example.com": "Name"} (legacy)
             $keys = array_keys($from);
-            if (!empty($keys) && str_contains((string) $keys[0], '@')) {
+            if (! empty($keys) && str_contains((string) $keys[0], '@')) {
                 return trim((string) $keys[0]);
             }
         }
@@ -297,12 +362,12 @@ class Email extends Model implements EmailContract
         }
 
         // If already an array of strings, return as is
-        if (is_array($replyTo) && array_is_list($replyTo) && !empty($replyTo) && is_string($replyTo[0] ?? null)) {
+        if (is_array($replyTo) && array_is_list($replyTo) && ! empty($replyTo) && is_string($replyTo[0] ?? null)) {
             return array_values(array_filter($replyTo));
         }
 
         // If it's an object with 'email' key (legacy format from old PatientMailService)
-        if (is_array($replyTo) && !array_is_list($replyTo) && isset($replyTo['email']) && is_string($replyTo['email'])) {
+        if (is_array($replyTo) && ! array_is_list($replyTo) && isset($replyTo['email']) && is_string($replyTo['email'])) {
             return [$replyTo['email']];
         }
 
@@ -320,6 +385,7 @@ class Email extends Model implements EmailContract
                     }
                 }
             }
+
             return array_values(array_filter($emails));
         }
 
@@ -332,7 +398,13 @@ class Email extends Model implements EmailContract
      */
     public function getHasRelationshipsAttribute(): bool
     {
-        return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->clinic_id || $this->order_id;
+        foreach (self::entityLinkForeignKeys() as $column) {
+            if (! empty($this->{$column})) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -340,8 +412,7 @@ class Email extends Model implements EmailContract
      * Handles cases where name might be stored as an object or array.
      * This ensures Vue components receive a string value.
      *
-     * @param mixed $value
-     * @return string
+     * @param  mixed  $value
      */
     public function getNameAttribute($value): string
     {
@@ -354,10 +425,7 @@ class Email extends Model implements EmailContract
      * The standard structure is: {"name": "...", "email": "..."}
      * If name is not available, it will be an empty string.
      *
-     * @param  string|null  $email
-     * @param  string|null  $name
-     * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public static function normalizeFromField(?string $email, ?string $name = null): array
     {
@@ -383,6 +451,7 @@ class Email extends Model implements EmailContract
             'email' => $email,
         ];
     }
+
     /**
      * Scope: latest email per thread matching the given condition.
      *

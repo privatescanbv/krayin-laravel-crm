@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderLookupResource extends JsonResource
@@ -10,13 +11,20 @@ class OrderLookupResource extends JsonResource
      * Transform the resource into an array.
      * Minimal resource for lookup/search operations to avoid N+1 queries.
      *
-     * @param  \Illuminate\Http\Request
+     * @param  Request
      * @return array
      */
     public function toArray($request)
     {
+        $parts = array_filter([
+            $this->order_number !== null && $this->order_number !== '' ? (string) $this->order_number : null,
+            $this->title !== null && $this->title !== '' ? (string) $this->title : null,
+        ]);
+        $name = $parts !== [] ? implode(' — ', $parts) : 'Order #'.$this->id;
+
         return [
             'id'                => $this->id,
+            'name'              => $name,
             'order_number'      => $this->order_number,
             'title'             => $this->title,
 
@@ -38,6 +46,11 @@ class OrderLookupResource extends JsonResource
             ),
 
             'sales_lead_id'     => $this->sales_lead_id,
+
+            'subtitle'          => $this->when(
+                $this->relationLoaded('stage'),
+                fn () => $this->stage?->name
+            ),
         ];
     }
 }

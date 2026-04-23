@@ -90,6 +90,7 @@
                     :email="email"
                     :lead-search-route="'{{ route('admin.leads.search') }}'"
                     :sales-lead-search-route="'{{ route('admin.sales-leads.search') }}'"
+                    :order-search-route="'{{ route('admin.orders.search') }}'"
                     @link-entity="linkEntity"
                     @unlink-entity="unlinkEntity"
                     :unlinking="unlinking"
@@ -354,6 +355,24 @@
                     .catch (error => {});
             },
 
+            linkOrder(order) {
+                this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                    _method: 'PUT',
+                    order_id: order.id,
+                })
+                    .then (response => {
+                        this.email.order = {
+                            id: order.id,
+                            title: order.title ?? null,
+                            name: order.name ?? order.title ?? null,
+                        };
+                        this.email.order_id = order.id;
+                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        window.location.reload();
+                    })
+                    .catch (error => {});
+            },
+
             unlinkLead() {
                 this.$emitter.emit('open-confirm-modal', {
                     agree: () => {
@@ -483,6 +502,8 @@
                     this.linkContact(entity);
                 } else if (entity.type === 'clinic') {
                     this.linkClinic(entity);
+                } else if (entity.type === 'order') {
+                    this.linkOrder(entity);
                 } else if (entity.type === 'activity') {
                     this.linkActivity(entity);
                 }

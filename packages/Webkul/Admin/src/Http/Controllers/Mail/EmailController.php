@@ -370,8 +370,8 @@ class EmailController extends Controller
      */
     private function moveToProcessedIfLinked(Email $email, array $data): void
     {
-        $entityFields = ['lead_id', 'sales_lead_id', 'person_id', 'clinic_id', 'order_id'];
-        $hasEntityLink = collect($entityFields)->contains(fn ($field) => ! empty($data[$field]));
+        $hasEntityLink = collect(Email::entityLinkForeignKeys())
+            ->contains(fn ($field) => ! empty($data[$field]));
 
         if ($hasEntityLink) {
             $this->emailRepository->moveToProcessedIfInbox($email->id);

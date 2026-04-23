@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
+use Webkul\Email\Models\Email;
 use Webkul\Tag\Repositories\TagRepository;
 
 class EmailDataGrid extends DataGrid
@@ -58,13 +59,7 @@ class EmailDataGrid extends DataGrid
                 DB::raw('orders.title as order_title'),
                 DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
                 DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
-                DB::raw('CASE
-                    WHEN emails.person_id IS NOT NULL THEN "person"
-                    WHEN emails.lead_id IS NOT NULL THEN "lead"
-                    WHEN emails.order_id IS NOT NULL THEN "order"
-                    WHEN emails.sales_lead_id IS NOT NULL THEN "sales"
-                    ELSE "N/A"
-                END as entity_type'),
+                DB::raw(Email::entityTypeCaseSql('emails').' as entity_type'),
             )
             ->leftJoin('email_attachments', 'emails.id', '=', 'email_attachments.email_id')
             ->leftJoin('email_tags', 'emails.id', '=', 'email_tags.email_id')
@@ -114,9 +109,7 @@ class EmailDataGrid extends DataGrid
             $queryBuilder->where(function ($query) {
                 $query->where('emails.is_read', 0)
                     ->orWhere(function ($q) {
-                        $q->whereNull('emails.person_id')
-                            ->whereNull('emails.lead_id')
-                            ->whereNull('emails.sales_lead_id');
+                        Email::applyUnlinkedFromAllEntitiesConstraints($q, 'emails');
                     });
             });
         }
@@ -197,8 +190,8 @@ class EmailDataGrid extends DataGrid
 
                 // Verwachte standaardstructuur
                 if (is_array($from)) {
-                    if (!empty($from['name'])) {
-                        return $from['name'] . ' - ' . ($from['email'] ?? '');
+                    if (! empty($from['name'])) {
+                        return $from['name'].' - '.($from['email'] ?? '');
                     }
 
                     return $from['email'] ?? '';
@@ -208,17 +201,17 @@ class EmailDataGrid extends DataGrid
             },
         ]);
 
-//        $this->addColumn([
-//            'index'      => 'reply_to',
-//            'label'      => trans('admin::app.mail.index.datagrid.to'),
-//            'type'       => 'string',
-//            'sortable'   => true,
-//            'searchable' => true,
-//            'filterable' => true,
-//            'closure'    => function ($row) {
-//                return (is_array($row->reply_to)) ? implode(', ', $row->reply_to) : $row->reply_to;
-//            },
-//        ]);
+        //        $this->addColumn([
+        //            'index'      => 'reply_to',
+        //            'label'      => trans('admin::app.mail.index.datagrid.to'),
+        //            'type'       => 'string',
+        //            'sortable'   => true,
+        //            'searchable' => true,
+        //            'filterable' => true,
+        //            'closure'    => function ($row) {
+        //                return (is_array($row->reply_to)) ? implode(', ', $row->reply_to) : $row->reply_to;
+        //            },
+        //        ]);
 
         $this->addColumn([
             'index'      => 'subject',
@@ -285,48 +278,48 @@ class EmailDataGrid extends DataGrid
                         $route = route('admin.leads.view', $row->lead_id);
                         // Construct name similar to Lead model's name accessor
                         $parts = [];
-                        if (!empty($row->lead_first_name)) {
+                        if (! empty($row->lead_first_name)) {
                             $parts[] = trim($row->lead_first_name);
                         }
-                        if (!empty($row->lead_lastname_prefix)) {
+                        if (! empty($row->lead_lastname_prefix)) {
                             $parts[] = trim($row->lead_lastname_prefix);
                         }
-                        if (!empty($row->lead_last_name)) {
+                        if (! empty($row->lead_last_name)) {
                             $parts[] = trim($row->lead_last_name);
                         }
-                        if (!empty($row->lead_married_name)) {
+                        if (! empty($row->lead_married_name)) {
                             $marriedParts = [];
-                            if (!empty($row->lead_married_name_prefix)) {
+                            if (! empty($row->lead_married_name_prefix)) {
                                 $marriedParts[] = trim($row->lead_married_name_prefix);
                             }
                             $marriedParts[] = trim($row->lead_married_name);
                             $parts[] = '/ '.implode(' ', array_filter($marriedParts));
                         }
-                        $display = !empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->lead_id);
+                        $display = ! empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->lead_id);
                         $label = e($display);
                         break;
                     case 'person':
                         $route = route('admin.contacts.persons.view', $row->person_id);
                         // Construct name similar to Person model's name accessor
                         $parts = [];
-                        if (!empty($row->person_first_name)) {
+                        if (! empty($row->person_first_name)) {
                             $parts[] = trim($row->person_first_name);
                         }
-                        if (!empty($row->person_lastname_prefix)) {
+                        if (! empty($row->person_lastname_prefix)) {
                             $parts[] = trim($row->person_lastname_prefix);
                         }
-                        if (!empty($row->person_last_name)) {
+                        if (! empty($row->person_last_name)) {
                             $parts[] = trim($row->person_last_name);
                         }
-                        if (!empty($row->person_married_name)) {
+                        if (! empty($row->person_married_name)) {
                             $marriedParts = [];
-                            if (!empty($row->person_married_name_prefix)) {
+                            if (! empty($row->person_married_name_prefix)) {
                                 $marriedParts[] = trim($row->person_married_name_prefix);
                             }
                             $marriedParts[] = trim($row->person_married_name);
                             $parts[] = '/ '.implode(' ', array_filter($marriedParts));
                         }
-                        $display = !empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->person_id);
+                        $display = ! empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->person_id);
                         $label = e($display);
                         break;
                     case 'order':

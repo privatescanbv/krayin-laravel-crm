@@ -3,6 +3,7 @@
 @include('adminc.components.lead-selector')
 @include('adminc.components.sales-lead-selector')
 @include('adminc.components.clinic-selector')
+@include('adminc.components.order-selector')
 
 @pushOnce('scripts')
     @verbatim
@@ -62,6 +63,19 @@
                     />
                 </template>
 
+                <template v-else-if="selectedEntityType === 'order'">
+                    <v-order-selector
+                        label="Order"
+                        placeholder="Zoek order (nummer of titel)..."
+                        :search-route="orderSearchRoute"
+                        :current-value="email?.order_id || null"
+                        :current-label="orderCurrentLabel"
+                        :can-add-new="false"
+                        @change="onOrderSelected"
+                        @update:value="val => { /* handled by @change */ }"
+                    />
+                </template>
+
                 <template v-else-if="selectedEntityType === 'clinic'">
                     <v-clinic-selector
                         label="Clinic"
@@ -85,6 +99,7 @@
                     unlinking: Object,
                     leadSearchRoute: String,
                     salesLeadSearchRoute: String,
+                    orderSearchRoute: String,
                 },
                 emits: ['link-entity', 'unlink-entity'],
                 data() {
@@ -97,9 +112,20 @@
                             { value: 'lead', label: 'Lead' },
                             { value: 'sales_lead', label: 'Sales' },
                             { value: 'person', label: 'Contact' },
+                            { value: 'order', label: 'Order' },
                             { value: 'clinic', label: 'Clinic' },
                         ],
                     };
+                },
+                computed: {
+                    orderCurrentLabel() {
+                        const o = this.email?.order;
+                        if (! o) {
+                            return '';
+                        }
+
+                        return o.name || o.title || ('Order #' + o.id);
+                    },
                 },
                 mounted() {
                     // Set initial entity type based on existing relationships
@@ -111,6 +137,8 @@
                         this.salesLeadItems = [{ id: this.email.sales_lead_id, name: this.email.sales_lead?.name || `Sales #${this.email.sales_lead_id}` }];
                     } else if (this.email?.person_id) {
                         this.selectedEntityType = 'person';
+                    } else if (this.email?.order_id) {
+                        this.selectedEntityType = 'order';
                     } else if (this.email?.clinic_id) {
                         this.selectedEntityType = 'clinic';
                     }
@@ -138,6 +166,12 @@
                     onClinicSelected(clinic) {
                         if (clinic) {
                             this.pendingEntity = { ...clinic, type: 'clinic' };
+                            this.saveSelection();
+                        }
+                    },
+                    onOrderSelected(order) {
+                        if (order) {
+                            this.pendingEntity = { ...order, type: 'order' };
                             this.saveSelection();
                         }
                     },

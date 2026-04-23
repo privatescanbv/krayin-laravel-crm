@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Order;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Admin\DataGrids\Mail\EmailDataGrid;
@@ -201,4 +202,45 @@ test('unread emails are sorted before read emails', function () {
     // Second and third should be read emails, sorted by date desc
     expect($results->skip(1)->first()->id)->toBe($readEmail2->id) // newest read
         ->and($results->last()->id)->toBe($readEmail->id); // older read
+});
+
+test('ongelezen ongekoppeld filter excludes read email that is only linked to an order', function () {
+    $folder = Folder::create([
+        'name'         => 'inbox',
+        'parent_id'    => null,
+        'order'        => 1,
+        'is_deletable' => false,
+    ]);
+
+    $order = Order::factory()->create();
+
+    $readLinkedToOrder = Email::create([
+        'folder_id' => $folder->id,
+        'is_read'   => true,
+        'subject'   => 'Order linked',
+        'from'      => ['test@example.com'],
+        'name'      => 'Sender',
+        'reply'     => 'Body',
+        'order_id'  => $order->id,
+    ]);
+
+    $readUnlinked = Email::create([
+        'folder_id' => $folder->id,
+        'is_read'   => true,
+        'subject'   => 'No link',
+        'from'      => ['other@example.com'],
+        'name'      => 'Sender 2',
+        'reply'     => 'Body 2',
+    ]);
+
+    request()->merge([
+        'route'   => 'inbox',
+        'filters' => ['ongelezen_ongekoppeld' => ['1']],
+    ]);
+
+    $dataGrid = new EmailDataGrid;
+    $ids = $dataGrid->prepareQueryBuilder()->pluck('emails.id');
+
+    expect($ids)->toContain($readUnlinked->id)
+        ->and($ids)->not->toContain($readLinkedToOrder->id);
 });

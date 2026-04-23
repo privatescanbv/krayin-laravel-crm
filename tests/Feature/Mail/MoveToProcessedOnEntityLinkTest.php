@@ -4,11 +4,13 @@ use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
 use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
 
 uses(RefreshDatabase::class);
@@ -133,6 +135,34 @@ test('email in Inbox is moved to Verwerkt when linked to an order', function () 
 
     $this->put(route('admin.mail.update', $email->id), [
         'order_id' => $order->id,
+    ]);
+
+    expect($email->refresh()->folder_id)->toBe($this->verwerktFolder->id);
+});
+
+test('email in Inbox is moved to Verwerkt when linked to an activity', function () {
+    $group = Group::firstOrCreate(['name' => 'MoveToProcessed activity test group']);
+
+    $activity = Activity::create([
+        'type'          => 'task',
+        'title'         => 'Linked activity',
+        'group_id'      => $group->id,
+        'user_id'       => $this->user->id,
+        'lead_id'       => $this->lead->id,
+        'schedule_from' => now()->format('Y-m-d H:i:s'),
+        'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
+        'is_done'       => 0,
+    ]);
+
+    $email = Email::create([
+        'subject'   => 'Test',
+        'from'      => ['test@example.com'],
+        'reply'     => 'Body',
+        'folder_id' => $this->inboxFolder->id,
+    ]);
+
+    $this->put(route('admin.mail.update', $email->id), [
+        'activity_id' => $activity->id,
     ]);
 
     expect($email->refresh()->folder_id)->toBe($this->verwerktFolder->id);

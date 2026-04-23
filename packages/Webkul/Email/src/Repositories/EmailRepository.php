@@ -6,9 +6,9 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Email\Contracts\Email;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Email\Models\Folder;
-use Webkul\Email\Enums\EmailFolderEnum;
 
 class EmailRepository extends Repository
 {
@@ -29,14 +29,14 @@ class EmailRepository extends Repository
         return Email::class;
     }
 
-    public function createWith(array $data, array $linkEmailToEntities): Email {
+    public function createWith(array $data, array $linkEmailToEntities): Email
+    {
         // TODO refactor later, keep this interface and remove create(data)
         return $this->create(array_merge($data, $linkEmailToEntities));
     }
+
     /**
      * Create.
-     *
-     * @return \Webkul\Email\Contracts\Email
      */
     public function create(array $data): Email
     {
@@ -65,22 +65,11 @@ class EmailRepository extends Repository
             $normalizedFrom = EmailModel::normalizeFromField($fromAddress, $fromName);
         } // (e.g., system emails that don't need to be linked to a specific entity)
 
-        if(!is_null($parent)) {
-            //use releation of parent
-            if($parent->lead_id) {
-                $data['lead_id'] = $parent->lead_id;
-            }
-            if($parent->sales_lead_id) {
-                $data['sales_lead_id'] = $parent->sales_lead_id;
-            }
-            if($parent->person_id) {
-                $data['person_id'] = $parent->person_id;
-            }
-            if($parent->clinic_id) {
-                $data['clinic_id'] = $parent->clinic_id;
-            }
-            if($parent->order_id) {
-                $data['order_id'] = $parent->order_id;
+        if (! is_null($parent)) {
+            foreach (EmailModel::entityLinkForeignKeys() as $foreignKey) {
+                if (! empty($parent->{$foreignKey})) {
+                    $data[$foreignKey] = $parent->{$foreignKey};
+                }
             }
         }
 
@@ -109,17 +98,17 @@ class EmailRepository extends Repository
      *
      * @param  int  $id
      * @param  string  $attribute
-     * @return \Webkul\Email\Contracts\Email
+     * @return Email
      */
     public function update(array $data, $id, $attribute = 'id')
     {
         // Add user signature to email content if not a draft and reply content exists
-        if ((!isset($data['is_draft']) || !$data['is_draft']) && isset($data['reply'])) {
+        if ((! isset($data['is_draft']) || ! $data['is_draft']) && isset($data['reply'])) {
             $user = auth()->guard('user')->user();
             if ($user && $user->signature) {
                 // Only add signature if it's not already present
                 if (strpos($data['reply'], $user->signature) === false) {
-                    $data['reply'] = $data['reply'] . "\n\n" . $user->signature;
+                    $data['reply'] = $data['reply']."\n\n".$user->signature;
                 }
             }
         }
@@ -188,13 +177,13 @@ class EmailRepository extends Repository
     /**
      * Get folder ID by name
      *
-     * @param bool $isDraft
-     * @return int|null
+     * @param  bool  $isDraft
      */
     protected function getFolderId($isDraft = false): ?int
     {
         $folderEnum = $isDraft ? EmailFolderEnum::DRAFT : EmailFolderEnum::SENT;
         $folder = Folder::where('name', $folderEnum->getFolderName())->first();
+
         return $folder ? $folder->id : null;
     }
 }

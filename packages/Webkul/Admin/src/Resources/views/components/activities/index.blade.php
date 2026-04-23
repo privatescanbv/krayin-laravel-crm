@@ -41,7 +41,7 @@
 
             <div class="w-full rounded-md border bg-white dark:border-gray-800 dark:bg-gray-900">
                 <!-- Main Tabs -->
-                <div class="flex gap-4 overflow-x-auto border-b border-gray-200 px-4 dark:border-gray-800">
+                <div class="flex gap-4 overflow-x-auto border-b border-gray-200 px-4 dark:border-gray-800 items-center">
                     {!! view_render_event('admin.components.activities.content.types.before') !!}
 
                     <!-- Action Needed Tab -->
@@ -85,6 +85,18 @@
                     </div>
 
                     {!! view_render_event('admin.components.activities.content.types.after') !!}
+
+                    <div class="ml-auto flex items-center py-3">
+                        <button
+                            type="button"
+                            class="flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800"
+                            :class="showCompleted ? 'border-brandColor text-brandColor bg-brandColor/5' : 'border-gray-200 text-gray-500 bg-white dark:border-gray-700 dark:bg-gray-900'"
+                            @click="showCompleted = !showCompleted"
+                        >
+                            <span v-if="!showCompleted">Toon afgerond</span>
+                            <span v-else>Verberg afgerond</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="p-4">
@@ -264,6 +276,8 @@
 
                     activityTypeFilter: 'all',
 
+                    showCompleted: false,
+
                     typeClasses: {
                         email: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
                         email_unread: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
@@ -368,13 +382,19 @@
                                 return aTime - bTime;
                             });
                     } else if (this.selectedType == 'file') {
-                        return this.activities.filter(activity => activity.type == 'file');
+                        return this.activities.filter(activity =>
+                            activity.type == 'file' && (this.showCompleted || !activity.is_done)
+                        );
                     } else if (this.selectedType == 'system') {
                         return this.activities.filter(activity => activity.type == 'system');
                     }
 
                     // Default case: 'all'
                     let filtered = this.activities.filter(activity => activity.type !== 'system');
+
+                    if (!this.showCompleted) {
+                        filtered = filtered.filter(activity => !activity.is_done);
+                    }
 
                     // If 'all' tab, respect filter
                     if (this.selectedType == 'all' && this.activityTypeFilter !== 'all') {

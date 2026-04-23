@@ -9,15 +9,17 @@ export default defineConfig(({ mode }) => {
     Object.assign(process.env, loadEnv(mode, envDir));
 
     return {
+        envDir,
+
+        base: mode === "production" ? "/webform/build/" : "/",
+
         build: {
             emptyOutDir: true,
         },
 
-        envDir,
-
         server: {
             host: process.env.VITE_HOST || "localhost",
-            port: process.env.VITE_PORT || 5174,
+            port: Number(process.env.VITE_PORT) || 5174,
         },
 
         plugins: [

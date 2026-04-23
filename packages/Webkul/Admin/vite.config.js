@@ -113,6 +113,10 @@ export default defineConfig(({ mode }) => {
                     "src/Resources/assets/js/chart.js",
                 ],
 
+                assets: [
+                    "src/Resources/assets/images/**",
+                ],
+
                 origin: origin, // Force correct origin
             }),
         ],

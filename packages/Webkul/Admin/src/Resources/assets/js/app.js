@@ -1,7 +1,6 @@
 /**
- * This will track all the images and fonts for publishing.
+ * Static images for publishing are declared via `assets` in vite.config.js (laravel-vite-plugin 3 + Vite 8).
  */
-import.meta.glob(["../images/**", "../fonts/**"]);
 
 /**
  * Main vue bundler.

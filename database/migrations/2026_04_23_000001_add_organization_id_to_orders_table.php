@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedBigInteger('organization_id')->nullable()->after('is_business');
+            // organizations.id is increments() => unsigned INT; must match for MySQL 8 FK (3780)
+            $table->unsignedInteger('organization_id')->nullable()->after('is_business');
             $table->foreign('organization_id')->references('id')->on('organizations')->nullOnDelete();
         });
     }

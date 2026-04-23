@@ -1,7 +1,7 @@
 /**
- * This will track all the images and fonts for publishing.
+ * Voeg `assets: ['src/Resources/assets/images/**']` toe aan laravel() in vite.config.js
+ * als je statische images onder assets wilt publiceren (Vite 8 + laravel-vite-plugin 3).
  */
-import.meta.glob(["../images/**", "../fonts/**"]);
 
 /**
  * Main vue bundler.

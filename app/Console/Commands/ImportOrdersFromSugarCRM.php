@@ -239,8 +239,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         $this->table($headers, $rows);
-        $newCount = collect($rows)->filter(fn ($r) => $r[7] === '✗ new')->count();
+        $newCount = collect($rows)->filter(fn ($r) => $r[8] === '✗ new')->count();
         $this->info("Would import {$newCount} orders");
+
+        // Order rows detail preview
+        $this->showDryRunOrderRowsPreview($records, $rowsByOrder);
 
         // SalesLead preview for new orders only
         $newRecords = $records->filter(fn ($r) => ! Order::where('external_id', $r->id)->exists());
@@ -277,6 +280,124 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         if ($missing > 0) {
             $this->warn("{$missing} order(s) have no matching CRM Lead — SalesLead will be created with lead_id=null.");
         }
+    }
+
+    /**
+     * Show per-order row details in the dry run: product resolution and invoice settlement (afletteren) status.
+     */
+    private function showDryRunOrderRowsPreview(Collection $records, Collection $rowsByOrder): void
+    {
+        $allRows = $rowsByOrder->flatten(1);
+        if ($allRows->isEmpty()) {
+            return;
+        }
+
+        $this->info("\n=== ORDER ROWS PREVIEW ===");
+
+        // Build product lookup collections once for all rows (same logic as importRecords)
+        $allProductIds = $allRows->pluck('producttemplate_id_c')->filter()->unique()->values()->all();
+        $productsByExternalId = ! empty($allProductIds)
+            ? Product::whereIn('external_id', $allProductIds)->get()->keyBy('external_id')
+            : collect();
+
+        $productsByName = $this->productsByNameForSugarRows($allRows);
+        $productsByNormalizedName = $productsByName->mapWithKeys(
+            fn (Product $p, string $name) => [$this->normalizeProductName($name) => $p]
+        );
+        $partnerProductsByNormalizedName = $this->partnerProductsByNormalizedName();
+
+        $headers = ['Order#', 'Naam', 'CRM product', 'Prijs', 'Status', 'Afl.other', 'Afl.cardio', 'Afl.clinic', 'Afl.radio', 'Afl.totaal'];
+        $tableRows = [];
+        $noMatchCount = 0;
+
+        foreach ($records as $record) {
+            $orderRows = $rowsByOrder->get($record->id, collect());
+            $orderNum = $record->order_num ?? 'N/A';
+
+            foreach ($orderRows as $row) {
+                $product = $this->resolveProductForSugarRow(
+                    $row,
+                    $productsByExternalId,
+                    $productsByName,
+                    $productsByNormalizedName,
+                    $partnerProductsByNormalizedName
+                );
+
+                if ($product === null) {
+                    $noMatchCount++;
+                }
+
+                $status = $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '');
+
+                $tableRows[] = [
+                    $orderNum,
+                    $row->name ?? '—',
+                    $product ? $product->name : '✗ geen match',
+                    number_format((float) ($row->sales_price ?? 0), 2),
+                    $status->value,
+                    $this->dryRunAflettereCell($row, 'other'),
+                    $this->dryRunAflettereCell($row, 'cardio'),
+                    $this->dryRunAflettereCell($row, 'clinic'),
+                    $this->dryRunAflettereCell($row, 'radio'),
+                    $this->dryRunAflettererTotaalCell($row),
+                ];
+            }
+        }
+
+        $this->table($headers, $tableRows);
+
+        if ($noMatchCount > 0) {
+            $this->warn("{$noMatchCount} order rule(s) hebben geen CRM product — deze regels worden overgeslagen bij import.");
+        }
+    }
+
+    /**
+     * Format a single invoice settlement (afletteren) component cell for the dry run.
+     * Shows "amount (status)" when amount is present, or status alone, or "—" when empty.
+     */
+    private function dryRunAflettereCell(object $row, string $component): string
+    {
+        $amountField = "inv_purchase_{$component}_c";
+        $statusField = "ink_{$component}_status_c";
+
+        $amount = property_exists($row, $amountField) ? $this->sugarMoneyAmount(data_get($row, $amountField)) : null;
+        $status = property_exists($row, $statusField) ? (data_get($row, $statusField) ?? '') : null;
+        $allowed = $status === null || $this->sugarInkStatusAllowsInvoiceAmount($status);
+
+        if ($amount === null && ($status === null || $status === '')) {
+            return '—';
+        }
+
+        $statusLabel = ($status !== null && $status !== '') ? $status : 'ok';
+        $prefix = $allowed ? '' : '✗ ';
+
+        if ($amount !== null) {
+            return $prefix.number_format($amount, 2).' ('.$statusLabel.')';
+        }
+
+        return $prefix.$statusLabel;
+    }
+
+    /**
+     * Format the total invoice settlement (afletteren totaal) cell for the dry run.
+     */
+    private function dryRunAflettererTotaalCell(object $row): string
+    {
+        $totalAmount = property_exists($row, 'inv_purchase_total_c')
+            ? $this->sugarMoneyAmount(data_get($row, 'inv_purchase_total_c'))
+            : null;
+
+        $effectiveTotal = $this->sugarInvoiceAggregatedTotalAmount($row);
+
+        if ($totalAmount === null) {
+            return '—';
+        }
+
+        if ($effectiveTotal === null) {
+            return '✗ '.number_format($totalAmount, 2).' (geblokkeerd)';
+        }
+
+        return number_format($effectiveTotal, 2);
     }
 
     /**

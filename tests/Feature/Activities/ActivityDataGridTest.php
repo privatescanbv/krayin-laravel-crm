@@ -4,6 +4,7 @@ namespace Tests\Feature\Activities;
 
 use App\Enums\ActivityType;
 use App\Enums\PipelineStage;
+use App\Models\SalesLead;
 use App\Services\ActivityQueueRegistry;
 use App\Services\ActivityQueueRepository;
 use Database\Seeders\TestSeeder;
@@ -209,4 +210,56 @@ it('computes open_and_overdue_counts_per_queue_consistently_with_filters', funct
     $counts = $repo->counts('our-tasks');
     expect($counts['open'])->toBe(2)
         ->and($counts['overdue'])->toBe(1);
+});
+
+it('excludes sales-linked tasks from the our-tasks and my-tasks queues', function () {
+    $adminRole = Role::factory()->create([
+        'permission_type' => 'all',
+        'permissions'     => null,
+    ]);
+
+    $admin = User::factory()->create([
+        'role_id'         => $adminRole->id,
+        'view_permission' => 'global',
+        'status'          => 1,
+    ]);
+
+    /** @var Group $group */
+    $group = Group::query()->firstOrFail();
+
+    $salesLead = SalesLead::factory()->create();
+
+    // Task linked to a sales lead – should be excluded.
+    Activity::create([
+        'type'          => ActivityType::TASK->value,
+        'user_id'       => $admin->id,
+        'title'         => 'Sales task',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $group->id,
+        'sales_lead_id' => $salesLead->id,
+    ]);
+
+    // Regular task (no sales_lead_id) – should be included.
+    Activity::create([
+        'type'          => ActivityType::TASK->value,
+        'user_id'       => $admin->id,
+        'title'         => 'Regular task',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $group->id,
+    ]);
+
+    $this->actingAs($admin, 'user');
+
+    /** @var ActivityQueueRepository $repo */
+    $repo = app(ActivityQueueRepository::class);
+
+    $ourTasksCounts = $repo->counts('our-tasks');
+    expect($ourTasksCounts['open'])->toBe(1);
+
+    $myTasksCounts = $repo->counts('my-tasks');
+    expect($myTasksCounts['open'])->toBe(1);
 });

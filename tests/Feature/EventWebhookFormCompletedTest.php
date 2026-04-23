@@ -101,7 +101,7 @@ test('CreateFormReviewTask listener creates task activity with 5-day deadline', 
         ->first();
 
     expect($activity)->not->toBeNull()
-        ->and($activity->title)->toBe('Formulier controleren')
+        ->and($activity->title)->toBe('GVL controleren')
         ->and($activity->is_done)->toBeFalse()
         ->and($activity->status)->toBe(ActivityStatus::ACTIVE)
         ->and($activity->additional)->toMatchArray(['form_id' => $formId])

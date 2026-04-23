@@ -288,10 +288,7 @@ class OrderRepository extends Repository
             }
         }
 
-        $person = $order->salesLead?->contactPerson;
-        if (! $person) {
-            $person = $order->salesLead?->lead?->persons()?->first();
-        }
+        $person = $order->salesLead?->getContactPersonOrFirstPerson();
 
         if ($person && $person->name) {
             return $person->name;

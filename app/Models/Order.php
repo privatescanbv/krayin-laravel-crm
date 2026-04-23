@@ -21,7 +21,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -40,6 +42,7 @@ class Order extends Model
         'order_number',
         'invoice_number',
         'is_business',
+        'organization_id',
         'title',
         'total_price',
         'pipeline_stage_id',
@@ -66,6 +69,7 @@ class Order extends Model
         'clinic_coordinator_user_id'       => 'integer',
         'combine_order'                    => 'boolean',
         'is_business'                      => 'boolean',
+        'organization_id'                  => 'integer',
         'created_by'                       => 'integer',
         'updated_by'                       => 'integer',
     ];
@@ -83,6 +87,7 @@ class Order extends Model
             'combine_order'                 => 'boolean',
             'invoice_number'                => 'nullable|string|max:255',
             'is_business'                   => 'boolean',
+            'organization_id'               => 'nullable|integer|exists:organizations,id',
         ];
     }
 
@@ -151,6 +156,11 @@ class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**
@@ -274,9 +284,9 @@ class Order extends Model
      * Use this as the single source of truth for AFB display logic across views.
      * Requires 'afbPersonDocuments.dispatch' to be eager-loaded.
      *
-     * @return \Illuminate\Support\Collection<int, AfbPersonDocument>
+     * @return Collection<int, AfbPersonDocument>
      */
-    public function latestSuccessfulAfbDocuments(): \Illuminate\Support\Collection
+    public function latestSuccessfulAfbDocuments(): Collection
     {
         return $this->afbPersonDocuments
             ->filter(fn (AfbPersonDocument $doc) => $doc->dispatch?->status === AfbDispatchStatus::SUCCESS)
@@ -390,5 +400,25 @@ class Order extends Model
         return $query
             ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
             ->when($filter === AppointmentTimeFilter::PAST, fn (Builder $q) => $q->where('first_examination_at', '<', $now));
+    }
+
+    public function resolveAddress(?Person $person = null): ?Address
+    {
+        if ($this->is_business) {
+            if ($this->organization?->address) {
+                return $this->organization->address;
+            }
+
+            $org = $this->salesLead?->lead?->organization;
+            if ($org?->address) {
+                return $org->address;
+            }
+        }
+
+        if ($this->combine_order) {
+            return $this->salesLead?->getContactPersonOrFirstPerson()?->address;
+        }
+
+        return $person?->address ?? null;
     }
 }

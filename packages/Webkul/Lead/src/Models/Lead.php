@@ -14,6 +14,7 @@ use App\Models\LeadMarketingData;
 use App\Models\LeadPerson;
 use App\Services\LeadStatusTransitionValidator;
 use App\Traits\HasDefaultContactInfo;
+use App\Traits\SelectsBestContactPerson;
 use BackedEnum;
 use Carbon\Carbon;
 use Database\Factories\LeadFactory;
@@ -41,7 +42,7 @@ use Webkul\User\Models\UserProxy;
 
 class Lead extends Model implements LeadContract
 {
-    use HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SoftDeletes;
+    use HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SelectsBestContactPerson, SoftDeletes;
 
     protected $casts = [
         'closed_at'                      => 'datetime',
@@ -518,34 +519,11 @@ class Lead extends Model implements LeadContract
         return (int) round($rottenDate->diffInDays(Carbon::now(), false));
     }
 
-    public function getContactPersonOrFirstPerson(): ?Person
+    protected function getLeadForScoring(): Lead
     {
-        if ($this->hasContactPerson()) {
-            return $this->contactPerson()->first();
-        }
+        $this->loadMissing('address');
 
-        $persons = $this->persons()->with('address')->get();
-        if ($persons->isEmpty()) {
-            return null;
-        }
-
-        $this->loadMissing(['address']);
-
-        $scored = $persons->map(fn (Person $person) => [
-            'person' => $person,
-            'score'  => LeadStatusTransitionValidator::calculateMatchScore($this, $person),
-        ]);
-
-        return $scored
-            ->sort(function (array $a, array $b): int {
-                $byScore = $b['score'] <=> $a['score'];
-                if ($byScore !== 0) {
-                    return $byScore;
-                }
-
-                return $b['person']->id <=> $a['person']->id;
-            })
-            ->first()['person'];
+        return $this;
     }
 
     /**

@@ -3,6 +3,10 @@ use App\Enums\PipelineStage;
 use App\Models\SalesLead;
 use Webkul\Lead\Models\Stage;
 @endphp
+
+@include('adminc.components.entity-selector')
+@include('adminc.components.order-org-section')
+
 <x-admin::layouts>
     <x-slot:title>
         Order bewerken
@@ -198,15 +202,12 @@ use Webkul\Lead\Models\Stage;
                                 value="{{ $orders->invoice_number }}"
                             />
 
-                            <x-adminc::components.field
-                                type="select"
-                                name="is_business"
-                                label="Zakelijk"
-                                value="{{ $orders->is_business ? '1' : '0' }}"
-                            >
-                                <option value="1" {{ $orders->is_business ? 'selected' : '' }}>Ja</option>
-                                <option value="0" {{ ! $orders->is_business ? 'selected' : '' }}>Nee</option>
-                            </x-adminc::components.field>
+                            <v-order-org-section
+                                :initial-is-business='@json($orderOrgSectionInitialIsBusiness)'
+                                :initial-org='@json($orderOrgSectionInitialOrg)'
+                                :hint-org='@json($orderOrgSectionHintOrg ?? null)'
+                                search-route="{{ route('admin.contacts.organizations.search') }}"
+                            ></v-order-org-section>
 
                             <!-- Owner -->
                             <div class="flex-1">

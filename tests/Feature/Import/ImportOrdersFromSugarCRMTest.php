@@ -10,7 +10,6 @@ use App\Enums\PipelineStage;
 use App\Enums\PurchasePriceType;
 use App\Models\Anamnesis;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\PartnerProduct;
 use App\Models\SalesLead;
@@ -563,11 +562,11 @@ test('dry run does not persist any data', function () {
 
 test('imports Sugar advance payment as OrderPayment with date_entered as paid_at', function () {
     insertSugarOrder('order-pay-adv-001', [
-        'betaald_vooruit_c' => 2206.0,
-        'betaal_status_c'   => 'volledig',
-        'date_entered'      => '2025-02-10 09:00:00',
+        'betaald_vooruit_c'        => 2206.0,
+        'betaal_status_c'          => 'volledig',
+        'date_entered'             => '2025-02-10 09:00:00',
         'datum_betaling_vr_c'      => '2025-03-10 09:00:00',
-        'date_closed'       => '2025-08-20',
+        'date_closed'              => '2025-08-20',
     ]);
 
     runOrderImport();
@@ -623,12 +622,12 @@ test('imports Sugar clinic payment with datum_onderzoek_1 as paid_at', function 
 
 test('payment dates differ for advance and clinic on same order', function () {
     insertSugarOrder('order-pay-both-001', [
-        'betaald_vooruit_c'  => 100.0,
-        'betaald_kliniek_c'  => 50.0,
-        'pin_contant_c'      => 'pin',
-        'date_entered'       => '2025-01-01 08:30:00',
+        'betaald_vooruit_c'   => 100.0,
+        'betaald_kliniek_c'   => 50.0,
+        'pin_contant_c'       => 'pin',
+        'date_entered'        => '2025-01-01 08:30:00',
         'datum_betaling_vr_c' => '2025-02-01 08:30:00',
-        'datum_onderzoek_1'  => '2025-06-20',
+        'datum_onderzoek_1'   => '2025-06-20',
     ]);
 
     runOrderImport();

@@ -4,15 +4,13 @@ namespace App\Services;
 
 use App\Enums\EmailTemplateCode;
 use App\Helpers\ValueNormalizer;
+use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use RuntimeException;
 use Webkul\Contact\Models\Person;
-use Webkul\Email\Enums\EmailFolderEnum;
-use Webkul\Email\Models\Email;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
 class OrderMailService
@@ -132,38 +130,6 @@ class OrderMailService
         return null;
     }
 
-    /**
-     * Send an order mail directly (outside the mail dialog).
-     *
-     * This keeps Order-specific composition here, while all actual "store/send/folder"
-     * happens through the generic CrmMailService pipeline.
-     */
-    public function sendOrderMailDirect(Order $order, ?string $recipientEmail = null): Email
-    {
-        $mailData = $this->buildMailData($order);
-
-        $to = $recipientEmail ?: ($mailData['default_email'] ?? null);
-        if (! is_string($to) || trim($to) === '') {
-            throw new RuntimeException('No recipient email available for order mail.');
-        }
-
-        $order->loadMissing(['salesLead.lead.persons', 'salesLead.contactPerson']);
-
-        $salesLeadId = $order->salesLead?->id;
-        $personId = $order->salesLead?->contactPerson?->id ?? $order->salesLead?->lead?->persons()?->first()?->id;
-
-        return $this->crmMailService->createAndMaybeSend([
-            'subject'       => (string) ($mailData['subject'] ?? ''),
-            'reply'         => (string) ($mailData['body'] ?? ''),
-            'reply_to'      => [trim($to)],
-            'name'          => (string) ($order->salesLead?->name ?? 'Order mail'),
-            'source'        => 'system',
-            'user_type'     => 'user',
-            'sales_lead_id' => $salesLeadId,
-            'person_id'     => $personId,
-        ], false, EmailFolderEnum::SENT);
-    }
-
     protected function buildTemplateVariables(Order $order, ?Person $person = null): array
     {
         $formLink = $this->getExistingFormLink($order);
@@ -179,11 +145,14 @@ class OrderMailService
             'orderItems.resourceOrderItems.resource.resourceType',
             'orderItems.person',
             'orderItems.product',
+            'organization.address',
+            'salesLead.lead.organization.address',
+            'salesLead.contactPerson.address',
         ]);
 
         $personId = $person?->id;
 
-        return [
+        return array_merge([
             'order_reference'        => (string) $order->id,
             'order_title'            => e($order->title ?? ''),
             'order_status'           => e($order->status?->label() ?? ''),
@@ -197,6 +166,35 @@ class OrderMailService
             'current_date'           => Carbon::now()->format('d-m-Y'),
             'form_link'              => $formLink ? e($formLink) : '',
             'form_link_section'      => $formLinkSection,
+        ], $this->buildAddressVariables($order->resolveAddress($person)));
+    }
+
+    protected function buildAddressVariables(?Address $address): array
+    {
+        if (! $address) {
+            return array_fill_keys([
+                'address_street', 'address_house_number', 'address_house_number_suffix',
+                'address_postal_code', 'address_city', 'address_state', 'address_country',
+                'address_line1', 'address_line2', 'address_full',
+            ], '');
+        }
+
+        $suffix = $address->house_number_suffix ? ' '.$address->house_number_suffix : '';
+        $line1 = trim(($address->street ?? '').' '.($address->house_number ?? '').$suffix);
+        $postalFormatted = $this->formatPostalCodeForDisplay($address->postal_code ?? '');
+        $line2 = trim($postalFormatted.' '.($address->city ?? ''));
+
+        return [
+            'address_street'              => $address->street ?? '',
+            'address_house_number'        => $address->house_number ?? '',
+            'address_house_number_suffix' => $address->house_number_suffix ?? '',
+            'address_postal_code'         => $postalFormatted,
+            'address_city'                => $address->city ?? '',
+            'address_state'               => $address->state ?? '',
+            'address_country'             => $address->country ?? '',
+            'address_line1'               => $line1,
+            'address_line2'               => $line2,
+            'address_full'                => implode(', ', array_filter([$line1, $line2])),
         ];
     }
 
@@ -413,11 +411,7 @@ HTML;
 
     protected function resolveCustomerName(Order $order): string
     {
-        $person = $order->salesLead?->contactPerson;
-        if (! $person) {
-            // Fallback to the first person attached to the lead, if available
-            $person = $order->salesLead?->lead?->persons()?->first();
-        }
+        $person = $order->salesLead?->getContactPersonOrFirstPerson();
 
         if ($person && $person->name) {
             return $person->name;
@@ -510,5 +504,14 @@ HTML;
         }
 
         return $person;
+    }
+
+    private function formatPostalCodeForDisplay(string $postalCode): string
+    {
+        if (preg_match('/^([0-9]{4})([A-Z]{2})$/', $postalCode, $m)) {
+            return $m[1].' '.$m[2];
+        }
+
+        return $postalCode;
     }
 }

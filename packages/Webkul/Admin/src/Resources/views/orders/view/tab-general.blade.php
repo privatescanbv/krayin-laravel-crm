@@ -159,6 +159,20 @@
                 </span>
             </div>
 
+            @if($order->is_business)
+            <div class="flex flex-col col-span-2">
+                <span class="text-gray-500 dark:text-gray-400">Organisatie</span>
+                @if($order->organization)
+                    <a href="{{ route('admin.contacts.organizations.view', $order->organization->id) }}"
+                       class="font-medium text-brandColor hover:underline">
+                        {{ $order->organization->name }}
+                    </a>
+                @else
+                    <span class="font-medium text-red-600 dark:text-red-400">Niet ingesteld</span>
+                @endif
+            </div>
+            @endif
+
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Afdeling</span>
                 <span class="font-medium text-gray-800 dark:text-white">

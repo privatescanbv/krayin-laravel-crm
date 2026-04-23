@@ -1,3 +1,7 @@
+@include('adminc.components.entity-selector')
+@include('adminc.components.sales-lead-selector')
+@include('adminc.components.order-org-section')
+
 <x-admin::layouts>
     <x-slot:title>
         Order aanmaken
@@ -31,8 +35,6 @@
             };
         </script>
     @endpush
-
-    @include('adminc.components.sales-lead-selector')
 
     <x-admin::form :action="route('admin.orders.store')" method="POST">
         @include('adminc.components.validation-errors')
@@ -80,7 +82,13 @@
                         current-label="{{ e($salesLeadName ?? '') }}"
                         :can-add-new="false"
                         selection-change-callback="syncOrderTitleFromSalesLeadSelection"
-                    />
+                    ></v-sales-lead-selector>
+
+                    <v-order-org-section
+                        :initial-is-business='@json($initialIsBusinessForOrderOrg)'
+                        :initial-org='@json($defaultOrganization)'
+                        search-route="{{ route('admin.contacts.organizations.search') }}"
+                    ></v-order-org-section>
                 </div>
             </div>
         </div>

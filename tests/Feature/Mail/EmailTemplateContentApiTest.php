@@ -3,10 +3,12 @@
 use App\Enums\EmailTemplateCode;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
+use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Models\Lead;
@@ -386,4 +388,173 @@ test('it merges acknowledge-order-mail variables from OrderMailService for order
     $content = $response->json('data.content');
     expect($content)->toContain('Geef uw akkoord')
         ->and($content)->not->toContain('{{ approval_instructions }}');
+});
+
+test('address variables resolve to particulier contactpersoon address', function () {
+    $address = Address::factory()->create([
+        'street'              => 'Dorpsstraat',
+        'house_number'        => '10',
+        'house_number_suffix' => 'A',
+        'postal_code'         => '1234AB',
+        'city'                => 'Amsterdam',
+        'state'               => 'Noord-Holland',
+        'country'             => 'Nederland',
+    ]);
+
+    $person = Person::factory()->create(['address_id' => $address->id]);
+
+    $salesLead = SalesLead::factory()->create(['contact_person_id' => $person->id]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'is_business'   => false,
+    ]);
+
+    $template = EmailTemplate::factory()->create([
+        'name'     => 'adres-particulier',
+        'code'     => 'adres-particulier',
+        'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+        'language' => EmailTemplateLanguage::NEDERLANDS->value,
+        'subject'  => 'Test',
+        'content'  => '{{ address_line1 }} | {{ address_line2 }} | {{ address_state }} | {{ address_country }}',
+    ]);
+
+    $response = $this->postJson(route('admin.mail.template_content_body'), [
+        'email_template_identifier' => 'adres-particulier',
+        'entities'                  => ['order' => $order->id],
+    ]);
+
+    $response->assertStatus(200);
+    $content = $response->json('data.content');
+
+    expect($content)
+        ->toContain('Dorpsstraat 10 A')
+        ->toContain('1234 AB Amsterdam')
+        ->toContain('Noord-Holland')
+        ->toContain('Nederland')
+        ->not->toContain('{{ address_line1 }}');
+});
+
+test('address variables resolve to specific person address when person entity passed with order', function () {
+    $address = Address::factory()->create([
+        'street'       => 'Kerkstraat',
+        'house_number' => '5',
+        'postal_code'  => '5678CD',
+        'city'         => 'Utrecht',
+    ]);
+
+    $person = Person::factory()->create(['address_id' => $address->id]);
+
+    $salesLead = SalesLead::factory()->create(['contact_person_id' => $person->id]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'is_business'   => false,
+    ]);
+
+    $template = EmailTemplate::factory()->create([
+        'name'     => 'adres-per-persoon',
+        'code'     => 'adres-per-persoon',
+        'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+        'language' => EmailTemplateLanguage::NEDERLANDS->value,
+        'subject'  => 'Test',
+        'content'  => '{{ address_line1 }} | {{ address_line2 }}',
+    ]);
+
+    $response = $this->postJson(route('admin.mail.template_content_body'), [
+        'email_template_identifier' => 'adres-per-persoon',
+        'entities'                  => [
+            'order'  => $order->id,
+            'person' => $person->id,
+        ],
+    ]);
+
+    $response->assertStatus(200);
+    $content = $response->json('data.content');
+
+    expect($content)
+        ->toContain('Kerkstraat 5')
+        ->toContain('5678 CD Utrecht');
+});
+
+test('address variables resolve to organisation address for zakelijk order', function () {
+    $orgAddress = Address::factory()->create([
+        'street'       => 'Bedrijvenlaan',
+        'house_number' => '99',
+        'postal_code'  => '9012EF',
+        'city'         => 'Rotterdam',
+        'state'        => 'Zuid-Holland',
+        'country'      => 'Nederland',
+    ]);
+
+    $organization = Organization::factory()->create(['address_id' => $orgAddress->id]);
+
+    $lead = Lead::factory()->create(['organization_id' => $organization->id]);
+
+    $personWithoutAddress = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create([
+        'lead_id'           => $lead->id,
+        'contact_person_id' => $personWithoutAddress->id,
+    ]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'is_business'   => true,
+    ]);
+
+    $template = EmailTemplate::factory()->create([
+        'name'     => 'adres-zakelijk',
+        'code'     => 'adres-zakelijk',
+        'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+        'language' => EmailTemplateLanguage::NEDERLANDS->value,
+        'subject'  => 'Test',
+        'content'  => '{{ address_line1 }} | {{ address_line2 }} | {{ address_state }}',
+    ]);
+
+    $response = $this->postJson(route('admin.mail.template_content_body'), [
+        'email_template_identifier' => 'adres-zakelijk',
+        'entities'                  => ['order' => $order->id],
+    ]);
+
+    $response->assertStatus(200);
+    $content = $response->json('data.content');
+
+    expect($content)
+        ->toContain('Bedrijvenlaan 99')
+        ->toContain('9012 EF Rotterdam')
+        ->toContain('Zuid-Holland');
+});
+
+test('address variables are empty strings when no address is set', function () {
+    $person = Person::factory()->create();
+
+    $salesLead = SalesLead::factory()->create(['contact_person_id' => $person->id]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'is_business'   => false,
+    ]);
+
+    $template = EmailTemplate::factory()->create([
+        'name'     => 'adres-leeg',
+        'code'     => 'adres-leeg',
+        'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+        'language' => EmailTemplateLanguage::NEDERLANDS->value,
+        'subject'  => 'Test',
+        'content'  => 'Adres: [{{ address_line1 }}] Stad: [{{ address_city }}]',
+    ]);
+
+    $response = $this->postJson(route('admin.mail.template_content_body'), [
+        'email_template_identifier' => 'adres-leeg',
+        'entities'                  => ['order' => $order->id],
+    ]);
+
+    $response->assertStatus(200);
+    $content = $response->json('data.content');
+
+    expect($content)
+        ->toContain('Adres: []')
+        ->toContain('Stad: []')
+        ->not->toContain('{{ address_line1 }}')
+        ->not->toContain('{{ address_city }}');
 });

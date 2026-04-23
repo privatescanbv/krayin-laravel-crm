@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
+import vueDevTools from "vite-plugin-vue-devtools";
 import laravel from "laravel-vite-plugin";
 import path from "path";
 import fs from "fs";
@@ -27,6 +28,13 @@ export default defineConfig(({ mode }) => {
     Object.assign(process.env, loadEnv(mode, envDir));
 
     process.env.LARAVEL_VITE_DETECT_TLS = "false";
+
+    const vueDevtoolsBrowserExtensionOnly =
+        process.env.VITE_VUE_DEVTOOLS_BROWSER_EXTENSION_ONLY === "true" ||
+        process.env.VITE_VUE_DEVTOOLS_BROWSER_EXTENSION_ONLY === "1";
+
+    const adminAppJsEntry =
+        /[/\\]src[/\\]Resources[/\\]assets[/\\]js[/\\]app\.js$/;
 
     const adminPort = Number(process.env.VITE_ADMIN_PORT) || 5174;
     const host      = process.env.VITE_HMR_HOST || 'crm.local.privatescan.nl';
@@ -86,7 +94,13 @@ export default defineConfig(({ mode }) => {
 
         plugins: [
             vue(),
-
+            ...(mode === "development" && !vueDevtoolsBrowserExtensionOnly
+                ? [
+                    vueDevTools({
+                        appendTo: adminAppJsEntry,
+                    }),
+                ]
+                : []),
             laravel({
                 publicDirectory: "../../../public",
                 buildDirectory: "admin/build",

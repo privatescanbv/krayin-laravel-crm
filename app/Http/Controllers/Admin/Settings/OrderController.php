@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -265,18 +266,49 @@ class OrderController extends SimpleEntityController
 
         $salesLeadName = null;
         $defaultOrderTitle = null;
+        $resolvedOrganization = null;
+
         if ($salesLeadId) {
             $salesLead = SalesLead::with('lead')->find($salesLeadId);
             if ($salesLead) {
                 $salesLeadName = $salesLead->labelWithLeadSuffix();
                 $defaultOrderTitle = $salesLead->name;
+                $resolvedOrganization = $salesLead->resolveDefaultOrganizationForOrder();
             }
         }
 
+        $oldInput = $request->session()->get('_old_input', []);
+
+        $defaultOrganization = null;
+        if (is_array($oldInput) && ! empty($oldInput['organization_id'])) {
+            $defaultOrganization = [
+                'id'   => (int) $oldInput['organization_id'],
+                'name' => (string) ($oldInput['organization_name'] ?? ''),
+            ];
+        } elseif ($resolvedOrganization) {
+            $defaultOrganization = [
+                'id'   => $resolvedOrganization->id,
+                'name' => $resolvedOrganization->name,
+            ];
+        }
+
+        if (is_array($oldInput) && array_key_exists('is_business', $oldInput)) {
+            $v = $oldInput['is_business'];
+            $initialIsBusinessForOrderOrg = filter_var($v, FILTER_VALIDATE_BOOLEAN) || (string) $v === '1';
+        } elseif (is_array($oldInput) && ! empty($oldInput['organization_id'])) {
+            $initialIsBusinessForOrderOrg = true;
+        } elseif ($resolvedOrganization) {
+            $initialIsBusinessForOrderOrg = true;
+        } else {
+            $initialIsBusinessForOrderOrg = false;
+        }
+
         return view($this->createView, [
-            'salesLeadId'       => $salesLeadId,
-            'salesLeadName'     => $salesLeadName,
-            'defaultOrderTitle' => $defaultOrderTitle,
+            'salesLeadId'                  => $salesLeadId,
+            'salesLeadName'                => $salesLeadName,
+            'defaultOrderTitle'            => $defaultOrderTitle,
+            'defaultOrganization'          => $defaultOrganization,
+            'initialIsBusinessForOrderOrg' => $initialIsBusinessForOrderOrg,
         ]);
     }
 
@@ -348,6 +380,7 @@ class OrderController extends SimpleEntityController
     public function view(int $id): View
     {
         $order = $this->orderRepository->with([
+            'organization',
             'salesLead.lead',
             'salesLead.persons',
             'salesLead.contactPerson',
@@ -1294,6 +1327,7 @@ class OrderController extends SimpleEntityController
         // Model = Order
         // Eager-load relations needed for planning button visibility and planning info
         $order->load([
+            'organization',
             'orderItems.product.productGroup',
             'orderItems.product.partnerProducts' => function ($q) {
                 $q->select('partner_products.id', 'partner_products.product_id', 'partner_products.resource_type_id');
@@ -1372,16 +1406,52 @@ class OrderController extends SimpleEntityController
             }
         }
 
+        $suggestedOrderOrganization = null;
+        if (! $order->organization_id && $order->salesLead) {
+            $suggested = $order->salesLead->resolveDefaultOrganizationForOrder();
+            if ($suggested) {
+                $suggestedOrderOrganization = [
+                    'id'   => $suggested->id,
+                    'name' => $suggested->name,
+                ];
+            }
+        }
+
+        $oldInput = $request->session()->get('_old_input', []);
+
+        $orderOrgSectionInitialOrg = null;
+        if (is_array($oldInput) && ! empty($oldInput['organization_id'])) {
+            $orderOrgSectionInitialOrg = [
+                'id'   => (int) $oldInput['organization_id'],
+                'name' => (string) ($oldInput['organization_name'] ?? ''),
+            ];
+        } elseif ($order->organization) {
+            $orderOrgSectionInitialOrg = [
+                'id'   => $order->organization->id,
+                'name' => $order->organization->name,
+            ];
+        }
+
+        if (is_array($oldInput) && array_key_exists('is_business', $oldInput)) {
+            $v = $oldInput['is_business'];
+            $orderOrgSectionInitialIsBusiness = filter_var($v, FILTER_VALIDATE_BOOLEAN) || (string) $v === '1';
+        } else {
+            $orderOrgSectionInitialIsBusiness = (bool) $order->is_business;
+        }
+
         return [
             $this->entityName         => $entity,
 
-            'orders'                  => $entity,
-            'salesLeads'              => $salesLeads,
-            'persons'                 => $persons,
-            'personsWithAnamnesis'    => $personsWithAnamnesis,
-            'orderEmailOptions'       => $orderEmailOptions,
-            'orderDefaultEmail'       => $orderDefaultEmail,
-            'missingPersonsWarning'   => $missingPersonsWarning,
+            'orders'                           => $entity,
+            'salesLeads'                       => $salesLeads,
+            'persons'                          => $persons,
+            'personsWithAnamnesis'             => $personsWithAnamnesis,
+            'orderEmailOptions'                => $orderEmailOptions,
+            'orderDefaultEmail'                => $orderDefaultEmail,
+            'missingPersonsWarning'            => $missingPersonsWarning,
+            'orderOrgSectionInitialOrg'        => $orderOrgSectionInitialOrg,
+            'orderOrgSectionInitialIsBusiness' => $orderOrgSectionInitialIsBusiness,
+            'orderOrgSectionHintOrg'           => $suggestedOrderOrganization,
         ];
     }
 
@@ -1455,6 +1525,7 @@ class OrderController extends SimpleEntityController
             'combine_order'                 => ['nullable', 'boolean'],
             'invoice_number'                => ['nullable', 'string', 'max:255'],
             'is_business'                   => ['nullable', 'boolean'],
+            'organization_id'               => [Rule::requiredIf(fn () => $request->boolean('is_business')), 'nullable', 'integer', 'exists:organizations,id'],
             'first_examination_at'          => ['nullable', 'date'],
             'items'                         => ['nullable', 'array'],
             'items.*.product_id'            => ['nullable', 'integer', 'exists:products,id'],
@@ -1504,6 +1575,11 @@ class OrderController extends SimpleEntityController
         if (array_key_exists('clinic_coordinator_user_id', $payload)) {
             $val = $payload['clinic_coordinator_user_id'];
             $payload['clinic_coordinator_user_id'] = ($val === '' || $val === null) ? null : (int) $val;
+        }
+
+        // Clear organization when not a business order
+        if (isset($payload['is_business']) && ! filter_var($payload['is_business'], FILTER_VALIDATE_BOOLEAN)) {
+            $payload['organization_id'] = null;
         }
 
         // Compute total from items if provided; otherwise default to 0 for create without items

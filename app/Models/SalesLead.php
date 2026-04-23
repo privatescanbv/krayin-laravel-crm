@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\Departments;
 use App\Enums\LostReason;
 use App\Traits\HasAuditTrail;
+use App\Traits\SelectsBestContactPerson;
 use BackedEnum;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
@@ -25,7 +27,7 @@ use Webkul\Lead\Models\StageProxy;
  */
 class SalesLead extends Model
 {
-    use HasAuditTrail, HasFactory;
+    use HasAuditTrail, HasFactory, SelectsBestContactPerson;
 
     /**
      * The table associated with the model.
@@ -282,15 +284,6 @@ class SalesLead extends Model
         return $person?->findDefaultEmail();
     }
 
-    public function getContactPersonOrFirstPerson(): ?Person
-    {
-        if ($this->hasContactPerson()) {
-            return $this->contactPerson;
-        }
-
-        return $this->persons()->first();
-    }
-
     /**
      * Attach persons to this sales lead.
      */
@@ -413,6 +406,34 @@ class SalesLead extends Model
             ->join('departments', 'leads.department_id', '=', 'departments.id')
             ->where('salesleads.id', $salesId)
             ->value('departments.name');
+    }
+
+    /**
+     * Default organization for an order form: the lead's organization first, otherwise the
+     * organization of {@see getContactPersonOrFirstPerson()} when set.
+     */
+    public function resolveDefaultOrganizationForOrder(): ?Organization
+    {
+        $this->loadMissing(['lead.organization']);
+
+        if ($this->lead?->organization_id) {
+            return $this->lead->organization;
+        }
+
+        $person = $this->getContactPersonOrFirstPerson();
+
+        if ($person?->organization_id) {
+            $person->loadMissing('organization');
+
+            return $person->organization;
+        }
+
+        return null;
+    }
+
+    protected function getLeadForScoring(): ?Lead
+    {
+        return $this->lead;
     }
 
     /**

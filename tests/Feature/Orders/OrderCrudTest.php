@@ -7,7 +7,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 use Webkul\Product\Models\Product;
 
 beforeEach(function () {
@@ -94,6 +96,7 @@ test('can update order invoice_number and is_business', function () {
         'is_business'    => false,
     ]);
     $salesLead = SalesLead::factory()->create();
+    $org = Organization::factory()->create();
 
     $payload = [
         'title'           => $order->title,
@@ -101,6 +104,7 @@ test('can update order invoice_number and is_business', function () {
         'sales_lead_id'   => $salesLead->id,
         'invoice_number'  => 'INV-2026-42',
         'is_business'     => true,
+        'organization_id' => $org->id,
         '_method'         => 'put',
     ];
 
@@ -110,6 +114,7 @@ test('can update order invoice_number and is_business', function () {
     $order->refresh();
     expect($order->invoice_number)->toBe('INV-2026-42');
     expect($order->is_business)->toBeTrue();
+    expect($order->organization_id)->toBe($org->id);
 });
 
 test('can delete order', function () {
@@ -301,4 +306,62 @@ test('order create form prefills title from sales lead name when sales_lead_id i
 
     $response->assertOk();
     $response->assertSee('OrderCreateTitlePrefill2026', false);
+});
+
+test('order create form prefills organization from lead when sales_lead_id is set', function () {
+    $org = Organization::factory()->create(['name' => 'OrderCreateLeadOrg2026']);
+    $lead = Lead::factory()->create(['organization_id' => $org->id]);
+    $salesLead = SalesLead::factory()->create(['lead_id' => $lead->id]);
+
+    $response = $this->get(route('admin.orders.create', ['sales_lead_id' => $salesLead->id]));
+
+    $response->assertOk();
+    $response->assertSee('OrderCreateLeadOrg2026', false);
+});
+
+test('order create form prefills organization from linked person when lead has no organization', function () {
+    $lead = Lead::factory()->create(['organization_id' => null]);
+    $salesLead = SalesLead::factory()->create([
+        'lead_id'            => $lead->id,
+        'contact_person_id'  => null,
+    ]);
+    $person = Person::factory()->withOrganisation('OrderCreatePersonOrg2026')->create();
+    $salesLead->persons()->attach($person->id);
+
+    $response = $this->get(route('admin.orders.create', ['sales_lead_id' => $salesLead->id]));
+
+    $response->assertOk();
+    $response->assertSee('OrderCreatePersonOrg2026', false);
+});
+
+test('order edit form keeps zakelijk off when order is not business even if lead has organization', function () {
+    $org = Organization::factory()->create(['name' => 'OrderEditLeadOrgHint2026']);
+    $lead = Lead::factory()->create(['organization_id' => $org->id]);
+    $salesLead = SalesLead::factory()->create(['lead_id' => $lead->id]);
+    $order = Order::factory()->create([
+        'sales_lead_id'   => $salesLead->id,
+        'is_business'     => false,
+        'organization_id' => null,
+    ]);
+
+    $response = $this->get(route('admin.orders.edit', ['id' => $order->id]));
+    $response->assertOk();
+    $response->assertSee(":initial-is-business='false'", false);
+    $response->assertSee(":initial-org='null'", false);
+    $response->assertSee('OrderEditLeadOrgHint2026', false);
+});
+
+test('order create form leaves initial org empty when lead and persons have no organization', function () {
+    $lead = Lead::factory()->create(['organization_id' => null]);
+    $salesLead = SalesLead::factory()->create([
+        'lead_id'           => $lead->id,
+        'contact_person_id' => null,
+    ]);
+    $person = Person::factory()->create(['organization_id' => null]);
+    $salesLead->persons()->attach($person->id);
+
+    $response = $this->get(route('admin.orders.create', ['sales_lead_id' => $salesLead->id]));
+
+    $response->assertOk();
+    $response->assertSee(":initial-org='null'", false);
 });

@@ -29,6 +29,9 @@ Route::group(['middleware' => ['user']], function () {
         Route::delete('', 'detach')->name('admin.sales-leads.emails.detach');
     });
 
+    // Create Preventie sales from a Herniapoli sales lead
+    Route::post('sales-leads/{id}/create-preventie-sales', [SalesLeadController::class, 'createPreventieSales'])->name('admin.sales-leads.create-preventie-sales');
+
     // Temporary debug route
     Route::get('sales-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.sales-leads.debug');
 });

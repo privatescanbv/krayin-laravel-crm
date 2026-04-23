@@ -94,6 +94,19 @@
                             />
                         @endif
 
+                        @if ($salesLead->lead?->department?->isHernia())
+                            <form method="POST" action="{{ route('admin.sales-leads.create-preventie-sales', $salesLead->id) }}" class="inline">
+                                @csrf
+                                <button type="submit"
+                                    class="secondary-button flex items-center gap-1 border border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                    onclick="return confirm('Nieuwe Preventie Sales aanmaken vanuit deze Herniapoli sales?')"
+                                >
+                                    <span class="icon-plus text-base"></span>
+                                    <span>Nieuwe Preventie Sales aanmaken</span>
+                                </button>
+                            </form>
+                        @endif
+
                         {!! view_render_event('admin.sales.view.actions.after', ['sales' => $salesLead]) !!}
                     </div>
                 </div>

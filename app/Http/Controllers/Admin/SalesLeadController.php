@@ -5,20 +5,26 @@ namespace App\Http\Controllers\Admin;
 use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\ActivityStatus;
 use App\Enums\LostReason;
+use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
 use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Models\SalesLeadRelation;
 use App\Repositories\SalesLeadRepository;
 use App\Services\PipelineCookieService;
 use App\Services\StageTransitionAttributes;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
 use Prettus\Repository\Criteria\RequestCriteria;
+use RuntimeException;
+use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
@@ -527,6 +533,69 @@ class SalesLeadController extends Controller
                 ] : null,
             ],
         ]);
+    }
+
+    /**
+     * Create a new Preventie (Privatescan) sales from a Herniapoli sales lead.
+     * Creates a SalesLead linked to the same Lead and links them via SalesLeadRelation.
+     */
+    public function createPreventieSales(int $id): JsonResponse|RedirectResponse
+    {
+        $herniaSales = SalesLead::with(['lead.department', 'persons'])->find($id);
+
+        if (! $herniaSales) {
+            return redirect()->back()->with('error', 'Sales niet gevonden.');
+        }
+
+        if (! $herniaSales->lead?->department?->isHernia()) {
+            return redirect()->back()->with('error', 'Deze actie is alleen beschikbaar voor Herniapoli sales.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $sourceLead = $herniaSales->lead;
+
+            $preventieSales = $this->salesLeadRepository->createFromWonLead(
+                $sourceLead,
+                forceCreate: true,
+                attributeOverrides: [
+                    'pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id(),
+                    'contact_person_id' => $herniaSales->contact_person_id ?? $sourceLead->contact_person_id,
+                ]
+            );
+
+            if (! $preventieSales) {
+                throw new RuntimeException('Preventie SalesLead kon niet worden aangemaakt.');
+            }
+
+            // Sync persons from the Herniapoli sales (overrides the persons copied from lead)
+            $personIds = $herniaSales->persons->pluck('id')->toArray();
+            if (! empty($personIds)) {
+                $preventieSales->syncPersons($personIds);
+            }
+
+            SalesLeadRelation::firstOrCreate([
+                'source_saleslead_id' => $herniaSales->id,
+                'target_saleslead_id' => $preventieSales->id,
+                'relation_type'       => 'preventie_referral',
+            ]);
+
+            DB::commit();
+
+            session()->flash('success', 'Preventie sales aangemaakt en gekoppeld aan Herniapoli.');
+
+            return redirect()->route('admin.sales-leads.view', $preventieSales->id);
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error('Failed to create Preventie sales from Herniapoli', [
+                'hernia_sales_id' => $id,
+                'error'           => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'Er is een fout opgetreden bij het aanmaken van de Preventie sales.');
+        }
     }
 
     /**

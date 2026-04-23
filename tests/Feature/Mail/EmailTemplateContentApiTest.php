@@ -7,6 +7,7 @@ use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\OrderMailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
@@ -416,7 +417,7 @@ test('address variables resolve to particulier contactpersoon address', function
         'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
         'language' => EmailTemplateLanguage::NEDERLANDS->value,
         'subject'  => 'Test',
-        'content'  => '{{ address_line1 }} | {{ address_line2 }} | {{ address_state }} | {{ address_country }}',
+        'content'  => '{{ address_line1 }} | {{ address_line2 }} | {{ address_state }} | {{ address_country }} | {{ address_full }}',
     ]);
 
     $response = $this->postJson(route('admin.mail.template_content_body'), [
@@ -427,12 +428,22 @@ test('address variables resolve to particulier contactpersoon address', function
     $response->assertStatus(200);
     $content = $response->json('data.content');
 
+    $mailVars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+    expect($mailVars['address_full'])->toBe(
+        '<span style="display:block;">Dorpsstraat 10 A</span>'
+        .'<span style="display:block;">1234 AB Amsterdam</span>'
+        .'<span style="display:block;">Nederland</span>',
+    );
+
+    $decoded = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     expect($content)
         ->toContain('Dorpsstraat 10 A')
         ->toContain('1234 AB Amsterdam')
         ->toContain('Noord-Holland')
         ->toContain('Nederland')
         ->not->toContain('{{ address_line1 }}');
+
+    expect($decoded)->toMatch('/Dorpsstraat 10 A.*?1234 AB Amsterdam.*?Nederland/s');
 });
 
 test('address variables resolve to specific person address when person entity passed with order', function () {

@@ -183,6 +183,12 @@ class OrderMailService
         $line1 = trim(($address->street ?? '').' '.($address->house_number ?? '').$suffix);
         $postalFormatted = $this->formatPostalCodeForDisplay($address->postal_code ?? '');
         $line2 = trim($postalFormatted.' '.($address->city ?? ''));
+        $line3 = trim((string) ($address->country ?? ''));
+        $fullLines = array_values(array_filter([$line1, $line2, $line3], fn (string $s): bool => $s !== ''));
+        $addressFull = implode('', array_map(
+            static fn (string $s): string => '<span style="display:block;">'.e($s).'</span>',
+            $fullLines,
+        ));
 
         return [
             'address_street'              => $address->street ?? '',
@@ -194,7 +200,7 @@ class OrderMailService
             'address_country'             => $address->country ?? '',
             'address_line1'               => $line1,
             'address_line2'               => $line2,
-            'address_full'                => implode(', ', array_filter([$line1, $line2])),
+            'address_full'                => $addressFull,
         ];
     }
 

@@ -350,6 +350,48 @@ class SalesLead extends Model
     }
 
     /**
+     * SalesLeads that this sales lead refers to (e.g. Preventie referrals from Herniapoli).
+     */
+    public function outgoingRelations()
+    {
+        return $this->hasMany(SalesLeadRelation::class, 'source_saleslead_id');
+    }
+
+    /**
+     * SalesLeads that refer to this sales lead (reverse side of the relation).
+     */
+    public function incomingRelations()
+    {
+        return $this->hasMany(SalesLeadRelation::class, 'target_saleslead_id');
+    }
+
+    /**
+     * Preventie SalesLeads created from this Herniapoli sales lead.
+     */
+    public function linkedPreventieSales()
+    {
+        return $this->belongsToMany(
+            SalesLead::class,
+            'saleslead_relations',
+            'source_saleslead_id',
+            'target_saleslead_id'
+        )->wherePivot('relation_type', 'preventie_referral');
+    }
+
+    /**
+     * Herniapoli SalesLeads that created this Preventie sales lead.
+     */
+    public function linkedHerniaSales()
+    {
+        return $this->belongsToMany(
+            SalesLead::class,
+            'saleslead_relations',
+            'target_saleslead_id',
+            'source_saleslead_id'
+        )->wherePivot('relation_type', 'preventie_referral');
+    }
+
+    /**
      * Copy persons and contact person from a lead to this sales lead.
      */
     public function copyFromLead(Lead $lead): void

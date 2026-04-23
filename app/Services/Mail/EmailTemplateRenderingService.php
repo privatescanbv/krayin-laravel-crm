@@ -81,7 +81,7 @@ class EmailTemplateRenderingService
             'address_country'             => 'Land',
             'address_line1'               => 'Eerste adresregel: straat + huisnummer (+ toevoeging)',
             'address_line2'               => 'Tweede adresregel: postcode + plaats',
-            'address_full'                => 'Volledig adres op één regel',
+            'address_full'                => 'Volledig adres: straat + huisnr, postcode + plaats, land (elk een HTML-blokregel)',
         ],
     ];
 

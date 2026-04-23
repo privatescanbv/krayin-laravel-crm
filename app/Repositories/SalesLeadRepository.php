@@ -42,27 +42,32 @@ class SalesLeadRepository extends Repository
 
     /**
      * Create a SalesLead from a won Lead with appropriate workflow pipeline stage.
+     *
+     * @param  array<string, mixed>  $attributeOverrides  Merged over defaults (e.g. pipeline_stage_id).
+     * @param  bool  $forceCreate  Skip the duplicate SalesLead check (e.g. for Preventie sales from Herniapoli).
      */
-    public function createFromWonLead(Lead $lead): ?SalesLead
+    public function createFromWonLead(Lead $lead, bool $forceCreate = false, array $attributeOverrides = []): ?SalesLead
     {
         try {
-            // Check if there's already a SalesLead for this lead
-            $existingSalesLead = SalesLead::where('lead_id', $lead->id)->with('stage')->first();
+            if (! $forceCreate) {
+                // Check if there's already a SalesLead for this lead
+                $existingSalesLead = SalesLead::where('lead_id', $lead->id)->with('stage')->first();
 
-            if ($existingSalesLead) {
-                // Check if the existing SalesLead is in a non-won/lost stage
-                if ($this->existsSalesLeadInNotWonOrLoss($lead->id)) {
-                    Log::info('SalesLead already exists in a non-won/lost stage', [
-                        'lead_id' => $lead->id,
-                    ]);
+                if ($existingSalesLead) {
+                    // Check if the existing SalesLead is in a non-won/lost stage
+                    if ($this->existsSalesLeadInNotWonOrLoss($lead->id)) {
+                        Log::info('SalesLead already exists in a non-won/lost stage', [
+                            'lead_id' => $lead->id,
+                        ]);
 
-                    // Don't create a new SalesLead if one already exists in a non-won/lost stage
-                    return null;
+                        // Don't create a new SalesLead if one already exists in a non-won/lost stage
+                        return null;
+                    }
+                    // If an existing SalesLead is in won/lost, do not create an order here; creation is only for new SalesLeads
                 }
-                // If an existing SalesLead is in won/lost, do not create an order here; creation is only for new SalesLeads
             }
 
-            $salesLead = $this->createSalesLeadFromLead($lead, [], []);
+            $salesLead = $this->createSalesLeadFromLead($lead, $attributeOverrides, []);
 
             // Create initial order for this sales lead
             $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name, $lead->department);

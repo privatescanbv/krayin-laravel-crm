@@ -106,18 +106,6 @@ class Order extends Model
     }
 
     /**
-     * Get the "order verzonden" stage ID for the given department.
-     */
-    public static function orderSendByDepartmentStageId(?Department $department): int
-    {
-        if ($department->name === Departments::HERNIA->value) {
-            return PipelineStage::ORDER_BEVESTIGD_HERNIA->id();
-        }
-
-        return PipelineStage::ORDER_BEVESTIGD->id();
-    }
-
-    /**
      * Normalize empty datetime input to NULL (see ValueNormalizer::nullableDateTime()).
      */
     public function setFirstExaminationAtAttribute(mixed $value): void

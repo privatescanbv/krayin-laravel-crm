@@ -771,10 +771,6 @@ class OrderController extends SimpleEntityController
     {
         $order = $this->orderRepository->with('salesLead.lead.department')->findOrFail($orderId);
 
-        $order->update([
-            'pipeline_stage_id' => Order::orderSendByDepartmentStageId($order->salesLead?->lead?->department),
-        ]);
-
         // Dispatch event - listeners will handle PDF activity creation
         OrderMarkedAsSent::dispatch($order, auth()->id());
 

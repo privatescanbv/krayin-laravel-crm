@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contracts\Api\ApiHttpTrafficLogger;
+use App\Http\Middleware\CanInstall;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PatientMessage;
@@ -16,6 +18,7 @@ use App\Observers\PersonObserver;
 use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
 use App\Observers\UserObserver;
+use App\Services\Api\DefaultApiHttpTrafficLogger;
 use App\Services\OrderCheckService;
 use App\Services\Storage\DocumentStorage;
 use App\Services\Storage\LaravelDocumentStorage;
@@ -56,11 +59,13 @@ class AppServiceProvider extends ServiceProvider
         // Compatibility alias: the Webkul Installer package was removed; map the old class
         // name so existing test files that import it continue to resolve correctly.
         if (! class_exists(\Webkul\Installer\Http\Middleware\CanInstall::class, false)) {
-            class_alias(\App\Http\Middleware\CanInstall::class, \Webkul\Installer\Http\Middleware\CanInstall::class);
+            class_alias(CanInstall::class, \Webkul\Installer\Http\Middleware\CanInstall::class);
         }
 
         $this->app->singleton(OrderCheckService::class);
         $this->app->bind(DocumentStorage::class, LaravelDocumentStorage::class);
+
+        $this->app->singleton(ApiHttpTrafficLogger::class, DefaultApiHttpTrafficLogger::class);
     }
 
     /**

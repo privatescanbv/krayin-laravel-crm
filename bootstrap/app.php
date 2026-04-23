@@ -5,6 +5,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BouncerPermissionMiddleware;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureKeycloakPatientMatchesRoute;
+use App\Http\Middleware\LogApiHttpTraffic;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
@@ -36,17 +37,17 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('admin.session.create'));
 
         $middleware->replace(
-            \Illuminate\Http\Middleware\TrustProxies::class,
+            Illuminate\Http\Middleware\TrustProxies::class,
             TrustProxies::class,
         );
 
         $middleware->replace(
-            \Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
+            Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
             PreventRequestsDuringMaintenance::class,
         );
 
         $middleware->replace(
-            \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
+            Illuminate\Foundation\Http\Middleware\TrimStrings::class,
             TrimStrings::class,
         );
 
@@ -54,7 +55,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         $middleware->replaceInGroup(
             'web',
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            Illuminate\Cookie\Middleware\EncryptCookies::class,
             EncryptCookies::class,
         );
 
@@ -70,6 +71,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth'               => Authenticate::class,
             'guest'              => RedirectIfAuthenticated::class,
+            'log.api.http'       => LogApiHttpTraffic::class,
             'api.key'            => ApiKeyAuth::class,
             'patient.self'       => EnsureKeycloakPatientMatchesRoute::class,
             'bouncer.permission' => BouncerPermissionMiddleware::class,

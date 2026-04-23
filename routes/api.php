@@ -135,4 +135,4 @@ $registerAuthenticatedApiRoutes = function () {
 // All API routes are protected by ApiKeyAuth middleware, which supports:
 // - X-API-KEY header validation
 // - OR a valid Keycloak Bearer token in the Authorization header
-Route::middleware('api.key')->group($registerAuthenticatedApiRoutes);
+Route::middleware(['log.api.http', 'api.key'])->group($registerAuthenticatedApiRoutes);

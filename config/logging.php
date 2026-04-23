@@ -81,11 +81,11 @@ return [
 
         'stderr' => [
             'driver'  => 'monolog',
-            'handler' => Monolog\Handler\StreamHandler::class,
+            'handler' => StreamHandler::class,
             'with'    => [
                 'stream' => 'php://stderr',
             ],
-            'formatter'      => Monolog\Formatter\JsonFormatter::class,
+            'formatter'      => JsonFormatter::class,
             'formatter_with' => [
                 'include_stacktraces' => true,
             ],
@@ -114,6 +114,13 @@ return [
         'null' => [
             'driver'  => 'monolog',
             'handler' => NullHandler::class,
+        ],
+
+        'api_http' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/api-http.log'),
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'days'   => 14,
         ],
 
         'emergency' => [

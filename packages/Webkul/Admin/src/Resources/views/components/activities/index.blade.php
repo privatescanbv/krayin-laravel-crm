@@ -322,7 +322,7 @@
                 countActionNeeded() {
                     return this.activities.filter(activity =>
                         ! activity.is_done &&
-                        this.isPast(activity.schedule_from) &&
+                        this.isPastDay(activity.schedule_to || activity.schedule_from) &&
                         ['call', 'meeting', 'task'].includes(activity.type)
                     ).length;
                 },
@@ -342,7 +342,7 @@
                     // console.log(JSON.parse(JSON.stringify(this.activities)));
                     if (this.selectedType === 'action_needed') {
                          return this.activities
-                             .filter(activity => ! activity.is_done && this.isPast(activity.schedule_from))
+                             .filter(activity => ! activity.is_done && this.isPastDay(activity.schedule_to || activity.schedule_from))
                             .sort((a, b) => {
                                 const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
                                 const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
@@ -564,6 +564,13 @@
                 isPast(dateStr) {
                     if (!dateStr) return false;
                     return new Date(dateStr).getTime() < Date.now();
+                },
+
+                isPastDay(dateStr) {
+                    if (!dateStr) return false;
+                    const d = new Date(dateStr);
+                    const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+                    return endOfDay.getTime() < Date.now();
                 },
             },
         });

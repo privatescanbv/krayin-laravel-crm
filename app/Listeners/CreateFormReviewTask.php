@@ -21,8 +21,8 @@ class CreateFormReviewTask
             Log::info('Create activity to validate form, form has been filled in by user');
             $this->activityRepository->create([
                 'type'          => ActivityType::TASK,
-                'title'         => 'Formulier controleren',
-                'comment'       => "Patiënt heeft formulier ingevuld (ID: {$event->formId}).",
+                'title'         => "{$event->formType->label()} controleren",
+                'comment'       => "Patiënt heeft {$event->formType->label()} formulier ingevuld (ID: {$event->formId}).",
                 'person_id'     => $event->person->id,
                 'schedule_from' => now(),
                 'schedule_to'   => now()->addDays(5),

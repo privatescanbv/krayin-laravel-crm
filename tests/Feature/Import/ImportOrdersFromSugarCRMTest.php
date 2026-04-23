@@ -93,11 +93,21 @@ beforeEach(function () {
 
     Schema::connection('sugarcrm')->create('pcrm_salesorderrow_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
+        $table->decimal('purchase_other_c', 10, 2)->nullable();
+        $table->decimal('purchase_cardio_c', 10, 2)->nullable();
+        $table->decimal('purchase_clinic_c', 10, 2)->nullable();
+        $table->decimal('purchase_radio_c', 10, 2)->nullable();
+        $table->decimal('purchase_total_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_other_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_cardio_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_clinic_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_radio_c', 10, 2)->nullable();
         $table->decimal('inv_purchase_total_c', 10, 2)->nullable();
+        $table->string('ink_other_status_c')->nullable();
+        $table->string('ink_cardio_status_c')->nullable();
+        $table->string('ink_clinic_status_c')->nullable();
+        $table->string('ink_radio_status_c')->nullable();
+        $table->string('ink_total_status_c')->nullable();
         $table->text('afb_description_c')->nullable();
     });
 
@@ -207,11 +217,21 @@ function insertSugarRowCstm(string $rowId, array $overrides = []): void
 {
     DB::connection('sugarcrm')->table('pcrm_salesorderrow_cstm')->insert(array_merge([
         'id_c'                  => $rowId,
+        'purchase_other_c'      => null,
+        'purchase_cardio_c'     => null,
+        'purchase_clinic_c'     => null,
+        'purchase_radio_c'      => null,
+        'purchase_total_c'      => null,
         'inv_purchase_other_c'  => null,
         'inv_purchase_cardio_c' => null,
         'inv_purchase_clinic_c' => null,
         'inv_purchase_radio_c'  => null,
         'inv_purchase_total_c'  => null,
+        'ink_other_status_c'    => null,
+        'ink_cardio_status_c'   => null,
+        'ink_clinic_status_c'   => null,
+        'ink_radio_status_c'    => null,
+        'ink_total_status_c'    => null,
         'afb_description_c'     => null,
     ], $overrides));
 }
@@ -410,6 +430,10 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
     insertSugarOrder('order-inv-001');
     insertSugarRow('order-inv-001', 'row-inv-001');
     insertSugarRowCstm('row-inv-001', [
+        'purchase_other_c'      => 1.5,
+        'purchase_cardio_c'     => 2.25,
+        'purchase_clinic_c'     => 3,
+        'purchase_radio_c'      => 4.25,
         'inv_purchase_other_c'  => 1.5,
         'inv_purchase_cardio_c' => 2.25,
         'inv_purchase_clinic_c' => 3,
@@ -441,6 +465,98 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
     expect((float) $resolved->purchase_price)->toBe(11.0)
         ->and((float) $resolved->purchase_price_misc)->toBe(1.5)
         ->and((float) $resolved->purchase_price_cardiology)->toBe(2.25);
+});
+
+test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is geen', function () {
+    Person::factory()->create(['external_id' => 'contact-ink-geen']);
+
+    insertSugarOrder('order-ink-geen-001');
+    insertSugarRow('order-ink-geen-001', 'row-ink-geen-001');
+    insertSugarRowCstm('row-ink-geen-001', [
+        'purchase_radio_c'     => 169,
+        'inv_purchase_radio_c' => 50,
+        'ink_radio_status_c'   => 'geen',
+        'inv_purchase_total_c' => 50,
+    ]);
+    linkRowToContact('row-ink-geen-001', 'contact-ink-geen');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-ink-geen-001')->first()->orderItems->first();
+
+    expect((float) $item->purchasePrice->purchase_price_radiology)->toBe(169.0)
+        ->and((float) $item->invoicePurchasePrice->purchase_price_radiology)->toBe(0.0)
+        ->and((float) $item->invoicePurchasePrice->purchase_price)->toBe(0.0)
+        ->and((float) $item->invoicePurchasePrice->purchase_price_misc)->toBe(0.0);
+});
+
+test('invoice import treats SuiteCRM export row like Result_6.csv as not paid (teontvangen + geen buckets)', function () {
+    Person::factory()->create(['external_id' => 'contact-result6-mri']);
+
+    insertSugarOrder('order-result6-mri');
+    insertSugarRow('order-result6-mri', 'row-result6-mri');
+    insertSugarRowCstm('row-result6-mri', [
+        'purchase_radio_c'     => 169,
+        'inv_purchase_radio_c' => 169,
+        'inv_purchase_total_c' => 169,
+        'ink_radio_status_c'   => 'geen',
+        'ink_total_status_c'   => 'teontvangen',
+    ]);
+    linkRowToContact('row-result6-mri', 'contact-result6-mri');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-result6-mri')->first()->orderItems->first();
+    $inv = $item->invoicePurchasePrice;
+
+    expect((float) $inv->purchase_price_radiology)->toBe(0.0)
+        ->and((float) $inv->purchase_price)->toBe(0.0)
+        ->and((float) $inv->purchase_price_misc)->toBe(0.0);
+});
+
+test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is open', function () {
+    Person::factory()->create(['external_id' => 'contact-ink-open']);
+
+    insertSugarOrder('order-ink-open-001');
+    insertSugarRow('order-ink-open-001', 'row-ink-open-001');
+    insertSugarRowCstm('row-ink-open-001', [
+        'purchase_radio_c'     => 169,
+        'inv_purchase_radio_c' => 50,
+        'ink_radio_status_c'   => 'open',
+        'inv_purchase_total_c' => 50,
+    ]);
+    linkRowToContact('row-ink-open-001', 'contact-ink-open');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-ink-open-001')->first()->orderItems->first();
+
+    expect((float) $item->purchasePrice->purchase_price_radiology)->toBe(169.0)
+        ->and((float) $item->invoicePurchasePrice->purchase_price_radiology)->toBe(0.0)
+        ->and((float) $item->invoicePurchasePrice->purchase_price)->toBe(0.0)
+        ->and((float) $item->invoicePurchasePrice->purchase_price_misc)->toBe(0.0);
+});
+
+test('invoice import ignores inv_purchase_total_c when ink_total_status_c is geen', function () {
+    Person::factory()->create(['external_id' => 'contact-ink-total-geen']);
+
+    insertSugarOrder('order-ink-total-geen-001');
+    insertSugarRow('order-ink-total-geen-001', 'row-ink-total-geen-001');
+    insertSugarRowCstm('row-ink-total-geen-001', [
+        'inv_purchase_radio_c' => 20,
+        'inv_purchase_total_c' => 100,
+        'ink_total_status_c'   => 'geen',
+    ]);
+    linkRowToContact('row-ink-total-geen-001', 'contact-ink-total-geen');
+
+    runOrderImport();
+
+    $item = Order::where('external_id', 'order-ink-total-geen-001')->first()->orderItems->first();
+    $inv = $item->invoicePurchasePrice;
+
+    expect((float) $inv->purchase_price_radiology)->toBe(20.0)
+        ->and((float) $inv->purchase_price)->toBe(20.0)
+        ->and((float) $inv->purchase_price_misc)->toBe(0.0);
 });
 
 test('creates zero PurchasePrice rows when Sugar inv fields are empty so resolved price ignores catalog', function () {
@@ -478,6 +594,7 @@ test('imports inv_purchase_total_c only into MAIN and resolved purchase total', 
         'inv_purchase_cardio_c' => null,
         'inv_purchase_clinic_c' => null,
         'inv_purchase_radio_c'  => null,
+        'purchase_total_c'      => 99.5,
         'inv_purchase_total_c'  => 99.5,
     ]);
     linkRowToContact('row-totalonly-001', 'contact-totalonly');
@@ -512,6 +629,10 @@ test('Sugar purchase prices override partner product in resolvedPurchasePrice', 
     insertSugarOrder('order-sugarpp-001');
     insertSugarRow('order-sugarpp-001', 'row-sugarpp-001');
     insertSugarRowCstm('row-sugarpp-001', [
+        'purchase_other_c'      => 10,
+        'purchase_cardio_c'     => 10,
+        'purchase_clinic_c'     => 10,
+        'purchase_radio_c'      => 10,
         'inv_purchase_other_c'  => 10,
         'inv_purchase_cardio_c' => 10,
         'inv_purchase_clinic_c' => 10,

@@ -20,6 +20,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Product\Models\Product;
@@ -440,20 +441,21 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             'person_id'       => $person?->id,
                             'product_id'      => $product->id,
                             'name'            => $row->name ?? null,
-                            'afb_description' => ! empty($row->afb_description_c) ? trim($row->afb_description_c) : null,
+                            'afb_description' => ! empty(data_get($row, 'afb_description_c')) ? trim((string) data_get($row, 'afb_description_c')) : null,
                             'total_price'     => $row->sales_price ?? 0,
                             'quantity'        => 1,
                             'status'          => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? ''),
                         ]);
 
-                        $purchasePayload = $this->orderItemPurchasePayloadFromSugarRow($row);
+                        $invoicePurchasePayload = $this->orderItemInvoicePurchasePayloadFromSugarRow($row);
+                        $mainPurchasePayload = $this->orderItemMainPurchasePayloadFromSugarRow($row);
                         $orderItem->invoicePurchasePrice()->updateOrCreate(
                             ['type' => PurchasePriceType::INVOICE],
-                            array_merge(['type' => PurchasePriceType::INVOICE], $purchasePayload)
+                            array_merge(['type' => PurchasePriceType::INVOICE], $invoicePurchasePayload)
                         );
                         $orderItem->purchasePrice()->updateOrCreate(
                             ['type' => PurchasePriceType::MAIN],
-                            array_merge(['type' => PurchasePriceType::MAIN], $purchasePayload)
+                            array_merge(['type' => PurchasePriceType::MAIN], $mainPurchasePayload)
                         );
 
                         $itemsCreated++;
@@ -525,7 +527,19 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return collect();
         }
 
-        $rows = DB::connection($connection)
+        $baseSelect = [
+            'rel.pcrm_salesb9a7esorder_ida as order_id',
+            'sor.id',
+            'sor.name',
+            'sor.sales_price',
+            'sor.sales_stage',
+            'sor.resource_type',
+            'sor.producttemplate_id_c',
+            'pt.name as product_template_name',
+            'rc.pcrm_sales4bd9ontacts_ida as contact_id',
+        ];
+
+        $sql = DB::connection($connection)
             ->table('pcrm_salesoalesorderrow_c as rel')
             ->join('pcrm_salesorderrow as sor', 'sor.id', '=', 'rel.pcrm_sales509drderrow_idb')
             ->leftJoin('pcrm_salesorderrow_cstm as row_cstm', 'row_cstm.id_c', '=', 'sor.id')
@@ -537,28 +551,83 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $join->on('pt.id', '=', 'sor.producttemplate_id_c')
                     ->where('pt.deleted', '=', 0);
             })
-            ->select([
-                'rel.pcrm_salesb9a7esorder_ida as order_id',
-                'sor.id',
-                'sor.name',
-                'sor.sales_price',
-                'sor.sales_stage',
-                'sor.resource_type',
-                'sor.producttemplate_id_c',
-                'pt.name as product_template_name',
-                'rc.pcrm_sales4bd9ontacts_ida as contact_id',
-                'row_cstm.inv_purchase_other_c as inv_purchase_other_c',
-                'row_cstm.inv_purchase_cardio_c as inv_purchase_cardio_c',
-                'row_cstm.inv_purchase_clinic_c as inv_purchase_clinic_c',
-                'row_cstm.inv_purchase_radio_c as inv_purchase_radio_c',
-                'row_cstm.inv_purchase_total_c as inv_purchase_total_c',
-                'row_cstm.afb_description_c as afb_description_c',
-            ])
+            ->select(array_merge($baseSelect, $this->sugarOrderRowCstmSelectFragments($connection)))
             ->where('sor.deleted', 0)
-            ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds)
-            ->get();
+            ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds);
+
+        $this->infoVV($sql->toRawSql());
+        $rows = $sql->get();
 
         return $rows->groupBy('order_id');
+    }
+
+    /**
+     * Custom fields on pcrm_salesorderrow_cstm differ per Sugar instance; only select columns that exist.
+     *
+     * @return list<string>
+     */
+    private function sugarOrderRowCstmSelectFragments(string $connection): array
+    {
+        $byLowerName = $this->sugarOrderRowCstmColumnByLowerName($connection);
+        $candidates = [
+            'purchase_other_c',
+            'purchase_cardio_c',
+            'purchase_clinic_c',
+            'purchase_radio_c',
+            'purchase_total_c',
+            'inv_purchase_other_c',
+            'inv_purchase_cardio_c',
+            'inv_purchase_clinic_c',
+            'inv_purchase_radio_c',
+            'inv_purchase_total_c',
+            'ink_other_status_c',
+            'ink_cardio_status_c',
+            'ink_clinic_status_c',
+            'ink_radio_status_c',
+            'ink_total_status_c',
+            'afb_description_c',
+        ];
+
+        $fragments = [];
+        foreach ($candidates as $column) {
+            $dbColumn = $byLowerName[strtolower($column)] ?? null;
+            if ($dbColumn !== null) {
+                $fragments[] = "row_cstm.{$dbColumn} as {$column}";
+            }
+        }
+
+        return $fragments;
+    }
+
+    /**
+     * Lowercase name => actual column name on the database (for correct quoting / casing).
+     *
+     * @return array<string, string>
+     */
+    private function sugarOrderRowCstmColumnByLowerName(string $connection): array
+    {
+        static $cache = [];
+
+        if (array_key_exists($connection, $cache)) {
+            return $cache[$connection];
+        }
+
+        try {
+            $names = Schema::connection($connection)->getColumnListing('pcrm_salesorderrow_cstm');
+            $map = [];
+            foreach ($names as $name) {
+                $map[strtolower($name)] = $name;
+            }
+            $cache[$connection] = $map;
+        } catch (Exception $e) {
+            Log::warning('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
+                'connection' => $connection,
+                'error'      => $e->getMessage(),
+            ]);
+            $cache[$connection] = [];
+        }
+
+        return $cache[$connection];
     }
 
     /**
@@ -639,17 +708,107 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Build order-item purchase price attributes from SuiteCRM row custom fields (authoritative inkoop).
+     * MAIN purchase row: expected amounts from SuiteCRM (purchase_*), not invoice-allocated inv_*.
      *
-     * When Sugar sends no inv_* values, returns explicit zeros so {@see OrderItem::resolvedPurchasePrice()}
+     * @return array<string, float>
+     */
+    private function orderItemMainPurchasePayloadFromSugarRow(object $row): array
+    {
+        return $this->buildPurchasePayloadFromSugarAmounts(
+            $this->sugarMoneyAmount(data_get($row, 'purchase_other_c')),
+            $this->sugarMoneyAmount(data_get($row, 'purchase_cardio_c')),
+            $this->sugarMoneyAmount(data_get($row, 'purchase_clinic_c')),
+            $this->sugarMoneyAmount(data_get($row, 'purchase_radio_c')),
+            $this->sugarMoneyAmount(data_get($row, 'purchase_total_c')),
+        );
+    }
+
+    /**
+     * INVOICE purchase row: amounts from invoice matching (inv_purchase_*).
+     * A component is ignored when the matching ink_*_status_c blocks invoice amounts
+     * (e.g. geen, open, teontvangen — SuiteCRM / invoice-app export semantics).
+     *
+     * @return array<string, float>
+     */
+    private function orderItemInvoicePurchasePayloadFromSugarRow(object $row): array
+    {
+        return $this->buildPurchasePayloadFromSugarAmounts(
+            $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_other_c'), data_get($row, 'ink_other_status_c')),
+            $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_cardio_c'), data_get($row, 'ink_cardio_status_c')),
+            $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_clinic_c'), data_get($row, 'ink_clinic_status_c')),
+            $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_radio_c'), data_get($row, 'ink_radio_status_c')),
+            $this->sugarInvoiceAggregatedTotalAmount($row),
+        );
+    }
+
+    /**
+     * inv_purchase_total_c must not drive afletteren when no invoice bucket is active.
+     * Prefer ink_total_status_c (same semantics as invoice app); otherwise if every non-empty
+     * per-bucket ink_*_status_c blocks invoice amounts, ignore the total so remainder does not land in misc.
+     */
+    private function sugarInvoiceAggregatedTotalAmount(object $row): ?float
+    {
+        $rawTotal = $this->sugarMoneyAmount(data_get($row, 'inv_purchase_total_c'));
+        if ($rawTotal === null) {
+            return null;
+        }
+
+        if (property_exists($row, 'ink_total_status_c')) {
+            $totalStatus = $row->ink_total_status_c;
+            if ($totalStatus !== null && $totalStatus !== '') {
+                return $this->sugarInkStatusAllowsInvoiceAmount($totalStatus) ? $rawTotal : null;
+            }
+        }
+
+        $statusFields = ['ink_other_status_c', 'ink_cardio_status_c', 'ink_clinic_status_c', 'ink_radio_status_c'];
+        $nonEmptyStatuses = [];
+        foreach ($statusFields as $field) {
+            if (! property_exists($row, $field)) {
+                continue;
+            }
+            $value = $row->{$field};
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $nonEmptyStatuses[] = $value;
+        }
+
+        if ($nonEmptyStatuses !== [] && $this->sugarInkEveryNonEmptyStatusBlocksInvoiceAmount($nonEmptyStatuses)) {
+            return null;
+        }
+
+        return $rawTotal;
+    }
+
+    /**
+     * @param  list<mixed>  $statusValues
+     */
+    private function sugarInkEveryNonEmptyStatusBlocksInvoiceAmount(array $statusValues): bool
+    {
+        foreach ($statusValues as $value) {
+            if ($this->sugarInkStatusAllowsInvoiceAmount($value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * When Sugar sends no values, returns explicit zeros so {@see OrderItem::resolvedPurchasePrice()}
      * uses the line only and does not fall back to catalog product / partner product prices.
      *
      * Aligns component sum to Sugar total (remainder in misc).
      *
      * @return array<string, float>
      */
-    private function orderItemPurchasePayloadFromSugarRow(object $row): array
-    {
+    private function buildPurchasePayloadFromSugarAmounts(
+        ?float $miscRaw,
+        ?float $cardio,
+        ?float $clinic,
+        ?float $radio,
+        ?float $totalFromSugar,
+    ): array {
         $empty = [
             'purchase_price_misc'       => 0.0,
             'purchase_price_doctor'     => 0.0,
@@ -658,12 +817,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'purchase_price_radiology'  => 0.0,
             'purchase_price'            => 0.0,
         ];
-
-        $miscRaw = $this->sugarMoneyAmount($row->inv_purchase_other_c ?? null);
-        $cardio = $this->sugarMoneyAmount($row->inv_purchase_cardio_c ?? null);
-        $clinic = $this->sugarMoneyAmount($row->inv_purchase_clinic_c ?? null);
-        $radio = $this->sugarMoneyAmount($row->inv_purchase_radio_c ?? null);
-        $totalFromSugar = $this->sugarMoneyAmount($row->inv_purchase_total_c ?? null);
 
         $hasComponent = $miscRaw !== null || $cardio !== null || $clinic !== null || $radio !== null;
         $hasTotal = $totalFromSugar !== null;
@@ -686,6 +839,26 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'purchase_price_radiology'  => $radio ?? 0.0,
             'purchase_price'            => $total,
         ];
+    }
+
+    private function sugarInvoiceComponentAmount(mixed $amount, mixed $status): ?float
+    {
+        if (! $this->sugarInkStatusAllowsInvoiceAmount($status)) {
+            return null;
+        }
+
+        return $this->sugarMoneyAmount($amount);
+    }
+
+    private function sugarInkStatusAllowsInvoiceAmount(mixed $status): bool
+    {
+        if ($status === null || $status === '') {
+            return true;
+        }
+
+        $normalized = strtolower(str_replace(' ', '', trim((string) $status)));
+
+        return ! in_array($normalized, ['geen', 'open', 'teontvangen'], true);
     }
 
     private function sugarMoneyAmount(mixed $value): ?float

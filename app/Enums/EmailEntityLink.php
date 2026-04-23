@@ -15,6 +15,14 @@ enum EmailEntityLink: string
     case CLINIC = 'clinic';
     case ACTIVITY = 'activity';
 
+    /**
+     * @return list<string>
+     */
+    public static function foreignKeys(): array
+    {
+        return array_map(fn (self $link) => $link->getForeignKey(), self::cases());
+    }
+
     public function getForeignKey(): string
     {
         return match ($this) {
@@ -25,13 +33,5 @@ enum EmailEntityLink: string
             self::CLINIC   => 'clinic_id',
             self::ACTIVITY => 'activity_id',
         };
-    }
-
-    /**
-     * @return list<string>
-     */
-    public static function foreignKeys(): array
-    {
-        return array_map(fn (self $link) => $link->getForeignKey(), self::cases());
     }
 }

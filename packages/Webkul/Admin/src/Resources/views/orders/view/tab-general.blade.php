@@ -60,6 +60,14 @@
                         <span class="icon-edit text-base"></span><span>Bewerk order</span>
                     </a>
                 @endif
+
+                @if (bouncer()->hasPermission('orders.delete'))
+                    <v-order-delete
+                        delete-url="{{ route('admin.orders.delete', ['id' => $order->id]) }}"
+                        redirect-url="{{ route('admin.orders.index') }}"
+                        :order-name='@json($order->title ?? $order->name ?? '')'
+                    ></v-order-delete>
+                @endif
             </div>
         </div>
     </div>

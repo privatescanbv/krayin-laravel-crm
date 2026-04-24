@@ -8,6 +8,7 @@ use App\Models\PersonPreference;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use RuntimeException;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Mails\Email as EmailMailable;

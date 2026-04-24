@@ -15,6 +15,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\View;
 use ReflectionClass;
 use ReflectionException;
+use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
@@ -86,7 +87,6 @@ class EmailTemplateRenderingService
     ];
 
     public function __construct(
-        private readonly EmailRenderingService $emailRenderingService,
         private readonly LeadRepository $leadRepository,
         private readonly PersonRepository $personRepository,
         private readonly SalesLeadRepository $salesLeadRepository,
@@ -128,7 +128,7 @@ class EmailTemplateRenderingService
 
         return [
             'subject' => $subject,
-            'html'    => $this->emailRenderingService->renderInlineCss($htmlContent),
+            'html'    => $this->renderInlineCss($htmlContent),
         ];
     }
 
@@ -349,7 +349,7 @@ class EmailTemplateRenderingService
             'template' => $templateWithInterpolatedContent,
         ])->render();
 
-        return $this->emailRenderingService->renderInlineCss($htmlContent);
+        return $this->renderInlineCss($htmlContent);
     }
 
     /**
@@ -358,6 +358,22 @@ class EmailTemplateRenderingService
     private function orderMailService(): OrderMailService
     {
         return $this->application->make(OrderMailService::class);
+    }
+
+    /**
+     * Convert a plain HTML string to one with all CSS inlined.
+     * Necessary because many email clients strip <style> tags.
+     */
+    private function renderInlineCss(string $html): string
+    {
+        $cssPath = resource_path('css/email-templates.css');
+        $css = file_exists($cssPath) ? file_get_contents($cssPath) : '';
+
+        if (! empty($css)) {
+            $html = (new CssToInlineStyles)->convert($html, $css);
+        }
+
+        return $html;
     }
 
     /**

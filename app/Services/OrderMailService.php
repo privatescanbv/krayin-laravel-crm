@@ -7,7 +7,6 @@ use App\Helpers\ValueNormalizer;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
-use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
@@ -15,10 +14,6 @@ use Webkul\EmailTemplate\Models\EmailTemplate;
 
 class OrderMailService
 {
-    public function __construct(
-        private readonly CrmMailService $crmMailService
-    ) {}
-
     public function buildMailData(Order $order, ?Person $person = null): array
     {
         $template = EmailTemplate::byCodeEnum(EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL)->firstOrFail();

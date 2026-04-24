@@ -9,6 +9,22 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Mime\Email as MimeEmail;
 
+/**
+ * Mailable that delivers a persisted CRM Email record to its recipients.
+ *
+ * Wraps an {@see \Webkul\Email\Models\Email} Eloquent model and builds the
+ * outgoing message from its stored fields:
+ *  - Recipients, CC, BCC from `reply_to`, `cc`, and `bcc` columns.
+ *  - HTML body from the `reply` column (passed through {@see HtmlImageInliner}).
+ *  - Subject constructed from `subject`, prefixed with "Re: " for thread replies.
+ *  - RFC 2822 threading headers (`Message-ID`, `In-Reply-To`, `References`)
+ *    derived from `message_id` and the parent email's `reference_ids`.
+ *  - Storage attachments attached via `attachFromStorage`.
+ *
+ * The From address is always the configured `mail.from.address`; the From name
+ * is set to the currently authenticated CRM user's name so replies are
+ * personalised without requiring per-user SendAs permissions.
+ */
 class Email extends Mailable
 {
     use Queueable, SerializesModels;

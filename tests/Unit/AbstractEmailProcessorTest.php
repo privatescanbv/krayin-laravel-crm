@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\EmailLog;
 use App\Services\Mail\AbstractEmailProcessor;
 use App\Services\Mail\GraphMailService;
+use App\Services\Mail\MicrosoftGraphTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
 use Tests\TestCase;
@@ -39,7 +40,8 @@ class AbstractEmailProcessorTest extends TestCase
         // Use GraphMailService as a concrete implementation for testing
         $this->processor = new GraphMailService(
             $this->emailRepository,
-            $this->attachmentRepository
+            $this->attachmentRepository,
+            new MicrosoftGraphTokenService,
         );
     }
 

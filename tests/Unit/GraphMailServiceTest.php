@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\EmailLog;
 use App\Services\Mail\AbstractEmailProcessor;
 use App\Services\Mail\GraphMailService;
+use App\Services\Mail\MicrosoftGraphTokenService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,24 +26,26 @@ class GraphMailServiceTest extends TestCase
 
     protected AttachmentRepository $attachmentRepository;
 
+    protected MicrosoftGraphTokenService $tokenService;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Set required Graph Mail configuration for this test
-        // (TestCase sets these to null, but GraphMailService needs them)
         config(['mail.graph.client_id' => 'test-client-id']);
         config(['mail.graph.client_secret' => 'test-client-secret']);
         config(['mail.graph.tenant_id' => 'test-tenant-id']);
         config(['mail.graph.mailbox' => 'test@example.com']);
         config(['mail.graph.sender_domain' => 'example.com']);
 
-        $this->emailRepository = $this->createMock(EmailRepository::class);
+        $this->emailRepository    = $this->createMock(EmailRepository::class);
         $this->attachmentRepository = $this->createMock(AttachmentRepository::class);
+        $this->tokenService       = new MicrosoftGraphTokenService;
 
         $this->service = new GraphMailService(
             $this->emailRepository,
-            $this->attachmentRepository
+            $this->attachmentRepository,
+            $this->tokenService,
         );
     }
 
@@ -66,11 +69,7 @@ class GraphMailServiceTest extends TestCase
             ], 200),
         ]);
 
-        $reflection = new ReflectionClass($this->service);
-        $method = $reflection->getMethod('getAccessToken');
-        $method->setAccessible(true);
-
-        $token = $method->invoke($this->service);
+        $token = $this->tokenService->getAccessToken();
 
         $this->assertEquals('test-token', $token);
     }
@@ -84,14 +83,10 @@ class GraphMailServiceTest extends TestCase
             ], 401),
         ]);
 
-        $reflection = new ReflectionClass($this->service);
-        $method = $reflection->getMethod('getAccessToken');
-        $method->setAccessible(true);
-
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Failed to get access token');
 
-        $method->invoke($this->service);
+        $this->tokenService->getAccessToken();
     }
 
     public function test_fetch_messages_success()

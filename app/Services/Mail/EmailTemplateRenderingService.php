@@ -15,11 +15,28 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\View;
 use ReflectionClass;
 use ReflectionException;
+use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Repositories\LeadRepository;
 
+/**
+ * Resolves entity variables and renders DB-backed EmailTemplates to final HTML.
+ *
+ * Responsibilities:
+ *  - Accept an entity map (lead, person, sales_lead, order — as models or IDs) and load each
+ *    entity through the appropriate repository.
+ *  - Interpolate Twig-style {{ variable }} and {% variable %} placeholders in template subject
+ *    and content, with support for nested dot-notation access (e.g. {{ lead.name }}).
+ *  - Wrap interpolated content in the standard mail layout view and apply CSS inlining so the
+ *    HTML is safe for email clients that strip <style> tags.
+ *
+ * Does NOT send mail — that is the responsibility of {@see CrmMailService}.
+ *
+ * The {@see SUPPORTED_VARIABLES} constant is the single source of truth for which placeholders
+ * are available in templates; it is also referenced in the developer documentation.
+ */
 class EmailTemplateRenderingService
 {
     /**
@@ -86,7 +103,6 @@ class EmailTemplateRenderingService
     ];
 
     public function __construct(
-        private readonly EmailRenderingService $emailRenderingService,
         private readonly LeadRepository $leadRepository,
         private readonly PersonRepository $personRepository,
         private readonly SalesLeadRepository $salesLeadRepository,
@@ -128,7 +144,7 @@ class EmailTemplateRenderingService
 
         return [
             'subject' => $subject,
-            'html'    => $this->emailRenderingService->rendInlineCss($htmlContent),
+            'html'    => $this->renderInlineCss($htmlContent),
         ];
     }
 
@@ -349,7 +365,7 @@ class EmailTemplateRenderingService
             'template' => $templateWithInterpolatedContent,
         ])->render();
 
-        return $this->emailRenderingService->rendInlineCss($htmlContent);
+        return $this->renderInlineCss($htmlContent);
     }
 
     /**
@@ -358,6 +374,22 @@ class EmailTemplateRenderingService
     private function orderMailService(): OrderMailService
     {
         return $this->application->make(OrderMailService::class);
+    }
+
+    /**
+     * Convert a plain HTML string to one with all CSS inlined.
+     * Necessary because many email clients strip <style> tags.
+     */
+    private function renderInlineCss(string $html): string
+    {
+        $cssPath = resource_path('css/email-templates.css');
+        $css = file_exists($cssPath) ? file_get_contents($cssPath) : '';
+
+        if (! empty($css)) {
+            $html = (new CssToInlineStyles)->convert($html, $css);
+        }
+
+        return $html;
     }
 
     /**

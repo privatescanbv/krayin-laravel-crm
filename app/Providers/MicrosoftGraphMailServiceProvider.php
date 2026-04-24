@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Mail\MicrosoftGraphMailTransport;
+use App\Services\Mail\MicrosoftGraphTokenService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,7 +23,7 @@ class MicrosoftGraphMailServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Mail::extend('microsoft-graph', function (array $config = []) {
-            return new MicrosoftGraphMailTransport;
+            return new MicrosoftGraphMailTransport(app(MicrosoftGraphTokenService::class));
         });
     }
 }

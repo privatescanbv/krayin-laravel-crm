@@ -8,7 +8,6 @@ use Webklex\IMAP\Facades\Client;
 use Webklex\PHPIMAP\Message;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\Models\Email;
-use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -274,19 +273,6 @@ class ImapEmailProcessor extends AbstractEmailProcessor
 
             return false;
         }
-    }
-
-    /**
-     * Get folder ID by name
-     *
-     * @param  string  $folderName
-     * @return int|null
-     */
-    protected function getFolderId($folderName)
-    {
-        $folder = Folder::where('name', strtolower($folderName))->first();
-
-        return $folder ? $folder->id : null;
     }
 
     /**

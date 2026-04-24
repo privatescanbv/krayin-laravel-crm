@@ -12,7 +12,7 @@ class EmailRenderingService
      * @param  string  $html  body
      * @return string The rendered HTML with inline styles
      */
-    public function rendInlineCss(string $html): string
+    public function renderInlineCss(string $html): string
     {
         // Read the CSS file
         $cssPath = resource_path('css/email-templates.css');

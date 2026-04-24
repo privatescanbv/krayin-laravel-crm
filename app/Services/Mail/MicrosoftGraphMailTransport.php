@@ -14,15 +14,13 @@ use Symfony\Component\Mime\RawMessage;
 
 class MicrosoftGraphMailTransport implements TransportInterface
 {
-    protected ?string $accessToken = null;
-
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';
 
     protected string $mailbox;
 
     private bool $enableLog = false;
 
-    public function __construct()
+    public function __construct(private readonly MicrosoftGraphTokenService $tokenService)
     {
         $this->mailbox = config('mail.graph.mailbox');
     }
@@ -151,7 +149,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
             }
 
             // Send via Graph API
-            $accessToken = $this->getAccessToken();
+            $accessToken = $this->tokenService->getAccessToken();
             $url = "{$this->baseUrl}/users/{$this->mailbox}/sendMail";
 
             logger()->info('Sending email via Microsoft Graph', [
@@ -192,48 +190,6 @@ class MicrosoftGraphMailTransport implements TransportInterface
             Log::error('Microsoft Graph mail transport error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-            ]);
-
-            throw $e;
-        }
-    }
-
-    /**
-     * Get access token using client credentials flow
-     */
-    protected function getAccessToken(): string
-    {
-        if ($this->accessToken) {
-            return $this->accessToken;
-        }
-
-        $tenantId = config('mail.graph.tenant_id');
-        $clientId = config('mail.graph.client_id');
-        $clientSecret = config('mail.graph.client_secret');
-
-        if (! $tenantId || ! $clientId || ! $clientSecret) {
-            throw new Exception('Microsoft Graph credentials not configured');
-        }
-
-        try {
-            $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
-                'client_id'     => $clientId,
-                'client_secret' => $clientSecret,
-                'scope'         => 'https://graph.microsoft.com/.default',
-                'grant_type'    => 'client_credentials',
-            ]);
-
-            if (! $response->successful()) {
-                throw new Exception('Failed to get access token: '.$response->body());
-            }
-
-            $data = $response->json();
-            $this->accessToken = $data['access_token'];
-
-            return $this->accessToken;
-        } catch (Exception $e) {
-            Log::error('Failed to get Microsoft Graph access token', [
-                'error' => $e->getMessage(),
             ]);
 
             throw $e;

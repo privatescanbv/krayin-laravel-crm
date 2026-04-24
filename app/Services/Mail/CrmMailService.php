@@ -8,7 +8,6 @@ use App\Models\PersonPreference;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use RuntimeException;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Mails\Email as EmailMailable;
@@ -34,17 +33,15 @@ class CrmMailService
     ) {}
 
     /**
-     * Render a DB email template (code or name).
+     * Render a DB email template by code.
      *
      * @return array{subject: string, html: string, template: EmailTemplate}
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException when template not found
      */
     public function renderTemplate(EmailTemplateCode $templateIdentifier, array $variables = []): array
     {
         $template = EmailTemplate::byCodeEnum($templateIdentifier)->firstOrFail();
-
-        if (! $template) {
-            throw new RuntimeException("Email template '{$templateIdentifier->value}' not found.");
-        }
 
         $rendered = $this->templateRendering->render($template, $variables);
 

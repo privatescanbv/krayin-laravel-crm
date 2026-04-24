@@ -128,7 +128,7 @@ class EmailTemplateRenderingService
 
         return [
             'subject' => $subject,
-            'html'    => $this->emailRenderingService->rendInlineCss($htmlContent),
+            'html'    => $this->emailRenderingService->renderInlineCss($htmlContent),
         ];
     }
 
@@ -349,7 +349,7 @@ class EmailTemplateRenderingService
             'template' => $templateWithInterpolatedContent,
         ])->render();
 
-        return $this->emailRenderingService->rendInlineCss($htmlContent);
+        return $this->emailRenderingService->renderInlineCss($htmlContent);
     }
 
     /**

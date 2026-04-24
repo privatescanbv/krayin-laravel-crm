@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Mail\GraphMailService;
+use App\Services\Mail\MicrosoftGraphTokenService;
 use Exception;
 use Illuminate\Console\Command;
 use Webkul\Email\Repositories\AttachmentRepository;
@@ -31,7 +32,8 @@ class SyncGraphEmails extends Command
      */
     public function __construct(
         protected EmailRepository $emailRepository,
-        protected AttachmentRepository $attachmentRepository
+        protected AttachmentRepository $attachmentRepository,
+        protected MicrosoftGraphTokenService $tokenService,
     ) {
         parent::__construct();
     }
@@ -46,7 +48,7 @@ class SyncGraphEmails extends Command
         $this->info('Starting Microsoft Graph email sync...');
 
         try {
-            $graphService = new GraphMailService($this->emailRepository, $this->attachmentRepository);
+            $graphService = new GraphMailService($this->emailRepository, $this->attachmentRepository, $this->tokenService);
             $graphService->processMessagesFromAllFolders();
 
             $this->info('Microsoft Graph email sync completed successfully.');

@@ -8,61 +8,29 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\Models\Email;
-use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
 class GraphMailService extends AbstractEmailProcessor
 {
-    protected string $accessToken;
-
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';
 
     protected string $mailbox;
 
     public function __construct(
         EmailRepository $emailRepository,
-        AttachmentRepository $attachmentRepository
+        AttachmentRepository $attachmentRepository,
+        private readonly MicrosoftGraphTokenService $tokenService,
     ) {
         parent::__construct($emailRepository, $attachmentRepository);
         $this->mailbox = config('mail.graph.mailbox');
-    }
-
-    /**
-     * Get access token using client credentials flow
-     */
-    protected function getAccessToken(): string
-    {
-        if (isset($this->accessToken)) {
-            return $this->accessToken;
-        }
-
-        $tenantId = config('mail.graph.tenant_id');
-        $clientId = config('mail.graph.client_id');
-        $clientSecret = config('mail.graph.client_secret');
-
-        $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
-            'client_id'     => $clientId,
-            'client_secret' => $clientSecret,
-            'scope'         => 'https://graph.microsoft.com/.default',
-            'grant_type'    => 'client_credentials',
-        ]);
-
-        if (! $response->successful()) {
-            throw new Exception('Failed to get access token: '.$response->body());
-        }
-
-        $data = $response->json();
-        $this->accessToken = $data['access_token'];
-
-        return $this->accessToken;
     }
 
     // Abstract method implementations
 
     protected function fetchMessages(): array
     {
-        $accessToken = $this->getAccessToken();
+        $accessToken = $this->tokenService->getAccessToken();
 
         $url = "{$this->baseUrl}/users/{$this->mailbox}/mailFolders('Inbox')/messages";
 
@@ -72,21 +40,20 @@ class GraphMailService extends AbstractEmailProcessor
         } else {
             $filter = 'isRead eq false';
         }
+
         $response = Http::withToken($accessToken)
             ->get($url, [
                 '$filter'  => $filter,
                 '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
                 '$orderby' => 'receivedDateTime desc',
-                '$top'     => 50, // Limit to prevent timeout
+                '$top'     => 50,
             ]);
 
         if (! $response->successful()) {
             throw new Exception('Failed to fetch messages: '.$response->body());
         }
 
-        $data = $response->json();
-
-        return $data['value'] ?? [];
+        return $response->json('value') ?? [];
     }
 
     protected function isValidMessage($message): bool
@@ -111,17 +78,15 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function extractEmailData($message, string $folderName, ?Email $parentEmail): array
     {
-        $from = $message['from']['emailAddress'] ?? [];
+        $from         = $message['from']['emailAddress'] ?? [];
         $toRecipients = $message['toRecipients'] ?? [];
         $ccRecipients = $message['ccRecipients'] ?? [];
         $bccRecipients = $message['bccRecipients'] ?? [];
-        $replyTo = $message['replyTo'] ?? [];
+        $replyTo      = $message['replyTo'] ?? [];
 
-        // Get message body
-        $body = $this->extractMessageBody($message);
-
+        $body      = $this->extractMessageBody($message);
         $fromEmail = $from['address'] ?? '';
-        $fromName = $from['name'] ?? null;
+        $fromName  = $from['name'] ?? null;
 
         return [
             'from'          => Email::normalizeFromField($fromEmail, $fromName),
@@ -169,17 +134,14 @@ class GraphMailService extends AbstractEmailProcessor
     protected function processAttachments(Email $email, $message): void
     {
         try {
-            $accessToken = $this->getAccessToken();
-            $messageId = $message['id'];
-
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
+            $accessToken = $this->tokenService->getAccessToken();
+            $messageId   = $message['id'];
+            $url         = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
 
             $response = Http::withToken($accessToken)->get($url);
 
             if ($response->successful()) {
-                $attachments = $response->json()['value'] ?? [];
-
-                foreach ($attachments as $attachment) {
+                foreach ($response->json('value') ?? [] as $attachment) {
                     $this->attachmentRepository->create([
                         'email_id'     => $email->id,
                         'name'         => $attachment['name'] ?? 'attachment',
@@ -201,15 +163,10 @@ class GraphMailService extends AbstractEmailProcessor
     protected function markMessageAsRead($message): void
     {
         try {
-            $accessToken = $this->getAccessToken();
-            $messageId = $message['id'];
+            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$message['id']}";
 
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}";
-
-            Http::withToken($accessToken)
-                ->patch($url, [
-                    'isRead' => true,
-                ]);
+            Http::withToken($this->tokenService->getAccessToken())
+                ->patch($url, ['isRead' => true]);
         } catch (Exception $e) {
             Log::error('Failed to mark message as read', [
                 'message_id' => $message['id'],
@@ -235,10 +192,14 @@ class GraphMailService extends AbstractEmailProcessor
         ];
     }
 
-    // Helper methods specific to Microsoft Graph
+    // Helpers specific to Microsoft Graph
 
     /**
-     * Extract message body from Graph response
+     * Extract message body from Graph response.
+     *
+     * Note: we intentionally return the content regardless of contentType — the CRM stores HTML
+     * bodies as-is and plain text is stored without conversion. Keeping both branches explicit
+     * here makes future differentiation straightforward.
      */
     protected function extractMessageBody(array $message): string
     {
@@ -252,7 +213,7 @@ class GraphMailService extends AbstractEmailProcessor
     }
 
     /**
-     * Extract email addresses from recipients array
+     * Extract a plain list of email addresses from a Graph recipients array.
      */
     protected function extractEmailAddresses(array $recipients): array
     {
@@ -264,23 +225,10 @@ class GraphMailService extends AbstractEmailProcessor
     }
 
     /**
-     * Parse DateTime from Graph response
+     * Parse a Graph DateTime string into a Carbon instance in the application timezone.
      */
     protected function parseDateTime(string $dateTime): Carbon
     {
         return Carbon::parse($dateTime)->setTimezone(config('app.timezone', 'UTC'));
-    }
-
-    /**
-     * Get folder ID by name
-     *
-     * @param  string  $folderName
-     * @return int|null
-     */
-    protected function getFolderId($folderName)
-    {
-        $folder = Folder::where('name', strtolower($folderName))->first();
-
-        return $folder ? $folder->id : null;
     }
 }

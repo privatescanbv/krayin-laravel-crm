@@ -40,6 +40,7 @@ class EmailController extends Controller
         protected AttachmentRepository $attachmentRepository,
         protected FolderRepository $folderRepository,
         private readonly EmailTemplateRenderingService $emailTemplateRenderingService,
+        private readonly CrmMailService $crmMailService,
     ) {}
 
     /**
@@ -127,9 +128,7 @@ class EmailController extends Controller
         // Get all request data including activity_id if provided
         $data = request()->all();
 
-        // Centralized mail flow (store + send) via App service.
-        $crmMailService = app(CrmMailService::class);
-        $email = $crmMailService->createAndMaybeSend($data, (bool) request('is_draft'), EmailFolderEnum::SENT);
+        $email = $this->crmMailService->createAndMaybeSend($data, (bool) request('is_draft'), EmailFolderEnum::SENT);
 
         Event::dispatch('email.create.after', $email);
 
@@ -181,10 +180,12 @@ class EmailController extends Controller
 
         if (! is_null(request('is_draft')) && ! request('is_draft')) {
             try {
-                // Centralized send logic (folder behavior kept as-is: move to inbox).
-                $crmMailService = app(CrmMailService::class);
-                $crmMailService->sendEmail($email, EmailFolderEnum::INBOX);
+                $this->crmMailService->sendEmail($email, EmailFolderEnum::INBOX);
             } catch (Exception $e) {
+                Log::error('EmailController@update: Failed to send email', [
+                    'email_id' => $email->id ?? null,
+                    'error'    => $e->getMessage(),
+                ]);
             }
         }
 
@@ -443,9 +444,13 @@ class EmailController extends Controller
                 'message' => trans('admin::app.mail.delete-success'),
             ]);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => trans('admin::app.mail.delete-success'),
+            Log::error('EmailController@massDestroy: Failed to delete emails', [
+                'error' => $e->getMessage(),
             ]);
+
+            return response()->json([
+                'message' => trans('admin::app.mail.delete-failed'),
+            ], 400);
         }
     }
 

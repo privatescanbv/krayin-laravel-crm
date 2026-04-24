@@ -3,6 +3,7 @@
 use App\Models\Clinic;
 use App\Models\SalesLead;
 use App\Services\Mail\GraphMailService;
+use App\Services\Mail\MicrosoftGraphTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Repositories\AttachmentRepository;
@@ -25,7 +26,8 @@ beforeEach(function () {
 
     $this->processor = new GraphMailService(
         $emailRepository,
-        $attachmentRepository
+        $attachmentRepository,
+        new MicrosoftGraphTokenService,
     );
 
     $this->method = new ReflectionMethod($this->processor, 'linkToExistingEntities');

@@ -12,6 +12,20 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\MessageConverter;
 use Symfony\Component\Mime\RawMessage;
 
+/**
+ * Symfony/Laravel mail transport that delivers outbound messages via the Microsoft Graph API.
+ *
+ * Registered under the driver name `'microsoft-graph'` by {@see MicrosoftGraphMailServiceProvider}.
+ * Set `MAIL_MAILER=microsoft-graph` in the environment to activate it.
+ *
+ * Responsibilities:
+ *  - Convert a Symfony RawMessage to a Graph-compatible JSON payload (recipients, body, attachments).
+ *  - Always send from the configured service-account mailbox to avoid SendAs permission issues,
+ *    while personalising the From name from the currently authenticated CRM user.
+ *  - Validate every recipient against the `MAIL_SEND_ONLY_ACCEPT` allowlist before sending,
+ *    blocking delivery in non-production environments when no allowlist is configured.
+ *  - Obtain the Bearer token via {@see MicrosoftGraphTokenService}.
+ */
 class MicrosoftGraphMailTransport implements TransportInterface
 {
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';

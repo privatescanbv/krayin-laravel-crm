@@ -11,6 +11,21 @@ use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
+/**
+ * Inbound email processor backed by IMAP (via the Webklex PHP-IMAP library).
+ *
+ * Opens a connection to the configured IMAP account, iterates all leaf folders
+ * (excluding "All Mail"), and processes messages received within the last 10 days.
+ * Each message is normalised into the application's Email model and its attachments
+ * are uploaded through AttachmentRepository.
+ *
+ * Bound to the {@see InboundEmailProcessor} contract when the
+ * `mail-receiver.default` config value is `'imap'`.
+ *
+ * The IMAP connection is established lazily in the constructor; if the database
+ * or the mail server is unavailable the processor skips processing gracefully
+ * rather than crashing the process.
+ */
 class ImapEmailProcessor extends AbstractEmailProcessor
 {
     protected $client;

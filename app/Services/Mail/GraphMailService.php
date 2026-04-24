@@ -11,6 +11,19 @@ use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
+/**
+ * Inbound email processor for Microsoft Graph (Office 365 / Exchange Online).
+ *
+ * Fetches unread messages from the configured mailbox via the Graph REST API,
+ * normalises them into the application's Email model, stores attachments, and
+ * marks each message as read once processed.
+ *
+ * Bound to the {@see InboundEmailProcessor} contract when the
+ * `mail-receiver.default` config value is `'microsoft-graph'`.
+ *
+ * Authentication uses the OAuth 2.0 client-credentials flow delegated to
+ * {@see MicrosoftGraphTokenService}.
+ */
 class GraphMailService extends AbstractEmailProcessor
 {
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';

@@ -18,13 +18,21 @@ use Webkul\Email\Repositories\EmailRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
 /**
- * Single entry-point for application email functionality.
+ * Single entry-point for all outbound email in the application.
  *
- * - Renders EmailTemplate (DB) to final HTML + subject
- * - Stores email records via EmailRepository
- * - Queues Webkul\Email\Mails\Email for actual sending
+ * Responsibilities:
+ *  - Look up and render DB-backed EmailTemplates to final HTML + subject via EmailTemplateRenderingService.
+ *  - Persist email records (EmailModel) through EmailRepository so every sent message is tracked in the CRM.
+ *  - Dispatch outbound mail via Laravel's Mail facade (send for synchronous, queue for async).
+ *  - Check per-person notification preferences before sending notification emails.
  *
- * This service is meant to unify behavior across PatientMailService and order flows.
+ * Entry points used by callers:
+ *  - {@see createEmail()}           – persist without sending (e.g. AFB dispatch attaches files first).
+ *  - {@see sendEmail()}             – send a pre-persisted email record and move it to a folder.
+ *  - {@see createAndMaybeSend()}    – create + conditionally send in one call (admin mail UI).
+ *  - {@see sendToPersonTemplate()}  – render a template and send to a Person, honouring opt-out preferences.
+ *  - {@see renderTemplate()}        – render only (for preview or external send logic).
+ *  - {@see renderHtmlForEntities()} – render by code/name string with entity variable resolution.
  */
 class CrmMailService
 {

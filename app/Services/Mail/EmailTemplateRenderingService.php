@@ -21,6 +21,22 @@ use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\Lead\Repositories\LeadRepository;
 
+/**
+ * Resolves entity variables and renders DB-backed EmailTemplates to final HTML.
+ *
+ * Responsibilities:
+ *  - Accept an entity map (lead, person, sales_lead, order — as models or IDs) and load each
+ *    entity through the appropriate repository.
+ *  - Interpolate Twig-style {{ variable }} and {% variable %} placeholders in template subject
+ *    and content, with support for nested dot-notation access (e.g. {{ lead.name }}).
+ *  - Wrap interpolated content in the standard mail layout view and apply CSS inlining so the
+ *    HTML is safe for email clients that strip <style> tags.
+ *
+ * Does NOT send mail — that is the responsibility of {@see CrmMailService}.
+ *
+ * The {@see SUPPORTED_VARIABLES} constant is the single source of truth for which placeholders
+ * are available in templates; it is also referenced in the developer documentation.
+ */
 class EmailTemplateRenderingService
 {
     /**

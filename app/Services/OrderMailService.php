@@ -12,6 +12,24 @@ use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
+/**
+ * Builds the data and HTML required to send order-acknowledgement emails.
+ *
+ * Responsibilities:
+ *  - Resolve all template variables for the ACKNOWLEDGE_ORDER_MAIL template:
+ *    order summary, appointment table, address lines, GVL form link, etc.
+ *  - Render the order-items HTML table (with optional per-person filter).
+ *  - Render the appointments-by-person HTML block.
+ *  - Collect and normalise the list of recipient email addresses for an order,
+ *    with default-email detection logic.
+ *
+ * This service does NOT send mail; it only prepares content and metadata.
+ * Actual sending is done by {@see CrmMailService}.
+ *
+ * Consumed by:
+ *  - {@see OrderController} — to populate the send-order-mail UI and confirmation endpoints.
+ *  - {@see EmailTemplateRenderingService} — lazily to merge order variables into generic templates.
+ */
 class OrderMailService
 {
     public function buildMailData(Order $order, ?Person $person = null): array

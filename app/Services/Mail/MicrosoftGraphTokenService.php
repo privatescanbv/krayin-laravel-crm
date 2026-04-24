@@ -7,7 +7,18 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Fetches and caches a Microsoft Graph OAuth2 access token for the duration of one request/job.
+ * Obtains and in-memory caches a Microsoft Graph OAuth2 access token.
+ *
+ * Uses the OAuth 2.0 client-credentials flow (application identity, no user context).
+ * The token is cached for the lifetime of the current PHP process / request so that
+ * multiple Graph API calls within the same job or request share a single token fetch.
+ *
+ * Required config keys (via `config/mail.php` → `mail.graph.*`):
+ *  - `tenant_id`     — Azure AD tenant GUID
+ *  - `client_id`     — registered application (client) ID
+ *  - `client_secret` — application secret
+ *
+ * Used by {@see GraphMailService} (inbound sync) and {@see MicrosoftGraphMailTransport} (outbound send).
  */
 class MicrosoftGraphTokenService
 {

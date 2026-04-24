@@ -15,6 +15,22 @@ use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Lead\Models\Lead;
 
+/**
+ * Shared orchestration logic for all inbound email processors.
+ *
+ * Handles the parts of message processing that are protocol-agnostic:
+ *  - Deduplication: skips messages whose message_id or unique_id already exist in the database.
+ *  - Thread detection: finds a parent Email record via conversation ID or To-recipient matching.
+ *  - Entity linking: matches the sender's email address against Person, Lead, SalesLead, and Clinic
+ *    records and populates the corresponding foreign keys on the new Email record.
+ *  - Sync logging: creates and updates an EmailLog entry to track each sync run's outcome.
+ *
+ * Concrete subclasses implement the protocol-specific primitives declared as abstract methods
+ * (fetching, message-ID extraction, folder mapping, attachment handling, etc.).
+ *
+ * @see GraphMailService  Microsoft Graph (Exchange Online) implementation
+ * @see ImapEmailProcessor IMAP implementation
+ */
 abstract class AbstractEmailProcessor implements InboundEmailProcessor
 {
     protected ?EmailLog $currentLog = null;

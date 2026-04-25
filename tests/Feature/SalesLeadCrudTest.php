@@ -330,6 +330,46 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
     });
 });
 
+test('attaching gvl form sends lastname_prefix and married_name_prefix combined in api request', function () {
+    config([
+        'services.portal.patient.api_url'   => 'http://forms',
+        'services.portal.patient.api_token' => 'test-token',
+    ]);
+
+    $person = Person::factory()->create([
+        'first_name'          => 'Jan',
+        'last_name'           => 'Berg',
+        'lastname_prefix'     => 'van den',
+        'married_name'        => 'Smit',
+        'married_name_prefix' => 'de',
+    ]);
+
+    $lead = Lead::factory()->create();
+    $lead->attachPersons([$person->id]);
+
+    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
+
+    Http::fake([
+        'http://forms/api/forms' => Http::response([
+            'data'     => ['id' => 99],
+            'form_url' => 'https://forms.example.com/forms/99/step/1',
+        ], 201),
+    ]);
+
+    $response = $this->postJson(route('admin.anamnesis.gvl-form.attach', ['id' => $anamnesis->id]));
+
+    $response->assertOk();
+
+    Http::assertSent(function ($request) {
+        $body = $request->data();
+
+        return $request->method() === 'POST'
+            && str_contains($request->url(), 'http://forms/api/forms')
+            && ($body['user_lastname'] ?? null) === 'van den Berg'
+            && ($body['user_maidenname'] ?? null) === 'de Smit';
+    });
+});
+
 test('gvl form stays linked to anamnesis when forms api responds with error', function () {
     config([
         'services.portal.patient.api_url'   => 'http://forms',

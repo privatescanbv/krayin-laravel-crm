@@ -542,6 +542,9 @@ class AnamnesisController extends Controller
             $lastName = $nameParts[1] ?? $firstName;
         }
 
+        $lastNameWithPrefix = trim(($person->lastname_prefix ? $person->lastname_prefix.' ' : '').$lastName);
+        $maidenNameWithPrefix = trim(($person->married_name_prefix ? $person->married_name_prefix.' ' : '').($person->married_name ?? ''));
+
         // Determine form type from lead department
         $department = $lead->department;
         $formType = $this->mapFormTypeFromDepartment($department);
@@ -549,8 +552,8 @@ class AnamnesisController extends Controller
         $formData = [
             'user_crm_id'     => $person->id,
             'user_firstname'  => $firstName ?: '-',
-            'user_lastname'   => $lastName ?: '-',
-            'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
+            'user_lastname'   => $lastNameWithPrefix ?: '-',
+            'user_maidenname' => $maidenNameWithPrefix ?: '--',
             'user_email'      => $email,
             'user_birthday'   => $birthday,
             'mri_research'    => 'Nee', // Default, can be updated later

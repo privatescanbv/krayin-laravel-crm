@@ -99,20 +99,19 @@ class SalesLeadController extends Controller
             ? $stages->filter(fn ($s) => ! $s->is_won && ! $s->is_lost)
             : $stages;
 
-        $allSalesLeads = SalesLead::with(['lead', 'user', 'orders', 'persons.organization'])
-            ->withCount([
-                'activities as open_activities_count' => fn ($q) => $q->where('is_done', 0),
-                'emails as unread_emails_count'       => fn ($q) => $q->where('is_read', 0),
-            ])
-            ->whereIn('pipeline_stage_id', $filteredStages->pluck('id'))
-            ->get()
-            ->groupBy('pipeline_stage_id');
+        $stageIds = $filteredStages->pluck('id')->all();
 
-        $data = [];
+        // Pre-compute totals for all stages in one query (avoids N+1 COUNT per stage)
+        $totalsByStage = DB::table('salesleads')
+            ->select('pipeline_stage_id', DB::raw('COUNT(*) as total'))
+            ->whereIn('pipeline_stage_id', $stageIds)
+            ->groupBy('pipeline_stage_id')
+            ->pluck('total', 'pipeline_stage_id');
+
+        $perPage = (int) $request->query('limit', 10);
+        $data    = [];
 
         foreach ($filteredStages as $stage) {
-            $stageSalesLeads = $allSalesLeads->get($stage->id, collect());
-
             $stagePayload = [
                 'id'      => $stage->id,
                 'name'    => $stage->name,
@@ -121,57 +120,75 @@ class SalesLeadController extends Controller
                 'is_lost' => (bool) $stage->is_lost,
             ];
 
-            $salesLeads = $stageSalesLeads->map(function ($salesLead) use ($stagePayload) {
-                $person = $salesLead->persons->first();
+            $totalForStage = (int) ($totalsByStage[$stage->id] ?? 0);
 
-                return [
-                    'id'                => $salesLead->id,
-                    'name'              => $salesLead->name,
-                    'description'       => $salesLead->description,
-                    'pipeline_stage_id' => $salesLead->pipeline_stage_id,
-                    // Keep legacy key, but also provide `stage` for parity with Lead payloads consumed by the kanban.
-                    'pipeline_stage'    => $stagePayload,
-                    'stage'             => $stagePayload,
-                    'lead'              => $salesLead->lead ? [
-                        'id'     => $salesLead->lead->id,
-                        'title'  => $salesLead->lead->title,
-                        'person' => $person ? [
-                            'id'           => $person->id,
-                            'name'         => $person->name,
-                            'organization' => $person->organization ? [
-                                'name' => $person->organization->name,
+            if ($totalForStage > 0) {
+                $paginator = SalesLead::with(['lead', 'user', 'orders', 'persons.organization'])
+                    ->withCount([
+                        'activities as open_activities_count' => fn ($q) => $q->where('is_done', 0),
+                        'emails as unread_emails_count'       => fn ($q) => $q->where('is_read', 0),
+                    ])
+                    ->where('pipeline_stage_id', $stage->id)
+                    ->orderByDesc('created_at')
+                    ->paginate($perPage, ['*'], 'page');
+
+                $salesLeads = collect($paginator->items())->map(function ($salesLead) use ($stagePayload) {
+                    $person = $salesLead->persons->first();
+
+                    return [
+                        'id'                => $salesLead->id,
+                        'name'              => $salesLead->name,
+                        'description'       => $salesLead->description,
+                        'pipeline_stage_id' => $salesLead->pipeline_stage_id,
+                        'pipeline_stage'    => $stagePayload,
+                        'stage'             => $stagePayload,
+                        'lead'              => $salesLead->lead ? [
+                            'id'     => $salesLead->lead->id,
+                            'title'  => $salesLead->lead->title,
+                            'person' => $person ? [
+                                'id'           => $person->id,
+                                'name'         => $person->name,
+                                'organization' => $person->organization ? [
+                                    'name' => $person->organization->name,
+                                ] : null,
                             ] : null,
                         ] : null,
-                    ] : null,
-                    'user_id' => $salesLead->user_id,
-                    'user'    => $salesLead->user ? [
-                        'id'   => $salesLead->user->id,
-                        'name' => $salesLead->user->name,
-                    ] : null,
-                    'created_at'            => $salesLead->created_at,
-                    'open_activities_count' => $salesLead->open_activities_count,
-                    'unread_emails_count'   => $salesLead->unread_emails_count ?? 0,
-                    'has_duplicates'        => $salesLead->has_duplicates ?? false,
-                    'duplicates_count'      => $salesLead->duplicates_count ?? 0,
-                    'rotten_days'           => $salesLead->rotten_days ?? 0,
-                    'days_until_due_date'   => $salesLead->days_until_due_date ?? null,
-                    'mri_status'            => $salesLead->mri_status ?? null,
-                    'mri_status_label'      => $salesLead->mri_status_label ?? null,
-                    'has_diagnosis_form'    => $salesLead->has_diagnosis_form ?? false,
-                    'lost_reason_label'     => $salesLead->lost_reason_label ?? null,
-                    'has_multiple_persons'  => $salesLead->hasMultiplePersons(),
-                    'persons_count'         => $salesLead->persons_count,
-                    'orders'                => $salesLead->orders->map(function ($order) {
-                        $status = $order->status;
+                        'user_id' => $salesLead->user_id,
+                        'user'    => $salesLead->user ? [
+                            'id'   => $salesLead->user->id,
+                            'name' => $salesLead->user->name,
+                        ] : null,
+                        'created_at'            => $salesLead->created_at,
+                        'open_activities_count' => $salesLead->open_activities_count,
+                        'unread_emails_count'   => $salesLead->unread_emails_count ?? 0,
+                        'has_duplicates'        => false,
+                        'duplicates_count'      => 0,
+                        'rotten_days'           => 0,
+                        'days_until_due_date'   => null,
+                        'mri_status'            => null,
+                        'mri_status_label'      => null,
+                        'has_diagnosis_form'    => false,
+                        'lost_reason_label'     => $salesLead->lost_reason_label,
+                        'has_multiple_persons'  => $salesLead->persons->count() > 1,
+                        'persons_count'         => $salesLead->persons->count(),
+                        'orders'                => $salesLead->orders->map(function ($order) {
+                            $status = $order->status;
 
-                        return [
-                            'id'           => $order->id,
-                            'status'       => $status?->value,
-                            'status_label' => $status?->label(),
-                        ];
-                    }),
-                ];
-            });
+                            return [
+                                'id'           => $order->id,
+                                'status'       => $status?->value,
+                                'status_label' => $status?->label(),
+                            ];
+                        }),
+                    ];
+                });
+
+                $lastPage = (int) ceil($totalForStage / max($perPage, 1));
+            } else {
+                $paginator  = null;
+                $salesLeads = collect();
+                $lastPage   = 1;
+            }
 
             $data[$stage->sort_order] = [
                 'id'               => $stage->id,
@@ -185,10 +202,10 @@ class SalesLeadController extends Controller
                 'leads'            => [
                     'data' => $salesLeads,
                     'meta' => [
-                        'total'        => $salesLeads->count(),
-                        'current_page' => 1,
-                        'per_page'     => 10,
-                        'last_page'    => 1,
+                        'total'        => $totalForStage,
+                        'current_page' => $paginator ? $paginator->currentPage() : 1,
+                        'per_page'     => $perPage,
+                        'last_page'    => $lastPage,
                     ],
                 ],
             ];

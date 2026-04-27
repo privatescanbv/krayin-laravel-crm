@@ -13,7 +13,6 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'admin/mail/inbound-parse',
-        'admin/web-forms/forms/*',
         'admin/auth/keycloak/backchannel-logout', // Keycloak backchannel logout (no CSRF token)
     ];
 }

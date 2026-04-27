@@ -30,7 +30,6 @@ use Webkul\Tag\Models\Tag;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
-use Webkul\WebForm\Models\WebForm;
 
 /**
  * Test all admin URLs to ensure they don't return 500 errors.
@@ -345,20 +344,6 @@ function createTestDataForRoutes(): array
     $data['email_template'] = EmailTemplate::firstOrCreate(
         ['name' => 'Test Template'],
         ['subject' => 'Test', 'content' => 'Test content']
-    );
-
-    // Web form - create directly
-    $data['web_form'] = WebForm::firstOrCreate(
-        ['title' => 'Test Form'],
-        [
-            'form_id'                   => 'test-form-'.uniqid(),
-            'submit_button_label'       => 'Submit',
-            'submit_success_action'     => 'message',
-            'submit_success_content'    => 'Thank you for your submission',
-            'background_color'          => '#FFFFFF',
-            'form_submit_button_color'  => '#0000FF',
-            'attribute_form_text_color' => '#000000',
-        ]
     );
 
     // Workflow - create directly

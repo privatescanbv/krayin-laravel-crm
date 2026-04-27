@@ -1,19 +1,74 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
-## Project Overview
+---
 
-Krayin CRM is a Laravel-based customer relationship management system built on a modular architecture using Konekt Concord. The frontend uses Vue 3 with Tailwind CSS and Vite for bundling.
+# Primary Operating Mode
 
-## Development Commands
+Use Claude as planner, architect, reviewer and analyst.
 
-### Docker Development (Recommended)
+Use Codex as the default execution engine for implementation work whenever possible.
+
+## Claude should handle
+
+- architecture decisions
+- domain modelling
+- root cause analysis
+- debugging strategy
+- code review
+- refactor plans
+- maintainability analysis
+- performance analysis
+- security review
+- release planning
+
+## Codex should handle by default
+
+- writing code
+- creating controllers
+- creating services
+- generating migrations
+- generating tests
+- repetitive refactors
+- renaming files/classes
+- fixing straightforward bugs
+- boilerplate
+- CRUD implementations
+- CI/CD yaml edits
+- Docker config edits
+
+## Delegation Rule
+
+When a task is executable and low-risk, prefer Codex.
+
+Use:
+
+- /codex:rescue for implementation
+- /codex:review only when explicitly requested
+- /codex:status for long-running tasks
+- /codex:result to fetch outputs
+
+Claude should think briefly first, then delegate execution.
+
+Do not spend excessive Claude tokens writing code if Codex can do it.
+
+---
+
+# Project Overview
+
+Krayin CRM is a Laravel-based CRM built on a modular architecture using Konekt Concord.
+Frontend uses Vue 3, Tailwind CSS and Vite.
+This codebase contains PrivateScan-specific customizations.
+
+---
+
+# Development Commands
+
+## Docker Development (Preferred)
+
 ```bash
-# Start containers
 docker-compose up -d
-
-# Execute commands inside container
 docker-compose exec crm php artisan migrate
 docker-compose exec crm npm run build
 docker-compose exec crm npm run dev    # Watch mode
@@ -112,7 +167,7 @@ Two separate Vite builds:
 
 - CRM: `crm.local.privatescan.nl`
 - SSO: `sso.local.privatescan.nl`
-- Admin: `http://localhost/admin/login` (admin@example.com / admin123)
+- Admin: `https://crm.local.privatescan.nl/admin/login` (admin@example.com / admin123)
 
 ## Key Configuration Files
 

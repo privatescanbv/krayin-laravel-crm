@@ -20,14 +20,6 @@ if [ "$BUILD_TYPE" != "local" ]; then
 fi
 cd ../../..
 
-# Build WebForm package
-cd packages/Webkul/WebForm
-npm install
-if [ "$BUILD_TYPE" != "local" ]; then
-    npm run build
-fi
-cd ../../..
-
 # do not build installer, do not use it for now
 
 echo "DONE (BUILD_TYPE: $BUILD_TYPE)"

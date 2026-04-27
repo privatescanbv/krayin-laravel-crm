@@ -63,7 +63,9 @@
       "mcp__laravel-boost__last-error",
       "Bash(curl *)",
       "Bash(python3 -c ' *)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(xxd /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/packages/Webkul/Admin/src/Routes/Admin/settings-routes.php)",
+      "Bash(xargs '-I{}' sh -c 'result=$\\(php -l \"{}\" 2>&1\\); echo \"$result: {}\"')"
     ]
   }
 }

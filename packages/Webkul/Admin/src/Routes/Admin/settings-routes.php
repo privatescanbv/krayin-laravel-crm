@@ -220,25 +220,6 @@ Route::prefix('settings')->group(function () {
     });
 
     /**
-     * WebForms Routes. - DISABLED FOR NOW
-     */
-    //    Route::controller(WebFormController::class)->prefix('web-forms')->group(function () {
-    //        Route::group(['middleware' => ['user']], function () {
-    //            Route::get('', 'index')->name('admin.settings.web_forms.index');
-    //
-    //            Route::get('create', 'create')->name('admin.settings.web_forms.create');
-    //
-    //            Route::post('create', 'store')->name('admin.settings.web_forms.store');
-    //
-    //            Route::get('edit/{id?}', 'edit')->name('admin.settings.web_forms.edit');
-    //
-    //            Route::put('edit/{id}', 'update')->name('admin.settings.web_forms.update');
-    //
-    //            Route::delete('{id}', 'destroy')->name('admin.settings.web_forms.delete');
-    //        });
-    //    });
-
-    /**
      * Workflows Routes.
      */
     Route::controller(WorkflowController::class)->prefix('workflows')->group(function () {

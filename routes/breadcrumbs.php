@@ -508,24 +508,6 @@ Breadcrumbs::for('settings.tags.edit', function (BreadcrumbTrail $trail, $tag) {
     $trail->push(trans('admin::app.settings.tags.edit-title'), route('admin.settings.tags.edit', $tag->id));
 });
 
-// Settings > Web Form
-// Breadcrumbs::for('settings.web_forms', function (BreadcrumbTrail $trail) {
-//    $trail->parent('settings');
-//    $trail->push(trans('admin::app.settings.webforms.index.title'), route('admin.settings.web_forms.index'));
-// });
-
-// Web Form > Create Web Form
-Breadcrumbs::for('settings.web_forms.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('settings.web_forms');
-    $trail->push(trans('admin::app.settings.webforms.create.title'), route('admin.settings.web_forms.create'));
-});
-
-// Web Form > Edit Web Form
-Breadcrumbs::for('settings.web_forms.edit', function (BreadcrumbTrail $trail, $webForm) {
-    $trail->parent('settings.web_forms');
-    $trail->push(trans('admin::app.settings.webforms.edit.title'), route('admin.settings.web_forms.edit', $webForm->id));
-});
-
 // Settings > Resource Types
 Breadcrumbs::for('settings.resource_types', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

@@ -19,11 +19,5 @@ return [
             // BELANGRIJK — moet exact mappen naar Vite config
             'package_assets_directory' => 'packages/Webkul/Admin/src/Resources/assets',
         ],
-
-        'webform' => [
-            'hot_file'                 => storage_path('framework/vite.hot'),
-            'build_directory'          => 'webform/build',
-            'package_assets_directory' => 'src/Resources/assets',
-        ],
     ],
 ];

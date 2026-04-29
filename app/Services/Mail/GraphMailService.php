@@ -91,15 +91,15 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function extractEmailData($message, string $folderName, ?Email $parentEmail): array
     {
-        $from         = $message['from']['emailAddress'] ?? [];
+        $from = $message['from']['emailAddress'] ?? [];
         $toRecipients = $message['toRecipients'] ?? [];
         $ccRecipients = $message['ccRecipients'] ?? [];
         $bccRecipients = $message['bccRecipients'] ?? [];
-        $replyTo      = $message['replyTo'] ?? [];
+        $replyTo = $message['replyTo'] ?? [];
 
-        $body      = $this->extractMessageBody($message);
+        $body = $this->extractMessageBody($message);
         $fromEmail = $from['address'] ?? '';
-        $fromName  = $from['name'] ?? null;
+        $fromName = $from['name'] ?? null;
 
         return [
             'from'          => Email::normalizeFromField($fromEmail, $fromName),
@@ -148,8 +148,8 @@ class GraphMailService extends AbstractEmailProcessor
     {
         try {
             $accessToken = $this->tokenService->getAccessToken();
-            $messageId   = $message['id'];
-            $url         = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
+            $messageId = $message['id'];
+            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
 
             $response = Http::withToken($accessToken)->get($url);
 

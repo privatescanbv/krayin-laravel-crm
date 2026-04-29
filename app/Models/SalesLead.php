@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Departments;
 use App\Enums\LostReason;
 use App\Traits\HasAuditTrail;
 use App\Traits\SelectsBestContactPerson;
@@ -48,6 +47,7 @@ class SalesLead extends Model
         'closed_at',
         'pipeline_stage_id',
         'lead_id',
+        'department_id',
         'user_id',
         'contact_person_id',
         'created_by',
@@ -67,13 +67,13 @@ class SalesLead extends Model
     ];
 
     /**
-     * @return bool true if department of the lead of this sales is hernia, otherwise it is privatescan.
+     * @return bool true if department of this sales lead is hernia (own department takes precedence over lead's department).
      */
     public static function isHerniaPoli(int $salesId): bool
     {
-        $departmentName = SalesLead::resolveDepartment($salesId);
+        $salesLead = static::with('department')->find($salesId);
 
-        return $departmentName == Departments::HERNIA->value;
+        return $salesLead?->getDepartment()?->isHernia() ?? false;
     }
 
     /**
@@ -408,9 +408,14 @@ class SalesLead extends Model
         }
     }
 
-    public function getDepartment(): Department
+    public function department()
     {
-        return $this->lead->department;
+        return $this->belongsTo(Department::class);
+    }
+
+    public function getDepartment(): ?Department
+    {
+        return $this->department ?? $this->lead?->department;
     }
 
     /**

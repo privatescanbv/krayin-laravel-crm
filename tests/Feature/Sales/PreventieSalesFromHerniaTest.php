@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Sales;
 
+use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Models\Department;
+use App\Models\Order;
 use App\Models\SalesLead;
 use App\Models\SalesLeadRelation;
 use Database\Seeders\TestSeeder;
@@ -81,6 +83,18 @@ test('createPreventieSales creates a preventie sales linked to the same lead and
 
     // Assert: redirect to the Preventie sales view
     $response->assertRedirect(route('admin.sales-leads.view', $preventieSales->id));
+
+    // Assert: SalesLead has PrivateScan department_id (not Hernia)
+    $privatescanDept = Department::firstOrCreate(['name' => 'Privatescan']);
+    $this->assertEquals($privatescanDept->id, $preventieSales->department_id);
+
+    // Assert: Order is on PrivateScan orders pipeline (ORDER_CONFIRM), not Hernia
+    $order = Order::where('sales_lead_id', $preventieSales->id)->first();
+    $this->assertNotNull($order);
+    $this->assertEquals(PipelineStage::ORDER_CONFIRM->id(), $order->pipeline_stage_id);
+
+    // Assert: isHerniaPoli returns false for the Preventie SalesLead
+    $this->assertFalse(SalesLead::isHerniaPoli($preventieSales->id));
 });
 
 test('createPreventieSales returns error for non-hernia sales', function (): void {
@@ -117,4 +131,48 @@ test('createPreventieSales returns error for non-hernia sales', function (): voi
     $this->assertDatabaseMissing('saleslead_relations', [
         'source_saleslead_id' => $privatescanSales->id,
     ]);
+});
+
+test('changing department_id on a sales lead resets pipeline_stage_id to default of new pipeline', function (): void {
+    $user = User::factory()->create();
+    $source = Source::firstOrCreate(['name' => 'Website']);
+    $type = Type::firstOrCreate(['name' => 'New Lead']);
+
+    $privatescanDept = Department::firstOrCreate(['name' => Departments::PRIVATESCAN->value]);
+    $herniaDept = Department::firstOrCreate(['name' => Departments::HERNIA->value]);
+
+    $lead = new Lead([
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
+        'lead_pipeline_stage_id' => PipelineStage::WON->id(),
+        'status'                 => 1,
+        'first_name'             => 'Piet',
+        'last_name'              => 'Jansen',
+        'emails'                 => [['value' => 'piet@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'                 => [],
+        'user_id'                => $user->id,
+        'lead_source_id'         => $source->id,
+        'lead_type_id'           => $type->id,
+        'department_id'          => $privatescanDept->id,
+    ]);
+    $lead->save();
+
+    $sales = SalesLead::create([
+        'name'              => 'PrivateScan Sales',
+        'lead_id'           => $lead->id,
+        'pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id(),
+        'department_id'     => $privatescanDept->id,
+        'user_id'           => $user->id,
+    ]);
+
+    // Switch department to Hernia → pipeline_stage_id should move to Hernia default
+    $sales->update(['department_id' => $herniaDept->id]);
+    $sales->refresh();
+
+    $this->assertEquals(PipelineStage::SALES_DOCTOR_ASSESSMENT_HERNIA->id(), $sales->pipeline_stage_id);
+
+    // Switch back to PrivateScan → pipeline_stage_id should return to PrivateScan default
+    $sales->update(['department_id' => $privatescanDept->id]);
+    $sales->refresh();
+
+    $this->assertEquals(PipelineStage::SALES_IN_BEHANDELING->id(), $sales->pipeline_stage_id);
 });

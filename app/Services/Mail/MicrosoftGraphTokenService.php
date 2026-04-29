@@ -35,8 +35,8 @@ class MicrosoftGraphTokenService
             return $this->accessToken;
         }
 
-        $tenantId     = config('mail.graph.tenant_id');
-        $clientId     = config('mail.graph.client_id');
+        $tenantId = config('mail.graph.tenant_id');
+        $clientId = config('mail.graph.client_id');
         $clientSecret = config('mail.graph.client_secret');
 
         if (! $tenantId || ! $clientId || ! $clientSecret) {

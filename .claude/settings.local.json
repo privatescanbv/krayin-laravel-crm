@@ -66,7 +66,10 @@
       "Bash(python3 -m json.tool)",
       "Bash(xxd /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/packages/Webkul/Admin/src/Routes/Admin/settings-routes.php)",
       "Bash(xargs '-I{}' sh -c 'result=$\\(php -l \"{}\" 2>&1\\); echo \"$result: {}\"')",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(echo \"exit:$?\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(p.get\\('name','?'\\), p.get\\('skills',[]\\)\\) for p in data.get\\('plugins',[]\\)]\")",
+      "Skill(codex:rescue)"
     ]
   }
 }

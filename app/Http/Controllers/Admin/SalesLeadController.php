@@ -9,6 +9,7 @@ use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
 use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Models\SalesLeadRelation;
@@ -109,7 +110,7 @@ class SalesLeadController extends Controller
             ->pluck('total', 'pipeline_stage_id');
 
         $perPage = (int) $request->query('limit', 10);
-        $data    = [];
+        $data = [];
 
         foreach ($filteredStages as $stage) {
             $stagePayload = [
@@ -185,9 +186,9 @@ class SalesLeadController extends Controller
 
                 $lastPage = (int) ceil($totalForStage / max($perPage, 1));
             } else {
-                $paginator  = null;
+                $paginator = null;
                 $salesLeads = collect();
-                $lastPage   = 1;
+                $lastPage = 1;
             }
 
             $data[$stage->sort_order] = [
@@ -235,9 +236,10 @@ class SalesLeadController extends Controller
 
     public function edit($id)
     {
-        $salesLead = SalesLead::with(['contactPerson', 'lead.contactPerson', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['contactPerson', 'lead.contactPerson', 'user', 'department'])->findOrFail($id);
+        $departments = Department::orderBy('name')->get();
 
-        return view('adminc.sales_leads.edit', ['salesLead' => $salesLead]);
+        return view('adminc.sales_leads.edit', ['salesLead' => $salesLead, 'departments' => $departments]);
     }
 
     public function update(Request $request, $id)
@@ -579,6 +581,7 @@ class SalesLeadController extends Controller
                 attributeOverrides: [
                     'pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id(),
                     'contact_person_id' => $herniaSales->contact_person_id ?? $sourceLead->contact_person_id,
+                    'department_id'     => Department::findPrivateScanId(),
                 ]
             );
 
@@ -705,6 +708,7 @@ class SalesLeadController extends Controller
             'pipeline_stage_id'         => 'nullable|exists:lead_pipeline_stages,id',
             'lead_id'                   => $leadRule,
             'user_id'                   => 'nullable|exists:users,id',
+            'department_id'             => 'nullable|exists:departments,id',
             'contact_person_id'         => 'nullable|exists:persons,id',
             'contact_person_id_display' => 'nullable|string',
             'person_ids'                => $personIdsRule,

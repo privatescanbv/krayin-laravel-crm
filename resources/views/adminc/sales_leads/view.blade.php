@@ -123,6 +123,10 @@
                     <span>{{ $salesLead->user?->name }}</span>
                 </div>
                 <div class="flex justify-between">
+                    <span>Afdeling:</span>
+                    <span>{{ $salesLead->getDepartment()?->name ?? '—' }}</span>
+                </div>
+                <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $salesLead->created_at->format('d-m-Y') }}</span>
                 </div>

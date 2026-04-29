@@ -38,9 +38,9 @@ class GraphMailServiceTest extends TestCase
         config(['mail.graph.mailbox' => 'test@example.com']);
         config(['mail.graph.sender_domain' => 'example.com']);
 
-        $this->emailRepository    = $this->createMock(EmailRepository::class);
+        $this->emailRepository = $this->createMock(EmailRepository::class);
         $this->attachmentRepository = $this->createMock(AttachmentRepository::class);
-        $this->tokenService       = new MicrosoftGraphTokenService;
+        $this->tokenService = new MicrosoftGraphTokenService;
 
         $this->service = new GraphMailService(
             $this->emailRepository,

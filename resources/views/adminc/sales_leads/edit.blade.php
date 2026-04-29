@@ -124,6 +124,25 @@
                     </x-adminc::components.field>
                 </div>
 
+                <!-- Department -->
+                <div class="flex-1">
+                    <x-adminc::components.field
+                        type="select"
+                        name="department_id"
+                        value="{{ old('department_id', $salesLead->department_id) }}"
+                        label="Afdeling"
+                    >
+                        <option value="">-- Geen afdeling --</option>
+                        @foreach ($departments as $department)
+                            <option
+                                value="{{ $department->id }}"
+                                {{ (old('department_id', $salesLead->department_id) == $department->id) ? 'selected' : '' }}>
+                                {{ $department->name }}
+                            </option>
+                        @endforeach
+                    </x-adminc::components.field>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="mt-6 flex justify-end">
                     <button

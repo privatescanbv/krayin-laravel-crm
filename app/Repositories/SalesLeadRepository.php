@@ -70,7 +70,7 @@ class SalesLeadRepository extends Repository
             $salesLead = $this->createSalesLeadFromLead($lead, $attributeOverrides, []);
 
             // Create initial order for this sales lead
-            $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name, $lead->department);
+            $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name, $salesLead->department);
 
             // Add a system activity on the lead linking to this new sales lead view
             $this->activityRepository->createSystemActivitiesForSalesLeadCreation($lead, $salesLead);
@@ -131,6 +131,7 @@ class SalesLeadRepository extends Repository
             'pipeline_stage_id' => $this->getWorkflowPipelineStageId($lead),
             'lead_id'           => $lead->id,
             'user_id'           => $lead->user_id,
+            'department_id'     => $lead->department_id,
         ], $attributeOverrides);
 
         $salesLead = new SalesLead($data);

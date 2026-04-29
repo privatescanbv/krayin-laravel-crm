@@ -3,10 +3,13 @@
 namespace App\Observers;
 
 use App\Actions\Sales\SalesToLostAction;
+use App\Enums\Departments;
+use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Event;
+use Webkul\Lead\Models\Stage;
 
 /**
  * Observer for SalesLead model to handle pipeline stage changes and webhooks.
@@ -20,6 +23,32 @@ class SalesLeadObserver
         protected WebhookService $webhookService,
         private readonly SalesToLostAction $salesToLostAction,
     ) {}
+
+    /**
+     * Handle the SalesLead "updating" event.
+     * When department_id changes, reset pipeline_stage_id to the default stage of the new sales pipeline.
+     */
+    public function updating(SalesLead $salesLead): void
+    {
+        if (! $salesLead->isDirty('department_id')) {
+            return;
+        }
+
+        $salesLead->load('department');
+        $isHernia = $salesLead->department?->name === Departments::HERNIA->value;
+
+        $pipelineId = $isHernia
+            ? PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value
+            : PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value;
+
+        $defaultStage = Stage::where('lead_pipeline_id', $pipelineId)
+            ->where('is_default', true)
+            ->first();
+
+        if ($defaultStage) {
+            $salesLead->pipeline_stage_id = $defaultStage->id;
+        }
+    }
 
     /**
      * Handle the SalesLead "created" event.

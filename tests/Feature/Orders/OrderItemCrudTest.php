@@ -2,16 +2,24 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Enums\OrderItemStatus;
+use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ResourceType;
+use Database\Seeders\TestSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
 
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     test()->withoutMiddleware(CanInstall::class);
+
+    $this->seed(TestSeeder::class);
 
     $user = makeUser();
     $this->actingAs($user, 'user');
@@ -113,4 +121,67 @@ test('can delete order_item', function () {
     $this->assertDatabaseMissing('order_items', [
         'id' => $item->id,
     ]);
+});
+
+test('cannot set order_item status to gewonnen when order stage is before uitgevoerd', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+    ]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+
+    $payload = [
+        'order_id'   => $order->id,
+        'product_id' => $item->product_id,
+        'person_id'  => test()->person->id,
+        'quantity'   => 1,
+        'status'     => OrderItemStatus::WON->value,
+        '_method'    => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors(['status']);
+});
+
+test('can set order_item status to gewonnen when order stage is uitgevoerd', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_UITGEVOERD->id(),
+    ]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+
+    $payload = [
+        'order_id'   => $order->id,
+        'product_id' => $item->product_id,
+        'person_id'  => test()->person->id,
+        'quantity'   => 1,
+        'status'     => OrderItemStatus::WON->value,
+        '_method'    => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
+    $response->assertOk();
+
+    $this->assertDatabaseHas('order_items', [
+        'id'     => $item->id,
+        'status' => OrderItemStatus::WON->value,
+    ]);
+});
+
+test('can set order_item status to gewonnen when hernia order stage is uitgevoerd', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_UITGEVOERD_HERNIA->id(),
+    ]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+
+    $payload = [
+        'order_id'   => $order->id,
+        'product_id' => $item->product_id,
+        'person_id'  => test()->person->id,
+        'quantity'   => 1,
+        'status'     => OrderItemStatus::WON->value,
+        '_method'    => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
+    $response->assertOk();
 });

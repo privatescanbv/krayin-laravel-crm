@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderItemDataGrid;
 use App\Enums\Currency;
 use App\Enums\OrderItemStatus;
+use App\Enums\PipelineStage;
 use App\Enums\PurchasePriceType;
 use App\Models\OrderItem;
 use App\Models\PurchasePrice;
@@ -14,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Product\Models\Product;
 
@@ -118,6 +121,18 @@ class OrderItemController extends SimpleEntityController
     protected function validateUpdate(Request $request, int $id): void
     {
         $this->validateStore($request);
+
+        if ($request->input('status') === OrderItemStatus::WON->value) {
+            $item = OrderItem::with('order')->findOrFail($id);
+            $allowedStageIds = PipelineStage::getStageIdsAtOrAfterExecution();
+
+            if (! in_array($item->order->pipeline_stage_id, $allowedStageIds, true)) {
+                $validator = Validator::make([], []);
+                $validator->errors()->add('status', 'Een orderregel kan alleen op "Gewonnen" worden gezet nadat het onderzoek is uitgevoerd.');
+
+                throw new ValidationException($validator);
+            }
+        }
     }
 
     protected function saveOrderItemPurchasePrice(OrderItem $entity, Request $request): void

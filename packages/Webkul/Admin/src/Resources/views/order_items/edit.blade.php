@@ -84,14 +84,14 @@
                     type="select"
                     name="resource_type_id"
                     label="Resource type (overschrijft resource type van product)"
-                    value="{{ old('resource_type_id', $order_items->resource_type_id ?? $order_items->product?->resource_type_id ?? '') }}"
+                    value="{{ old('resource_type_id', $order_items->resource_type_id ?? '') }}"
                     rules=""
                 >
                     <option value="">@lang('admin::app.select')</option>
                     @foreach ($resourceTypes as $type)
                         <option
                             value="{{ $type->id }}"
-                            @selected((string) old('resource_type_id', $order_items->resource_type_id ?? $order_items->product?->resource_type_id ?? '') === (string) $type->id)
+                            @selected((string) old('resource_type_id', $order_items->resource_type_id ?? '') === (string) $type->id)
                         >{{ $type->name }}</option>
                     @endforeach
                 </x-adminc::components.field>

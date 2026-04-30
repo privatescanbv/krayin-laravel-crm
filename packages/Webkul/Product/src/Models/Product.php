@@ -6,15 +6,14 @@ use App\Helpers\ProductHelper;
 use App\Models\PartnerProduct;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Product\Contracts\Product as ProductContract;
 use Webkul\Product\Database\Factories\ProductFactory;
 use Webkul\Tag\Models\TagProxy;
 use App\Models\ResourceType;
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\Currency;
@@ -93,13 +92,22 @@ class Product extends Model implements ProductContract
      * Returns the directly assigned resource type if set,
      * otherwise falls back to the resource type of the first active partner product.
      */
-    public function resolvedResourceType(): ?\App\Models\ResourceType
+    public function resolvedResourceType(): ?ResourceType
     {
         if ($this->resource_type_id) {
             return $this->resourceType;
         }
 
         return $this->partnerProducts->first()?->resourceType;
+    }
+
+    public function resolvedResourceTypeEnum(): ?ResourceTypeEnum
+    {
+        $resourceType = $this->resolvedResourceType();
+        if ($resourceType) {
+            return ResourceTypeEnum::mapFrom($resourceType->name);
+        }
+        return null;
     }
 
     /**

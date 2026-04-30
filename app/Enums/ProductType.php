@@ -16,6 +16,17 @@ enum ProductType: string
     case OPERATIONS = 'operaties';
     case OVERIG = 'overig';
 
+    public static function fromLabel(string $name): ?self
+    {
+        foreach (self::cases() as $case) {
+            if (strcasecmp($case->label(), $name) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
     public function label(): string
     {
         return match ($this) {
@@ -30,6 +41,14 @@ enum ProductType: string
             self::DIENSTEN       => 'Diensten',
             self::OPERATIONS     => 'Operaties',
             self::OVERIG         => 'Overig',
+        };
+    }
+
+    public function isPlannable(): bool
+    {
+        return match ($this) {
+            self::LABORATORIUM, self::VERTALING, self::DIENSTEN, self::OVERIG => false,
+            default => true,
         };
     }
 }

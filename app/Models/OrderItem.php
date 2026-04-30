@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\OrderItemStatus;
-use App\Enums\ProductType as ProductTypeEnum;
 use App\Enums\PurchasePriceType;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Traits\HasAuditTrail;
@@ -13,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
@@ -75,81 +75,30 @@ class OrderItem extends Model
     }
 
     /**
-     * Effective product type ID for this order item (planning/UI): order-item resource override wins, else product.
-     */
-    public function resolvedProductTypeId(): ?int
-    {
-        $type = $this->resolvedProductType();
-
-        return $type ? (int) $type->id : null;
-    }
-
-    /**
      * Effective product type for planning/UI: derived from order-item resource type override when set,
      * otherwise the product's product type.
      */
     public function resolvedProductType(): ?ProductType
     {
-        if (! empty($this->resource_type_id)) {
-            $resource = $this->relationLoaded('resourceType')
-                ? $this->resourceType
-                : $this->resourceType()->first();
-
-            $productTypeEnum = $this->productTypeEnumFromResourceTypeName($resource?->name);
-            if ($productTypeEnum) {
-                $row = ProductType::query()->where('name', $productTypeEnum->label())->first();
-                if ($row) {
-                    return $row;
-                }
-            }
-        }
-
-        return $this->product?->productType;
-    }
-
-    public function resolvedProductTypeEnum(): ?ProductTypeEnum
-    {
-        $name = $this->resolvedProductType()?->name;
-
-        if (! $name) {
-            return null;
-        }
-
-        foreach (ProductTypeEnum::cases() as $case) {
-            if (strcasecmp($case->label(), $name) === 0) {
-                return $case;
-            }
-        }
-
-        return null;
-    }
-
-    public function resolvedResourceTypeEnum(): ?ResourceTypeEnum
-    {
-        if (! empty($this->resource_type_id)) {
-            $override = $this->relationLoaded('resourceType')
-                ? $this->resourceType
-                : $this->resourceType()->first();
-
-            if ($override?->name) {
-                try {
-                    return ResourceTypeEnum::mapFrom($override->name);
-                } catch (\Exception) {
-                    // Unknown label: fall through to product type mapping
-                }
-            }
-        }
-
-        return $this->resourceTypeEnumFromProductProductType();
+        return $this->productType ?? $this->product?->productType;
     }
 
     /**
      * Effective resource type name for planning/monitor.
      *
-     * Uses order-item resource type override when set; otherwise product type → resource mapping,
-     * then the product's resource type name.
+     * Uses order-item resource type override when set; otherwise from product or first partner product.
      */
     public function resolvedResourceTypeName(): ?string
+    {
+        return $this->resolvedResourceType()?->label();
+    }
+
+    /**
+     * Effective resource type name for planning/monitor.
+     *
+     * Uses order-item resource type override when set; otherwise from product or first partner product.
+     */
+    public function resolvedResourceType(): ResourceTypeEnum
     {
         if (! empty($this->resource_type_id)) {
             $name = $this->relationLoaded('resourceType')
@@ -157,17 +106,25 @@ class OrderItem extends Model
                 : $this->resourceType()->value('name');
 
             if ($name) {
-                return $name;
+                $resolved = ResourceTypeEnum::mapFrom($name);
+                if ($resolved !== null) {
+                    return $resolved;
+                }
             }
         }
-
-        $fromProductType = $this->resourceTypeEnumFromProductProductType();
-
-        if ($fromProductType) {
-            return $fromProductType->label();
+        $resolveResourceType = $this->product?->resolvedResourceTypeEnum();
+        if ($resolveResourceType) {
+            return $resolveResourceType;
         }
+        // fallback
+        Log::error('Could resolve resource type for order item'.$this->id.', fallback to default OTHER');
 
-        return $this->product?->resourceType?->name;
+        return ResourceTypeEnum::OTHER;
+    }
+
+    public function isPlannable(): bool
+    {
+        return $this->resolvedResourceType()?->isPlannable() ?: false;
     }
 
     public function person(): BelongsTo
@@ -270,19 +227,6 @@ class OrderItem extends Model
             ->whereNotIn('status', [OrderItemStatus::LOST->value, OrderItemStatus::NEW->value]);
     }
 
-    public function isPlannable(): bool
-    {
-        if (! empty($this->resource_type_id)) {
-            $enum = $this->resolvedResourceTypeEnum();
-
-            return $enum !== null && $enum !== ResourceTypeEnum::OTHER;
-        }
-
-        return $this->product &&
-            $this->product->partnerProducts &&
-            $this->product->partnerProducts->filter(fn ($product) => $product->isPlannable())->count() > 0;
-    }
-
     public function getProductName(): string
     {
         if (! empty($this->name)) {
@@ -304,76 +248,5 @@ class OrderItem extends Model
     public function getCanPlanAttribute(): string
     {
         return $this->isPlannable();
-    }
-
-    /**
-     * Product type enum from the linked product only (not order-item override), for resource type fallback chain.
-     */
-    private function productTypeEnumFromProductOnly(): ?ProductTypeEnum
-    {
-        $name = $this->product?->productType?->name;
-
-        if (! $name) {
-            return null;
-        }
-
-        foreach (ProductTypeEnum::cases() as $case) {
-            if (strcasecmp($case->label(), $name) === 0) {
-                return $case;
-            }
-        }
-
-        return null;
-    }
-
-    private function resourceTypeEnumFromProductProductType(): ?ResourceTypeEnum
-    {
-        $productType = $this->productTypeEnumFromProductOnly();
-
-        if (! $productType) {
-            return null;
-        }
-
-        return match ($productType) {
-            ProductTypeEnum::TOTAL_BODYSCAN => ResourceTypeEnum::MRI_SCANNER,
-            ProductTypeEnum::MRI_SCAN       => ResourceTypeEnum::MRI_SCANNER,
-            ProductTypeEnum::CT_SCAN        => ResourceTypeEnum::CT_SCANNER,
-            ProductTypeEnum::PETSCAN        => ResourceTypeEnum::PET_CT_SCANNER,
-            ProductTypeEnum::CARDIOLOGIE    => ResourceTypeEnum::CARDIOLOGIE,
-            ProductTypeEnum::OPERATIONS     => ResourceTypeEnum::ARTSEN,
-
-            ProductTypeEnum::ENDOSCOPIE,
-            ProductTypeEnum::LABORATORIUM,
-            ProductTypeEnum::VERTALING,
-            ProductTypeEnum::DIENSTEN,
-            ProductTypeEnum::OVERIG => ResourceTypeEnum::OTHER,
-        };
-    }
-
-    /**
-     * Map planning resource type label to a product type enum for display (reverse of product-type → resource mapping).
-     * Ambiguous cases pick a single canonical product type.
-     */
-    private function productTypeEnumFromResourceTypeName(?string $resourceTypeName): ?ProductTypeEnum
-    {
-        if ($resourceTypeName === null || $resourceTypeName === '') {
-            return null;
-        }
-
-        try {
-            $resourceEnum = ResourceTypeEnum::mapFrom($resourceTypeName);
-        } catch (\Exception) {
-            return null;
-        }
-
-        return match ($resourceEnum) {
-            ResourceTypeEnum::MRI_SCANNER    => ProductTypeEnum::MRI_SCAN,
-            ResourceTypeEnum::CT_SCANNER     => ProductTypeEnum::CT_SCAN,
-            ResourceTypeEnum::PET_CT_SCANNER => ProductTypeEnum::PETSCAN,
-            ResourceTypeEnum::CARDIOLOGIE    => ProductTypeEnum::CARDIOLOGIE,
-            ResourceTypeEnum::ARTSEN         => ProductTypeEnum::OPERATIONS,
-            ResourceTypeEnum::OTHER          => ProductTypeEnum::OVERIG,
-            ResourceTypeEnum::RONTGEN        => ProductTypeEnum::OVERIG,
-        };
     }
 }

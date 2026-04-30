@@ -228,18 +228,6 @@
                         'useVueModel' => false,
                     ])
 
-                    <!-- Lead Details Description -->
-                    <div class="mb-0.5">
-                        <x-adminc::components.field
-                            type="textarea"
-                            name="description"
-                            :label="trans('admin::app.leads.edit.description')"
-                            :placeholder="trans('admin::app.leads.edit.description')"
-                            value="{{ old('description', $lead->description) }}"
-                            class="min-h-[80px]"
-                        />
-                    </div>
-
                     {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
 
                     <!-- Organization Section -->

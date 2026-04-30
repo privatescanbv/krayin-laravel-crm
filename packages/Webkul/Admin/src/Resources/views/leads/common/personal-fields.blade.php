@@ -173,6 +173,17 @@
         :disabled="!$mayEditPersonFields"
         :readonly="!$mayEditPersonFields"
     />
+
+    <!-- Description -->
+    <x-adminc::components.field
+        type="textarea"
+        name="description"
+        label="Beschrijving"
+        placeholder="Beschrijving"
+        value="{{ old('description', $entity?->description ?? '') }}"
+        class="min-h-[80px]"
+    />
+
     @if($showActiveField)
         <!-- Portal activation toggle -->
         <x-adminc::components.field

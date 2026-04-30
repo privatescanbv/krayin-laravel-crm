@@ -427,18 +427,6 @@ $salutationToGenderMapping = [
                                         'useVueModel' => true,
                                     ])
 
-                                    <!-- Description -->
-                                    <div class="mb-4">
-                                        <x-adminc::components.field
-                                            type="textarea"
-                                            name="description"
-                                            v-model="formData.description"
-                                            label="Beschrijving"
-                                            placeholder="Beschrijving"
-                                            class="min-h-[80px]"
-                                        />
-                                    </div>
-
                                     <!-- Organization Section -->
                                     <div class="flex flex-col gap-4 mb-4">
                                         @include('admin::leads.common.organization', ['organization' => null])

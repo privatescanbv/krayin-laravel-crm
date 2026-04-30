@@ -278,7 +278,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $missing = collect($slRows)->filter(fn ($r) => $r[6] === '✗ missing')->count();
         if ($missing > 0) {
-            $this->warn("{$missing} order(s) have no matching CRM Lead — SalesLead will be created with lead_id=null.");
+            $this->warn("{$missing} order(s) have no matching CRM Lead — these orders will be skipped during import. Run with --import-leads to import missing leads first.");
         }
     }
 
@@ -467,7 +467,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $closedAt = $this->parseSugarDate($record->date_closed);
 
                 if ($crmLead === null) {
-                    $this->warn("Order {$record->id}: no matching CRM Lead found for sugar_lead_id=".($record->sugar_lead_id ?? 'null').'. SalesLead will have lead_id=null.');
+                    $this->warn("Skipping order {$record->id} (order_num={$record->order_num}): no matching CRM Lead found for sugar_lead_id=".($record->sugar_lead_id ?? 'null').'. Run with --import-leads to import missing leads first.');
+                    $skipped++;
+                    $bar->advance();
+
+                    continue;
                 }
 
                 DB::transaction(function () use (
@@ -486,34 +490,15 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 ) {
                     $timestamps = $this->parseSugarTimestamps($record);
 
-                    if ($crmLead !== null) {
-                        // Same path as createFromWonLead (copyFromLead → persons + anamnesis), without auto-created order
-                        $salesLead = $this->salesLeadRepository->createFromLeadForOrderImport($crmLead, [
-                            'name'              => $record->name ?? "Order {$record->order_num}",
-                            'pipeline_stage_id' => $salesStage->id(),
-                            'lost_reason'       => $lostReason,
-                            'closed_at'         => $closedAt,
-                        ], $timestamps);
+                    // Same path as createFromWonLead (copyFromLead → persons + anamnesis), without auto-created order
+                    $salesLead = $this->salesLeadRepository->createFromLeadForOrderImport($crmLead, [
+                        'name'              => $record->name ?? "Order {$record->order_num}",
+                        'pipeline_stage_id' => $salesStage->id(),
+                        'lost_reason'       => $lostReason,
+                        'closed_at'         => $closedAt,
+                    ], $timestamps);
 
-                        $this->attachSugarOrderPersonsToSalesLead($salesLead, $personsByExternalId);
-                    } else {
-                        $salesLead = $this->createEntityWithTimestamps(SalesLead::class, [
-                            'name'              => $record->name ?? "Order {$record->order_num}",
-                            'pipeline_stage_id' => $salesStage->id(),
-                            'lost_reason'       => $lostReason,
-                            'closed_at'         => $closedAt,
-                            'lead_id'           => null,
-                        ], $timestamps);
-
-                        if ($personsByExternalId->isNotEmpty()) {
-                            foreach ($personsByExternalId->pluck('id') as $personId) {
-                                DB::table('saleslead_persons')->insertOrIgnore([
-                                    'saleslead_id' => $salesLead->id,
-                                    'person_id'    => $personId,
-                                ]);
-                            }
-                        }
-                    }
+                    $this->attachSugarOrderPersonsToSalesLead($salesLead, $personsByExternalId);
 
                     // Create the Order
                     $order = $this->createEntityWithTimestamps(Order::class, [

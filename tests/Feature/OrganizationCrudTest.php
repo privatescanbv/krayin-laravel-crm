@@ -34,6 +34,15 @@ test('organizations index returns datagrid json', function () {
     expect($ids)->toContain($org1->id, $org2->id);
 });
 
+test('organization view page loads', function () {
+    $user = auth()->guard('user')->user();
+    $org = Organization::factory()->create(['user_id' => $user->id, 'name' => 'Acme BV']);
+
+    $response = $this->get(route('admin.contacts.organizations.view', $org->id));
+
+    $response->assertOk()->assertSee('Acme BV');
+});
+
 test('can create organization with address', function () {
     $payload = [
         'name'    => 'Test Organization',

@@ -13,11 +13,26 @@
 
                 <x-admin::breadcrumbs
                     name="contacts.organizations.view"
-                    :params="['id' => $organization->id]"
+                    :entity="$organization"
                 />
 
                 {!! view_render_event('admin.organizations.view.breadcrumbs.after', ['organization' => $organization]) !!}
             </div>
+
+            @if (bouncer()->hasPermission('contacts.organizations.edit'))
+                <div class="flex shrink-0 items-center gap-x-2.5">
+                    {!! view_render_event('admin.organizations.view.edit_button.before', ['organization' => $organization]) !!}
+
+                    <a
+                        href="{{ route('admin.contacts.organizations.edit', $organization->id) }}"
+                        class="secondary-button"
+                    >
+                        @lang('admin::app.contacts.organizations.index.datagrid.edit')
+                    </a>
+
+                    {!! view_render_event('admin.organizations.view.edit_button.after', ['organization' => $organization]) !!}
+                </div>
+            @endif
         </div>
 
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

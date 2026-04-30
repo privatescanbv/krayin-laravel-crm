@@ -144,6 +144,15 @@ Breadcrumbs::for('contacts.organizations.edit', function (BreadcrumbTrail $trail
     $trail->push(trans('admin::app.contacts.organizations.edit.title'), route('admin.contacts.organizations.edit', $organization->id));
 });
 
+// Contacts > Organizations > View
+Breadcrumbs::for('contacts.organizations.view', function (BreadcrumbTrail $trail, $organization) {
+    $trail->parent('contacts.organizations');
+    $trail->push(
+        $organization->name ?? trans('admin::app.contacts.organizations.view.title'),
+        route('admin.contacts.organizations.view', $organization->id)
+    );
+});
+
 // Products group
 Breadcrumbs::for('productgroups', function (BreadcrumbTrail $trail) {
     $trail->parent('products');

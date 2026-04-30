@@ -587,6 +587,11 @@ return [
                 'save-btn' => 'Save Organization',
                 'address'  => 'Address',
             ],
+
+            'view' => [
+                'title'   => 'View Organization',
+                'address' => 'Address',
+            ],
         ],
     ],
 

@@ -14,6 +14,7 @@ use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\PartnerProduct;
 use App\Models\SalesLead;
+use App\Repositories\AddressRepository;
 use App\Repositories\SalesLeadRepository;
 use Exception;
 use Illuminate\Support\Collection;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Product\Models\Product;
@@ -93,6 +95,14 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     ->table($table.' as so')
                     ->join('pcrm_salesorder_cstm as cstm', 'cstm.id_c', '=', 'so.id')
                     ->leftJoinSub($leadRelSub, 'lead_rel', 'lead_rel.order_id', '=', 'so.id')
+                    ->leftJoin('pcrm_salesoder_accounts_c as a', function ($join) {
+                        $join->on('a.pcrm_salesd0bfesorder_idb', '=', 'so.id')
+                            ->where('a.deleted', '=', 0);
+                    })
+                    ->leftJoin('accounts as ac', function ($join) {
+                        $join->on('ac.id', '=', 'a.pcrm_sales697fccounts_ida')
+                            ->where('ac.deleted', '=', 0);
+                    })
                     ->select([
                         'so.id',
                         'so.name',
@@ -116,6 +126,13 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'cstm.user_id_c',
                         'so.assigned_user_id',
                         'lead_rel.sugar_lead_id',
+                        'ac.name as account_name',
+                        'ac.billing_address_postalcode as account_billing_postalcode',
+                        'ac.billing_address_state as account_billing_state',
+                        'ac.billing_address_street as account_billing_street',
+                        'ac.billing_address_city as account_billing_city',
+                        'ac.shipping_address_city as account_shipping_city',
+                        'ac.billing_address_country as account_billing_country',
                     ])
                     ->where('so.deleted', 0)
                     ->whereNotNull('so.id')
@@ -213,12 +230,22 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     private function showDryRunResults(Collection $records, string $connection): void
     {
         $this->info("\n=== DRY RUN RESULTS ===");
+        $this->line('Type: Zakelijk = gekoppeld Sugar-account (naam niet begint met "Fam "); anders Particulier.');
+        $this->newLine();
 
         $orderIds = $records->pluck('id')->all();
         $rowsByOrder = $this->fetchOrderRows($connection, $orderIds);
 
-        // Orders table
-        $headers = ['External ID', 'Order#', 'Name', 'Amount', 'Stage', 'Lost Reason', 'First exam', 'Rows', 'Status'];
+        foreach ($records as $record) {
+            $label = $this->formatDryRunOrderTypeLabel($record);
+            $num = $record->order_num ?? substr((string) $record->id, 0, 8).'…';
+            $addr = $this->dryRunSugarOrganizationAddressHint($record);
+            $this->line("  #{$num}  →  {$label}".($addr !== null ? '  |  '.$addr : ''));
+        }
+        $this->newLine();
+
+        // Orders table (Type direct na Order# zodat het in smalle terminals zichtbaar blijft)
+        $headers = ['External ID', 'Order#', 'Type', 'Name', 'Amount', 'Stage', 'Lost Reason', 'First exam', 'Rows', 'Status'];
         $rows = [];
 
         foreach ($records as $record) {
@@ -228,6 +255,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             $rows[] = [
                 substr($record->id, 0, 8).'…',
                 $record->order_num ?? 'N/A',
+                $this->formatDryRunOrderTypeLabel($record),
                 $record->name ?? 'N/A',
                 $record->amount ?? '0',
                 $record->sales_stage ?? 'N/A',
@@ -239,7 +267,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         $this->table($headers, $rows);
-        $newCount = collect($rows)->filter(fn ($r) => $r[8] === '✗ new')->count();
+        $newCount = collect($rows)->filter(fn ($r) => $r[9] === '✗ new')->count();
         $this->info("Would import {$newCount} orders");
 
         // Order rows detail preview
@@ -253,7 +281,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info("\n=== SALESLEAD PREVIEW (new orders only) ===");
 
-        $slHeaders = ['Order#', 'SalesLead name', 'Sales stage', 'Lead ref (CRM)', 'Lead #', 'Lead name', 'Lead found?'];
+        $slHeaders = ['Order#', 'Type', 'SalesLead name', 'Sales stage', 'Lead ref (CRM)', 'Lead #', 'Lead name', 'Lead found?'];
         $slRows = [];
 
         foreach ($newRecords as $record) {
@@ -265,6 +293,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
             $slRows[] = [
                 $record->order_num ?? 'N/A',
+                $this->formatDryRunOrderTypeLabel($record),
                 $record->name ?? 'N/A',
                 $salesStage->label(),
                 $record->sugar_lead_id ? substr($record->sugar_lead_id, 0, 8).'…' : '—',
@@ -276,7 +305,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $this->table($slHeaders, $slRows);
 
-        $missing = collect($slRows)->filter(fn ($r) => $r[6] === '✗ missing')->count();
+        $missing = collect($slRows)->filter(fn ($r) => $r[7] === '✗ missing')->count();
         if ($missing > 0) {
             $this->warn("{$missing} order(s) have no matching CRM Lead — these orders will be skipped during import. Run with --import-leads to import missing leads first.");
         }
@@ -474,6 +503,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     continue;
                 }
 
+                $isBusiness = $this->isSugarBusinessOrder($record);
+
                 DB::transaction(function () use (
                     $record,
                     $orderRows,
@@ -487,8 +518,21 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $lostReason,
                     $closedAt,
                     $crmLead,
+                    $isBusiness,
                 ) {
                     $timestamps = $this->parseSugarTimestamps($record);
+
+                    $organizationId = null;
+                    if ($isBusiness) {
+                        $org = Organization::firstOrCreate(['name' => $record->account_name]);
+                        $organizationId = $org->id;
+
+                        $addressPayload = $this->organizationAddressPayloadFromSugarAccountRecord($record);
+                        if ($addressPayload !== null && ! $org->address_id) {
+                            app(AddressRepository::class)->upsertForEntity($org, $addressPayload);
+                            $org->refresh();
+                        }
+                    }
 
                     // Same path as createFromWonLead (copyFromLead → persons + anamnesis), without auto-created order
                     $salesLead = $this->salesLeadRepository->createFromLeadForOrderImport($crmLead, [
@@ -514,6 +558,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'user_id'                      => $this->mapSugarUserToId($record->assigned_user_id ?? null),
                         'clinic_coordinator_user_id'   => $this->mapSugarUserToId($record->user_id_c ?? null),
                         'combine_order'                => (bool) ($record->op_een_factuur_c ?? false),
+                        'is_business'                  => $isBusiness,
+                        'organization_id'              => $organizationId,
                     ], $this->parseSugarTimestamps($record));
 
                     $itemsCreated = 0;
@@ -1247,5 +1293,139 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         if ($extraIds !== []) {
             $salesLead->attachPersons($extraIds);
         }
+    }
+
+    /**
+     * @return array{street: ?string, house_number: ?string, house_number_suffix: ?string}
+     */
+    private function splitSugarBillingStreetForOrganization(?string $raw): array
+    {
+        $collapsed = preg_replace('/\s+/u', ' ', trim((string) ($raw ?? '')));
+        $collapsed = is_string($collapsed) ? trim($collapsed) : '';
+        if ($collapsed === '') {
+            return ['street' => null, 'house_number' => null, 'house_number_suffix' => null];
+        }
+
+        /**
+         * Last segment looks like house number when billing_address_street combines
+         * name + digits (often Dutch): "Schermerhoek 500", optional "-B"/"42a"-style suffix.
+         */
+        if (preg_match(
+            '/^(.+?)\s+(\d{1,6})(?:[-\s]([a-zA-Z0-9]{1,10})|([a-zA-Z]{1,10}))?$/u',
+            $collapsed,
+            $matches
+        )) {
+            $streetPart = trim($matches[1]);
+            if ($streetPart !== '') {
+                $suffix = $matches[3] ?? '';
+                if ($suffix === '' && (($matches[4] ?? '') !== '')) {
+                    $suffix = $matches[4];
+                }
+
+                return [
+                    'street'               => $streetPart,
+                    'house_number'         => $matches[2],
+                    'house_number_suffix'  => $suffix !== '' ? substr($suffix, 0, 10) : null,
+                ];
+            }
+        }
+
+        return [
+            'street'              => $collapsed,
+            'house_number'        => $this->sugarOrganizationFallbackHouseNumber(),
+            'house_number_suffix' => null,
+        ];
+    }
+
+    /**
+     * @return non-empty-string
+     */
+    private function sugarOrganizationFallbackHouseNumber(): string
+    {
+        return '9999';
+    }
+
+    private function nonEmptyTrimmedString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $t = trim((string) $value);
+
+        return $t === '' ? null : $t;
+    }
+
+    /**
+     * Builds address data for CRM {@see Address} when Sugar billing fields allow it.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function organizationAddressPayloadFromSugarAccountRecord(object $record): ?array
+    {
+        $postalRaw = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_postalcode'));
+        if ($postalRaw === null) {
+            return null;
+        }
+
+        $streetRaw = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_street')) ?? '';
+
+        $split = $this->splitSugarBillingStreetForOrganization($streetRaw !== '' ? $streetRaw : null);
+        $street = (($split['street'] ?? '') !== '') ? ($split['street'] ?? '') : 'Onbekend';
+        $houseNumber = (($split['house_number'] ?? '') !== '') ? ($split['house_number'] ?? '') : $this->sugarOrganizationFallbackHouseNumber();
+        $suffix = $split['house_number_suffix'] ?? null;
+
+        $cityBilling = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_city'));
+        $cityShipping = $this->nonEmptyTrimmedString(data_get($record, 'account_shipping_city'));
+        $city = $cityBilling ?? $cityShipping;
+
+        return [
+            'street'               => $street,
+            'house_number'         => $houseNumber,
+            'house_number_suffix'  => $suffix,
+            'postal_code'          => $postalRaw,
+            'city'                 => $city,
+            'state'                => $this->nonEmptyTrimmedString(data_get($record, 'account_billing_state')),
+            'country'              => $this->nonEmptyTrimmedString(data_get($record, 'account_billing_country')),
+        ];
+    }
+
+    /**
+     * One-line Sugar org address preview for zakelijk orders in dry-run.
+     */
+    private function dryRunSugarOrganizationAddressHint(object $record): ?string
+    {
+        if (! $this->isSugarBusinessOrder($record)) {
+            return null;
+        }
+
+        $payload = $this->organizationAddressPayloadFromSugarAccountRecord($record);
+        if ($payload === null) {
+            return 'org-adres: (geen postcode in Sugar)';
+        }
+
+        return 'org-adres: '.trim(implode(', ', array_filter([
+            implode(' ', array_filter([
+                $payload['street'] ?? '',
+                ($payload['house_number'] ?? '')
+                    .(! empty($payload['house_number_suffix']) ? '-'.$payload['house_number_suffix'] : ''),
+            ])),
+            trim(($payload['postal_code'] ?? '').' '.($payload['city'] ?? '')),
+            $payload['country'] ?? null,
+        ])));
+    }
+
+    private function isSugarBusinessOrder(object $record): bool
+    {
+        return ! empty($record->account_name)
+            && ! str_starts_with($record->account_name, 'Fam ');
+    }
+
+    private function formatDryRunOrderTypeLabel(object $record): string
+    {
+        if ($this->isSugarBusinessOrder($record)) {
+            return 'Zakelijk ('.$record->account_name.')';
+        }
+
+        return 'Particulier';
     }
 }

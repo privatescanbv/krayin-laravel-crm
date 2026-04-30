@@ -560,6 +560,11 @@ return [
                 'save-btn' => 'Organisatie opslaan',
                 'address'  => 'Adres',
             ],
+
+            'view' => [
+                'title'   => 'Organisatie bekijken',
+                'address' => 'Adres',
+            ],
         ],
     ],
 

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Product\Models\Product;
@@ -44,6 +45,8 @@ beforeEach(function () {
         'pcrm_salesorder_cstm',
         'pcrm_salesorder',
         'aos_products',
+        'pcrm_salesoder_accounts_c',
+        'accounts',
     ];
 
     foreach ($tables as $tbl) {
@@ -135,6 +138,24 @@ beforeEach(function () {
     Schema::connection('sugarcrm')->create('aos_products', function (Blueprint $table) {
         $table->string('id')->primary();
         $table->string('name')->nullable();
+        $table->integer('deleted')->default(0);
+    });
+
+    Schema::connection('sugarcrm')->create('accounts', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable();
+        $table->string('billing_address_postalcode')->nullable();
+        $table->string('billing_address_state')->nullable();
+        $table->text('billing_address_street')->nullable();
+        $table->string('billing_address_city')->nullable();
+        $table->string('shipping_address_city')->nullable();
+        $table->string('billing_address_country')->nullable();
+        $table->integer('deleted')->default(0);
+    });
+
+    Schema::connection('sugarcrm')->create('pcrm_salesoder_accounts_c', function (Blueprint $table) {
+        $table->string('pcrm_salesd0bfesorder_idb');
+        $table->string('pcrm_sales697fccounts_ida');
         $table->integer('deleted')->default(0);
     });
 });
@@ -245,6 +266,34 @@ function linkOrderToSugarLead(string $orderId, string $sugarLeadId): void
     ]);
 }
 
+function insertSugarAccount(string $accountId, string $accountName, array $billing = []): void
+{
+    if (DB::connection('sugarcrm')->table('accounts')->where('id', $accountId)->exists()) {
+        return;
+    }
+
+    DB::connection('sugarcrm')->table('accounts')->insert(array_merge([
+        'id'                                  => $accountId,
+        'name'                                => $accountName,
+        'deleted'                             => 0,
+        'billing_address_postalcode'          => null,
+        'billing_address_state'               => null,
+        'billing_address_street'              => null,
+        'billing_address_city'                => null,
+        'shipping_address_city'               => null,
+        'billing_address_country'             => null,
+    ], $billing));
+}
+
+function linkOrderToAccount(string $orderId, string $accountId): void
+{
+    DB::connection('sugarcrm')->table('pcrm_salesoder_accounts_c')->insert([
+        'pcrm_salesd0bfesorder_idb' => $orderId,
+        'pcrm_sales697fccounts_ida' => $accountId,
+        'deleted'                   => 0,
+    ]);
+}
+
 function runOrderImport(array $args = []): int
 {
     return Artisan::call('import:orders', array_merge([
@@ -254,6 +303,162 @@ function runOrderImport(array $args = []): int
 }
 
 // ─── tests ──────────────────────────────────────────────────────────────────
+
+test('imports zakelijk Sugar order with organization and is_business', function () {
+    Person::factory()->create(['external_id' => 'contact-biz']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-biz']);
+
+    insertSugarOrder('order-biz-001', ['order_num' => 202500099]);
+    insertSugarRow('order-biz-001', 'row-biz', []);
+    linkRowToContact('row-biz', 'contact-biz');
+    linkOrderToSugarLead('order-biz-001', 'sugar-lead-biz');
+    insertSugarAccount('acc-biz', 'Acme BV', [
+        'billing_address_postalcode'   => '1846 LD',
+        'billing_address_state'        => 'Noord-Holland',
+        'billing_address_street'       => 'Schermerhoek 500',
+        'billing_address_city'         => 'Groet',
+        'billing_address_country'      => 'Nederland',
+    ]);
+    linkOrderToAccount('order-biz-001', 'acc-biz');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-biz-001')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->is_business)->toBeTrue()
+        ->and($order->organization_id)->not->toBeNull();
+
+    $org = Organization::with('address')->find($order->organization_id);
+    expect($org)->not->toBeNull()->and($org->name)->toBe('Acme BV');
+
+    expect($org->address)->not->toBeNull()
+        ->street->toBe('Schermerhoek')
+        ->house_number->toBe('500')
+        ->postal_code->toBe('1846LD')
+        ->city->toBe('Groet')
+        ->state->toBe('Noord-Holland')
+        ->country->toBe('Nederland');
+});
+
+test('Fam prefixed Sugar account name is particulier not zakelijk', function () {
+    Person::factory()->create(['external_id' => 'contact-fam']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-fam']);
+
+    insertSugarOrder('order-fam-001');
+    insertSugarRow('order-fam-001', 'row-fam', []);
+    linkRowToContact('row-fam', 'contact-fam');
+    linkOrderToSugarLead('order-fam-001', 'sugar-lead-fam');
+    insertSugarAccount('acc-fam', 'Fam Jansen');
+    linkOrderToAccount('order-fam-001', 'acc-fam');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-fam-001')->first();
+    expect($order->is_business)->toBeFalse()
+        ->and($order->organization_id)->toBeNull();
+});
+
+test('two zakelijk orders with same Sugar account reuse one CRM organization', function () {
+    Person::factory()->create(['external_id' => 'contact-shared']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-shared-a']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-shared-b']);
+
+    insertSugarAccount('acc-shared', 'Shared BV');
+
+    insertSugarOrder('order-biz-shared-a', ['order_num' => 202500101]);
+    insertSugarRow('order-biz-shared-a', 'row-shared-a', []);
+    linkRowToContact('row-shared-a', 'contact-shared');
+    linkOrderToSugarLead('order-biz-shared-a', 'sugar-lead-shared-a');
+    linkOrderToAccount('order-biz-shared-a', 'acc-shared');
+
+    insertSugarOrder('order-biz-shared-b', ['order_num' => 202500102]);
+    insertSugarRow('order-biz-shared-b', 'row-shared-b', []);
+    linkRowToContact('row-shared-b', 'contact-shared');
+    linkOrderToSugarLead('order-biz-shared-b', 'sugar-lead-shared-b');
+    linkOrderToAccount('order-biz-shared-b', 'acc-shared');
+
+    expect(runOrderImport())->toBe(0);
+
+    expect(Organization::where('name', 'Shared BV')->count())->toBe(1);
+
+    $orderA = Order::where('external_id', 'order-biz-shared-a')->first();
+    $orderB = Order::where('external_id', 'order-biz-shared-b')->first();
+    expect($orderA->organization_id)->toBe($orderB->organization_id)
+        ->and($orderA->is_business)->toBeTrue()
+        ->and($orderB->is_business)->toBeTrue();
+});
+
+test('zakelijk import uses fallback house number 9999 when Sugar street has no huisnummer', function () {
+    Person::factory()->create(['external_id' => 'contact-nohouse']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-nohouse']);
+
+    insertSugarOrder('order-nohouse-001');
+    insertSugarRow('order-nohouse-001', 'row-nohouse', []);
+    linkRowToContact('row-nohouse', 'contact-nohouse');
+    linkOrderToSugarLead('order-nohouse-001', 'sugar-lead-nohouse');
+    insertSugarAccount('acc-nohouse', 'Zorg BV', [
+        'billing_address_postalcode'   => '1081 AB',
+        'billing_address_street'       => 'Burgemeester C. van de Werkenstraat',
+        'billing_address_city'         => 'Amsterdam',
+        'billing_address_country'      => 'Nederland',
+    ]);
+    linkOrderToAccount('order-nohouse-001', 'acc-nohouse');
+
+    expect(runOrderImport())->toBe(0);
+
+    $org = Organization::with('address')->where('name', 'Zorg BV')->first();
+    expect($org->address)->not->toBeNull()
+        ->street->toBe('Burgemeester C. van de Werkenstraat')
+        ->house_number->toBe('9999')
+        ->postal_code->toBe('1081AB');
+});
+
+test('zakelijk import skips organization address when Sugar billing postcode missing', function () {
+    Person::factory()->create(['external_id' => 'contact-nozip']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-nozip']);
+
+    insertSugarOrder('order-nozip-001');
+    insertSugarRow('order-nozip-001', 'row-nozip', []);
+    linkRowToContact('row-nozip', 'contact-nozip');
+    linkOrderToSugarLead('order-nozip-001', 'sugar-lead-nozip');
+    insertSugarAccount('acc-nozip', 'Losse BV', [
+        'billing_address_street'  => 'Ergens 10',
+        'billing_address_city'    => 'Utrecht',
+    ]);
+    linkOrderToAccount('order-nozip-001', 'acc-nozip');
+
+    expect(runOrderImport())->toBe(0);
+
+    $org = Organization::find(Order::where('external_id', 'order-nozip-001')->value('organization_id'));
+    expect($org)->not->toBeNull()->and($org->address_id)->toBeNull();
+});
+
+test('zakelijk import uses shipping_address_city when billing city missing', function () {
+    Person::factory()->create(['external_id' => 'contact-ship-city']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-ship-city']);
+
+    insertSugarOrder('order-ship-city-001');
+    insertSugarRow('order-ship-city-001', 'row-ship-city', []);
+    linkRowToContact('row-ship-city', 'contact-ship-city');
+    linkOrderToSugarLead('order-ship-city-001', 'sugar-lead-ship-city');
+    insertSugarAccount('acc-ship-city', 'Ship City BV', [
+        'billing_address_postalcode'   => '9711 BP',
+        'billing_address_street'       => 'Willem Barentszroute 12-B',
+        'shipping_address_city'        => 'Groningen',
+        'billing_address_country'      => 'NL',
+    ]);
+    linkOrderToAccount('order-ship-city-001', 'acc-ship-city');
+
+    expect(runOrderImport())->toBe(0);
+
+    $addr = Organization::with('address')->where('name', 'Ship City BV')->first()?->address;
+    expect($addr)->not->toBeNull()
+        ->street->toBe('Willem Barentszroute')
+        ->house_number->toBe('12')
+        ->house_number_suffix->toBe('B')
+        ->city->toBe('Groningen')
+        ->postal_code->toBe('9711BP');
+});
 
 test('imports won order and creates saleslead and orderitem linked to person', function () {
     $person = Person::factory()->create(['external_id' => 'contact-001']);
@@ -297,10 +502,13 @@ test('imports won order and creates saleslead and orderitem linked to person', f
 });
 
 test('imports lost order with lost reason', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-lost-001']);
+
     insertSugarOrder('order-lost-001', [
         'sales_stage'      => 'Verloren',
         'reden_afvoeren_c' => 'prijs',
     ]);
+    linkOrderToSugarLead('order-lost-001', 'sugar-lead-lost-001');
 
     $exit = runOrderImport();
 
@@ -316,7 +524,10 @@ test('imports lost order with lost reason', function () {
 });
 
 test('unknown sales_stage maps to first order stage', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-optie-001']);
+
     insertSugarOrder('order-optie-001', ['sales_stage' => 'Optie']);
+    linkOrderToSugarLead('order-optie-001', 'sugar-lead-optie-001');
 
     runOrderImport();
 
@@ -326,7 +537,10 @@ test('unknown sales_stage maps to first order stage', function () {
 });
 
 test('skips already imported order on re-run', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-dup-001']);
+
     insertSugarOrder('order-dup-001');
+    linkOrderToSugarLead('order-dup-001', 'sugar-lead-dup-001');
 
     runOrderImport();
     runOrderImport(); // second run
@@ -336,6 +550,8 @@ test('skips already imported order on re-run', function () {
 });
 
 test('order with multiple rows and multiple persons creates multiple orderitems', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-multi-001']);
+
     $personA = Person::factory()->create(['external_id' => 'contact-A']);
     $personB = Person::factory()->create(['external_id' => 'contact-B']);
 
@@ -347,6 +563,7 @@ test('order with multiple rows and multiple persons creates multiple orderitems'
     insertSugarRow('order-multi-001', 'row-B', ['sales_price' => 1500, 'name' => 'Scan B']);
     linkRowToContact('row-A', 'contact-A');
     linkRowToContact('row-B', 'contact-B');
+    linkOrderToSugarLead('order-multi-001', 'sugar-lead-multi-001');
 
     runOrderImport();
 
@@ -358,9 +575,12 @@ test('order with multiple rows and multiple persons creates multiple orderitems'
 });
 
 test('order row without matching person still imports with person_id null', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-noperson-001']);
+
     insertSugarOrder('order-noperson-001');
     insertSugarRow('order-noperson-001', 'row-noperson', []);
     linkRowToContact('row-noperson', 'contact-does-not-exist');
+    linkOrderToSugarLead('order-noperson-001', 'sugar-lead-noperson-001');
 
     runOrderImport();
 
@@ -371,12 +591,15 @@ test('order row without matching person still imports with person_id null', func
 });
 
 test('order row with matching product sets product_id on orderitem', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-product-001']);
+
     $product = Product::factory()->create(['external_id' => 'product-template-001']);
 
     insertSugarOrder('order-product-001');
     insertSugarRow('order-product-001', 'row-product-001', [
         'producttemplate_id_c' => 'product-template-001',
     ]);
+    linkOrderToSugarLead('order-product-001', 'sugar-lead-product-001');
 
     runOrderImport();
 
@@ -385,6 +608,8 @@ test('order row with matching product sets product_id on orderitem', function ()
 });
 
 test('order row resolves product by exact CRM name when template id has no match', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-by-name-001']);
+
     $product = Product::factory()->create(['name' => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio']);
 
     insertSugarOrder('order-by-name-001');
@@ -393,6 +618,7 @@ test('order row resolves product by exact CRM name when template id has no match
         'producttemplate_id_c' => 'no-such-template-in-crm',
         'sales_price'          => 1890,
     ]);
+    linkOrderToSugarLead('order-by-name-001', 'sugar-lead-by-name-001');
 
     runOrderImport();
 
@@ -403,6 +629,8 @@ test('order row resolves product by exact CRM name when template id has no match
 });
 
 test('order row resolves product via partner product name when Sugar line differs from catalog Product name', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pp-name-001']);
+
     $product = Product::factory()->create(['name' => 'TB1 catalog internal label']);
     PartnerProduct::factory()->create([
         'product_id' => $product->id,
@@ -415,6 +643,7 @@ test('order row resolves product via partner product name when Sugar line differ
         'name'                 => 'TB1 Royal+ Bodyscan',
         'producttemplate_id_c' => 'unknown-sugar-template-uuid',
     ]);
+    linkOrderToSugarLead('order-pp-name-001', 'sugar-lead-pp-name-001');
 
     runOrderImport();
 
@@ -425,6 +654,8 @@ test('order row resolves product via partner product name when Sugar line differ
 });
 
 test('imports invoice purchase prices from Sugar order row cstm', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-inv-001']);
+
     Person::factory()->create(['external_id' => 'contact-inv-1']);
 
     insertSugarOrder('order-inv-001');
@@ -441,6 +672,7 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
         'inv_purchase_total_c'  => 11,
     ]);
     linkRowToContact('row-inv-001', 'contact-inv-1');
+    linkOrderToSugarLead('order-inv-001', 'sugar-lead-inv-001');
 
     runOrderImport();
 
@@ -468,6 +700,8 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
 });
 
 test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is geen', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-ink-geen']);
+
     Person::factory()->create(['external_id' => 'contact-ink-geen']);
 
     insertSugarOrder('order-ink-geen-001');
@@ -479,6 +713,7 @@ test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is gee
         'inv_purchase_total_c' => 50,
     ]);
     linkRowToContact('row-ink-geen-001', 'contact-ink-geen');
+    linkOrderToSugarLead('order-ink-geen-001', 'sugar-lead-ink-geen');
 
     runOrderImport();
 
@@ -491,6 +726,8 @@ test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is gee
 });
 
 test('invoice import treats SuiteCRM export row like Result_6.csv as not paid (teontvangen + geen buckets)', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-result6-mri']);
+
     Person::factory()->create(['external_id' => 'contact-result6-mri']);
 
     insertSugarOrder('order-result6-mri');
@@ -503,6 +740,7 @@ test('invoice import treats SuiteCRM export row like Result_6.csv as not paid (t
         'ink_total_status_c'   => 'teontvangen',
     ]);
     linkRowToContact('row-result6-mri', 'contact-result6-mri');
+    linkOrderToSugarLead('order-result6-mri', 'sugar-lead-result6-mri');
 
     runOrderImport();
 
@@ -515,6 +753,8 @@ test('invoice import treats SuiteCRM export row like Result_6.csv as not paid (t
 });
 
 test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is open', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-ink-open']);
+
     Person::factory()->create(['external_id' => 'contact-ink-open']);
 
     insertSugarOrder('order-ink-open-001');
@@ -526,6 +766,7 @@ test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is ope
         'inv_purchase_total_c' => 50,
     ]);
     linkRowToContact('row-ink-open-001', 'contact-ink-open');
+    linkOrderToSugarLead('order-ink-open-001', 'sugar-lead-ink-open');
 
     runOrderImport();
 
@@ -538,6 +779,8 @@ test('invoice import ignores inv_purchase_radio_c when ink_radio_status_c is ope
 });
 
 test('invoice import ignores inv_purchase_total_c when ink_total_status_c is geen', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-ink-total-geen']);
+
     Person::factory()->create(['external_id' => 'contact-ink-total-geen']);
 
     insertSugarOrder('order-ink-total-geen-001');
@@ -548,6 +791,7 @@ test('invoice import ignores inv_purchase_total_c when ink_total_status_c is gee
         'ink_total_status_c'   => 'geen',
     ]);
     linkRowToContact('row-ink-total-geen-001', 'contact-ink-total-geen');
+    linkOrderToSugarLead('order-ink-total-geen-001', 'sugar-lead-ink-total-geen');
 
     runOrderImport();
 
@@ -560,6 +804,8 @@ test('invoice import ignores inv_purchase_total_c when ink_total_status_c is gee
 });
 
 test('creates zero PurchasePrice rows when Sugar inv fields are empty so resolved price ignores catalog', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-noinv']);
+
     Person::factory()->create(['external_id' => 'contact-noinv']);
 
     insertSugarOrder('order-noinv-001');
@@ -572,6 +818,7 @@ test('creates zero PurchasePrice rows when Sugar inv fields are empty so resolve
         'inv_purchase_total_c'  => null,
     ]);
     linkRowToContact('row-noinv-001', 'contact-noinv');
+    linkOrderToSugarLead('order-noinv-001', 'sugar-lead-noinv');
 
     runOrderImport();
 
@@ -585,6 +832,8 @@ test('creates zero PurchasePrice rows when Sugar inv fields are empty so resolve
 });
 
 test('imports inv_purchase_total_c only into MAIN and resolved purchase total', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-totalonly']);
+
     Person::factory()->create(['external_id' => 'contact-totalonly']);
 
     insertSugarOrder('order-totalonly-001');
@@ -598,6 +847,7 @@ test('imports inv_purchase_total_c only into MAIN and resolved purchase total', 
         'inv_purchase_total_c'  => 99.5,
     ]);
     linkRowToContact('row-totalonly-001', 'contact-totalonly');
+    linkOrderToSugarLead('order-totalonly-001', 'sugar-lead-totalonly');
 
     runOrderImport();
 
@@ -613,6 +863,8 @@ test('imports inv_purchase_total_c only into MAIN and resolved purchase total', 
 });
 
 test('Sugar purchase prices override partner product in resolvedPurchasePrice', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-sugarpp']);
+
     Person::factory()->create(['external_id' => 'contact-sugarpp']);
 
     $product = Product::where('name', 'TB1 Business Class')->first();
@@ -640,6 +892,7 @@ test('Sugar purchase prices override partner product in resolvedPurchasePrice', 
         'inv_purchase_total_c'  => 40,
     ]);
     linkRowToContact('row-sugarpp-001', 'contact-sugarpp');
+    linkOrderToSugarLead('order-sugarpp-001', 'sugar-lead-sugarpp');
 
     runOrderImport();
 
@@ -663,7 +916,10 @@ test('orders entered before 2025 are excluded by the date filter', function () {
 });
 
 test('combine_order flag is imported correctly', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-combined']);
+
     insertSugarOrder('order-combined-001', ['op_een_factuur_c' => 1]);
+    linkOrderToSugarLead('order-combined-001', 'sugar-lead-combined');
 
     runOrderImport();
 
@@ -682,6 +938,8 @@ test('dry run does not persist any data', function () {
 });
 
 test('imports Sugar advance payment as OrderPayment with date_entered as paid_at', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pay-adv']);
+
     insertSugarOrder('order-pay-adv-001', [
         'betaald_vooruit_c'        => 2206.0,
         'betaal_status_c'          => 'volledig',
@@ -689,6 +947,7 @@ test('imports Sugar advance payment as OrderPayment with date_entered as paid_at
         'datum_betaling_vr_c'      => '2025-03-10 09:00:00',
         'date_closed'              => '2025-08-20',
     ]);
+    linkOrderToSugarLead('order-pay-adv-001', 'sugar-lead-pay-adv');
 
     runOrderImport();
 
@@ -707,10 +966,13 @@ test('imports Sugar advance payment as OrderPayment with date_entered as paid_at
 });
 
 test('imports Sugar clinic payment with pin_contant mapping', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pay-clinic']);
+
     insertSugarOrder('order-pay-clinic-001', [
         'betaald_kliniek_c' => 50.0,
         'pin_contant_c'     => 'contant',
     ]);
+    linkOrderToSugarLead('order-pay-clinic-001', 'sugar-lead-pay-clinic');
 
     runOrderImport();
 
@@ -723,11 +985,14 @@ test('imports Sugar clinic payment with pin_contant mapping', function () {
 });
 
 test('imports Sugar clinic payment with datum_onderzoek_1 as paid_at', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pay-clinic-date']);
+
     insertSugarOrder('order-pay-clinic-date-001', [
         'betaald_kliniek_c'  => 75.0,
         'pin_contant_c'      => 'pin',
         'datum_onderzoek_1'  => '2025-07-15',
     ]);
+    linkOrderToSugarLead('order-pay-clinic-date-001', 'sugar-lead-pay-clinic-date');
 
     runOrderImport();
 
@@ -742,6 +1007,8 @@ test('imports Sugar clinic payment with datum_onderzoek_1 as paid_at', function 
 });
 
 test('payment dates differ for advance and clinic on same order', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pay-both']);
+
     insertSugarOrder('order-pay-both-001', [
         'betaald_vooruit_c'   => 100.0,
         'betaald_kliniek_c'   => 50.0,
@@ -750,6 +1017,7 @@ test('payment dates differ for advance and clinic on same order', function () {
         'datum_betaling_vr_c' => '2025-02-01 08:30:00',
         'datum_onderzoek_1'   => '2025-06-20',
     ]);
+    linkOrderToSugarLead('order-pay-both-001', 'sugar-lead-pay-both');
 
     runOrderImport();
 
@@ -765,10 +1033,13 @@ test('payment dates differ for advance and clinic on same order', function () {
 });
 
 test('does not create OrderPayments when Sugar payment amounts are empty', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pay-none']);
+
     insertSugarOrder('order-pay-none-001', [
         'betaald_vooruit_c' => null,
         'betaald_kliniek_c' => null,
     ]);
+    linkOrderToSugarLead('order-pay-none-001', 'sugar-lead-pay-none');
 
     runOrderImport();
 

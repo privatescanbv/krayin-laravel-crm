@@ -30,9 +30,9 @@
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
-    <script src="{{ asset("/vendor/scribe/js/tryitout-5.8.0.js") }}"></script>
+    <script src="{{ asset("/vendor/scribe/js/tryitout-5.9.0.js") }}"></script>
 
-    <script src="{{ asset("/vendor/scribe/js/theme-default-5.8.0.js") }}"></script>
+    <script src="{{ asset("/vendor/scribe/js/theme-default-5.9.0.js") }}"></script>
 
 </head>
 
@@ -203,7 +203,7 @@
                 </li>
                                     <ul id="tocify-subheader-patient-documents" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents">
-                                <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</a>
+                                <a href="#patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="patient-documents-POSTapi-patient--id--documents">
                                 <a href="#patient-documents-POSTapi-patient--id--documents">Upload a file and attach it as a FILE activity for the patient.</a>
@@ -261,7 +261,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: March 17, 2026</li>
+        <li>Last updated: April 30, 2026</li>
     </ul>
 </div>
 
@@ -566,14 +566,31 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-03-17\",
+    \"birthdate\": \"2026-04-30\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
     \"primary_huisnr_toevoeging_c\": \"architecto\",
     \"primary_address_postalcode\": \"1234AB\",
     \"description\": \"Eius et animi quos velit et.\",
-    \"diagnoseform_pdf_url\": \"http:\\/\\/www.bailey.biz\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"
+    \"diagnoseform_pdf_url\": \"http:\\/\\/www.bailey.biz\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\",
+    \"source\": \"architecto\",
+    \"medium\": \"architecto\",
+    \"campaign\": \"architecto\",
+    \"adgroup\": \"architecto\",
+    \"utm_term\": \"architecto\",
+    \"utm_content\": \"architecto\",
+    \"utm_id\": \"architecto\",
+    \"gclid\": \"architecto\",
+    \"gbraid\": \"architecto\",
+    \"wbraid\": \"architecto\",
+    \"gad_source\": \"architecto\",
+    \"gad_campaignid\": \"architecto\",
+    \"landing_page\": \"architecto\",
+    \"referrer\": \"architecto\",
+    \"first_visit_at\": \"architecto\",
+    \"last_visit_at\": \"architecto\",
+    \"attribution_url\": \"http:\\/\\/www.bailey.biz\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"
 }"
 </code></pre></div>
 
@@ -597,14 +614,31 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-03-17",
+    "birthdate": "2026-04-30",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
     "primary_huisnr_toevoeging_c": "architecto",
     "primary_address_postalcode": "1234AB",
     "description": "Eius et animi quos velit et.",
-    "diagnoseform_pdf_url": "http:\/\/www.bailey.biz\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html"
+    "diagnoseform_pdf_url": "http:\/\/www.bailey.biz\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html",
+    "source": "architecto",
+    "medium": "architecto",
+    "campaign": "architecto",
+    "adgroup": "architecto",
+    "utm_term": "architecto",
+    "utm_content": "architecto",
+    "utm_id": "architecto",
+    "gclid": "architecto",
+    "gbraid": "architecto",
+    "wbraid": "architecto",
+    "gad_source": "architecto",
+    "gad_campaignid": "architecto",
+    "landing_page": "architecto",
+    "referrer": "architecto",
+    "first_visit_at": "architecto",
+    "last_visit_at": "architecto",
+    "attribution_url": "http:\/\/www.bailey.biz\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html"
 };
 
 fetch(url, {
@@ -724,7 +758,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="69b238c0-e630-b733-2bb3-4fd85ff554da"
                data-component="body">
     <br>
-<p>Marketing campaign external id (UUID). Dit is <strong>niet</strong> de numerieke database id, maar <code>marketing_campaigns.external_id</code> (model: <code>Webkul\Marketing\Models\Campaign</code>). The <code>external_id</code> of an existing record in the marketing_campaigns table. Example: <code>69b238c0-e630-b733-2bb3-4fd85ff554da</code></p>
+<p>Marketing campaign external id (UUID). Dit is <strong>niet</strong> de numerieke database id, maar <code>marketing_campaigns.external_id</code> (model: <code>Webkul\Marketing\Models\Campaign</code>). Example: <code>69b238c0-e630-b733-2bb3-4fd85ff554da</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>lead_source</code></b>&nbsp;&nbsp;
@@ -805,10 +839,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-03-17"
+               value="2026-04-30"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-03-17</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-04-30</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -820,7 +854,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="zbailey@example.net"
                data-component="body">
     <br>
-<p>Must be a valid email address. Example: <code>zbailey@example.net</code></p>
+<p>Het veld value moet een geldig e-mailadres zijn. Example: <code>zbailey@example.net</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>phone_mobile</code></b>&nbsp;&nbsp;
@@ -889,6 +923,210 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="diagnoseform_pdf_url"                data-endpoint="POSTapi-leads-hernia"
+               value="http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html"
+               data-component="body">
+    <br>
+<p>Example: <code>http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>source</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="source"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>medium</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="medium"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>campaign</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="campaign"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>adgroup</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="adgroup"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>utm_term</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="utm_term"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>utm_content</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="utm_content"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>utm_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="utm_id"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>gclid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="gclid"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>gbraid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="gbraid"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>wbraid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="wbraid"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>gad_source</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="gad_source"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>gad_campaignid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="gad_campaignid"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>landing_page</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="landing_page"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>referrer</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="referrer"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>first_visit_at</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="first_visit_at"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>last_visit_at</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="last_visit_at"                data-endpoint="POSTapi-leads-hernia"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>attribution_url</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="attribution_url"                data-endpoint="POSTapi-leads-hernia"
                value="http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html"
                data-component="body">
     <br>
@@ -1152,7 +1390,7 @@ Must be one of:
                value="zbailey@example.net"
                data-component="body">
     <br>
-<p>Must be a valid email address. Example: <code>zbailey@example.net</code></p>
+<p>Het veld value moet een geldig e-mailadres zijn. Example: <code>zbailey@example.net</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>phone</code></b>&nbsp;&nbsp;
@@ -1260,7 +1498,7 @@ Must be one of:
                value="69b238c0-e630-b733-2bb3-4fd85ff554da"
                data-component="body">
     <br>
-<p>Marketing campaign external id (UUID). Dit is <strong>niet</strong> de numerieke database id, maar <code>marketing_campaigns.external_id</code> (model: <code>Webkul\Marketing\Models\Campaign</code>). Wordt vaak gezet vanuit een cookie/UTM id. The <code>external_id</code> of an existing record in the marketing_campaigns table. Example: <code>69b238c0-e630-b733-2bb3-4fd85ff554da</code></p>
+<p>Marketing campaign external id (UUID). Dit is <strong>niet</strong> de numerieke database id, maar <code>marketing_campaigns.external_id</code> (model: <code>Webkul\Marketing\Models\Campaign</code>). Wordt vaak gezet vanuit een cookie/UTM id. Example: <code>69b238c0-e630-b733-2bb3-4fd85ff554da</code></p>
         </div>
         </form>
 
@@ -1466,6 +1704,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: c80da7b1-9fc3-4eac-800b-3883a1dd4686
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -2492,6 +2731,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: 5eb44946-1686-405e-a51c-dce323efa6ce
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -2649,6 +2889,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: 4544fb9f-ffbc-43fe-85a5-8e7f90ae0bda
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -2904,7 +3145,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="b"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>b</code></p>
+<p>Het veld value mag niet meer dan 255 tekens bevatten. Example: <code>b</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
@@ -3017,6 +3258,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: a78b5f3e-b098-4163-8130-14b08e72b37a
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -3144,12 +3386,12 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"task\",
+    \"type\": \"meeting\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_from\": \"2026-03-17 15:49:26\",
-    \"schedule_to\": \"2026-03-17 15:49:26\"
+    \"schedule_from\": \"2026-04-30 12:38:46\",
+    \"schedule_to\": \"2026-04-30 12:38:46\"
 }"
 </code></pre></div>
 
@@ -3166,12 +3408,12 @@ const headers = {
 };
 
 let body = {
-    "type": "task",
+    "type": "meeting",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_from": "2026-03-17 15:49:26",
-    "schedule_to": "2026-03-17 15:49:26"
+    "schedule_from": "2026-04-30 12:38:46",
+    "schedule_to": "2026-04-30 12:38:46"
 };
 
 fetch(url, {
@@ -3288,10 +3530,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="task"
+               value="meeting"
                data-component="body">
     <br>
-<p>Example: <code>task</code></p>
+<p>Example: <code>meeting</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -3350,10 +3592,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_from"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-03-17 15:49:26"
+               value="2026-04-30 12:38:46"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-03-17 15:49:26</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-04-30 12:38:46</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3362,10 +3604,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-03-17 15:49:26"
+               value="2026-04-30 12:38:46"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-03-17 15:49:26</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-04-30 12:38:46</code></p>
         </div>
         </form>
 
@@ -5454,14 +5696,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 
 
-                                <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities with publish_to_portal = true).</h2>
+                                <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
-<p>Documents are linked to the patient via any known relation:
-person_id FK, lead, sales lead, or order.</p>
+
 
 <span id="example-requests-GETapi-patient--id--documents">
 <blockquote>Example request:</blockquote>
@@ -5722,7 +5963,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpODbNK0" </code></pre></div>
+    --form "file=@/tmp/phpl0vm07lluah556HKbXM" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -5911,7 +6152,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpODbNK0</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpl0vm07lluah556HKbXM</code></p>
         </div>
         </form>
 
@@ -5964,6 +6205,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: b57a7a8e-e08b-4a44-aa1f-5b0e23f3475b
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -6538,6 +6780,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: fd3c5980-ac13-4b5f-8b5e-2d01fa93316d
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -7025,6 +7268,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
+x-request-id: 54e792f5-ca36-4789-b847-ec76e3719a1f
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -7205,7 +7449,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-03-17T15:49:26\"
+        \"onboarding_completed_at\": \"2026-04-30T12:38:47\"
     }
 }"
 </code></pre></div>
@@ -7226,7 +7470,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-03-17T15:49:26"
+        "onboarding_completed_at": "2026-04-30T12:38:47"
     }
 };
 
@@ -7398,10 +7642,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-03-17T15:49:26"
+               value="2026-04-30T12:38:47"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2026-03-17T15:49:26</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-04-30T12:38:47</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

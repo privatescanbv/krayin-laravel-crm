@@ -2,34 +2,35 @@
 
 namespace Webkul\Lead\Http\Controllers\Api;
 
-use App\Enums\PipelineDefaultKeys;
 use App\Enums\ContactLabel;
+use App\Enums\PipelineDefaultKeys;
 use App\Http\Requests\Api\HerniaCreateLeadRequest;
 use App\Http\Requests\Api\PrivatescanCreateLeadRequest;
 use App\Models\Department;
+use App\Models\LeadMarketingData;
 use App\Services\InboundLeads\InboundLeadPayloadMapper;
+use App\Services\LeadValidationService;
 use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
 use Webkul\Admin\Http\Requests\LeadForm;
+use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Attribute\Repositories\AttributeValueRepository;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Type;
 use Webkul\Lead\Repositories\LeadRepository;
-use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
-use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\Attribute\Repositories\AttributeValueRepository;
-use Illuminate\Support\Facades\DB;
-use App\Models\LeadMarketingData;
-use App\Services\LeadValidationService;
-use Webkul\Core\Contracts\Validations\PhoneValidator;
-use function Laravel\Prompts\warning;
+use Webkul\Marketing\Models\Campaign;
 
 class LeadController extends Controller
 {
@@ -39,13 +40,12 @@ class LeadController extends Controller
      * Create a new controller instance.
      */
     public function __construct(
-        protected LeadRepository           $leadRepository,
-        protected AdminLeadController      $leadService,
-        protected AttributeRepository      $attributeRepository,
+        protected LeadRepository $leadRepository,
+        protected AdminLeadController $leadService,
+        protected AttributeRepository $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
         protected InboundLeadPayloadMapper $inboundLeadPayloadMapper
-    )
-    {
+    ) {
         request()->request->add(['entity_type' => 'leads']);
     }
 
@@ -65,37 +65,20 @@ class LeadController extends Controller
      * Create a Hernia lead from the inbound (Gravity Forms) payload schema.
      *
      * @response 201 {"message":"Lead created successfully.","lead_id":123,"data":{"id":123}}
+     *
      * @throws Exception internal server error, missing lead_id from first request
      */
     public function storeHernia(HerniaCreateLeadRequest $inbound): JsonResponse
     {
         $validated = $inbound->validated();
-        $mapped = $this->inboundLeadPayloadMapper->mapHernia($validated);
-        $marketingData = $this->inboundLeadPayloadMapper->extractHerniaMarketingData($validated);
 
-        $leadForm = LeadForm::createFrom($inbound);
-        $leadForm->setContainer(app());
-        $leadForm->replace($mapped);
-
-        $response = $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findHerniaId(), allowInvalidPhone: true);
-
-        if ($response->isSuccessful() && ! empty($marketingData)) {
-            $jsonResponse = json_decode($response->getContent(), true);
-            $leadId = $jsonResponse['lead_id'] ?? throw new Exception('Could not store marketing data, missing lead_id in response', ['response_create_lead' => $jsonResponse]);
-            foreach ($marketingData as $key => $value) {
-                LeadMarketingData::create([
-                    'lead_id' => $leadId,
-                    'key' => $key,
-                    'value' => $value,
-                ]);
-            }
-        } else if(empty($marketingData)) {
-            Log::warning('Missing marketing data in POST api/leads/hernia request', [
-                'request_data' => $validated,
-            ]);
-        }
-
-        return $response;
+        return $this->storeInboundLead(
+            inbound: $inbound,
+            mappedLeadData: $this->inboundLeadPayloadMapper->mapHernia($validated),
+            departmentId: Department::findHerniaId(),
+            marketingData: $this->inboundLeadPayloadMapper->extractHerniaMarketingData($validated),
+            endpoint: 'api/leads/hernia',
+        );
     }
 
     /**
@@ -105,13 +88,144 @@ class LeadController extends Controller
      */
     public function storePrivatescan(PrivatescanCreateLeadRequest $inbound): JsonResponse
     {
-        $mapped = $this->inboundLeadPayloadMapper->mapPrivatescan($inbound->validated());
+        $validated = $inbound->validated();
 
+        return $this->storeInboundLead(
+            inbound: $inbound,
+            mappedLeadData: $this->inboundLeadPayloadMapper->mapPrivatescan($validated),
+            departmentId: Department::findPrivateScanId(),
+            marketingData: $this->inboundLeadPayloadMapper->extractPrivatescanMarketingData($validated),
+            endpoint: 'api/leads/privatescan',
+        );
+    }
+
+    /**
+     * Display the specified lead.
+     */
+    public function show(int $id): JsonResponse
+    {
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
+
+        return response()->json([
+            'data' => $lead,
+        ]);
+    }
+
+    /**
+     * Update the specified lead in storage.
+     */
+    public function update(LeadForm $request, int $id): JsonResponse
+    {
+        $lead = $this->leadService->update($request, $id);
+
+        return response()->json([
+            'message' => 'Lead updated successfully.',
+            'data'    => $lead,
+        ]);
+    }
+
+    /**
+     * Update the pipeline stage of a lead.
+     */
+    public function updateStage(Request $request, int $leadId): JsonResponse
+    {
+        $this->validate($request, [
+            'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+        ]);
+        $lead = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
+
+        return response()->json([
+            'message' => 'Lead stage updated successfully.',
+            'data'    => $lead,
+        ]);
+    }
+
+    /**
+     * Remove the specified lead from storage.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $this->leadService->destroy($id);
+
+        return response()->json([
+            'message' => 'Lead deleted successfully.',
+        ]);
+    }
+
+    public function nextStage(string $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        // Get current stage directly from lead_pipeline_stages table
+        $currentStage = DB::table('lead_pipeline_stages')
+            ->where('id', $lead->lead_pipeline_stage_id)
+            ->first();
+
+        if (! $currentStage) {
+            return response()->json([
+                'message' => 'Current stage not found.',
+            ], 404);
+        }
+
+        // Find next stage in the same pipeline
+        $nextStage = DB::table('lead_pipeline_stages')
+            ->where('lead_pipeline_id', $lead->lead_pipeline_id)
+            ->where('sort_order', '>', $currentStage->sort_order)
+            ->orderBy('sort_order', 'asc')
+            ->first();
+
+        if (is_null($nextStage)) {
+            return response()->json([
+                'message' => 'No next stage found for this lead.',
+            ], 404);
+        }
+
+        $lead = $this->leadService->updateStageId($id, $nextStage->id);
+
+        return response()->json([
+            'message' => 'Lead stage updated successfully.',
+            'data'    => $lead,
+        ]);
+    }
+
+    /**
+     * Store a mapped inbound lead and persist any tracking metadata supplied by the source endpoint.
+     */
+    private function storeInboundLead(
+        FormRequest $inbound,
+        array $mappedLeadData,
+        int $departmentId,
+        array $marketingData,
+        string $endpoint
+    ): JsonResponse {
         $leadForm = LeadForm::createFrom($inbound);
         $leadForm->setContainer(app());
-        $leadForm->replace($mapped);
+        $leadForm->replace($mappedLeadData);
 
-        return $this->storeFromLeadForm($leadForm, forceDepartmentId: Department::findPrivateScanId(), allowInvalidPhone: true);
+        $response = $this->storeFromLeadForm($leadForm, forceDepartmentId: $departmentId, allowInvalidPhone: true);
+
+        if (! $response->isSuccessful()) {
+            return $response;
+        }
+
+        $leadId = $this->leadIdFromCreateResponse($response);
+
+        if (! empty($marketingData)) {
+            $this->persistMarketingData($leadId, $marketingData);
+
+            if (
+                array_key_exists('campaign_id', $marketingData)
+                && Campaign::query()->where('external_id', $marketingData['campaign_id'])->first() === null
+            ) {
+                Log::error('Campaign not found by campaign_id', [
+                    'campaign_id' => $marketingData['campaign_id'],
+                    'lead_id'     => $leadId,
+                    'endpoint'    => $endpoint,
+                ]);
+            }
+        }
+
+        return $response;
     }
 
     /**
@@ -140,39 +254,39 @@ class LeadController extends Controller
 
             return response()->json([
                 'message' => 'Internal server error, department not found',
-                'data' => [],
+                'data'    => [],
             ], 500);
         }
 
         // Add required fields before validation
         $request->merge([
-            'user_id' => $currentUserId,
-            'status' => 1,
+            'user_id'       => $currentUserId,
+            'status'        => 1,
             'department_id' => $departmentId,
         ]);
 
         // Default anamnesis flags to "no" (false) for API if not provided
         $request->merge([
-            'metals' => $request->has('metals') ? $request->input('metals') : false,
+            'metals'         => $request->has('metals') ? $request->input('metals') : false,
             'claustrophobia' => $request->has('claustrophobia') ? $request->input('claustrophobia') : false,
-            'allergies' => $request->has('allergies') ? $request->input('allergies') : false,
+            'allergies'      => $request->has('allergies') ? $request->input('allergies') : false,
         ]);
 
         // Ensure contacts are in array structure expected by validators
         // Map single 'email'/'phone' fields to emails[]/phones[] arrays if provided
         $incoming = $request->all();
-        if (isset($incoming['email']) && !isset($incoming['emails'])) {
+        if (isset($incoming['email']) && ! isset($incoming['emails'])) {
             $incoming['emails'] = [[
-                'value' => (string) $incoming['email'],
-                'label' => ContactLabel::default()->value,
+                'value'      => (string) $incoming['email'],
+                'label'      => ContactLabel::default()->value,
                 'is_default' => true,
             ]];
             unset($incoming['email']);
         }
-        if (isset($incoming['phone']) && !isset($incoming['phones'])) {
+        if (isset($incoming['phone']) && ! isset($incoming['phones'])) {
             $incoming['phones'] = [[
-                'value' => (string) $incoming['phone'],
-                'label' => ContactLabel::default()->value,
+                'value'      => (string) $incoming['phone'],
+                'label'      => ContactLabel::default()->value,
                 'is_default' => true,
             ]];
             unset($incoming['phone']);
@@ -226,7 +340,7 @@ class LeadController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Lead creation failed.',
-                'errors' => $e->errors(),
+                'errors'  => $e->errors(),
             ], 422);
         }
 
@@ -250,7 +364,7 @@ class LeadController extends Controller
         } catch (InvalidArgumentException $e) {
             return response()->json([
                 'message' => 'Lead creation failed.',
-                'errors' => [$e->getMessage()],
+                'errors'  => [$e->getMessage()],
             ], 400);
         } catch (Exception $e) {
             Log::error('Could not store lead', [
@@ -259,7 +373,7 @@ class LeadController extends Controller
 
             return response()->json([
                 'message' => 'Internal server error, could not store lead',
-                'data' => [],
+                'data'    => [],
             ], 500);
         }
 
@@ -267,97 +381,33 @@ class LeadController extends Controller
             'message' => 'Lead created successfully.',
             // Keep original structure for backwards compatibility, but also expose lead_id as top-level field.
             'lead_id' => $lead->id,
-            'data' => ['id' => $lead->id],
+            'data'    => ['id' => $lead->id],
         ], 201);
     }
 
     /**
-     * Display the specified lead.
+     * @throws Exception
      */
-    public function show(int $id): JsonResponse
+    private function leadIdFromCreateResponse(JsonResponse $response): int
     {
-        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
+        $jsonResponse = json_decode($response->getContent(), true);
 
-        return response()->json([
-            'data' => $lead,
-        ]);
-    }
-
-    /**
-     * Update the specified lead in storage.
-     */
-    public function update(LeadForm $request, int $id): JsonResponse
-    {
-        $lead = $this->leadService->update($request, $id);
-
-        return response()->json([
-            'message' => 'Lead updated successfully.',
-            'data' => $lead,
-        ]);
-    }
-
-    /**
-     * Update the pipeline stage of a lead.
-     */
-    public function updateStage(Request $request, int $leadId): JsonResponse
-    {
-        $this->validate($request, [
-            'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
-        ]);
-        $lead = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
-
-        return response()->json([
-            'message' => 'Lead stage updated successfully.',
-            'data' => $lead,
-        ]);
-    }
-
-    /**
-     * Remove the specified lead from storage.
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $this->leadService->destroy($id);
-
-        return response()->json([
-            'message' => 'Lead deleted successfully.',
-        ]);
-    }
-
-    public function nextStage(string $id)
-    {
-        $lead = Lead::findOrFail($id);
-
-        // Get current stage directly from lead_pipeline_stages table
-        $currentStage = DB::table('lead_pipeline_stages')
-            ->where('id', $lead->lead_pipeline_stage_id)
-            ->first();
-
-        if (!$currentStage) {
-            return response()->json([
-                'message' => 'Current stage not found.',
-            ], 404);
+        if (! is_array($jsonResponse) || empty($jsonResponse['lead_id'])) {
+            throw new Exception('Could not store marketing data, missing lead_id in response');
         }
 
-        // Find next stage in the same pipeline
-        $nextStage = DB::table('lead_pipeline_stages')
-            ->where('lead_pipeline_id', $lead->lead_pipeline_id)
-            ->where('sort_order', '>', $currentStage->sort_order)
-            ->orderBy('sort_order', 'asc')
-            ->first();
+        return (int) $jsonResponse['lead_id'];
+    }
 
-        if (is_null($nextStage)) {
-            return response()->json([
-                'message' => 'No next stage found for this lead.',
-            ], 404);
+    private function persistMarketingData(int $leadId, array $marketingData): void
+    {
+        foreach ($marketingData as $key => $value) {
+            LeadMarketingData::create([
+                'lead_id' => $leadId,
+                'key'     => $key,
+                'value'   => $value,
+            ]);
         }
-
-        $lead = $this->leadService->updateStageId($id, $nextStage->id);
-
-        return response()->json([
-            'message' => 'Lead stage updated successfully.',
-            'data' => $lead,
-        ]);
     }
 
     /**
@@ -371,7 +421,7 @@ class LeadController extends Controller
             return [$payload, []];
         }
 
-        $validator = new PhoneValidator();
+        $validator = new PhoneValidator;
         $invalid = [];
         $validPhones = [];
 
@@ -386,6 +436,7 @@ class LeadController extends Controller
             if ($trimmed === '') {
                 // Keep empty entries as-is; they'll be ignored by downstream validators
                 $validPhones[] = $phone;
+
                 continue;
             }
 
@@ -396,6 +447,7 @@ class LeadController extends Controller
 
             if ($failed) {
                 $invalid[] = $trimmed;
+
                 continue;
             }
 
@@ -459,7 +511,7 @@ class LeadController extends Controller
             foreach ($requestData['emails'] as $index => $email) {
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
-                    if (!isset($email['label']) || empty($email['label'])) {
+                    if (! isset($email['label']) || empty($email['label'])) {
                         $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
@@ -480,7 +532,7 @@ class LeadController extends Controller
             foreach ($requestData['phones'] as $index => $phone) {
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
-                    if (!isset($phone['label']) || empty($phone['label'])) {
+                    if (! isset($phone['label']) || empty($phone['label'])) {
                         $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);

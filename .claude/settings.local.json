@@ -69,7 +69,8 @@
       "Bash(echo \"exit: $?\")",
       "Bash(echo \"exit:$?\")",
       "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(p.get\\('name','?'\\), p.get\\('skills',[]\\)\\) for p in data.get\\('plugins',[]\\)]\")",
-      "Skill(codex:rescue)"
+      "Skill(codex:rescue)",
+      "Bash(node *)"
     ]
   }
 }

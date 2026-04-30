@@ -60,25 +60,37 @@ class InboundLeadPayloadMapper
      */
     public function extractHerniaMarketingData(array $payload): array
     {
-        $keys = [
-            'source', 'medium', 'campaign', 'adgroup',
-            'utm_term', 'utm_content', 'utm_id',
-            'gclid', 'gbraid', 'wbraid',
-            'gad_source', 'gad_campaignid',
-            'landing_page', 'referrer',
-            'first_visit_at', 'last_visit_at',
+        return $this->extractMarketingData($payload, [
+            'campaign_id',
+            'source',
+            'medium',
+            'campaign',
+            'adgroup',
+            'utm_term',
+            'utm_content',
+            'utm_id',
+            'gclid',
+            'gbraid',
+            'wbraid',
+            'gad_source',
+            'gad_campaignid',
+            'landing_page',
+            'referrer',
+            'first_visit_at',
+            'last_visit_at',
             'attribution_url',
-        ];
+        ]);
+    }
 
-        $result = [];
-        foreach ($keys as $key) {
-            $value = $this->nullIfEmpty($payload[$key] ?? null);
-            if ($value !== null) {
-                $result[$key] = $value;
-            }
-        }
-
-        return $result;
+    /**
+     * Extract marketing tracking fields from the Privatescan payload.
+     * Returns only fields that have a non-empty value.
+     */
+    public function extractPrivatescanMarketingData(array $payload): array
+    {
+        return $this->extractMarketingData($payload, [
+            'campaign_id',
+        ]);
     }
 
     private function mapHerniaAddress(array $payload): array
@@ -198,5 +210,19 @@ class InboundLeadPayloadMapper
         }
 
         return PhoneNormalizer::toE164($raw);
+    }
+
+    private function extractMarketingData(array $payload, array $keys): array
+    {
+        $result = [];
+
+        foreach ($keys as $key) {
+            $value = $this->nullIfEmpty($payload[$key] ?? null);
+            if ($value !== null) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 }

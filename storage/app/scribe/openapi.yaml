@@ -190,7 +190,7 @@ paths:
               properties:
                 campaign_id:
                   type: string
-                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`). The <code>external_id</code> of an existing record in the marketing_campaigns table.'
+                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`).'
                   example: 69b238c0-e630-b733-2bb3-4fd85ff554da
                 lead_source:
                   type: string
@@ -221,11 +221,11 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-03-17'
+                  example: '2026-04-30'
                   nullable: true
                 email1:
                   type: string
-                  description: 'Must be a valid email address.'
+                  description: 'Het veld value moet een geldig e-mailadres zijn.'
                   example: zbailey@example.net
                 phone_mobile:
                   type: string
@@ -253,6 +253,91 @@ paths:
                   example: 'Eius et animi quos velit et.'
                   nullable: true
                 diagnoseform_pdf_url:
+                  type: string
+                  description: ''
+                  example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
+                  nullable: true
+                source:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                medium:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                campaign:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                adgroup:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                utm_term:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                utm_content:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                utm_id:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gclid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gbraid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                wbraid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gad_source:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gad_campaignid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                landing_page:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                referrer:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                first_visit_at:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                last_visit_at:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                attribution_url:
                   type: string
                   description: ''
                   example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
@@ -342,7 +427,7 @@ paths:
                   nullable: true
                 email:
                   type: string
-                  description: 'Must be a valid email address.'
+                  description: 'Het veld value moet een geldig e-mailadres zijn.'
                   example: zbailey@example.net
                   nullable: true
                 phone:
@@ -387,7 +472,7 @@ paths:
                   nullable: true
                 campaign_id:
                   type: string
-                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`). Wordt vaak gezet vanuit een cookie/UTM id. The <code>external_id</code> of an existing record in the marketing_campaigns table.'
+                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`). Wordt vaak gezet vanuit een cookie/UTM id.'
                   example: 69b238c0-e630-b733-2bb3-4fd85ff554da
                   nullable: true
               required:
@@ -739,7 +824,7 @@ paths:
               properties:
                 name:
                   type: string
-                  description: 'Must not be greater than 255 characters.'
+                  description: 'Het veld value mag niet meer dan 255 tekens bevatten.'
                   example: b
                   nullable: true
                 description:
@@ -825,7 +910,7 @@ paths:
                 type:
                   type: string
                   description: ''
-                  example: task
+                  example: meeting
                   enum:
                     - task
                     - meeting
@@ -854,11 +939,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-03-17 15:49:26'
+                  example: '2026-04-30 12:38:46'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-03-17 15:49:26'
+                  example: '2026-04-30 12:38:46'
               required:
                 - type
     parameters:
@@ -1589,47 +1674,38 @@ paths:
                   type: string
                   description: 'Salutation. Allowed values: Dhr., Mevr.'
                   example: Dhr.
-                  nullable: true
                 first_name:
                   type: string
                   description: 'First name.'
                   example: Jan
-                  nullable: true
                 lastname_prefix:
                   type: string
                   description: 'Lastname prefix (tussenvoegsel).'
                   example: van
-                  nullable: true
                 last_name:
                   type: string
                   description: 'Last name.'
                   example: Berg
-                  nullable: true
                 married_name_prefix:
                   type: string
                   description: 'Married name prefix.'
                   example: de
-                  nullable: true
                 married_name:
                   type: string
                   description: 'Married name.'
                   example: Vries
-                  nullable: true
                 initials:
                   type: string
                   description: Initials.
                   example: J.
-                  nullable: true
                 date_of_birth:
                   type: string
                   description: 'Date of birth (Y-m-d).'
                   example: '1985-03-15'
-                  nullable: true
                 gender:
                   type: string
                   description: 'Gender. Allowed values: Man, Vrouw, Anders.'
                   example: Man
-                  nullable: true
                 phones:
                   type: array
                   description: 'List of phone numbers. Exactly one entry must have is_default set to true.'
@@ -1637,7 +1713,6 @@ paths:
                     - architecto
                   items:
                     type: string
-                    nullable: true
                 emails:
                   type: array
                   description: 'List of email addresses. Exactly one entry must have is_default set to true.'
@@ -1645,7 +1720,6 @@ paths:
                     - architecto
                   items:
                     type: string
-                    nullable: true
                 address:
                   type: object
                   description: 'Address data.'
@@ -1655,38 +1729,30 @@ paths:
                       type: string
                       description: 'Street name.'
                       example: Hoofdstraat
-                      nullable: true
                     house_number:
                       type: string
                       description: 'House number.'
                       example: '1'
-                      nullable: true
                     house_number_suffix:
                       type: string
                       description: 'House number suffix.'
                       example: A
-                      nullable: true
                     postal_code:
                       type: string
                       description: 'Postal code.'
                       example: 1234AB
-                      nullable: true
                     city:
                       type: string
                       description: City.
                       example: Amsterdam
-                      nullable: true
                     state:
                       type: string
                       description: 'State / province.'
                       example: Noord-Holland
-                      nullable: true
                     country:
                       type: string
                       description: Country.
                       example: Nederland
-                      nullable: true
-                  nullable: true
     parameters:
       -
         in: path
@@ -2060,9 +2126,9 @@ paths:
           type: string
   '/api/patient/{id}/documents':
     get:
-      summary: 'Get all documents for a patient (FILE activities with publish_to_portal = true).'
-      operationId: getAllDocumentsForAPatientFILEActivitiesWithPublishToPortalTrue
-      description: "Documents are linked to the patient via any known relation:\nperson_id FK, lead, sales lead, or order."
+      summary: 'Get all documents for a patient (FILE activities published to their portal via pivot).'
+      operationId: getAllDocumentsForAPatientFILEActivitiesPublishedToTheirPortalViaPivot
+      description: ''
       parameters:
         -
           in: query
@@ -2687,8 +2753,8 @@ paths:
                       nullable: true
                     onboarding_completed_at:
                       type: string
-                      description: 'Must be a valid date.'
-                      example: '2026-03-17T15:49:26'
+                      description: 'Het veld value is geen geldige datum.'
+                      example: '2026-04-30T12:38:47'
                       nullable: true
                     email_notifications_enabled:
                       type: boolean

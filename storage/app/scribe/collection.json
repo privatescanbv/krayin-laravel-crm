@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Privatescan CRM API Documentation",
-        "_postman_id": "04aead05-f689-4b1d-a61a-c0ac41eae9d7",
+        "_postman_id": "e4e5bf54-f74e-4d37-9355-eb44e399a139",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -88,7 +88,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-03-17\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
+                            "raw": "{\"campaign_id\":\"69b238c0-e630-b733-2bb3-4fd85ff554da\",\"lead_source\":\"Herniapoli.nl\",\"kanaal_c\":\"website\",\"soort_aanvraag_c\":\"operatie\",\"salutation\":\"Dhr.\",\"first_name\":\"architecto\",\"last_name\":\"architecto\",\"birthdate\":\"2026-04-30\",\"email1\":\"zbailey@example.net\",\"phone_mobile\":\"0612345678\",\"primary_huisnr_c\":\"12\",\"primary_huisnr_toevoeging_c\":\"architecto\",\"primary_address_postalcode\":\"1234AB\",\"description\":\"Eius et animi quos velit et.\",\"diagnoseform_pdf_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\",\"source\":\"architecto\",\"medium\":\"architecto\",\"campaign\":\"architecto\",\"adgroup\":\"architecto\",\"utm_term\":\"architecto\",\"utm_content\":\"architecto\",\"utm_id\":\"architecto\",\"gclid\":\"architecto\",\"gbraid\":\"architecto\",\"wbraid\":\"architecto\",\"gad_source\":\"architecto\",\"gad_campaignid\":\"architecto\",\"landing_page\":\"architecto\",\"referrer\":\"architecto\",\"first_visit_at\":\"architecto\",\"last_visit_at\":\"architecto\",\"attribution_url\":\"http:\\\/\\\/www.bailey.biz\\\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html\"}"
                         },
                         "description": ""
                     },
@@ -212,6 +212,10 @@
                                 {
                                     "key": "content-type",
                                     "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-request-id",
+                                    "value": "c80da7b1-9fc3-4eac-800b-3883a1dd4686"
                                 },
                                 {
                                     "key": "x-ratelimit-limit",
@@ -475,6 +479,10 @@
                                     "value": "application\/json"
                                 },
                                 {
+                                    "key": "x-request-id",
+                                    "value": "5eb44946-1686-405e-a51c-dce323efa6ce"
+                                },
+                                {
                                     "key": "x-ratelimit-limit",
                                     "value": "60"
                                 },
@@ -530,6 +538,10 @@
                                 {
                                     "key": "content-type",
                                     "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-request-id",
+                                    "value": "4544fb9f-ffbc-43fe-85a5-8e7f90ae0bda"
                                 },
                                 {
                                     "key": "x-ratelimit-limit",
@@ -617,6 +629,10 @@
                                     "value": "application\/json"
                                 },
                                 {
+                                    "key": "x-request-id",
+                                    "value": "a78b5f3e-b098-4163-8130-14b08e72b37a"
+                                },
+                                {
                                     "key": "x-ratelimit-limit",
                                     "value": "60"
                                 },
@@ -661,7 +677,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"type\":\"task\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-03-17 15:49:26\",\"schedule_to\":\"2026-03-17 15:49:26\"}"
+                            "raw": "{\"type\":\"meeting\",\"title\":\"architecto\",\"description\":\"Eius et animi quos velit et.\",\"comment\":\"architecto\",\"schedule_from\":\"2026-04-30 12:38:46\",\"schedule_to\":\"2026-04-30 12:38:46\"}"
                         },
                         "description": ""
                     },
@@ -1151,7 +1167,7 @@
             "description": "",
             "item": [
                 {
-                    "name": "Get all documents for a patient (FILE activities with publish_to_portal = true).",
+                    "name": "Get all documents for a patient (FILE activities published to their portal via pivot).",
                     "request": {
                         "url": {
                             "host": "{{baseUrl}}",
@@ -1204,7 +1220,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Documents are linked to the patient via any known relation:\nperson_id FK, lead, sales lead, or order."
+                        "description": ""
                     },
                     "response": [
                         {
@@ -1347,6 +1363,10 @@
                                 {
                                     "key": "content-type",
                                     "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-request-id",
+                                    "value": "b57a7a8e-e08b-4a44-aa1f-5b0e23f3475b"
                                 },
                                 {
                                     "key": "x-ratelimit-limit",
@@ -1548,6 +1568,10 @@
                                     "value": "application\/json"
                                 },
                                 {
+                                    "key": "x-request-id",
+                                    "value": "fd3c5980-ac13-4b5f-8b5e-2d01fa93316d"
+                                },
+                                {
                                     "key": "x-ratelimit-limit",
                                     "value": "60"
                                 },
@@ -1669,6 +1693,10 @@
                                     "value": "application\/json"
                                 },
                                 {
+                                    "key": "x-request-id",
+                                    "value": "54e792f5-ca36-4789-b847-ec76e3719a1f"
+                                },
+                                {
                                     "key": "x-ratelimit-limit",
                                     "value": "60"
                                 },
@@ -1713,7 +1741,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-03-17T15:49:26\"}}"
+                            "raw": "{\"preferences\":{\"email_notifications_enabled\":true,\"language\":\"architecto\",\"onboarding_completed_at\":\"2026-04-30T12:38:47\"}}"
                         },
                         "description": ""
                     },

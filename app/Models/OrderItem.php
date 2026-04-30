@@ -272,6 +272,12 @@ class OrderItem extends Model
 
     public function isPlannable(): bool
     {
+        if (! empty($this->resource_type_id)) {
+            $enum = $this->resolvedResourceTypeEnum();
+
+            return $enum !== null && $enum !== ResourceTypeEnum::OTHER;
+        }
+
         return $this->product &&
             $this->product->partnerProducts &&
             $this->product->partnerProducts->filter(fn ($product) => $product->isPlannable())->count() > 0;

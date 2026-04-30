@@ -8,35 +8,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 Use Claude as planner, architect, reviewer and analyst.
 
-Use Codex as the default execution engine for implementation work whenever possible.
-
-## Claude should handle
-
-- architecture decisions
-- domain modelling
-- root cause analysis
-- debugging strategy
-- code review
-- refactor plans
-- maintainability analysis
-- performance analysis
-- security review
-- release planning
-
-## Codex should handle by default
-
-- writing code
-- creating controllers
-- creating services
-- generating migrations
-- generating tests
-- repetitive refactors
-- renaming files/classes
-- fixing straightforward bugs
-- boilerplate
-- CRUD implementations
-- CI/CD yaml edits
-- Docker config edits
+Use plugin Codex as the default execution engine for implementation work whenever possible. So Implement code changes.
 
 ## Delegation Rule
 
@@ -50,7 +22,6 @@ Use:
 - /codex:result to fetch outputs
 
 Claude should think briefly first, then delegate execution.
-
 Do not spend excessive Claude tokens writing code if Codex can do it.
 
 ---
@@ -144,7 +115,7 @@ Two separate Vite builds:
 - Eager loading required to prevent N+1 queries
 - Use `config()` helper, never `env()` directly in application code
 
-## Laravel 10 Specifics
+## Laravel Specifics
 
 - Middleware registered in `app/Http/Kernel.php`
 - Exception handling in `app/Exceptions/Handler.php`

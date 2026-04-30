@@ -138,7 +138,7 @@
 
                         <div class="w-1/2 max-md:w-full">
                             <!-- Personal Fields Component -->
-                            @include('admin::leads.common.personal-fields', ['entity' => $lead, 'showActiveField' => false])
+                            @include('admin::leads.common.personal-fields', ['entity' => $lead, 'showActiveField' => false, 'showDescriptionField' => true])
                         </div>
                     </div>
 
@@ -227,18 +227,6 @@
                         'defaults' => [],
                         'useVueModel' => false,
                     ])
-
-                    <!-- Lead Details Description -->
-                    <div class="mb-0.5">
-                        <x-adminc::components.field
-                            type="textarea"
-                            name="description"
-                            :label="trans('admin::app.leads.edit.description')"
-                            :placeholder="trans('admin::app.leads.edit.description')"
-                            value="{{ old('description', $lead->description) }}"
-                            class="min-h-[80px]"
-                        />
-                    </div>
 
                     {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
 

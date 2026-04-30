@@ -260,6 +260,7 @@ $salutationToGenderMapping = [
                                             'entity' => $__entityPrefill,
                                             'bindModel' => 'formData',
                                             'showActiveField' => false,
+                                            'showDescriptionField' => true,
                                         ])
                                     </div>
 
@@ -426,18 +427,6 @@ $salutationToGenderMapping = [
                                         // so these selects must be bound to `formData` to reflect user changes.
                                         'useVueModel' => true,
                                     ])
-
-                                    <!-- Description -->
-                                    <div class="mb-4">
-                                        <x-adminc::components.field
-                                            type="textarea"
-                                            name="description"
-                                            v-model="formData.description"
-                                            label="Beschrijving"
-                                            placeholder="Beschrijving"
-                                            class="min-h-[80px]"
-                                        />
-                                    </div>
 
                                     <!-- Organization Section -->
                                     <div class="flex flex-col gap-4 mb-4">

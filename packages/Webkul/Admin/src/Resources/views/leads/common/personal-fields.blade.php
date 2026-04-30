@@ -10,6 +10,7 @@
 
     // By default show portal fields, but allow includes to disable them (e.g. create lead)
     $showActiveField = $showActiveField ?? true;
+    $showDescriptionField = $showDescriptionField ?? false;
     $readonlyAttributes = !$mayEditPersonFields ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
 @endphp
 
@@ -173,6 +174,19 @@
         :disabled="!$mayEditPersonFields"
         :readonly="!$mayEditPersonFields"
     />
+
+    @if($showDescriptionField)
+    <!-- Description -->
+    <x-adminc::components.field
+        type="textarea"
+        name="description"
+        label="Beschrijving"
+        placeholder="Beschrijving"
+        value="{{ old('description', $entity?->description ?? '') }}"
+        class="min-h-[80px]"
+    />
+    @endif
+
     @if($showActiveField)
         <!-- Portal activation toggle -->
         <x-adminc::components.field

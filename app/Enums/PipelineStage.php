@@ -45,8 +45,8 @@ enum PipelineStage: string
     case SALES_ASSESSMENT_DONE_HERNIA = 'sales-mri-beoordeling-hernia';
     case SALES_PATIENT_REFLECTION_TIME_HERNIA = 'sales-casus-bij-arts-hernia';
     case SALES_PLANNED_FOR_ADDITIONAL_RESEARCH_HERNIA = 'sales-beoordeling-gereed-hernia';
+    case SALES_WAIT_HEALTH_INSURER_HERNIA = 'sales-wachten-op-zorgverzekeraar-hernia';
     case SALES_CONFIRM_TREATMENT_HERNIA = 'sales-wachten-op-planning-hernia';
-    case SALES_DOC_COMPLETE_HERNIA = 'sales-ingepland-hernia';
     case SALES_TREATMENT_PLANNED_HERNIA = 'sales-pre-operatief-hernia';
     case SALES_AFTER_TREATMENT_HERNIA = 'sales-opname-hernia';
     case SALES_AFTERCARE1_HERNIA = 'sales-operatie-hernia';
@@ -269,18 +269,18 @@ enum PipelineStage: string
             'status'     => null,
             'is_default' => false,
         ],
-        self::SALES_CONFIRM_TREATMENT_HERNIA->value => [
+        self::SALES_WAIT_HEALTH_INSURER_HERNIA->value => [
             'id'         => 21,
             'pipeline'   => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'      => 'Behandeling bevestigen',
+            'label'      => 'Wachten op zorgverzekeraar',
             'entity'     => EntityType::SALES->value,
             'status'     => null,
             'is_default' => false,
         ],
-        self::SALES_DOC_COMPLETE_HERNIA->value => [
+        self::SALES_CONFIRM_TREATMENT_HERNIA->value => [
             'id'         => 22,
             'pipeline'   => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'      => 'Documentatie volledig / ontvangen',
+            'label'      => 'Behandeling bevestigen',
             'entity'     => EntityType::SALES->value,
             'status'     => null,
             'is_default' => false,
@@ -304,7 +304,7 @@ enum PipelineStage: string
         self::SALES_AFTERCARE1_HERNIA->value => [
             'id'         => 25,
             'pipeline'   => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'      => 'Nazorg 1',
+            'label'      => '1e Nazorg',
             'entity'     => EntityType::SALES->value,
             'status'     => null,
             'is_default' => false,
@@ -312,7 +312,7 @@ enum PipelineStage: string
         self::SALES_AFTERCARE2_HERNIA->value => [
             'id'         => 26,
             'pipeline'   => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'      => 'Nazorg 2',
+            'label'      => '2e Nazorg',
             'entity'     => EntityType::SALES->value,
             'status'     => null,
             'is_default' => false,
@@ -320,7 +320,7 @@ enum PipelineStage: string
         self::SALES_PHYSICAL_CONSULTATION_HERNIA->value => [
             'id'         => 27,
             'pipeline'   => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'      => 'Fysiek consult',
+            'label'      => 'Gepland voor fysieke nacontrole',
             'entity'     => EntityType::SALES->value,
             'status'     => null,
             'is_default' => false,

@@ -36,7 +36,11 @@ rm docker-compose.yml
 # Kopieer init-bestand uit container (pas pad aan als nodig)
 docker cp temp-crm:/docker/mysql/ ./docker/mysql/
 chmod +x ./docker/mysql/*.sh
-docker cp temp-crm:/docker/docker-compose.yml ./docker-compose.yml
+if [ "$APP_ENV" = "production" ]; then
+  docker cp temp-crm:/docker/docker-compose.yml ./docker-compose.yml
+else
+  docker cp temp-crm:/docker/docker-compose-acc.yml ./docker-compose.yml
+fi
 #docker cp temp-crm:/docker/.env.prod ./.env
 docker cp temp-crm:/docker/.env.keycloak.prod ./.env.keycloak
 docker cp temp-crm:/docker/config ./docker/config

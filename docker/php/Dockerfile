@@ -94,6 +94,7 @@ RUN mkdir -p /docker/mysql/
 # These files are not used within the container, but copied in the server
 COPY --from=vite /build/.docker/mysql/ /docker/mysql/
 COPY --from=vite /build/docker-compose-prod.yml /docker/docker-compose.yml
+COPY --from=vite /build/docker-compose-acc.yml /docker/docker-compose-acc.yml
 # TODO security wise, red flag. Change this CI implmementation later to a vault.
 COPY --from=vite /build/.env.prod /docker/.env.prod
 COPY --from=vite /build/.env.keycloak.prod /docker/.env.keycloak.prod

@@ -1,0 +1,443 @@
+services:
+
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=public
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --certificatesresolvers.myresolver.acme.httpchallenge=true
+      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=http
+      - --certificatesresolvers.myresolver.acme.email=mark.bulthuis@mbsoftware.nl
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+      - --entrypoints.http.http.redirections.entryPoint.to=https
+      - --entrypoints.http.http.redirections.entryPoint.scheme=https
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      public:
+        aliases:
+          - "sso.${PRIVATESCAN_BASE_DOMAIN}"
+          - "newcrm.${PRIVATESCAN_BASE_DOMAIN}"
+          - "patient.${PRIVATESCAN_BASE_DOMAIN}"
+
+  crm:
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
+    container_name: crm
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.crm.entrypoints=https
+      - traefik.http.routers.crm.tls=true
+      - traefik.http.routers.crm.tls.certresolver=myresolver
+      - traefik.http.routers.crm.service=crm-svc
+      - traefik.http.routers.crm.priority=1
+      # === APIDOCS ROUTER (afgeschermd) ===
+      - traefik.http.routers.crm-apidocs.rule=PathPrefix("/admin/apidocs")
+      - traefik.http.routers.crm-apidocs.entrypoints=https
+      - traefik.http.routers.crm-apidocs.tls=true
+      - traefik.http.routers.crm-apidocs.priority=100
+      - traefik.http.routers.crm-apidocs.service=crm-svc
+      - traefik.http.routers.crm-apidocs.middlewares=crm-apidocs-auth
+      # === BASIC AUTH MIDDLEWARE ===
+      - traefik.http.middlewares.crm-apidocs-auth.basicauth.users=${CRM_APIDOCS_AUTH}
+      - traefik.http.services.crm-svc.loadbalancer.server.port=80
+      # Middleware: expliciete headers doorgeven
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.${PRIVATESCAN_BASE_DOMAIN}
+      - traefik.docker.network=public
+      - logging=promtail
+    volumes:
+      - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
+      - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app/public'
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+      - public
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: host.docker.internal
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: '${DB_PASSWORD}'
+      UPLOAD_LIMIT: 300M
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pma.rule=Host("phpmyadmin.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.pma.entrypoints=https
+      - traefik.http.routers.pma.tls=true
+      - traefik.http.routers.pma.tls.certresolver=myresolver
+      - traefik.http.routers.pma.middlewares=pma-auth
+      - traefik.http.middlewares.pma-auth.basicauth.users=admin:$$2y$$05$$13501WAPEwnZGYkGbsZ.duBZGb.C9wQYQiAqeIZM8SyAqTuAVd7Xe
+      - traefik.http.services.pma.loadbalancer.server.port=80
+      - traefik.docker.network=public
+      - logging=promtail
+    networks:
+      - backend
+      - public
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  suitecrm:
+    image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.1
+    container_name: suitecrm
+    ports:
+      - "81:80"
+    environment:
+      SITE_URL: 'https://suitecrm.${PRIVATESCAN_BASE_DOMAIN}'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public
+      - traefik.http.routers.suitecrm.rule=Host("suitecrm.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.suitecrm.entrypoints=https
+      - traefik.http.routers.suitecrm.tls=true
+      - traefik.http.routers.suitecrm.tls.certresolver=myresolver
+      - traefik.http.routers.suitecrm.service=suitecrm-svc
+      - traefik.http.services.suitecrm-svc.loadbalancer.server.port=80
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Host=suitecrm.${PRIVATESCAN_BASE_DOMAIN}
+      - traefik.http.routers.suitecrm.middlewares=suitecrm-forward@docker
+      - logging=promtail
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - backend
+      - public
+
+  forms:
+    image: ghcr.io/privatescanbv/privateforms/forms:latest
+    container_name: forms
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      WWWUSER: '${WWWUSER}'
+      WWWGROUP: '${WWWGROUP}'
+      APP_NAME: 'PrivateForms'
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg="
+      API_KEY_1: "${FORMS_API_KEY}"
+      APP_DEBUG: 'false'
+      APP_URL: "$PATIENT_PORTAL_URL"
+      ASSET_URL: "$PATIENT_PORTAL_URL"
+      APP_FALLBACK_LOCALE: 'en'
+      APP_FAKER_LOCALE: 'en_US'
+      APP_LOCALE: 'nl'
+      APP_MAINTENANCE_DRIVER: 'file'
+      PHP_CLI_SERVER_WORKERS: 4
+      BCRYPT_ROUNDS: 12
+      LOG_CHANNEL: "${LOG_CHANNEL:-stack}"
+      LOG_LEVEL: 'info'
+      DB_CONNECTION: 'mysql'
+      DB_HOST: 'host.docker.internal'
+      DB_PORT: '3306'
+      DB_DATABASE: 'forms'
+      DB_USERNAME: 'formadmin'
+      DB_PASSWORD: "${FORMS_DB_PASSWORD}"
+      APP_TIMEZONE: 'UTC'
+      SESSION_DRIVER: 'file'
+      SESSION_LIFETIME: 120
+      SESSION_DOMAIN: ''
+      SESSION_SECURE: 'false'
+      SESSION_PATH: '/'
+      BROADCAST_CONNECTION: 'log'
+      FILESYSTEM_DISK: 'local'
+      QUEUE_CONNECTION: 'database'
+      CACHE_STORE: 'database'
+      MEMCACHED_HOST: '127.0.0.1'
+      FORWARD_REDIS_PORT: 6379
+      KEYCLOAK_BASE_URL: 'https://sso.${PRIVATESCAN_BASE_DOMAIN}'
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: 'patient-app'
+      KEYCLOAK_LOAD_USER_FROM_DATABASE: 'false'
+      KEYCLOAK_APPEND_DECODED_TOKEN: 'true'
+      KEYCLOAK_ALLOWED_RESOURCES: 'patient-app'
+      KEYCLOAK_LEEWAY: 60
+      KEYCLOAK_CLIENT_SECRET: "$PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET"
+      CRM_API_KEY: "${API_KEY_1}"
+      CRM_API_URL: "${APP_URL}/api/"
+      TWILIO_ACCOUNT_SID: "${FORMS_TWILIO_ACCOUNT_SID}"
+      TWILIO_AUTH_TOKEN: "${FORMS_TWILIO_AUTH_TOKEN}"
+      TWILIO_VERIFY_SID: "${FORMS_TWILIO_VERIFY_SID}"
+      PATIENT_MESSAGES_ENABLED: false
+    labels:
+      - traefik.enable=true
+      # Patient portal router
+      - traefik.http.routers.patient.rule=Host("patient.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.patient.entrypoints=https
+      - traefik.http.routers.patient.tls=true
+      - traefik.http.routers.patient.tls.certresolver=myresolver
+      - traefik.http.routers.patient.service=patient-svc
+
+      # === APIDOCS ROUTER (afgeschermd) ===
+      - traefik.http.routers.patient-apidocs.rule=PathPrefix("/apidocs")
+      - traefik.http.routers.patient-apidocs.entrypoints=https
+      - traefik.http.routers.patient-apidocs.tls=true
+      - traefik.http.routers.patient-apidocs.priority=100
+      - traefik.http.routers.patient-apidocs.service=patient-svc
+      - traefik.http.routers.patient-apidocs.middlewares=patient-apidocs-auth
+      # === BASIC AUTH MIDDLEWARE ===
+      - traefik.http.middlewares.patient-apidocs-auth.basicauth.users=${CRM_APIDOCS_AUTH}
+      - traefik.http.services.patient-svc.loadbalancer.server.port=80
+      # Middlewares
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.patient-forward-headers.headers.customrequestheaders.X-Forwarded-Host=patient.${PRIVATESCAN_BASE_DOMAIN}
+      - traefik.docker.network=public
+      - logging=promtail
+    volumes:
+      - '/home/apps/storage/forms:/usr/share/nginx/html/storage/app/public'
+    networks:
+      - backend
+      - public
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      crm:
+        condition: service_started
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+      - /home/apps/docker/loki/:/etc/loki/:ro
+    networks:
+      - backend
+    labels:
+      - logging=promtail
+
+  promtail:
+    image: grafana/promtail:3.5.8
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/apps/docker/promtail/:/etc/promtail/:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - backend
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
+      - GF_INSTALL_PLUGINS=
+      - GF_SERVER_ROOT_URL=https://logs.${PRIVATESCAN_BASE_DOMAIN}
+      - GF_SERVER_DOMAIN=logs.${PRIVATESCAN_BASE_DOMAIN}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - backend
+      - public
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host("logs.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.grafana.entrypoints=https
+      - traefik.http.routers.grafana.tls=true
+      - traefik.http.routers.grafana.tls.certresolver=myresolver
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+      - traefik.docker.network=public
+      - logging=promtail
+    depends_on:
+      - loki
+
+  keycloak:
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:latest
+    container_name: keycloak
+    restart: unless-stopped
+    env_file:
+      - .env.keycloak
+    environment:
+      TZ: Europe/Amsterdam
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      KC_HOSTNAME: sso.${PRIVATESCAN_BASE_DOMAIN}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_PROXY: edge
+    entrypoint: >
+      /bin/sh -c "
+        /opt/keycloak/bin/kc.sh build --features=token-exchange &&
+        exec /opt/keycloak/bin/kc.sh start --optimized
+      "
+    networks:
+      - backend
+      - public
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak.rule=Host("sso.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.keycloak.entrypoints=https
+      - traefik.http.routers.keycloak.tls=true
+      - traefik.http.routers.keycloak.tls.certresolver=myresolver
+      - traefik.http.routers.keycloak.service=keycloak-svc
+      - traefik.http.routers.keycloak.middlewares=keycloak-forward-headers@docker
+      - traefik.http.services.keycloak-svc.loadbalancer.server.port=8080
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.${PRIVATESCAN_BASE_DOMAIN}
+      - traefik.docker.network=public
+      - logging=promtail
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+
+  keycloak-db:
+    image: postgres:15-alpine
+    container_name: keycloak-db
+    restart: unless-stopped
+    env_file:
+      - .env.keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak_user} -d ${POSTGRES_DB:-keycloak}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: llama
+    restart: unless-stopped
+    volumes:
+      - /home/apps/models:/models:ro
+    environment:
+      - GGML_NO_GPU=1
+    command: >
+      -m /models/medgemma-27b-text-it-Q3_K_M.gguf
+      -c 8192
+      --threads 6
+      --parallel 1
+      --port 8080
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public
+
+      # Router
+      - traefik.http.routers.llm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/llm")
+      - traefik.http.routers.llm.entrypoints=https
+      - traefik.http.routers.llm.tls=true
+      - traefik.http.routers.llm.tls.certresolver=myresolver
+      - traefik.http.routers.llm.priority=1000
+
+      # Service
+      - traefik.http.routers.llm.service=llm-svc
+      - traefik.http.services.llm-svc.loadbalancer.server.port=8080
+
+      # Strip /llm prefix
+      - traefik.http.middlewares.llm-stripprefix.stripprefix.prefixes=/llm
+      - traefik.http.routers.llm.middlewares=llm-stripprefix
+
+      # Logging
+      - logging=promtail
+    networks:
+      - backend
+      - public
+
+  llama-fast:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: llama-fast
+    restart: unless-stopped
+    volumes:
+      - /home/apps/models:/models:ro
+    environment:
+      - GGML_NO_GPU=1
+    command: >
+      -m /models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+      -c 4096
+      --threads 6
+      --parallel 1
+      --port 8081
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public
+
+      # Router
+      - traefik.http.routers.llmfast.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/llm-fast")
+      - traefik.http.routers.llmfast.entrypoints=https
+      - traefik.http.routers.llmfast.tls=true
+      - traefik.http.routers.llmfast.tls.certresolver=myresolver
+      - traefik.http.routers.llmfast.priority=1001
+
+      # Service
+      - traefik.http.routers.llmfast.service=llm-svc
+      - traefik.http.services.llmfast-svc.loadbalancer.server.port=8081
+
+      # Strip /llm prefix
+      - traefik.http.middlewares.llmfast-stripprefix.stripprefix.prefixes=/llm
+      - traefik.http.routers.llmfast.middlewares=llm-stripprefix
+
+      # Logging
+      - logging=promtail
+    networks:
+      - backend
+      - public
+
+networks:
+  backend:
+    driver: bridge
+  public:
+    external: true
+
+volumes:
+  loki-data:
+    driver: local
+  grafana-data:
+    driver: local
+  keycloak-db-data:
+    driver: local

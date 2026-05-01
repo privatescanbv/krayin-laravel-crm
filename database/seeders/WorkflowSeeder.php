@@ -64,7 +64,7 @@ class WorkflowSeeder extends Seeder
                 ['Kostenraming maken', $defaultDescription, ActivityType::TASK, 3],
                 ['Kostenraming en artsbrief verzenden', $defaultDescription, ActivityType::TASK, 3],
                 ['Reactie zorgverzekeraar?', $defaultDescription, ActivityType::TASK, 8],
-                ],
+            ],
             PipelineStage::SALES_TREATMENT_PLANNED_HERNIA                => [],
             PipelineStage::SALES_AFTER_TREATMENT_HERNIA                  => [],
             PipelineStage::SALES_AFTERCARE1_HERNIA                       => [],

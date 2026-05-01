@@ -12,13 +12,17 @@ use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\PartnerProduct;
+use App\Models\Resource;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Mockery;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -90,12 +94,14 @@ beforeEach(function () {
         $table->double('sales_price')->nullable();
         $table->string('sales_stage')->nullable();
         $table->string('resource_type')->nullable();
-        $table->string('aos_products_id_c')->nullable();
+        $table->integer('duration')->nullable();
+        $table->string('pcrm_partnerresources_id_c')->nullable();
         $table->integer('deleted')->default(0);
     });
 
     Schema::connection('sugarcrm')->create('pcrm_salesorderrow_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
+        $table->string('aos_products_id_c')->nullable();
         $table->decimal('purchase_other_c', 10, 2)->nullable();
         $table->decimal('purchase_cardio_c', 10, 2)->nullable();
         $table->decimal('purchase_clinic_c', 10, 2)->nullable();
@@ -153,6 +159,11 @@ beforeEach(function () {
         $table->integer('deleted')->default(0);
     });
 
+    Schema::connection('sugarcrm')->create('accounts_cstm', function (Blueprint $table) {
+        $table->string('id_c')->primary();
+        $table->string('billing_huisnr_c')->nullable();
+    });
+
     Schema::connection('sugarcrm')->create('pcrm_salesoder_accounts_c', function (Blueprint $table) {
         $table->string('pcrm_salesd0bfesorder_idb');
         $table->string('pcrm_sales697fccounts_ida');
@@ -169,6 +180,7 @@ function insertSugarOrder(string $id, array $overrides = []): void
         'reden_afvoeren_c',
         'op_een_factuur_c',
         'd_wfl_status_c',
+        'aankomsttijd_c',
         'betaald_vooruit_c',
         'betaald_kliniek_c',
         'datum_betaling_vr_c',
@@ -266,23 +278,29 @@ function linkOrderToSugarLead(string $orderId, string $sugarLeadId): void
     ]);
 }
 
-function insertSugarAccount(string $accountId, string $accountName, array $billing = []): void
+function insertSugarAccount(string $accountId, string $accountName, array $billing = [], array $accountCstm = []): void
 {
-    if (DB::connection('sugarcrm')->table('accounts')->where('id', $accountId)->exists()) {
-        return;
+    if (! DB::connection('sugarcrm')->table('accounts')->where('id', $accountId)->exists()) {
+        DB::connection('sugarcrm')->table('accounts')->insert(array_merge([
+            'id'                                  => $accountId,
+            'name'                                => $accountName,
+            'deleted'                             => 0,
+            'billing_address_postalcode'          => null,
+            'billing_address_state'               => null,
+            'billing_address_street'              => null,
+            'billing_address_city'                => null,
+            'shipping_address_city'               => null,
+            'billing_address_country'             => null,
+        ], $billing));
     }
 
-    DB::connection('sugarcrm')->table('accounts')->insert(array_merge([
-        'id'                                  => $accountId,
-        'name'                                => $accountName,
-        'deleted'                             => 0,
-        'billing_address_postalcode'          => null,
-        'billing_address_state'               => null,
-        'billing_address_street'              => null,
-        'billing_address_city'                => null,
-        'shipping_address_city'               => null,
-        'billing_address_country'             => null,
-    ], $billing));
+    // Sugar always has accounts_cstm for an account; import uses INNER JOIN on this table.
+    if (! DB::connection('sugarcrm')->table('accounts_cstm')->where('id_c', $accountId)->exists()) {
+        DB::connection('sugarcrm')->table('accounts_cstm')->insert(array_merge([
+            'id_c'               => $accountId,
+            'billing_huisnr_c'   => null,
+        ], $accountCstm));
+    }
 }
 
 function linkOrderToAccount(string $orderId, string $accountId): void
@@ -410,6 +428,31 @@ test('zakelijk import uses fallback house number 9999 when Sugar street has no h
     expect($org->address)->not->toBeNull()
         ->street->toBe('Burgemeester C. van de Werkenstraat')
         ->house_number->toBe('9999')
+        ->postal_code->toBe('1081AB');
+});
+
+test('zakelijk import uses accounts_cstm billing_huisnr_c when street has no parseable huisnummer', function () {
+    Person::factory()->create(['external_id' => 'contact-cstm-huis']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-cstm-huis']);
+
+    insertSugarOrder('order-cstm-huis-001');
+    insertSugarRow('order-cstm-huis-001', 'row-cstm-huis', []);
+    linkRowToContact('row-cstm-huis', 'contact-cstm-huis');
+    linkOrderToSugarLead('order-cstm-huis-001', 'sugar-lead-cstm-huis');
+    insertSugarAccount('acc-cstm-huis', 'Cstm Huis BV', [
+        'billing_address_postalcode'   => '1081 AB',
+        'billing_address_street'       => 'Burgemeester C. van de Werkenstraat',
+        'billing_address_city'         => 'Amsterdam',
+        'billing_address_country'      => 'Nederland',
+    ], ['billing_huisnr_c' => '42']);
+    linkOrderToAccount('order-cstm-huis-001', 'acc-cstm-huis');
+
+    expect(runOrderImport())->toBe(0);
+
+    $org = Organization::with('address')->where('name', 'Cstm Huis BV')->first();
+    expect($org->address)->not->toBeNull()
+        ->street->toBe('Burgemeester C. van de Werkenstraat')
+        ->house_number->toBe('42')
         ->postal_code->toBe('1081AB');
 });
 
@@ -596,9 +639,8 @@ test('order row with matching product sets product_id on orderitem', function ()
     $product = Product::factory()->create(['external_id' => 'product-template-001']);
 
     insertSugarOrder('order-product-001');
-    insertSugarRow('order-product-001', 'row-product-001', [
-        'aos_products_id_c' => 'product-template-001',
-    ]);
+    insertSugarRow('order-product-001', 'row-product-001');
+    insertSugarRowCstm('row-product-001', ['aos_products_id_c' => 'product-template-001']);
     linkOrderToSugarLead('order-product-001', 'sugar-lead-product-001');
 
     runOrderImport();
@@ -614,10 +656,10 @@ test('order row resolves product by exact CRM name when template id has no match
 
     insertSugarOrder('order-by-name-001');
     insertSugarRow('order-by-name-001', 'row-by-name-001', [
-        'name'                 => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio',
-        'aos_products_id_c' => 'no-such-template-in-crm',
-        'sales_price'          => 1890,
+        'name'        => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio',
+        'sales_price' => 1890,
     ]);
+    insertSugarRowCstm('row-by-name-001', ['aos_products_id_c' => 'no-such-template-in-crm']);
     linkOrderToSugarLead('order-by-name-001', 'sugar-lead-by-name-001');
 
     runOrderImport();
@@ -640,9 +682,9 @@ test('order row resolves product via partner product name when Sugar line differ
 
     insertSugarOrder('order-pp-name-001');
     insertSugarRow('order-pp-name-001', 'row-pp-001', [
-        'name'                 => 'TB1 Royal+ Bodyscan',
-        'aos_products_id_c' => 'unknown-sugar-template-uuid',
+        'name' => 'TB1 Royal+ Bodyscan',
     ]);
+    insertSugarRowCstm('row-pp-001', ['aos_products_id_c' => 'unknown-sugar-template-uuid']);
     linkOrderToSugarLead('order-pp-name-001', 'sugar-lead-pp-name-001');
 
     runOrderImport();
@@ -682,15 +724,15 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
 
     expect($inv)->not->toBeNull()
         ->and($inv->type)->toBe(PurchasePriceType::INVOICE)
-        ->and((float)$inv->purchase_price_misc)->toBe(1.5)
-        ->and((float)$inv->purchase_price_cardiology)->toBe(2.25)
-        ->and((float)$inv->purchase_price_clinic)->toBe(3.0)
-        ->and((float)$inv->purchase_price_radiology)->toBe(4.25)
-        ->and((float)$inv->purchase_price)->toBe(11.0)
-        ->and((float)$inv->purchase_price_doctor)->toBe(0.0)
+        ->and((float) $inv->purchase_price_misc)->toBe(1.5)
+        ->and((float) $inv->purchase_price_cardiology)->toBe(2.25)
+        ->and((float) $inv->purchase_price_clinic)->toBe(3.0)
+        ->and((float) $inv->purchase_price_radiology)->toBe(4.25)
+        ->and((float) $inv->purchase_price)->toBe(11.0)
+        ->and((float) $inv->purchase_price_doctor)->toBe(0.0)
         ->and($main)->not->toBeNull()
         ->and($main->type)->toBe(PurchasePriceType::MAIN)
-        ->and((float)$main->purchase_price)->toBe(11.0);
+        ->and((float) $main->purchase_price)->toBe(11.0);
 
     $resolved = $item->fresh(['product.partnerProducts.purchasePrice'])->resolvedPurchasePrice();
     expect((float) $resolved->purchase_price)->toBe(11.0)
@@ -926,6 +968,32 @@ test('combine_order flag is imported correctly', function () {
     expect($order->combine_order)->toBeTrue();
 });
 
+test('import limit counts distinct Sugar orders when account join duplicates rows', function () {
+    insertSugarOrder('order-limit-a', [
+        'date_entered' => '2025-03-02 12:00:00',
+        'order_num'    => 202500901,
+    ]);
+    insertSugarOrder('order-limit-b', [
+        'date_entered' => '2025-03-01 12:00:00',
+        'order_num'    => 202500902,
+    ]);
+
+    insertSugarAccount('acc-lim-1', 'Lim One');
+    insertSugarAccount('acc-lim-2', 'Lim Two');
+    linkOrderToAccount('order-limit-a', 'acc-lim-1');
+    linkOrderToAccount('order-limit-a', 'acc-lim-2');
+    linkOrderToAccount('order-limit-b', 'acc-lim-2');
+
+    Artisan::call('import:orders', [
+        '--connection' => 'sugarcrm',
+        '--table'      => 'pcrm_salesorder',
+        '--dry-run'    => true,
+        '--limit'      => '2',
+    ]);
+
+    expect(Artisan::output())->toContain('Found 2 orders to import');
+});
+
 test('dry run does not persist any data', function () {
     insertSugarOrder('order-dryrun-001');
 
@@ -1044,4 +1112,86 @@ test('does not create OrderPayments when Sugar payment amounts are empty', funct
 
     $order = Order::where('external_id', 'order-pay-none-001')->first();
     expect(OrderPayment::where('order_id', $order->id)->count())->toBe(0);
+});
+
+test('creates ResourceOrderItem with correct times when duration and resource are present', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-roi-001']);
+    Person::factory()->create(['external_id' => 'contact-roi-001']);
+    $resource = Resource::factory()->create(['external_id' => 'sugar-resource-uuid-001']);
+
+    insertSugarOrder('order-roi-001', [
+        'datum_onderzoek_1' => '2025-07-15',
+        'aankomsttijd_c'    => '09:00',
+    ]);
+    insertSugarRow('order-roi-001', 'row-roi-001', [
+        'duration'                   => 60,
+        'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-001',
+    ]);
+    linkRowToContact('row-roi-001', 'contact-roi-001');
+    linkOrderToSugarLead('order-roi-001', 'sugar-lead-roi-001');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-roi-001')->first();
+    $orderItem = $order->orderItems->first();
+    expect($orderItem)->not->toBeNull();
+
+    $roi = ResourceOrderItem::where('orderitem_id', $orderItem->id)->first();
+    expect($roi)->not->toBeNull()
+        ->and($roi->resource_id)->toBe($resource->id)
+        ->and($roi->from->format('Y-m-d H:i:s'))->toBe('2025-07-15 09:00:00')
+        ->and($roi->to->format('Y-m-d H:i:s'))->toBe('2025-07-15 10:00:00');
+});
+
+test('does not create ResourceOrderItem when duration is null', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-roi-nodur']);
+    Person::factory()->create(['external_id' => 'contact-roi-nodur']);
+    Resource::factory()->create(['external_id' => 'sugar-resource-nodur']);
+
+    insertSugarOrder('order-roi-nodur', [
+        'datum_onderzoek_1' => '2025-07-15',
+        'aankomsttijd_c'    => '09:00',
+    ]);
+    insertSugarRow('order-roi-nodur', 'row-roi-nodur', [
+        'duration'                   => null,
+        'pcrm_partnerresources_id_c' => 'sugar-resource-nodur',
+    ]);
+    linkRowToContact('row-roi-nodur', 'contact-roi-nodur');
+    linkOrderToSugarLead('order-roi-nodur', 'sugar-lead-roi-nodur');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-roi-nodur')->first();
+    expect($order)->not->toBeNull();
+    expect(ResourceOrderItem::whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))->count())->toBe(0);
+});
+
+test('logs warning and still imports order when resource external_id not found', function () {
+    Log::spy();
+
+    Lead::factory()->create(['external_id' => 'sugar-lead-roi-nores']);
+    Person::factory()->create(['external_id' => 'contact-roi-nores']);
+
+    insertSugarOrder('order-roi-nores', [
+        'datum_onderzoek_1' => '2025-07-15',
+        'aankomsttijd_c'    => '09:00',
+    ]);
+    insertSugarRow('order-roi-nores', 'row-roi-nores', [
+        'duration'                   => 45,
+        'pcrm_partnerresources_id_c' => 'non-existent-resource-uuid',
+    ]);
+    linkRowToContact('row-roi-nores', 'contact-roi-nores');
+    linkOrderToSugarLead('order-roi-nores', 'sugar-lead-roi-nores');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-roi-nores')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->orderItems)->toHaveCount(1);
+
+    expect(ResourceOrderItem::whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))->count())->toBe(0);
+
+    Log::shouldHaveReceived('warning')
+        ->once()
+        ->with('ImportOrdersFromSugarCRM: resource not found for order row', Mockery::on(fn ($ctx) => ($ctx['resource_external_id'] ?? null) === 'non-existent-resource-uuid'));
 });

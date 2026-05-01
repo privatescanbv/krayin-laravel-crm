@@ -13,9 +13,12 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\PartnerProduct;
+use App\Models\Resource;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Repositories\AddressRepository;
 use App\Repositories\SalesLeadRepository;
+use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -103,6 +106,13 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         $join->on('ac.id', '=', 'a.pcrm_sales697fccounts_ida')
                             ->where('ac.deleted', '=', 0);
                     })
+                    // Sugar has accounts_cstm for every account row; require it when an account is linked.
+                    // Plain INNER JOIN would drop all particuliere orders (no account ⇒ ac.id IS NULL).
+                    ->leftJoin('accounts_cstm as ac_cstm', 'ac_cstm.id_c', '=', 'ac.id')
+                    ->where(function ($q): void {
+                        $q->whereNull('ac.id')
+                            ->orWhereNotNull('ac_cstm.id_c');
+                    })
                     ->select([
                         'so.id',
                         'so.name',
@@ -133,6 +143,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'ac.billing_address_city as account_billing_city',
                         'ac.shipping_address_city as account_shipping_city',
                         'ac.billing_address_country as account_billing_country',
+                        'ac_cstm.billing_huisnr_c as account_billing_huisnr_c',
                     ])
                     ->where('so.deleted', 0)
                     ->whereNotNull('so.id')
@@ -147,8 +158,21 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $sql = $sql->whereIn('so.order_num', $normalizedIds);
                 } else {
                     $sql = $sql->orderBy('so.date_entered', 'desc');
+                    // LIMIT on joined rows is wrong when an order has multiple account links: apply cap on distinct orders only.
                     if ($limit > 0) {
-                        $sql = $sql->limit($limit);
+                        $orderIdCap = DB::connection($connection)
+                            ->table($table.' as so')
+                            ->join('pcrm_salesorder_cstm as cstm', 'cstm.id_c', '=', 'so.id')
+                            ->where('so.deleted', 0)
+                            ->whereNotNull('so.id')
+                            ->where('so.id', '!=', '')
+                            ->where('so.date_entered', '>=', '2025-01-01 00:00:00')
+                            ->orderBy('so.date_entered', 'desc')
+                            ->limit($limit)
+                            ->select('so.id');
+
+                        // MySQL rejects LIMIT inside IN-subquery (error 1235); JOIN derived table is supported.
+                        $sql->joinSub($orderIdCap, 'order_id_cap', 'order_id_cap.id', '=', 'so.id');
                     }
                 }
 
@@ -173,7 +197,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     return;
                 }
 
-                $this->importRecords($records, $connection);
+                Order::withoutEvents(function () use ($records, $connection) {
+                    $this->importRecords($records, $connection);
+                });
             });
         } catch (Exception $e) {
             $this->error('Error: '.$e->getMessage());
@@ -446,6 +472,16 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         // Batch-fetch all order rows for these orders upfront (avoid N+1)
         $orderIds = $records->pluck('id')->all();
         $rowsByOrder = $this->fetchOrderRows($connection, $orderIds);
+        $allResourceExternalIds = $rowsByOrder->flatten()
+            ->pluck('pcrm_partnerresources_id_c')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $resourcesByExternalId = ! empty($allResourceExternalIds)
+            ? Resource::whereIn('external_id', $allResourceExternalIds)->get()->keyBy('external_id')
+            : collect();
 
         // Partner labels often match Sugar line overrides better than catalog {@see Product::name}.
         $partnerProductsByNormalizedName = $this->partnerProductsByNormalizedName();
@@ -513,6 +549,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $productsByName,
                     $productsByNormalizedName,
                     $partnerProductsByNormalizedName,
+                    $resourcesByExternalId,
                     $salesStage,
                     $orderStage,
                     $lostReason,
@@ -598,6 +635,29 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             'quantity'        => 1,
                             'status'          => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? ''),
                         ]);
+
+                        if (! empty($row->pcrm_partnerresources_id_c) && $row->duration !== null) {
+                            $resource = $resourcesByExternalId->get($row->pcrm_partnerresources_id_c);
+                            if ($resource === null) {
+                                Log::warning('ImportOrdersFromSugarCRM: resource not found for order row', [
+                                    'order_id'             => $record->id,
+                                    'order_row_id'         => $row->id,
+                                    'resource_external_id' => $row->pcrm_partnerresources_id_c,
+                                ]);
+                            } else {
+                                $examAt = $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c);
+                                if ($examAt !== null) {
+                                    $from = CarbonImmutable::parse($examAt);
+                                    $to = $from->addMinutes((int) $row->duration);
+                                    ResourceOrderItem::create([
+                                        'resource_id'  => $resource->id,
+                                        'orderitem_id' => $orderItem->id,
+                                        'from'         => $from,
+                                        'to'           => $to,
+                                    ]);
+                                }
+                            }
+                        }
 
                         $invoicePurchasePayload = $this->orderItemInvoicePurchasePayloadFromSugarRow($row);
                         $mainPurchasePayload = $this->orderItemMainPurchasePayloadFromSugarRow($row);
@@ -686,7 +746,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'sor.sales_price',
             'sor.sales_stage',
             'sor.resource_type',
-            'sor.aos_products_id_c',
+            'row_cstm.aos_products_id_c',
+            'sor.duration',
+            'sor.pcrm_partnerresources_id_c',
             'pt.name as product_template_name',
             'rc.pcrm_sales4bd9ontacts_ida as contact_id',
         ];
@@ -700,7 +762,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     ->where('rc.deleted', '=', 0);
             })
             ->leftJoin('aos_products as pt', function ($join) {
-                $join->on('pt.id', '=', 'sor.aos_products_id_c')
+                $join->on('pt.id', '=', 'row_cstm.aos_products_id_c')
                     ->where('pt.deleted', '=', 0);
             })
             ->select(array_merge($baseSelect, $this->sugarOrderRowCstmSelectFragments($connection)))
@@ -772,7 +834,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             }
             $cache[$connection] = $map;
         } catch (Exception $e) {
-            Log::warning('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
+            $this->warn('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
                 'connection' => $connection,
                 'error'      => $e->getMessage(),
             ]);
@@ -1371,8 +1433,16 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $split = $this->splitSugarBillingStreetForOrganization($streetRaw !== '' ? $streetRaw : null);
         $street = (($split['street'] ?? '') !== '') ? ($split['street'] ?? '') : 'Onbekend';
-        $houseNumber = (($split['house_number'] ?? '') !== '') ? ($split['house_number'] ?? '') : $this->sugarOrganizationFallbackHouseNumber();
         $suffix = $split['house_number_suffix'] ?? null;
+
+        $houseFromCstm = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_huisnr_c'));
+        if ($houseFromCstm !== null) {
+            $houseNumber = $houseFromCstm;
+        } else {
+            $houseNumber = (($split['house_number'] ?? '') !== '')
+                ? ($split['house_number'] ?? '')
+                : $this->sugarOrganizationFallbackHouseNumber();
+        }
 
         $cityBilling = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_city'));
         $cityShipping = $this->nonEmptyTrimmedString(data_get($record, 'account_shipping_city'));
@@ -1382,7 +1452,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'street'               => $street,
             'house_number'         => $houseNumber,
             'house_number_suffix'  => $suffix,
-            'postal_code'          => $postalRaw,
+            'postal_code'          => preg_replace('/\s+/', '', $postalRaw),
             'city'                 => $city,
             'state'                => $this->nonEmptyTrimmedString(data_get($record, 'account_billing_state')),
             'country'              => $this->nonEmptyTrimmedString(data_get($record, 'account_billing_country')),

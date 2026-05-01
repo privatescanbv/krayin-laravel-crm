@@ -42,7 +42,7 @@ services:
       - .env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && !PathPrefix("/llm") && !PathPrefix("/llm-fast")
       - traefik.http.routers.crm.entrypoints=https
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.certresolver=myresolver
@@ -388,6 +388,12 @@ services:
     networks:
       - backend
       - public
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/v1/models" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   llama-fast:
     image: ghcr.io/ggml-org/llama.cpp:server
@@ -399,10 +405,10 @@ services:
       - GGML_NO_GPU=1
     command: >
       -m /models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
-      -c 4096
+      -c 8192
       --threads 6
       --parallel 1
-      --port 8081
+      --port 8080
     labels:
       - traefik.enable=true
       - traefik.docker.network=public
@@ -415,18 +421,24 @@ services:
       - traefik.http.routers.llmfast.priority=1001
 
       # Service
-      - traefik.http.routers.llmfast.service=llm-svc
-      - traefik.http.services.llmfast-svc.loadbalancer.server.port=8081
+      - traefik.http.routers.llmfast.service=llmfast-svc
+      - traefik.http.services.llmfast-svc.loadbalancer.server.port=8080
 
-      # Strip /llm prefix
-      - traefik.http.middlewares.llmfast-stripprefix.stripprefix.prefixes=/llm
-      - traefik.http.routers.llmfast.middlewares=llm-stripprefix
+      # Strip /llm-fast prefix
+      - traefik.http.middlewares.llmfast-stripprefix.stripprefix.prefixes=/llm-fast
+      - traefik.http.routers.llmfast.middlewares=llmfast-stripprefix
 
       # Logging
       - logging=promtail
     networks:
       - backend
       - public
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/v1/models" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
 networks:
   backend:

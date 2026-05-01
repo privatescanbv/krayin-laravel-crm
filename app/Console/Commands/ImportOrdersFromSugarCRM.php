@@ -324,7 +324,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $this->info("\n=== ORDER ROWS PREVIEW ===");
 
         // Build product lookup collections once for all rows (same logic as importRecords)
-        $allProductIds = $allRows->pluck('producttemplate_id_c')->filter()->unique()->values()->all();
+        $allProductIds = $allRows->pluck('aos_products_id_c')->filter()->unique()->values()->all();
         $productsByExternalId = ! empty($allProductIds)
             ? Product::whereIn('external_id', $allProductIds)->get()->keyBy('external_id')
             : collect();
@@ -466,7 +466,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                 // Collect unique contact IDs and product template IDs from rows
                 $contactIds = $orderRows->pluck('contact_id')->filter()->unique()->values()->all();
-                $productIds = $orderRows->pluck('producttemplate_id_c')->filter()->unique()->values()->all();
+                $productIds = $orderRows->pluck('aos_products_id_c')->filter()->unique()->values()->all();
 
                 // Look up existing persons and products
                 $personsByExternalId = ! empty($contactIds)
@@ -581,7 +581,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                                 $record->id,
                                 $row->id ?? '',
                                 $row->name ?? '',
-                                $row->producttemplate_id_c ?? '',
+                                $row->aos_products_id_c ?? '',
                                 $row->product_template_name ?? ''
                             ));
 
@@ -686,7 +686,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'sor.sales_price',
             'sor.sales_stage',
             'sor.resource_type',
-            'sor.producttemplate_id_c',
+            'sor.aos_products_id_c',
             'pt.name as product_template_name',
             'rc.pcrm_sales4bd9ontacts_ida as contact_id',
         ];
@@ -700,7 +700,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     ->where('rc.deleted', '=', 0);
             })
             ->leftJoin('aos_products as pt', function ($join) {
-                $join->on('pt.id', '=', 'sor.producttemplate_id_c')
+                $join->on('pt.id', '=', 'sor.aos_products_id_c')
                     ->where('pt.deleted', '=', 0);
             })
             ->select(array_merge($baseSelect, $this->sugarOrderRowCstmSelectFragments($connection)))
@@ -1196,8 +1196,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         Collection $partnerProductsByNormalizedName,
     ): ?Product {
         // 1. Match by Sugar product template UUID → Product.external_id (most reliable)
-        if (! empty($row->producttemplate_id_c)) {
-            $byId = $productsByExternalId->get($row->producttemplate_id_c);
+        if (! empty($row->aos_products_id_c)) {
+            $byId = $productsByExternalId->get($row->aos_products_id_c);
             if ($byId !== null) {
                 return $byId;
             }
@@ -1213,7 +1213,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         // 3. Fall back to the original product template name from Sugar (handles overridden row names
-        //    when producttemplate_id_c is set but external_id lookup fails)
+        //    when aos_products_id_c is set but external_id lookup fails)
         $templateName = trim((string) ($row->product_template_name ?? ''));
         if ($templateName !== '') {
             $byTemplateName = $productsByName->get($templateName);

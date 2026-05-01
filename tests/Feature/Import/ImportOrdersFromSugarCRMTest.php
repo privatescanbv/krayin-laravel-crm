@@ -90,7 +90,7 @@ beforeEach(function () {
         $table->double('sales_price')->nullable();
         $table->string('sales_stage')->nullable();
         $table->string('resource_type')->nullable();
-        $table->string('producttemplate_id_c')->nullable();
+        $table->string('aos_products_id_c')->nullable();
         $table->integer('deleted')->default(0);
     });
 
@@ -329,15 +329,15 @@ test('imports zakelijk Sugar order with organization and is_business', function 
         ->and($order->organization_id)->not->toBeNull();
 
     $org = Organization::with('address')->find($order->organization_id);
-    expect($org)->not->toBeNull()->and($org->name)->toBe('Acme BV');
-
-    expect($org->address)->not->toBeNull()
+    expect($org)->not->toBeNull()->and($org->name)->toBe('Acme BV')
+        ->and($org->address)->not->toBeNull()
         ->street->toBe('Schermerhoek')
         ->house_number->toBe('500')
         ->postal_code->toBe('1846LD')
         ->city->toBe('Groet')
         ->state->toBe('Noord-Holland')
         ->country->toBe('Nederland');
+
 });
 
 test('Fam prefixed Sugar account name is particulier not zakelijk', function () {
@@ -517,10 +517,10 @@ test('imports lost order with lost reason', function () {
     $order = Order::where('external_id', 'order-lost-001')->first();
     expect($order)->not->toBeNull()
         ->and($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_VERLOREN->id())
-        ->and($order->lost_reason)->toBe(LostReason::Price);
-
-    expect($order->salesLead->pipeline_stage_id)
+        ->and($order->lost_reason)->toBe(LostReason::Price)
+        ->and($order->salesLead->pipeline_stage_id)
         ->toBe(PipelineStage::SALES_NIET_SUCCESVOL_AFGEROND->id());
+
 });
 
 test('unknown sales_stage maps to first order stage', function () {
@@ -532,8 +532,8 @@ test('unknown sales_stage maps to first order stage', function () {
     runOrderImport();
 
     $order = Order::where('external_id', 'order-optie-001')->first();
-    expect($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_CONFIRM->id());
-    expect($order->salesLead->pipeline_stage_id)->toBe(PipelineStage::SALES_IN_BEHANDELING->id());
+    expect($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_CONFIRM->id())
+        ->and($order->salesLead->pipeline_stage_id)->toBe(PipelineStage::SALES_IN_BEHANDELING->id());
 });
 
 test('skips already imported order on re-run', function () {
@@ -545,8 +545,8 @@ test('skips already imported order on re-run', function () {
     runOrderImport();
     runOrderImport(); // second run
 
-    expect(Order::where('external_id', 'order-dup-001')->count())->toBe(1);
-    expect(SalesLead::count())->toBe(1);
+    expect(Order::where('external_id', 'order-dup-001')->count())->toBe(1)
+        ->and(SalesLead::count())->toBe(1);
 });
 
 test('order with multiple rows and multiple persons creates multiple orderitems', function () {
@@ -597,7 +597,7 @@ test('order row with matching product sets product_id on orderitem', function ()
 
     insertSugarOrder('order-product-001');
     insertSugarRow('order-product-001', 'row-product-001', [
-        'producttemplate_id_c' => 'product-template-001',
+        'aos_products_id_c' => 'product-template-001',
     ]);
     linkOrderToSugarLead('order-product-001', 'sugar-lead-product-001');
 
@@ -615,7 +615,7 @@ test('order row resolves product by exact CRM name when template id has no match
     insertSugarOrder('order-by-name-001');
     insertSugarRow('order-by-name-001', 'row-by-name-001', [
         'name'                 => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio',
-        'producttemplate_id_c' => 'no-such-template-in-crm',
+        'aos_products_id_c' => 'no-such-template-in-crm',
         'sales_price'          => 1890,
     ]);
     linkOrderToSugarLead('order-by-name-001', 'sugar-lead-by-name-001');
@@ -641,7 +641,7 @@ test('order row resolves product via partner product name when Sugar line differ
     insertSugarOrder('order-pp-name-001');
     insertSugarRow('order-pp-name-001', 'row-pp-001', [
         'name'                 => 'TB1 Royal+ Bodyscan',
-        'producttemplate_id_c' => 'unknown-sugar-template-uuid',
+        'aos_products_id_c' => 'unknown-sugar-template-uuid',
     ]);
     linkOrderToSugarLead('order-pp-name-001', 'sugar-lead-pp-name-001');
 
@@ -682,16 +682,15 @@ test('imports invoice purchase prices from Sugar order row cstm', function () {
 
     expect($inv)->not->toBeNull()
         ->and($inv->type)->toBe(PurchasePriceType::INVOICE)
-        ->and((float) $inv->purchase_price_misc)->toBe(1.5)
-        ->and((float) $inv->purchase_price_cardiology)->toBe(2.25)
-        ->and((float) $inv->purchase_price_clinic)->toBe(3.0)
-        ->and((float) $inv->purchase_price_radiology)->toBe(4.25)
-        ->and((float) $inv->purchase_price)->toBe(11.0)
-        ->and((float) $inv->purchase_price_doctor)->toBe(0.0);
-
-    expect($main)->not->toBeNull()
+        ->and((float)$inv->purchase_price_misc)->toBe(1.5)
+        ->and((float)$inv->purchase_price_cardiology)->toBe(2.25)
+        ->and((float)$inv->purchase_price_clinic)->toBe(3.0)
+        ->and((float)$inv->purchase_price_radiology)->toBe(4.25)
+        ->and((float)$inv->purchase_price)->toBe(11.0)
+        ->and((float)$inv->purchase_price_doctor)->toBe(0.0)
+        ->and($main)->not->toBeNull()
         ->and($main->type)->toBe(PurchasePriceType::MAIN)
-        ->and((float) $main->purchase_price)->toBe(11.0);
+        ->and((float)$main->purchase_price)->toBe(11.0);
 
     $resolved = $item->fresh(['product.partnerProducts.purchasePrice'])->resolvedPurchasePrice();
     expect((float) $resolved->purchase_price)->toBe(11.0)

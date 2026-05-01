@@ -33,7 +33,7 @@ return [
     ],
 
     'postcodeapi' => [
-        'url'   => 'https://sandbox.postcodeapi.nu/v3/lookup/',
+        'url'   => env('POSTCODEAPI_URL', 'https://sandbox.postcodeapi.nu/v3/lookup'),
         'token' => env('POSTCODEAPI_TOKEN'),
     ],
 

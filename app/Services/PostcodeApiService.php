@@ -23,7 +23,7 @@ class PostcodeApiService
         }
         $response = Http::withHeaders([
             'X-Api-Key' => $apiToken,
-        ])->get("{$apiUrl}{$postcode}/{$number}");
+        ])->get("{$apiUrl}/{$postcode}/{$number}");
 
         if ($response->successful()) {
             return $response->json();

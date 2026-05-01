@@ -155,7 +155,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $this->infoVV($sql->toRawSql());
 
                 try {
-                    $records = $sql->get();
+                    $records = $sql->get()->unique('id');
                 } catch (Exception $e) {
                     $this->error('Query failed: '.$e->getMessage());
                     throw $e;
@@ -708,7 +708,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds);
 
         $this->infoVV($sql->toRawSql());
-        $rows = $sql->get();
+        $rows = $sql->get()->unique('id');
 
         return $rows->groupBy('order_id');
     }

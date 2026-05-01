@@ -46,10 +46,12 @@ test('weekday map blocks expand to availability', function (): void {
     $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
     $resource = Resource::factory()->create();
 
+    $start = now()->startOfWeek();
+
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
-        'period_start'        => now()->startOfMonth(),
+        'period_start'        => $start->toDateString(),
         'period_end'          => now()->endOfMonth(),
         'weekday_time_blocks' => [
             '1' => [['from' => '08:00', 'to' => '17:00']],
@@ -57,8 +59,6 @@ test('weekday map blocks expand to availability', function (): void {
             '3' => [['from' => '08:00', 'to' => '17:00']],
         ],
     ]);
-
-    $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
 
     $resp = $this->getJson(route('admin.planning.order_item.availability', [

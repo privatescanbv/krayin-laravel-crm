@@ -16,6 +16,7 @@ routes
 packages
 lang
 docs
+ai-agents
 "
 
 for dir in $DIRS; do

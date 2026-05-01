@@ -13,14 +13,23 @@ Je kunt kiezen tussen:
 - 💬 *CRM-vraag* → haalt data op uit je CRM en beantwoordt via de AI-agent
 - ✍️ *Tekst schrijven* → gebruikt het schrijvende model (Mistral / Phi-3) in LM Studio
 - 📄 *Bedrijfsdocument* → stel vragen over een geüpload PDF-bestand (zoals voorwaarden, handleidingen, etc.)
+- 🏥 *Medische analyse* → genereer een medische samenvatting voor een arts op basis van een patiëntformulier
 """)
 
-# --- Keuze tussen CRM, tekst of document ---
+# --- Keuze tussen CRM, tekst, document of medisch ---
 option = st.radio(
     "Kies functie:",
-    ["CRM-vraag", "Tekst schrijven", "Bedrijfsdocument"],
+    ["CRM-vraag", "Tekst schrijven", "Bedrijfsdocument", "Medische analyse"],
     horizontal=True,
 )
+
+# --- Session state voor bewerkbare medische prompt ---
+if "med_prompt" not in st.session_state:
+    try:
+        r = requests.get("http://ai-agent:8001/med/default_prompt", timeout=5)
+        st.session_state.med_prompt = r.json().get("prompt", "")
+    except Exception:
+        st.session_state.med_prompt = "Analyseer de volgende medische tekst en maak een samenvatting voor een arts.\n\nTekst:\n{text}"
 
 # --- Optioneel schrijfstijl-menu voor de tekstmodus ---
 tone = None
@@ -67,6 +76,8 @@ if uploaded_file:
         st.sidebar.error("Upload mislukt! Controleer backend logs.")
 
 # --- Eén formulier voor alle opties ---
+med_prompt_input = st.session_state.med_prompt  # default, overschreven in form als optie actief is
+
 with st.form("crm_form", clear_on_submit=False):
     if option == "CRM-vraag":
         user_input = st.text_input("Vraag aan je CRM:")
@@ -74,6 +85,18 @@ with st.form("crm_form", clear_on_submit=False):
         user_input = st.text_area("Schrijfopdracht of onderwerp:")
     elif option == "Bedrijfsdocument":
         user_input = st.text_input("Stel je vraag over het document:")
+    elif option == "Medische analyse":
+        user_input = st.text_area(
+            "Plak hier de patiënttekst (formulier of beschrijving):",
+            height=300,
+            placeholder="Kopieer hier de intake-tekst van de patiënt...",
+        )
+        with st.expander("✏️ Prompt aanpassen (voor experimenteren)"):
+            med_prompt_input = st.text_area(
+                "Prompt template — gebruik {text} als plaatshouder voor de patiënttekst:",
+                value=st.session_state.med_prompt,
+                height=350,
+            )
     else:
         user_input = ""
 
@@ -81,6 +104,9 @@ with st.form("crm_form", clear_on_submit=False):
 
 # --- Actie bij klikken op Verstuur ---
 if submitted and user_input:
+    if option == "Medische analyse":
+        st.session_state.med_prompt = med_prompt_input  # bewaar eventuele aanpassing
+
     with st.spinner("Even geduld, ik haal de data op..."):
         try:
             # Endpoint bepalen
@@ -88,13 +114,18 @@ if submitted and user_input:
                 endpoint = "http://ai-agent:8001/write"
             elif option == "Bedrijfsdocument":
                 endpoint = "http://ai-agent:8001/ask_pdf"
+            elif option == "Medische analyse":
+                endpoint = "http://ai-agent:8001/med"
             else:
                 endpoint = "http://ai-agent:8001/chat"
 
             # Vraag opbouwen
-            payload = {"question": user_input}
-            if option == "Tekst schrijven" and tone:
-                payload["question"] = f"Schrijf in een {tone.lower()} stijl: {user_input}"
+            if option == "Medische analyse":
+                payload = {"question": user_input, "prompt_template": med_prompt_input}
+            elif option == "Tekst schrijven" and tone:
+                payload = {"question": f"Schrijf in een {tone.lower()} stijl: {user_input}"}
+            else:
+                payload = {"question": user_input}
 
             # Verstuur
             resp = requests.post(endpoint, json=payload, timeout=180)

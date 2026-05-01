@@ -65,8 +65,39 @@ def extract_sql(output: str) -> str:
 from langchain_core.runnables import RunnableLambda
 generate_query = create_sql_query_chain(llm, db) | RunnableLambda(extract_sql)
 
+DEFAULT_MED_PROMPT = """\
+Analyseer de volgende medische tekst (afkomstig uit een patiëntformulier) en maak een korte medische samenvatting voor een arts.
+
+Regels:
+- Laat naam, adres, geboortedatum en andere persoonsgegevens weg.
+- Gebruik zakelijke medische taal.
+- Geef alleen relevante medische inhoud weer.
+- Als informatie ontbreekt: noteer Niet vermeld.
+- Voeg geen uitleg toe buiten de samenvatting.
+
+Structuur:
+- Lopend verhaal van maximaal 15 zinnen.
+- Verwerk expliciet de volgende onderdelen:
+  - Duur van de klachten
+  - Medische beschrijving van de klachten (inclusief eventuele uitstraling, bv dorsolateraal)
+  - Tintelingen / doof gevoel
+  - Krachtverlies
+  - VAS pijnscore
+  - Verergering bij lopen / zitten / staan / liggen
+  - Uitgevoerde conservatieve therapieën
+
+Afsluiting:
+- Korte conclusie in 3-5 zinnen voor de arts.
+
+Tekst:
+{text}"""
+
 class Query(BaseModel):
     question: str
+
+class MedQuery(BaseModel):
+    question: str
+    prompt_template: str = ""
 
 def call_lm_studio(prompt: str, system_prompt: str = "Je bent een behulpzame AI assistent.", mode="default"):
     """Stuurt een bericht naar het lokale LM Studio model"""
@@ -268,3 +299,19 @@ def chroma_status():
     """Toon statistieken over de vectorstore."""
     status = get_chroma_status()
     return status
+
+@app.post("/med")
+def med_analyse(query: MedQuery):
+    text = query.question.strip()
+    template = query.prompt_template.strip() if query.prompt_template else DEFAULT_MED_PROMPT
+    prompt = template.replace("{text}", text) if "{text}" in template else f"{template}\n\nTekst:\n{text}"
+    answer = call_lm_studio(
+        prompt,
+        system_prompt="Je bent een medisch assistent die patiëntformulieren analyseert voor artsen.",
+        mode="default",
+    )
+    return {"answer": answer}
+
+@app.get("/med/default_prompt")
+def med_default_prompt():
+    return {"prompt": DEFAULT_MED_PROMPT}

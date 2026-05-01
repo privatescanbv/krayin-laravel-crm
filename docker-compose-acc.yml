@@ -469,12 +469,13 @@ services:
       - ./ai-agents/ai-frontend:/app
     labels:
       - traefik.enable=true
-      - traefik.http.routers.ai-frontend.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/chat")
+      - traefik.docker.network=public
+      - traefik.http.routers.ai-frontend.rule=Host("chat.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.ai-frontend.entrypoints=https
       - traefik.http.routers.ai-frontend.tls=true
-      - traefik.http.routers.ai-frontend.priority=1002
+      - traefik.http.routers.ai-frontend.tls.domains[0].main=chat.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.http.services.ai-frontend.loadbalancer.server.port=8501
-      - traefik.docker.network=public
+      - logging=promtail
     depends_on:
       - ai-agent
     networks:

@@ -1,5 +1,6 @@
 .env
 .env.ai
+ai-agents/ai-agent/chroma/
 .env.testing
 .idea
 .cache
@@ -63,3 +64,4 @@ docs/html
 /k6-scripts/results.html
 /HTML_dashboard/
 .aider*
+/ai-agents/ai-agent/chroma

@@ -144,6 +144,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'ac.shipping_address_city as account_shipping_city',
                         'ac.billing_address_country as account_billing_country',
                         'ac_cstm.billing_huisnr_c as account_billing_huisnr_c',
+                        'ac_cstm.billing_huisnr_toevoeging_c as account_billing_huisnr_toevoeging_c',
                     ])
                     ->where('so.deleted', 0)
                     ->whereNotNull('so.id')
@@ -1433,7 +1434,10 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $split = $this->splitSugarBillingStreetForOrganization($streetRaw !== '' ? $streetRaw : null);
         $street = (($split['street'] ?? '') !== '') ? ($split['street'] ?? '') : 'Onbekend';
-        $suffix = $split['house_number_suffix'] ?? null;
+
+        $suffixFromCstm = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_huisnr_toevoeging_c'));
+        $suffixFromCstm = $suffixFromCstm !== null ? substr($suffixFromCstm, 0, 10) : null;
+        $suffix = $suffixFromCstm ?? ($split['house_number_suffix'] ?? null);
 
         $houseFromCstm = $this->nonEmptyTrimmedString(data_get($record, 'account_billing_huisnr_c'));
         if ($houseFromCstm !== null) {

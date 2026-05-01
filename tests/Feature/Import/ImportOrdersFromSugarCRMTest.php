@@ -162,6 +162,7 @@ beforeEach(function () {
     Schema::connection('sugarcrm')->create('accounts_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
         $table->string('billing_huisnr_c')->nullable();
+        $table->string('billing_huisnr_toevoeging_c')->nullable();
     });
 
     Schema::connection('sugarcrm')->create('pcrm_salesoder_accounts_c', function (Blueprint $table) {
@@ -297,8 +298,9 @@ function insertSugarAccount(string $accountId, string $accountName, array $billi
     // Sugar always has accounts_cstm for an account; import uses INNER JOIN on this table.
     if (! DB::connection('sugarcrm')->table('accounts_cstm')->where('id_c', $accountId)->exists()) {
         DB::connection('sugarcrm')->table('accounts_cstm')->insert(array_merge([
-            'id_c'               => $accountId,
-            'billing_huisnr_c'   => null,
+            'id_c'                         => $accountId,
+            'billing_huisnr_c'             => null,
+            'billing_huisnr_toevoeging_c'  => null,
         ], $accountCstm));
     }
 }
@@ -444,7 +446,10 @@ test('zakelijk import uses accounts_cstm billing_huisnr_c when street has no par
         'billing_address_street'       => 'Burgemeester C. van de Werkenstraat',
         'billing_address_city'         => 'Amsterdam',
         'billing_address_country'      => 'Nederland',
-    ], ['billing_huisnr_c' => '42']);
+    ], [
+        'billing_huisnr_c'             => '42',
+        'billing_huisnr_toevoeging_c'  => 'A',
+    ]);
     linkOrderToAccount('order-cstm-huis-001', 'acc-cstm-huis');
 
     expect(runOrderImport())->toBe(0);
@@ -453,7 +458,33 @@ test('zakelijk import uses accounts_cstm billing_huisnr_c when street has no par
     expect($org->address)->not->toBeNull()
         ->street->toBe('Burgemeester C. van de Werkenstraat')
         ->house_number->toBe('42')
+        ->house_number_suffix->toBe('A')
         ->postal_code->toBe('1081AB');
+});
+
+test('zakelijk import uses billing_huisnr_toevoeging_c over suffix parsed from street', function () {
+    Person::factory()->create(['external_id' => 'contact-cstm-toev']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-cstm-toev']);
+
+    insertSugarOrder('order-cstm-toev-001');
+    insertSugarRow('order-cstm-toev-001', 'row-cstm-toev', []);
+    linkRowToContact('row-cstm-toev', 'contact-cstm-toev');
+    linkOrderToSugarLead('order-cstm-toev-001', 'sugar-lead-cstm-toev');
+    insertSugarAccount('acc-cstm-toev', 'Cstm Toev BV', [
+        'billing_address_postalcode'   => '9711 BP',
+        'billing_address_street'       => 'Willem Barentszroute 12-B',
+        'billing_address_city'         => 'Groningen',
+        'billing_address_country'      => 'NL',
+    ], ['billing_huisnr_toevoeging_c' => 'bis']);
+    linkOrderToAccount('order-cstm-toev-001', 'acc-cstm-toev');
+
+    expect(runOrderImport())->toBe(0);
+
+    $addr = Organization::with('address')->where('name', 'Cstm Toev BV')->first()?->address;
+    expect($addr)->not->toBeNull()
+        ->street->toBe('Willem Barentszroute')
+        ->house_number->toBe('12')
+        ->house_number_suffix->toBe('bis');
 });
 
 test('zakelijk import skips organization address when Sugar billing postcode missing', function () {

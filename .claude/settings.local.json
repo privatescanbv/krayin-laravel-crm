@@ -71,7 +71,8 @@
       "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(p.get\\('name','?'\\), p.get\\('skills',[]\\)\\) for p in data.get\\('plugins',[]\\)]\")",
       "Skill(codex:rescue)",
       "Bash(node *)",
-      "Bash(xxd /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/app/Enums/ProductType.php)"
+      "Bash(xxd /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/app/Enums/ProductType.php)",
+      "Bash(vendor/bin/sail mysql *)"
     ]
   }
 }

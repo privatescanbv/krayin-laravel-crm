@@ -42,7 +42,7 @@ services:
       - .env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && !PathPrefix("/llm") && !PathPrefix("/llm-fast")
+      - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && !PathPrefix("/llm") && !PathPrefix("/llm-fast") && !PathPrefix("/chat")
       - traefik.http.routers.crm.entrypoints=https
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.certresolver=myresolver
@@ -439,6 +439,47 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
+
+  ai-agent:
+    build: ./ai-agents/ai-agent
+    container_name: ai-agent
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+    env_file:
+      - .env.ai
+    environment:
+      DB_HOST: 'host.docker.internal'
+      DB_PORT: '3306'
+      DB_USER: '${DB_USERNAME}'
+      DB_PASS: '${DB_PASSWORD}'
+      DB_NAME: '${DB_DATABASE}'
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai-agents/ai-agent:/app
+    depends_on:
+      - llama-fast
+    networks:
+      - public
+      - backend
+
+  ai-frontend:
+    build: ./ai-agents/ai-frontend
+    container_name: ai-frontend
+    volumes:
+      - ./ai-agents/ai-frontend:/app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ai-frontend.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/chat")
+      - traefik.http.routers.ai-frontend.entrypoints=https
+      - traefik.http.routers.ai-frontend.tls=true
+      - traefik.http.routers.ai-frontend.priority=1002
+      - traefik.http.services.ai-frontend.loadbalancer.server.port=8501
+      - traefik.docker.network=public
+    depends_on:
+      - ai-agent
+    networks:
+      - public
+      - backend
 
 networks:
   backend:

@@ -27,22 +27,43 @@ db_url = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:3306/{db_name}"
 db = SQLDatabase.from_uri(
     db_url,
     include_tables=[
-        "lead_channels", "lead_persons", "lead_pipeline_stages",
-        "lead_pipelines", "lead_products", "lead_sources",
-        "lead_stages", "lead_tags", "lead_types", "leads", "emails",
-        "lead_types", "users", "persons"
+        "leads", "lead_stages", "lead_types", "lead_sources", "lead_channels",
+        "lead_pipelines", "lead_pipeline_stages", "lead_persons",
+        "persons", "users",
     ],
     sample_rows_in_table_info=0,
 )
 
 # --- LM Studio omgeving ---
+# LM_API_BASE = os.getenv("LLM_API_BASE_URL", "http://host.docker.internal:1234/v1")
 LM_API_BASE = os.getenv("LLM_API_BASE_URL", "http://host.docker.internal:1234/v1")
 LM_MODEL = os.getenv("LM_MODEL", "deepseek-r1-distill-qwen-7b")
 LM_API_KEY = os.getenv("LLM_API_KEY", "dummy")
 
 # --- Standaard LLM (voor SQL-generatie) ---
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-generate_query = create_sql_query_chain(llm, db)
+_llm_base_url = LM_API_BASE.rstrip("/")
+if _llm_base_url.endswith("/chat/completions"):
+    _llm_base_url = _llm_base_url[: -len("/chat/completions")]
+# _llm_model = os.getenv("LLM_MODEL_DEFAULT", os.getenv("LLM_MODEL", "llama"))
+_llm_model = "local-llama"
+logging.info(f"LLM base_url: {_llm_base_url}  model: {_llm_model}")
+llm = ChatOpenAI(
+    model=_llm_model,
+    temperature=0,
+    base_url=_llm_base_url,
+    api_key=os.getenv("LLM_API_KEY", "dummy"),
+)
+
+def extract_sql(output: str) -> str:
+    """Extract bare SQL from verbose LLM output like 'Question: ...\nSQLQuery: SELECT ...'"""
+    if "SQLQuery:" in output:
+        output = output.split("SQLQuery:")[-1]
+    output = re.sub(r"```sql\s*", "", output)
+    output = re.sub(r"```\s*", "", output)
+    return output.strip().rstrip(";")
+
+from langchain_core.runnables import RunnableLambda
+generate_query = create_sql_query_chain(llm, db) | RunnableLambda(extract_sql)
 
 class Query(BaseModel):
     question: str

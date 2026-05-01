@@ -26,9 +26,20 @@ def embed_text(texts):
         vectors.append(data["data"][0]["embedding"])
     return vectors
 
+def sanitize_collection_name(name: str) -> str:
+    """Convert an arbitrary filename to a valid ChromaDB collection name."""
+    import re
+    sanitized = re.sub(r'[^a-zA-Z0-9._-]', '-', name)
+    sanitized = re.sub(r'-+', '-', sanitized).strip('-')
+    sanitized = sanitized[:512]
+    if len(sanitized) < 3:
+        sanitized = sanitized.ljust(3, '0')
+    return sanitized
+
 def index_pdf(file_path):
     doc = fitz.open(file_path)
-    collection_name = os.path.splitext(os.path.basename(file_path))[0]
+    raw_name = os.path.splitext(os.path.basename(file_path))[0]
+    collection_name = sanitize_collection_name(raw_name)
     collection = client.get_or_create_collection(collection_name)
     chunks = []
     for page in doc:

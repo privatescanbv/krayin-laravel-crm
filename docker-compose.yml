@@ -29,6 +29,7 @@ services:
           - crm.local.privatescan.nl
           - patient.local.privatescan.nl
           - phpmyadmin.local.privatescan.nl
+          - chat.local.privatescan.nl
 
   crm:
     build:
@@ -300,46 +301,59 @@ services:
       timeout: 5s
       retries: 5
 
-#  ai-agent:
-#    build: ./ai-agents/ai-agent
-#    container_name: ai-agent
-#    env_file:
-#      - .env.ai
-#    environment:
-#      - DB_HOST=mysql
-#      - DB_PORT=3306
-#      - DB_USER=${DB_USERNAME}
-#      - DB_PASS=${DB_PASSWORD}
-#      - DB_NAME=${DB_DATABASE}
-#    ports:
-#      - "8001:8001"
-#    depends_on:
-#      - mysql_crm
-#    networks:
-#      - public
-#      - backend
-#
-#  ai-frontend:
-#    build: ./ai-agents/ai-frontend
-#    container_name: ai-frontend
-#    ports:
-#      - "8501:8501"
-#    depends_on:
-#      - ai-agent
-#    networks:
-#      - backend
-#
-#  ai-visualizer:
-#    build: ./ai-agents/ai-visualizer
-#    container_name: ai-visualizer
-#    ports:
-#      - "8002:8002"
-#    env_file:
-#      - .env.ai
-#    networks:
-#      - public
-#      - backend
+  ai-agent:
+    build: ./ai-agents/ai-agent
+    container_name: ai-agent
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+    env_file:
+      - .env.ai
+    environment:
+      DB_HOST: 'mysql_crm'
+      DB_PORT: '3306'
+      DB_USER: '${DB_USERNAME}'
+      DB_PASS: '${DB_PASSWORD}'
+      DB_NAME: '${DB_DATABASE}'
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai-agents/ai-agent:/app
+    depends_on:
+      - mysql_crm
+    networks:
+      - public
+      - backend
 
+  ai-frontend:
+    build: ./ai-agents/ai-frontend
+    container_name: ai-frontend
+    volumes:
+      - ./ai-agents/ai-frontend:/app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ai-frontend.rule=Host("chat.local.privatescan.nl")
+      - traefik.http.routers.ai-frontend.entrypoints=https
+      - traefik.http.routers.ai-frontend.tls=true
+      - traefik.http.routers.ai-frontend.tls.domains[0].main=chat.local.privatescan.nl
+      - traefik.http.services.ai-frontend.loadbalancer.server.port=8501
+      - traefik.docker.network=public
+    depends_on:
+      - ai-agent
+    networks:
+      - public
+      - backend
+
+  ai-visualizer:
+    build: ./ai-agents/ai-visualizer
+    container_name: ai-visualizer
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./ai-agents/ai-visualizer:/app
+    env_file:
+      - .env.ai
+    networks:
+      - public
+      - backend
 
 networks:
   backend:

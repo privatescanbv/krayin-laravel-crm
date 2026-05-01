@@ -40,6 +40,8 @@ if [ "$APP_ENV" = "production" ]; then
   docker cp temp-crm:/docker/docker-compose.yml ./docker-compose.yml
 else
   docker cp temp-crm:/docker/docker-compose-acc.yml ./docker-compose.yml
+  rm -rf ./ai-agents && mkdir -p ./ai-agents
+  docker cp temp-crm:/usr/share/nginx/html/ai-agents ./
 fi
 #docker cp temp-crm:/docker/.env.prod ./.env
 docker cp temp-crm:/docker/.env.keycloak.prod ./.env.keycloak

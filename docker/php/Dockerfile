@@ -51,6 +51,7 @@ COPY --from=vite /build/database ./database
 COPY --from=vite /build/artisan ./artisan
 COPY --from=vite /build/packages ./packages
 COPY --from=vite /build/storage/app/scribe ./storage/app/scribe
+COPY --from=vite /build/ai-agents ./ai-agents
 
 ENV VIEW_COMPILED_PATH=/usr/share/nginx/html/storage/framework/views
 

@@ -23,9 +23,11 @@ test('submitting empty address fields via HTTP clears the address', function () 
 
     $response = $this->actingAs($this->user, 'user')
         ->put(route('admin.leads.update', $lead->id), [
-            'first_name' => $lead->first_name ?? 'Test',
-            'last_name'  => $lead->last_name ?? 'Lead',
-            'address'    => [
+            'first_name'    => $lead->first_name ?? 'Test',
+            'last_name'     => $lead->last_name ?? 'Lead',
+            'department_id' => $lead->department_id,
+            'emails'        => [['value' => 'test@example.com', 'label' => 'eigen']],
+            'address'       => [
                 '_clear'              => '0',
                 'street'              => '',
                 'house_number'        => '',
@@ -55,9 +57,11 @@ test('submitting _clear=1 via HTTP deletes the address', function () {
 
     $response = $this->actingAs($this->user, 'user')
         ->put(route('admin.leads.update', $lead->id), [
-            'first_name' => $lead->first_name ?? 'Test',
-            'last_name'  => $lead->last_name ?? 'Lead',
-            'address'    => [
+            'first_name'    => $lead->first_name ?? 'Test',
+            'last_name'     => $lead->last_name ?? 'Lead',
+            'department_id' => $lead->department_id,
+            'emails'        => [['value' => 'test@example.com', 'label' => 'eigen']],
+            'address'       => [
                 '_clear' => '1',
             ],
         ]);

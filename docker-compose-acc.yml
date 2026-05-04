@@ -443,9 +443,9 @@ services:
       start_period: 60s
 
   ai-agent:
-    build: ./ai-agents/ai-agent
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/ai-agent:latest
     container_name: ai-agent
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
     env_file:
       - .env.ai
     environment:
@@ -456,8 +456,6 @@ services:
       DB_NAME: '${DB_DATABASE}'
     ports:
       - "8001:8001"
-    volumes:
-      - ./ai-agents/ai-agent:/app
     depends_on:
       - llama-fast
     networks:
@@ -465,10 +463,8 @@ services:
       - backend
 
   ai-frontend:
-    build: ./ai-agents/ai-frontend
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/ai-frontend:latest
     container_name: ai-frontend
-    volumes:
-      - ./ai-agents/ai-frontend:/app
     labels:
       - traefik.enable=true
       - traefik.docker.network=public

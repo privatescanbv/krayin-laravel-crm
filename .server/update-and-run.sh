@@ -54,10 +54,6 @@ docker cp temp-crm:/docker/promtail/promtail-config.yml ./docker/promtail/config
 # Verwijder tijdelijke container
 docker rm temp-crm
 
-#build python (no docker builds yet)
-/home/apps/ai-agents/ai-agent/build.sh
-/home/apps/ai-agents/ai-frontend/build.sh
-
 sed -i "s|ghcr.io/privatescanbv/\([^:]*\):latest|ghcr.io/privatescanbv/\1:${TAG}|g" ./docker-compose.yml
 if [ "$APP_ENV" = "production" ]; then
 #  sed -i 's|ghcr.io/privatescanbv/\([^:]*\):latest|ghcr.io/privatescanbv/\1:prod|g' ./docker-compose.yml

@@ -465,6 +465,8 @@ services:
   ai-frontend:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/ai-frontend:latest
     container_name: ai-frontend
+    environment:
+      STREAMLIT_SERVER_COOKIE_SECRET: "${STREAMLIT_COOKIE_SECRET:-changeme-set-in-env}"
     labels:
       - traefik.enable=true
       - traefik.docker.network=public

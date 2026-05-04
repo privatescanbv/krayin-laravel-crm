@@ -19,6 +19,8 @@ docker pull "ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:${TAG}" &
 docker pull "ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:${TAG}" &
 docker pull ghcr.io/privatescanbv/privatecrm/suitecrm:1.0 &
 docker pull "ghcr.io/privatescanbv/privateforms/forms:${TAG}" &
+docker pull "ghcr.io/privatescanbv/krayin-laravel-crm/ai-frontend:${TAG}" &
+docker pull "ghcr.io/privatescanbv/krayin-laravel-crm/ai-agent:${TAG}" &
 
 wait
 echo "Alle pulls zijn klaar!"

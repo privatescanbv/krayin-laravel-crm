@@ -454,6 +454,8 @@ services:
       DB_USER: '${DB_USERNAME}'
       DB_PASS: '${DB_PASSWORD}'
       DB_NAME: '${DB_DATABASE}'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - "8001:8001"
     depends_on:

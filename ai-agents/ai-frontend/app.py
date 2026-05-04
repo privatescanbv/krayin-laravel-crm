@@ -1,5 +1,8 @@
-import streamlit as st
+import io
+
+import pypdf
 import requests
+import streamlit as st
 import base64
 import time
 
@@ -75,6 +78,21 @@ if uploaded_file:
     else:
         st.sidebar.error("Upload mislukt! Controleer backend logs.")
 
+# --- PDF-upload voor medische analyse (buiten form: directe verwerking) ---
+if option == "Medische analyse":
+    uploaded_patient_pdf = st.file_uploader(
+        "📎 Of upload een PDF-formulier (tekst wordt automatisch ingevuld):",
+        type=["pdf"],
+        key="patient_pdf_uploader",
+    )
+    if uploaded_patient_pdf is not None:
+        reader = pypdf.PdfReader(io.BytesIO(uploaded_patient_pdf.getvalue()))
+        extracted = "\n".join(
+            page.extract_text() or "" for page in reader.pages
+        ).strip()
+        if extracted:
+            st.session_state.patient_text_area = extracted
+
 # --- Eén formulier voor alle opties ---
 med_prompt_input = st.session_state.med_prompt  # default, overschreven in form als optie actief is
 
@@ -89,6 +107,7 @@ with st.form("crm_form", clear_on_submit=False):
         user_input = st.text_area(
             "Plak hier de patiënttekst (formulier of beschrijving):",
             height=300,
+            key="patient_text_area",
             placeholder="Kopieer hier de intake-tekst van de patiënt...",
         )
         with st.expander("✏️ Prompt aanpassen (voor experimenteren)"):

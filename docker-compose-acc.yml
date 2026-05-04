@@ -5,6 +5,7 @@ services:
     container_name: traefik
     command:
       - --api.dashboard=true
+      - --api.insecure=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=public
@@ -19,7 +20,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      - "8082:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
@@ -29,6 +30,7 @@ services:
           - "sso.${PRIVATESCAN_BASE_DOMAIN}"
           - "newcrm.${PRIVATESCAN_BASE_DOMAIN}"
           - "patient.${PRIVATESCAN_BASE_DOMAIN}"
+          - "chat.${PRIVATESCAN_BASE_DOMAIN}"
 
   crm:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
@@ -473,9 +475,8 @@ services:
       - traefik.http.routers.ai-frontend.rule=Host("chat.${PRIVATESCAN_BASE_DOMAIN}")
       - traefik.http.routers.ai-frontend.entrypoints=https
       - traefik.http.routers.ai-frontend.tls=true
-      - traefik.http.routers.ai-frontend.tls.domains[0].main=chat.${PRIVATESCAN_BASE_DOMAIN}
+      - traefik.http.routers.ai-frontend.tls.certresolver=myresolver
       - traefik.http.services.ai-frontend.loadbalancer.server.port=8501
-      - logging=promtail
     depends_on:
       - ai-agent
     networks:

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreign('source_saleslead_id')->references('id')->on('salesleads')->onDelete('cascade');
             $table->foreign('target_saleslead_id')->references('id')->on('salesleads')->onDelete('cascade');
 
-            $table->unique(['source_saleslead_id', 'target_saleslead_id', 'relation_type']);
+            $table->unique(['source_saleslead_id', 'target_saleslead_id', 'relation_type'], 'slr_source_target_type_unique');
         });
     }
 

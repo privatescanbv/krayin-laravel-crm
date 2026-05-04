@@ -74,6 +74,7 @@ Regels:
 - Geef alleen relevante medische inhoud weer.
 - Als informatie ontbreekt: noteer Niet vermeld.
 - Voeg geen uitleg toe buiten de samenvatting.
+- Altijd antwoorden in Nederlands
 
 Structuur:
 - Lopend verhaal van maximaal 15 zinnen.

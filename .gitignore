@@ -65,3 +65,4 @@ docs/html
 /HTML_dashboard/
 .aider*
 /ai-agents/ai-agent/chroma
+/ai-agents/ai-agent/__pycache__

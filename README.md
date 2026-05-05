@@ -1,3 +1,22 @@
+## Notes setup ai models
+
+Setting up models on VPS.
+
+sudo apt update
+sudo apt install -y pipx
+pipx ensurepath
+pipx install huggingface_hub
+hf auth login
+hf models ls --search "medgemma gguf"
+hf models ls --search "medgemma gguf" --format json
+sudo chown -R $USER:$USER /home/apps/models
+hf download unsloth/medgemma-27b-text-it-GGUF \
+--local-dir /home/apps/models
+hf download \
+unsloth/medgemma-27b-text-it-GGUF \
+--local-dir /home/apps/models \
+--max-workers 1
+
 ![enter image description here](https://raw.githubusercontent.com/krayin/temp-media/master/dashboard.png)
 
 ## Topics

@@ -209,6 +209,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 'connection' => $connection,
                 'table'      => $table,
             ]);
+            report($e);
 
             return 1;
         }
@@ -691,6 +692,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     'record_label' => $record->name ?? 'unknown',
                     'error'        => $e->getMessage(),
                 ]);
+                report($e);
                 if (count($firstErrors) < 5) {
                     $firstErrors[] = [
                         'id'        => $record->id ?? 'unknown',
@@ -835,10 +837,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             }
             $cache[$connection] = $map;
         } catch (Exception $e) {
-            $this->warn('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
+            Log::warning('ImportOrdersFromSugarCRM: could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
                 'connection' => $connection,
                 'error'      => $e->getMessage(),
             ]);
+            $this->warn('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped.');
             $cache[$connection] = [];
         }
 

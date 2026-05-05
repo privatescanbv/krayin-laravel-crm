@@ -575,6 +575,22 @@ test('imports won order and creates saleslead and orderitem linked to person', f
         ->and((float) $item->total_price)->toBe(1500.0);
 });
 
+test('gewonnen order stage is ORDER_GEWONNEN independent of OrderObserver', function () {
+    Person::factory()->create(['external_id' => 'contact-won-stage']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-won-stage']);
+
+    insertSugarOrder('order-won-stage', ['sales_stage' => 'Gewonnen']);
+    insertSugarRow('order-won-stage', 'row-won-stage', ['sales_stage' => 'Gewonnen']);
+    linkRowToContact('row-won-stage', 'contact-won-stage');
+    linkOrderToSugarLead('order-won-stage', 'sugar-lead-won-stage');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-won-stage')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id());
+});
+
 test('imports lost order with lost reason', function () {
     Lead::factory()->create(['external_id' => 'sugar-lead-lost-001']);
 

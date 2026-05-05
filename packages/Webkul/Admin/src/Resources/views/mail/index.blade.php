@@ -537,8 +537,8 @@
                                     <option value="">Geen template</option>
                                     <option
                                         v-for="template in emailTemplates"
-                                        :key="template.name"
-                                        :value="template.name"
+                                        :key="template.code"
+                                        :value="template.code"
                                     >
                                         @{{ template.label }}
                                     </option>

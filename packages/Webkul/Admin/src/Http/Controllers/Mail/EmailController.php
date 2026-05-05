@@ -579,12 +579,6 @@ class EmailController extends Controller
             ], 400);
         }
 
-        if (is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
-            return response()->json([
-                'error' => __('messages.email.entity_required'),
-            ], 400);
-        }
-
         try {
             $template = EmailTemplate::byCode($templateCode)->first();
 

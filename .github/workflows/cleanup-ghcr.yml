@@ -17,6 +17,8 @@ jobs:
           image-names: |
             krayin-laravel-crm/krayincrm
             krayin-laravel-crm/keycloak
+            krayin-laravel-crm/ai-frontend
+            krayin-laravel-crm/ai-agent
           image-tags: "!latest"
           keep-n-most-recent: 3
           dry-run: false
@@ -31,6 +33,8 @@ jobs:
           image-names: |
             krayin-laravel-crm/krayincrm
             krayin-laravel-crm/keycloak
+            krayin-laravel-crm/ai-frontend
+            krayin-laravel-crm/ai-agent
           tag-selection: untagged
           dry-run: false
           cut-off: '4d'

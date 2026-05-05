@@ -24,8 +24,8 @@ it('updates user with valid department default', function () {
     $payload = [
         'email'               => $user->email,
         'first_name'          => 'Admin',
-        'password'            => '123',
-        'confirm_password'    => '123',
+        'password'            => 'Secret123!',
+        'confirm_password'    => 'Secret123!',
         'last_name'           => 'Tester',
         'role_id'             => $role->id,
         'view_permission'     => 'global',
@@ -73,8 +73,8 @@ test('can add user', function () {
         'view_permission'  => 'global',
         'groups'           => [],
         // password is optional in controller rules; include to avoid unique issues later
-        'password'         => 'secret123',
-        'confirm_password' => 'secret123',
+        'password'         => 'Secret123!',
+        'confirm_password' => 'Secret123!',
     ];
     $user = $this->user;
     actingAs($user, 'user');

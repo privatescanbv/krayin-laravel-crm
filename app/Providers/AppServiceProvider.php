@@ -26,6 +26,7 @@ use App\Support\IdeHelper\SocialiteFacadeForIdeHelper;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 use Laravel\Socialite\Socialite;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
@@ -82,6 +83,8 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         PatientMessage::observe(PatientMessageObserver::class);
         Activity::observe(ActivityObserver::class);
+
+        Password::defaults(fn () => Password::min(8)->mixedCase()->numbers()->symbols());
 
         // Register custom validation rules
         Validator::extend('active_user', function ($attribute, $value, $parameters, $validator) {

@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\User;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Admin\Http\Controllers\Controller;
 
@@ -34,7 +35,7 @@ class AccountController extends Controller
             'first_name'       => 'required',
             'last_name'        => 'required',
             'email'            => 'email|unique:users,email,'.$user->id,
-            'password'         => 'nullable|min:6|confirmed',
+            'password'         => ['nullable', Password::defaults(), 'confirmed'],
             'current_password' => 'nullable|min:6',
             'image.*'          => 'nullable|mimes:bmp,jpeg,jpg,png,webp',
         ]);

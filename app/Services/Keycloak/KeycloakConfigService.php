@@ -63,9 +63,15 @@ class KeycloakConfigService
         // Check and create realm
         if ($this->keycloakService->realmExists($realmName, $accessToken)) {
             $results['realm_exists'] = true;
+            $passwordPolicyError = $this->syncPasswordPolicy($accessToken);
+            if ($passwordPolicyError) {
+                $results['errors'][] = $passwordPolicyError;
+            }
         } else {
             // Create realm with default configuration
-            $realmData = [];
+            $realmData = [
+                'passwordPolicy' => 'length(8) and upperCase(1) and digits(1) and specialChars(1)',
+            ];
 
             if ($this->keycloakService->createRealm($realmName, $realmData, $accessToken)) {
                 // Set frontend URL to base URL (localhost) so tokens use localhost as issuer
@@ -424,6 +430,47 @@ class KeycloakConfigService
         }
 
         return $scheme.'://'.$host.($port ? ':'.$port : '');
+    }
+
+    /**
+     * Ensure the realm password policy includes a minimum length of 8.
+     */
+    protected function syncPasswordPolicy(string $accessToken): ?string
+    {
+        $required = ['length(8)', 'upperCase(1)', 'digits(1)', 'specialChars(1)'];
+
+        try {
+            $realmUrl = $this->keycloakService->getRealmAdminUrl();
+            $response = Http::asJson()->withToken($accessToken)->get($realmUrl);
+
+            if (! $response->successful()) {
+                return 'Kon realm configuratie niet ophalen voor password policy sync.';
+            }
+
+            $currentPolicy = $response->json('passwordPolicy') ?? '';
+
+            $missing = array_filter($required, fn ($rule) => ! str_contains($currentPolicy, $rule));
+
+            if (empty($missing)) {
+                return null;
+            }
+
+            $newPolicy = $currentPolicy !== ''
+                ? $currentPolicy.' and '.implode(' and ', $missing)
+                : implode(' and ', $required);
+
+            $putResponse = Http::asJson()->withToken($accessToken)->put($realmUrl, ['passwordPolicy' => $newPolicy]);
+
+            if (! $putResponse->successful()) {
+                return 'Kon password policy niet updaten in Keycloak realm.';
+            }
+
+            Log::info('Keycloak realm password policy updated', ['policy' => $newPolicy]);
+        } catch (Exception $e) {
+            return 'Fout bij updaten password policy: '.$e->getMessage();
+        }
+
+        return null;
     }
 
     /**

@@ -9,6 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use App\Models\Department as DepartmentModel;
 use App\Support\UserSignature;
@@ -87,12 +88,6 @@ class UserController extends Controller
         $data = request()->all();
         // Normalize composite name field expected by backend
         $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
-
-        // Don't hash password here - let the User model's mutator handle it
-        // This allows UserObserver to capture the plaintext password
-        // if (isset($data['password']) && $data['password']) {
-        //     $data['password'] = bcrypt($data['password']);
-        // }
 
         $data['status'] = array_key_exists('status', $data) ? $data['status'] : 0;
 
@@ -223,9 +218,6 @@ class UserController extends Controller
         if (!array_key_exists('password', $data)) {
             unset($data['password'], $data['confirm_password']);
         }
-        // else {
-        //     $data['password'] = bcrypt($data['password']);
-        // }
 
         if (auth()->guard('user')->user()->id != $id) {
             $data['status'] = $data['status'] ? 1 : 0;
@@ -436,7 +428,7 @@ class UserController extends Controller
             'email'            => 'required|email|unique:users,email,'.$userId ?? '',
             'first_name'       => 'required',
             'last_name'        => 'required',
-            'password'         => 'nullable',
+            'password'         => ['nullable', Password::defaults()],
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required',
             'signature'        => 'nullable|string|max:50000',

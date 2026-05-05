@@ -82,7 +82,7 @@ KEYCLOAK_DB_PASSWORD=c8f4b3a8323369
 
 ==== Stap 6: Configuratie realm client patient-app aanpassen voor Impersonation
 
-- Service accounts roles aanvinken onder Authentication flow.
+- Service accounts roles aanvinken onder Authentication flow in tab settings van client 'patient-app'.
 - Tab Service accounts roles -> assign impersonation role aan de client.
 
 Note: docker start op met een feature flag: --features=token-exchange

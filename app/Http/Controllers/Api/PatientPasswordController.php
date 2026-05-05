@@ -7,6 +7,7 @@ use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Webkul\User\Models\User;
 
 class PatientPasswordController extends Controller
@@ -41,7 +42,7 @@ class PatientPasswordController extends Controller
 
         $validated = $request->validate([
             'current_password'      => ['nullable', 'string', Rule::requiredIf(! $usingBearerToken)],
-            'password'              => 'required|string|min:7|confirmed',
+            'password'              => ['required', 'string', Password::defaults(), 'confirmed'],
             'password_confirmation' => 'required|string',
         ]);
 

@@ -19,7 +19,6 @@ CREATE TABLE `activities` (
   `schedule_from` datetime DEFAULT NULL,
   `schedule_to` datetime DEFAULT NULL,
   `is_done` tinyint(1) NOT NULL DEFAULT '0',
-  `publish_to_portal` tinyint(1) NOT NULL DEFAULT '0',
   `user_id` int unsigned DEFAULT NULL,
   `assigned_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -37,6 +36,7 @@ CREATE TABLE `activities` (
   KEY `activities_lead_id_foreign` (`lead_id`),
   KEY `activities_external_id_index` (`external_id`),
   KEY `activities_clinic_id_foreign` (`clinic_id`),
+  KEY `activities_sales_lead_id_index` (`sales_lead_id`),
   CONSTRAINT `activities_clinic_id_foreign` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`) ON DELETE SET NULL,
   CONSTRAINT `activities_group_id_foreign` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE SET NULL,
   CONSTRAINT `activities_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL,
@@ -56,6 +56,22 @@ CREATE TABLE `activity_files` (
   PRIMARY KEY (`id`),
   KEY `activity_files_activity_id_foreign` (`activity_id`),
   CONSTRAINT `activity_files_activity_id_foreign` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `activity_portal_persons`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `activity_portal_persons` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `activity_id` int unsigned NOT NULL,
+  `person_id` int unsigned NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `activity_portal_persons_activity_id_person_id_unique` (`activity_id`,`person_id`),
+  KEY `activity_portal_persons_person_id_foreign` (`person_id`),
+  CONSTRAINT `activity_portal_persons_activity_id_foreign` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `activity_portal_persons_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `addresses`;
@@ -89,12 +105,12 @@ CREATE TABLE `afb_dispatches` (
   `clinic_id` bigint unsigned NOT NULL,
   `clinic_department_id` bigint unsigned DEFAULT NULL,
   `email_id` int unsigned DEFAULT NULL,
-  `type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `sent_at` timestamp NULL DEFAULT NULL,
   `last_attempt_at` timestamp NULL DEFAULT NULL,
   `attempt` smallint unsigned NOT NULL DEFAULT '1',
-  `error_message` text COLLATE utf8mb4_unicode_ci,
+  `error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -115,9 +131,9 @@ CREATE TABLE `afb_person_documents` (
   `order_id` bigint unsigned NOT NULL,
   `order_item_ids` json DEFAULT NULL,
   `person_id` int unsigned DEFAULT NULL,
-  `patient_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `patient_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `sent_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -286,9 +302,9 @@ DROP TABLE IF EXISTS `clinic_departments`;
 CREATE TABLE `clinic_departments` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `clinic_id` bigint unsigned NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -511,7 +527,9 @@ CREATE TABLE `emails` (
   `reference_ids` json DEFAULT NULL,
   `person_id` int unsigned DEFAULT NULL,
   `lead_id` int unsigned DEFAULT NULL,
+  `activity_id` int unsigned DEFAULT NULL,
   `sales_lead_id` bigint unsigned DEFAULT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
   `clinic_id` bigint unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -524,9 +542,14 @@ CREATE TABLE `emails` (
   KEY `emails_folder_id_foreign` (`folder_id`),
   KEY `emails_sales_lead_id_foreign` (`sales_lead_id`),
   KEY `emails_clinic_id_foreign` (`clinic_id`),
+  KEY `emails_activity_id_foreign` (`activity_id`),
+  KEY `emails_order_id_foreign` (`order_id`),
+  KEY `emails_sales_lead_id_is_read_idx` (`sales_lead_id`,`is_read`),
+  CONSTRAINT `emails_activity_id_foreign` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`) ON DELETE SET NULL,
   CONSTRAINT `emails_clinic_id_foreign` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`) ON DELETE SET NULL,
   CONSTRAINT `emails_folder_id_foreign` FOREIGN KEY (`folder_id`) REFERENCES `folders` (`id`) ON DELETE SET NULL,
   CONSTRAINT `emails_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `emails_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
   CONSTRAINT `emails_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `emails` (`id`) ON DELETE CASCADE,
   CONSTRAINT `emails_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE SET NULL,
   CONSTRAINT `emails_sales_lead_id_foreign` FOREIGN KEY (`sales_lead_id`) REFERENCES `salesleads` (`id`) ON DELETE SET NULL
@@ -710,8 +733,8 @@ DROP TABLE IF EXISTS `lead_marketing_data`;
 CREATE TABLE `lead_marketing_data` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `lead_id` int unsigned NOT NULL,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -742,6 +765,7 @@ CREATE TABLE `lead_pipeline_stages` (
   `probability` int NOT NULL DEFAULT '0',
   `is_won` tinyint(1) NOT NULL DEFAULT '0',
   `is_lost` tinyint(1) NOT NULL DEFAULT '0',
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
   `sort_order` int NOT NULL DEFAULT '0',
   `lead_pipeline_id` int unsigned NOT NULL,
   PRIMARY KEY (`id`),
@@ -955,6 +979,7 @@ CREATE TABLE `order_items` (
   `resource_type_id` bigint unsigned DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `afb_description` text COLLATE utf8mb4_unicode_ci,
   `person_id` int unsigned DEFAULT NULL,
   `quantity` int unsigned NOT NULL,
   `total_price` decimal(12,2) NOT NULL DEFAULT '0.00',
@@ -997,10 +1022,10 @@ CREATE TABLE `order_payments` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `order_id` bigint unsigned NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `method` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `paid_at` date DEFAULT NULL,
-  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EUR',
+  `currency` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EUR',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -1008,20 +1033,43 @@ CREATE TABLE `order_payments` (
   CONSTRAINT `order_payments_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `order_person_confirmations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_person_confirmations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned NOT NULL,
+  `person_id` int unsigned NOT NULL,
+  `confirmation_letter_content` longtext COLLATE utf8mb4_unicode_ci,
+  `email_sent_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `order_person_confirmations_order_id_person_id_unique` (`order_id`,`person_id`),
+  KEY `order_person_confirmations_person_id_foreign` (`person_id`),
+  CONSTRAINT `order_person_confirmations_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `order_person_confirmations_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `orders`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `orders` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `external_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `order_number` varchar(9) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_business` tinyint(1) NOT NULL DEFAULT '0',
+  `organization_id` int unsigned DEFAULT NULL,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `sales_lead_id` bigint unsigned NOT NULL,
   `user_id` int unsigned DEFAULT NULL,
+  `clinic_coordinator_user_id` int unsigned DEFAULT NULL,
   `combine_order` tinyint(1) NOT NULL DEFAULT '1',
   `total_price` decimal(12,2) NOT NULL DEFAULT '0.00',
   `confirmation_letter_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `pipeline_stage_id` int unsigned DEFAULT NULL,
-  `lost_reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lost_reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `closed_at` date DEFAULT NULL,
   `first_examination_at` datetime DEFAULT NULL,
   `created_by` int unsigned DEFAULT NULL,
@@ -1030,12 +1078,17 @@ CREATE TABLE `orders` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `orders_order_number_unique` (`order_number`),
+  UNIQUE KEY `orders_external_id_unique` (`external_id`),
   KEY `orders_created_by_foreign` (`created_by`),
   KEY `orders_updated_by_foreign` (`updated_by`),
   KEY `orders_sales_lead_id_foreign` (`sales_lead_id`),
   KEY `orders_pipeline_stage_id_foreign` (`pipeline_stage_id`),
   KEY `orders_user_id_foreign` (`user_id`),
+  KEY `orders_clinic_coordinator_user_id_foreign` (`clinic_coordinator_user_id`),
+  KEY `orders_organization_id_foreign` (`organization_id`),
+  CONSTRAINT `orders_clinic_coordinator_user_id_foreign` FOREIGN KEY (`clinic_coordinator_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `orders_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `orders_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL,
   CONSTRAINT `orders_pipeline_stage_id_foreign` FOREIGN KEY (`pipeline_stage_id`) REFERENCES `lead_pipeline_stages` (`id`) ON DELETE SET NULL,
   CONSTRAINT `orders_sales_lead_id_foreign` FOREIGN KEY (`sales_lead_id`) REFERENCES `salesleads` (`id`),
   CONSTRAINT `orders_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
@@ -1266,6 +1319,8 @@ CREATE TABLE `persons` (
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `preferred_language` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `onboarding_completed_at` datetime DEFAULT NULL,
+  `patient_portal_notify_scheduled_at` timestamp NULL DEFAULT NULL,
+  `patient_portal_last_notify_email_at` timestamp NULL DEFAULT NULL,
   `password` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_by` int unsigned DEFAULT NULL,
   `updated_by` int unsigned DEFAULT NULL,
@@ -1510,6 +1565,23 @@ CREATE TABLE `saleslead_persons` (
   CONSTRAINT `saleslead_persons_saleslead_id_foreign` FOREIGN KEY (`saleslead_id`) REFERENCES `salesleads` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `saleslead_relations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `saleslead_relations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `source_saleslead_id` bigint unsigned NOT NULL,
+  `target_saleslead_id` bigint unsigned NOT NULL,
+  `relation_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'preventie_referral',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `sl_relations_src_tgt_type_uniq` (`source_saleslead_id`,`target_saleslead_id`,`relation_type`),
+  KEY `saleslead_relations_target_saleslead_id_foreign` (`target_saleslead_id`),
+  CONSTRAINT `saleslead_relations_source_saleslead_id_foreign` FOREIGN KEY (`source_saleslead_id`) REFERENCES `salesleads` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `saleslead_relations_target_saleslead_id_foreign` FOREIGN KEY (`target_saleslead_id`) REFERENCES `salesleads` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `salesleads`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1521,6 +1593,7 @@ CREATE TABLE `salesleads` (
   `closed_at` date DEFAULT NULL,
   `pipeline_stage_id` int unsigned NOT NULL,
   `lead_id` int unsigned DEFAULT NULL,
+  `department_id` bigint unsigned DEFAULT NULL,
   `quote_id` int unsigned DEFAULT NULL,
   `user_id` int unsigned DEFAULT NULL,
   `contact_person_id` int unsigned DEFAULT NULL,
@@ -1528,7 +1601,11 @@ CREATE TABLE `salesleads` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `created_by` int unsigned DEFAULT NULL,
   `updated_by` int unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `salesleads_pipeline_stage_id_index` (`pipeline_stage_id`),
+  KEY `salesleads_kanban_stage_created_idx` (`pipeline_stage_id`,`created_at`),
+  KEY `salesleads_department_id_foreign` (`department_id`),
+  CONSTRAINT `salesleads_department_id_foreign` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `shifts`;
@@ -1682,48 +1759,6 @@ CREATE TABLE `users` (
   CONSTRAINT `users_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `users_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `web_form_attributes`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `web_form_attributes` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `placeholder` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_required` tinyint(1) NOT NULL DEFAULT '0',
-  `is_hidden` tinyint(1) NOT NULL DEFAULT '0',
-  `sort_order` int DEFAULT NULL,
-  `attribute_id` int unsigned NOT NULL,
-  `web_form_id` int unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `web_form_attributes_attribute_id_foreign` (`attribute_id`),
-  KEY `web_form_attributes_web_form_id_foreign` (`web_form_id`),
-  CONSTRAINT `web_form_attributes_attribute_id_foreign` FOREIGN KEY (`attribute_id`) REFERENCES `attributes` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `web_form_attributes_web_form_id_foreign` FOREIGN KEY (`web_form_id`) REFERENCES `web_forms` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `web_forms`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `web_forms` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `form_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `submit_button_label` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `submit_success_action` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `submit_success_content` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `create_lead` tinyint(1) NOT NULL DEFAULT '0',
-  `background_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `form_background_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `form_title_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `form_submit_button_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `attribute_label_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `web_forms_form_id_unique` (`form_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `webhooks`;
@@ -2029,3 +2064,22 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (254,'2026_03_26_00
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (255,'2026_03_27_000000_replace_order_items_product_type_with_resource_type',4);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (256,'2026_03_27_000001_add_order_item_ids_to_afb_person_documents',4);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (257,'2026_03_28_000000_create_lead_marketing_data_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (258,'2026_04_07_000000_add_operational_dashboard_permission_to_custom_roles',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (259,'2026_04_07_190000_add_activity_id_to_emails_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (260,'2026_04_10_000001_add_external_id_to_orders_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (261,'2026_04_10_000002_add_invoice_number_and_is_business_to_orders_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (262,'2026_04_10_100000_convert_purchase_prices_priceable_type_to_morph_aliases',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (263,'2026_04_14_120000_add_order_id_to_emails_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (264,'2026_04_14_140000_create_order_person_confirmations_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (265,'2026_04_14_160000_create_activity_portal_persons_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (266,'2026_04_14_160001_migrate_publish_to_portal_to_pivot',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (267,'2026_04_14_170000_add_clinic_coordinator_user_id_to_orders_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (268,'2026_04_16_000000_add_afb_description_to_order_items_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (269,'2026_04_16_180000_add_patient_portal_notify_schedule_to_persons_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (270,'2026_04_20_000000_add_indexes_to_salesleads_and_activities',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (271,'2026_04_20_000001_add_is_default_to_lead_pipeline_stages',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (272,'2026_04_23_000001_add_organization_id_to_orders_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (273,'2026_04_23_100000_create_saleslead_relations_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (274,'2026_04_26_000000_add_kanban_performance_indexes_to_salesleads_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (275,'2026_04_27_000000_drop_web_forms_tables',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (276,'2026_04_29_000000_add_department_id_to_salesleads',5);

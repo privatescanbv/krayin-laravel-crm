@@ -379,17 +379,14 @@ class EmailTemplateRenderingService
     /**
      * Convert a plain HTML string to one with all CSS inlined.
      * Necessary because many email clients strip <style> tags.
+     * @throws Exception technical error, css not found
      */
-    private function renderInlineCss(string $html): string
+    public function renderInlineCss(string $html): string
     {
         $cssPath = resource_path('css/email-templates.css');
-        $css = file_exists($cssPath) ? file_get_contents($cssPath) : '';
+        $css = file_exists($cssPath) ? file_get_contents($cssPath) : throw new Exception('css file not found');
 
-        if (! empty($css)) {
-            $html = (new CssToInlineStyles)->convert($html, $css);
-        }
-
-        return $html;
+        return (new CssToInlineStyles)->convert($html, $css);
     }
 
     /**

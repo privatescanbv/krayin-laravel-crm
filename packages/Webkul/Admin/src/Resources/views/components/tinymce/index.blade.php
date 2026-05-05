@@ -111,6 +111,7 @@
                                 ...extraConfiguration,
                                 skin: vm.currentSkin,
                                 content_css: vm.currentContentCSS,
+                                content_style: "body { font-family: 'Trebuchet MS', sans-serif; font-size: 10.5pt; color: #00539F; }",
                             };
 
                             const image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) => {

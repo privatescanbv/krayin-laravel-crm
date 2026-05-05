@@ -1,14 +1,11 @@
 /* Email Template Styles */
 /* These styles are designed for email clients and will be inlined when rendering */
 
-:root {
-    --privatescan-blue: #11518f;
-}
-
 .email-container {
-    font-family: Arial, sans-serif;
+    font-family: 'Trebuchet MS', sans-serif;
+    font-size: 10.5pt;
     line-height: 1.6;
-    color: var(--privatescan-blue);
+    color: #00539F;
     margin: 0;
     padding: 0;
 }
@@ -47,7 +44,7 @@
     height: 4rem;
 }
 .blue-bar {
-    background-color: var(--privatescan-blue);
+    background-color: #00539F;
     padding: 1rem 0;
 }
 .blue-bar-content {

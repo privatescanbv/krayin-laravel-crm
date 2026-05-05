@@ -60,7 +60,7 @@ class OrderRepository extends Repository
 
         $variables = [
             'order'            => $order,
-            'order_reference'  => (string) $order->id,
+            'order_reference'  => (string) $order->order_number,
             'order_number'     => $order->order_number ?? '',
             'order_title'      => $order->title ?? '',
             'order_status'     => $order->stage?->name ?? '',

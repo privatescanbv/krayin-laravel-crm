@@ -1246,7 +1246,8 @@ class OrderController extends SimpleEntityController
         $orders = Order::query()
             ->with('payments')
             ->whereIn('pipeline_stage_id', $stageIds)
-            ->orderBy('order_number')
+            ->whereNotNull('first_examination_at')
+            ->orderByRaw('first_examination_at ASC')
             ->get()
             ->filter(fn (Order $o) => $o->netPaidAmount() < round((float) ($o->total_price ?? 0), 2))
             ->values();

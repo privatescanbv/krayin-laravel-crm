@@ -97,6 +97,9 @@
                             <th class="px-3 py-3 text-right text-xs font-semibold text-amber-600 dark:text-amber-500 uppercase tracking-wider">
                                 Nog open
                             </th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                Onderzoeksdatum
+                            </th>
 
                             {{-- Editable columns (visually separated by dashed border) --}}
                             <th class="px-3 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-l-2 border-dashed border-gray-300 dark:border-gray-600">
@@ -155,6 +158,11 @@
                                 {{-- Nog open --}}
                                 <td class="px-3 py-2 text-right font-semibold text-amber-600 dark:text-amber-500 whitespace-nowrap tabular-nums">
                                     {{ Currency::formatMoney($defaultCurrencyCode, $openAmount) }}
+                                </td>
+
+                                {{-- Onderzoeksdatum --}}
+                                <td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                                    {{ $order->first_examination_at?->format('d-m-Y') ?? '—' }}
                                 </td>
 
                                 {{-- === Editable: Bedrag === --}}

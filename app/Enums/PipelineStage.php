@@ -542,16 +542,6 @@ enum PipelineStage: string
         ));
     }
 
-    public static function getOrderStagesIdsWon(): array
-    {
-        return [
-            self::ORDER_BEVESTIGD->id(),
-            self::ORDER_BEVESTIGD_HERNIA->id(),
-            self::ORDER_UITGEVOERD->id(),
-            self::ORDER_UITGEVOERD_HERNIA->id(),
-        ];
-    }
-
     public static function getOrderStagesIdsForClinicGuide(): array
     {
         return [
@@ -571,30 +561,23 @@ enum PipelineStage: string
         ];
     }
 
-    /**
-     * Stage IDs at or after "Uitgevoerd, wachten op rapporten".
-     * AFB dispatch is no longer actionable from this point onwards,
-     * so "Niet klaar voor dispatch" should not be shown.
-     *
-     * @return list<int>
-     */
-    public static function getStageIdsAfterExecution(): array
+    public static function getStageIdsAfterExecutionExLost(): array
     {
         return [
+            self::ORDER_UITGEVOERD->id(),
             self::ORDER_RAPPORTEN_ONTVANGEN->id(),
             self::ORDER_GEWONNEN->id(),
-            self::ORDER_VERLOREN->id(),
+            self::ORDER_UITGEVOERD_HERNIA->id(),
             self::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->id(),
             self::ORDER_GEWONNEN_HERNIA->id(),
-            self::ORDER_VERLOREN_HERNIA->id(),
         ];
     }
 
     public static function getStageIdsAtOrAfterExecution(): array
     {
         return array_merge(
-            [self::ORDER_UITGEVOERD->id(), self::ORDER_UITGEVOERD_HERNIA->id()],
-            self::getStageIdsAfterExecution(),
+            [self::ORDER_VERLOREN->id(), self::ORDER_VERLOREN_HERNIA->id()],
+            self::getStageIdsAfterExecutionExLost(),
         );
     }
 

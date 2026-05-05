@@ -44,9 +44,9 @@ class OrderObserver
             $newStageId = $this->orderStatusService->recalculateAndPersist($order);
             $stageChange = ! is_null($newStageId);
         }
-        if ($stageChange && in_array($order->pipeline_stage_id, PipelineStage::getOrderStagesIdsWon(), true)) {
+        if ($stageChange && in_array($order->pipeline_stage_id, PipelineStage::getStageIdsAfterExecutionExLost(), true)) {
             Log::info('Updating order items to WON for order '.$order->id);
-            OrderItem::forOrderAndNotLostAndNew($order->id)
+            OrderItem::forOrderAndNotLost($order->id)
                 ->update(['status' => OrderItemStatus::WON->value]);
         }
     }

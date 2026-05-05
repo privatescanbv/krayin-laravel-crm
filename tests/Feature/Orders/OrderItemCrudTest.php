@@ -145,7 +145,7 @@ test('cannot set order_item status to gewonnen when order stage is before uitgev
 
 test('can not set order_item status to gewonnen when order stage is uitgevoerd', function () {
     $order = Order::factory()->create([
-        'pipeline_stage_id' => PipelineStage::ORDER_UITGEVOERD->id(),
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
     ]);
     $item = OrderItem::factory()->create(['order_id' => $order->id]);
 
@@ -164,7 +164,7 @@ test('can not set order_item status to gewonnen when order stage is uitgevoerd',
 
 test('can not set order_item status to gewonnen when hernia order stage is uitgevoerd', function () {
     $order = Order::factory()->create([
-        'pipeline_stage_id' => PipelineStage::ORDER_UITGEVOERD_HERNIA->id(),
+        'pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
     ]);
     $item = OrderItem::factory()->create(['order_id' => $order->id]);
 

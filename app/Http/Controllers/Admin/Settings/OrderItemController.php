@@ -124,7 +124,7 @@ class OrderItemController extends SimpleEntityController
 
         if ($request->input('status') === OrderItemStatus::WON->value) {
             $item = OrderItem::with('order')->findOrFail($id);
-            $allowedStageIds = PipelineStage::getStageIdsAfterExecution();
+            $allowedStageIds = PipelineStage::getStageIdsAfterExecutionExLost();
 
             if (! in_array($item->order->pipeline_stage_id, $allowedStageIds, true)) {
                 $validator = Validator::make([], []);

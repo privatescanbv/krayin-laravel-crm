@@ -17,7 +17,7 @@ run_crm() {
 run_forms() {
   echo "=== [forms] start ==="
   docker exec forms php artisan optimize:clear
-  docker exec forms php artisan migrate:fresh --seed
+  docker exec forms php artisan migrate:fresh --seed --force
   echo "=== [forms] klaar ==="
 }
 

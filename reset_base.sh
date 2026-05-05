@@ -12,6 +12,6 @@ fi
 $ARTISAN migrate:fresh &&
 # create realm and capture output to extract the secrets
 ./create-realm.sh "$APP_ENV" &&
-$ARTISAN db:seed &&
+$ARTISAN db:seed --force &&
 $ARTISAN import:users &&
 $ARTISAN keycloak:sync-users

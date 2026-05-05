@@ -46,7 +46,7 @@ final class GvlFormLink
      */
     public static function adminOpenUrlForPerson(?string $gvlFormLink, ?Person $person): ?string
     {
-        if ($gvlFormLink === null || $gvlFormLink === '') {
+        if (empty($gvlFormLink)) {
             return null;
         }
 

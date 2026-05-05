@@ -38,6 +38,7 @@ return [
         'delete'          => 'Verwijderen',
         'portal-create'   => 'Portaal account aanmaken',
         'portal-delete'   => 'Portaal account intrekken',
+        'impersonate'     => 'Impersoneren (patiëntportaal overnemen)',
         'takeover'        => 'Overnemen',
         'export'          => 'Exporteren',
         'mass-delete'     => 'Bulk verwijderen',

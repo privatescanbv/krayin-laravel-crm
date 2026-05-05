@@ -39,6 +39,7 @@ return [
         'delete'          => 'Delete',
         'portal-create'   => 'Create Portal Account',
         'portal-delete'   => 'Revoke Portal Account',
+        'impersonate'     => 'Impersonate (take over patient portal)',
         'export'          => 'Export',
         'mass-delete'     => 'Mass Delete',
         'data-transfer'   => 'Data Transfer',

@@ -135,6 +135,11 @@ return [
         'route' => 'admin.contacts.persons.portal.delete',
         'sort'  => 7,
     ], [
+        'key'   => 'contacts.persons.impersonate',
+        'name'  => 'admin::app.acl.impersonate',
+        'route' => 'admin.contacts.persons.impersonate-and-open-form',
+        'sort'  => 8,
+    ], [
         'key'   => 'contacts.organizations',
         'name'  => 'admin::app.acl.organizations',
         'route' => 'admin.contacts.organizations.index',

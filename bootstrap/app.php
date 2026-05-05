@@ -96,20 +96,32 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
             try {
                 $request = request();
-                Log::error('Exception reported', [
-                    'exception'    => get_class($e),
-                    'message'      => $e->getMessage(),
-                    'file'         => $e->getFile(),
-                    'line'         => $e->getLine(),
-                    'trace'        => $e->getTraceAsString(),
-                    'url'          => optional($request)->fullUrl(),
-                    'method'       => optional($request)->method(),
-                    'ip'           => optional($request)->ip(),
-                    'user_id'      => optional(optional(auth()->guard('user'))->user())->id,
-                    'request_data' => optional($request)->all(),
-                    'headers'      => optional(optional($request)->headers)->all(),
-                    'session_id'   => optional(session())->getId(),
-                ]);
+                if ($e instanceof NotFoundHttpException) {
+                    Log::warning('Exception not found', [
+                        'exception'    => get_class($e),
+                        'message'      => $e->getMessage(),
+                        'file'         => $e->getFile(),
+                        'line'         => $e->getLine(),
+                        'trace'        => $e->getTraceAsString(),
+                        'url'          => optional($request)->fullUrl(),
+                        'method'       => optional($request)->method(),
+                    ]);
+                } else {
+                    Log::error('Exception reported', [
+                        'exception' => get_class($e),
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString(),
+                        'url' => optional($request)->fullUrl(),
+                        'method' => optional($request)->method(),
+                        'ip' => optional($request)->ip(),
+                        'user_id' => optional(optional(auth()->guard('user'))->user())->id,
+                        'request_data' => optional($request)->all(),
+                        'headers' => optional(optional($request)->headers)->all(),
+                        'session_id' => optional(session())->getId(),
+                    ]);
+                }
             } catch (Exception $logException) {
                 Log::error('Could not log reported exception', ['exception' => $logException->getMessage()]);
             }

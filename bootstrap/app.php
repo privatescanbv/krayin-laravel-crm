@@ -11,6 +11,7 @@ use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -76,6 +77,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'patient.self'       => EnsureKeycloakPatientMatchesRoute::class,
             'bouncer.permission' => BouncerPermissionMiddleware::class,
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule) {
+        $schedule->command('emails:sync-graph')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('activities:release-overdue')->hourly();
+        $schedule->command('activities:sync-statuses')->hourly();
+        $schedule->command('duplicates:refresh-cache --clear')->hourly();
+        $schedule->command('emails:cleanup-logs')->daily();
+        $schedule->command('emails:cleanup-graph-inbox')->daily();
+        $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('afb:send-daily')->dailyAt('06:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);

@@ -370,6 +370,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         foreach ($records as $record) {
             $orderRows = $rowsByOrder->get($record->id, collect());
             $orderNum = $record->order_num ?? 'N/A';
+            $hasScheduledExamination = $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c) !== null;
 
             foreach ($orderRows as $row) {
                 $product = $this->resolveProductForSugarRow(
@@ -384,7 +385,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $noMatchCount++;
                 }
 
-                $status = $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '');
+                $status = $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '', $hasScheduledExamination);
 
                 $tableRows[] = [
                     $orderNum,
@@ -601,6 +602,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'organization_id'              => $organizationId,
                     ], $this->parseSugarTimestamps($record));
 
+                    $examinationAt = $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c);
+                    $hasScheduledExamination = $examinationAt !== null;
+
                     $itemsCreated = 0;
 
                     // Create OrderItems
@@ -635,7 +639,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             'afb_description' => ! empty(data_get($row, 'afb_description_c')) ? trim((string) data_get($row, 'afb_description_c')) : null,
                             'total_price'     => $row->sales_price ?? 0,
                             'quantity'        => 1,
-                            'status'          => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? ''),
+                            'status'          => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '', $hasScheduledExamination),
                         ]);
 
                         if (! empty($row->pcrm_partnerresources_id_c) && $row->duration !== null) {
@@ -647,9 +651,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                                     'resource_external_id' => $row->pcrm_partnerresources_id_c,
                                 ]);
                             } else {
-                                $examAt = $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c);
-                                if ($examAt !== null) {
-                                    $from = CarbonImmutable::parse($examAt);
+                                if ($examinationAt !== null) {
+                                    $from = CarbonImmutable::parse($examinationAt);
                                     $to = $from->addMinutes((int) $row->duration);
                                     ResourceOrderItem::create([
                                         'resource_id'  => $resource->id,
@@ -902,14 +905,25 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
     /**
      * Map SugarCRM sales_stage on an order row to an OrderItemStatus.
+     * When the order has an imported examination datetime, non-lost rows become {@see OrderItemStatus::PLANNED}.
      */
-    private function mapRowSalesStageToOrderItemStatus(string $salesStage): OrderItemStatus
+    private function mapRowSalesStageToOrderItemStatus(string $salesStage, bool $hasScheduledExamination = false): OrderItemStatus
     {
-        return match (strtolower(trim($salesStage))) {
+        $base = match (strtolower(trim($salesStage))) {
             'gewonnen' => OrderItemStatus::WON,
             'verloren' => OrderItemStatus::LOST,
             default    => OrderItemStatus::NEW,
         };
+
+        if ($base === OrderItemStatus::LOST) {
+            return OrderItemStatus::LOST;
+        }
+
+        if ($hasScheduledExamination) {
+            return OrderItemStatus::PLANNED;
+        }
+
+        return $base;
     }
 
     /**

@@ -534,6 +534,43 @@ test('zakelijk import uses shipping_address_city when billing city missing', fun
         ->postal_code->toBe('9711BP');
 });
 
+test('import sets orderitem to PLANNED when order has examination date', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-planned-001']);
+    Person::factory()->create(['external_id' => 'contact-planned']);
+
+    insertSugarOrder('order-planned-001', [
+        'sales_stage'       => 'Optie',
+        'datum_onderzoek_1' => '2025-08-20',
+    ]);
+    insertSugarRow('order-planned-001', 'row-planned', ['sales_stage' => 'Optie']);
+    linkRowToContact('row-planned', 'contact-planned');
+    linkOrderToSugarLead('order-planned-001', 'sugar-lead-planned-001');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-planned-001')->first();
+    expect($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::PLANNED);
+});
+
+test('import keeps orderitem LOST when row is verloren even with examination date', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-lost-exam']);
+
+    insertSugarOrder('order-lost-exam', [
+        'sales_stage'       => 'Verloren',
+        'datum_onderzoek_1' => '2025-08-20',
+        'reden_afvoeren_c'  => 'prijs',
+    ]);
+    insertSugarRow('order-lost-exam', 'row-lost-exam', ['sales_stage' => 'Verloren']);
+    linkOrderToSugarLead('order-lost-exam', 'sugar-lead-lost-exam');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-lost-exam')->first();
+    expect($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::LOST);
+});
+
 test('imports won order and creates saleslead and orderitem linked to person', function () {
     $person = Person::factory()->create(['external_id' => 'contact-001']);
     $lead = Lead::factory()->create(['external_id' => 'sugar-lead-001']);

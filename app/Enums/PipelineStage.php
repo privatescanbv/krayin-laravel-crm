@@ -590,6 +590,14 @@ enum PipelineStage: string
         ];
     }
 
+    public static function getStageIdsAtOrAfterExecution(): array
+    {
+        return array_merge(
+            [self::ORDER_UITGEVOERD->id(), self::ORDER_UITGEVOERD_HERNIA->id()],
+            self::getStageIdsAfterExecution(),
+        );
+    }
+
     // Used for operational grids:
 
     public static function getFrontOfficeStageIds(): array

@@ -658,11 +658,12 @@ class SalesLeadController extends Controller
                 $preventieLead->attachPersons($personIds);
             }
 
-            // Retrieve the SalesLead created by the LeadObserver (on WON transition)
-            $preventieSales = SalesLead::where('lead_id', $preventieLead->id)->latest()->first();
+            // Explicitly create the SalesLead and Order for the new Preventie lead
+            // (LeadObserver only creates SalesLead on updated/stage-transition, not on created)
+            $preventieSales = $this->salesLeadRepository->createFromWonLead($preventieLead->fresh());
 
             if (! $preventieSales) {
-                throw new \RuntimeException('Preventie SalesLead was not created automatically.');
+                throw new \RuntimeException('Kon Preventie SalesLead niet aanmaken.');
             }
 
             // Link the Herniapoli SalesLead to the Preventie SalesLead

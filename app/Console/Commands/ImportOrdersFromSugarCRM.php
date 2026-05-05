@@ -322,7 +322,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             $slRows[] = [
                 $record->order_num ?? 'N/A',
                 $this->formatDryRunOrderTypeLabel($record),
-                $record->name ?? 'N/A',
+                $this->stripOrderNumberFromName($record->name ?? '', $record->order_num ?? null),
                 $salesStage->label(),
                 $record->sugar_lead_id ? substr($record->sugar_lead_id, 0, 8).'…' : '—',
                 $crmLead ? '#'.$crmLead->id : '—',
@@ -574,9 +574,10 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         }
                     }
 
+                    $salesName = $this->stripOrderNumberFromName($record->name ?? '', $record->order_num ?? null);
                     // Same path as createFromWonLead (copyFromLead → persons + anamnesis), without auto-created order
                     $salesLead = $this->salesLeadRepository->createFromLeadForOrderImport($crmLead, [
-                        'name'              => $record->name ?? "Order {$record->order_num}",
+                        'name'              => $salesName ?? "Order {$record->order_num}",
                         'pipeline_stage_id' => $salesStage->id(),
                         'lost_reason'       => $lostReason,
                         'closed_at'         => $closedAt,
@@ -1509,6 +1510,17 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     {
         return ! empty($record->account_name)
             && ! str_starts_with($record->account_name, 'Fam ');
+    }
+
+    private function stripOrderNumberFromName(string $name, ?string $orderNum): string
+    {
+        if ($orderNum !== null && $orderNum !== '' && str_starts_with($name, $orderNum)) {
+            $stripped = ltrim(substr($name, strlen($orderNum)), " \t_-");
+
+            return $stripped !== '' ? $stripped : $name;
+        }
+
+        return $name;
     }
 
     private function formatDryRunOrderTypeLabel(object $record): string

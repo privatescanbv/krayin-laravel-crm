@@ -369,16 +369,9 @@ class EmailTemplateRenderingService
     }
 
     /**
-     * Resolved lazily to avoid a container cycle: CrmMailService → this service → OrderMailService → CrmMailService.
-     */
-    private function orderMailService(): OrderMailService
-    {
-        return $this->application->make(OrderMailService::class);
-    }
-
-    /**
      * Convert a plain HTML string to one with all CSS inlined.
      * Necessary because many email clients strip <style> tags.
+     *
      * @throws Exception technical error, css not found
      */
     public function renderInlineCss(string $html): string
@@ -387,6 +380,14 @@ class EmailTemplateRenderingService
         $css = file_exists($cssPath) ? file_get_contents($cssPath) : throw new Exception('css file not found');
 
         return (new CssToInlineStyles)->convert($html, $css);
+    }
+
+    /**
+     * Resolved lazily to avoid a container cycle: CrmMailService → this service → OrderMailService → CrmMailService.
+     */
+    private function orderMailService(): OrderMailService
+    {
+        return $this->application->make(OrderMailService::class);
     }
 
     /**

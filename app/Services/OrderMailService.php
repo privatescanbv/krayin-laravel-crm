@@ -166,7 +166,7 @@ class OrderMailService
         $personId = $person?->id;
 
         return array_merge([
-            'order_reference'        => (string) $order->id,
+            'order_reference'        => (string) $order->order_number,
             'order_title'            => e($order->title ?? ''),
             'order_status'           => e($order->status?->label() ?? ''),
             'order_total'            => $this->formatCurrency($order->total_price),

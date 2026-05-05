@@ -143,7 +143,7 @@ test('cannot set order_item status to gewonnen when order stage is before uitgev
     $response->assertJsonValidationErrors(['status']);
 });
 
-test('can set order_item status to gewonnen when order stage is uitgevoerd', function () {
+test('can not set order_item status to gewonnen when order stage is uitgevoerd', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id' => PipelineStage::ORDER_UITGEVOERD->id(),
     ]);
@@ -159,15 +159,10 @@ test('can set order_item status to gewonnen when order stage is uitgevoerd', fun
     ];
 
     $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
-    $response->assertOk();
-
-    $this->assertDatabaseHas('order_items', [
-        'id'     => $item->id,
-        'status' => OrderItemStatus::WON->value,
-    ]);
+    $response->assertUnprocessable();
 });
 
-test('can set order_item status to gewonnen when hernia order stage is uitgevoerd', function () {
+test('can not set order_item status to gewonnen when hernia order stage is uitgevoerd', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id' => PipelineStage::ORDER_UITGEVOERD_HERNIA->id(),
     ]);
@@ -183,5 +178,5 @@ test('can set order_item status to gewonnen when hernia order stage is uitgevoer
     ];
 
     $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
-    $response->assertOk();
+    $response->assertUnprocessable();
 });

@@ -578,14 +578,12 @@ enum PipelineStage: string
      *
      * @return list<int>
      */
-    public static function getStageIdsAtOrAfterExecution(): array
+    public static function getStageIdsAfterExecution(): array
     {
         return [
-            self::ORDER_UITGEVOERD->id(),
             self::ORDER_RAPPORTEN_ONTVANGEN->id(),
             self::ORDER_GEWONNEN->id(),
             self::ORDER_VERLOREN->id(),
-            self::ORDER_UITGEVOERD_HERNIA->id(),
             self::ORDER_RAPPORTEN_ONTVANGEN_HERNIA->id(),
             self::ORDER_GEWONNEN_HERNIA->id(),
             self::ORDER_VERLOREN_HERNIA->id(),

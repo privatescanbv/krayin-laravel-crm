@@ -1,7 +1,7 @@
 <#import "template.ftl" as layout>
 <#import "password-commons.ftl" as passwordCommons>
 
-<@layout.registrationLayout displayMessage=!messagesPerField.existsError('password','password-confirm')>
+<@layout.registrationLayout displayMessage=true>
 
 <div class="log_main">
     <div class="log">

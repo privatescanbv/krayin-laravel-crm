@@ -18,6 +18,12 @@
     <#-- Zorg dat section nooit null is -->
     <#assign _section = section!"form">
 
+    <#if displayMessage && message?has_content>
+        <div class="alert alert-${message.type!"info"}">
+            ${kcSanitize(message.summary)?no_esc}
+        </div>
+    </#if>
+
     <#nested _section>
 
 </body>

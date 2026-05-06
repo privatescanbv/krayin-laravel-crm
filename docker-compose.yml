@@ -252,6 +252,8 @@ services:
       KC_PROXY_ADDRESS_FORWARDING: "true"
       KC_THEME_CACHE: "false"
       KC_THEME_STATIC_MAX_AGE: "-1"
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
     entrypoint: >
       /bin/sh -c "
         /opt/keycloak/bin/kc.sh build --features=token-exchange &&

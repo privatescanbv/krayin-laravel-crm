@@ -73,13 +73,56 @@
     $summary['diff_total']     = $round2($summary['diff_total']);
 @endphp
 
-<div class="flex w-full flex-col gap-4 rounded-lg">
+<div id="afletteren-tab-{{ $order->id }}" class="flex w-full flex-col gap-4 rounded-lg">
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between gap-4">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Afletteren</h3>
         </div>
         <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Overzicht van inkoop vs invoice (daadwerkelijk betaald) per order item.
+        </div>
+    </div>
+
+    {{-- Inline edit form (hidden by default) --}}
+    <div id="afletteren-form-{{ $order->id }}" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+        <h4 id="afletteren-form-title-{{ $order->id }}" class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+            Invoice prijs bewerken
+        </h4>
+
+        <div id="afletteren-form-error-{{ $order->id }}" class="hidden mb-3 rounded bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-300"></div>
+
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-5">
+            @foreach (['misc' => 'Overig', 'doctor' => 'Arts', 'cardiology' => 'Cardiologie', 'clinic' => 'Kliniek', 'radiology' => 'Radiologie'] as $suffix => $label)
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">{{ $label }}</label>
+                    <input
+                        type="number"
+                        name="purchase_price_{{ $suffix }}"
+                        step="0.01"
+                        min="0"
+                        value="0.00"
+                        class="w-full rounded border border-gray-300 px-2 py-1.5 text-right text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        placeholder="0.00"
+                    />
+                </div>
+            @endforeach
+        </div>
+
+        <div class="mt-4 flex gap-2">
+            <button
+                type="button"
+                id="afletteren-save-{{ $order->id }}"
+                class="primary-button"
+            >
+                Opslaan
+            </button>
+            <button
+                type="button"
+                id="afletteren-cancel-{{ $order->id }}"
+                class="secondary-button"
+            >
+                Annuleren
+            </button>
         </div>
     </div>
 
@@ -140,6 +183,7 @@
                             <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Verschil</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Status</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Details</th>
+                            <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Acties</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -224,6 +268,22 @@
                                         </details>
                                     @endif
                                 </td>
+                                <td class="px-2 py-3">
+                                    <button
+                                        type="button"
+                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 icon-edit"
+                                        title="Invoice prijs bewerken"
+                                        data-role="afletteren-edit"
+                                        data-item-id="{{ $item->id }}"
+                                        data-misc="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_misc) }}"
+                                        data-doctor="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_doctor) }}"
+                                        data-cardiology="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_cardiology) }}"
+                                        data-clinic="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_clinic) }}"
+                                        data-radiology="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_radiology) }}"
+                                    >
+                                        <span class="sr-only">Bewerken</span>
+                                    </button>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -233,3 +293,101 @@
     @endif
 
 </div>
+
+@pushOnce('scripts')
+<script>
+(function () {
+    function csrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var orderId = {{ $order->id }};
+        var container = document.getElementById('afletteren-tab-' + orderId);
+        if (!container) return;
+
+        var formWrapper = document.getElementById('afletteren-form-' + orderId);
+        var errorEl    = document.getElementById('afletteren-form-error-' + orderId);
+        var saveBtn    = document.getElementById('afletteren-save-' + orderId);
+        var cancelBtn  = document.getElementById('afletteren-cancel-' + orderId);
+
+        var editingItemId = null;
+
+        function openForm(btn) {
+            editingItemId = btn.getAttribute('data-item-id');
+
+            var suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+            suffixes.forEach(function (suffix) {
+                var input = formWrapper.querySelector('input[name="purchase_price_' + suffix + '"]');
+                if (input) {
+                    input.value = parseFloat(btn.getAttribute('data-' + suffix) || '0').toFixed(2);
+                }
+            });
+
+            errorEl.textContent = '';
+            errorEl.classList.add('hidden');
+            formWrapper.classList.remove('hidden');
+            formWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeForm() {
+            formWrapper.classList.add('hidden');
+            editingItemId = null;
+        }
+
+        cancelBtn.addEventListener('click', closeForm);
+
+        container.querySelectorAll('[data-role="afletteren-edit"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                openForm(btn);
+            });
+        });
+
+        saveBtn.addEventListener('click', function () {
+            if (!editingItemId) return;
+
+            var suffixes = ['misc', 'doctor', 'cardiology', 'clinic', 'radiology'];
+            var payload = {};
+            suffixes.forEach(function (suffix) {
+                var input = formWrapper.querySelector('input[name="purchase_price_' + suffix + '"]');
+                payload['purchase_price_' + suffix] = input ? input.value : '0';
+            });
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Opslaan...';
+            errorEl.classList.add('hidden');
+
+            fetch('/admin/order-items/' + editingItemId + '/invoice-price', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf(),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            }).then(function (response) {
+                if (!response.ok) {
+                    return response.json().catch(function () { return {}; }).then(function (body) {
+                        var message = body.message || 'Fout: ' + response.status;
+                        if (body.errors) {
+                            var first = Object.values(body.errors)[0];
+                            if (Array.isArray(first) && first.length) message = first[0];
+                        }
+                        throw new Error(message);
+                    });
+                }
+                return response.json();
+            }).then(function () {
+                window.location.reload();
+            }).catch(function (err) {
+                errorEl.textContent = err.message || 'Netwerkfout. Probeer opnieuw.';
+                errorEl.classList.remove('hidden');
+            }).finally(function () {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Opslaan';
+            });
+        });
+    });
+})();
+</script>
+@endPushOnce

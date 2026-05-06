@@ -78,6 +78,7 @@ Route::controller(OrderItemController::class)->prefix('order-items')->group(func
     Route::post('create', 'store')->name('admin.order_items.store');
     Route::get('edit/{id}', 'edit')->name('admin.order_items.edit');
     Route::put('edit/{id}', 'update')->name('admin.order_items.update');
+    Route::patch('{id}/invoice-price', 'updateInvoicePrice')->name('admin.order_items.invoice_price.update');
     Route::delete('', 'destroy')->name('admin.order_items.bulk_delete');
     Route::delete('{id}', 'destroy')->name('admin.order_items.delete');
     Route::get('partner-purchase-prices/{productId}', 'getPartnerPurchasePrices')

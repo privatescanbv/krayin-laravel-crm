@@ -6,8 +6,8 @@ use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
 use App\Enums\KeycloakRoles;
+use App\Support\PasswordGenerator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 
 class PersonKeycloakService
@@ -37,7 +37,7 @@ class PersonKeycloakService
         $passwordToUse = $password ?? $person->getPlaintextPassword() ?? $person->getDecryptedPassword();
 
         if (! $passwordToUse) {
-            $passwordToUse = Str::random(16);
+            $passwordToUse = PasswordGenerator::generate();
 
             Person::withoutEvents(function () use ($person, $passwordToUse) {
                 $person->forceFill(['password' => $passwordToUse])->save();

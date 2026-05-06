@@ -236,7 +236,7 @@ services:
       - loki
 
   keycloak:
-    image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:latest
+    image: quay.io/keycloak/keycloak:24.0
     container_name: keycloak
     restart: unless-stopped
     env_file:

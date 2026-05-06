@@ -7,11 +7,11 @@ use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
 use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
+use App\Support\PasswordGenerator;
 use Database\Seeders\UserSeeder;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Webkul\User\Models\User;
 
 /**
@@ -418,8 +418,8 @@ class UserObserver
             return $defaultPassword;
         }
 
-        // Generate a temporary random password
-        return Str::random(16);
+        // Generate a temporary random password compliant with the application password policy
+        return PasswordGenerator::generate();
     }
 
     /**

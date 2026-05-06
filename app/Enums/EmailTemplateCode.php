@@ -20,4 +20,6 @@ enum EmailTemplateCode: string
     case PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT = 'patient-portal-notification-new-content';
     case CREATE_USER = 'create-user';
     case ACKNOWLEDGE_ORDER_MAIL = 'acknowledge-order-mail';
+    case PATIENT_FORGOT_PASSWORD = 'patient-forgot-password';
+    case CRM_FORGOT_PASSWORD = 'crm-forgot-password';
 }

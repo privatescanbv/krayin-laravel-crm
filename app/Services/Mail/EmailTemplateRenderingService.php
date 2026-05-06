@@ -48,6 +48,9 @@ class EmailTemplateRenderingService
      * Structuur: entity => [ variabele => omschrijving ]
      */
     public const SUPPORTED_VARIABLES = [
+        'auth' => [
+            'reset_url' => 'Tijdelijk gesigneerde URL voor wachtwoord-reset (forgot-password flow)',
+        ],
         'user' => [
             'user.first_name' => 'Voornaam van de gebruiker',
             'user.last_name'  => 'Achternaam van de gebruiker',

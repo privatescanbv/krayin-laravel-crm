@@ -213,6 +213,44 @@ HTML,
 HTML,
             ],
 
+            // ── Patiënt: wachtwoord vergeten ───────────────────────────────────────
+            // Variables: person.first_name, reset_url
+            [
+                'name'        => 'Patiënt wachtwoord vergeten',
+                'code'        => EmailTemplateCode::PATIENT_FORGOT_PASSWORD->value,
+                'type'        => $patient,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Wachtwoord resetten voor uw patiëntportaal',
+                'content'     => <<<'HTML'
+<p>Beste {{ person.first_name }},</p>
+<p>U heeft een verzoek ingediend om uw wachtwoord voor het Privatescan patiëntportaal te resetten.</p>
+<p>Klik op de onderstaande link om een nieuw wachtwoord in te stellen:</p>
+<p><a href="{{ reset_url }}">Wachtwoord resetten</a></p>
+<p>Deze link is <strong>1 uur</strong> geldig. Heeft u geen verzoek ingediend? Dan kunt u deze e-mail negeren.</p>
+<p>Met vriendelijke groet,<br>Privatescan</p>
+HTML,
+            ],
+
+            // ── CRM-medewerker: wachtwoord vergeten ────────────────────────────────
+            // Variables: user.first_name, reset_url
+            [
+                'name'        => 'CRM wachtwoord vergeten',
+                'code'        => EmailTemplateCode::CRM_FORGOT_PASSWORD->value,
+                'type'        => $algemeen,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Wachtwoord resetten voor uw CRM account',
+                'content'     => <<<'HTML'
+<p>Beste {{ user.first_name }},</p>
+<p>U heeft een verzoek ingediend om uw wachtwoord voor het Privatescan CRM te resetten.</p>
+<p>Klik op de onderstaande link om een nieuw wachtwoord in te stellen:</p>
+<p><a href="{{ reset_url }}">Wachtwoord resetten</a></p>
+<p>Deze link is <strong>1 uur</strong> geldig. Heeft u geen verzoek ingediend? Dan kunt u deze e-mail negeren.</p>
+<p>Met vriendelijke groet,<br>Privatescan</p>
+HTML,
+            ],
+
             // ── Medewerker aanmaken ────────────────────────────────────────────────
             // Variables: user.first_name, user.last_name, user.email
             [

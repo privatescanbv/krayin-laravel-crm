@@ -74,11 +74,9 @@
                         <strong>Onthoud mij</strong>
                     </label>
 
-                    <#if realm.resetPasswordAllowed>
-                        <a href="${url.loginResetCredentialsUrl}">
-                            Wachtwoord vergeten?
-                        </a>
-                    </#if>
+                    <a href="${properties['patient.forgot.password.url']!''}">
+                        Wachtwoord vergeten?
+                    </a>
                 </div>
 
                 <div class="form_end">

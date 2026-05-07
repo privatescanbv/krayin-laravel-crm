@@ -805,7 +805,7 @@ class OrderController extends SimpleEntityController
             'type'      => ActivityType::FILE,
             'title'     => $title,
             'comment'   => $request->input('comment'),
-            'is_done'   => true,
+            'is_done'   => false,
             'user_id'   => auth()->id(),
             'order_id'  => $order->id,
             'clinic_id' => $request->input('clinic_id'),

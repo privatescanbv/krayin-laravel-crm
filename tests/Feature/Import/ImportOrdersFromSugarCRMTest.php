@@ -94,6 +94,7 @@ beforeEach(function () {
         $table->double('sales_price')->nullable();
         $table->string('sales_stage')->nullable();
         $table->string('resource_type')->nullable();
+        $table->dateTime('datum_onderzoek')->nullable();
         $table->integer('duration')->nullable();
         $table->string('pcrm_partnerresources_id_c')->nullable();
         $table->integer('deleted')->default(0);
@@ -225,11 +226,12 @@ function insertSugarOrder(string $id, array $overrides = []): void
 function insertSugarRow(string $orderId, string $rowId, array $overrides = []): void
 {
     DB::connection('sugarcrm')->table('pcrm_salesorderrow')->insert(array_merge([
-        'id'          => $rowId,
-        'name'        => 'TB1 Business Class',
-        'sales_price' => 1500.00,
-        'sales_stage' => 'Gewonnen',
-        'deleted'     => 0,
+        'id'              => $rowId,
+        'name'            => 'TB1 Business Class',
+        'sales_price'     => 1500.00,
+        'sales_stage'     => 'Gewonnen',
+        'datum_onderzoek' => null,
+        'deleted'         => 0,
     ], $overrides));
 
     DB::connection('sugarcrm')->table('pcrm_salesoalesorderrow_c')->insert([
@@ -1210,6 +1212,7 @@ test('creates ResourceOrderItem with correct times when duration and resource ar
     insertSugarRow('order-roi-001', 'row-roi-001', [
         'duration'                   => 60,
         'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-001',
+        'datum_onderzoek'            => '2025-07-15 09:00:00',
     ]);
     linkRowToContact('row-roi-001', 'contact-roi-001');
     linkOrderToSugarLead('order-roi-001', 'sugar-lead-roi-001');
@@ -1239,6 +1242,7 @@ test('does not create ResourceOrderItem when duration is null', function () {
     insertSugarRow('order-roi-nodur', 'row-roi-nodur', [
         'duration'                   => null,
         'pcrm_partnerresources_id_c' => 'sugar-resource-nodur',
+        'datum_onderzoek'            => '2025-07-15 09:00:00',
     ]);
     linkRowToContact('row-roi-nodur', 'contact-roi-nodur');
     linkOrderToSugarLead('order-roi-nodur', 'sugar-lead-roi-nodur');
@@ -1263,6 +1267,7 @@ test('logs warning and still imports order when resource external_id not found',
     insertSugarRow('order-roi-nores', 'row-roi-nores', [
         'duration'                   => 45,
         'pcrm_partnerresources_id_c' => 'non-existent-resource-uuid',
+        'datum_onderzoek'            => '2025-07-15 09:00:00',
     ]);
     linkRowToContact('row-roi-nores', 'contact-roi-nores');
     linkOrderToSugarLead('order-roi-nores', 'sugar-lead-roi-nores');
@@ -1278,4 +1283,51 @@ test('logs warning and still imports order when resource external_id not found',
     Log::shouldHaveReceived('warning')
         ->once()
         ->with('ImportOrdersFromSugarCRM: resource not found for order row', Mockery::on(fn ($ctx) => ($ctx['resource_external_id'] ?? null) === 'non-existent-resource-uuid'));
+});
+
+test('creates ResourceOrderItems using each row examination date and time', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-roi-rows']);
+    Person::factory()->create(['external_id' => 'contact-roi-rows']);
+    $resource = Resource::factory()->create(['external_id' => 'sugar-resource-uuid-rows']);
+
+    insertSugarOrder('order-roi-rows', [
+        'datum_onderzoek_1' => '2025-07-15',
+        'aankomsttijd_c'    => '09:00',
+    ]);
+    insertSugarRow('order-roi-rows', 'row-roi-a', [
+        'duration'                   => 60,
+        'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-rows',
+        'datum_onderzoek'            => '2025-07-15 09:00:00',
+    ]);
+    insertSugarRow('order-roi-rows', 'row-roi-b', [
+        'duration'                   => 30,
+        'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-rows',
+        'datum_onderzoek'            => '2025-07-20 14:00:00',
+    ]);
+    linkRowToContact('row-roi-a', 'contact-roi-rows');
+    linkRowToContact('row-roi-b', 'contact-roi-rows');
+    linkOrderToSugarLead('order-roi-rows', 'sugar-lead-roi-rows');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-roi-rows')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->first_examination_at->format('Y-m-d H:i:s'))->toBe('2025-07-15 09:00:00');
+
+    $rowA = ResourceOrderItem::whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))
+        ->where('from', '2025-07-15 09:00:00')
+        ->first();
+    $rowB = ResourceOrderItem::whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))
+        ->where('from', '2025-07-20 14:00:00')
+        ->first();
+
+    expect($rowA)->not->toBeNull()
+        ->and($rowA->resource_id)->toBe($resource->id)
+        ->and($rowA->from->format('Y-m-d H:i:s'))->toBe('2025-07-15 09:00:00')
+        ->and($rowA->to->format('Y-m-d H:i:s'))->toBe('2025-07-15 10:00:00');
+
+    expect($rowB)->not->toBeNull()
+        ->and($rowB->resource_id)->toBe($resource->id)
+        ->and($rowB->from->format('Y-m-d H:i:s'))->toBe('2025-07-20 14:00:00')
+        ->and($rowB->to->format('Y-m-d H:i:s'))->toBe('2025-07-20 14:30:00');
 });

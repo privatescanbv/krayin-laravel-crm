@@ -606,6 +606,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $examinationAt = $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c);
                     $hasScheduledExamination = $examinationAt !== null;
 
+                    // duration.
                     $itemsCreated = 0;
 
                     // Create OrderItems
@@ -652,8 +653,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                                     'resource_external_id' => $row->pcrm_partnerresources_id_c,
                                 ]);
                             } else {
-                                if ($examinationAt !== null) {
-                                    $from = CarbonImmutable::parse($examinationAt);
+                                $rowExaminationAt = $this->parseSugarDate($row->datum_onderzoek ?? null);
+                                if ($rowExaminationAt !== null) {
+                                    $from = CarbonImmutable::parse($rowExaminationAt);
                                     $to = $from->addMinutes((int) $row->duration);
                                     ResourceOrderItem::create([
                                         'resource_id'  => $resource->id,
@@ -754,6 +756,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'sor.sales_stage',
             'sor.resource_type',
             'row_cstm.aos_products_id_c',
+            'sor.datum_onderzoek',
             'sor.duration',
             'sor.pcrm_partnerresources_id_c',
             'pt.name as product_template_name',

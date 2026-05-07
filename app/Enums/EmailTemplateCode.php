@@ -13,13 +13,12 @@ enum EmailTemplateCode: string
     case REPLY = 'reply';
     case REPLY_DE = 'reply-de';
     case REPLY_EN = 'reply-en';
-    case APPOINTMENT_CONFIRMATION = 'appointment-confirmation';
     case INFORMATIEF_MET_GVL = 'informatief-met-gvl';
     // use when user gets a new patient portal account
     case PATIENT_PORTAL_NOTIFICATION = 'patient-portal-notification';
     case PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT = 'patient-portal-notification-new-content';
     case CREATE_USER = 'create-user';
-    case ACKNOWLEDGE_ORDER_MAIL = 'acknowledge-order-mail';
+    case ACKNOWLEDGE_ORDER_MAIL = 'acknowledge-order-mail-augusta';
     case PATIENT_FORGOT_PASSWORD = 'patient-forgot-password';
     case CRM_FORGOT_PASSWORD = 'crm-forgot-password';
 }

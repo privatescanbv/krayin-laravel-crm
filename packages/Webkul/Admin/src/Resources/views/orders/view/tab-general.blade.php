@@ -144,17 +144,11 @@
                 <span class="font-medium text-gray-800 dark:text-white">
                     {{ $order->firstExaminationCarbon()?->format('d-m-Y H:i') ?? '-' }}
                     @if ($order->hasFirstExaminationOverride())
-                        <span class="text-xs font-normal text-amber-600 dark:text-amber-400">(handmatig)</span>
-                    @endif
-                </span>
-                @if ($order->hasFirstExaminationOverride())
-                    @php $computedAt = $order->earliestScheduledResourceSlotStart(); @endphp
-                    @if ($computedAt)
                         <span class="text-xs text-gray-400 dark:text-gray-500">
-                            Berekend: {{ $computedAt->format('d-m-Y H:i') }}
+                            Berekend: {{ $order->earliestScheduledResourceSlotStart()?->format('d-m-Y H:i') }}
                         </span>
                     @endif
-                @endif
+                </span>
             </div>
 
             <div class="flex flex-col">

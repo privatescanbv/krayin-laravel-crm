@@ -534,7 +534,7 @@ class OrderMailService
     {
         $rows = '';
         foreach ($items as $item) {
-            $productName = e($item->getProductDescription() ?? 'Onbekend product');
+            $productName = nl2br(e($item->getProductDescription() ?? 'Onbekend product'));
             $quantity = (int) ($item->quantity ?? 0);
             if ($item->total_price == 0) {
                 // wish of privatescan, empty vs price 0.0

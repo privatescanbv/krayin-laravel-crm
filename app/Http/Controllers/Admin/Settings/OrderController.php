@@ -738,6 +738,91 @@ class OrderController extends SimpleEntityController
         ]);
     }
 
+    /**
+     * Return clinics (from order item resource bookings) and unchecked order checks for the report upload modal.
+     */
+    public function reportUploadData(int $orderId): JsonResponse
+    {
+        $order = $this->orderRepository->with([
+            'orderItems.resourceOrderItem.resource.clinic',
+            'orderItems.resourceOrderItem.resource.clinicDepartment.clinic',
+            'orderChecks',
+        ])->findOrFail($orderId);
+
+        $clinics = $order->orderItems
+            ->map(function ($item) {
+                $resource = $item->resourceOrderItem?->resource;
+                if (! $resource) {
+                    return null;
+                }
+
+                return $resource->clinicDepartment?->clinic ?? $resource->clinic;
+            })
+            ->filter()
+            ->unique('id')
+            ->values()
+            ->map(fn ($clinic) => [
+                'id'   => $clinic->id,
+                'name' => $clinic->name,
+            ]);
+
+        $uncheckedChecks = $order->orderChecks
+            ->where('done', false)
+            ->values()
+            ->map(fn ($check) => [
+                'id'   => $check->id,
+                'name' => $check->name,
+            ]);
+
+        return response()->json([
+            'clinics' => $clinics,
+            'checks'  => $uncheckedChecks,
+        ]);
+    }
+
+    /**
+     * Upload a report file: create a file Activity linked to order + clinic, and mark selected checks as done.
+     */
+    public function storeReport(Request $request, int $orderId): JsonResponse
+    {
+        $request->validate([
+            'file'      => 'required|file|max:20480',
+            'clinic_id' => 'required|integer|exists:clinics,id',
+            'check_ids' => 'required|array|min:1',
+            'check_ids.*' => 'integer|exists:order_checks,id',
+            'title'     => 'nullable|string|max:255',
+            'comment'   => 'nullable|string',
+        ]);
+
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $activityRepository = app(ActivityRepository::class);
+
+        $file = $request->file('file');
+        $title = $request->input('title') ?: $file->getClientOriginalName();
+
+        $activity = $activityRepository->create([
+            'type'      => ActivityType::FILE,
+            'title'     => $title,
+            'comment'   => $request->input('comment'),
+            'is_done'   => true,
+            'user_id'   => auth()->id(),
+            'order_id'  => $order->id,
+            'clinic_id' => $request->input('clinic_id'),
+            'file'      => $file,
+        ]);
+
+        $checkIds = $request->input('check_ids', []);
+        OrderCheck::where('order_id', $orderId)
+            ->whereIn('id', $checkIds)
+            ->update(['done' => true]);
+
+        return response()->json([
+            'data'    => new ActivityResource($activity),
+            'message' => 'Rapportage succesvol geüpload en checks afgevinkt.',
+        ]);
+    }
+
     public function mailPreview(int $orderId): JsonResponse
     {
         $order = $this->orderRepository->findOrFail($orderId);

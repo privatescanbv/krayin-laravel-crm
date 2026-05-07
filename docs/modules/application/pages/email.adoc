@@ -372,6 +372,17 @@ Bij wijzigingen aan variabelen: pas de constant aan en werk deze tabel bij.
 | `{{ form_link_section }}`
 | Complete HTML sectie met formulierlink indien aanwezig
 
+| Order
+| `{{ order_aanhef }}`
+| Indien zakelijk order bedrijfsnaam en anders de aanhef van de persoon. Voor order met meerdere personen zal dit zijn: 1. Contact persoon van de sales. 2 Persoon met de hoogste match score op de oorspronkelijke lead. Fallback is leeg.
+
+| Order
+| `{{ adviseur }}`
+| Indien de order een toegewezen medewerker heeft, dan wordt hier de naam van de adviseur getoond. Anders '[onbekende adviseur].
+
+| Order
+| `{{ meldplek }}`
+| Sorteer de orderitem chronologisch op ingeplande start datum en zoek hierbij afdeling van de kliniek. Van deze afdeling wordt dit veld getoond: "Opmerking orderbevestiging". Fallback is leeg.
 |===
 
 ==== Belangrijke Noot

@@ -17,6 +17,12 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
+                    <a
+                        href="{{ route('admin.clinics.view', $clinic->id) }}"
+                        class="secondary-button"
+                    >
+                        Bekijken
+                    </a>
                     <button type="submit" class="primary-button">
                         @lang('admin::app.settings.clinics.index.create.save-btn')
                     </button>

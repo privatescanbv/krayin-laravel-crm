@@ -308,6 +308,44 @@ HTML,
 HTML,
             ],
             [
+                'name'        => 'Orderbevestiging TB zonder bloed NL',
+                'code'        => 'order-ackn-TB-no-blood',
+                'type'        => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Orderbevestiging TB zonder bloed NL',
+                'content'     => <<<'HTML'
+<p>{{ person.salutation }} {{ person.initials }} {{ person.last_name }}<br>{{ address_full }}</p>
+<p>&nbsp;</p>
+<p style="text-align: right;">Hengelo, {{ current_date }}</p>
+<p style="text-align: left;">&nbsp;</p>
+<p style="text-align: left;">Onze referentie: {{ order_reference }}</p>
+<p style="text-align: left;">Geachte {{ customer_name}},</p>
+<p style="text-align: left;">Hierbij bevestigen wij de door u aan Privatescan verstrekte opdracht voor het laten uitvoeren van een Total Bodyscan zonder aanvullend bloedonderzoek.</p>
+<p style="text-align: left;"><strong>Afspraakgegevens:</strong><br>Uw afspraak is tot stand gekomen in overleg met {{ adviseur }} en staat ingepland voor {{ datum_afspraak }} om {{ tijd_afspraak }} uur in &nbsp;{{ plaats_afspraak }}. {{ meldplek }}</p>
+<p style="text-align: left;">De volgende onderzoeken worden uitgevoerd:<br>{{ order_summary_table }}</p>
+<p>Voor een optimaal verloop en een goede voorbereiding op de onderzoeken verzoeken wij u om de meegestuurde informatie zorgvuldig door te lezen.</p>
+<p>Graag ontvangen we zo spoedig mogelijk, bij voorkeur per e-mail, uw akkoord voor de geplande onderzoeken alsmede de door u ingevulde gezondheidsvragenlijst(en). Het totaalbedrag van {{ order_total }} dient v&oacute;&oacute;r de onderzoeksdatum op onze bank te zijn bijgeschreven op ons IBAN rekeningnummer, NL11 INGB 0673 2299 71 &nbsp;o.v.v. onze referentie: {{ order_reference }}. U ontvangt separaat de factuur.</p>
+<p>Met dank voor uw opdracht wens ik u alvast een aangenaam verblijf in de kliniek.</p>
+<p>Met vriendelijke groet,</p>
+<table style="border-collapse: collapse; width: 100%; border-width: 0px;" border="1"><colgroup><col style="width: 50%;"><col style="width: 50%;"></colgroup>
+<tbody>
+<tr>
+<td style="border-width: 0px;">{{ adviseur }}</td>
+<td style="border-width: 0px;">voor akkoord:</td>
+</tr>
+<tr>
+<td style="border-width: 0px;">Binnendienst adviseur</td>
+<td style="border-width: 0px;">{{ person.salutation }} {{ person.initials }} {{ person.last_name }}</td>
+</tr>
+</tbody>
+</table>
+<!-- pagebreak -->
+<p><strong>Rapportage, vertaling en begeleiding</strong><br>Na afloop van de onderzoeken (MRI en/of CT) krijgt u een CD/DVD en/of QR-code mee van de gemaakte beelden. Van de resultaten ontvangt u een schriftelijk Duits verslag. Een vertaling van het verslag maakt geen onderdeel uit van het onderzoeksprogramma. Uit ervaring is gebleken dat de meerderheid van onze cli&euml;nten geen behoefte heeft aan een vertaling indien er bij de onderzoeken geen bijzonderheden zijn aangetroffen. Een vertaling van het verslag (volledig of samenvatting) kunt u bestellen bij de begeleiding in de kliniek of achteraf bij Privatescan. Namens Privatescan is op de onderzoeksdag Nederlandstalige begeleiding aanwezig.</p>
+<p><strong>Aankomst kliniek</strong><br>Ten behoeve van uw onderzoeken heeft Privatescan tijd op apparatuur (MRI, CT etc.) en bij artsen gereserveerd. Om te voorkomen dat er op uw onderzoeksdag (te) lange vertragingen en wachttijden ontstaan, is het van belang dat u uiterlijk op de overeengekomen tijd aanwezig bent in de kliniek. Houdt daarom rekening met mogelijke files op uw route. Bij vertraging van meer dan 30 minuten, bestaat de mogelijkheid dat uw onderzoek dient te worden verplaatst om verder oplopende wachttijden voor de mensen die na u staan ingepland te voorkomen. Wij vragen u dan ook vriendelijk om bij vertraging direct contact met ons op te nemen. Vanaf &rsquo;s morgens 8:30 uur zijn we hiervoor bereikbaar via 074 &ndash; 255 2 680.</p>
+HTML,
+            ],
+            [
                 'name'        => 'Afspraak bevestiging',
                 'code'        => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL,
                 'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,

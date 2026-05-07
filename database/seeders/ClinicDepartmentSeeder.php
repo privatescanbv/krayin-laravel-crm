@@ -75,8 +75,7 @@ class ClinicDepartmentSeeder extends BaseSeeder
     {
         return [
             'Evidia - Augusta Klinik' => [
-                ['name' => 'Radiologie', 'MRI 1, MRI 2 en CT' => null, 'email' => 'kristina.gurock@evidia.de'],
-                ['name' => 'NTB', 'Nader te bepalen' => null, 'email' => 'kai.reiter@evidia.de'],
+                ['name' => 'Radiologie', 'MRI 1, MRI 2 en CT' => null, 'email' => 'radiologie.bochum@evidia.de'],
             ],
             'Ambulante Kardiologie Augusta' => [
                 ['name' => 'Cardiologie', 'Cardiologie' => null, 'email' => 'ambulanz@bochumer-herz.de'],

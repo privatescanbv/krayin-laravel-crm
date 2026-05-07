@@ -54,7 +54,7 @@ class WorkflowSeeder extends Seeder
             PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA         => [['Beelden binnen?', $defaultDescription, ActivityType::TASK, 10]],
             PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA             => [['Klant adviseren met MRI beelden', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::SALES_ORDER_PREVENTIE_HERNIA                  => [['Onderzoek via Privatescan', $defaultDescription, ActivityType::TASK, 3]],
-            PipelineStage::SALES_DOCTOR_ASSESSMENT_HERNIA                => [['Casus bij arts ter beoordeling', $defaultDescription, ActivityType::TASK, 3]],
+            PipelineStage::SALES_DOCTOR_ASSESSMENT_HERNIA                => [['Casus beoordeeld door arts?', $defaultDescription, ActivityType::TASK, 3]],
             PipelineStage::SALES_ASSESSMENT_DONE_HERNIA                  => [['Beoordeling gereed: wat zegt de Arts?', $defaultDescription, ActivityType::TASK, 0]],
             PipelineStage::SALES_PATIENT_REFLECTION_TIME_HERNIA          => [['Wenst patient het advies?', $defaultDescription, ActivityType::TASK, 4]],
             PipelineStage::SALES_PLANNED_FOR_ADDITIONAL_RESEARCH_HERNIA  => [['Gepland voor aanvullend onderzoek', $defaultDescription, ActivityType::TASK, 3]],

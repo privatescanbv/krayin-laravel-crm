@@ -72,7 +72,7 @@ class EmailTemplateRenderingService
             'sales_lead.*'   => 'Nested toegang tot alle SalesLead attributen',
         ],
         'order' => [
-            'order_reference'             => 'Order ID als referentienummer',
+            'order_reference'             => 'Order nummer als referentienummer',
             'order_title'                 => 'Titel van de order',
             'order_status'                => 'Status van de order (leesbaar label)',
             'order_total'                 => 'Totaalbedrag van de order (order mail: geformatteerd)',

@@ -211,8 +211,9 @@ Variabelen worden automatisch ingevuld op basis van de gekoppelde entiteiten (le
 [[beschikbare-template-variabelen]]
 ===== Beschikbare Template Variabelen
 
-De onderstaande tabel bevat alle variabelen die in email templates gebruikt kunnen worden.
-Variabelen worden gecombineerd wanneer meerdere entiteiten beschikbaar zijn (bijv. een email vanuit een order heeft ook toegang tot lead- en persoon-variabelen).
+Variabelen zijn *context-afhankelijk*: een variabele is alleen beschikbaar als de bijbehorende entiteit aanwezig is in de template-aanroep.
+Templates voor een order hebben automatisch ook toegang tot lead- en sales lead-variabelen (via de gekoppelde SalesLead/Lead).
+Variabelen die leeg kunnen zijn, zijn gemarkeerd met _(kan leeg zijn)_.
 
 [NOTE]
 ====
@@ -220,169 +221,226 @@ Single source of truth: `EmailTemplateRenderingService::SUPPORTED_VARIABLES` in 
 Bij wijzigingen aan variabelen: pas de constant aan en werk deze tabel bij.
 ====
 
-[cols="1,1,3"]
-|===
-| Entity | Variabele | Omschrijving
+====== Auth-context
 
-| User
+Alleen beschikbaar in de wachtwoord-reset template. Niet beschikbaar in andere templates.
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
+| `{{ reset_url }}`
+| Gesigneerde URL voor wachtwoord-reset (forgot-password flow)
+|===
+
+====== User-context
+
+Beschikbaar wanneer een User is meegegeven (bijv. wachtwoord reset, systeemnotificaties).
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
 | `{{ user.first_name }}`
 | Voornaam van de gebruiker
 
-| User
 | `{{ user.last_name }}`
 | Achternaam van de gebruiker
 
-| User
 | `{{ user.email }}`
 | E-mailadres van de gebruiker
 
-| User
 | `{{ user.* }}`
-| Nested toegang tot alle User attributen
+| Nested toegang tot alle User-attributen
+|===
 
-| Lead
+====== Lead-context
+
+Beschikbaar wanneer een Lead is meegegeven. In order-context automatisch ook beschikbaar via de gekoppelde Lead.
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
 | `{{ lastname }}`
 | Achternaam: contactpersoon > eerste gekoppelde persoon > lead zelf
 
-| Lead
 | `{{ lead.* }}`
-| Nested toegang tot Lead attributen, bijv. `{{ lead.name }}`
+| Nested toegang tot Lead-attributen, bijv. `{{ lead.name }}`
+|===
 
-| Person
+====== Person-context
+
+Beschikbaar wanneer een Persoon is meegegeven.
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
 | `{{ lastname }}`
 | Achternaam van de persoon
 
-| Person
 | `{{ gvl_form_link }}`
-| Link naar het GVL formulier (indien anamnesis beschikbaar)
+| Link naar het GVL formulier. _(kan leeg zijn — alleen aanwezig als er een anamnese bestaat met een ingevulde form link)_
 
-| Person
 | `{{ gvl_deadline }}`
-| Deadline GVL formulier (1 week vanaf nu, dd-mm-jjjj)
+| Deadline GVL formulier (1 week vanaf nu, dd-mm-jjjj). _(kan leeg zijn — alleen aanwezig als `gvl_form_link` aanwezig is)_
 
-| Person
 | `{{ person.* }}`
-| Nested toegang tot Person attributen, bijv. `{{ person.last_name }}`
+| Nested toegang tot Person-attributen, bijv. `{{ person.last_name }}`
+|===
 
-| Sales Lead
+====== Sales Lead-context
+
+Beschikbaar wanneer een Sales Lead is meegegeven. In order-context automatisch ook beschikbaar.
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
 | `{{ lastname }}`
 | Achternaam: contactpersoon of eerste gekoppelde persoon
 
-| Sales Lead
 | `{{ sales_lead.* }}`
-| Nested toegang tot alle SalesLead attributen
+| Nested toegang tot alle SalesLead-attributen
+|===
 
-| Order
+====== Order-context
+
+Beschikbaar wanneer een Order is meegegeven. Levert automatisch ook lead- en sales lead-variabelen op.
+
+*Ordergegevens*
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
 | `{{ order_reference }}`
-| Order ID als referentienummer
+| Ordernummer als referentienummer
 
-| Order
 | `{{ order_title }}`
 | Titel van de order
 
-| Order
 | `{{ order_status }}`
-| Status van de order (leesbaar label)
+| Status van de order (leesbaar label van de pipeline-stage)
 
-| Order
 | `{{ order_total }}`
-| Totaalbedrag van de order
+| Totaalbedrag geformatteerd, bijv. "€ 1.250,00"
 
-| Order
 | `{{ customer_name }}`
-| Klantnaam (via contactpersoon of lead)
+| Naam van de klant of gekoppelde contactpersoon
 
-| Order
-| `{{ datum_afspraak }}`
-| Datum eerste afspraak (bijv. "15 januari 2025")
+| `{{ order_aanhef }}`
+| Zakelijk: organisatienaam; particulier: naam contactpersoon (1. contactpersoon sales, 2. eerste persoon). _(kan leeg zijn)_
 
-| Order
-| `{{ tijd_afspraak }}`
-| Tijdstip eerste afspraak (bijv. "14:00")
+| `{{ adviseur }}`
+| Naam van de toegewezen medewerker. Fallback: `[onbekende adviseur]`
 
-| Order
-| `{{ plaats_afspraak }}`
-| Locatie eerste afspraak (kliniek + adres)
-
-| Order
-| `{{ datum_bevestiging }}`
-| Bevestigingsdeadline (3 dagen voor afspraak)
-
-| Order
-| `{{ afspraken_tabel }}`
-| HTML tabel met alle afspraken gegroepeerd per persoon
-
-| Order
-| `{{ order_items_table }}`
-| HTML tabel met alle orderregels
-
-| Order
-| `{{ order.* }}`
-| Nested toegang tot Order attributen, bijv. `{{ order.id }}`
-
-| Order
-| `{{ order_reference }}`
-| Order ID als referentienummer
-
-| Order
-| `{{ order_title }}`
-| Titel van de order
-
-| Order
-| `{{ order_status }}`
-| Status van de order (leesbaar label)
-
-| Order
-| `{{ order_total }}`
-| Totaalbedrag van de order
-
-| Order
-| `{{ order_summary_table }}`
-| HTML tabel met orderregels, optioneel gefilterd op persoon
-
-| Order
-| `{{ appointments_by_person }}`
-| HTML overzicht van afspraken gegroepeerd per persoon
-
-| Order
-| `{{ customer_name }}`
-| Naam van de klant of gekoppelde persoon
-
-| Order
-| `{{ approval_instructions }}`
-| Standaard tekst met instructie voor akkoord geven
-
-| Order
-| `{{ company_signature }}`
-| Naam van de organisatie uit configuratie
-
-| Order
-| `{{ default_email }}`
-| Standaard e-mailadres gekoppeld aan de order
-
-| Order
 | `{{ current_date }}`
 | Huidige datum in formaat dd-mm-jjjj
 
-| Order
-| `{{ form_link }}`
-| Link naar formulier indien beschikbaar
+| `{{ approval_instructions }}`
+| Vaste akkoordtekst (reageer op deze e-mail of bel ons)
 
-| Order
-| `{{ form_link_section }}`
-| Complete HTML sectie met formulierlink indien aanwezig
+| `{{ company_signature }}`
+| App-naam als ondertekening (uit `config('app.name')`)
 
-| Order
-| `{{ order_aanhef }}`
-| Indien zakelijk order bedrijfsnaam en anders de aanhef van de persoon. Voor order met meerdere personen zal dit zijn: 1. Contact persoon van de sales. 2 Persoon met de hoogste match score op de oorspronkelijke lead. Fallback is leeg.
+| `{{ default_email }}`
+| Standaard e-mailadres van de contactpersoon. _(kan leeg zijn)_
 
-| Order
-| `{{ adviseur }}`
-| Indien de order een toegewezen medewerker heeft, dan wordt hier de naam van de adviseur getoond. Anders '[onbekende adviseur].
+| `{{ order.* }}`
+| Nested toegang tot alle Order-attributen, bijv. `{{ order.id }}`
+|===
 
-| Order
+*Eerste afspraak* _(leeg als geen ingeplande resource order items aanwezig zijn)_
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
+| `{{ datum_afspraak }}`
+| Datum eerste ingeplande afspraak, bijv. "15 januari 2025"
+
+| `{{ tijd_afspraak }}`
+| Tijdstip eerste afspraak, bijv. "14:00"
+
+| `{{ plaats_afspraak }}`
+| Locatie eerste afspraak: kliniek + adres
+
+| `{{ datum_bevestiging }}`
+| Bevestigingsdeadline: 3 dagen vóór de eerste afspraak
+
 | `{{ meldplek }}`
-| Sorteer de orderitem chronologisch op ingeplande start datum en zoek hierbij afdeling van de kliniek. Van deze afdeling wordt dit veld getoond: "Opmerking orderbevestiging". Fallback is leeg.
+| Veld "Opmerking orderbevestiging" van de afdeling van de eerst ingeplande afspraak (chronologisch op `from`). _(kan leeg zijn — vereist ingeplande resource order items waarbij de resource een afdeling heeft met dit veld ingevuld)_
+|===
+
+*GVL-formulier* _(leeg als geen anamnese met formulierlink aanwezig is)_
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
+| `{{ form_link }}`
+| GVL-formulierlink (HTML-escaped). _(kan leeg zijn)_
+
+| `{{ form_link_section }}`
+| Complete HTML-paragraaf met formulierlink en begeleidende tekst. _(kan leeg zijn — alleen aanwezig als `form_link` gevuld is)_
+|===
+
+*HTML-blokken* _(kant-en-klare HTML voor gebruik in de template body)_
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
+| `{{ order_summary_table }}`
+| Orderregels als HTML-tabel, gegroepeerd per persoon met naam + geboortedatum als header en subtotaal per persoon. Bron: `OrderMailService::renderItemsTable()`
+
+| `{{ order_items_table }}`
+| Orderregels als HTML-tabel via Blade-template (`adminc.email_templates.order.order_items_table`). Alternatief voor `order_summary_table` zonder persoon-groepering.
+
+| `{{ appointments_by_person }}`
+| Afspraken per persoon als gestylde HTML-blokken met datum, tijd, locatie en resource. Bron: `OrderMailService::renderAppointmentsByPerson()`
+
+| `{{ afspraken_tabel }}`
+| Afspraken per persoon als HTML-tabel. Alternatief voor `appointments_by_person`. Bron: `OrderRepository::renderAppointmentsTable()`
+|===
+
+*Adresgegevens* _(zakelijk: adres van organisatie; particulier: adres van persoon; leeg als geen adres beschikbaar)_
+
+[cols="1,3"]
+|===
+| Variabele | Omschrijving
+
+| `{{ address_street }}`
+| Straatnaam
+
+| `{{ address_house_number }}`
+| Huisnummer
+
+| `{{ address_house_number_suffix }}`
+| Toevoeging huisnummer
+
+| `{{ address_postal_code }}`
+| Postcode (geformatteerd: "1234 AB")
+
+| `{{ address_city }}`
+| Plaats
+
+| `{{ address_state }}`
+| Provincie
+
+| `{{ address_country }}`
+| Land
+
+| `{{ address_line1 }}`
+| Eerste adresregel: straat + huisnummer (+ toevoeging)
+
+| `{{ address_line2 }}`
+| Tweede adresregel: postcode + plaats
+
+| `{{ address_full }}`
+| Volledig adres als HTML-blokregels (`<span style="display:block;">` per regel)
 |===
 
 ==== Belangrijke Noot

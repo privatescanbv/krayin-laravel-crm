@@ -418,6 +418,7 @@ class Order extends Model
         if ($this->is_business) {
             return $this->organization?->name ?? '[Organisatie heeft geen naam]';
         }
+
         return $this->salesLead?->getContactPersonOrFirstPerson()?->name ?? '';
     }
 }

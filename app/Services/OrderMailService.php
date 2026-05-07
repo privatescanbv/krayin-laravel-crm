@@ -7,8 +7,10 @@ use App\Helpers\ValueNormalizer;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
+use App\Models\ResourceOrderItem;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
@@ -150,24 +152,28 @@ class OrderMailService
 
         if (! empty($formLink)) {
             $safeLink = e($formLink);
-            $formLinkSection = '<p>Om uw order te kunnen verwerken, verzoeken wij u vriendelijk om <a href="'.$safeLink.'" style="color: #007bff; text-decoration: underline;">graag dit GVL formulier in te vullen</a>.</p>';
+            $formLinkSection = '<p>Om uw order te kunnen verwerken, verzoeken wij u vriendelijk om <a href="'.$safeLink.'" style="text-decoration: underline;">graag dit GVL formulier in te vullen</a>.</p>';
         }
 
         $order->load([
             'orderItems.resourceOrderItems.resource.clinic.address',
             'orderItems.resourceOrderItems.resource.resourceType',
+            'orderItems.resourceOrderItem.resource.clinicDepartment',
             'orderItems.person',
             'orderItems.product',
             'organization.address',
             'salesLead.lead.organization.address',
             'salesLead.contactPerson.address',
+            'user',
         ]);
 
         $personId = $person?->id;
 
         return array_merge([
             'order_aanhef'           => $order->resolveAttentionName(),
-            'order_reference'        => (string) $order->order_number,
+            'adviseur'               => $order->user?->name ?? '[onbekende adviseur]',
+            'meldplek'               => $this->resolveMeldplek($order),
+            'order_reference'        => $order->order_number,
             'order_title'            => e($order->title ?? ''),
             'order_status'           => e($order->status?->label() ?? ''),
             'order_total'            => $this->formatCurrency($order->total_price),
@@ -249,11 +255,7 @@ class OrderMailService
 
     protected function renderItemsTable(Order $order, ?int $filterPersonId = null): string
     {
-        $items = $order->orderItems ?: collect();
-
-        if (! $items instanceof Collection) {
-            $items = collect($items);
-        }
+        $items = collect($order->orderItems);
 
         if ($filterPersonId !== null) {
             $items = $items->where('person_id', $filterPersonId)->values();
@@ -263,45 +265,16 @@ class OrderMailService
             return '<p>Er zijn nog geen orderregels toegevoegd.</p>';
         }
 
-        $rows = '';
-
-        foreach ($items as $item) {
-            $productName = e($item->getProductDescription() ?? 'Onbekend product');
-            $quantity = (int) ($item->quantity ?? 0);
-            $price = $this->formatCurrency($item->total_price ?? 0);
-
-            $rows .= '<tr>'
-                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.$productName.'</td>'
-                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">'.$quantity.'</td>'
-                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">'.$price.'</td>';
-            $rows .= '</tr>';
+        $html = '';
+        foreach ($items->groupBy('person_id') as $personItems) {
+            $person = $personItems->first()->person;
+            $html .= '<div style="margin-bottom:24px;">'
+                .$this->renderPersonHeader($person)
+                .$this->renderPersonItemsTable($personItems->values())
+                .'</div>';
         }
 
-        $totalPrice = $filterPersonId !== null
-            ? $this->formatCurrency($items->sum('total_price'))
-            : $this->formatCurrency($order->total_price ?? 0);
-
-        $colspanTotal = 2;
-
-        $rows .= '<tr>'
-            .'<td colspan="'.$colspanTotal.'" style="padding:8px; text-align:right; font-weight:600;">Totaal</td>'
-            .'<td style="padding:8px; text-align:right; font-weight:600;">'.$totalPrice.'</td>';
-        $rows .= '</tr>';
-
-        return <<<HTML
-<table style="width:100%; border-collapse:collapse; margin:16px 0;">
-    <thead>
-        <tr>
-            <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Product</th>
-            <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;">Aantal</th>
-            <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;">Prijs</th>
-        </tr>
-    </thead>
-    <tbody>
-        {$rows}
-    </tbody>
-</table>
-HTML;
+        return $html;
     }
 
     protected function renderAppointmentsByPerson(Order $order, ?int $filterPersonId = null): string
@@ -508,6 +481,95 @@ HTML;
         }
 
         return $person;
+    }
+
+    private function resolveMeldplek(Order $order): string
+    {
+        $orderItemIds = collect($order->orderItems)->pluck('id')->filter()->all();
+
+        if (empty($orderItemIds)) {
+            return '';
+        }
+
+        $roi = ResourceOrderItem::whereIn('orderitem_id', $orderItemIds)
+            ->whereNotNull('from')
+            ->with('resource.clinicDepartment')
+            ->orderBy('from')
+            ->first();
+
+        if (! $roi) {
+            Log::warning('resolveMeldplek: no planned resource order items', ['order_id' => $order->id]);
+
+            return '';
+        }
+
+        if (! $roi->resource?->clinic_department_id) {
+            Log::warning('resolveMeldplek: resource has no clinic_department_id', [
+                'order_id'    => $order->id,
+                'resource_id' => $roi->resource?->id,
+            ]);
+
+            return '';
+        }
+
+        return $roi->resource->clinicDepartment?->order_confirmation_note ?? '';
+    }
+
+    private function renderPersonHeader(?Person $person): string
+    {
+        if (! $person) {
+            return '';
+        }
+
+        $label = e($person->namePatient);
+        if ($person->date_of_birth) {
+            $label .= '. '.$person->date_of_birth->format('d-m-Y');
+        }
+
+        return '<p>'.$label.'</p>';
+    }
+
+    private function renderPersonItemsTable(Collection $items): string
+    {
+        $rows = '';
+        foreach ($items as $item) {
+            $productName = e($item->getProductDescription() ?? 'Onbekend product');
+            $quantity = (int) ($item->quantity ?? 0);
+            if ($item->total_price == 0) {
+                // wish of privatescan, empty vs price 0.0
+                $price = '';
+            } else {
+                $price = $this->formatCurrency($item->total_price ?? 0);
+            }
+
+            $rows .= '<tr>'
+                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.$productName.'</td>'
+                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">'.$quantity.'</td>'
+                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">'.$price.'</td>'
+                .'</tr>';
+        }
+
+        $totalPrice = $this->formatCurrency($items->sum('total_price'));
+
+        $rows .= '<tr>'
+            .'<td colspan="2" style="padding:8px; text-align:right; font-weight:600;">Totaal</td>'
+            .'<td style="padding:8px; text-align:right; font-weight:600;">'.$totalPrice.'</td>'
+            .'</tr>';
+
+        return <<<HTML
+<table style="width:100%; border-collapse:collapse; margin:0;">
+    <thead>
+        <tr>
+            <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Product</th>
+            <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;">Aantal</th>
+            <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;">Prijs</th>
+        </tr>
+    </thead>
+    <tbody>
+        {$rows}
+    </tbody>
+</table>
+HTML;
     }
 
     private function formatPostalCodeForDisplay(string $postalCode): string

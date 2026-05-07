@@ -401,7 +401,7 @@ class Person extends Model implements PersonContract
     }
 
     /**
-     * Get the full name attribute.
+     * Get the full name attribute. use as name presentation within CRM for employee
      */
     public function getNameAttribute($value): string
     {
@@ -415,6 +415,27 @@ class Person extends Model implements PersonContract
         if (! $this->is_active) {
             $parts[] = '[Inactief]';
         }
+
+        return implode(' ', array_filter($parts));
+    }
+
+    /**
+     * Patient-facing salutation: "Geachte Dhr. F. van Delft"
+     * Format: Geachte {salutation} {first initial}. {full last name}
+     */
+    public function getNamePatientAttribute(): string
+    {
+        $parts = [];
+
+        if ($this->salutation) {
+            $parts[] = $this->salutation->value;
+        }
+
+        if ($this->initials) {
+            $parts[] = $this->initials;
+        }
+
+        $parts = array_merge($parts, $this->getFullLastNameParts());
 
         return implode(' ', array_filter($parts));
     }

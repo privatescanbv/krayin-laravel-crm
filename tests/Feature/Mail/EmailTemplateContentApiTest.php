@@ -5,8 +5,13 @@ use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use App\Models\Address;
 use App\Models\Anamnesis;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Resource;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
+use App\Models\User as AppUser;
 use App\Services\OrderMailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Organization;
@@ -391,6 +396,27 @@ test('it merges acknowledge-order-mail variables from OrderMailService for order
         ->and($content)->not->toContain('{{ approval_instructions }}');
 });
 
+test('acknowledge order mail resolves adviseur from order assigned user', function () {
+    $advisor = AppUser::factory()->create([
+        'first_name' => 'Jan',
+        'last_name'  => 'Adviseur',
+    ]);
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create([
+        'contact_person_id' => $person->id,
+    ]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'user_id'       => $advisor->id,
+    ]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['adviseur'])->toBe('Jan Adviseur');
+});
+
 test('address variables resolve to particulier contactpersoon address', function () {
     $address = Address::factory()->create([
         'street'              => 'Dorpsstraat',
@@ -534,6 +560,85 @@ test('address variables resolve to organisation address for zakelijk order', fun
         ->toContain('Bedrijvenlaan 99')
         ->toContain('9012 EF Rotterdam')
         ->toContain('Zuid-Holland');
+});
+
+test('meldplek resolves order_confirmation_note from earliest scheduled clinic department', function () {
+    $dept = ClinicDepartment::factory()->create([
+        'order_confirmation_note' => 'Meld u aan bij de balie met uw verwijsbrief.',
+    ]);
+    $resource = Resource::factory()->create(['clinic_department_id' => $dept->id]);
+
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $item->id,
+        'resource_id'  => $resource->id,
+        'from'         => now()->addDays(3),
+    ]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['meldplek'])->toBe('Meld u aan bij de balie met uw verwijsbrief.');
+});
+
+test('meldplek picks earliest appointment when multiple order items exist', function () {
+    $deptEarly = ClinicDepartment::factory()->create(['order_confirmation_note' => 'Vroegste locatie.']);
+    $deptLate = ClinicDepartment::factory()->create(['order_confirmation_note' => 'Late locatie.']);
+
+    $resourceEarly = Resource::factory()->create(['clinic_department_id' => $deptEarly->id]);
+    $resourceLate = Resource::factory()->create(['clinic_department_id' => $deptLate->id]);
+
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+
+    $itemEarly = OrderItem::factory()->create(['order_id' => $order->id]);
+    $itemLate = OrderItem::factory()->create(['order_id' => $order->id]);
+
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $itemEarly->id,
+        'resource_id'  => $resourceEarly->id,
+        'from'         => now()->addDays(1),
+    ]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $itemLate->id,
+        'resource_id'  => $resourceLate->id,
+        'from'         => now()->addDays(5),
+    ]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['meldplek'])->toBe('Vroegste locatie.');
+});
+
+test('meldplek is empty string when no resource order items exist', function () {
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+    OrderItem::factory()->create(['order_id' => $order->id]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['meldplek'])->toBe('');
+});
+
+test('meldplek is empty string when clinic department has no order_confirmation_note', function () {
+    $dept = ClinicDepartment::factory()->create(['order_confirmation_note' => null]);
+    $resource = Resource::factory()->create(['clinic_department_id' => $dept->id]);
+
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $item->id,
+        'resource_id'  => $resource->id,
+        'from'         => now()->addDays(2),
+    ]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['meldplek'])->toBe('');
 });
 
 test('address variables are empty strings when no address is set', function () {

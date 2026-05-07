@@ -91,3 +91,51 @@ test('person full_last_name: married name with all parts', function () {
 
     expect($person->full_last_name)->toBe('opt Nijhuis - van Jansen');
 });
+
+test('name_patient: Dhr. with initial and lastname prefix', function () {
+    $person = Person::factory()->create([
+        'salutation'      => 'Dhr.',
+        'first_name'      => 'Frank',
+        'initials'        => 'F.B.',
+        'lastname_prefix' => 'van',
+        'last_name'       => 'Delft',
+        'is_active'       => true,
+    ]);
+
+    expect($person->name_patient)->toBe('Dhr. F.B. van Delft');
+});
+
+test('name_patient: Mevr. without lastname prefix', function () {
+    $person = Person::factory()->create([
+        'salutation' => 'Mevr.',
+        'first_name' => 'Anna',
+        'initials'   => 'A.A.',
+        'last_name'  => 'Jansen',
+        'is_active'  => true,
+    ]);
+
+    expect($person->name_patient)->toBe('Mevr. A.A. Jansen');
+});
+
+test('name_patient: no salutation falls back gracefully', function () {
+    $person = Person::factory()->create([
+        'salutation' => null,
+        'first_name' => 'Jan',
+        'initials'   => 'J.B.',
+        'last_name'  => 'Bakker',
+        'is_active'  => true,
+    ]);
+
+    expect($person->name_patient)->toBe('J.B. Bakker');
+});
+
+test('name_patient: no first name omits initial', function () {
+    $person = Person::factory()->create([
+        'salutation' => 'Dhr.',
+        'first_name' => null,
+        'last_name'  => 'Smit',
+        'is_active'  => true,
+    ]);
+
+    expect($person->name_patient)->toBe('Dhr. Smit');
+});

@@ -40,7 +40,7 @@ test('resolveAttentionName returns contact person name for non-business order', 
         'is_business'   => false,
     ]);
 
-    expect($order->resolveAttentionName())->toBe($person->name);
+    expect($order->resolveAttentionName())->toBe($person->namePatient);
 });
 
 test('resolveAttentionName returns empty string when non-business order has no persons', function () {

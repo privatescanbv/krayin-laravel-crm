@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
@@ -207,9 +208,15 @@ class OrderItem extends Model
             ->where('type', PurchasePriceType::INVOICE);
     }
 
+    /** @deprecated use resourceOrderItem() */
     public function resourceOrderItems(): HasMany
     {
         return $this->hasMany(ResourceOrderItem::class, 'orderitem_id');
+    }
+
+    public function resourceOrderItem(): HasOne
+    {
+        return $this->hasOne(ResourceOrderItem::class, 'orderitem_id');
     }
 
     public function scopeWithPartnerProductCount(Builder $query): Builder
@@ -233,20 +240,47 @@ class OrderItem extends Model
             return $this->name;
         }
 
-        return $this->product?->name ?? '';
+        return $this->retrievePartnerProductOrProductOrError()?->name ?? '';
     }
 
+    /**
+     * 1. description order item
+     * 2. description partner product
+     * 3. description product (designed as template for partner product)
+     *
+     * @return string product description for patient
+     */
     public function getProductDescription(): string
     {
         if (! empty($this->description)) {
+            // override
             return $this->description;
         }
 
-        return $this->product?->ndescriptioname ?? '';
+        return $this->retrievePartnerProductOrProductOrError()?->description ?? '';
     }
 
     public function getCanPlanAttribute(): string
     {
         return $this->isPlannable();
+    }
+
+    private function retrievePartnerProductOrProductOrError(): PartnerProduct|Product|null
+    {
+        $product = $this->product;
+
+        $resourceOrderItem = $this->resourceOrderItem()->with('resource')->first();
+        if (! is_null($resourceOrderItem)) {
+            // order item has been planned
+            $clinicId = $resourceOrderItem->resource?->clinic_id;
+            $partnerProduct = PartnerProduct::forClinicAndProduct($clinicId, $product->id)->first();
+            if (! is_null($partnerProduct)) {
+                return $partnerProduct;
+            } else {
+                Log::error('Partner product not found for clinic '.$clinicId.', fallback on product '.$product->id.'. For orderitem with id='.$this->id);
+            }
+        }
+
+        return $this->product ?? null;
     }
 }

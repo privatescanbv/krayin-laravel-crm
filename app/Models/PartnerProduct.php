@@ -7,6 +7,7 @@ use App\Enums\PurchasePriceType;
 use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Abstracts\BaseProduct;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -150,6 +151,13 @@ class PartnerProduct extends BaseProduct
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function scopeForClinicAndProduct(Builder $query, int $clinicId, int $productId): Builder
+    {
+        return $query
+            ->where('product_id', $productId)
+            ->whereHas('clinics', fn (Builder $query) => $query->where('clinics.id', $clinicId));
     }
 
     public function getReportingOptions(): array

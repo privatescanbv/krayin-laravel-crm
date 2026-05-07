@@ -31,6 +31,9 @@
                                 Omschrijving
                             </th>
                             <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                Opmerking orderbevestiging
+                            </th>
+                            <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Acties
                             </th>
                         </tr>
@@ -46,6 +49,9 @@
                                 </td>
                                 <td class="p-2 dark:text-white">
                                     {{ $department->description ?? '-' }}
+                                </td>
+                                <td class="p-2 dark:text-white">
+                                    {{ $department->order_confirmation_note ?? '-' }}
                                 </td>
                                 <td class="p-2">
                                     <div class="flex gap-2">

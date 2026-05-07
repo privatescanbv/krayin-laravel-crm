@@ -344,6 +344,10 @@
                             if (this.leadDetailSection === 'betalingen' && window.initOrderPaymentsTab) {
                                 this.$nextTick(() => window.initOrderPaymentsTab({{ $order->id }}));
                             }
+
+                            if (this.leadDetailSection === 'afletteren' && window.initAfleterenTab) {
+                                this.$nextTick(() => window.initAfleterenTab({{ $order->id }}));
+                            }
                         },
 
                         methods: {
@@ -353,6 +357,10 @@
 
                                 if (section === 'betalingen' && window.initOrderPaymentsTab) {
                                     this.$nextTick(() => window.initOrderPaymentsTab({{ $order->id }}));
+                                }
+
+                                if (section === 'afletteren' && window.initAfleterenTab) {
+                                    this.$nextTick(() => window.initAfleterenTab({{ $order->id }}));
                                 }
                             }
                         }

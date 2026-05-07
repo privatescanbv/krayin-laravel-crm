@@ -12,7 +12,7 @@ class ClinicDepartment extends Model
 
     protected $table = 'clinic_departments';
 
-    protected $fillable = ['clinic_id', 'name', 'description', 'email'];
+    protected $fillable = ['clinic_id', 'name', 'description', 'email', 'order_confirmation_note'];
 
     public function clinic(): BelongsTo
     {

@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Enums\AppointmentTimeFilter;
 use App\Models\Department;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -212,7 +214,7 @@ class OrderRepository extends Repository
     private function prepareAppointmentsByPerson(Order $order, ?int $filterPersonId = null): array
     {
         $appointmentsByPerson = [];
-        $items = $order->orderItems ?? collect();
+        $items = $order->orderItems;
 
         foreach ($items as $item) {
             if ($filterPersonId !== null && $item->person_id !== $filterPersonId) {
@@ -229,34 +231,40 @@ class OrderRepository extends Repository
                 ];
             }
 
-            $resourceOrderItems = $item->resourceOrderItems ?? collect();
+            $resourceOrderItems = $item->resourceOrderItems;
 
             foreach ($resourceOrderItems as $resourceOrderItem) {
-                if (! $resourceOrderItem->from) {
-                    continue;
-                }
-
-                // Ensure resource is loaded (should be eager loaded, but check anyway)
-                if (! $resourceOrderItem->relationLoaded('resource')) {
-                    $resourceOrderItem->load('resource.clinic.address');
-                }
-
-                $address = $resourceOrderItem->resource?->clinic?->address;
-
-                $appointmentsByPerson[$personId]['appointments'][] = [
-                    'product_name'        => $item->getProductName() ?? 'Onbekend product',
-                    'product_description' => $item->getProductDescription() ?? 'Onbekend product',
-                    'date'                => $this->formatDutchDate($resourceOrderItem->from),
-                    'time_from'           => Carbon::parse($resourceOrderItem->from)->format('H:i'),
-                    'time_to'             => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,
-                    'clinic_name'         => $resourceOrderItem->resource?->clinic?->name ?? 'Onbekend',
-                    'address'             => $address ? $address->formatAddress() : '',
-                    'resource_name'       => $resourceOrderItem->resource?->name ?? 'Onbekend',
-                ];
+                $this->prepareAppointmentForResourceOrderItem($order, $appointmentsByPerson, $personId, $item, $resourceOrderItem);
             }
         }
 
         return $appointmentsByPerson;
+    }
+
+    private function prepareAppointmentForResourceOrderItem(
+        Order $order,
+        array &$appointmentsByPerson,
+        $personId,
+        OrderItem $item,
+        ResourceOrderItem $resourceOrderItem
+    ): void {
+        if (! $resourceOrderItem->from) {
+            return;
+        }
+
+        $resourceOrderItem->loadMissing('resource.clinic.address');
+
+        $address = $resourceOrderItem->resource?->clinic?->address;
+        $appointmentsByPerson[$personId]['appointments'][] = [
+            'product_name'        => $item->getProductName() ?? 'Onbekend product',
+            'product_description' => $item->getProductDescription() ?? 'Onbekend product',
+            'date'                => $this->formatDutchDate($resourceOrderItem->from),
+            'time_from'           => Carbon::parse($resourceOrderItem->from)->format('H:i'),
+            'time_to'             => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,
+            'clinic_name'         => $resourceOrderItem->resource?->clinic?->name ?? 'Onbekend',
+            'address'             => $address ? $address->formatAddress() : '',
+            'resource_name'       => $resourceOrderItem->resource?->name ?? 'Onbekend',
+        ];
     }
 
     /**

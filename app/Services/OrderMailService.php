@@ -166,6 +166,7 @@ class OrderMailService
         $personId = $person?->id;
 
         return array_merge([
+            'order_aanhef'           => $order->resolveAttentionName(),
             'order_reference'        => (string) $order->order_number,
             'order_title'            => e($order->title ?? ''),
             'order_status'           => e($order->status?->label() ?? ''),
@@ -263,10 +264,9 @@ class OrderMailService
         }
 
         $rows = '';
-        $showPersonColumn = $filterPersonId === null;
 
         foreach ($items as $item) {
-            $productName = e($item->product->name ?? 'Onbekend product');
+            $productName = e($item->getProductDescription() ?? 'Onbekend product');
             $quantity = (int) ($item->quantity ?? 0);
             $price = $this->formatCurrency($item->total_price ?? 0);
 
@@ -274,11 +274,6 @@ class OrderMailService
                 .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.$productName.'</td>'
                 .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">'.$quantity.'</td>'
                 .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">'.$price.'</td>';
-
-            if ($showPersonColumn) {
-                $rows .= '<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.e($item->person->name ?? '-').'</td>';
-            }
-
             $rows .= '</tr>';
         }
 
@@ -286,21 +281,12 @@ class OrderMailService
             ? $this->formatCurrency($items->sum('total_price'))
             : $this->formatCurrency($order->total_price ?? 0);
 
-        $colspanTotal = $showPersonColumn ? 2 : 2;
+        $colspanTotal = 2;
 
         $rows .= '<tr>'
             .'<td colspan="'.$colspanTotal.'" style="padding:8px; text-align:right; font-weight:600;">Totaal</td>'
             .'<td style="padding:8px; text-align:right; font-weight:600;">'.$totalPrice.'</td>';
-
-        if ($showPersonColumn) {
-            $rows .= '<td></td>';
-        }
-
         $rows .= '</tr>';
-
-        $personHeader = $showPersonColumn
-            ? '<th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Voor</th>'
-            : '';
 
         return <<<HTML
 <table style="width:100%; border-collapse:collapse; margin:16px 0;">
@@ -309,7 +295,6 @@ class OrderMailService
             <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Product</th>
             <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;">Aantal</th>
             <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;">Prijs</th>
-            {$personHeader}
         </tr>
     </thead>
     <tbody>

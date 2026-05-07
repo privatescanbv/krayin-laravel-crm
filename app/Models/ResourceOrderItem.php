@@ -52,6 +52,11 @@ class ResourceOrderItem extends Model
         return $query->whereDate('from', $date->toDateString());
     }
 
+    public function scopeOnOrderItemId(Builder $query, string $orderItemId): Builder
+    {
+        return $query->whereDate('orderitem_id', $orderItemId);
+    }
+
     public function scopeForAfbDispatch(Builder $query): Builder
     {
         return $query

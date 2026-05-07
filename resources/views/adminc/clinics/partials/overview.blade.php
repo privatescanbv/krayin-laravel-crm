@@ -6,11 +6,41 @@
 
         <div class="flex flex-col gap-3">
             <div class="grid grid-cols-[200px_1fr] gap-2">
+                <span class="font-medium text-gray-600 dark:text-gray-400">Status:</span>
+                <span>
+                    @if ($clinic->is_active)
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">Actief</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-200">Inactief</span>
+                    @endif
+                </span>
+            </div>
+
+            <div class="grid grid-cols-[200px_1fr] gap-2">
                 <span class="font-medium text-gray-600 dark:text-gray-400">
                     @lang('admin::app.settings.clinics.view.overview.name'):
                 </span>
                 <span class="dark:text-white">{{ $clinic->name }}</span>
             </div>
+
+            @if (!empty($clinic->registration_form_clinic_name))
+                <div class="grid grid-cols-[200px_1fr] gap-2">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">AFB naam kliniek:</span>
+                    <span class="dark:text-white">{{ $clinic->registration_form_clinic_name }}</span>
+                </div>
+            @endif
+
+            @if (!empty($clinic->website_url))
+                <div class="grid grid-cols-[200px_1fr] gap-2">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Website:</span>
+                    <span>
+                        <a href="{{ $clinic->website_url }}" target="_blank" rel="noopener"
+                           class="text-activity-note-text hover:text-activity-task-text dark:text-blue-400">
+                            {{ $clinic->website_url }}
+                        </a>
+                    </span>
+                </div>
+            @endif
 
             @if (!empty($clinic->external_id))
                 <div class="grid grid-cols-[200px_1fr] gap-2">

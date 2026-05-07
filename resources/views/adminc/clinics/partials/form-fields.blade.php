@@ -48,15 +48,6 @@
         placeholder="https://www.voorbeeld.nl"
     />
 
-    <x-adminc::components.field
-        type="textarea"
-        name="order_confirmation_note"
-        value="{{ old('order_confirmation_note', $clinic->order_confirmation_note ?? '') }}"
-        rules="max:1000"
-        label="Opmerking orderbevestiging"
-        placeholder="Informatie waar patiënt zich kan melden"
-    />
-
     <!-- Emails -->
     @php
         $__emailsVal = old('emails', $clinic->emails ?? []);

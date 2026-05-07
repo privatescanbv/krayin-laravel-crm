@@ -301,15 +301,20 @@
         return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var orderId = {{ $order->id }};
-        var container = document.getElementById('afletteren-tab-' + orderId);
-        if (!container) return;
+    window.initAfleterenTab = window.initAfleterenTab || function (orderId) {
+        var containerId = 'afletteren-tab-' + orderId;
+        var container = document.getElementById(containerId);
+
+        window.__afleterenTabInit = window.__afleterenTabInit || {};
+        if (!container || window.__afleterenTabInit[containerId]) return;
+        window.__afleterenTabInit[containerId] = true;
 
         var formWrapper = document.getElementById('afletteren-form-' + orderId);
         var errorEl    = document.getElementById('afletteren-form-error-' + orderId);
         var saveBtn    = document.getElementById('afletteren-save-' + orderId);
         var cancelBtn  = document.getElementById('afletteren-cancel-' + orderId);
+
+        if (!formWrapper || !saveBtn || !cancelBtn) return;
 
         var editingItemId = null;
 
@@ -387,7 +392,7 @@
                 saveBtn.textContent = 'Opslaan';
             });
         });
-    });
+    };
 })();
 </script>
 @endPushOnce

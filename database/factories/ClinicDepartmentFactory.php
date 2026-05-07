@@ -15,9 +15,10 @@ class ClinicDepartmentFactory extends Factory
         $clinic = Clinic::query()->inRandomOrder()->first() ?? Clinic::factory()->create();
 
         return [
-            'clinic_id' => $clinic->id,
-            'name'      => $this->faker->unique()->word(),
-            'email'     => $this->faker->unique()->safeEmail(),
+            'clinic_id'               => $clinic->id,
+            'name'                    => $this->faker->unique()->word(),
+            'email'                   => $this->faker->unique()->safeEmail(),
+            'order_confirmation_note' => $this->faker->optional()->sentence(),
         ];
     }
 }

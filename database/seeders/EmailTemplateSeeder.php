@@ -315,7 +315,7 @@ HTML,
                 'departments' => $allDepartments,
                 'subject'     => 'Orderbevestiging TB zonder bloed NL',
                 'content'     => <<<'HTML'
-<p>{{ person.salutation }} {{ person.initials }} {{ person.last_name }}<br>{{ address_full }}</p>
+<p>{{ order_aanhef }}<br>{{ address_full }}</p>
 <p>&nbsp;</p>
 <p style="text-align: right;">Hengelo, {{ current_date }}</p>
 <p style="text-align: left;">&nbsp;</p>

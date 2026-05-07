@@ -409,4 +409,15 @@ class Order extends Model
 
         return $person?->address ?? null;
     }
+
+    /**
+     * @return string attention name
+     */
+    public function resolveAttentionName(): string
+    {
+        if ($this->is_business) {
+            return $this->organization?->name ?? '[Organisatie heeft geen naam]';
+        }
+        return $this->salesLead?->getContactPersonOrFirstPerson()?->name ?? '';
+    }
 }

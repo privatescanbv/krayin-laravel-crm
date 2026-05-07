@@ -84,6 +84,31 @@ class OrderItemController extends SimpleEntityController
         return response()->json($totals);
     }
 
+    public function updateInvoicePrice(Request $request, int $id): JsonResponse
+    {
+        $item = OrderItem::findOrFail($id);
+
+        $suffixes = PurchasePrice::priceSuffixes();
+        $rules = [];
+        foreach ($suffixes as $suffix) {
+            $rules['purchase_price_'.$suffix] = ['nullable', 'numeric', 'min:0'];
+        }
+        $request->validate($rules);
+
+        $data = ['type' => PurchasePriceType::INVOICE];
+        $total = 0.0;
+        foreach ($suffixes as $suffix) {
+            $value = floatval($request->input('purchase_price_'.$suffix, 0));
+            $data['purchase_price_'.$suffix] = $value;
+            $total += $value;
+        }
+        $data['purchase_price'] = $total;
+
+        $item->invoicePurchasePrice()->updateOrCreate(['type' => PurchasePriceType::INVOICE], $data);
+
+        return response()->json(['message' => 'Invoice prijs opgeslagen.']);
+    }
+
     protected function validateStore(Request $request): void
     {
         $suffixes = PurchasePrice::priceSuffixes();
@@ -161,31 +186,6 @@ class OrderItemController extends SimpleEntityController
         }
         $data['purchase_price'] = $total;
         $entity->invoicePurchasePrice()->updateOrCreate(['type' => PurchasePriceType::INVOICE], $data);
-    }
-
-    public function updateInvoicePrice(Request $request, int $id): JsonResponse
-    {
-        $item = OrderItem::findOrFail($id);
-
-        $suffixes = PurchasePrice::priceSuffixes();
-        $rules = [];
-        foreach ($suffixes as $suffix) {
-            $rules['purchase_price_'.$suffix] = ['nullable', 'numeric', 'min:0'];
-        }
-        $request->validate($rules);
-
-        $data = ['type' => PurchasePriceType::INVOICE];
-        $total = 0.0;
-        foreach ($suffixes as $suffix) {
-            $value = floatval($request->input('purchase_price_'.$suffix, 0));
-            $data['purchase_price_'.$suffix] = $value;
-            $total += $value;
-        }
-        $data['purchase_price'] = $total;
-
-        $item->invoicePurchasePrice()->updateOrCreate(['type' => PurchasePriceType::INVOICE], $data);
-
-        return response()->json(['message' => 'Invoice prijs opgeslagen.']);
     }
 
     protected function getCreateSuccessMessage(): string

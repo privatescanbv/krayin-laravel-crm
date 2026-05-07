@@ -76,6 +76,18 @@
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="order_confirmation_note">
+                        Opmerking orderbevestiging
+                    </label>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Informatie over waar de patiënt zich kan melden bij deze afdeling.</p>
+                    <textarea id="order_confirmation_note" name="order_confirmation_note" rows="4"
+                        class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm">{{ old('order_confirmation_note', $clinic_department->order_confirmation_note) }}</textarea>
+                    @error('order_confirmation_note')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         </div>
     </x-admin::form>

@@ -27,7 +27,6 @@ class Clinic extends Model
         'description',
         'registration_form_clinic_name',
         'website_url',
-        'order_confirmation_note',
         'emails',
         'phones',
         'visit_address_id',

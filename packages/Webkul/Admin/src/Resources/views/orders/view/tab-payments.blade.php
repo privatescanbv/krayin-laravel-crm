@@ -276,13 +276,7 @@
         var containerId = 'order-payments-' + orderId;
         var container = document.getElementById(containerId);
 
-        window.__orderPaymentsInit = window.__orderPaymentsInit || {};
-
-        if (!container || window.__orderPaymentsInit[containerId]) {
-            return;
-        }
-
-        window.__orderPaymentsInit[containerId] = true;
+        if (!container) return;
 
         var today = '{{ $today }}';
 

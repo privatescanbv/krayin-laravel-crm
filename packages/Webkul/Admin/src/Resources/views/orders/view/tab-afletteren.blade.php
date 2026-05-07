@@ -305,9 +305,7 @@
         var containerId = 'afletteren-tab-' + orderId;
         var container = document.getElementById(containerId);
 
-        window.__afleterenTabInit = window.__afleterenTabInit || {};
-        if (!container || window.__afleterenTabInit[containerId]) return;
-        window.__afleterenTabInit[containerId] = true;
+        if (!container) return;
 
         var formWrapper = document.getElementById('afletteren-form-' + orderId);
         var errorEl    = document.getElementById('afletteren-form-error-' + orderId);

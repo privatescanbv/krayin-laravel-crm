@@ -162,7 +162,7 @@
 
                                 {{-- Onderzoeksdatum --}}
                                 <td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                                    {{ $order->first_examination_at?->format('d-m-Y') ?? '—' }}
+                                    {{ $order->firstExaminationCarbon()?->format('d-m-Y') ?? '—' }}
                                 </td>
 
                                 {{-- === Editable: Bedrag === --}}

@@ -110,7 +110,7 @@ class AfbDocumentGenerator
         Collection $examinations
     ): array {
         $address = $person?->address;
-        $earliestScheduledStart = $order->earliestScheduledResourceSlotStart();
+        $earliest = $order->firstExaminationCarbon();
 
         return [
             'header' => [
@@ -148,10 +148,9 @@ class AfbDocumentGenerator
                 'remark'              => $this->emptyToNull($anamnesis?->remarks),
             ],
             'examinations'              => $examinations->values()->all(),
-            'first_examination_start'   => $earliestScheduledStart?->format('H:i')
-                ?: ($order->first_examination_at?->format('H:i') ?: '-'),
-            'clinic_anamnesis' => $this->emptyToNull($anamnesis?->comment_clinic),
-            'extra_info'       => $this->emptyToNull($anamnesis?->description),
+            'first_examination_start'   => $earliest?->format('H:i') ?: '-',
+            'clinic_anamnesis'          => $this->emptyToNull($anamnesis?->comment_clinic),
+            'extra_info'                => $this->emptyToNull($anamnesis?->description),
         ];
     }
 
@@ -174,14 +173,14 @@ class AfbDocumentGenerator
                     ->map(function (ResourceOrderItem $resourceOrderItem) use ($item) {
                         $start = $resourceOrderItem->from
                             ? Carbon::parse($resourceOrderItem->from)
-                            : Carbon::parse($item->order?->first_examination_at ?? now());
+                            : ($item->order?->firstExaminationCarbon() ?? now());
 
                         $clinicId = $resourceOrderItem->resource?->clinicDepartment?->clinic_id;
 
                         return [
                             'start_at'                      => $start,
                             'date'                          => $start->format('d-m-Y'),
-                            'appointment_time'              => $item->order?->first_examination_at?->format('H:i') ?: $start->format('H:i'),
+                            'appointment_time'              => $item->order?->first_examination_time ?: $start->format('H:i'),
                             'start_time'                    => $start->format('H:i'),
                             'clinic_product_description'    => $this->emptyToNull($item->afb_description)
                                 ?: ($clinicId ? $this->resolveClinicDescription($item->product?->partnerProducts ?? collect(), $clinicId) : null)

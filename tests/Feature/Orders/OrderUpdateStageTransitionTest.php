@@ -32,11 +32,14 @@ test('order stage transition succeeds when required field is provided in same re
     $response = $this->postJson(
         route('admin.orders.update', ['id' => $order->id]),
         [
-            'title'                => $order->title,
-            'sales_lead_id'        => $salesLead->id,
-            'pipeline_stage_id'    => $toStage->id,
-            'first_examination_at' => '2025-06-01 09:00:00',
-            '_method'              => 'put',
+            'title'                           => $order->title,
+            'sales_lead_id'                   => $salesLead->id,
+            'pipeline_stage_id'               => $toStage->id,
+            'first_examination_date'          => '2025-06-01',
+            'first_examination_time'          => '09:00',
+            'first_examination_date_override' => '1',
+            'first_examination_time_override' => '1',
+            '_method'                         => 'put',
         ]
     );
 

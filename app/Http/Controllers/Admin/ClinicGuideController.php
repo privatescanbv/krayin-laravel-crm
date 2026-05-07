@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AfbDispatchStatus;
+use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Http\Controllers\Controller;
 use App\Models\AfbPersonDocument;
@@ -33,9 +34,15 @@ class ClinicGuideController extends Controller
         $endOfDay = Carbon::parse($date)->endOfDay();
 
         $orders = Order::query()
-            ->whereNotNull('first_examination_at')
-            ->whereBetween('first_examination_at', [$startOfDay, $endOfDay])
             ->whereIn('pipeline_stage_id', PipelineStage::getOrderStagesIdsForClinicGuide())
+            ->where(function ($q) {
+                $q->whereNotNull('first_examination_at')
+                    ->orWhereHas('orderItems', function ($orderItems) {
+                        $orderItems
+                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
+                    });
+            })
             ->with([
                 'salesLead.persons',
                 'salesLead.stage',
@@ -53,17 +60,24 @@ class ClinicGuideController extends Controller
                 'afbPersonDocuments.dispatch.clinic',
                 'afbPersonDocuments.dispatch.clinicDepartment',
             ])
-            ->orderBy('first_examination_at', 'asc')
-            ->get();
+            ->get()
+            ->filter(function (Order $order) use ($startOfDay, $endOfDay) {
+                $at = $order->firstExaminationCarbon();
+
+                return $at !== null && $at->between($startOfDay, $endOfDay);
+            })
+            ->sortBy(fn (Order $order) => $order->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
+            ->values();
 
         $data = $orders->flatMap(function (Order $order) {
             $salesLead = $order->salesLead;
 
+            $firstExaminationDateTime = $order->firstExaminationCarbon();
             $orderData = [
                 'id'                   => $order->id,
                 'title'                => $order->title,
-                'first_examination_at' => $order->first_examination_at?->toIso8601String(),
-                'time'                 => $order->first_examination_at?->format('H:i'),
+                'first_examination_at' => $firstExaminationDateTime?->toIso8601String(),
+                'time'                 => $firstExaminationDateTime?->format('H:i'),
                 'total_price'          => $order->total_price,
                 'stage'                => $order->stage ? [
                     'name'    => $order->stage->name,

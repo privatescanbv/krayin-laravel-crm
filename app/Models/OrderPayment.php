@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Patient Payments
+ *
+ * @mixin IdeHelperOrderPayment
  */
 class OrderPayment extends Model
 {

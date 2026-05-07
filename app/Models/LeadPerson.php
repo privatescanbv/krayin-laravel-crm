@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 
+/**
+ * @mixin IdeHelperLeadPerson
+ */
 class LeadPerson extends Pivot
 {
     public $incrementing = false;

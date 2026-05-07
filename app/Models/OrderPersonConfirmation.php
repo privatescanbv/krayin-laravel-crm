@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Contact\Models\Person;
 
+/**
+ * @mixin IdeHelperOrderPersonConfirmation
+ */
 class OrderPersonConfirmation extends Model
 {
     protected $table = 'order_person_confirmations';

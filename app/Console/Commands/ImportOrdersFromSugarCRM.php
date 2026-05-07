@@ -585,6 +585,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                     $this->attachSugarOrderPersonsToSalesLead($salesLead, $personsByExternalId);
 
+                    $examinationDateStr = $this->parseSugarDate($record->datum_onderzoek_1);
+
                     // Create the Order
                     $order = $this->createEntityWithTimestamps(Order::class, [
                         'external_id'                  => $record->id,
@@ -594,7 +596,10 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'pipeline_stage_id'            => $orderStage->id(),
                         'lost_reason'                  => $lostReason,
                         'closed_at'                    => $closedAt,
-                        'first_examination_at'         => $this->parseSugarExaminationAt($record->datum_onderzoek_1, $record->aankomsttijd_c),
+                        'first_examination_at'         => $examinationDateStr !== null ? substr($examinationDateStr, 0, 10) : null,
+                        'first_examination_time'       => ! empty($record->aankomsttijd_c) && $examinationDateStr !== null
+                            ? $this->parseAankomsttijd($record->aankomsttijd_c)
+                            : null,
                         'sales_lead_id'                => $salesLead->id,
                         'user_id'                      => $this->mapSugarUserToId($record->assigned_user_id ?? null),
                         'clinic_coordinator_user_id'   => $this->mapSugarUserToId($record->user_id_c ?? null),
@@ -875,6 +880,15 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         return $parsed;
+    }
+
+    private function parseAankomsttijd(mixed $time): ?string
+    {
+        if (empty($time) || ! preg_match('/^(\d{1,2})[.:](\d{2})$/', trim((string) $time), $m)) {
+            return null;
+        }
+
+        return str_pad($m[1], 2, '0', STR_PAD_LEFT).':'.$m[2];
     }
 
     /**

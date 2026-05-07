@@ -9,6 +9,8 @@ use Webkul\Contact\Models\Person;
 
 /**
  * One generated AFB PDF for a patient, linked to a CRM order and parent dispatch (email run).
+ *
+ * @mixin IdeHelperAfbPersonDocument
  */
 class AfbPersonDocument extends Model
 {

@@ -10,7 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Email\Models\Email;
 
-/** One email send to a clinic department; PDFs per patient are {@see AfbPersonDocument} rows. */
+/**
+ * One email send to a clinic department; PDFs per patient are {@see AfbPersonDocument} rows.
+ *
+ * @mixin IdeHelperAfbDispatch
+ */
 class AfbDispatch extends Model
 {
     use HasFactory;

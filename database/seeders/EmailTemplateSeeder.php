@@ -129,7 +129,7 @@ HTML,
 <<p>Beste {{ customer_name }},</p>
 <p>Hierbij bevestigen wij de door u aan Privatescan verstrekte opdracht voor het laten uitvoeren van een Total Bodyscan met aanvullend bloedonderzoek in {{ plaats_afspraak }}.<br>De complete orderbevestiging en de gezondheidsvragenlijst vindt u terug in het pati&euml;ntportaal. Graag ontvangen we zo spoedig mogelijk, bij voorkeur per e-mail, uw akkoord voor de geplande onderzoeken alsmede de door u ingevulde gezondheidsvragenlijst(en).</p>
 <p><a title="Inloggen" href="https://patient.dev.privatescan.nl" target="_blank" rel="noopener"><strong>Inloggen pati&euml;ntportaal</strong></a></p>
-<p>{{ order.first_examination_at}}</p>
+<p>{{ datum_afspraak }} {{ tijd_afspraak }}</p>
 <p>Heeft u vragen? Neem dan gerust contact met ons op.</p>
 <p>{{ order_items_table }}</p>
 <p>Met vriendelijke groet,<br>Privatescan</p>

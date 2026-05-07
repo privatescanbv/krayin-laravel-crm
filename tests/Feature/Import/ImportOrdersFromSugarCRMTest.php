@@ -1312,7 +1312,8 @@ test('creates ResourceOrderItems using each row examination date and time', func
 
     $order = Order::where('external_id', 'order-roi-rows')->first();
     expect($order)->not->toBeNull()
-        ->and($order->first_examination_at->format('Y-m-d H:i:s'))->toBe('2025-07-15 09:00:00');
+        ->and($order->first_examination_at->format('Y-m-d'))->toBe('2025-07-15')
+        ->and($order->first_examination_time)->toBe('09:00');
 
     $rowA = ResourceOrderItem::whereHas('orderItem', fn ($q) => $q->where('order_id', $order->id))
         ->where('from', '2025-07-15 09:00:00')
@@ -1324,10 +1325,10 @@ test('creates ResourceOrderItems using each row examination date and time', func
     expect($rowA)->not->toBeNull()
         ->and($rowA->resource_id)->toBe($resource->id)
         ->and($rowA->from->format('Y-m-d H:i:s'))->toBe('2025-07-15 09:00:00')
-        ->and($rowA->to->format('Y-m-d H:i:s'))->toBe('2025-07-15 10:00:00');
-
-    expect($rowB)->not->toBeNull()
+        ->and($rowA->to->format('Y-m-d H:i:s'))->toBe('2025-07-15 10:00:00')
+        ->and($rowB)->not->toBeNull()
         ->and($rowB->resource_id)->toBe($resource->id)
         ->and($rowB->from->format('Y-m-d H:i:s'))->toBe('2025-07-20 14:00:00')
         ->and($rowB->to->format('Y-m-d H:i:s'))->toBe('2025-07-20 14:30:00');
+
 });

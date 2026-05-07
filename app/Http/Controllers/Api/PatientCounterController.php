@@ -52,7 +52,7 @@ class PatientCounterController extends Controller
             ->count();
 
         $appointmentsCount = $this->orderRepository
-            ->queryPatientAppointmentsForPerson($person, AppointmentTimeFilter::FUTURE, $now)
+            ->getPatientAppointmentOrdersForPerson($person, AppointmentTimeFilter::FUTURE, $now)
             ->count();
 
         foreach (PatientAppointmentController::PORTAL_ACTIVITY_TYPES as $type) {

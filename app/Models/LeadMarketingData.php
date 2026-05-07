@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Models\Lead;
 
+/**
+ * @mixin IdeHelperLeadMarketingData
+ */
 class LeadMarketingData extends Model
 {
     protected $table = 'lead_marketing_data';

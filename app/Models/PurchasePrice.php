@@ -7,9 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * @mixin IdeHelperPurchasePrice
- *
  * @property PurchasePriceType $type
+ * @mixin IdeHelperPurchasePrice
  */
 class PurchasePrice extends Model
 {

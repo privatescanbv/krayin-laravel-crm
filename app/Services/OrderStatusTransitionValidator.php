@@ -105,8 +105,13 @@ class OrderStatusTransitionValidator
             ],
             PipelineStage::getOrderStagesAfterPlanned(),
             [
-                'required_fields' => ['first_examination_at'],
-                'message'         => 'Het veld eerste onderzoek datum is verplicht voor deze status',
+                'custom_validation' => static function (Order $order): array {
+                    if ($order->firstExaminationCarbon() === null) {
+                        return ['Het veld eerste onderzoek datum is verplicht voor deze order status.'];
+                    }
+
+                    return [];
+                },
             ]
         );
 

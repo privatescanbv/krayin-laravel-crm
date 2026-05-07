@@ -87,11 +87,10 @@ class PatientAppointmentController extends Controller
     private function collectOrderItems(Person $person, ?AppointmentTimeFilter $filter, Carbon $now): Collection
     {
         return $this->orderRepository
-            ->queryPatientAppointmentsForPerson($person, $filter, $now)
-            ->get()
+            ->getPatientAppointmentOrdersForPerson($person, $filter, $now)
             ->map(fn ($order) => [
                 'source'  => 'order',
-                'sort_at' => $order->first_examination_at,
+                'sort_at' => $order->firstExaminationCarbon(),
                 'payload' => [
                     'order'  => $order,
                     'clinic' => app(OrderCheckService::class)->retrieveClinicFromOrder($order, $person),

@@ -17,8 +17,8 @@
                     <p class="font-semibold">AFB: handmatige verzending nodig</p>
                     <p class="text-amber-900/90 dark:text-amber-100/90">
                         Het eerste onderzoek staat binnen 24 uur
-                        @if ($order->first_examination_at)
-                            ({{ $order->first_examination_at->timezone(config('app.timezone'))->format('d-m-Y H:i') }}).
+                        @if ($order->firstExaminationCarbon())
+                            ({{ $order->firstExaminationCarbon()?->timezone(config('app.timezone'))->format('d-m-Y H:i') }}).
                         @else
                             .
                         @endif
@@ -142,8 +142,19 @@
             <div class="flex flex-col">
                 <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
                 <span class="font-medium text-gray-800 dark:text-white">
-                    {{ $order->first_examination_at ? $order->first_examination_at->format('d-m-Y H:i') : '-' }}
+                    {{ $order->firstExaminationCarbon()?->format('d-m-Y H:i') ?? '-' }}
+                    @if ($order->hasFirstExaminationOverride())
+                        <span class="text-xs font-normal text-amber-600 dark:text-amber-400">(handmatig)</span>
+                    @endif
                 </span>
+                @if ($order->hasFirstExaminationOverride())
+                    @php $computedAt = $order->earliestScheduledResourceSlotStart(); @endphp
+                    @if ($computedAt)
+                        <span class="text-xs text-gray-400 dark:text-gray-500">
+                            Berekend: {{ $computedAt->format('d-m-Y H:i') }}
+                        </span>
+                    @endif
+                @endif
             </div>
 
             <div class="flex flex-col">

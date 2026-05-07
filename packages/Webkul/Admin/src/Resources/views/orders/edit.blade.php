@@ -178,12 +178,73 @@ use Webkul\Lead\Models\Stage;
                                 @endforeach
                             </x-adminc::components.field>
 
-                            <x-adminc::components.field
-                                type="datetime"
-                                name="first_examination_at"
-                                label="Datum eerste onderzoek"
-                                value="{{ $orders->first_examination_at }}"
-                            />
+                            @php
+                                $storedDate = $orders->first_examination_at?->format('Y-m-d');
+                                $storedTime = $orders->first_examination_time;  // null when not overridden
+                                $computedDate = $computedExaminationAt?->format('Y-m-d');
+                                $computedTime = $computedExaminationAt?->format('H:i');
+                            @endphp
+
+                            <div class="space-y-2">
+                                <div class="flex items-end gap-3">
+                                    <div class="flex-1">
+                                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Datum eerste onderzoek
+                                        </label>
+                                        <input
+                                            type="date"
+                                            id="first_examination_date"
+                                            name="first_examination_date"
+                                            value="{{ $storedDate ?? $computedDate ?? '' }}"
+                                            {{ !$storedDate ? 'disabled' : '' }}
+                                            class="block w-full rounded border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:disabled:bg-gray-900"
+                                        />
+                                        <input type="hidden" id="first_examination_date_override" name="first_examination_date_override" value="{{ $storedDate ? '1' : '0' }}"/>
+                                    </div>
+                                    <div class="mb-0.5 flex items-center gap-2 pb-2">
+                                        <input
+                                            type="checkbox"
+                                            id="date_override_toggle"
+                                            {{ $storedDate ? 'checked' : '' }}
+                                            data-target="first_examination_date"
+                                            data-override="first_examination_date_override"
+                                            data-computed="{{ $computedDate ?? '' }}"
+                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                        />
+                                        <label for="date_override_toggle" class="text-sm text-gray-600 dark:text-gray-400">Overschrijven</label>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-end gap-3">
+                                    <div class="w-64">
+                                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Tijd eerste onderzoek
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="first_examination_time"
+                                            name="first_examination_time"
+                                            value="{{ $storedTime ?? $computedTime ?? '' }}"
+                                            placeholder="09:00"
+                                            {{ !$storedTime ? 'disabled' : '' }}
+                                            class="block w-full rounded border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:disabled:bg-gray-900"
+                                        />
+                                        <input type="hidden" id="first_examination_time_override" name="first_examination_time_override" value="{{ $storedTime ? '1' : '0' }}"/>
+                                    </div>
+                                    <div class="mb-0.5 flex items-center gap-2 pb-2">
+                                        <input
+                                            type="checkbox"
+                                            id="time_override_toggle"
+                                            {{ $storedTime ? 'checked' : '' }}
+                                            data-target="first_examination_time"
+                                            data-override="first_examination_time_override"
+                                            data-computed="{{ $computedTime ?? '' }}"
+                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                        />
+                                        <label for="time_override_toggle" class="text-sm text-gray-600 dark:text-gray-400">Overschrijven</label>
+                                    </div>
+                                </div>
+                            </div>
 
                             <x-adminc::components.field
                                 type="select"
@@ -506,6 +567,25 @@ use Webkul\Lead\Models\Stage;
                 }
             };
 
+            // Event delegation: runs for any matching checkbox regardless of Vue render timing
+            document.addEventListener('change', function (e) {
+                const id = e.target?.id;
+                if (id !== 'date_override_toggle' && id !== 'time_override_toggle') return;
+                const toggle = e.target;
+                const target = document.getElementById(toggle.dataset.target);
+                const hidden = document.getElementById(toggle.dataset.override);
+                const computed = toggle.dataset.computed;
+                if (target) {
+                    target.disabled = !toggle.checked;
+                    if (toggle.checked && !target.value && computed) {
+                        target.value = computed;  // pre-fill with computed when enabling
+                    } else if (!toggle.checked && computed) {
+                        target.value = computed;  // restore computed display when disabling
+                    }
+                }
+                if (hidden) hidden.value = toggle.checked ? '1' : '0';
+            });
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
@@ -719,4 +799,3 @@ use Webkul\Lead\Models\Stage;
 
     @endPushOnce
 </x-admin::layouts>
-

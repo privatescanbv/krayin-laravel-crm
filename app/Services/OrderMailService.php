@@ -7,10 +7,9 @@ use App\Helpers\ValueNormalizer;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
-use App\Models\ResourceOrderItem;
+use App\Repositories\OrderRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
@@ -34,6 +33,8 @@ use Webkul\EmailTemplate\Models\EmailTemplate;
  */
 class OrderMailService
 {
+    public function __construct(private OrderRepository $orderRepository) {}
+
     public function buildMailData(Order $order, ?Person $person = null): array
     {
         $template = EmailTemplate::byCodeEnum(EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL)->firstOrFail();
@@ -171,6 +172,7 @@ class OrderMailService
 
         return array_merge([
             'order_aanhef'                     => $order->resolveAttentionName(),
+            // TODO niet order->clinicCoordinator gebruiken?
             'adviseur'                         => $order->user?->name ?? '[onbekende adviseur]',
             'meldplek'                         => $this->resolveMeldplek($order),
             'order_bevesting_datum_plus_1_dag' => Carbon::now()->addDay()->format('d-m-Y'),
@@ -486,34 +488,7 @@ class OrderMailService
 
     private function resolveMeldplek(Order $order): string
     {
-        $orderItemIds = collect($order->orderItems)->pluck('id')->filter()->all();
-
-        if (empty($orderItemIds)) {
-            return '';
-        }
-
-        $roi = ResourceOrderItem::whereIn('orderitem_id', $orderItemIds)
-            ->whereNotNull('from')
-            ->with('resource.clinicDepartment')
-            ->orderBy('from')
-            ->first();
-
-        if (! $roi) {
-            Log::warning('resolveMeldplek: no planned resource order items', ['order_id' => $order->id]);
-
-            return '';
-        }
-
-        if (! $roi->resource?->clinic_department_id) {
-            Log::warning('resolveMeldplek: resource has no clinic_department_id', [
-                'order_id'    => $order->id,
-                'resource_id' => $roi->resource?->id,
-            ]);
-
-            return '';
-        }
-
-        return $roi->resource->clinicDepartment?->order_confirmation_note ?? '';
+        return $this->orderRepository->resolveClinicDepartmentForOrder($order)?->order_confirmation_note ?? '';
     }
 
     private function renderPersonHeader(?Person $person): string

@@ -56,7 +56,7 @@ class PatientPortalAppointmentResource extends JsonResource
             'practitioner_id' => null,
             'clinic_id'       => $clinic ? (string) $clinic->id : null,
             'clinic_ref'      => ClinicResource::make($clinic),
-            'start_at'        => $order->first_examination_at?->toIso8601String(),
+            'start_at'        => $order->firstExaminationCarbon()?->toIso8601String(),
             'end_at'          => null,
             'timezone'        => config('app.timezone'),
             'is_remote'       => false,

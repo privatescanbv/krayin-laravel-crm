@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
+use App\Repositories\OrderRepository;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -78,6 +79,21 @@ test('patient appointments endpoint returns planned/approved orders as appointme
     expect($futureOrder->fresh()->pipeline_stage_id)->toBe(PipelineStage::ORDER_WACHTEN_UITVOERING->id())
         ->and($pastOrder->fresh()->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id());
 
+    // Slot-only: no first_examination_at override but earliest booking defines the appointment.
+    $slotOnlyOrder = Order::factory()->create([
+        'sales_lead_id'         => $salesLead->id,
+        'pipeline_stage_id'     => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'  => null,
+    ]);
+    $slotOnlyItem = OrderItem::factory()->create(['order_id' => $slotOnlyOrder->id]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $slotOnlyItem->id,
+        'resource_id'  => $resourceA->id,
+        'from'         => now()->addDay()->setTime(15, 0),
+        'to'           => now()->addDay()->setTime(16, 0),
+    ]);
+    $slotOnlyOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_WACHTEN_UITVOERING->id()]);
+
     // Should be ignored (wrong status)
     Order::factory()->create([
         'sales_lead_id'        => $salesLead->id,
@@ -96,7 +112,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         ->getJson("/api/patient/{$keycloakId}/appointments");
 
     $response->assertOk();
-    $response->assertJsonCount(2, 'data');
+    $response->assertJsonCount(3, 'data');
     $response->assertJsonStructure([
         'data' => [
             '*' => [
@@ -123,6 +139,12 @@ test('patient appointments endpoint returns planned/approved orders as appointme
             'name'    => $clinicA->name,
             'address' => null,
         ],
+    ]);
+
+    $response->assertJsonFragment([
+        'id'           => 'order-'.$slotOnlyOrder->id,
+        'patient_id'   => (string) $person->id,
+        'clinic_id'    => (string) $clinicA->id,
     ]);
 
     $response->assertJsonFragment([
@@ -243,12 +265,8 @@ test('patient appointments endpoint supports future/past filter', function () {
 
     $pastOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()]);
 
-    expect(Order::query()
-        ->whereIn('pipeline_stage_id', [PipelineStage::ORDER_WACHTEN_UITVOERING->id(), PipelineStage::ORDER_GEWONNEN->id()])
-        ->whereNotNull('first_examination_at')
-        ->whereHas('salesLead.persons', fn ($q) => $q->whereKey($person->id))
-        ->count()
-    )->toBe(2);
+    expect(app(OrderRepository::class)->getPatientAppointmentOrdersForPerson($person, null, now())->count())
+        ->toBe(2);
 
     $futureResponse = $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
         ->getJson("/api/patient/{$keycloakId}/appointments?filter=future");

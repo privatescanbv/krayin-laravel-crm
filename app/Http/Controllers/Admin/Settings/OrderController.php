@@ -218,7 +218,7 @@ class OrderController extends SimpleEntityController
                     'id'                     => $order->id,
                     'title'                  => $order->title,
                     'total_price'            => $order->total_price,
-                    'first_examination_at'   => $order->first_examination_at,
+                    'first_examination_at'   => $order->firstExaminationCarbon(),
                     'created_at'             => $order->created_at,
                     'pipeline_stage_id'      => $order->pipeline_stage_id,
                     'pipeline_stage'         => $stagePayload,
@@ -1244,11 +1244,19 @@ class OrderController extends SimpleEntityController
         $stageIds = $currentPipeline->stages->pluck('id');
 
         $orders = Order::query()
-            ->with('payments')
+            ->with(['payments', 'orderItems.resourceOrderItems'])
             ->whereIn('pipeline_stage_id', $stageIds)
-            ->whereNotNull('first_examination_at')
-            ->orderByRaw('first_examination_at ASC')
+            ->where(function ($q) {
+                $q->whereNotNull('first_examination_at')
+                    ->orWhereHas('orderItems', function ($orderItems) {
+                        $orderItems
+                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
+                    });
+            })
             ->get()
+            ->filter(fn (Order $o) => $o->firstExaminationCarbon() !== null)
+            ->sortBy(fn (Order $o) => $o->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
             ->filter(fn (Order $o) => $o->netPaidAmount() < round((float) ($o->total_price ?? 0), 2))
             ->values();
 
@@ -1449,6 +1457,7 @@ class OrderController extends SimpleEntityController
             'orderOrgSectionInitialOrg'        => $orderOrgSectionInitialOrg,
             'orderOrgSectionInitialIsBusiness' => $orderOrgSectionInitialIsBusiness,
             'orderOrgSectionHintOrg'           => $suggestedOrderOrganization,
+            'computedExaminationAt'            => $order->earliestScheduledResourceSlotStart(),
         ];
     }
 
@@ -1514,19 +1523,22 @@ class OrderController extends SimpleEntityController
         }
 
         $request->validate([
-            'title'                         => ['required', 'string', 'max:255'],
-            'total_price'                   => ['nullable', 'numeric', 'min:0'],
-            'sales_lead_id'                 => ['required', 'integer', 'exists:salesleads,id'],
-            'user_id'                       => ['nullable', 'integer', 'exists:users,id'],
-            'clinic_coordinator_user_id'    => ['nullable', 'integer', 'exists:users,id'],
-            'combine_order'                 => ['nullable', 'boolean'],
-            'invoice_number'                => ['nullable', 'string', 'max:255'],
-            'is_business'                   => ['nullable', 'boolean'],
-            'organization_id'               => [Rule::requiredIf(fn () => $request->boolean('is_business')), 'nullable', 'integer', 'exists:organizations,id'],
-            'first_examination_at'          => ['nullable', 'date'],
-            'items'                         => ['nullable', 'array'],
-            'items.*.product_id'            => ['nullable', 'integer', 'exists:products,id'],
-            'items.*.person_id'             => [
+            'title'                           => ['required', 'string', 'max:255'],
+            'total_price'                     => ['nullable', 'numeric', 'min:0'],
+            'sales_lead_id'                   => ['required', 'integer', 'exists:salesleads,id'],
+            'user_id'                         => ['nullable', 'integer', 'exists:users,id'],
+            'clinic_coordinator_user_id'      => ['nullable', 'integer', 'exists:users,id'],
+            'combine_order'                   => ['nullable', 'boolean'],
+            'invoice_number'                  => ['nullable', 'string', 'max:255'],
+            'is_business'                     => ['nullable', 'boolean'],
+            'organization_id'                 => [Rule::requiredIf(fn () => $request->boolean('is_business')), 'nullable', 'integer', 'exists:organizations,id'],
+            'first_examination_date'          => ['nullable', 'date'],
+            'first_examination_time'          => ['nullable', 'string', 'max:5'],
+            'first_examination_date_override' => ['nullable', 'boolean'],
+            'first_examination_time_override' => ['nullable', 'boolean'],
+            'items'                           => ['nullable', 'array'],
+            'items.*.product_id'              => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.person_id'               => [
                 'required_with:items.*.product_id',
                 'nullable',
                 'integer',
@@ -1553,7 +1565,8 @@ class OrderController extends SimpleEntityController
             // Exclude pipeline_stage_id: the validator uses $order->pipeline_stage_id as
             // the *current* (from) stage; the new (to) stage is passed as a separate argument.
             $fillable = array_diff($order->getFillable(), ['pipeline_stage_id']);
-            $order->fill($request->only($fillable));
+            $payload = $this->transformPayload($request->all(), $id);
+            $order->fill(array_intersect_key($payload, array_flip($fillable)));
 
             OrderStatusTransitionValidator::validateTransition($order, (int) $request->input('pipeline_stage_id'));
         }
@@ -1561,6 +1574,28 @@ class OrderController extends SimpleEntityController
 
     protected function transformPayload(array $payload, ?int $id = null): array
     {
+        // Combine split date/time override fields into first_examination_at
+        if (array_key_exists('first_examination_date', $payload) || array_key_exists('first_examination_date_override', $payload)) {
+            $dateOverride = ! empty($payload['first_examination_date_override']);
+            $timeOverride = ! empty($payload['first_examination_time_override']);
+            $date = $dateOverride ? ($payload['first_examination_date'] ?? null) : null;
+            $time = $timeOverride ? ($payload['first_examination_time'] ?? null) : null;
+            unset(
+                $payload['first_examination_date'],
+                $payload['first_examination_date_override'],
+                $payload['first_examination_time_override'],
+            );
+
+            // Store time override independently (null = not overridden)
+            $payload['first_examination_time'] = $time;
+
+            if ($date) {
+                $payload['first_examination_at'] = $date;
+            } else {
+                $payload['first_examination_at'] = null;
+            }
+        }
+
         // Optional user select submits ""; MySQL FK rejects that — must be NULL when cleared.
         if (array_key_exists('user_id', $payload)) {
             $userId = $payload['user_id'];

@@ -222,11 +222,11 @@ class AfbDispatchService
      */
     public function shouldSendAsLateBooking(Order $order): bool
     {
-        if (! $order->first_examination_at) {
+        $examAt = $order->firstExaminationCarbon();
+
+        if (! $examAt) {
             return false;
         }
-
-        $examAt = Carbon::parse($order->first_examination_at);
 
         if ($examAt->isPast()) {
             return false;
@@ -256,7 +256,7 @@ class AfbDispatchService
         }
 
         $reasons = [];
-        $examAt = $order->first_examination_at ? Carbon::parse($order->first_examination_at) : null;
+        $examAt = $order->firstExaminationCarbon();
 
         if (! $this->isInDispatchableStage($order)) {
             $reasons[] = 'Order staat niet in de juiste status voor AFB dispatch';

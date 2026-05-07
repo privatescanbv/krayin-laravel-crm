@@ -12,7 +12,6 @@ use App\Enums\OrderPurchaseStatus;
 use App\Enums\PaymentType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
-use App\Helpers\ValueNormalizer;
 use App\Traits\HasAuditTrail;
 use BackedEnum;
 use Carbon\Carbon;
@@ -49,6 +48,7 @@ class Order extends Model
         'lost_reason',
         'closed_at',
         'first_examination_at',
+        'first_examination_time',
         'sales_lead_id',
         'user_id',
         'clinic_coordinator_user_id',
@@ -61,7 +61,7 @@ class Order extends Model
     protected $casts = [
         'total_price'                      => 'decimal:2',
         'pipeline_stage_id'                => 'integer',
-        'first_examination_at'             => 'datetime',
+        'first_examination_at'             => 'date',
         'closed_at'                        => 'date',
         'lost_reason'                      => LostReason::class,
         'sales_lead_id'                    => 'integer',
@@ -105,12 +105,38 @@ class Order extends Model
         return PipelineStage::ORDER_CONFIRM->id();
     }
 
-    /**
-     * Normalize empty datetime input to NULL (see ValueNormalizer::nullableDateTime()).
-     */
     public function setFirstExaminationAtAttribute(mixed $value): void
     {
-        $this->attributes['first_examination_at'] = ValueNormalizer::nullableDateTime($value);
+        if ($value === null || $value === '') {
+            $this->attributes['first_examination_at'] = null;
+
+            return;
+        }
+        $this->attributes['first_examination_at'] = Carbon::parse($value)->format('Y-m-d');
+    }
+
+    /**
+     * Combine the stored date with the stored time override into a full Carbon datetime.
+     * Returns null when no override date is set.
+     */
+    public function firstExaminationCarbon(): ?Carbon
+    {
+        $computed = $this->earliestScheduledResourceSlotStart();
+
+        $date = $this->first_examination_at?->format('Y-m-d') ?? $computed?->format('Y-m-d');
+
+        if ($date === null) {
+            return null;
+        }
+
+        $time = $this->first_examination_time ?? $computed?->format('H:i') ?? '00:00';
+
+        return Carbon::parse("$date $time:00");
+    }
+
+    public function hasFirstExaminationOverride(): bool
+    {
+        return $this->first_examination_at !== null || $this->first_examination_time !== null;
     }
 
     /**
@@ -372,22 +398,42 @@ class Order extends Model
 
     /**
      * Scope orders that are eligible to be shown as appointments in the patient portal.
+     * Includes orders with a resolved first examination via {@see firstExaminationCarbon()}:
+     * stored override date and/or a scheduled resource slot on a non-lost order item.
      */
     public function scopeAppointmentEligible(Builder $query): Builder
     {
         return $query
             ->whereNotIn('pipeline_stage_id', PipelineStage::getOrderStagesIdsBeforeConfirmed())
-            ->whereNotNull('first_examination_at');
+            ->where(function (Builder $q) {
+                $q->whereNotNull('first_examination_at')
+                    ->orWhereHas('orderItems', function (Builder $orderItems) {
+                        $orderItems
+                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereHas('resourceOrderItems', fn (Builder $roi) => $roi->whereNotNull('from'));
+                    });
+            });
     }
 
     /**
-     * Scope appointment time filtering.
+     * Whether this order's resolved first-examination instant matches the portal time filter.
+     * Prefer this over SQL on {@see $first_examination_at} alone (slots without override are excluded there).
      */
-    public function scopeAppointmentTimeFilter(Builder $query, ?AppointmentTimeFilter $filter, Carbon $now): Builder
+    public function matchesAppointmentTimeFilter(?AppointmentTimeFilter $filter, Carbon $now): bool
     {
-        return $query
-            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('first_examination_at', '>=', $now))
-            ->when($filter === AppointmentTimeFilter::PAST, fn (Builder $q) => $q->where('first_examination_at', '<', $now));
+        $at = $this->firstExaminationCarbon();
+        if (! $at) {
+            return false;
+        }
+
+        if ($filter === null) {
+            return true;
+        }
+
+        return match ($filter) {
+            AppointmentTimeFilter::FUTURE => $at->gte($now),
+            AppointmentTimeFilter::PAST   => $at->lt($now),
+        };
     }
 
     public function resolveAddress(?Person $person = null): ?Address

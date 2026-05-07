@@ -170,7 +170,7 @@
         <table>
             <tr>
                 <td class="label">Datum</td>
-                <td>{{ $order->first_examination_at?->format('d-m-Y') ?: '-' }}</td>
+                <td>{{ $order->firstExaminationCarbon()?->format('d-m-Y') ?: '-' }}</td>
             </tr>
             @forelse ($afb['examinations'] as $exam)
                 <tr>

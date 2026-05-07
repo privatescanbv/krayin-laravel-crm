@@ -3,6 +3,9 @@
 namespace App\Repositories;
 
 use App\Enums\AppointmentTimeFilter;
+use App\Enums\OrderItemStatus;
+use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -11,6 +14,7 @@ use App\Models\SalesLead;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
 
@@ -104,17 +108,35 @@ class OrderRepository extends Repository
     }
 
     /**
-     * Get a query builder for orders shown as patient appointments.
+     * Base query for patient-portal orders (pipeline + person). Eager-loads relations needed for
+     * {@see Order::firstExaminationCarbon()}. Does not apply future/past filter (use
+     * {@see getPatientAppointmentOrdersForPerson()}).
      */
-    public function queryPatientAppointmentsForPerson(Person $person, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): Builder
+    public function queryPatientAppointmentsForPerson(Person $person): Builder
     {
-        $now = $now ?: now();
-
         return Order::query()
             ->appointmentEligible()
             ->forPerson($person)
-            ->appointmentTimeFilter($filter, $now)
-            ->orderBy('first_examination_at', 'asc');
+            ->with([
+                'orderItems' => fn ($q) => $q->where('status', '!=', OrderItemStatus::LOST->value),
+                'orderItems.resourceOrderItems',
+            ]);
+    }
+
+    /**
+     * Orders shown as patient appointments, filtered/sorted by resolved first-examination datetime.
+     *
+     * @return Collection<int, Order>
+     */
+    public function getPatientAppointmentOrdersForPerson(Person $person, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): Collection
+    {
+        $now = $now ?? now();
+
+        return $this->queryPatientAppointmentsForPerson($person)
+            ->get()
+            ->filter(fn (Order $order) => $order->matchesAppointmentTimeFilter($filter, $now))
+            ->sortBy(fn (Order $o) => $o->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
+            ->values();
     }
 
     /**
@@ -122,12 +144,39 @@ class OrderRepository extends Repository
      */
     public function paginatePatientAppointmentsForPerson(Person $person, int $perPage, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): LengthAwarePaginator
     {
-        return $this->queryPatientAppointmentsForPerson($person, $filter, $now)->paginate($perPage);
+        $orders = $this->getPatientAppointmentOrdersForPerson($person, $filter, $now);
+        $page = max(1, (int) request()->query('page', 1));
+
+        return new LengthAwarePaginator(
+            $orders->forPage($page, $perPage)->values(),
+            $orders->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()],
+        );
+    }
+
+    public function resolveClinicDepartmentForOrder(Order $order): ?ClinicDepartment
+    {
+        return $order->orderItems()->first()?->resourceOrderItem()->with('resource')->first()?->resource->clinicDepartment ?? null;
+    }
+
+    /**
+     * Assumption that clinics are equal over all order items
+     *
+     * @return Clinic|null, null if no planned order items
+     */
+    private function resolveClinicForOrder(Order $order): ?Clinic
+    {
+        return $order->orderItems()->first()?->resourceOrderItem()->with('resource')->first()?->resource->clinic ?? null;
     }
 
     /**
      * Resolve appointment-related variables from order.
      * Extracts the first appointment details for template variables.
+     *
+     * When $filterPersonId is set, uses the earliest booked slot among that person's order items only
+     * (per-person mail). Otherwise uses {@see Order::firstExaminationCarbon()} (order-wide, includes overrides).
      */
     private function resolveAppointmentVariables(Order $order, ?int $filterPersonId = null): array
     {
@@ -138,24 +187,26 @@ class OrderRepository extends Repository
             'datum_bevestiging' => '',
         ];
 
-        $firstAppointment = null;
-        foreach ($order->orderItems ?? [] as $orderItem) {
-            if ($filterPersonId !== null && $orderItem->person_id !== $filterPersonId) {
-                continue;
-            }
+        $from = null;
+        $clinic = null;
 
-            foreach ($orderItem->resourceOrderItems ?? [] as $resourceOrderItem) {
-                if ($resourceOrderItem->from) {
-                    if (! $firstAppointment || $resourceOrderItem->from < $firstAppointment->from) {
-                        $firstAppointment = $resourceOrderItem;
-                    }
-                }
+        if ($filterPersonId !== null) {
+            $firstRoi = $this->earliestResourceOrderItemForPerson($order, $filterPersonId);
+            if ($firstRoi?->from) {
+                $from = Carbon::parse($firstRoi->from);
+                $firstRoi->loadMissing('resource.clinic.address');
+                $clinic = $firstRoi->resource?->clinic;
+            }
+        } else {
+            $resolved = $order->firstExaminationCarbon();
+            if ($resolved) {
+                $from = $resolved->copy();
+                $clinic = $this->resolveClinicForOrder($order);
             }
         }
 
-        if ($firstAppointment && $firstAppointment->from) {
-            $from = Carbon::parse($firstAppointment->from);
-            $clinic = $firstAppointment->resource?->clinic;
+        if ($from) {
+            $clinic?->loadMissing('address');
             $address = $clinic?->address;
 
             // Format date in Dutch (e.g., "15 januari 2025")
@@ -193,6 +244,38 @@ class OrderRepository extends Repository
         }
 
         return $variables;
+    }
+
+    /**
+     * Earliest resource booking for a specific person on this order (non-lost items only).
+     */
+    private function earliestResourceOrderItemForPerson(Order $order, int $personId): ?ResourceOrderItem
+    {
+        $order->loadMissing('orderItems.resourceOrderItems.resource.clinic');
+
+        $best = null;
+
+        foreach ($order->orderItems as $orderItem) {
+            if ($orderItem->status === OrderItemStatus::LOST) {
+                continue;
+            }
+
+            if ((int) ($orderItem->person_id ?? 0) !== $personId) {
+                continue;
+            }
+
+            foreach ($orderItem->resourceOrderItems as $resourceOrderItem) {
+                if (! $resourceOrderItem->from) {
+                    continue;
+                }
+
+                if ($best === null || Carbon::parse($resourceOrderItem->from)->lt(Carbon::parse($best->from))) {
+                    $best = $resourceOrderItem;
+                }
+            }
+        }
+
+        return $best;
     }
 
     /**

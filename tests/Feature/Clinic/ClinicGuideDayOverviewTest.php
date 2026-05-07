@@ -11,6 +11,7 @@ use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use Carbon\Carbon;
 use Database\Seeders\TestSeeder;
@@ -97,6 +98,30 @@ test('clinic guide get filters out orders from other days', function () {
     $response->assertJsonPath('count', 1);
 });
 
+test('clinic guide get includes orders with only scheduled slots on the requested day', function () {
+    $targetDate = '2026-07-01';
+    $salesLead = SalesLead::factory()->create();
+
+    $order = Order::factory()->create([
+        'sales_lead_id'         => $salesLead->id,
+        'pipeline_stage_id'     => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'  => null,
+    ]);
+
+    $item = createClinicLinkedOrderItem($order->id);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $item->id,
+        'from'         => Carbon::parse("$targetDate 11:30:00"),
+        'to'           => Carbon::parse("$targetDate 12:30:00"),
+    ]);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    $response->assertJsonPath('count', 1);
+    expect(collect($response->json('orders'))->pluck('order.id')->all())->toContain($order->id);
+});
+
 test('clinic guide get excludes orders without first_examination_at', function () {
     $salesLead = SalesLead::factory()->create();
 
@@ -122,9 +147,10 @@ test('clinic guide get response contains expected fields', function () {
 
     $targetDate = '2026-05-10';
     $order = Order::factory()->create([
-        'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
-        'first_examination_at' => Carbon::parse($targetDate)->setHour(9)->setMinute(15),
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => '09:15',
     ]);
 
     createClinicLinkedOrderItem($order->id, $person->id);
@@ -239,28 +265,31 @@ test('clinic guide AFB PDF view serves PDF inline', function () {
         ->assertHeader('Content-Disposition', 'inline; filename="form.pdf"');
 });
 
-test('clinic guide get orders are sorted by time ascending', function () {
+test('clinic guide get orders are sorted by time ascending when time override is set', function () {
     $salesLead = SalesLead::factory()->create();
     $targetDate = '2026-06-01';
 
     $orderLate = Order::factory()->create([
-        'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
-        'first_examination_at' => Carbon::parse($targetDate)->setHour(16)->setMinute(0),
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => '16:00',
     ]);
     createClinicLinkedOrderItem($orderLate->id);
 
     $orderEarly = Order::factory()->create([
-        'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
-        'first_examination_at' => Carbon::parse($targetDate)->setHour(8)->setMinute(0),
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => '08:00',
     ]);
     createClinicLinkedOrderItem($orderEarly->id);
 
     $orderMid = Order::factory()->create([
-        'sales_lead_id'        => $salesLead->id,
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
-        'first_examination_at' => Carbon::parse($targetDate)->setHour(12)->setMinute(0),
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => '12:00',
     ]);
     createClinicLinkedOrderItem($orderMid->id);
 
@@ -270,6 +299,73 @@ test('clinic guide get orders are sorted by time ascending', function () {
     $orderIds = collect($response->json('orders'))->pluck('order.id')->all();
 
     expect($orderIds)->toBe([$orderEarly->id, $orderMid->id, $orderLate->id]);
+});
+
+test('clinic guide get orders without time override sort by earliest resource order item time', function () {
+    $salesLead = SalesLead::factory()->create();
+    $targetDate = '2026-06-10';
+
+    // Order with date override only — no time override. ROI scheduled at 14:00.
+    $orderLate = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => null,
+    ]);
+    $itemLate = createClinicLinkedOrderItem($orderLate->id);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $itemLate->id,
+        'from'         => Carbon::parse("$targetDate 14:00:00"),
+        'to'           => Carbon::parse("$targetDate 15:00:00"),
+    ]);
+
+    // Order with date override only — no time override. ROI scheduled at 09:00.
+    $orderEarly = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => null,
+    ]);
+    $itemEarly = createClinicLinkedOrderItem($orderEarly->id);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $itemEarly->id,
+        'from'         => Carbon::parse("$targetDate 09:00:00"),
+        'to'           => Carbon::parse("$targetDate 10:00:00"),
+    ]);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    $orderIds = collect($response->json('orders'))->pluck('order.id')->all();
+
+    expect($orderIds)->toBe([$orderEarly->id, $orderLate->id]);
+});
+
+test('clinic guide get orders without any time information sort without error', function () {
+    $salesLead = SalesLead::factory()->create();
+    $targetDate = '2026-06-15';
+
+    // Orders with date override only, no time override, no scheduled ROIs.
+    $order1 = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => null,
+    ]);
+    createClinicLinkedOrderItem($order1->id);
+
+    $order2 = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at'   => $targetDate,
+        'first_examination_time' => null,
+    ]);
+    createClinicLinkedOrderItem($order2->id);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    $response->assertJsonPath('count', 2);
 });
 
 test('clinic guide index page loads successfully', function () {

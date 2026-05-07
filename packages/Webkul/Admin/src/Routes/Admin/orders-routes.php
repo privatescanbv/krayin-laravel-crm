@@ -53,6 +53,10 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::put('{orderId}/checks/{checkId}', 'updateCheck')->name('admin.orders.checks.update');
     Route::delete('{orderId}/checks/{checkId}', 'destroyCheck')->name('admin.orders.checks.destroy');
 
+    // Order report upload routes
+    Route::get('{orderId}/report-upload-data', 'reportUploadData')->name('admin.orders.report-upload-data');
+    Route::post('{orderId}/report-upload', 'storeReport')->name('admin.orders.report-upload.store');
+
     // Order activities routes
     Route::get('{id}/activities', 'activities')->name('admin.orders.activities.index');
     Route::get('{id}/emails/detach', 'emailsDetach')->name('admin.orders.emails.detach');

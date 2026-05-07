@@ -37,6 +37,9 @@
 
 
                         @if (bouncer()->hasPermission('activities.create'))
+                            <!-- Report Upload Action -->
+                            <x-admin::activities.actions.report :entity="$order"/>
+
                             <!-- File Activity Action -->
                             <x-admin::activities.actions.file :entity="$order" entity-control-name="order_id"/>
 

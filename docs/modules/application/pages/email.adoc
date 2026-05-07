@@ -372,6 +372,10 @@ Beschikbaar wanneer een Order is meegegeven. Levert automatisch ook lead- en sal
 
 | `{{ meldplek }}`
 | Veld "Opmerking orderbevestiging" van de afdeling van de eerst ingeplande afspraak (chronologisch op `from`). _(kan leeg zijn — vereist ingeplande resource order items waarbij de resource een afdeling heeft met dit veld ingevuld)_
+
+| `{{ order_bevesting_datum_plus_1_dag }}`
+| Vandaag plus 1 dag. Daarmee is het in de flow orderbevestigings datum, aangezien de variable wordt gebruikt tijdens het maken van order bevestiging.
+
 |===
 
 *GVL-formulier* _(leeg als geen anamnese met formulierlink aanwezig is)_

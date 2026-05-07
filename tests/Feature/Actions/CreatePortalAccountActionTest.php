@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Persons\CreatePortalAccountAction;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\Mail\CrmMailService;
@@ -94,7 +95,8 @@ test('temporary password in flash message matches password in welcome email', fu
         ->where('subject', 'Welkom bij het Privatescan patiëntportaal')
         ->firstOrFail();
 
-    expect($email->reply)->toContain($expectedPassword);
+    // Stored HTML escapes Blade output (& → &amp; etc.); compare against decoded body.
+    expect(html_entity_decode($email->reply, ENT_QUOTES | ENT_HTML5, 'UTF-8'))->toContain($expectedPassword);
 });
 
 test('temporary password in flash message matches password in email when using real keycloak service', function () {
@@ -109,7 +111,7 @@ test('temporary password in flash message matches password in email when using r
     ]);
 
     // Mock alleen de Keycloak HTTP calls, niet de PersonKeycloakService zelf
-    $addKeycloakUserAction = Mockery::mock(\App\Actions\Keycloak\AddKeycloakUserAction::class);
+    $addKeycloakUserAction = Mockery::mock(AddKeycloakUserAction::class);
     $addKeycloakUserAction->shouldReceive('execute')
         ->once()
         ->andReturnUsing(function (array $userData, string $password, bool $temporary, ?string $role) {
@@ -122,7 +124,7 @@ test('temporary password in flash message matches password in email when using r
             ];
         });
 
-    $this->app->instance(\App\Actions\Keycloak\AddKeycloakUserAction::class, $addKeycloakUserAction);
+    $this->app->instance(AddKeycloakUserAction::class, $addKeycloakUserAction);
 
     $personKeycloakService = app(PersonKeycloakService::class);
     $crmMailService = app(CrmMailService::class);
@@ -148,7 +150,7 @@ test('temporary password in flash message matches password in email when using r
 
     expect($tooltipPassword)->not->toBeNull()
         ->and($tooltipPassword)->toBe($keycloakPassword)
-        ->and($email->reply)->toContain($keycloakPassword);
+        ->and(html_entity_decode($email->reply, ENT_QUOTES | ENT_HTML5, 'UTF-8'))->toContain($keycloakPassword);
 });
 
 test('does not queue mail when sendAccountEmails is false (sync path)', function () {

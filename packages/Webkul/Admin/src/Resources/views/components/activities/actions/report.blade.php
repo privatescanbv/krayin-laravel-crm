@@ -178,7 +178,7 @@
                 fetchData() {
                     this.loadingData = true;
 
-                    const url = `{{ route('admin.orders.report-upload-data', ':id') }}`.replace(':id', this.entity.id);
+                    const url = '{{ route("admin.orders.report-upload-data", ":id") }}'.replace(':id', this.entity.id);
 
                     this.$axios.get(url)
                         .then(response => {
@@ -225,7 +225,7 @@
                         formData.append('check_ids[]', String(id));
                     });
 
-                    const url = `{{ route('admin.orders.report-upload.store', ':id') }}`.replace(':id', this.entity.id);
+                    const url = '{{ route("admin.orders.report-upload.store", ":id") }}'.replace(':id', this.entity.id);
 
                     this.$axios.post(url, formData)
                         .then(response => {

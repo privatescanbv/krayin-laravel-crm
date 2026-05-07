@@ -419,6 +419,6 @@ class Order extends Model
             return $this->organization?->name ?? '[Organisatie heeft geen naam]';
         }
 
-        return $this->salesLead?->getContactPersonOrFirstPerson()?->name ?? '';
+        return $this->salesLead?->getContactPersonOrFirstPerson()?->namePatient ?? '';
     }
 }

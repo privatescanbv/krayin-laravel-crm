@@ -328,15 +328,11 @@ HTML,
 <p>Graag ontvangen we zo spoedig mogelijk, bij voorkeur per e-mail, uw akkoord voor de geplande onderzoeken alsmede de door u ingevulde gezondheidsvragenlijst(en). Het totaalbedrag van {{ order_total }} dient v&oacute;&oacute;r de onderzoeksdatum op onze bank te zijn bijgeschreven op ons IBAN rekeningnummer, NL11 INGB 0673 2299 71 &nbsp;o.v.v. onze referentie: {{ order_reference }}. U ontvangt separaat de factuur.</p>
 <p>Met dank voor uw opdracht wens ik u alvast een aangenaam verblijf in de kliniek.</p>
 <p>Met vriendelijke groet,</p>
-<table style="border-collapse: collapse; width: 100%; border-width: 0px;" border="1"><colgroup><col style="width: 50%;"><col style="width: 50%;"></colgroup>
+<table style="border-collapse: collapse; width: 100%; border-width: 0px; border-spacing: 0px;" border="1"><colgroup><col style="width: 50%;"><col style="width: 50%;"></colgroup>
 <tbody>
 <tr>
-<td style="border-width: 0px;">{{ adviseur }}</td>
-<td style="border-width: 0px;">voor akkoord:</td>
-</tr>
-<tr>
-<td style="border-width: 0px;">Binnendienst adviseur</td>
-<td style="border-width: 0px;">{{ person.salutation }} {{ person.initials }} {{ person.last_name }}</td>
+<td style="border-width: 0px; padding: 0px;">{{ adviseur }}<br>Binnendienst adviseur</td>
+<td style="border-width: 0px; padding: 0px;">voor akkoord:<br>{{ customer_name }}</td>
 </tr>
 </tbody>
 </table>
@@ -346,18 +342,118 @@ HTML,
 HTML,
             ],
             [
-                'name'        => 'Afspraak bevestiging',
-                'code'        => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL,
+                'name'        => 'Orderbevestiging TB aanvullend bloed NL',
+                'code'        => 'order-ackn-TB-blood',
+                'type'        => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Orderbevestiging TB aanvullend bloed NL',
+                'content'     => <<<'HTML'
+<p>{{ order_aanhef }}<br>{{ address_full }}</p>
+<p>&nbsp;</p>
+<p style="text-align: right;">Hengelo, {{ current_date }}</p>
+<p style="text-align: left;">&nbsp;</p>
+<p style="text-align: left;">Onze referentie: {{ order_reference }}</p>
+<p style="text-align: left;">Geachte {{ customer_name}},</p>
+<p style="text-align: left;">Hierbij bevestigen wij de door u aan Privatescan verstrekte opdracht voor het laten uitvoeren van een Total Bodyscan met aanvullend bloedonderzoek.</p>
+<p style="text-align: left;"><strong>Afspraakgegevens:</strong><br>Uw afspraak is tot stand gekomen in overleg met {{ adviseur }} en staat ingepland voor {{ datum_afspraak }} om {{ tijd_afspraak }} uur in &nbsp;{{ plaats_afspraak }}. {{ meldplek }}</p>
+<p style="text-align: left;">De volgende onderzoeken worden uitgevoerd:<br>{{ order_summary_table }}</p>
+<p>Voor een optimaal verloop en een goede voorbereiding op de onderzoeken verzoeken wij u om de meegestuurde informatie zorgvuldig door te lezen.</p>
+<p>Graag ontvangen we zo spoedig mogelijk, bij voorkeur per e-mail, uw akkoord voor de geplande onderzoeken alsmede de door u ingevulde gezondheidsvragenlijst(en). Het totaalbedrag van {{ order_total }} dient v&oacute;&oacute;r de onderzoeksdatum op onze bank te zijn bijgeschreven op ons IBAN rekeningnummer, NL11 INGB 0673 2299 71 &nbsp;o.v.v. onze referentie: {{ order_reference }}. U ontvangt separaat de factuur.</p>
+<p>Met dank voor uw opdracht wens ik u alvast een aangenaam verblijf in de kliniek.</p>
+<p>Met vriendelijke groet,</p>
+<table style="border-collapse: collapse; width: 100%; border-width: 0px; border-spacing: 0px;" border="1"><colgroup><col style="width: 47.3948%;"><col style="width: 52.6052%;"></colgroup>
+<tbody>
+<tr>
+<td style="padding: 0px; border-width: 0px;">{{ adviseur }}<br>Binnendienst adviseur</td>
+<td style="padding: 0px; border-width: 0px;">voor akkoord:<br>{{ customer_name }}</td>
+</tr>
+</tbody>
+</table>
+<!-- pagebreak -->
+<p><strong>Rapportage, vertaling en begeleiding</strong><br>Na afloop van de onderzoeken (MRI en/of CT) krijgt u een CD/DVD en/of QR-code mee van de gemaakte beelden. Van de resultaten ontvangt u een schriftelijk Duits verslag. Een vertaling van het verslag maakt geen onderdeel uit van het onderzoeksprogramma. Uit ervaring is gebleken dat de meerderheid van onze cli&euml;nten geen behoefte heeft aan een vertaling indien er bij de onderzoeken geen bijzonderheden zijn aangetroffen. Een vertaling van het verslag (volledig of samenvatting) kunt u bestellen bij de begeleiding in de kliniek of achteraf bij Privatescan. Namens Privatescan is op de onderzoeksdag Nederlandstalige begeleiding aanwezig.</p>
+<p><strong>Aankomst kliniek</strong><br>Ten behoeve van uw onderzoeken heeft Privatescan tijd op apparatuur (MRI, CT etc.) en bij artsen gereserveerd. Om te voorkomen dat er op uw onderzoeksdag (te) lange vertragingen en wachttijden ontstaan, is het van belang dat u uiterlijk op de overeengekomen tijd aanwezig bent in de kliniek. Houdt daarom rekening met mogelijke files op uw route. Bij vertraging van meer dan 30 minuten, bestaat de mogelijkheid dat uw onderzoek dient te worden verplaatst om verder oplopende wachttijden voor de mensen die na u staan ingepland te voorkomen. Wij vragen u dan ook vriendelijk om bij vertraging direct contact met ons op te nemen. Vanaf &rsquo;s morgens 8:30 uur zijn we hiervoor bereikbaar via 074 &ndash; 255 2 680.</p>
+HTML,
+            ],
+            [
+                'name'        => 'Orderbevestiging TB zonder bloed ENG',
+                'code'        => 'order-ackn-TB-no-blood-ENG',
+                'type'        => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
+                'language'    => $en,
+                'departments' => $allDepartments,
+                'subject'     => 'Orderbevestiging TB zonder bloed ENG',
+                'content'     => <<<'HTML'
+<p>{{ order_aanhef }}<br>{{ address_full }}</p>
+<p>&nbsp;</p>
+<p style="text-align: right;">Hengelo, {{ current_date }}</p>
+<p style="text-align: left;">&nbsp;</p>
+<p style="text-align: left;">Our reference: {{ order_reference }}</p>
+<p style="text-align: left;">Dear {{ customer_name}},</p>
+<p style="text-align: left;">We hereby confirm your order to have a Total Body Scan done.</p>
+<p style="text-align: left;"><strong>Details of the appointment:</strong><br>Your appointment has been discussed with {{ adviseur }} and will take place on {{ datum_afspraak }} at {{ tijd_afspraak }} } o'clock at the {{ plaats_afspraak }}. You may report to the reception at the main entrance. {{ meldplek }}</p>
+<p>The following medical check-ups will be conducted:<br>{{ order_summary_table }}</p>
+<p>For an optimal preparation for the examinations it is very important that you read the included information carefully.</p>
+<p>After filling in the health questionnaire please return it to us, as well as a confirmation of your booking by email. The total amount of {{ order_total }} has to be paid upfront by bank into our IBAN account number, NL11 INGB 0673 2299 71 stating our reference number: {{ order_reference }}. You will receive the invoice separately.</p>
+<p>We thank you for your order and wish you a pleasant stay at the clinic.</p>
+<p>Yours sincerely,</p>
+<table style="border-collapse: collapse; width: 100%; border-width: 0px;" border="1"><colgroup><col style="width: 50%;"><col style="width: 50%;"></colgroup>
+<tbody>
+<tr>
+<td style="border-width: 0px;">{{ adviseur }}<br>Internal advisor</td>
+<td style="border-width: 0px;">for consent:<br>{{ customer_name }}</td>
+</tr>
+<tr>
+<td style="border-width: 0px;">&nbsp;</td>
+<td style="border-width: 0px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<p><!-- pagebreak --></p>
+<p><strong>Written report, translation and English speaking attendant</strong><br>At the end of the examinations (MRI and/or CT) you will receive a CD/DVD and/or QR-code with all the images of the scan. You will receive a written report (in German). A translation to Dutch or English is not part of the examination package. Experience has shown that the majority of our clients do not need a translation if no specific abnormalities were found during the examinations. A translation of the report (complete or summary) can be ordered at the attendant in the clinic or afterwards at Privatescan. On behalf of Privatescan a Dutch / English speaking attendant is available on the day of the examination.</p>
+<p><strong>Arrival at the clinic</strong><br>For the examinations, Privatescan has reserved time on the equipment (MRI, CT etc.) and with doctors. To prevent long delays and waiting time on your examination day, it is important to be present in the clinic no later than the agreed arrival time. Take possible traffic jams on your route into account. In the event of a delay of more than 30 minutes, there is a possibility that your examination needs to be changed to a different date in order to prevent further waiting time for the people scheduled after you. We kindly ask you to contact us directly in case of possible delay. From 8:30 a.m. we can be reached via 074 - 255 2 680.</p>
+HTML,
+            ],
+            [
+                'name'        => 'Afspraak bevestiging Evidia',
+                'code'        => 'acknowledge-order-mail-evidia',
                 'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
                 'language'    => $nl,
                 'departments' => $allDepartments,
                 'subject'     => 'Order {{ order_reference }} | {{ order_title }}',
                 'content'     => <<<'HTML'
 <p>Beste {{ customer_name }},</p>
-<p>Hierbij bevestigen wij uw afspraak(en) voor order {{ order_reference }} ({{ order_title }}).</p>
-{{ appointments_by_person }}
-{{ form_link_section }}
-<p>{{ approval_instructions }}</p>
+<p>Hierbij bevestig ik de afspraak voor het laten uitvoeren van medische onderzoeken op {{ datum_afspraak }} om {{ tijd_afspraak }} uur in &nbsp;Bochum.</p>
+<p>Graag ontvangen wij uiterlijk {{ datum_bevestiging }} voor 12.00 uur een definitieve bevestiging van u, zodat ik uw schriftelijke akkoord heb en de afspraak definitief kan bevestigen bij de kliniek.</p>
+<p>In uw eigen pati&euml;ntportaal treft u de orderbevestiging, een in te vullen vragenlijst, onderzoekkaart(en) waarin u kunt lezen hoe een onderzoek als deze zal verlopen en wat u ervan mag verwachten en fiscale informatie. Via onderstaande link gaat u naar de inlogpagina van het portaal.</p>
+<p><a title="Inloggen" href="https://patient.dev.privatescan.nl" target="_blank" rel="noopener"><strong>Inloggen pati&euml;ntportaal</strong></a></p>
+<p>Graag ontvangen wij uiterlijk {{ datum_bevestiging }} voor 12.00 uur de bijgevoegde vragenlijst ingevuld retour.</p>
+<p>Parkeren kunt u op het parkeerdek van P1 of P2 van het Augusta Krankenhaus (Bergstra&szlig;e 26, 44791 te Bochum), tegenover het Gesundheitszentrum (Evidia, aan de Bergstra&szlig;e 25, 44791 te Bochum). Het parkeerdek van P1 is met het gezondheidscentrum verbonden met een loopbrug. Via deze loopbrug kunt u zich bij Evidia op de 4e etage melden.</p>
+<p>Voor na de onderzoeken dient u zelf wat te eten mee te nemen. Wij zorgen wel voor koffie/thee.<br>U dient nuchter te zijn vanaf 7.00 uur die ochtend. Voor dit tijdstip adviseer ik u om wel wat te eten. In de tussentijd mag u wel water drinken, maar geen cafe&iuml;nehoudende dranken en/of etenswaren nuttigen.</p>
+<p>Houd rekening met mogelijke verkeersdrukte en vertrek op tijd.</p>
+<p>Als u nog vragen heeft kunt u ons altijd even bellen op nummer 074 - 255 26 80.</p>
+<p>Wij vernemen graag uw akkoord voor dit onderzoek en wensen u alvast veel succes op uw onderzoeksdag.</p>
+<p>Met vriendelijke groet,<br>{{ company_signature }}</p>
+HTML,
+            ],
+            [
+                'name'        => 'Afspraak bevestiging Augusta',
+                'code'        => 'acknowledge-order-mail-augusta',
+                'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Order {{ order_reference }} | {{ order_title }}',
+                'content'     => <<<'HTML'
+<p>Beste {{ customer_name }},</p>
+<p>Hierbij bevestig ik de afspraak voor het laten uitvoeren van medische onderzoeken op {{ datum_afspraak }} om {{ tijd_afspraak }} uur in &nbsp;Bochum.</p>
+<p>Graag ontvangen wij uiterlijk {{ order_bevesting_datum_plus_1_dag }} voor 12.00 uur een definitieve bevestiging van u, zodat ik uw schriftelijke akkoord heb en de afspraak definitief kan bevestigen bij de kliniek.</p>
+<p>In uw eigen pati&euml;ntportaal treft u de orderbevestiging, een in te vullen vragenlijst, onderzoekkaart(en) waarin u kunt lezen hoe een onderzoek als deze zal verlopen en wat u ervan mag verwachten en fiscale informatie. Via onderstaande link gaat u naar de inlogpagina van het portaal.</p>
+<p><a title="Inloggen" href="https://patient.dev.privatescan.nl" target="_blank" rel="noopener"><strong>Inloggen pati&euml;ntportaal</strong></a></p>
+<p>Graag ontvangen wij uiterlijk {{ datum_bevestiging }} voor 12.00 uur de bijgevoegde vragenlijst ingevuld retour.</p>
+<p>De afspraak vindt plaats bij de Ambulante Kardiologie Augusta Klinik aan de Bergstrasse 26, 44791 te Bochum.<br>Wanneer u in de parkeergarage (P1 of P2 &ndash; hiervoor krijgt u een uitrijkaartje) bent aangekomen dient u contact op te nemen met de begeleid(st)er. Dit mag op nummer +316 34 159 513. Hij/zij zal u dan ophalen.</p>
+<p>Voor na de onderzoeken dient u zelf wat te eten mee te nemen. Wij zorgen wel voor koffie/thee.<br>U dient nuchter te zijn vanaf 7.00 uur die ochtend. Voor dit tijdstip adviseer ik u om wel wat te eten. In de tussentijd mag u wel water drinken, maar geen cafe&iuml;nehoudende dranken en/of etenswaren nuttigen.</p>
+<p>Houd rekening met mogelijke verkeersdrukte en vertrek op tijd.</p>
+<p>Als u nog vragen heeft kunt u ons altijd even bellen op nummer 074 - 255 26 80.</p>
+<p>Wij vernemen graag uw akkoord voor dit onderzoek en wensen u alvast veel succes op uw onderzoeksdag.</p>
 <p>Met vriendelijke groet,<br>{{ company_signature }}</p>
 HTML,
             ],

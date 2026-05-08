@@ -80,6 +80,61 @@
         'order' => $order,
     ])
 
+    <!-- Checks Card -->
+    @php
+        $orderChecks      = $order->orderChecks ?? collect();
+        $checksTotal      = $orderChecks->count();
+        $checksDone       = $orderChecks->where('done', true)->count();
+        $checksPct        = $checksTotal > 0 ? round($checksDone / $checksTotal * 100) : 0;
+        $checksAllDone    = $checksTotal > 0 && $checksDone === $checksTotal;
+        $checksEditUrl    = bouncer()->hasPermission('orders.edit') ? route('admin.orders.edit', $order->id) . '#checks' : null;
+    @endphp
+    <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+            <div class="flex items-center gap-3">
+                <span class="icon-check text-xl text-gray-600 dark:text-gray-400"></span>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">Checks</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                @if ($checksTotal > 0)
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full
+                        {{ $checksAllDone ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300' }}">
+                        {{ $checksDone }}/{{ $checksTotal }} afgevinkt
+                    </span>
+                @endif
+                @if ($checksEditUrl)
+                    <a href="{{ $checksEditUrl }}"
+                       class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text text-xs">
+                        <span class="icon-edit text-sm"></span>
+                        <span>{{ $checksTotal > 0 ? 'Beheer checks' : 'Checks toevoegen' }}</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <div class="p-4">
+            @if ($checksTotal > 0)
+                {{-- Progress bar --}}
+                <div class="mb-3 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div class="h-2 rounded-full transition-all duration-300 {{ $checksAllDone ? 'bg-green-500' : 'bg-brandColor' }}"
+                         style="width: {{ $checksPct }}%"></div>
+                </div>
+
+                {{-- Check items --}}
+                <ul class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    @foreach ($orderChecks as $check)
+                        <li class="flex items-center gap-2 text-sm {{ $check->done ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200' }}">
+                            <span class="{{ $check->done ? 'icon-check text-green-500' : 'icon-radio-normal text-gray-400' }} shrink-0"></span>
+                            <span class="{{ $check->done ? 'line-through' : '' }} truncate">{{ $check->name }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <p class="text-sm text-gray-400 dark:text-gray-500">Geen checks toegevoegd aan deze order.</p>
+            @endif
+        </div>
+    </div>
+
     <!-- Order Details Card -->
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">

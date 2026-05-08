@@ -479,8 +479,10 @@ use Webkul\Lead\Models\Stage;
             app.component('v-order-tabs', {
                 template: '#v-order-tabs-template',
                 data() {
+                    const validTabs = ['details', 'checks'];
+                    const hash = window.location.hash.replace('#', '');
                     return {
-                        activeTab: 'details',
+                        activeTab: validTabs.includes(hash) ? hash : 'details',
                     };
                 },
             });

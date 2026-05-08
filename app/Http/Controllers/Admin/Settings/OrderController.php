@@ -393,6 +393,7 @@ class OrderController extends SimpleEntityController
             'orderItems.resourceOrderItems.resource.clinicDepartment.clinic',
             'afbPersonDocuments.dispatch.clinicDepartment',
             'payments',
+            'orderChecks',
         ])->findOrFail($id);
 
         $activitiesCount = $order->activities()->where('is_done', false)->count();
@@ -427,6 +428,9 @@ class OrderController extends SimpleEntityController
             ->groupBy(fn ($doc) => $doc->dispatch?->clinic_department_id)
             ->map(fn ($docs) => $docs->sortByDesc('sent_at')->first());
 
+        $totalChecks     = $order->orderChecks->count();
+        $completedChecks = $order->orderChecks->where('done', true)->count();
+
         return view('admin::orders.view', [
             'order'                => $order,
             'activitiesCount'      => $activitiesCount,
@@ -437,6 +441,8 @@ class OrderController extends SimpleEntityController
             'bookedDepartments'    => $bookedDepartments,
             'afbSentPerDepartment' => $afbSentPerDepartment,
             'avbDispatchReadiness' => $avbDispatchReadiness,
+            'totalChecks'          => $totalChecks,
+            'completedChecks'      => $completedChecks,
         ]);
     }
 

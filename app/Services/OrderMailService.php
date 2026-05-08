@@ -528,8 +528,8 @@ class OrderMailService
         $totalPrice = $this->formatCurrency($items->sum('total_price'));
 
         $rows .= '<tr>'
-            .'<td colspan="2" style="padding:8px; text-align:right; font-weight:600;">Totaal</td>'
-            .'<td style="padding:8px; text-align:right; font-weight:600;">'.$totalPrice.'</td>'
+            .'<td colspan="2" style="padding:8px; text-align:right;">Totaal</td>'
+            .'<td style="padding:8px; text-align:right;">'.$totalPrice.'</td>'
             .'</tr>';
 
         return <<<HTML

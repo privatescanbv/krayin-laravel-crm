@@ -18,6 +18,8 @@ Route::group(['middleware' => ['user']], function () {
     Route::put('sales-leads/{id}/lost', [SalesLeadController::class, 'lost'])->name('admin.sales-leads.lost');
     Route::delete('sales-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.sales-leads.delete');
     Route::get('sales-leads/search', [SalesLeadController::class, 'search'])->name('admin.sales-leads.search');
+    Route::get('sales-leads/{id}/attach-person', [SalesLeadController::class, 'attachPersonPage'])->name('admin.sales-leads.attach_person');
+    Route::post('sales-leads/{id}/attach-person', [SalesLeadController::class, 'attachPerson'])->name('admin.sales-leads.attach_person.store');
 
     // Activity routes
     Route::get('sales-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.sales-leads.activities.index');

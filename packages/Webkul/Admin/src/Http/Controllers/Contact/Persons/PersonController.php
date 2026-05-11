@@ -230,6 +230,29 @@ class PersonController extends Controller
 
         session()->flash('success', trans('admin::app.contacts.persons.index.create-success'));
 
+        $returnTo = $request->input('return_to');
+        $entityId = $request->input('entity_id');
+
+        if ($returnTo === 'lead' && $entityId) {
+            $lead = Lead::find((int) $entityId);
+
+            if ($lead) {
+                $lead->attachPersons([$person->id]);
+            }
+
+            return redirect()->route('admin.leads.view', $entityId);
+        }
+
+        if ($returnTo === 'sales-lead' && $entityId) {
+            $salesLead = \App\Models\SalesLead::find((int) $entityId);
+
+            if ($salesLead) {
+                $salesLead->attachPersons([$person->id]);
+            }
+
+            return redirect()->route('admin.sales-leads.view', $entityId);
+        }
+
         return redirect()->route('admin.contacts.persons.index');
     }
 

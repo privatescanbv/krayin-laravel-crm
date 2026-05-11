@@ -23,6 +23,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use RuntimeException;
 use Throwable;
@@ -32,6 +33,7 @@ use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\SalesLeadLookupResource;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\StageProxy;
@@ -316,6 +318,26 @@ class SalesLeadController extends Controller
             'emails'         => $emails,
             'activitiesCount'=> $activitiesCount,
         ]);
+    }
+
+    public function attachPersonPage(int $id): View
+    {
+        $salesLead = SalesLead::findOrFail($id);
+
+        return view('adminc.sales_leads.view.attach-person', compact('salesLead'));
+    }
+
+    public function attachPerson(Request $request, int $id): RedirectResponse
+    {
+        $salesLead = SalesLead::findOrFail($id);
+        $personId = $request->integer('person_id');
+
+        Person::findOrFail($personId);
+
+        $salesLead->attachPersons([$personId]);
+
+        return redirect()->route('admin.sales-leads.view', $id)
+            ->with('success', 'Persoon is gekoppeld aan de sales.');
     }
 
     public function updateStage($id)

@@ -203,6 +203,7 @@
                         <x-adminc::components.multi-contactmatcher
                             :lead="$lead"
                             :persons="$lead->persons"
+                            :create-person-url="route('admin.leads.attach_person', $lead->id)"
                         />
                     </div>
 

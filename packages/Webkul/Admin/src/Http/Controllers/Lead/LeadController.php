@@ -1394,6 +1394,26 @@ class LeadController extends Controller
         }
     }
 
+    public function attachPersonPage(int $leadId): View
+    {
+        $lead = $this->leadRepository->findOrFail($leadId);
+
+        return view('admin::leads.view.attach-person', compact('lead'));
+    }
+
+    public function attachPerson(\Illuminate\Http\Request $request, int $leadId): RedirectResponse
+    {
+        $lead = $this->leadRepository->findOrFail($leadId);
+        $personId = $request->integer('person_id');
+
+        Person::findOrFail($personId);
+
+        $lead->attachPersons([$personId]);
+
+        return redirect()->route('admin.leads.view', $leadId)
+            ->with('success', 'Persoon is gekoppeld aan de lead.');
+    }
+
     /**
      * Determine the appropriate pipeline and stage for a lead based on request parameters
      *

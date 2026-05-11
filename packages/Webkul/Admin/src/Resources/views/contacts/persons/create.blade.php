@@ -11,6 +11,11 @@
         :action="route('admin.contacts.persons.store')"
         enctype="multipart/form-data"
     >
+        @if(request()->has('return_to'))
+            <input type="hidden" name="return_to" value="{{ request('return_to') }}">
+            <input type="hidden" name="entity_id" value="{{ request('entity_id') }}">
+        @endif
+
         @include('adminc.components.validation-errors')
         <div class="flex flex-col gap-4">
             <!-- Header -->

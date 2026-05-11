@@ -38,13 +38,9 @@
             <!-- Geen resultaten - optie om nieuwe persoon aan te maken -->
             <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-activity-note-bg border-activity-note-border">
                 <div class="text-center">
-                    <div class="text-sm text-blue-700 mb-2">Geen bestaande personen gevonden voor "{{ search }}"</div>
-                    <button
-                        @click="$emit('create-new')"
-                        class="text-activity-note-text hover:text-activity-task-text bg-blue-100 hover:bg-activity-task-bg px-3 py-1 rounded text-sm"
-                    >
-                        Nieuwe persoon aanmaken: "{{ search }}"
-                    </button>
+                    <div class="text-sm text-blue-700 mb-2">Geen bestaande personen gevonden voor "{{ search }}".
+                        <br/>Klik <a :href="createPersonUrl || '#'" @click="!createPersonUrl && ($event.preventDefault(), $emit('create-new'))" class="underline">hier</a> om aan te maken.
+                        <br/><i>(Eventuele opstaande wijzigingen gaan verloren)</i></div>
                 </div>
             </div>
         </div>
@@ -73,7 +69,7 @@
         if (!app._context.components['v-person-search']) {
             app.component('v-person-search', {
                 template: '#v-person-search-template',
-                props: ['search', 'suggestions', 'isSearching'],
+                props: ['search', 'suggestions', 'isSearching', 'createPersonUrl'],
                 emits: ['update:search', 'select', 'create-new'],
                 methods: {}
             });

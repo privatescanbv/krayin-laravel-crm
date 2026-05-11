@@ -116,6 +116,14 @@
                 'returnUrl' => route('admin.sales-leads.view', $sales->id),
             ])
         @endforeach
+
+        @if(bouncer()->hasPermission('contacts.persons.create'))
+            <a href="{{ route('admin.sales-leads.attach_person', $sales->id) }}"
+               class="flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white p-4 text-gray-400 hover:border-blue-400 hover:text-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-blue-500">
+                <span class="icon-plus text-3xl"></span>
+                <span class="text-sm font-medium">Persoon koppelen</span>
+            </a>
+        @endif
    </div>
 
 </div>

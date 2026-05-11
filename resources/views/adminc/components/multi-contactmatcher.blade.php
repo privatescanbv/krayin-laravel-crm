@@ -1,5 +1,5 @@
 {!! view_render_event('admin.leads.multi_contactmatcher.before') !!}
-@props(['lead' => null, 'persons' => []])
+@props(['lead' => null, 'persons' => [], 'createPersonUrl' => null])
 @php
     /**
      * IMPORTANT: `date_of_birth` is a DATE-only field.
@@ -48,6 +48,7 @@
     <v-multi-contact-matcher
         :lead='@json($leadForContactMatcher)'
         :existing-persons='@json($persons ?? [])'
+        create-person-url="{{ $createPersonUrl ?? '' }}"
     ></v-multi-contact-matcher>
 </div>
 
@@ -180,6 +181,7 @@
                         :search="search"
                         :suggestions="suggestions"
                         :is-searching="isSearching"
+                        :create-person-url="createPersonUrl || null"
                         @update:search="(val) => { search = val; onSearch(); }"
                         @select="addPerson"
                         @create-new="createNewPerson"
@@ -209,7 +211,7 @@
         app.component('v-multi-contact-matcher', {
             template: '#v-multi-contact-matcher-template',
 
-            props: ['lead', 'existingPersons'],
+            props: ['lead', 'existingPersons', 'createPersonUrl'],
 
             data() {
                 return {

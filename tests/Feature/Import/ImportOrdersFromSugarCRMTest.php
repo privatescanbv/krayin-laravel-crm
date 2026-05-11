@@ -1212,7 +1212,7 @@ test('creates ResourceOrderItem with correct times when duration and resource ar
     insertSugarRow('order-roi-001', 'row-roi-001', [
         'duration'                   => 60,
         'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-001',
-        'datum_onderzoek'            => '2025-07-15 07:00:00',// UTC → 09:00 Amsterdam (CEST)
+        'datum_onderzoek'            => '2025-07-15 07:00:00', // UTC → 09:00 Amsterdam (CEST)
     ]);
     linkRowToContact('row-roi-001', 'contact-roi-001');
     linkOrderToSugarLead('order-roi-001', 'sugar-lead-roi-001');

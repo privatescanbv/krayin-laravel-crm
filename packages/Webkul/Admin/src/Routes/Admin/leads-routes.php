@@ -41,6 +41,10 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::delete('{leadId}/detach-person/{personId}', 'detachPerson')->name('admin.leads.detach_person');
 
+    Route::get('{leadId}/attach-person', 'attachPersonPage')->name('admin.leads.attach_person');
+
+    Route::post('{leadId}/attach-person', 'attachPerson')->name('admin.leads.attach_person.store');
+
     Route::get('sync-lead-to-person/{leadId}/{personId}', [PersonController::class, 'syncLeadToPerson'])->name('admin.leads.sync-lead-to-person');
 
     Route::post('sync-lead-to-person/{leadId}/{personId}', [PersonController::class, 'syncLeadToPersonUpdate'])->name('admin.leads.sync-lead-to-person-update');

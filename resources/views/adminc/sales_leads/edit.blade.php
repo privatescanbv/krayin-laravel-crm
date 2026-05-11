@@ -99,6 +99,7 @@
                         <x-adminc::components.multi-contactmatcher
                             :lead="$salesLead->lead"
                             :persons="$salesLead->persons"
+                            :create-person-url="route('admin.sales-leads.attach_person', $salesLead->id)"
                         />
                     </div>
                 </div>

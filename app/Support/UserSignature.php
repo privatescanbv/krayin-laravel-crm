@@ -44,7 +44,7 @@ class UserSignature
                             <p class="MsoNormal"><span style="font-size:9.0pt;font-family:&quot;Trebuchet MS&quot;,sans-serif;color:#00539f">+31 (0)74-255 26 80</span></p>
                         </td>
                         <td style="padding:1.5pt 1.5pt 1.5pt 1.5pt">
-                            <p class="MsoNormal"><span style="font-size:9.0pt;font-family:&quot;Trebuchet MS&quot;,sans-serif;color:#00539f"><a href="http://www.bodyscan.nl/" target="_blank"><span style="color:#00539f">www.bodyscan.nl</span></a></span></p>
+                            <p class="MsoNormal"><span style="font-size:9.0pt;font-family:&quot;Trebuchet MS&quot;,sans-serif;color:#00539f"><a href="https://www.herniapoli.nl" target="_blank"><span style="color:#00539f">www.herniapoli.nl</span></a></span></p>
                         </td>
                         <td width="170" rowspan="2" style="width:127.5pt;padding:1.5pt 1.5pt 1.5pt 1.5pt">
                             <table border="0" cellspacing="0" cellpadding="0" width="170" style="width:127.5pt">
@@ -71,9 +71,7 @@ class UserSignature
                         <td width="150" style="width:112.5pt;padding:1.5pt 1.5pt 1.5pt 1.5pt">
                             <p class="MsoNormal"><span style="font-size:9.0pt;font-family:&quot;Trebuchet MS&quot;,sans-serif;color:#00539f"><a href="mailto:info@privatescan.nl" target="_blank"><span style="color:#00539f">info@privatescan.nl</span></a></span></p>
                         </td>
-                        <td style="padding:1.5pt 1.5pt 1.5pt 1.5pt">
-                            <p class="MsoNormal"><span style="font-size:9.0pt;font-family:&quot;Trebuchet MS&quot;,sans-serif;color:#00539f"><a href="http://www.privatescan.nl/webshop" target="_blank"><span style="color:#00539f">www.privatescan.nl/webshop</span></a></span></p>
-                        </td>
+                        <td style="padding:1.5pt 1.5pt 1.5pt 1.5pt"></td>
                     </tr>
                     <tr>
                         <td width="70" style="width:52.5pt;padding:1.5pt 1.5pt 1.5pt 0cm">

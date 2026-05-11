@@ -424,6 +424,11 @@ class ResourcePlanningMonitorController extends Controller
                                $occupancy->orderItem?->order?->salesLead?->name ??
                                'Onbekend';
 
+                    $personName = $occupancy->orderItem?->person?->name;
+                    $order = $occupancy->orderItem?->order;
+                    $orderNumber = $order?->order_number;
+                    $orderId = $order?->id;
+
                     $outsideAvailability = empty($availabilityWindows)
                         ? false
                         : ! $this->overlapsWithWindows($blockStart, $blockEnd, $availabilityWindows);
@@ -437,6 +442,9 @@ class ResourcePlanningMonitorController extends Controller
                         'clickable'            => false,
                         'booking_id'           => $occupancy->id,
                         'lead_name'            => $leadName,
+                        'person_name'          => $personName,
+                        'order_number'         => $orderNumber,
+                        'order_id'             => $orderId,
                         'outside_availability' => $outsideAvailability,
                     ];
                 }

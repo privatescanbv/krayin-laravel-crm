@@ -520,8 +520,8 @@ class OrderMailService
 
             $rows .= '<tr>'
                 .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.$productName.'</td>'
-                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;">'.$quantity.'</td>'
-                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;">'.$price.'</td>'
+                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;vertical-align: top;">'.$quantity.'</td>'
+                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;vertical-align: top;">'.$price.'</td>'
                 .'</tr>';
         }
 
@@ -537,8 +537,8 @@ class OrderMailService
     <thead>
         <tr>
             <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Product</th>
-            <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;">Aantal</th>
-            <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;">Prijs</th>
+            <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:40px;">Aantal</th>
+            <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:140px;">Prijs</th>
         </tr>
     </thead>
     <tbody>

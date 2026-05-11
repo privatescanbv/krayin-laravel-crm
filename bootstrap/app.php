@@ -86,7 +86,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('emails:cleanup-logs')->daily();
         $schedule->command('emails:cleanup-graph-inbox')->daily();
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
-        $schedule->command('afb:send-daily')->dailyAt('06:00')->withoutOverlapping();
+        $schedule->command('afb:send-daily')->dailyAt('11:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);

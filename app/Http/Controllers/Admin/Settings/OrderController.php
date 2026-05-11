@@ -1807,7 +1807,7 @@ class OrderController extends SimpleEntityController
 
         PatientNotifyEvent::dispatch(
             $person->id,
-            'Orderbevestiging #'.$order->order_number,
+            'Orderbevestiging '.$order->order_number,
             NotificationReferenceType::FILE,
             $activity->id,
             false,

@@ -94,6 +94,7 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
         'user_id'              => auth()->id(),
         'order_number'         => 'ORD-TEST-1001',
         'first_examination_at' => $examAt->copy(),
+        'first_examination_time' => $examAt->format('H:i'),
         'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
     ]);
 
@@ -796,6 +797,7 @@ test('banner shows when order item from last afb dispatch is marked lost', funct
 
     $examAt = now()->addHours(10);
     $context = createOrderForClinic($examAt);
+
     $service = app(AfbDispatchService::class);
 
     // Sla een succesvolle dispatch op met het bestaande orderitem

@@ -428,7 +428,7 @@ class OrderController extends SimpleEntityController
             ->groupBy(fn ($doc) => $doc->dispatch?->clinic_department_id)
             ->map(fn ($docs) => $docs->sortByDesc('sent_at')->first());
 
-        $totalChecks     = $order->orderChecks->count();
+        $totalChecks = $order->orderChecks->count();
         $completedChecks = $order->orderChecks->where('done', true)->count();
 
         return view('admin::orders.view', [

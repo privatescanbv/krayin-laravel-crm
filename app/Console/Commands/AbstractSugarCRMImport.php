@@ -80,8 +80,7 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function parseSugarUtcDate($value): ?string
     {
-        return $this->parseSugarUtcAsDate($value)
-            ->format('Y-m-d H:i:s');
+        return $this->parseSugarUtcAsDate($value)?->format('Y-m-d H:i:s');
     }
 
     protected function parseSugarUtcAsDate($value): ?Carbon

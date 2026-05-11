@@ -53,7 +53,7 @@ class OrderRepository extends Repository
     public function resolveEmailVariablesForOrder(int $orderId, ?int $personId = null): array
     {
         $order = $this->with([
-            'orderItems.resourceOrderItems.resource.clinic.address',
+            'orderItems.resourceOrderItems.resource.clinicDepartment.clinic.address',
             'orderItems.resourceOrderItems.resource.resourceType',
             'orderItems.person',
             'orderItems.product',
@@ -168,7 +168,7 @@ class OrderRepository extends Repository
      */
     private function resolveClinicForOrder(Order $order): ?Clinic
     {
-        return $order->orderItems()->first()?->resourceOrderItem()->with('resource')->first()?->resource->clinic ?? null;
+        return $order->orderItems()->first()?->resourceOrderItem()->with('resource.clinicDepartment.clinic')->first()?->resource->clinicDepartment?->clinic ?? null;
     }
 
     /**
@@ -194,8 +194,8 @@ class OrderRepository extends Repository
             $firstRoi = $this->earliestResourceOrderItemForPerson($order, $filterPersonId);
             if ($firstRoi?->from) {
                 $from = Carbon::parse($firstRoi->from);
-                $firstRoi->loadMissing('resource.clinic.address');
-                $clinic = $firstRoi->resource?->clinic;
+                $firstRoi->loadMissing('resource.clinicDepartment.clinic.address');
+                $clinic = $firstRoi->resource?->clinicDepartment?->clinic;
             }
         } else {
             $resolved = $order->firstExaminationCarbon();
@@ -251,7 +251,7 @@ class OrderRepository extends Repository
      */
     private function earliestResourceOrderItemForPerson(Order $order, int $personId): ?ResourceOrderItem
     {
-        $order->loadMissing('orderItems.resourceOrderItems.resource.clinic');
+        $order->loadMissing('orderItems.resourceOrderItems.resource.clinicDepartment.clinic');
 
         $best = null;
 
@@ -335,16 +335,16 @@ class OrderRepository extends Repository
             return;
         }
 
-        $resourceOrderItem->loadMissing('resource.clinic.address');
+        $resourceOrderItem->loadMissing('resource.clinicDepartment.clinic.address');
 
-        $address = $resourceOrderItem->resource?->clinic?->address;
+        $address = $resourceOrderItem->resource?->clinicDepartment?->clinic?->address;
         $appointmentsByPerson[$personId]['appointments'][] = [
             'product_name'        => $item->getProductName() ?? 'Onbekend product',
             'product_description' => $item->getProductDescription() ?? 'Onbekend product',
             'date'                => $this->formatDutchDate($resourceOrderItem->from),
             'time_from'           => Carbon::parse($resourceOrderItem->from)->format('H:i'),
             'time_to'             => $resourceOrderItem->to ? Carbon::parse($resourceOrderItem->to)->format('H:i') : null,
-            'clinic_name'         => $resourceOrderItem->resource?->clinic?->name ?? 'Onbekend',
+            'clinic_name'         => $resourceOrderItem->resource?->clinicDepartment?->clinic?->name ?? 'Onbekend',
             'address'             => $address ? $address->formatAddress() : '',
             'resource_name'       => $resourceOrderItem->resource?->name ?? 'Onbekend',
         ];

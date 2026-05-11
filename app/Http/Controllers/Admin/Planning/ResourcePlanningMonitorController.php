@@ -29,7 +29,7 @@ class ResourcePlanningMonitorController extends Controller
     {
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = app(ResourceRepository::class)
-            ->allWithActiveClinics(['clinic', 'shifts'], ['id', 'name', 'clinic_id', 'resource_type_id']);
+            ->allWithActiveClinics(['clinicDepartment.clinic', 'shifts'], ['id', 'name', 'clinic_department_id', 'resource_type_id']);
         $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
         return view('adminc.planning.monitor', [
@@ -62,7 +62,7 @@ class ResourcePlanningMonitorController extends Controller
 
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = app(ResourceRepository::class)
-            ->allWithActiveClinics(['clinic'], ['id', 'name', 'clinic_id', 'resource_type_id']);
+            ->allWithActiveClinics(['clinicDepartment.clinic'], ['id', 'name', 'clinic_department_id', 'resource_type_id']);
         $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
         return view('adminc.planning.order_monitor', [
@@ -240,8 +240,8 @@ class ResourcePlanningMonitorController extends Controller
                 'id'                         => $r->id,
                 'name'                       => $r->name,
                 'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinic_id,
-                'clinic'                     => $r->clinic?->name,
+                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+                'clinic'                     => $r->clinicDepartment?->clinic?->name,
                 'resource_type'              => $r->resourceType?->name,
                 'resource_type_id'           => $r->resource_type_id,
                 'has_infinite_duration'      => $r->hasInfiniteDuration(),
@@ -296,8 +296,8 @@ class ResourcePlanningMonitorController extends Controller
                 'id'                         => $r->id,
                 'name'                       => $r->name,
                 'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinic_id,
-                'clinic'                     => $r->clinic?->name,
+                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+                'clinic'                     => $r->clinicDepartment?->clinic?->name,
                 'resource_type'              => $r->resourceType?->name,
                 'resource_type_id'           => $r->resource_type_id,
                 'has_infinite_duration'      => $r->hasInfiniteDuration(),
@@ -313,7 +313,7 @@ class ResourcePlanningMonitorController extends Controller
     {
         $resourcesQuery = app(ResourceRepository::class)
             ->queryWithActiveClinics()
-            ->with('clinic', 'resourceType', 'shifts');
+            ->with('clinicDepartment.clinic', 'resourceType', 'shifts');
 
         // Filter by resource types (multi-select)
         if ($request->filled('resource_type_ids')) {
@@ -324,7 +324,7 @@ class ResourcePlanningMonitorController extends Controller
         // Filter by clinics (multi-select)
         if ($request->filled('clinic_ids')) {
             $clinicIds = explode(',', $request->query('clinic_ids'));
-            $resourcesQuery->whereIn('clinic_id', array_map('intval', $clinicIds));
+            $resourcesQuery->whereHas('clinicDepartment', fn ($q) => $q->whereIn('clinic_id', array_map('intval', $clinicIds)));
         }
 
         // Filter by resources (multi-select)
@@ -598,8 +598,8 @@ class ResourcePlanningMonitorController extends Controller
                 'id'                         => $r->id,
                 'name'                       => $r->name,
                 'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinic_id,
-                'clinic'                     => $r->clinic?->name,
+                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+                'clinic'                     => $r->clinicDepartment?->clinic?->name,
                 'resource_type'              => $r->resourceType?->name,
                 'resource_type_id'           => $r->resource_type_id,
                 'has_infinite_duration'      => $r->hasInfiniteDuration(),
@@ -684,8 +684,8 @@ class ResourcePlanningMonitorController extends Controller
                 'id'                         => $r->id,
                 'name'                       => $r->name,
                 'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinic_id,
-                'clinic'                     => $r->clinic?->name,
+                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+                'clinic'                     => $r->clinicDepartment?->clinic?->name,
                 'resource_type'              => $r->resourceType?->name,
                 'resource_type_id'           => $r->resource_type_id,
                 'has_infinite_duration'      => $r->hasInfiniteDuration(),

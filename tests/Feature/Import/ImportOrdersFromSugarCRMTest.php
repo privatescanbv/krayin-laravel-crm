@@ -1207,12 +1207,12 @@ test('creates ResourceOrderItem with correct times when duration and resource ar
 
     insertSugarOrder('order-roi-001', [
         'datum_onderzoek_1' => '2025-07-15',
-        'aankomsttijd_c'    => '09:00',
+        'aankomsttijd_c'    => '07:00', // UTC → 09:00 Amsterdam (CEST)
     ]);
     insertSugarRow('order-roi-001', 'row-roi-001', [
         'duration'                   => 60,
         'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-001',
-        'datum_onderzoek'            => '2025-07-15 09:00:00',
+        'datum_onderzoek'            => '2025-07-15 07:00:00',// UTC → 09:00 Amsterdam (CEST)
     ]);
     linkRowToContact('row-roi-001', 'contact-roi-001');
     linkOrderToSugarLead('order-roi-001', 'sugar-lead-roi-001');
@@ -1297,12 +1297,12 @@ test('creates ResourceOrderItems using each row examination date and time', func
     insertSugarRow('order-roi-rows', 'row-roi-a', [
         'duration'                   => 60,
         'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-rows',
-        'datum_onderzoek'            => '2025-07-15 09:00:00',
+        'datum_onderzoek'            => '2025-07-15 07:00:00', // UTC → 09:00 Amsterdam (CEST)
     ]);
     insertSugarRow('order-roi-rows', 'row-roi-b', [
         'duration'                   => 30,
         'pcrm_partnerresources_id_c' => 'sugar-resource-uuid-rows',
-        'datum_onderzoek'            => '2025-07-20 14:00:00',
+        'datum_onderzoek'            => '2025-07-20 12:00:00', // UTC → 14:00 Amsterdam (CEST)
     ]);
     linkRowToContact('row-roi-a', 'contact-roi-rows');
     linkRowToContact('row-roi-b', 'contact-roi-rows');

@@ -342,7 +342,7 @@ class PartnerProductController extends SimpleEntityController
         }
 
         $validResources = Resource::whereIn('id', $resourceIds)
-            ->whereIn('clinic_id', $clinicIds)
+            ->whereHas('clinicDepartment', fn ($q) => $q->whereIn('clinic_id', $clinicIds))
             ->pluck('id')
             ->toArray();
 

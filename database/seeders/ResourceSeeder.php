@@ -122,7 +122,6 @@ class ResourceSeeder extends BaseSeeder
             Resource::create([
                 'name'                         => $row['name'],
                 'resource_type_id'             => $resourceType->id,
-                'clinic_id'                    => $clinic->id,
                 'clinic_department_id'         => $dept->id,
                 'is_active'                    => $row['is_active'],
                 'allow_outside_availability'   => $row['allow_outside_availability'],

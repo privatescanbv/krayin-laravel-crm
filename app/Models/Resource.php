@@ -6,6 +6,7 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * @mixin IdeHelperResource
@@ -20,7 +21,6 @@ class Resource extends Model
         'external_id',
         'name',
         'resource_type_id',
-        'clinic_id',
         'clinic_department_id',
         'is_active',
         'allow_outside_availability',
@@ -30,7 +30,6 @@ class Resource extends Model
     ];
 
     protected $casts = [
-        'clinic_id'                  => 'integer',
         'clinic_department_id'       => 'integer',
         'resource_type_id'           => 'integer',
         'is_active'                  => 'boolean',
@@ -44,18 +43,9 @@ class Resource extends Model
         return $this->belongsTo(ClinicDepartment::class);
     }
 
-    public function getClinic(): ?Clinic
+    public function clinic(): HasOneThrough
     {
-        return $this->clinicDepartment?->clinic
-            ?? ($this->clinic_id ? Clinic::find($this->clinic_id) : null);
-    }
-
-    /**
-     * Keep backward-compatible clinic() relation for planning code that eager-loads it.
-     */
-    public function clinic(): BelongsTo
-    {
-        return $this->belongsTo(Clinic::class);
+        return $this->hasOneThrough(Clinic::class, ClinicDepartment::class);
     }
 
     public function resourceType()

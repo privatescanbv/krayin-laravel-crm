@@ -15,7 +15,7 @@ class OrderCheckService
     public function retrieveClinicFromOrder(Order $order, Person $patient): ?string
     {
         $firstBooking = ResourceOrderItem::query()
-            ->with(['resource:id,clinic_id'])
+            ->with(['resource:id,clinic_department_id', 'resource.clinicDepartment:id,clinic_id'])
             ->whereHas('orderItem', function ($q) use ($order, $patient) {
                 $q->where('order_id', $order->id);
 
@@ -28,7 +28,7 @@ class OrderCheckService
             ->orderBy('from', 'asc')
             ->first();
 
-        $clinicId = $firstBooking?->resource?->clinic_id;
+        $clinicId = $firstBooking?->resource?->clinicDepartment?->clinic_id;
 
         return $clinicId !== null ? (string) $clinicId : null;
     }

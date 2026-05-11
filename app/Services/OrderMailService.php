@@ -157,7 +157,7 @@ class OrderMailService
         }
 
         $order->load([
-            'orderItems.resourceOrderItems.resource.clinic.address',
+            'orderItems.resourceOrderItems.resource.clinicDepartment.clinic.address',
             'orderItems.resourceOrderItems.resource.resourceType',
             'orderItems.resourceOrderItem.resource.clinicDepartment',
             'orderItems.person',
@@ -317,7 +317,7 @@ class OrderMailService
 
             foreach ($resourceOrderItems as $resourceOrderItem) {
                 $resource = $resourceOrderItem->resource;
-                $clinic = $resource?->clinic;
+                $clinic = $resource?->clinicDepartment?->clinic;
                 $address = $clinic?->address;
 
                 $from = $resourceOrderItem->from ? Carbon::parse($resourceOrderItem->from) : null;

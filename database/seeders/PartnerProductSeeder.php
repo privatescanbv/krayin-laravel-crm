@@ -8,6 +8,7 @@ use App\Enums\PurchasePriceType;
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
 use App\Models\PurchasePrice;
+use App\Models\Resource;
 use App\Models\ResourceType;
 use Exception;
 use RuntimeException;
@@ -17,18 +18,27 @@ class PartnerProductSeeder extends BaseSeeder
 {
     public function run(): void
     {
-        // get all resources
-        $mappedResources = Clinic::with('resources.resourceType')->get()->mapWithKeys(function ($clinic) {
-            $resources = $clinic->resources->mapWithKeys(function ($resource) {
-                $typeName = optional($resource->resourceType)->name ?? 'unknown';
+        // Map resources per clinic via departments (resources have no clinic_id column).
+        $clinics = Clinic::query()->get();
+        $allResources = Resource::query()
+            ->with(['resourceType', 'clinicDepartment:id,clinic_id'])
+            ->get();
 
-                return [
-                    $typeName => [
-                        'id'   => $resource->id,
-                        'name' => $resource->name,
-                    ],
-                ];
-            });
+        $mappedResources = $clinics->mapWithKeys(function (Clinic $clinic) use ($allResources) {
+            $resources = $allResources
+                ->filter(
+                    fn (Resource $resource) => (int) ($resource->clinicDepartment?->clinic_id) === (int) $clinic->id
+                )
+                ->mapWithKeys(function (Resource $resource) {
+                    $typeName = optional($resource->resourceType)->name ?? 'unknown';
+
+                    return [
+                        $typeName => [
+                            'id'   => $resource->id,
+                            'name' => $resource->name,
+                        ],
+                    ];
+                });
 
             return [$clinic->id => $resources];
         })->toArray();

@@ -111,10 +111,10 @@ class OrderItemPlanningController extends Controller
         $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
         $clinicId = $request->query('clinic_id');
 
-        $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
+        $resourcesQuery = Resource::query()->with('clinicDepartment.clinic', 'resourceType')
             ->where('resource_type_id', $resourceTypeId);
         if ($clinicId !== null && $clinicId !== '') {
-            $resourcesQuery->where('clinic_id', (int) $clinicId);
+            $resourcesQuery->whereHas('clinicDepartment', fn ($q) => $q->where('clinic_id', (int) $clinicId));
         }
         $resources = $resourcesQuery->get();
 
@@ -162,8 +162,8 @@ class OrderItemPlanningController extends Controller
             'resources' => $resources->map(fn ($r) => [
                 'id'                         => $r->id,
                 'name'                       => $r->name,
-                'clinic_id'                  => $r->clinic_id,
-                'clinic'                     => $r->clinic?->name,
+                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+                'clinic'                     => $r->clinicDepartment?->clinic?->name,
                 'resource_type'              => $r->resourceType?->name,
                 'allow_outside_availability' => (bool) $r->allow_outside_availability,
             ])->values(),
@@ -181,10 +181,10 @@ class OrderItemPlanningController extends Controller
         $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
         $clinicId = $request->query('clinic_id');
 
-        $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
+        $resourcesQuery = Resource::query()->with('clinicDepartment.clinic', 'resourceType')
             ->where('resource_type_id', $resourceTypeId);
         if ($clinicId !== null && $clinicId !== '') {
-            $resourcesQuery->where('clinic_id', (int) $clinicId);
+            $resourcesQuery->whereHas('clinicDepartment', fn ($q) => $q->where('clinic_id', (int) $clinicId));
         }
         $resources = $resourcesQuery->get();
 
@@ -234,8 +234,8 @@ class OrderItemPlanningController extends Controller
             'resources' => $resources->map(fn ($r) => [
                 'id'                         => $r->id,
                 'name'                       => $r->name,
-                'clinic_id'                  => $r->clinic_id,
-                'clinic'                     => $r->clinic?->name,
+                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+                'clinic'                     => $r->clinicDepartment?->clinic?->name,
                 'resource_type'              => $r->resourceType?->name,
                 'allow_outside_availability' => (bool) $r->allow_outside_availability,
             ])->values(),

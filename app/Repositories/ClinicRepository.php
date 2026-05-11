@@ -37,8 +37,8 @@ class ClinicRepository extends Repository
         return DB::transaction(function () use ($id) {
             $clinic = $this->findOrFail($id);
 
-            // Detach resources by nullifying clinic_id and clinic_department_id
-            Resource::where('clinic_id', $clinic->id)->update(['clinic_id' => null, 'clinic_department_id' => null]);
+            // Detach resources by nullifying clinic_department_id
+            Resource::whereHas('clinicDepartment', fn ($q) => $q->where('clinic_id', $clinic->id))->update(['clinic_department_id' => null]);
 
             return (bool) parent::delete($id);
         });

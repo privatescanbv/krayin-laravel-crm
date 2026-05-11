@@ -37,9 +37,12 @@
 
             if (!empty($selectedClinicIds)) {
                 // Load all resources for the selected clinics for initial render
-                $initialResourceOptions = Resource::whereIn('clinic_id', $selectedClinicIds)
+                $initialResourceOptions = Resource::whereHas(
+                    'clinicDepartment',
+                    fn ($q) => $q->whereIn('clinic_id', $selectedClinicIds)
+                )
                     ->orderBy('name')
-                    ->get(['id','name']);
+                    ->get(['id', 'name']);
             } else {
                 // If no clinics pre-selected, render all resources initially so the user can pick
                 $initialResourceOptions = Resource::orderBy('name')->get(['id','name']);

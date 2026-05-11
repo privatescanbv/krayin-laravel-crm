@@ -12,6 +12,28 @@ class ResourceFactory extends Factory
 {
     protected $model = Resource::class;
 
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Resource $resource): void {
+            $clinicId = $resource->getAttribute('clinic_id');
+
+            if ($clinicId !== null) {
+                $currentDept = $resource->clinic_department_id
+                    ? ClinicDepartment::find($resource->clinic_department_id)
+                    : null;
+
+                if (! $currentDept || (int) $currentDept->clinic_id !== (int) $clinicId) {
+                    $currentDept = ClinicDepartment::where('clinic_id', $clinicId)->inRandomOrder()->first()
+                        ?? ClinicDepartment::factory()->create(['clinic_id' => $clinicId]);
+                }
+
+                $resource->clinic_department_id = $currentDept->id;
+            }
+
+            unset($resource->clinic_id);
+        });
+    }
+
     public function definition(): array
     {
         $resourceType = ResourceType::query()->inRandomOrder()->first() ?? ResourceType::factory()->create();
@@ -21,7 +43,6 @@ class ResourceFactory extends Factory
 
         return [
             'resource_type_id'     => $resourceType->id,
-            'clinic_id'            => $clinic->id,
             'clinic_department_id' => $dept->id,
             'name'                 => $this->faker->unique()->words(2, true),
         ];

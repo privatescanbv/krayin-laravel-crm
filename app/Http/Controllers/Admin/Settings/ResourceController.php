@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ResourceDataGrid;
-use App\Models\ClinicDepartment;
 use App\Repositories\ClinicDepartmentRepository;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
@@ -68,11 +67,17 @@ class ResourceController extends SimpleEntityController
 
         $resources = $this->resourceRepository
             ->scopeQuery(function ($query) use ($clinicIds) {
-                return $query->whereIn('clinic_id', $clinicIds)
+                return $query->whereHas('clinicDepartment', fn ($q) => $q->whereIn('clinic_id', $clinicIds))
+                    ->with('clinicDepartment:id,clinic_id')
                     ->orderBy('name')
-                    ->select('id', 'name', 'clinic_id');
+                    ->select('id', 'name', 'clinic_department_id');
             })
-            ->all();
+            ->all()
+            ->map(fn ($resource) => [
+                'id'        => $resource->id,
+                'name'      => $resource->name,
+                'clinic_id' => $resource->clinicDepartment?->clinic_id,
+            ]);
 
         return response()->json(['data' => $resources]);
     }
@@ -95,9 +100,9 @@ class ResourceController extends SimpleEntityController
         }
 
         // If coming from clinic view, go back there
-        if ($request->input('return_to') === 'clinic_view' && $entity->clinic_id) {
+        if ($request->input('return_to') === 'clinic_view' && $entity->clinicDepartment?->clinic_id) {
             return redirect()
-                ->route('admin.clinics.view', $entity->clinic_id)
+                ->route('admin.clinics.view', $entity->clinicDepartment?->clinic_id)
                 ->with('success', $this->getCreateSuccessMessage());
         }
 
@@ -390,11 +395,6 @@ class ResourceController extends SimpleEntityController
 
     protected function transformPayload(array $payload, ?int $id = null): array
     {
-        if (! empty($payload['clinic_department_id'])) {
-            $dept = ClinicDepartment::find($payload['clinic_department_id']);
-            $payload['clinic_id'] = $dept?->clinic_id;
-        }
-
         return $payload;
     }
 

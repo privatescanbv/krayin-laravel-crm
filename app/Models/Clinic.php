@@ -71,9 +71,12 @@ class Clinic extends Model
         return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product');
     }
 
-    public function resources()
+    /**
+     * Resources belong to clinic departments; this is the effective clinic scope for planning and seeding.
+     */
+    public function resources(): HasManyThrough
     {
-        return $this->hasMany(Resource::class);
+        return $this->hasManyThrough(Resource::class, ClinicDepartment::class);
     }
 
     public function activities()

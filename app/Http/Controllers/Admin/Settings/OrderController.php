@@ -389,7 +389,6 @@ class OrderController extends SimpleEntityController
             'orderItems.person',
             'orderItems.purchasePrice',
             'orderItems.invoicePurchasePrice',
-            'orderItems.resourceOrderItems.resource.clinic',
             'orderItems.resourceOrderItems.resource.clinicDepartment.clinic',
             'afbPersonDocuments.dispatch.clinicDepartment',
             'payments',
@@ -750,7 +749,6 @@ class OrderController extends SimpleEntityController
     public function reportUploadData(int $orderId): JsonResponse
     {
         $order = $this->orderRepository->with([
-            'orderItems.resourceOrderItem.resource.clinic',
             'orderItems.resourceOrderItem.resource.clinicDepartment.clinic',
             'orderChecks',
         ])->findOrFail($orderId);
@@ -762,7 +760,7 @@ class OrderController extends SimpleEntityController
                     return null;
                 }
 
-                return $resource->clinicDepartment?->clinic ?? $resource->clinic;
+                return $resource->clinicDepartment?->clinic;
             })
             ->filter()
             ->unique('id')

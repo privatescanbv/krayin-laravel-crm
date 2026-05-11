@@ -18,7 +18,6 @@ use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Repositories\AddressRepository;
 use App\Repositories\SalesLeadRepository;
-use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -532,7 +531,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $orderStage = $this->mapSalesStageToOrderPipelineStage($record->sales_stage ?? '', $department);
                 $salesStage = $this->mapSalesStageToSalesPipelineStage($record->sales_stage ?? '', $department);
                 $lostReason = $this->mapLostReason($record->reden_afvoeren_c ?? null);
-                $closedAt = $this->parseSugarDate($record->date_closed);
+                $closedAt = $this->parseSugarUtcDate($record->date_closed);
 
                 if ($crmLead === null) {
                     $this->warn("Skipping order {$record->id} (order_num={$record->order_num}): no matching CRM Lead found for sugar_lead_id=".($record->sugar_lead_id ?? 'null').'. Run with --import-leads to import missing leads first.');
@@ -661,7 +660,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                                 $rowExaminationAt = $this->parseSugarUtcAsDate($row->datum_onderzoek ?? null);
                                 if ($rowExaminationAt !== null) {
                                     $from = $rowExaminationAt;
-                                    $to = $from->addMinutes((int) $row->duration);
+                                    $to = $from->copy()->addMinutes((int) $row->duration);
                                     ResourceOrderItem::create([
                                         'resource_id'  => $resource->id,
                                         'orderitem_id' => $orderItem->id,

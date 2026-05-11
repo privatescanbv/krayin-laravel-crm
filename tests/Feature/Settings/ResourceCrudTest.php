@@ -44,8 +44,10 @@ test('can create resource', function () {
     $this->assertDatabaseHas('resources', [
         'name'                 => 'Test Resource',
         'clinic_department_id' => $dept->id,
-        'clinic_id'            => $clinic->id,
     ]);
+
+    $created = Resource::query()->findOrFail($response->json('data.id'));
+    expect($created->clinicDepartment?->clinic_id)->toBe($clinic->id);
 });
 
 test('can update resource', function () {

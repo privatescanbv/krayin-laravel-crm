@@ -90,12 +90,12 @@ function createOrderForClinic(Carbon $examAt, ?Clinic $clinic = null): array
     $salesLead->attachPersons([$person->id]);
 
     $order = Order::factory()->create([
-        'sales_lead_id'        => $salesLead->id,
-        'user_id'              => auth()->id(),
-        'order_number'         => 'ORD-TEST-1001',
-        'first_examination_at' => $examAt->copy(),
+        'sales_lead_id'          => $salesLead->id,
+        'user_id'                => auth()->id(),
+        'order_number'           => 'ORD-TEST-1001',
+        'first_examination_at'   => $examAt->copy(),
         'first_examination_time' => $examAt->format('H:i'),
-        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'pipeline_stage_id'      => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
     ]);
 
     $product = Product::factory()->create([

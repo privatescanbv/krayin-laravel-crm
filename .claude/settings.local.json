@@ -72,7 +72,9 @@
       "Skill(codex:rescue)",
       "Bash(node *)",
       "Bash(xxd /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/app/Enums/ProductType.php)",
-      "Bash(vendor/bin/sail mysql *)"
+      "Bash(vendor/bin/sail mysql *)",
+      "Bash(wait)",
+      "Bash(openssl x509 *)"
     ]
   }
 }

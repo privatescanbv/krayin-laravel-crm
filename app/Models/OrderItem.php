@@ -269,10 +269,10 @@ class OrderItem extends Model
     {
         $product = $this->product;
 
-        $resourceOrderItem = $this->resourceOrderItem()->with('resource')->first();
+        $resourceOrderItem = $this->resourceOrderItem()->with('resource.clinicDepartment')->first();
         if (! is_null($resourceOrderItem)) {
             // order item has been planned
-            $clinicId = $resourceOrderItem->resource?->clinic_id;
+            $clinicId = $resourceOrderItem->resource?->clinicDepartment?->clinic_id;
             $partnerProduct = PartnerProduct::forClinicAndProduct($clinicId, $product->id)->first();
             if (! is_null($partnerProduct)) {
                 return $partnerProduct;

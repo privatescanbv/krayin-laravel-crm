@@ -88,6 +88,71 @@ test('order items from other orders are not affected when one order moves to won
         ->and($itemB->fresh()->status)->toBe(OrderItemStatus::NEW);
 });
 
+test('updating to verloren stage marks all order items as lost', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+    ]);
+
+    $newItem = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::NEW->value]);
+    $plannedItem = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::PLANNED->value]);
+    $wonItem = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::WON->value]);
+
+    $order->pipeline_stage_id = PipelineStage::ORDER_VERLOREN->id();
+    $order->save();
+
+    expect($newItem->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and($plannedItem->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and($wonItem->fresh()->status)->toBe(OrderItemStatus::LOST);
+});
+
+test('updating to verloren stage removes resource_orderitem planning slots', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+    ]);
+
+    $item = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::PLANNED->value]);
+    \Illuminate\Support\Facades\DB::table('resource_orderitem')->insert([
+        'orderitem_id' => $item->id,
+        'resource_id'  => 1,
+        'from'         => now()->toDateTimeString(),
+        'to'           => now()->addHour()->toDateTimeString(),
+    ]);
+
+    expect(\Illuminate\Support\Facades\DB::table('resource_orderitem')->where('orderitem_id', $item->id)->count())->toBe(1);
+
+    $order->pipeline_stage_id = PipelineStage::ORDER_VERLOREN->id();
+    $order->save();
+
+    expect(\Illuminate\Support\Facades\DB::table('resource_orderitem')->where('orderitem_id', $item->id)->count())->toBe(0);
+});
+
+test('updating to hernia verloren stage marks all order items as lost', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND_HERNIA->id(),
+    ]);
+
+    $plannedItem = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::PLANNED->value]);
+
+    $order->pipeline_stage_id = PipelineStage::ORDER_VERLOREN_HERNIA->id();
+    $order->save();
+
+    expect($plannedItem->fresh()->status)->toBe(OrderItemStatus::LOST);
+});
+
+test('items from other orders are not affected when one order moves to verloren', function () {
+    $orderA = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id()]);
+    $orderB = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id()]);
+
+    $itemA = OrderItem::factory()->create(['order_id' => $orderA->id, 'status' => OrderItemStatus::PLANNED->value]);
+    $itemB = OrderItem::factory()->create(['order_id' => $orderB->id, 'status' => OrderItemStatus::PLANNED->value]);
+
+    $orderA->pipeline_stage_id = PipelineStage::ORDER_VERLOREN->id();
+    $orderA->save();
+
+    expect($itemA->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and($itemB->fresh()->status)->toBe(OrderItemStatus::PLANNED);
+});
+
 test('created dispatches order.update_stage.after event', function () {
     Event::fake(['order.update_stage.after']);
 

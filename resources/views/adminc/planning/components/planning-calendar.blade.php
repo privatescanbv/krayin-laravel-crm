@@ -99,9 +99,27 @@
                              :style="blockStyle(block)"
                              :title="getBlockTooltip(block)"
                              @click.stop="block.clickable ? handleBlockClick(block) : null">
-                            <div v-if="block.type === 'occupied'" class="font-semibold text-xs">@{{ block.lead_name || 'Onbekend' }}</div>
-                            <div v-else-if="block.type === 'available'" class="text-xs font-medium">Beschikbaar</div>
-                            <div class="text-xs" :class="block.type === 'occupied' ? 'opacity-75' : ''">@{{ timeRange(block.from, block.to) }}</div>
+                            <template v-if="block.type === 'occupied'">
+                                <div class="flex items-start justify-between gap-1">
+                                    <div class="font-semibold text-xs truncate">@{{ block.person_name || block.lead_name || 'Onbekend' }}</div>
+                                    <a v-if="block.order_id"
+                                       :href="`${'{{ route('admin.orders.view', ['id' => 'REPLACE']) }}'.replace('REPLACE', block.order_id)}`"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="text-white opacity-75 hover:opacity-100 flex-shrink-0"
+                                       :title="`Order ${block.order_number || block.order_id}`"
+                                       @click.stop>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                </div>
+                                <div class="text-xs opacity-75">@{{ timeRange(block.from, block.to) }}</div>
+                            </template>
+                            <template v-else-if="block.type === 'available'">
+                                <div class="text-xs font-medium">Beschikbaar</div>
+                                <div class="text-xs">@{{ timeRange(block.from, block.to) }}</div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -133,8 +151,25 @@
                          :class="['month-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied']"
                          :title="getBlockTooltip(block)"
                          @click="block.clickable ? handleBlockClick(block) : null">
-                        <div v-if="block.type === 'occupied'" class="font-semibold">@{{ block.lead_name || 'Onbekend' }}</div>
-                        <div v-else-if="block.type === 'available'" class="font-medium">Beschikbaar</div>
+                        <template v-if="block.type === 'occupied'">
+                            <div class="flex items-start justify-between gap-1">
+                                <div class="font-semibold truncate">@{{ block.person_name || block.lead_name || 'Onbekend' }}</div>
+                                <a v-if="block.order_id"
+                                   :href="`${'{{ route('admin.orders.view', ['id' => 'REPLACE']) }}'.replace('REPLACE', block.order_id)}`"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="opacity-75 hover:opacity-100 flex-shrink-0"
+                                   :title="`Order ${block.order_number || block.order_id}`"
+                                   @click.stop>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </template>
+                        <template v-else-if="block.type === 'available'">
+                            <div class="font-medium">Beschikbaar</div>
+                        </template>
                         <div class="text-xs">@{{ timeRange(block.from, block.to) }}</div>
                     </div>
                 </div>
@@ -487,8 +522,12 @@
                     const timeStr = `${from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} tot ${to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
                     if (block.type === 'occupied') {
-                        const leadName = block.lead_name || 'Onbekend';
-                        return `${name}${notes}\nGeboekt: ${leadName}\nTijd: ${timeStr}`;
+                        const displayName = block.person_name || block.lead_name || 'Onbekend';
+                        let tooltip = `${name}${notes}\nPersoon: ${displayName}\nTijd: ${timeStr}`;
+                        if (block.order_number) {
+                            tooltip += `\nOrder: ${block.order_number}`;
+                        }
+                        return tooltip;
                     }
 
                     return `${name}${notes} - ${timeStr}`;

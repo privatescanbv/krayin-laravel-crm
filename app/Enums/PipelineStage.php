@@ -581,6 +581,11 @@ enum PipelineStage: string
         );
     }
 
+    public static function getLostOrderStageIds(): array
+    {
+        return [self::ORDER_VERLOREN->id(), self::ORDER_VERLOREN_HERNIA->id()];
+    }
+
     // Used for operational grids:
 
     public static function getFrontOfficeStageIds(): array

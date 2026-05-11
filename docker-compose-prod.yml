@@ -48,6 +48,9 @@ services:
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.certresolver=myresolver
       - traefik.http.routers.crm.service=crm-svc
+      # IP whitelist middleware
+      - traefik.http.middlewares.crm-whitelist.ipwhitelist.sourcerange=62.165.71.152/32,92.64.110.49/32,161.35.19.28/32,84.241.218.147/32
+      - traefik.http.routers.crm.middlewares=crm-whitelist@docker
       # === APIDOCS ROUTER (afgeschermd) ===
       - traefik.http.routers.crm-apidocs.rule=PathPrefix("/admin/apidocs")
       - traefik.http.routers.crm-apidocs.entrypoints=https

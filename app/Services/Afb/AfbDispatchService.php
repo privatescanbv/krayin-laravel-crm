@@ -275,7 +275,8 @@ class AfbDispatchService
 
         $isReady = empty($reasons);
         $isLate = $isReady && $this->shouldSendAsLateBooking($order);
-        $needsManualSend = $isLate && $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
+        $needsManualSend = $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds)
+            && ($isLate || $this->hasPreviousSuccessfulDispatch((int) $order->id));
 
         $isAllSent = $isReady
             && ! $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds)
@@ -297,6 +298,14 @@ class AfbDispatchService
             'planned_at'        => $plannedAt,
             'reasons'           => $reasons,
         ];
+    }
+
+    private function hasPreviousSuccessfulDispatch(int $orderId): bool
+    {
+        return AfbPersonDocument::query()
+            ->where('order_id', $orderId)
+            ->whereHas('dispatch', fn ($q) => $q->where('status', AfbDispatchStatus::SUCCESS->value))
+            ->exists();
     }
 
     /**

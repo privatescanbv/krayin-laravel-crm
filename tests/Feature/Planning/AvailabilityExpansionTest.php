@@ -333,8 +333,8 @@ test('resources with finite duration shifts are shown when active', function ():
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
-        'period_start'        => now()->subDays(5)->format('Y-m-d'),
-        'period_end'          => now()->addDays(10)->format('Y-m-d'),
+        'period_start'        => now()->startOfWeek()->subDay()->format('Y-m-d'),
+        'period_end'          => now()->addDays(14)->format('Y-m-d'),
         'weekday_time_blocks' => [
             '1' => [['from' => '08:00', 'to' => '16:00']],
             '2' => [['from' => '08:00', 'to' => '16:00']],

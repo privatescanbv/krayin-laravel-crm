@@ -307,12 +307,18 @@
 
         if (!container) return;
 
+        if (container.dataset.afletterenTabInit === '1') {
+            return;
+        }
+
         var formWrapper = document.getElementById('afletteren-form-' + orderId);
         var errorEl    = document.getElementById('afletteren-form-error-' + orderId);
         var saveBtn    = document.getElementById('afletteren-save-' + orderId);
         var cancelBtn  = document.getElementById('afletteren-cancel-' + orderId);
 
         if (!formWrapper || !saveBtn || !cancelBtn) return;
+
+        container.dataset.afletterenTabInit = '1';
 
         var editingItemId = null;
 

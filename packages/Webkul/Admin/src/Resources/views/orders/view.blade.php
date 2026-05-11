@@ -328,11 +328,15 @@
                         data() {
                             return {
                                 leadDetailSection: 'algemeen',
-                                isRightColumnCollapsed: false,
+                                isRightColumnCollapsed: true,
                             };
                         },
 
                         mounted() {
+                            if (this !== this.$root) {
+                                return;
+                            }
+
                             if (window.location.hash) {
                                 let hash = window.location.hash.substring(1); // Remove '#'
 

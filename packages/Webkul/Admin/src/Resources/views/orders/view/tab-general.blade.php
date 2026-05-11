@@ -120,15 +120,20 @@
                          style="width: {{ $checksPct }}%"></div>
                 </div>
 
-                {{-- Check items --}}
-                <ul class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                    @foreach ($orderChecks as $check)
-                        <li class="flex items-center gap-2 text-sm {{ $check->done ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200' }}">
-                            <span class="{{ $check->done ? 'icon-check text-green-500' : 'icon-radio-normal text-gray-400' }} shrink-0"></span>
-                            <span class="{{ $check->done ? 'line-through' : '' }} truncate">{{ $check->name }}</span>
-                        </li>
-                    @endforeach
-                </ul>
+                {{-- Open check items only --}}
+                @php $openChecks = $orderChecks->where('done', false); @endphp
+                @if ($openChecks->isNotEmpty())
+                    <ul class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                        @foreach ($openChecks as $check)
+                            <li class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                <span class="icon-radio-normal text-gray-400 shrink-0"></span>
+                                <span class="truncate">{{ $check->name }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="text-sm text-green-600 dark:text-green-400">Alle checks afgerond.</p>
+                @endif
             @else
                 <p class="text-sm text-gray-400 dark:text-gray-500">Geen checks toegevoegd aan deze order.</p>
             @endif

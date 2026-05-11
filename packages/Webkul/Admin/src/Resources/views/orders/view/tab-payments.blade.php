@@ -278,19 +278,27 @@
 
         if (!container) return;
 
+        if (container.dataset.orderPaymentsInit === '1') {
+            return;
+        }
+
         var today = '{{ $today }}';
 
-        var formWrapper = document.getElementById('order-payments-form-{{ $order->id }}');
-        var formElement = document.getElementById('order-payments-form-element-{{ $order->id }}');
-        var titleEl = document.getElementById('order-payments-form-title-{{ $order->id }}');
-        var errorEl = document.getElementById('order-payments-error-{{ $order->id }}');
-        var addBtn = document.getElementById('order-payments-add-{{ $order->id }}');
-        var saveBtn = document.getElementById('order-payments-save-{{ $order->id }}');
-        var cancelBtn = document.getElementById('order-payments-cancel-{{ $order->id }}');
+        var formWrapper = document.getElementById('order-payments-form-' + orderId);
+        var formElement = document.getElementById('order-payments-form-element-' + orderId);
+        var titleEl = document.getElementById('order-payments-form-title-' + orderId);
+        var errorEl = document.getElementById('order-payments-error-' + orderId);
+        var addBtn = document.getElementById('order-payments-add-' + orderId);
+        var saveBtn = document.getElementById('order-payments-save-' + orderId);
+        var cancelBtn = document.getElementById('order-payments-cancel-' + orderId);
 
         if (!formWrapper || !formElement || !addBtn || !saveBtn || !cancelBtn) {
             return;
         }
+
+        container.dataset.orderPaymentsInit = '1';
+
+        var isSaving = false;
 
         function openForm(mode, payment) {
             errorEl.textContent = '';
@@ -368,7 +376,7 @@
                     return;
                 }
 
-                fetch('/admin/orders/' + {{ $order->id }} + '/payments/' + id, {
+                fetch('/admin/orders/' + orderId + '/payments/' + id, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': csrf(),
@@ -389,6 +397,10 @@
         formElement.addEventListener('submit', function (event) {
             event.preventDefault();
 
+            if (isSaving) {
+                return;
+            }
+
             var paymentIdInput = formElement.querySelector('input[name="payment_id"]');
             var amountInput = formElement.querySelector('input[name="amount"]');
             var typeSelect = formElement.querySelector('select[name="type"]');
@@ -405,9 +417,10 @@
             };
 
             var paymentId = paymentIdInput ? paymentIdInput.value : '';
-            var url = '/admin/orders/' + {{ $order->id }} + '/payments' + (paymentId ? '/' + paymentId : '');
+            var url = '/admin/orders/' + orderId + '/payments' + (paymentId ? '/' + paymentId : '');
             var method = paymentId ? 'PUT' : 'POST';
 
+            isSaving = true;
             saveBtn.disabled = true;
             saveBtn.textContent = 'Opslaan...';
 
@@ -443,6 +456,7 @@
             }).catch(function (error) {
                 showError(error.message || 'Netwerkfout. Probeer opnieuw.');
             }).finally(function () {
+                isSaving = false;
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'Opslaan';
             });

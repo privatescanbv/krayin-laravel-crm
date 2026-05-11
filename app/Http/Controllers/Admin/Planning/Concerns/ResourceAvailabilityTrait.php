@@ -91,7 +91,7 @@ trait ResourceAvailabilityTrait
     protected function getOccupancy($resources, CarbonImmutable $start, CarbonImmutable $end): Collection
     {
         return ResourceOrderItem::query()
-            ->with(['orderItem.order.salesLead.lead'])
+            ->with(['orderItem.order.salesLead.lead', 'orderItem.person'])
             ->whereIn('resource_id', $resources->pluck('id'))
             ->where(function ($q) use ($start, $end) {
                 $q->whereBetween('from', [$start, $end])

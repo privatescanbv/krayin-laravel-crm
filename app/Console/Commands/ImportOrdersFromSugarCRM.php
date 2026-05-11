@@ -585,7 +585,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                     $this->attachSugarOrderPersonsToSalesLead($salesLead, $personsByExternalId);
 
-                    $examinationDateStr = $this->parseSugarDate($record->datum_onderzoek_1);
+                    $examinationDateStr = $this->parseSugarUtcDate($record->datum_onderzoek_1);
 
                     // Create the Order
                     $order = $this->createEntityWithTimestamps(Order::class, [
@@ -658,9 +658,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                                     'resource_external_id' => $row->pcrm_partnerresources_id_c,
                                 ]);
                             } else {
-                                $rowExaminationAt = $this->parseSugarDate($row->datum_onderzoek ?? null);
+                                $rowExaminationAt = $this->parseSugarUtcAsDate($row->datum_onderzoek ?? null);
                                 if ($rowExaminationAt !== null) {
-                                    $from = CarbonImmutable::parse($rowExaminationAt);
+                                    $from = $rowExaminationAt;
                                     $to = $from->addMinutes((int) $row->duration);
                                     ResourceOrderItem::create([
                                         'resource_id'  => $resource->id,
@@ -866,12 +866,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
      */
     private function parseSugarExaminationAt(mixed $date, mixed $time): ?string
     {
-        $parsed = $this->parseSugarDate($date);
+        $parsed = $this->parseSugarUtcDate($date);
         if ($parsed === null) {
             return null;
         }
 
-        // parseSugarDate returns 'Y-m-d H:i:s'; take only the date part before appending HH:MM time
+        // parseSugarUtcDate returns 'Y-m-d H:i:s'; take only the date part before appending HH:MM time
         $dateOnly = substr($parsed, 0, 10);
 
         // Accept HH:MM, H:MM, HH.MM, H.MM (dot or colon separator, optional leading zero)
@@ -1145,7 +1145,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $clinic = $this->sugarMoneyAmount($record->betaald_kliniek_c ?? null);
         if ($clinic !== null && $clinic > 0) {
-            $examDate = $this->parseSugarDate($record->datum_onderzoek_1 ?? null);
+            $examDate = $this->parseSugarUtcDate($record->datum_onderzoek_1 ?? null);
 
             OrderPayment::create([
                 'order_id' => $order->id,

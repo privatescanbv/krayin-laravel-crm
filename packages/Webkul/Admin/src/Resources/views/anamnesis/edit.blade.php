@@ -1,7 +1,7 @@
 <x-admin::layouts>
     <!-- Page Title -->
     <x-slot:title>
-        Anamnesis bewerken - {{ $anamnesis->label }}
+        Anamnese bewerken - {{ $anamnesis->label }}
     </x-slot>
 
     <!-- Edit Anamnesis Form -->
@@ -35,7 +35,7 @@
                     </div>
 
                     <div class="text-xl font-bold dark:text-white">
-                        Anamnesis bewerken - {{ $anamnesis->label }}
+                        Anamnese bewerken - {{ $anamnesis->label }}
                     </div>
                 </div>
 

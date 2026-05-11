@@ -520,9 +520,9 @@ class OrderMailService
             }
 
             $rows .= '<tr>'
-                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;">'.$productName.'</td>'
-                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;vertical-align: top;">'.$quantity.'</td>'
-                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;vertical-align: top;">'.$price.'</td>'
+                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;line-height: 1.1;">'.$productName.'</td>'
+                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;vertical-align: top;line-height: 1.1;">'.$quantity.'</td>'
+                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;vertical-align: top;line-height: 1.1;">'.$price.'</td>'
                 .'</tr>';
         }
 

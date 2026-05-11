@@ -14,7 +14,7 @@
         </div>
     @elseif(empty($personsWithAnamnesis))
         <div class="rounded-lg border bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            Geen personen met anamnesis. Koppel eerst personen aan de sales lead en maak anamnesis aan.
+            Geen personen met anamnese. Koppel eerst personen aan de sales lead en maak anamnese aan.
         </div>
     @else
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

@@ -1,5 +1,4 @@
 @php
-    use App\Enums\EmailTemplateCode;
     use App\Enums\EmailTemplateType;
 @endphp
 <x-admin::layouts>
@@ -1048,11 +1047,7 @@
 
                             this.emailSubject = payload.subject || '';
 
-                            const defaultTpl = @json(EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value);
-                            if (this.emailTemplates.some(t => (t.code || t.name) === defaultTpl)) {
-                                this.emailSelectedTemplate = defaultTpl;
-                                this.$nextTick(() => this.loadEmailTemplate());
-                            } else if (payload.body) {
+                            if (payload.body) {
                                 this.emailBody = payload.body;
                                 this.$nextTick(() => this.setTinyMCEContent('wizard-email-editor', payload.body));
                             }

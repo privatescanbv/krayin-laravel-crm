@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\EmailTemplateCode;
 use App\Helpers\ValueNormalizer;
 use App\Models\Address;
 use App\Models\Anamnesis;
@@ -11,7 +10,6 @@ use App\Repositories\OrderRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
-use Webkul\EmailTemplate\Models\EmailTemplate;
 
 /**
  * Builds the data and HTML required to send order-acknowledgement emails.
@@ -37,19 +35,12 @@ class OrderMailService
 
     public function buildMailData(Order $order, ?Person $person = null): array
     {
-        $template = EmailTemplate::byCodeEnum(EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL)->firstOrFail();
-
-        $variables = $this->buildTemplateVariables($order, $person);
-
-        $subject = $this->interpolate($template->subject ?? '', $variables);
-        $body = $this->interpolate($template->content ?? '', $variables);
-
         return [
-            'subject'        => $subject,
-            'body'           => $body,
-            'default_email'  => $variables['default_email'] ?? null,
-            'emails'         => $this->getEmailOptions($order),
-            'template_id'    => $template->id,
+            'subject'       => '',
+            'body'          => '',
+            'default_email' => $this->getDefaultEmail($order),
+            'emails'        => $this->getEmailOptions($order),
+            'template_id'   => null,
         ];
     }
 

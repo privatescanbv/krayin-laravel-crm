@@ -350,6 +350,10 @@ Beschikbaar wanneer een Order is meegegeven. Levert automatisch ook lead- en sal
 
 | `{{ order.* }}`
 | Nested toegang tot alle Order-attributen, bijv. `{{ order.id }}`
+
+| `{{ order_gvl_deadline }}`
+| 7 dagen voor 1e onderzoeksdam in formaat d-m-Y (01-01-2025)
+
 |===
 
 *Eerste afspraak* _(leeg als geen ingeplande resource order items aanwezig zijn)_

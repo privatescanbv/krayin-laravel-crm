@@ -172,6 +172,7 @@ class OrderMailService
 
         return array_merge([
             'order_aanhef'                     => $order->resolveAttentionName(),
+            'order_gvl_deadline'               => $order->firstExaminationCarbon()?->subWeeks(1)->format('d-m-Y'),
             // TODO niet order->clinicCoordinator gebruiken?
             'adviseur'                         => $order->user?->name ?? '[onbekende adviseur]',
             'meldplek'                         => $this->resolveMeldplek($order),

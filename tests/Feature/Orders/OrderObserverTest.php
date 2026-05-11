@@ -12,6 +12,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Webkul\Product\Models\Product;
+use \Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -111,19 +112,18 @@ test('updating to verloren stage removes resource_orderitem planning slots', fun
     ]);
 
     $item = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::PLANNED->value]);
-    \Illuminate\Support\Facades\DB::table('resource_orderitem')->insert([
+    \App\Models\ResourceOrderItem::factory()->create([
         'orderitem_id' => $item->id,
-        'resource_id'  => 1,
         'from'         => now()->toDateTimeString(),
         'to'           => now()->addHour()->toDateTimeString(),
     ]);
 
-    expect(\Illuminate\Support\Facades\DB::table('resource_orderitem')->where('orderitem_id', $item->id)->count())->toBe(1);
+    expect(DB::table('resource_orderitem')->where('orderitem_id', $item->id)->count())->toBe(1);
 
     $order->pipeline_stage_id = PipelineStage::ORDER_VERLOREN->id();
     $order->save();
 
-    expect(\Illuminate\Support\Facades\DB::table('resource_orderitem')->where('orderitem_id', $item->id)->count())->toBe(0);
+    expect(DB::table('resource_orderitem')->where('orderitem_id', $item->id)->count())->toBe(0);
 });
 
 test('updating to hernia verloren stage marks all order items as lost', function () {

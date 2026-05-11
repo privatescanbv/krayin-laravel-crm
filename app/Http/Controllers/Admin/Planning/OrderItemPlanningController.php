@@ -316,6 +316,7 @@ class OrderItemPlanningController extends Controller
                     'booking_id'           => $occupancy->id,
                     'lead_name'            => $leadName,
                     'person_name'          => $personName,
+                    'product_name'         => $productName,
                     'order_number'         => $orderNumber,
                     'order_id'             => $orderId,
                     'outside_availability' => $outsideAvailability,

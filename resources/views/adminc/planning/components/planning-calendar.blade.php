@@ -4,7 +4,8 @@
 
 @pushOnce('scripts')
     <style>
-        .calendar-container { display: grid; grid-template-columns: 60px repeat(7, 1fr); }
+        /* minmax: gebruik horizontale ruimte (scroll) i.p.v. smalle dagkolommen */
+        .calendar-container { display: grid; grid-template-columns: 60px repeat(7, minmax(280px, 1fr)); width: max-content; min-width: 100%; }
         .calendar-header { display: contents; }
         .calendar-day-header { padding: 6px 8px; border-bottom: 1px solid var(--tw-prose-td-borders, #e5e7eb); font-weight: 600; font-size: 12px; }
         .calendar-body { display: contents; }
@@ -15,7 +16,7 @@
         .calendar-block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; transition: all 0.2s ease; }
         .calendar-block-available { cursor: pointer; }
         .calendar-block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .calendar-block-occupied { cursor: default; min-height: 20px; }
+        .calendar-block-occupied { cursor: default; min-height: 20px; font-size: 12px; line-height: 1.25; }
         .filters-bar { position: relative; z-index: 10; }
         .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
         .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -100,21 +101,23 @@
                              :title="getBlockTooltip(block)"
                              @click.stop="block.clickable ? handleBlockClick(block) : null">
                             <template v-if="block.type === 'occupied'">
-                                <div class="flex items-start justify-between gap-1">
-                                    <div class="font-semibold text-xs truncate">@{{ block.person_name || block.lead_name || 'Onbekend' }}</div>
-                                    <a v-if="block.order_id"
-                                       :href="`${'{{ route('admin.orders.view', ['id' => 'REPLACE']) }}'.replace('REPLACE', block.order_id)}`"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       class="text-white opacity-75 hover:opacity-100 flex-shrink-0"
-                                       :title="`Order ${block.order_number || block.order_id}`"
-                                       @click.stop>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                        </svg>
-                                    </a>
+                                <div class="flex flex-col gap-0.5 min-h-0 min-w-0 flex-1">
+                                    <div class="flex items-start justify-between gap-1 min-w-0">
+                                        <div class="font-semibold leading-tight truncate min-w-0 flex-1">@{{ block.person_name || block.lead_name || 'Onbekend' }}</div>
+                                        <a v-if="block.order_id"
+                                           :href="`${'{{ route('admin.orders.view', ['id' => 'REPLACE']) }}'.replace('REPLACE', block.order_id)}`"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="text-white opacity-75 hover:opacity-100 flex-shrink-0 mt-px"
+                                           :title="`Order ${block.order_number || block.order_id}`"
+                                           @click.stop>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                        </a>
+                                    </div>
+                                    <div class="text-[11px] opacity-90 tabular-nums whitespace-nowrap">@{{ timeRange(block.from, block.to) }}</div>
                                 </div>
-                                <div class="text-xs opacity-75">@{{ timeRange(block.from, block.to) }}</div>
                             </template>
                             <template v-else-if="block.type === 'available'">
                                 <div class="text-xs font-medium">Beschikbaar</div>
@@ -407,8 +410,14 @@
 
                     const sortedBlocks = blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
 
-                    // Group overlapping available blocks and calculate layout
-                    return this.calculateOverlappingBlocks(sortedBlocks);
+                    const hasOccupied = sortedBlocks.some(b => b.type === 'occupied');
+                    // Geplande blokken tonen: beschikbaarheid verbergen — anders stapelen alle
+                    // resource-vrije sloten op dezelfde coördinaten (onleesbare “Beschikbaar”-tekst).
+                    const toLayout = hasOccupied
+                        ? sortedBlocks.filter(b => b.type === 'occupied')
+                        : sortedBlocks;
+
+                    return this.calculateOverlappingBlocks(toLayout);
                 },
                 getBlocksForMonthDay(date) {
                     const blocks = [];
@@ -425,7 +434,9 @@
                         });
                     }
 
-                    return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
+                    const sorted = blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
+                    const hasOccupied = sorted.some(b => b.type === 'occupied');
+                    return hasOccupied ? sorted.filter(b => b.type === 'occupied') : sorted;
                 },
                 blockStyle(block) {
                     if (this.viewType === 'month') {
@@ -437,6 +448,15 @@
                     const top = this.topOffsetPx(from);
                     const height = Math.max(18, this.topOffsetPx(to) - this.topOffsetPx(from));
 
+                    const overlapStyle = {};
+                    if (block.overlapIndex !== undefined && block.overlapCount !== undefined && block.overlapCount > 1) {
+                        const widthPercent = 100 / block.overlapCount;
+                        overlapStyle.width = `calc(${widthPercent}% - 12px)`;
+                        overlapStyle.left = `calc(${(block.overlapIndex * widthPercent)}% + 6px)`;
+                        overlapStyle.right = 'auto';
+                        overlapStyle.position = 'absolute';
+                    }
+
                     if (block.type === 'occupied') {
                         return {
                             top: top + 'px',
@@ -445,7 +465,8 @@
                             borderColor: 'rgba(239, 68, 68, 0.8)',
                             color: '#ffffff',
                             border: '2px solid rgba(239, 68, 68, 0.8)',
-                            zIndex: '10'
+                            zIndex: String(25 + (block.overlapIndex || 0)),
+                            ...overlapStyle
                         };
                     }
 
@@ -453,65 +474,70 @@
                     const colorIndex = this.resources.indexOf(resource) % this.resourceColors.length;
                     const color = this.resourceColors[colorIndex];
 
-                    const style = {
+                    return {
                         top: top + 'px',
                         height: height + 'px',
                         backgroundColor: `rgba(${this.hexToRgb(color)}, 0.15)`,
                         borderColor: `rgba(${this.hexToRgb(color)}, 0.3)`,
-                        color: color
+                        color: color,
+                        zIndex: '2',
+                        ...overlapStyle
                     };
-
-                    // If block has overlapping layout info, apply width and left position
-                    if (block.overlapIndex !== undefined && block.overlapCount !== undefined) {
-                        const widthPercent = 100 / block.overlapCount;
-                        style.width = `calc(${widthPercent}% - 12px)`;
-                        style.left = `calc(${(block.overlapIndex * widthPercent)}% + 6px)`;
-                        style.right = 'auto'; // Override the default right: 6px from CSS
-                        style.position = 'absolute';
-                    }
-
-                    return style;
                 },
                 calculateOverlappingBlocks(blocks) {
-                    const avail = blocks
-                        .filter(b => b.type === 'available')
-                        .map(b => ({
-                            ref: b,
-                            start: new Date(b.from).getTime(),
-                            end: new Date(b.to).getTime(),
-                            col: -1,
-                            over: 1,
-                        }))
-                        .sort((a, b) => a.start - b.start || a.end - b.end);
+                    const sorted = [...blocks].sort((a, b) =>
+                        new Date(a.from) - new Date(b.from) || new Date(a.to) - new Date(b.to)
+                    );
 
-                    const occupied = blocks.filter(b => b.type === 'occupied');
+                    const clearOverlap = (b) => {
+                        delete b.overlapIndex;
+                        delete b.overlapCount;
+                    };
+                    sorted.forEach(clearOverlap);
+
+                    const hasOccupied = sorted.some(b => b.type === 'occupied');
+                    const toPack = hasOccupied
+                        ? sorted.filter(b => b.type === 'occupied')
+                        : sorted.filter(b => b.type === 'available');
+
+                    const wrapped = toPack.map(b => ({
+                        ref: b,
+                        start: new Date(b.from).getTime(),
+                        end: new Date(b.to).getTime(),
+                        col: -1,
+                        over: 1,
+                    }));
+
                     const active = [];
 
-                    for (const b of avail) {
-                        // Drop finished
+                    for (const b of wrapped) {
                         for (let i = active.length - 1; i >= 0; i--) {
-                            if (active[i].end <= b.start) active.splice(i, 1);
+                            if (active[i].end <= b.start) {
+                                active.splice(i, 1);
+                            }
                         }
 
-                        // Smallest free column
                         let c = 0;
-                        while (active.some(a => a.col === c)) c++;
+                        while (active.some(a => a.col === c)) {
+                            c++;
+                        }
                         b.col = c;
 
                         active.push(b);
                         active.sort((x, y) => x.end - y.end);
 
                         const k = active.length;
-                        for (const a of active) a.over = Math.max(a.over, k);
+                        for (const a of active) {
+                            a.over = Math.max(a.over, k);
+                        }
                     }
 
-                    // Apply layout
-                    for (const b of avail) {
+                    for (const b of wrapped) {
                         b.ref.overlapIndex = b.col;
                         b.ref.overlapCount = b.over;
                     }
 
-                    return [...avail.map(x => x.ref), ...occupied].sort((a, b) => new Date(a.from) - new Date(b.from));
+                    return sorted;
                 },
                 getBlockTooltip(block) {
                     const resource = this.resources.find(r => r.id === block.resource_id);
@@ -524,6 +550,9 @@
                     if (block.type === 'occupied') {
                         const displayName = block.person_name || block.lead_name || 'Onbekend';
                         let tooltip = `${name}${notes}\nPersoon: ${displayName}\nTijd: ${timeStr}`;
+                        if (block.product_name) {
+                            tooltip += `\nProduct: ${block.product_name}`;
+                        }
                         if (block.order_number) {
                             tooltip += `\nOrder: ${block.order_number}`;
                         }

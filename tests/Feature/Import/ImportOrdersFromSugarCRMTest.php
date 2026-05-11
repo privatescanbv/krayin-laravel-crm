@@ -7,6 +7,7 @@ use App\Enums\OrderItemStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\PipelineStage;
+use App\Enums\ProductReports;
 use App\Enums\PurchasePriceType;
 use App\Models\Anamnesis;
 use App\Models\Order;
@@ -360,6 +361,34 @@ test('imports zakelijk Sugar order with organization and is_business', function 
         ->state->toBe('Noord-Holland')
         ->country->toBe('Nederland');
 
+});
+
+test('Sugar order import creates partner-product order checks from reporting', function () {
+    $product = Product::where('name', 'TB1 Business Class')->firstOrFail();
+    PartnerProduct::factory()->create([
+        'product_id' => $product->id,
+        'reporting'  => [ProductReports::RAD_MRI->value],
+        'active'     => true,
+    ]);
+
+    Person::factory()->create(['external_id' => 'contact-order-checks']);
+    Lead::factory()->create(['external_id' => 'sugar-lead-order-checks']);
+
+    insertSugarOrder('order-import-checks-001');
+    insertSugarRow('order-import-checks-001', 'row-import-checks', []);
+    linkRowToContact('row-import-checks', 'contact-order-checks');
+    linkOrderToSugarLead('order-import-checks-001', 'sugar-lead-order-checks');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-import-checks-001')->first();
+    expect($order)->not->toBeNull();
+    expect(
+        $order->orderChecks()
+            ->where('name', 'Partner product rapportage: Radiologie MRI')
+            ->where('removable', false)
+            ->exists()
+    )->toBeTrue();
 });
 
 test('Fam prefixed Sugar account name is particulier not zakelijk', function () {

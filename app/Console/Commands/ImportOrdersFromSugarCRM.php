@@ -18,6 +18,7 @@ use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Repositories\AddressRepository;
 use App\Repositories\SalesLeadRepository;
+use App\Services\OrderCheckService;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -53,7 +54,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     protected $description = 'Import orders from SugarCRM database, creating SalesLeads and OrderItems per order';
 
     public function __construct(
-        private readonly SalesLeadRepository $salesLeadRepository
+        private readonly SalesLeadRepository $salesLeadRepository,
+        private readonly OrderCheckService $orderCheckService,
     ) {
         parent::__construct();
     }
@@ -690,6 +692,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     }
 
                     $this->syncOrderPaymentsFromSugar($order, $record);
+
+                    // Align partner-rapportage checks with order lines (same as {@see OrderItemObserver} after full import).
+                    $this->orderCheckService->updatePartnerProductChecks($order);
                 });
 
                 $imported++;

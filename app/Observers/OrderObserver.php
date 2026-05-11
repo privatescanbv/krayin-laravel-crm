@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\OrderNumberGenerator;
 use App\Services\OrderStatusService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 
@@ -48,6 +49,14 @@ class OrderObserver
             Log::info('Updating order items to WON for order '.$order->id);
             OrderItem::forOrderAndNotLost($order->id)
                 ->update(['status' => OrderItemStatus::WON->value]);
+        }
+
+        if ($stageChange && in_array($order->pipeline_stage_id, PipelineStage::getLostOrderStageIds(), true)) {
+            Log::info('Updating order items to LOST for order '.$order->id);
+            $orderItemIds = OrderItem::where('order_id', $order->id)->pluck('id');
+            OrderItem::where('order_id', $order->id)
+                ->update(['status' => OrderItemStatus::LOST->value]);
+            DB::table('resource_orderitem')->whereIn('orderitem_id', $orderItemIds)->delete();
         }
     }
 }

@@ -101,7 +101,7 @@ class StoreOrderConfirmationPdf
         foreach ($personIds as $personId) {
             PatientNotifyEvent::dispatch(
                 $personId,
-                'Orderbevestiging #'.$order->id,
+                'Orderbevestiging #'.$order->order_number,
                 NotificationReferenceType::FILE,
                 $activity->id,
                 true,

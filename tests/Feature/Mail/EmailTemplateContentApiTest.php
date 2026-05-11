@@ -13,6 +13,7 @@ use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Models\User as AppUser;
 use App\Services\OrderMailService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
@@ -415,6 +416,56 @@ test('acknowledge order mail resolves adviseur from order assigned user', functi
     $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
 
     expect($vars['adviseur'])->toBe('Jan Adviseur');
+});
+
+test('order_gvl_deadline is one week before stored first examination date', function () {
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create(['contact_person_id' => $person->id]);
+    $order = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'first_examination_at'   => '2026-04-09',
+        'first_examination_time' => null,
+    ]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['order_gvl_deadline'])->toBe('02-04-2026');
+});
+
+test('order_gvl_deadline uses earliest resource slot when examination fields are empty', function () {
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'first_examination_at'   => null,
+        'first_examination_time' => null,
+    ]);
+    $dept = ClinicDepartment::factory()->create();
+    $resource = Resource::factory()->create(['clinic_department_id' => $dept->id]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $item->id,
+        'resource_id'  => $resource->id,
+        'from'         => Carbon::parse('2026-05-21 14:30:00', config('app.timezone')),
+        'to'           => Carbon::parse('2026-05-21 15:00:00', config('app.timezone')),
+    ]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['order_gvl_deadline'])->toBe('14-05-2026');
+});
+
+test('order_gvl_deadline is empty string when no first examination can be resolved', function () {
+    $salesLead = SalesLead::factory()->create();
+    $order = Order::factory()->create([
+        'sales_lead_id'          => $salesLead->id,
+        'first_examination_at'   => null,
+        'first_examination_time' => null,
+    ]);
+    OrderItem::factory()->create(['order_id' => $order->id]);
+
+    $vars = app(OrderMailService::class)->templateVariablesForAcknowledgeOrder($order->fresh());
+
+    expect($vars['order_gvl_deadline'])->toBe('');
 });
 
 test('address variables resolve to particulier contactpersoon address', function () {

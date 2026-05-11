@@ -170,9 +170,14 @@ class OrderMailService
 
         $personId = $person?->id;
 
+        $firstExaminationAt = $order->firstExaminationCarbon();
+
         return array_merge([
             'order_aanhef'                     => $order->resolveAttentionName(),
-            'order_gvl_deadline'               => $order->firstExaminationCarbon()?->subWeeks(1)->format('d-m-Y'),
+            // One week before first examination (same basis as appointments); empty when unknown.
+            'order_gvl_deadline'               => $firstExaminationAt !== null
+                ? $firstExaminationAt->copy()->subWeeks(1)->format('d-m-Y')
+                : '',
             // TODO niet order->clinicCoordinator gebruiken?
             'adviseur'                         => $order->user?->name ?? '[onbekende adviseur]',
             'meldplek'                         => $this->resolveMeldplek($order),

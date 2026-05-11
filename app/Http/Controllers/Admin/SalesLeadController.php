@@ -324,7 +324,7 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::findOrFail($id);
 
-        return view('adminc.sales_leads.view.attach-person', compact('salesLead'));
+        return view('adminc.sales_leads.view.attach-person', ['salesLead' => $salesLead]);
     }
 
     public function attachPerson(Request $request, int $id): RedirectResponse

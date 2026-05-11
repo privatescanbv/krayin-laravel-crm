@@ -49,7 +49,7 @@
                                     <span class="icon-warning text-orange-600"></span>
                                     <span class="text-sm font-medium text-activity-note-text dark:text-orange-200">
                                         Potentiële duplicaten gevonden ({{ $lead->getPotentialDuplicatesCount() }}
-                                        leads{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
+                                        lead{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
                                     </span>
                                 </div>
                                 <a href="{{ route('admin.leads.duplicates.index', $lead->id) }}"

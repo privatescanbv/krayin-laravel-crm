@@ -308,11 +308,7 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       KC_PROXY: edge
-    entrypoint: >
-      /bin/sh -c "
-        /opt/keycloak/bin/kc.sh build --features=token-exchange &&
-        exec /opt/keycloak/bin/kc.sh start --optimized
-      "
+      FORMS_FRONTEND_URL: "https://patient.dev.privatescan.nl"
     networks:
       - backend
       - public

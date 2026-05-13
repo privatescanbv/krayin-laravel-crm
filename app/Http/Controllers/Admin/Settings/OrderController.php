@@ -1342,6 +1342,7 @@ class OrderController extends SimpleEntityController
         $orders = Order::query()
             ->with(['payments', 'orderItems.resourceOrderItems'])
             ->whereIn('pipeline_stage_id', $stageIds)
+            ->whereHas('stage', fn ($q) => $q->where('is_lost', false))
             ->where(function ($q) {
                 $q->whereNotNull('first_examination_at')
                     ->orWhereHas('orderItems', function ($orderItems) {

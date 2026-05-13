@@ -148,6 +148,6 @@ test('createMissingAnamnesis uses person name not lead name', function () {
 
     $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
 
-    expect($anamnesis->name)->toBe('Anamnesis voor Piet Jansen')
+    expect($anamnesis->name)->toBe('Anamnese voor Piet Jansen')
         ->and($anamnesis->name)->not->toContain('Lead Persoon');
 });

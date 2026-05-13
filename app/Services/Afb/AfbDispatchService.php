@@ -4,15 +4,18 @@ namespace App\Services\Afb;
 
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
+use App\Enums\FormStatus;
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
+use App\Models\Anamnesis;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ResourceOrderItem;
+use App\Services\FormService;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +31,8 @@ class AfbDispatchService
 
     public function __construct(
         private readonly AfbDocumentGenerator $afbDocumentGenerator,
-        private readonly CrmMailService $crmMailService
+        private readonly CrmMailService $crmMailService,
+        private readonly FormService $formService,
     ) {}
 
     public function queueDailyBatchDispatches(Carbon $date): int
@@ -147,6 +151,8 @@ class AfbDispatchService
                     'content_type' => 'application/pdf',
                 ]);
             }
+
+            $this->attachGvlPdfsToEmail($email, $generatedDocuments);
 
             $this->crmMailService->sendEmail($email);
 
@@ -516,5 +522,70 @@ class AfbDispatchService
         }
 
         Storage::put($path, $localDisk->get($path));
+    }
+
+    private function attachGvlPdfsToEmail(Email $email, array $generatedDocuments): void
+    {
+        $personIds = collect($generatedDocuments)
+            ->pluck('person_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($personIds as $personId) {
+            $anamnesis = Anamnesis::query()
+                ->where('person_id', $personId)
+                ->whereNotNull('gvl_form_link')
+                ->latest()
+                ->first();
+
+            if (! $anamnesis) {
+                continue;
+            }
+
+            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+
+            if (! $formId) {
+                continue;
+            }
+
+            try {
+                $formStatus = $this->formService->getFormStatusAsString($formId);
+
+                if ($formStatus !== FormStatus::Completed) {
+                    continue;
+                }
+
+                $response = $this->formService->downloadForm($formId);
+
+                if (! $response->successful()) {
+                    Log::warning('GVL PDF download mislukt', [
+                        'person_id' => $personId,
+                        'form_id'   => $formId,
+                        'status'    => $response->status(),
+                    ]);
+
+                    continue;
+                }
+
+                $fileName = sprintf('gvl-%d-%s.pdf', $personId, now()->format('Ymd'));
+                $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
+
+                Storage::put($filePath, $response->body());
+
+                $email->attachments()->create([
+                    'name'         => $fileName,
+                    'path'         => $filePath,
+                    'size'         => strlen($response->body()),
+                    'content_type' => 'application/pdf',
+                ]);
+            } catch (Throwable $e) {
+                Log::warning('GVL PDF bijlage mislukt', [
+                    'person_id'     => $personId,
+                    'form_id'       => $formId,
+                    'error_message' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

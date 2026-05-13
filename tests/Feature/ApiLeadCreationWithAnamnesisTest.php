@@ -92,7 +92,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     // The anamnesis name is based on the Person's name, not the Lead's name.
     $this->assertDatabaseHas('anamnesis', [
         'lead_id'   => $leadId,
-        'name'      => 'Anamnesis voor '.$person->name,
+        'name'      => 'Anamnese voor '.$person->name,
         'person_id' => $person->id,
     ]);
 

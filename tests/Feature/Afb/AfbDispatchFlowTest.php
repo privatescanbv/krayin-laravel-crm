@@ -194,6 +194,8 @@ test('late booking planning queues individual afb dispatch', function () {
     $examAt = now()->addHours(8);
     $context = createOrderForClinic($examAt);
 
+    app(AfbDispatchService::class)->queueLateBookingForOrder($context['order']);
+
     Bus::assertDispatched(SendAfbDispatchJob::class, function (SendAfbDispatchJob $job) use ($context) {
         return $job->departmentId === $context['department']->id
             && $job->type === AfbDispatchType::INDIVIDUAL->value
@@ -963,4 +965,46 @@ test('banner shows when order item from last afb dispatch is marked lost', funct
     // Nu moet de banner tonen: de kliniek moet een bijgewerkte AFB ontvangen
     expect($service->getAvbDispatchReadiness($context['order']->fresh())['needs_manual_send'])->toBeTrue()
         ->and($service->hasUnincludedActiveItems($context['order']->id, $context['department']->id))->toBeTrue();
+});
+
+test('send afb endpoint queues individual dispatch for pending order', function () {
+    Bus::fake();
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $context = createOrderForClinic(now()->addHours(8));
+
+    $response = $this->postJson(route('admin.orders.send_afb', $context['order']->id));
+
+    $response->assertOk();
+    Bus::assertDispatched(SendAfbDispatchJob::class, function (SendAfbDispatchJob $job) use ($context) {
+        return $job->departmentId === $context['department']->id
+            && $job->type === AfbDispatchType::INDIVIDUAL->value
+            && $job->orderIds === [$context['order']->id];
+    });
+});
+
+test('send afb endpoint returns already sent message when all departments dispatched', function () {
+    Bus::fake();
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $context = createOrderForClinic(now()->addHours(8));
+
+    // Simuleer een succesvolle eerdere dispatch voor deze afdeling
+    $dispatch = AfbDispatch::factory()->create([
+        'clinic_department_id' => $context['department']->id,
+        'clinic_id'            => $context['clinic']->id,
+        'status'               => AfbDispatchStatus::SUCCESS->value,
+        'sent_at'              => now()->subMinutes(10),
+    ]);
+    AfbPersonDocument::factory()->create([
+        'afb_dispatch_id' => $dispatch->id,
+        'order_id'        => $context['order']->id,
+        'order_item_ids'  => $context['order']->orderItems()->pluck('id')->toArray(),
+    ]);
+
+    $response = $this->postJson(route('admin.orders.send_afb', $context['order']->id));
+
+    $response->assertOk()
+        ->assertJsonFragment(['message' => 'AFB was al verstuurd of condities zijn niet van toepassing.']);
+    Bus::assertNotDispatched(SendAfbDispatchJob::class);
 });

@@ -20,11 +20,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
-use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 
 class AfbDispatchService
 {
+    public const AFB_LATE_BOOKING_CUTOFF_HOUR = 11;
+
     public function __construct(
         private readonly AfbDocumentGenerator $afbDocumentGenerator,
         private readonly CrmMailService $crmMailService
@@ -53,7 +54,7 @@ class AfbDispatchService
             return 0;
         }
 
-        if (! $this->getAvbDispatchReadiness($order)['is_late']) {
+        if (! $this->isInDispatchableStage($order)) {
             return 0;
         }
 
@@ -147,7 +148,7 @@ class AfbDispatchService
                 ]);
             }
 
-            $this->crmMailService->sendEmail($email, EmailFolderEnum::SENT);
+            $this->crmMailService->sendEmail($email);
 
             DB::transaction(function () use ($generatedDocuments, $dispatch, $email) {
                 foreach ($generatedDocuments as $generatedDocument) {
@@ -228,6 +229,47 @@ class AfbDispatchService
 
         // Avoid Carbon 3 float diffInHours edge cases: compare against a fixed horizon.
         return $examAt->lessThanOrEqualTo(now()->copy()->addHours(24));
+    }
+
+    /**
+     * Whether the manual "AFB versturen" button in the order view should be enabled.
+     *
+     * Active when:
+     *   - the current time is within [today AFB_LATE_BOOKING_CUTOFF_HOUR, tomorrow AFB_LATE_BOOKING_CUTOFF_HOUR]
+     *   - the order's first examination falls in the same window
+     *   - at least one department still has a pending AFB
+     */
+    public function isLateBookingWindowActive(Order $order): bool
+    {
+        if ($order->isHerniapoli()) {
+            return false;
+        }
+
+        if (! $this->isInDispatchableStage($order)) {
+            return false;
+        }
+
+        $now = now();
+        $windowStart = $now->copy()->startOfDay()->setTime(self::AFB_LATE_BOOKING_CUTOFF_HOUR, 0);
+        $windowEnd = $windowStart->copy()->addDay();
+
+        if (! $now->between($windowStart, $windowEnd)) {
+            return false;
+        }
+
+        $examAt = $order->firstExaminationCarbon();
+
+        if (! $examAt || ! $examAt->between($windowStart, $windowEnd)) {
+            return false;
+        }
+
+        $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
+
+        if (empty($departmentIds)) {
+            return false;
+        }
+
+        return $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
     }
 
     /**

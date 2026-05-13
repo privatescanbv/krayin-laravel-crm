@@ -128,6 +128,44 @@ test('can delete order', function () {
     ]);
 });
 
+test('order view lists gvl row for each person on order lines even without anamnesis', function () {
+    $lead = Lead::factory()->create();
+    $salesLead = SalesLead::factory()->create(['lead_id' => $lead->id]);
+
+    $personOne = Person::factory()->create([
+        'first_name' => 'GvlOrder',
+        'last_name'  => 'PersoonEen',
+    ]);
+    $personTwo = Person::factory()->create([
+        'first_name' => 'GvlOrder',
+        'last_name'  => 'PersoonTwee',
+    ]);
+    $personThree = Person::factory()->create([
+        'first_name' => 'GvlOrder',
+        'last_name'  => 'PersoonDrie',
+    ]);
+
+    $salesLead->attachPersons([$personOne->id, $personTwo->id, $personThree->id]);
+
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+    $product = Product::factory()->create();
+
+    foreach ([$personOne, $personTwo, $personThree] as $person) {
+        OrderItem::factory()->create([
+            'order_id'   => $order->id,
+            'product_id' => $product->id,
+            'person_id'  => $person->id,
+        ]);
+    }
+
+    $response = $this->get(route('admin.orders.view', $order->id));
+
+    $response->assertOk();
+    $response->assertSee($personOne->name);
+    $response->assertSee($personTwo->name);
+    $response->assertSee($personThree->name);
+});
+
 test('order item total_price is automatically calculated from product price when creating order', function () {
     $salesLead = SalesLead::factory()->create();
     $person = Person::factory()->create();

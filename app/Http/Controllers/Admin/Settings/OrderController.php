@@ -397,25 +397,12 @@ class OrderController extends SimpleEntityController
 
         $activitiesCount = $order->activities()->where('is_done', false)->count();
 
-        $personsWithAnamnesis = [];
-        if ($order->salesLead) {
-            $salesLeadPersons = $order->salesLead->persons()->get();
-            $leadId = $order->salesLead->lead_id;
-            $personsWithAnamnesis = $this->salesLeadRepository
-                ->findAnamnesisBySalesLeadId($leadId, $salesLeadPersons->pluck('id')->toArray())
-                ->mapWithKeys(fn ($anamnesis) => [
-                    $anamnesis->person_id => [
-                        'person'    => $salesLeadPersons->firstWhere('id', $anamnesis->person_id),
-                        'anamnesis' => $anamnesis,
-                        'lead_id'   => $leadId,
-                    ],
-                ])
-                ->all();
-        }
+        $personsWithAnamnesis = $this->buildOrderGvlPersonRows($order);
 
         $avbDispatchReadiness = $this->afbDispatchService->getAvbDispatchReadiness($order);
         $afbNeedsManualBanner = $avbDispatchReadiness['needs_manual_send'];
         $afbHasBatchSuccess = $this->afbDispatchService->hasSuccessfulBatchDispatchForOrder($order);
+        $afbLateBookingActive = $this->afbDispatchService->isLateBookingWindowActive($order);
 
         $latestAfbDocs = $order->latestSuccessfulAfbDocuments()
             ->keyBy(fn ($doc) => ($doc->person_id ?? '').'_'.$doc->dispatch?->clinic_department_id);
@@ -458,6 +445,7 @@ class OrderController extends SimpleEntityController
             'afbHasBatchSuccess'   => $afbHasBatchSuccess,
             'afbSendUrl'           => route('admin.orders.send_afb', $order->id),
             'afbStatusRows'        => $afbStatusRows,
+            'afbLateBookingActive' => $afbLateBookingActive,
             'avbDispatchReadiness' => $avbDispatchReadiness,
             'totalChecks'          => $totalChecks,
             'completedChecks'      => $completedChecks,
@@ -1431,6 +1419,50 @@ class OrderController extends SimpleEntityController
         return $result instanceof AnonymousResourceCollection ? $result->response() : $result;
     }
 
+    /**
+     * Persons for the order GVL tab: unique persons from order lines (preserves order), otherwise sales lead persons.
+     * Includes an anamnesis row when present; otherwise the tab can create one via create-and-attach GVL.
+     *
+     * @return array<int, array{person: \Webkul\Contact\Models\Person, anamnesis: ?\App\Models\Anamnesis, lead_id: int}>
+     */
+    protected function buildOrderGvlPersonRows(Order $order): array
+    {
+        if (! $order->salesLead) {
+            return [];
+        }
+
+        $leadId = $order->salesLead->lead_id;
+
+        $personsOrdered = $order->orderItems
+            ->map(fn ($item) => $item->person)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        if ($personsOrdered->isEmpty()) {
+            $personsOrdered = $order->salesLead->persons;
+        }
+
+        if ($personsOrdered->isEmpty()) {
+            return [];
+        }
+
+        $personIds = $personsOrdered->pluck('id')->toArray();
+        $anamnesesByPersonId = $this->salesLeadRepository
+            ->findAnamnesisBySalesLeadId($leadId, $personIds)
+            ->keyBy('person_id');
+
+        return $personsOrdered
+            ->mapWithKeys(fn ($person) => [
+                $person->id => [
+                    'person'    => $person,
+                    'anamnesis' => $anamnesesByPersonId->get($person->id),
+                    'lead_id'   => $leadId,
+                ],
+            ])
+            ->all();
+    }
+
     protected function getEditViewData(Request $request, Model $entity): array
     {
         /** @var Order $order */
@@ -1486,19 +1518,7 @@ class OrderController extends SimpleEntityController
                 return [$person->id => $person->name];
             })->toArray();
 
-            // Load anamnesis for each person (via lead_id and person_id)
-            // Show all persons, even if they don't have an anamnesis yet
-
-            $leadId = $entity->salesLead->lead_id;
-            $personsWithAnamnesis = $this->salesLeadRepository
-                ->findAnamnesisBySalesLeadId($leadId, $salesLeadPersons->pluck('id')->toArray())
-                ->mapWithKeys(fn ($anamnesis) => [
-                    $anamnesis->person_id => [
-                        'person'    => $salesLeadPersons->firstWhere('id', $anamnesis->person_id),
-                        'anamnesis' => $anamnesis,
-                        'lead_id'   => $leadId,
-                    ],
-                ]);
+            $personsWithAnamnesis = $this->buildOrderGvlPersonRows($entity);
 
             // Check if all persons have an order item
             if ($salesLeadPersons->isNotEmpty()) {

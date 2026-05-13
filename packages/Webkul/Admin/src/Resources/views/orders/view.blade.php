@@ -148,11 +148,14 @@
             <button
                 type="button"
                 class="primary-button shrink-0 whitespace-nowrap"
-                :class="{ 'opacity-50 pointer-events-none': sending }"
-                :disabled="sending"
+                :class="{
+                    'opacity-50 pointer-events-none': sending,
+                    'opacity-40 cursor-not-allowed': !enabled && !sending
+                }"
+                :disabled="!enabled || sending"
                 @click="sendAfb"
             >
-                @{{ sending ? 'Bezig…' : 'AFB nu versturen' }}
+                @{{ sending ? 'Bezig…' : label }}
             </button>
         </script>
 
@@ -165,6 +168,14 @@
                         type: String,
                         required: true,
                     },
+                    enabled: {
+                        type: Boolean,
+                        default: true,
+                    },
+                    label: {
+                        type: String,
+                        default: 'AFB nu versturen',
+                    },
                 },
 
                 data() {
@@ -175,7 +186,7 @@
 
                 methods: {
                     async sendAfb() {
-                        if (this.sending || !this.sendUrl) {
+                        if (!this.enabled || this.sending || !this.sendUrl) {
                             return;
                         }
 

@@ -80,7 +80,9 @@
       "Bash(security verify-cert *)",
       "Bash(openssl verify *)",
       "Bash(security dump-trust-settings *)",
-      "mcp__kepa-mysql__mysql_query"
+      "mcp__kepa-mysql__mysql_query",
+      "Bash(xargs basename -a)",
+      "Bash(git stash *)"
     ]
   }
 }

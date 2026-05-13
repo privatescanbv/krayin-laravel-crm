@@ -1,13 +1,8 @@
 <?php
 
-use App\Models\Department;
-use App\Services\InboundLeads\InboundLeadPayloadMapper;
 use Database\Seeders\CampaignSeeder;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Log;
-use Webkul\Lead\Http\Controllers\Api\LeadController;
 use Webkul\Lead\Models\Lead;
 
 beforeEach(function () {
@@ -58,17 +53,9 @@ test('POST api/leads/privatescan creates a lead', function () {
         ->and($lead->lead_source_id)->toBe(2) // privatescan.nl
         ->and($lead->lead_channel_id)->toBe(2); // Website
 
-    $this->assertDatabaseHas('lead_marketing_data', [
-        'lead_id' => $leadId,
-        'key'     => 'campaign_id',
-        'value'   => '69b238c0-e630-b733-2bb3-4fd85ff554da',
-    ]);
 });
 
-test('inbound privatescan storage logs an error when campaign_id campaign is not found', function () {
-    Log::spy();
-
-    $campaignId = '00000000-0000-0000-0000-000000000000';
+test('POST api/leads/privatescan stores UTM marketing data', function () {
     $payload = [
         'lead_source'      => 'privatescannl',
         'kanaal_c'         => 'website',
@@ -77,42 +64,34 @@ test('inbound privatescan storage logs an error when campaign_id campaign is not
         'last_name'        => 'Pieters',
         'email'            => 'piet.pieters@example.com',
         'phone'            => '0611111111',
-        'campaign_id'      => $campaignId,
+        'campaign_id'      => '69b238c0-e630-b733-2bb3-4fd85ff554da',
+        'utm_id'           => 'utm-123',
+        'gad_source'       => '1',
+        'gad_campaignid'   => 'test-campaign-123',
+        'source'           => 'google',
+        'medium'           => 'cpc',
+        'landing_page'     => 'https://privatescan.nl/preventie',
     ];
 
-    $inbound = FormRequest::create('/api/leads/privatescan', 'POST', $payload);
-    $inbound->setContainer(app());
+    $res = $this->postJson('/api/leads/privatescan', $payload);
 
-    $controller = app(LeadController::class);
-    $method = new ReflectionMethod($controller, 'storeInboundLead');
-    $method->setAccessible(true);
+    $res->assertStatus(201);
 
-    $response = $method->invoke(
-        $controller,
-        $inbound,
-        app(InboundLeadPayloadMapper::class)->mapPrivatescan($payload),
-        Department::findPrivateScanId(),
-        ['campaign_id' => $campaignId],
-        'api/leads/privatescan'
-    );
+    $leadId = $res->json('data.id');
 
-    expect($response->getStatusCode())->toBe(201);
-
-    $leadId = $response->getData(true)['data']['id'];
-
-    expect(Lead::find($leadId))->not->toBeNull();
-    $this->assertDatabaseHas('lead_marketing_data', [
-        'lead_id' => $leadId,
-        'key'     => 'campaign_id',
-        'value'   => $campaignId,
-    ]);
-
-    Log::shouldHaveReceived('error')
-        ->with(
-            'Campaign not found by campaign_id',
-            Mockery::on(fn (array $context): bool => ($context['campaign_id'] ?? null) === $campaignId
-                && ($context['lead_id'] ?? null) === $leadId
-                && ($context['endpoint'] ?? null) === 'api/leads/privatescan')
-        )
-        ->once();
+    foreach ([
+        'campaign_id'    => '69b238c0-e630-b733-2bb3-4fd85ff554da',
+        'utm_id'         => 'utm-123',
+        'gad_source'     => '1',
+        'gad_campaignid' => 'test-campaign-123',
+        'source'         => 'google',
+        'medium'         => 'cpc',
+        'landing_page'   => 'https://privatescan.nl/preventie',
+    ] as $key => $value) {
+        $this->assertDatabaseHas('lead_marketing_data', [
+            'lead_id' => $leadId,
+            'key'     => $key,
+            'value'   => $value,
+        ]);
+    }
 });

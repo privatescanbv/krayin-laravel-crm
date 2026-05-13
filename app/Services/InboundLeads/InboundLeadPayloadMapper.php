@@ -61,7 +61,6 @@ class InboundLeadPayloadMapper
     public function extractHerniaMarketingData(array $payload): array
     {
         return $this->extractMarketingData($payload, [
-            'campaign_id',
             'source',
             'medium',
             'campaign',
@@ -90,6 +89,23 @@ class InboundLeadPayloadMapper
     {
         return $this->extractMarketingData($payload, [
             'campaign_id',
+            'source',
+            'medium',
+            'campaign',
+            'adgroup',
+            'utm_term',
+            'utm_content',
+            'utm_id',
+            'gclid',
+            'gbraid',
+            'wbraid',
+            'gad_source',
+            'gad_campaignid',
+            'landing_page',
+            'referrer',
+            'first_visit_at',
+            'last_visit_at',
+            'attribution_url',
         ]);
     }
 

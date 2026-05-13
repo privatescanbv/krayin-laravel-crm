@@ -26,7 +26,7 @@ X-API-KEY: {{API_KEY}}
     "lead_source": "architecto",
     "kanaal_c": "architecto",
     "soort_aanvraag_c": "preventie",
-    "first_name": "architecto",
+    "first_name": "architecto123",
     "last_name": "architecto",
     "email": "zbailey@example.net",
     "phone": "architecto",
@@ -35,7 +35,11 @@ X-API-KEY: {{API_KEY}}
     "section": "architecto",
     "select_verzoek": "architecto",
     "select_interesse": "architecto",
-    "campaign_id": "architecto"
+    "campaign_id": "c6020f18-517c-c2f1-dcf3-63ff4f550abf",
+    "utm_id" : "6e4d78b5-37e9-efd7-4224-653a2b05587e",
+    "gclid" : "EAIaIQobChMIg466pZO2lAMVHJpoCR2sBAhpEAAYASAAEgJSFfD_BwE",
+    "gbraid" : "0AAAAACbZemqRfDFT-H1QBrNZBZRvMTkYd",
+    "gad_source" : "1"
 }
 
 

@@ -6,7 +6,6 @@ test('extractHerniaMarketingData returns only supported non-empty tracking field
     $mapper = new InboundLeadPayloadMapper;
 
     $result = $mapper->extractHerniaMarketingData([
-        'campaign_id'     => ' 69b238c0-e630-b733-2bb3-4fd85ff554da ',
         'source'          => ' google ',
         'medium'          => '',
         'campaign'        => null,
@@ -28,7 +27,6 @@ test('extractHerniaMarketingData returns only supported non-empty tracking field
     ]);
 
     expect($result)->toBe([
-        'campaign_id'     => '69b238c0-e630-b733-2bb3-4fd85ff554da',
         'source'          => 'google',
         'utm_term'        => 'mri scan',
         'utm_id'          => 'utm-123',
@@ -45,17 +43,21 @@ test('extractHerniaMarketingData returns only supported non-empty tracking field
     ]);
 });
 
-test('extractPrivatescanMarketingData returns only a non-empty campaign_id', function () {
+test('extractPrivatescanMarketingData returns supported non-empty tracking fields', function () {
     $mapper = new InboundLeadPayloadMapper;
 
     expect($mapper->extractPrivatescanMarketingData([
         'campaign_id' => ' 69b238c0-e630-b733-2bb3-4fd85ff554da ',
         'source'      => 'google',
+        'medium'      => ' ',
+        'utm_id'      => 'utm-123',
     ]))->toBe([
         'campaign_id' => '69b238c0-e630-b733-2bb3-4fd85ff554da',
+        'source'      => 'google',
+        'utm_id'      => 'utm-123',
     ])
         ->and($mapper->extractPrivatescanMarketingData([
             'campaign_id' => ' ',
+            'source'      => null,
         ]))->toBe([]);
-
 });

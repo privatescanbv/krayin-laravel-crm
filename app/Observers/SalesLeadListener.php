@@ -18,9 +18,9 @@ class SalesLeadListener
     {
         // Skip workflow processing if webhooks are disabled (e.g., during imports)
         if (! config('webhook.enabled', true)) {
-            Log::info('SalesLeadListener: Skipping - webhooks are disabled (likely during import)', [
-                'lead_id' => $lead->id,
-            ]);
+//            Log::info('SalesLeadListener: Skipping - webhooks are disabled (likely during import)', [
+//                'lead_id' => $lead->id,
+//            ]);
 
             return;
         }

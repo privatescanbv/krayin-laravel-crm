@@ -192,6 +192,7 @@ paths:
                   type: string
                   description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`).'
                   example: 69b238c0-e630-b733-2bb3-4fd85ff554da
+                  nullable: true
                 lead_source:
                   type: string
                   description: 'Broncode (string) die gemapt wordt naar lead_source_id. Zelfde mapping als in `InboundLeadPayloadMapper::mapLeadSourceId()`. Bij geen match: default naar "Anders" (lead_source_id=32).'
@@ -221,7 +222,7 @@ paths:
                 birthdate:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-04-30'
+                  example: '2026-05-13'
                   nullable: true
                 email1:
                   type: string
@@ -343,7 +344,6 @@ paths:
                   example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
                   nullable: true
               required:
-                - campaign_id
                 - lead_source
                 - kanaal_c
                 - soort_aanvraag_c
@@ -472,8 +472,93 @@ paths:
                   nullable: true
                 campaign_id:
                   type: string
-                  description: 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\Marketing\Models\Campaign`). Wordt vaak gezet vanuit een cookie/UTM id.'
-                  example: 69b238c0-e630-b733-2bb3-4fd85ff554da
+                  description: 'Optionele campaign waarde vanuit PrivateScan. Wordt niet gevalideerd tegen CRM marketing campaigns; Google campaign info staat in `gad_campaignid`.'
+                  example: private-campaign
+                  nullable: true
+                source:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                medium:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                campaign:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                adgroup:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                utm_term:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                utm_content:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                utm_id:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gclid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gbraid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                wbraid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gad_source:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                gad_campaignid:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                landing_page:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                referrer:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                first_visit_at:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                last_visit_at:
+                  type: string
+                  description: ''
+                  example: architecto
+                  nullable: true
+                attribution_url:
+                  type: string
+                  description: ''
+                  example: 'http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html'
                   nullable: true
               required:
                 - lead_source
@@ -939,11 +1024,11 @@ paths:
                 schedule_from:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-04-30 12:38:46'
+                  example: '2026-05-13 15:27:38'
                 schedule_to:
                   type: string
                   description: 'This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>.'
-                  example: '2026-04-30 12:38:46'
+                  example: '2026-05-13 15:27:38'
               required:
                 - type
     parameters:
@@ -2754,7 +2839,7 @@ paths:
                     onboarding_completed_at:
                       type: string
                       description: 'Het veld value is geen geldige datum.'
-                      example: '2026-04-30T12:38:47'
+                      example: '2026-05-13T15:27:39'
                       nullable: true
                     email_notifications_enabled:
                       type: boolean

@@ -16,8 +16,7 @@ class HerniaCreateLeadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // NOTE: despite the name, this is the external_id of a Marketing Campaign (marketing_campaigns.external_id)
-            'campaign_id'      => ['required', 'string', new MarketingCampaignExternalIdExists],
+            'campaign_id'      => ['nullable', 'string', new MarketingCampaignExternalIdExists],
             'lead_source'      => ['required', 'string'],
             'kanaal_c'         => ['required', 'string'],
             'soort_aanvraag_c' => ['required', 'string'],

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Rules\MarketingCampaignExternalIdExists;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PrivatescanCreateLeadRequest extends FormRequest
@@ -54,8 +53,24 @@ class PrivatescanCreateLeadRequest extends FormRequest
             'select_verzoek'   => ['nullable', 'string'],
             'select_interesse' => ['nullable', 'string'],
             'personen'         => ['nullable'],
-            // NOTE: despite the name, this is the external_id of a Marketing Campaign (marketing_campaigns.external_id)
-            'campaign_id'      => ['nullable', 'string', new MarketingCampaignExternalIdExists(allowEmpty: true)],
+            'campaign_id'      => ['nullable', 'string'],
+            'source'           => ['nullable', 'string'],
+            'medium'           => ['nullable', 'string'],
+            'campaign'         => ['nullable', 'string'],
+            'adgroup'          => ['nullable', 'string'],
+            'utm_term'         => ['nullable', 'string'],
+            'utm_content'      => ['nullable', 'string'],
+            'utm_id'           => ['nullable', 'string'],
+            'gclid'            => ['nullable', 'string'],
+            'gbraid'           => ['nullable', 'string'],
+            'wbraid'           => ['nullable', 'string'],
+            'gad_source'       => ['nullable', 'string'],
+            'gad_campaignid'   => ['nullable', 'string'],
+            'landing_page'     => ['nullable', 'string'],
+            'referrer'         => ['nullable', 'string'],
+            'first_visit_at'   => ['nullable', 'string'],
+            'last_visit_at'    => ['nullable', 'string'],
+            'attribution_url'  => ['nullable', 'string'],
         ];
     }
 
@@ -86,8 +101,8 @@ class PrivatescanCreateLeadRequest extends FormRequest
                 'example'     => '0611111111',
             ],
             'campaign_id' => [
-                'description' => 'Marketing campaign external id (UUID). Dit is **niet** de numerieke database id, maar `marketing_campaigns.external_id` (model: `Webkul\\Marketing\\Models\\Campaign`). Wordt vaak gezet vanuit een cookie/UTM id.',
-                'example'     => '69b238c0-e630-b733-2bb3-4fd85ff554da',
+                'description' => 'Optionele campaign waarde vanuit PrivateScan. Wordt niet gevalideerd tegen CRM marketing campaigns; Google campaign info staat in `gad_campaignid`.',
+                'example'     => 'private-campaign',
             ],
         ];
     }

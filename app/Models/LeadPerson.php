@@ -30,7 +30,7 @@ class LeadPerson extends Pivot
                     ],
                     [
                         'id'         => Str::uuid(),
-                        'name'       => 'Anamnesis voor '.Person::findOrFail($pivot->person_id)->name,
+                        'name'       => 'Anamnese voor '.Person::findOrFail($pivot->person_id)->name,
                         'created_by' => auth()->id() ?? $pivot->lead?->user_id ?? 1,
                         'updated_by' => auth()->id() ?? $pivot->lead?->user_id ?? 1,
                     ]

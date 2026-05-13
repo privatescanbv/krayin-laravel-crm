@@ -503,7 +503,7 @@ class SalesLead extends Model
                     ],
                     [
                         'id'         => (string) Str::uuid(),
-                        'name'       => 'Anamnesis voor '.$personName,
+                        'name'       => 'Anamnese voor '.$personName,
                         'created_by' => auth()->id() ?? $this->user_id ?? 1,
                         'updated_by' => auth()->id() ?? $this->user_id ?? 1,
                     ]

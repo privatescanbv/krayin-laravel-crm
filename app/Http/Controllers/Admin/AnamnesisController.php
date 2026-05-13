@@ -216,7 +216,7 @@ class AnamnesisController extends Controller
                 ],
                 [
                     'id'         => Str::uuid(),
-                    'name'       => 'Anamnesis voor '.$lead->name,
+                    'name'       => 'Anamnese voor '.$lead->name,
                     'created_by' => auth()->id() ?? $lead->user_id ?? 1,
                     'updated_by' => auth()->id() ?? $lead->user_id ?? 1,
                 ]

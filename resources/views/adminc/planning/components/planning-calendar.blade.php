@@ -410,14 +410,7 @@
 
                     const sortedBlocks = blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
 
-                    const hasOccupied = sortedBlocks.some(b => b.type === 'occupied');
-                    // Geplande blokken tonen: beschikbaarheid verbergen — anders stapelen alle
-                    // resource-vrije sloten op dezelfde coördinaten (onleesbare “Beschikbaar”-tekst).
-                    const toLayout = hasOccupied
-                        ? sortedBlocks.filter(b => b.type === 'occupied')
-                        : sortedBlocks;
-
-                    return this.calculateOverlappingBlocks(toLayout);
+                    return this.calculateOverlappingBlocks(sortedBlocks);
                 },
                 getBlocksForMonthDay(date) {
                     const blocks = [];
@@ -434,9 +427,7 @@
                         });
                     }
 
-                    const sorted = blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
-                    const hasOccupied = sorted.some(b => b.type === 'occupied');
-                    return hasOccupied ? sorted.filter(b => b.type === 'occupied') : sorted;
+                    return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
                 },
                 blockStyle(block) {
                     if (this.viewType === 'month') {
@@ -461,10 +452,10 @@
                         return {
                             top: top + 'px',
                             height: height + 'px',
-                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
-                            borderColor: 'rgba(239, 68, 68, 0.8)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.92)',
+                            borderColor: 'rgba(185, 28, 28, 0.95)',
                             color: '#ffffff',
-                            border: '2px solid rgba(239, 68, 68, 0.8)',
+                            border: '2px solid rgba(185, 28, 28, 0.95)',
                             zIndex: String(25 + (block.overlapIndex || 0)),
                             ...overlapStyle
                         };
@@ -495,47 +486,95 @@
                     };
                     sorted.forEach(clearOverlap);
 
-                    const hasOccupied = sorted.some(b => b.type === 'occupied');
-                    const toPack = hasOccupied
-                        ? sorted.filter(b => b.type === 'occupied')
-                        : sorted.filter(b => b.type === 'available');
+                    const packOverlapping = (subset) => {
+                        const wrapped = subset.map(b => ({
+                            ref: b,
+                            start: new Date(b.from).getTime(),
+                            end: new Date(b.to).getTime(),
+                            col: -1,
+                            over: 1,
+                        }));
 
-                    const wrapped = toPack.map(b => ({
-                        ref: b,
-                        start: new Date(b.from).getTime(),
-                        end: new Date(b.to).getTime(),
-                        col: -1,
-                        over: 1,
-                    }));
+                        const active = [];
 
-                    const active = [];
+                        for (const b of wrapped) {
+                            for (let i = active.length - 1; i >= 0; i--) {
+                                if (active[i].end <= b.start) {
+                                    active.splice(i, 1);
+                                }
+                            }
 
-                    for (const b of wrapped) {
-                        for (let i = active.length - 1; i >= 0; i--) {
-                            if (active[i].end <= b.start) {
-                                active.splice(i, 1);
+                            let c = 0;
+                            while (active.some(a => a.col === c)) {
+                                c++;
+                            }
+                            b.col = c;
+
+                            active.push(b);
+                            active.sort((x, y) => x.end - y.end);
+
+                            const k = active.length;
+                            for (const a of active) {
+                                a.over = Math.max(a.over, k);
                             }
                         }
 
-                        let c = 0;
-                        while (active.some(a => a.col === c)) {
-                            c++;
+                        for (const b of wrapped) {
+                            b.ref.overlapIndex = b.col;
+                            b.ref.overlapCount = b.over;
                         }
-                        b.col = c;
+                    };
 
-                        active.push(b);
-                        active.sort((x, y) => x.end - y.end);
+                    // Geplande blokken: overlap i.f.v. verticale pixelpositie (zelfde basis als blockStyle),
+                    // zodat gelijktijdige afspraken niet door kleine ISO/tijdverschillen uit elkaar vallen.
+                    const packOverlappingOccupied = (subset) => {
+                        const wrapped = subset.map(b => {
+                            const from = new Date(b.from);
+                            const to = new Date(b.to);
+                            const topPx = this.topOffsetPx(from);
+                            const h = Math.max(18, this.topOffsetPx(to) - topPx);
+                            const bottomPx = topPx + Math.max(1, h);
+                            return {
+                                ref: b,
+                                start: topPx,
+                                end: bottomPx,
+                                col: -1,
+                                over: 1,
+                            };
+                        }).sort((a, b) => a.start - b.start || a.end - b.end);
 
-                        const k = active.length;
-                        for (const a of active) {
-                            a.over = Math.max(a.over, k);
+                        const active = [];
+
+                        for (const b of wrapped) {
+                            for (let i = active.length - 1; i >= 0; i--) {
+                                if (active[i].end <= b.start) {
+                                    active.splice(i, 1);
+                                }
+                            }
+
+                            let c = 0;
+                            while (active.some(a => a.col === c)) {
+                                c++;
+                            }
+                            b.col = c;
+
+                            active.push(b);
+                            active.sort((x, y) => x.end - y.end);
+
+                            const k = active.length;
+                            for (const a of active) {
+                                a.over = Math.max(a.over, k);
+                            }
                         }
-                    }
 
-                    for (const b of wrapped) {
-                        b.ref.overlapIndex = b.col;
-                        b.ref.overlapCount = b.over;
-                    }
+                        for (const b of wrapped) {
+                            b.ref.overlapIndex = b.col;
+                            b.ref.overlapCount = b.over;
+                        }
+                    };
+
+                    packOverlapping(sorted.filter(b => b.type === 'available'));
+                    packOverlappingOccupied(sorted.filter(b => b.type === 'occupied'));
 
                     return sorted;
                 },

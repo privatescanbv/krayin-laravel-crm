@@ -28,8 +28,8 @@
             id="v-clinic-guide-template"
         >
             <div class="mt-4">
-                <!-- Date navigation -->
-                <div class="flex items-center justify-center gap-4 mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                <!-- Date navigation + department toggle -->
+                <div class="relative flex items-center justify-center gap-4 mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <button
                         @click="previousDay"
                         class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -65,6 +65,31 @@
                     >
                         Vandaag
                     </button>
+
+                    <!-- Department toggle (right-aligned) -->
+                    <nav class="absolute right-4 flex items-center gap-[2px] border border-gray-200 rounded-md px-1 h-9 dark:border-gray-700">
+                        <button
+                            @click="setDepartment('all')"
+                            :class="selectedDepartment === 'all'
+                                ? 'bg-brand-privatescan-main text-brand-privatescan-accent shadow-sm'
+                                : 'text-brand-privatescan-main hover:bg-[#e8f0f9]'"
+                            class="h-7 px-3 rounded text-xs font-medium transition"
+                        >Alle</button>
+                        <button
+                            @click="setDepartment('privatescan')"
+                            :class="selectedDepartment === 'privatescan'
+                                ? 'bg-brand-privatescan-main text-brand-privatescan-accent shadow-sm'
+                                : 'text-brand-privatescan-main hover:bg-[#e8f0f9]'"
+                            class="h-7 px-3 rounded text-xs font-medium transition"
+                        >Privatescan</button>
+                        <button
+                            @click="setDepartment('hernia')"
+                            :class="selectedDepartment === 'hernia'
+                                ? 'bg-brand-privatescan-main text-brand-privatescan-accent shadow-sm'
+                                : 'text-brand-privatescan-main hover:bg-[#e8f0f9]'"
+                            class="h-7 px-3 rounded text-xs font-medium transition"
+                        >Herniapoli</button>
+                    </nav>
                 </div>
 
                 <!-- Loading state -->
@@ -223,6 +248,7 @@
                 data() {
                     return {
                         selectedDate: new Date().toISOString().slice(0, 10),
+                        selectedDepartment: localStorage.getItem('dagplanning_department') ?? 'all',
                         orders: [],
                         loading: false,
                         activeActivityPerson: { id: null },
@@ -246,7 +272,8 @@
                     async fetchData() {
                         this.loading = true;
                         try {
-                            const response = await fetch(`{{ route('admin.clinic-guide.get') }}?date=${this.selectedDate}`, {
+                            const dept = this.selectedDepartment !== 'all' ? `&department=${this.selectedDepartment}` : '';
+                            const response = await fetch(`{{ route('admin.clinic-guide.get') }}?date=${this.selectedDate}${dept}`, {
                                 headers: {
                                     'Accept': 'application/json',
                                     'X-Requested-With': 'XMLHttpRequest',
@@ -260,6 +287,12 @@
                         } finally {
                             this.loading = false;
                         }
+                    },
+
+                    setDepartment(dept) {
+                        this.selectedDepartment = dept;
+                        localStorage.setItem('dagplanning_department', dept);
+                        this.fetchData();
                     },
 
                     formatLocalDate(d) {

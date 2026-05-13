@@ -26,15 +26,23 @@ class ClinicGuideController extends Controller
     public function get(Request $request): JsonResponse
     {
         $request->validate([
-            'date' => 'nullable|date_format:Y-m-d',
+            'date'       => 'nullable|date_format:Y-m-d',
+            'department' => 'nullable|string|in:hernia,privatescan',
         ]);
 
         $date = $request->input('date', now()->format('Y-m-d'));
+        $department = $request->input('department');
+        $stageIds = match ($department) {
+            'hernia'      => [PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id()],
+            'privatescan' => [PipelineStage::ORDER_WACHTEN_UITVOERING->id()],
+            default       => PipelineStage::getOrderStagesIdsForClinicGuide(),
+        };
+
         $startOfDay = Carbon::parse($date)->startOfDay();
         $endOfDay = Carbon::parse($date)->endOfDay();
 
         $orders = Order::query()
-            ->whereIn('pipeline_stage_id', PipelineStage::getOrderStagesIdsForClinicGuide())
+            ->whereIn('pipeline_stage_id', $stageIds)
             ->where(function ($q) {
                 $q->whereNotNull('first_examination_at')
                     ->orWhereHas('orderItems', function ($orderItems) {

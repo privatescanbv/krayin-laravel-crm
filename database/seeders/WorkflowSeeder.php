@@ -47,10 +47,10 @@ class WorkflowSeeder extends Seeder
         return match ($stage) {
             PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN,
             PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA           => [['Klant data bijwerken', $defaultDescription, ActivityType::TASK, 1]],
-            PipelineStage::KLANT_ADVISEREN_START                         => [['Nieuwe lead, bellen', $defaultDescription, ActivityType::CALL, 1]],
-            PipelineStage::KLANT_ADVISEREN_START_HERNIA                  => [['Nieuwe lead, bellen - geen MRI / overig', $defaultDescription, ActivityType::CALL, 1]],
+            PipelineStage::KLANT_ADVISEREN_START                         => [['Nieuwe lead, bellen', $defaultDescription, ActivityType::CALL, 0]],
+            PipelineStage::KLANT_ADVISEREN_START_HERNIA                  => [['Nieuwe lead, bellen - geen MRI / overig', $defaultDescription, ActivityType::CALL, 0]],
             PipelineStage::KLANT_ADVISEREN_OPVOLGEN                      => [],
-            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA               => [['Nieuwe lead, bellen - MRI', $defaultDescription, ActivityType::CALL, 1]],
+            PipelineStage::KLANT_ADVISEREN_WILL_MRI_HERNIA               => [['Nieuwe lead, bellen - MRI', $defaultDescription, ActivityType::CALL, 0]],
             PipelineStage::KLANT_ADVISEREN_WACHTEN_OP_MRI_HERNIA         => [['Beelden binnen?', $defaultDescription, ActivityType::TASK, 10]],
             PipelineStage::KLANT_ADVISEREN_MRI_BINNEN_HERNIA             => [['Klant adviseren met MRI beelden', $defaultDescription, ActivityType::CALL, 1]],
             PipelineStage::SALES_ORDER_PREVENTIE_HERNIA                  => [['Onderzoek via Privatescan', $defaultDescription, ActivityType::TASK, 3]],

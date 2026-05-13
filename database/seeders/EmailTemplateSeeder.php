@@ -307,6 +307,41 @@ HTML,
 <p>Met vriendelijke groet,<br>Privatescan</p>
 HTML,
             ],
+
+            // ── Behandelovereenkomst Hals─────────────────────────────────────────
+            // Variables: customer_name, order_reference, order_title, datum_afspraak,
+            //            tijd_afspraak, plaats_afspraak, afspraken_tabel
+            [
+                'name'        => 'Behandelingsovereenkomst Halswervelkolom',
+                'code'        => 'treatment-agreement-cervical_spine',
+                'type'        => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Behandelingsovereenkomst | Halswervelkolom',
+                'content'     => <<<'HTML'
+<p>Geachte {{ customer_name }},</p>
+<p>Zoals telefonisch besproken, stuur ik u via deze e-mail de behandelingsovereenkomst inclusief praktische informatie met betrekking tot uw aankomende [type operatie] bij Procelsio Clinic in Essen.</p>
+<ol>
+<li>Behandelingsovereenkomst:<br>In de bijlage van deze e-mail vindt u de behandelingsovereenkomst tussen u, Dr. Jost Thissen en de Procelsio Clinic voor uw geplande minimaal invasieve [type operatie] op [Datum-operatie]. Wij verzoeken u vriendelijk om deze overeenkomst zorgvuldig door te lezen en te ondertekenen. U kunt de ondertekende overeenkomst retourneren via e-mail. Graag ontvang ik de ondertekende overeenkomst voor [zelf kunnen invullen] retour. Daarnaast vindt u in de bijlagen:<br>
+<ul>
+<li>Een nazorg brochure over het herstelproces na de operatie;</li>
+<li>De algemene voorwaarden van de behandeling;</li>
+<li>Een informatiefolder met praktische informatie ter voorbereiding op de operatie;</li>
+<li>Een informatieformulier over de anesthesie (narcose);</li>
+<li>Informatie met betrekking tot het hotel waar wij mee samenwerken</li>
+</ul>
+</li>
+<li>Machtiging aanvraag zorgverzekeraar:<br>Zodra wij uw ondertekende behandelingsovereenkomst ontvangen, zullen wij u voorzien van een Arztbrief en een Kostenvoranschlag (kostenraming). Houd er rekening mee dat bij een zakelijke betaling u geen aanspraak kunt maken op uw zorgverzekeraar. Nadere informatie en de benodigde documenten ontvangt u van ons na ontvangst van uw ondertekende behandelingsovereenkomst. De zorgverzekeraar geeft de voorkeur aan een verwijzing van een medische specialist (huisarts bijvoorbeeld) die gericht is aan Procelsio Clinic te Essen, waarbij de operatieve ingreep wordt uitgevoerd door Dr. Jost Thissen. Let op: Geen Herniapoli of Privatescan benoemen in de verwijzing.</li>
+<li>Intake, operatie &amp; ontslag:&nbsp;<br>Op {{ datum_afspraak }} staat uw intakebespreking gepland met Dr. Jost Thissen en de anesthesist in de Procelsio Clinic Essen. Tijdens deze bespreking zal ook een Nederlandse begeleider vanuit Herniapoli aanwezig zijn om u te ondersteunen en te vertalen. U ontvangt het exacte tijdstip &eacute;&eacute;n werkdag voor de intakebespreking. Deze intakebespreking zal waarschijnlijk in de middag plaatsvinden. De verwachte ontslagdatum staat vermeld in de behandelingsovereenkomst.</li>
+<li>Facturering &amp; operatieverslag:&nbsp;<br>De kosten van de operatie zoals vermeld in de behandelingsovereenkomst dienen te worden voldaan uiterlijk op de maandag v&oacute;&oacute;r de ingreep. Na de operatie ontvangt u van ons een factuur waarin aangegeven is dat u de kosten heeft voldaan. Ongeveer een week na de operatie ontvangt u het operatieverslag in het Duits van ons per e-mail.</li>
+<li>Narcoseformulier:<br>Voor uw behandeling onder algehele narcose hebben wij voorafgaand aan uw operatie een ingevulde gezondheidsvragenlijst van u nodig. Gelieve het bijgevoegde informatieformulier over anesthesie zorgvuldig door te lezen. Dit formulier wordt tevens ook nog uitgebreid besproken samen met de Anesthesist tijdens het intakegesprek voorafgaand aan uw behandeling. Wij verzoeken u vriendelijk de onderstaande gezondheidsverklaring uiterlijk [datum-zelf-invullen] volledig en naar waarheid in te vullen.
+<p>Klik op de volgende link om de gezondheidsvragenlijst in te vullen: <a href="https://newcrm.dev.privatescan.nl/{{ gvl_form_link }}">Naar de gezondheidsverklaring &gt;&nbsp;</a></p>
+</li>
+</ol>
+<p>Mocht u nog vragen hebben of verdere ondersteuning nodig hebben, aarzel dan niet om contact op te nemen met ons team. We staan klaar om uw vragen te beantwoorden en u bij te staan gedurende uw behandeling.</p>
+<p>Met vriendelijke groet,<br>{{ company_signature }}</p>
+HTML,
+            ],
             [
                 'name'        => 'Orderbevestiging TB zonder bloed NL',
                 'code'        => 'order-ackn-TB-no-blood',
@@ -414,6 +449,40 @@ HTML,
 HTML,
             ],
             [
+                'name'        => 'Orderbevestiging los onderzoek NL',
+                'code'        => 'order-ackn-los-onderzoek',
+                'type'        => EmailTemplateType::ORDER_ACKNOWLEDGEMENT->value,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Orderbevestiging los onderzoek NL',
+                'content'     => <<<'HTML'
+<p>&nbsp;</p>
+<p style="text-align: right;">Hengelo, {{ current_date }}</p>
+<p style="text-align: left;">&nbsp;</p>
+<p style="text-align: left;">Onze referentie: {{ order_reference }}</p>
+<p style="text-align: left;">Geachte {{ customer_name}},</p>
+<p style="text-align: left;">Hierbij bevestigen wij de door u aan Privatescan verstrekte opdracht voor het laten uitvoeren van een medisch onderzoek.</p>
+<p style="text-align: left;"><strong>Afspraakgegevens:</strong><br>Uw afspraak is tot stand gekomen in overleg met {{ adviseur }} en staat ingepland voor {{ datum_afspraak }} om {{ tijd_afspraak }} uur in {{ plaats_afspraak }}. {{ meldplek }}</p>
+<p style="text-align: left;">De volgende onderzoeken worden uitgevoerd:<br>{{ order_summary_table }}</p>
+<p>Voor een optimaal verloop en een goede voorbereiding op de onderzoeken verzoeken wij u om de meegestuurde informatie zorgvuldig door te lezen.</p>
+<p>Graag ontvangen we zo spoedig mogelijk, bij voorkeur per e-mail, uw akkoord voor de geplande onderzoeken alsmede de door u ingevulde gezondheidsvragenlijst(en). Het totaalbedrag van {{ order_total }} dient v&oacute;&oacute;r de onderzoeksdatum op onze bank te zijn bijgeschreven op ons IBAN rekeningnummer, NL11 INGB 0673 2299 71 &nbsp;o.v.v. onze referentie: {{ order_reference }}. U ontvangt separaat de factuur.</p>
+<p>Met dank voor uw opdracht wens ik u alvast een aangenaam verblijf in de kliniek.</p>
+<p>Met vriendelijke groet,</p>
+<p>&nbsp;</p>
+<table style="border-collapse: collapse; width: 100%; border-width: 0px; border-spacing: 0px;" border="1"><colgroup><col style="width: 50%;"><col style="width: 50%;"></colgroup>
+<tbody>
+<tr>
+<td style="border-width: 0px; padding: 0px;">{{ adviseur }}<br>Binnendienst adviseur</td>
+<td style="border-width: 0px; padding: 0px;">voor akkoord:<br>{{ customer_name }}</td>
+</tr>
+</tbody>
+</table>
+<!-- pagebreak -->
+<p><strong>Rapportage, vertaling en begeleiding</strong><br>Na afloop van de onderzoeken (MRI en/of CT) krijgt u een CD/DVD en/of QR-code mee van de gemaakte beelden. Van de resultaten ontvangt u een schriftelijk Duits verslag. Een vertaling van het verslag maakt geen onderdeel uit van het onderzoeksprogramma. Uit ervaring is gebleken dat de meerderheid van onze cli&euml;nten geen behoefte heeft aan een vertaling indien er bij de onderzoeken geen bijzonderheden zijn aangetroffen. Een vertaling van het verslag (volledig of samenvatting) kunt u bestellen bij de begeleiding in de kliniek of achteraf bij Privatescan. Namens Privatescan is op de onderzoeksdag Nederlandstalige begeleiding aanwezig.</p>
+<p><strong>Aankomst kliniek</strong><br>Ten behoeve van uw onderzoeken heeft Privatescan tijd op apparatuur (MRI, CT etc.) en bij artsen gereserveerd. Om te voorkomen dat er op uw onderzoeksdag (te) lange vertragingen en wachttijden ontstaan, is het van belang dat u uiterlijk op de overeengekomen tijd aanwezig bent in de kliniek. Houdt daarom rekening met mogelijke files op uw route. Bij vertraging van meer dan 30 minuten, bestaat de mogelijkheid dat uw onderzoek dient te worden verplaatst om verder oplopende wachttijden voor de mensen die na u staan ingepland te voorkomen. Wij vragen u dan ook vriendelijk om bij vertraging direct contact met ons op te nemen. Vanaf &rsquo;s morgens 8:30 uur zijn we hiervoor bereikbaar via 074 &ndash; 255 2 680.</p>
+HTML,
+            ],
+            [
                 'name'        => 'Afspraak bevestiging Evidia',
                 'code'        => 'acknowledge-order-mail-evidia',
                 'type'        => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
@@ -426,7 +495,7 @@ HTML,
 <p>Graag ontvangen wij uiterlijk {{ datum_bevestiging }} voor 12.00 uur een definitieve bevestiging van u, zodat ik uw schriftelijke akkoord heb en de afspraak definitief kan bevestigen bij de kliniek.</p>
 <p>In uw eigen pati&euml;ntportaal treft u de orderbevestiging, een in te vullen vragenlijst, onderzoekkaart(en) waarin u kunt lezen hoe een onderzoek als deze zal verlopen en wat u ervan mag verwachten en fiscale informatie. Via onderstaande link gaat u naar de inlogpagina van het portaal.</p>
 <p><a title="Inloggen" href="https://patient.dev.privatescan.nl" target="_blank" rel="noopener"><strong>Inloggen pati&euml;ntportaal</strong></a></p>
-<p>Graag ontvangen wij uiterlijk {{ datum_bevestiging }} voor 12.00 uur de bijgevoegde vragenlijst ingevuld retour.</p>
+<p>Graag ontvangen wij uiterlijk {{ order_gvl_deadline }} voor 12.00 uur de bijgevoegde vragenlijst ingevuld retour.</p>
 <p>Parkeren kunt u op het parkeerdek van P1 of P2 van het Augusta Krankenhaus (Bergstra&szlig;e 26, 44791 te Bochum), tegenover het Gesundheitszentrum (Evidia, aan de Bergstra&szlig;e 25, 44791 te Bochum). Het parkeerdek van P1 is met het gezondheidscentrum verbonden met een loopbrug. Via deze loopbrug kunt u zich bij Evidia op de 4e etage melden.</p>
 <p>Voor na de onderzoeken dient u zelf wat te eten mee te nemen. Wij zorgen wel voor koffie/thee.<br>U dient nuchter te zijn vanaf 7.00 uur die ochtend. Voor dit tijdstip adviseer ik u om wel wat te eten. In de tussentijd mag u wel water drinken, maar geen cafe&iuml;nehoudende dranken en/of etenswaren nuttigen.</p>
 <p>Houd rekening met mogelijke verkeersdrukte en vertrek op tijd.</p>
@@ -448,7 +517,7 @@ HTML,
 <p>Graag ontvangen wij uiterlijk {{ order_bevesting_datum_plus_1_dag }} voor 12.00 uur een definitieve bevestiging van u, zodat ik uw schriftelijke akkoord heb en de afspraak definitief kan bevestigen bij de kliniek.</p>
 <p>In uw eigen pati&euml;ntportaal treft u de orderbevestiging, een in te vullen vragenlijst, onderzoekkaart(en) waarin u kunt lezen hoe een onderzoek als deze zal verlopen en wat u ervan mag verwachten en fiscale informatie. Via onderstaande link gaat u naar de inlogpagina van het portaal.</p>
 <p><a title="Inloggen" href="https://patient.dev.privatescan.nl" target="_blank" rel="noopener"><strong>Inloggen pati&euml;ntportaal</strong></a></p>
-<p>Graag ontvangen wij uiterlijk {{ datum_bevestiging }} voor 12.00 uur de bijgevoegde vragenlijst ingevuld retour.</p>
+<p>Graag ontvangen wij uiterlijk {{ order_gvl_deadline }} voor 12.00 uur de bijgevoegde vragenlijst ingevuld retour.</p>
 <p>De afspraak vindt plaats bij de Ambulante Kardiologie Augusta Klinik aan de Bergstrasse 26, 44791 te Bochum.<br>Wanneer u in de parkeergarage (P1 of P2 &ndash; hiervoor krijgt u een uitrijkaartje) bent aangekomen dient u contact op te nemen met de begeleid(st)er. Dit mag op nummer +316 34 159 513. Hij/zij zal u dan ophalen.</p>
 <p>Voor na de onderzoeken dient u zelf wat te eten mee te nemen. Wij zorgen wel voor koffie/thee.<br>U dient nuchter te zijn vanaf 7.00 uur die ochtend. Voor dit tijdstip adviseer ik u om wel wat te eten. In de tussentijd mag u wel water drinken, maar geen cafe&iuml;nehoudende dranken en/of etenswaren nuttigen.</p>
 <p>Houd rekening met mogelijke verkeersdrukte en vertrek op tijd.</p>

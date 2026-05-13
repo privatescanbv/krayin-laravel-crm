@@ -123,10 +123,10 @@ class AfbDispatchService
             $generatedDocuments = [];
 
             foreach ($unsentOrders as $order) {
-                $generatedDocuments[] = [
-                    'order' => $order,
-                    ...$this->afbDocumentGenerator->generateForOrderAndDepartment($order, $department),
-                ];
+                $docs = $this->afbDocumentGenerator->generateForOrderAndDepartment($order, $department);
+                foreach ($docs as $doc) {
+                    $generatedDocuments[] = ['order' => $order, ...$doc];
+                }
             }
 
             $email = $this->createDispatchEmail(
@@ -149,18 +149,12 @@ class AfbDispatchService
 
             $this->crmMailService->sendEmail($email, EmailFolderEnum::SENT);
 
-            DB::transaction(function () use ($generatedDocuments, $dispatch, $email, $departmentId) {
+            DB::transaction(function () use ($generatedDocuments, $dispatch, $email) {
                 foreach ($generatedDocuments as $generatedDocument) {
                     AfbPersonDocument::create([
                         'afb_dispatch_id' => $dispatch->id,
                         'order_id'        => $generatedDocument['order']->id,
-                        'order_item_ids'  => $generatedDocument['order']->orderItems
-                            ->where('status', '!=', OrderItemStatus::LOST)
-                            ->filter(fn ($item) => $item->resourceOrderItems
-                                ->contains(fn ($roi) => $roi->resource?->clinic_department_id === $departmentId))
-                            ->pluck('id')
-                            ->values()
-                            ->all(),
+                        'order_item_ids'  => $generatedDocument['order_item_ids'],
                         'person_id'       => $generatedDocument['person_id'],
                         'patient_name'    => $generatedDocument['patient_name'],
                         'file_name'       => $generatedDocument['file_name'],
@@ -344,34 +338,44 @@ class AfbDispatchService
      */
     public function hasUnincludedActiveItems(int $orderId, int $departmentId): bool
     {
-        $lastDocument = AfbPersonDocument::query()
+        $documents = AfbPersonDocument::query()
             ->where('order_id', $orderId)
             ->whereHas('dispatch', fn ($q) => $q
                 ->where('clinic_department_id', $departmentId)
                 ->where('status', AfbDispatchStatus::SUCCESS->value))
-            ->latest('sent_at')
-            ->first();
+            ->get();
 
-        if (! $lastDocument || $lastDocument->order_item_ids === null) {
+        if ($documents->isEmpty()) {
             return false;
         }
 
-        // New active items linked to this department that were not in the last dispatch
+        // Union of all item IDs covered across every per-person document for this order+department
+        $allSentItemIds = $documents
+            ->flatMap(fn ($doc) => $doc->order_item_ids ?? [])
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($allSentItemIds)) {
+            return false;
+        }
+
+        // New active items linked to this department not covered by any previous dispatch document
         $hasNewItems = OrderItem::query()
             ->where('order_id', $orderId)
             ->where('status', '!=', OrderItemStatus::LOST->value)
             ->whereHas('resourceOrderItems', fn ($q) => $q
                 ->whereHas('resource', fn ($q) => $q->where('clinic_department_id', $departmentId)))
-            ->whereNotIn('id', $lastDocument->order_item_ids)
+            ->whereNotIn('id', $allSentItemIds)
             ->exists();
 
         if ($hasNewItems) {
             return true;
         }
 
-        // Items that were in the last dispatch but are now LOST (clinic must receive updated AFB)
+        // Items that were in any previous dispatch document but are now LOST
         return OrderItem::query()
-            ->whereIn('id', $lastDocument->order_item_ids)
+            ->whereIn('id', $allSentItemIds)
             ->where('status', OrderItemStatus::LOST->value)
             ->exists();
     }

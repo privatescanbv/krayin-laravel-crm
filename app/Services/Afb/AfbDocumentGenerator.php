@@ -2,6 +2,7 @@
 
 namespace App\Services\Afb;
 
+use App\Enums\OrderItemStatus;
 use App\Models\Anamnesis;
 use App\Models\Clinic;
 use App\Models\ClinicDepartment;
@@ -22,49 +23,73 @@ class AfbDocumentGenerator
     ) {}
 
     /**
-     * @return array{
+     * Generates one PDF per person found in this department's order items.
+     * Falls back to a single document when no items carry a person_id.
+     *
+     * @return array<int, array{
      *     file_name: string,
      *     file_path: string,
      *     patient_name: ?string,
-     *     person_id: ?int
-     * }
+     *     person_id: ?int,
+     *     order_item_ids: array<int>
+     * }>
      */
     public function generateForOrderAndDepartment(Order $order, ClinicDepartment $department): array
     {
         $department->loadMissing('clinic');
-        $rendered = $this->renderHtmlForOrderAndDepartment($order, $department);
 
-        $html = $rendered['html'];
-        $person = $rendered['person'];
+        $order->loadMissing([
+            'user',
+            'salesLead.user',
+            'salesLead.contactPerson.address',
+            'salesLead.persons.address',
+            'orderItems.person.address',
+            'orderItems.product.partnerProducts.clinics',
+            'orderItems.resourceOrderItems.resource.clinicDepartment',
+        ]);
 
-        $pdfContent = Pdf::loadHTML($html)
-            ->setPaper('A4', 'portrait')
-            ->output();
+        $allExaminations = $this->extractDepartmentExaminations($order, $department->id);
 
-        $datePart = now()->format('Ymd_His');
-        $orderPart = $order->order_number ?: (string) $order->id;
-        $fileName = sprintf(
-            'afb_%s_%s_%s.pdf',
-            Str::slug($department->clinic->name ?: 'clinic'),
-            Str::slug($orderPart),
-            $datePart
-        );
-        $filePath = sprintf('afb/%d/%d/%s', $department->clinic_id, $order->id, $fileName);
+        $personIds = $allExaminations
+            ->pluck('order_item_person_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
-        $this->documentStorage->put($filePath, $pdfContent);
+        if (empty($personIds)) {
+            $person = $this->resolvePerson($order, $allExaminations);
+            $orderItemIds = $this->resolveOrderItemIdsForDepartment($order, $department->id, null);
 
-        return [
-            'file_name'    => $fileName,
-            'file_path'    => $filePath,
-            'patient_name' => $person?->name,
-            'person_id'    => $person?->id,
-        ];
+            return [$this->generateSingleDocument($order, $department, $person, $allExaminations, $orderItemIds)];
+        }
+
+        $results = [];
+
+        foreach ($personIds as $personId) {
+            // Include this person's examinations plus any items without a person assignment
+            $personExaminations = $allExaminations->filter(
+                fn (array $row) => $row['order_item_person_id'] === $personId
+                    || $row['order_item_person_id'] === null
+            )->values();
+
+            $person = $order->orderItems
+                ->pluck('person')
+                ->filter()
+                ->firstWhere('id', $personId);
+
+            $orderItemIds = $this->resolveOrderItemIdsForDepartment($order, $department->id, $personId);
+
+            $results[] = $this->generateSingleDocument($order, $department, $person, $personExaminations, $orderItemIds);
+        }
+
+        return $results;
     }
 
     /**
      * @return array{html: string, person: ?Person}
      */
-    public function renderHtmlForOrderAndDepartment(Order $order, ClinicDepartment $department): array
+    public function renderHtmlForOrderAndDepartment(Order $order, ClinicDepartment $department, ?Person $forPerson = null): array
     {
         $department->loadMissing('clinic');
 
@@ -79,7 +104,18 @@ class AfbDocumentGenerator
         ]);
 
         $examinations = $this->extractDepartmentExaminations($order, $department->id);
-        $person = $this->resolvePerson($order, $examinations);
+
+        if ($forPerson !== null) {
+            $forPersonId = (int) $forPerson->id;
+            $examinations = $examinations->filter(
+                fn (array $row) => $row['order_item_person_id'] === $forPersonId
+                    || $row['order_item_person_id'] === null
+            )->values();
+            $person = $forPerson;
+        } else {
+            $person = $this->resolvePerson($order, $examinations);
+        }
+
         $anamnesis = $this->resolveAnamnesis($order, $person);
 
         $html = view('adminc.afb.document', [
@@ -91,6 +127,74 @@ class AfbDocumentGenerator
             'html'   => $html,
             'person' => $person,
         ];
+    }
+
+    /**
+     * @param  array<int>  $orderItemIds
+     * @return array{file_name: string, file_path: string, patient_name: ?string, person_id: ?int, order_item_ids: array<int>}
+     */
+    private function generateSingleDocument(
+        Order $order,
+        ClinicDepartment $department,
+        ?Person $person,
+        Collection $examinations,
+        array $orderItemIds
+    ): array {
+        $anamnesis = $this->resolveAnamnesis($order, $person);
+
+        $html = view('adminc.afb.document', [
+            'afb'   => $this->buildViewData($order, $department->clinic, $person, $anamnesis, $examinations),
+            'order' => $order,
+        ])->render();
+
+        $pdfContent = Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->output();
+
+        $datePart = now()->format('Ymd_His');
+        $orderPart = $order->order_number ?: (string) $order->id;
+        $personPart = $person
+            ? Str::slug($person->name ?: (string) $person->id).'-'.$person->id
+            : 'unknown';
+
+        $fileName = sprintf(
+            'afb_%s_%s_%s_%s.pdf',
+            Str::slug($department->clinic->name ?: 'clinic'),
+            Str::slug($orderPart),
+            $personPart,
+            $datePart
+        );
+        $filePath = sprintf('afb/%d/%d/%s', $department->clinic_id, $order->id, $fileName);
+
+        $this->documentStorage->put($filePath, $pdfContent);
+
+        return [
+            'file_name'      => $fileName,
+            'file_path'      => $filePath,
+            'patient_name'   => $person?->name,
+            'person_id'      => $person?->id,
+            'order_item_ids' => $orderItemIds,
+        ];
+    }
+
+    /**
+     * @return array<int>
+     */
+    private function resolveOrderItemIdsForDepartment(Order $order, int $departmentId, ?int $personId): array
+    {
+        return $order->orderItems
+            ->when(
+                $personId !== null,
+                fn ($items) => $items->filter(
+                    fn ($item) => (int) $item->person_id === $personId || $item->person_id === null
+                )
+            )
+            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->filter(fn ($item) => $item->resourceOrderItems
+                ->contains(fn ($roi) => (int) $roi->resource?->clinic_department_id === $departmentId))
+            ->pluck('id')
+            ->values()
+            ->all();
     }
 
     /**

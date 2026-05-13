@@ -10,9 +10,9 @@ use App\Models\ResourceType;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Webkul\Product\Models\Product;
-use \Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 

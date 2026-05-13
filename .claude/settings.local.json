@@ -74,7 +74,13 @@
       "Bash(xxd /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/app/Enums/ProductType.php)",
       "Bash(vendor/bin/sail mysql *)",
       "Bash(wait)",
-      "Bash(openssl x509 *)"
+      "Bash(openssl x509 *)",
+      "Bash(mkcert *)",
+      "Bash(security find-certificate *)",
+      "Bash(security verify-cert *)",
+      "Bash(openssl verify *)",
+      "Bash(security dump-trust-settings *)",
+      "mcp__kepa-mysql__mysql_query"
     ]
   }
 }

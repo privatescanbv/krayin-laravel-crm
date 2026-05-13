@@ -790,6 +790,145 @@ test('late booking does not queue dispatch when order is not in an allowed stage
     Bus::assertNotDispatched(SendAfbDispatchJob::class);
 });
 
+test('order with two persons generates separate afb per person for same department', function () {
+    Mail::fake();
+
+    $examAt = now()->addDays(2)->setTime(10, 0);
+
+    $context = createOrderForClinic($examAt);
+    $personA = $context['person'];
+    $order = $context['order'];
+    $dept = $context['department'];
+
+    $addressB = Address::factory()->create([
+        'street'       => 'Kalverstraat',
+        'house_number' => '10',
+        'postal_code'  => '1012NX',
+        'city'         => 'Amsterdam',
+        'country'      => 'Nederland',
+    ]);
+    $personB = Person::factory()->create([
+        'first_name' => 'Jan',
+        'last_name'  => 'Bakker',
+        'address_id' => $addressB->id,
+        'is_active'  => true,
+    ]);
+    $order->salesLead->attachPersons([$personB->id]);
+
+    $deptResource = Resource::where('clinic_department_id', $dept->id)->firstOrFail();
+
+    $productTb1 = Product::factory()->create(['name' => 'MRI TB1']);
+    $itemTb1 = OrderItem::factory()->create([
+        'order_id'   => $order->id,
+        'product_id' => $productTb1->id,
+        'person_id'  => $personB->id,
+        'name'       => 'MRI TB1',
+    ]);
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $deptResource->id,
+        'orderitem_id' => $itemTb1->id,
+        'from'         => $examAt->copy()->addMinutes(60),
+        'to'           => $examAt->copy()->addMinutes(90),
+    ]);
+
+    $productLws = Product::factory()->create(['name' => 'MRI LWS']);
+    $itemLws = OrderItem::factory()->create([
+        'order_id'   => $order->id,
+        'product_id' => $productLws->id,
+        'person_id'  => $personB->id,
+        'name'       => 'MRI LWS',
+    ]);
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $deptResource->id,
+        'orderitem_id' => $itemLws->id,
+        'from'         => $examAt->copy()->addMinutes(100),
+        'to'           => $examAt->copy()->addMinutes(130),
+    ]);
+
+    $service = app(AfbDispatchService::class);
+    $service->sendDispatch(
+        departmentId: $dept->id,
+        orderIds: [$order->id],
+        type: AfbDispatchType::INDIVIDUAL,
+        attempt: 1
+    );
+
+    $docs = AfbPersonDocument::query()
+        ->where('order_id', $order->id)
+        ->whereHas('dispatch', fn ($q) => $q
+            ->where('clinic_department_id', $dept->id)
+            ->where('status', AfbDispatchStatus::SUCCESS->value))
+        ->get();
+
+    expect($docs)->toHaveCount(2);
+
+    $docA = $docs->firstWhere('person_id', $personA->id);
+    $docB = $docs->firstWhere('person_id', $personB->id);
+
+    expect($docA)->not->toBeNull()
+        ->and($docB)->not->toBeNull();
+
+    $itemA = $order->orderItems()->where('person_id', $personA->id)->first();
+
+    expect($docA->order_item_ids)->toContain($itemA->id)
+        ->and($docA->order_item_ids)->not->toContain($itemTb1->id)
+        ->and($docA->order_item_ids)->not->toContain($itemLws->id)
+        ->and($docB->order_item_ids)->toContain($itemTb1->id)
+        ->and($docB->order_item_ids)->toContain($itemLws->id)
+        ->and($docB->order_item_ids)->not->toContain($itemA->id);
+
+    $email = Email::where('clinic_id', $context['clinic']->id)->first();
+    expect($email->attachments)->toHaveCount(2);
+
+    Mail::assertSent(EmailMailable::class, 1);
+});
+
+test('renderHtmlForOrderAndDepartment with forPerson filters to that person only', function () {
+    $examAt = now()->addDays(2)->setTime(10, 0);
+
+    $context = createOrderForClinic($examAt);
+    $personA = $context['person'];
+    $order = $context['order'];
+    $dept = $context['department'];
+
+    $personB = Person::factory()->create([
+        'first_name' => 'Jan',
+        'last_name'  => 'Bakker',
+        'is_active'  => true,
+    ]);
+    $order->salesLead->attachPersons([$personB->id]);
+
+    $deptResource = Resource::where('clinic_department_id', $dept->id)->firstOrFail();
+
+    $productTb1 = Product::factory()->create(['name' => 'MRI TB1']);
+    $itemTb1 = OrderItem::factory()->create([
+        'order_id'        => $order->id,
+        'product_id'      => $productTb1->id,
+        'person_id'       => $personB->id,
+        'name'            => 'MRI TB1',
+        'afb_description' => 'MRI TB1',
+    ]);
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $deptResource->id,
+        'orderitem_id' => $itemTb1->id,
+        'from'         => $examAt->copy()->addMinutes(60),
+        'to'           => $examAt->copy()->addMinutes(90),
+    ]);
+
+    $generator = app(AfbDocumentGenerator::class);
+
+    $renderedA = $generator->renderHtmlForOrderAndDepartment($order->fresh(), $dept, $personA);
+    expect($renderedA['person']->id)->toBe($personA->id)
+        ->and($renderedA['html'])->toContain($personA->first_name)
+        ->and($renderedA['html'])->not->toContain('MRI TB1');
+
+    $renderedB = $generator->renderHtmlForOrderAndDepartment($order->fresh(), $dept, $personB);
+    expect($renderedB['person']->id)->toBe($personB->id)
+        ->and($renderedB['html'])->toContain('Jan')
+        ->and($renderedB['html'])->toContain('MRI TB1')
+        ->and($renderedB['html'])->not->toContain('MRT HWS');
+});
+
 test('banner shows when order item from last afb dispatch is marked lost', function () {
     Bus::fake();
     Mail::fake();

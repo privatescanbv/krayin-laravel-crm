@@ -277,7 +277,7 @@
             @elseif ($afbNeedsManualSending)
                 <span
                     class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                    ⚠ Klaar voor dispatch (handmatig verzenden vereist)
+                    ⚠ Klaar voor verzending (handmatig verzenden vereist)
                 </span>
             @elseif ($afbAllSent)
                 <span
@@ -287,7 +287,7 @@
             @elseif ($avbReady)
                 <span
                     class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                    ✓ Klaar voor dispatch
+                    ✓ Klaar voor verzending
                 </span>
                 @if ($avbPlanned)
                     <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -297,7 +297,7 @@
             @elseif (!$isPostExecution)
                 <span
                     class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    ✗ Niet klaar voor dispatch
+                    ✗ Niet Klaar voor verzending
                 </span>
                 @if (!empty($avbReasons))
                     <ul class="mt-0.5 list-inside list-disc text-xs text-gray-500 dark:text-gray-400">
@@ -309,12 +309,16 @@
             @endif
         </div>
 
-        {{-- AFB status per afdeling --}}
-        @if($bookedDepartments->isNotEmpty())
+        {{-- AFB status per afdeling/persoon --}}
+        @if($afbStatusRows->isNotEmpty())
             <div class="border-t border-gray-100 pt-3 dark:border-gray-800">
                 <div class="space-y-2 text-sm">
-                    @foreach($bookedDepartments as $department)
-                        @php $dispatch = $afbSentPerDepartment->get($department->id); @endphp
+                    @foreach($afbStatusRows as $row)
+                        @php
+                            $department = $row['department'];
+                            $person     = $row['person'];
+                            $dispatch   = $row['dispatch'];
+                        @endphp
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2 min-w-0">
                                 <a href="{{ route('admin.clinics.view', $department->clinic_id) }}"
@@ -322,6 +326,10 @@
                                 <span class="text-gray-400">›</span>
                                 <a href="{{ route('admin.clinic_departments.edit', $department->id) }}"
                                    class="text-gray-500 hover:underline dark:text-gray-400 truncate">{{ $department->name }}</a>
+                                @if($person)
+                                    <span class="text-gray-400">›</span>
+                                    <span class="text-gray-600 dark:text-gray-400 truncate">{{ $person->name }}</span>
+                                @endif
                             </div>
                             @if($dispatch)
                                 <div class="flex items-center gap-2 shrink-0">

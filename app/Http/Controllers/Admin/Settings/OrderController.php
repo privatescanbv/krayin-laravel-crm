@@ -417,15 +417,35 @@ class OrderController extends SimpleEntityController
         $afbNeedsManualBanner = $avbDispatchReadiness['needs_manual_send'];
         $afbHasBatchSuccess = $this->afbDispatchService->hasSuccessfulBatchDispatchForOrder($order);
 
-        $bookedDepartments = $order->orderItems
-            ->flatMap(fn ($item) => $item->resourceOrderItems)
-            ->map(fn ($roi) => $roi->resource?->clinicDepartment)
-            ->filter()
-            ->unique('id');
+        $latestAfbDocs = $order->latestSuccessfulAfbDocuments()
+            ->keyBy(fn ($doc) => ($doc->person_id ?? '').'_'.$doc->dispatch?->clinic_department_id);
 
-        $afbSentPerDepartment = $order->latestSuccessfulAfbDocuments()
-            ->groupBy(fn ($doc) => $doc->dispatch?->clinic_department_id)
-            ->map(fn ($docs) => $docs->sortByDesc('sent_at')->first());
+        $afbStatusRows = $order->orderItems
+            ->flatMap(function ($item) {
+                return $item->resourceOrderItems
+                    ->map(fn ($roi) => $roi->resource?->clinicDepartment)
+                    ->filter()
+                    ->map(fn ($dept) => [
+                        'department' => $dept,
+                        'person_id'  => $item->person_id !== null ? (int) $item->person_id : null,
+                    ]);
+            })
+            ->unique(fn ($row) => $row['department']->id.'|'.($row['person_id'] ?? ''))
+            ->sortBy(fn ($row) => $row['department']->name.'|'.($row['person_id'] ?? ''))
+            ->map(function ($row) use ($order, $latestAfbDocs) {
+                $personId = $row['person_id'];
+                $deptId = $row['department']->id;
+                $docKey = ($personId ?? '').'_'.$deptId;
+
+                return [
+                    'department' => $row['department'],
+                    'person'     => $personId !== null
+                        ? $order->orderItems->pluck('person')->filter()->firstWhere('id', $personId)
+                        : null,
+                    'dispatch'   => $latestAfbDocs->get($docKey),
+                ];
+            })
+            ->values();
 
         $totalChecks = $order->orderChecks->count();
         $completedChecks = $order->orderChecks->where('done', true)->count();
@@ -437,8 +457,7 @@ class OrderController extends SimpleEntityController
             'afbNeedsManualBanner' => $afbNeedsManualBanner,
             'afbHasBatchSuccess'   => $afbHasBatchSuccess,
             'afbSendUrl'           => route('admin.orders.send_afb', $order->id),
-            'bookedDepartments'    => $bookedDepartments,
-            'afbSentPerDepartment' => $afbSentPerDepartment,
+            'afbStatusRows'        => $afbStatusRows,
             'avbDispatchReadiness' => $avbDispatchReadiness,
             'totalChecks'          => $totalChecks,
             'completedChecks'      => $completedChecks,

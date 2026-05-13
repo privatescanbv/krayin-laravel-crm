@@ -6,6 +6,7 @@ use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
+use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
@@ -112,7 +113,7 @@ test('updating to verloren stage removes resource_orderitem planning slots', fun
     ]);
 
     $item = OrderItem::factory()->create(['order_id' => $order->id, 'status' => OrderItemStatus::PLANNED->value]);
-    \App\Models\ResourceOrderItem::factory()->create([
+    ResourceOrderItem::factory()->create([
         'orderitem_id' => $item->id,
         'from'         => now()->toDateTimeString(),
         'to'           => now()->addHour()->toDateTimeString(),

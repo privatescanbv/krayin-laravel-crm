@@ -33,6 +33,7 @@
                 return [
                     'id' => $item->id,
                     'product_name' => $item->getProductName() ?: 'Onbekend product',
+                    'person_name' => $item->person?->name ?? null,
                     'required_resource_type' => $item->resolvedResourceTypeName(),
                     'quantity' => $item->quantity,
                     'duration' => $duration, // Duration in minutes
@@ -67,8 +68,10 @@
                     :view-type="viewType"
                     :availability-url="availabilityUrl"
                     :auto-load="false"
+                    :current-order-id="orderId"
                     @loaded="onCalendarLoaded"
                     @block-click="openBook"
+                    @occupied-block-click="openEditBooking"
                     @column-click="openBookAtTime"
                 >
                     <template #filters>
@@ -239,11 +242,15 @@
                             to: '',
                             replace_existing: true
                         },
+                        isEditing: false,
+                        editingBookingId: null,
                         resources: [],
                         resourceTypes: @json($resourceTypes),
                         clinics: @json($clinics),
                         availabilityUrl: "{{ route('admin.planning.monitor.order.availability', ['orderId' => $order->id]) }}",
-                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}"
+                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}",
+                        updateBookingUrlTemplate: "{{ route('admin.planning.monitor.booking.update', ['bookingId' => '___ID___']) }}",
+                        deleteBookingUrlTemplate: "{{ route('admin.planning.monitor.booking.delete', ['bookingId' => '___ID___']) }}"
                     };
                 },
                 computed: {
@@ -251,8 +258,7 @@
                     orderItemOptions() {
                         return this.orderItems.map(item => ({
                             value: item.id,
-                            label: item.product_name
-                                + ' (Aantal: ' + item.quantity + ')'
+                            label: this.orderItemLabel(item)
                                 + (!item.can_plan ? ' - Niet planbaar' : '')
                         }));
                     },
@@ -334,6 +340,17 @@
                 methods: {
                     ...planningCalendarMixin.methods,
                     /**
+                     * Central label for order items: product name + person name.
+                     * Single source of truth for how order items are displayed in dropdowns, modals, etc.
+                     */
+                    orderItemLabel(item) {
+                        const parts = [item.product_name || 'Onbekend product'];
+                        if (item.person_name) {
+                            parts.push(item.person_name);
+                        }
+                        return parts.join(' — ') + ' (Aantal: ' + item.quantity + ')';
+                    },
+                    /**
                      * Als het orderregel wisselt: resource laten matchen met vereist type indien mogelijk.
                      */
                     syncBookingResourceId() {
@@ -408,7 +425,12 @@
                             (item) => item.required_resource_type === resourceTypeName
                         ) ?? null;
                     },
+                    resetEditState() {
+                        this.isEditing = false;
+                        this.editingBookingId = null;
+                    },
                     openBookAtTime({ from }) {
+                        this.resetEditState();
                         const pad = (n) => String(n).padStart(2, '0');
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(from);
@@ -422,6 +444,7 @@
                         this.$nextTick(() => this.syncBookingResourceId());
                     },
                     openBook(block) {
+                        this.resetEditState();
                         this.form.resource_id = block.resource_id;
                         const pad = (n) => String(n).padStart(2, '0');
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
@@ -438,6 +461,18 @@
                         this.$refs.bookModal.toggle();
                         this.$nextTick(() => this.syncBookingResourceId());
                     },
+                    openEditBooking(block) {
+                        this.isEditing = true;
+                        this.editingBookingId = block.booking_id;
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+                        this.form.order_item_id = block.order_item_id;
+                        this.form.resource_id = block.resource_id;
+                        this.form.from = toLocal(new Date(block.from));
+                        this.form.to = toLocal(new Date(block.to));
+                        this.form.replace_existing = false;
+                        this.$refs.bookModal.toggle();
+                    },
                     async submitBooking() {
                         if (this.$refs.calendar.loading) return;
 
@@ -453,46 +488,50 @@
 
                         this.$refs.calendar.loading = true;
                         try {
-                            const url = "{{ route('admin.planning.monitor.order_item.book', ['orderItemId' => '___ID___']) }}".replace('___ID___', this.form.order_item_id);
                             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
                             if (!csrfToken) {
                                 throw new Error('CSRF token niet gevonden');
                             }
 
+                            let url, method, body;
+
+                            if (this.isEditing && this.editingBookingId) {
+                                url = this.updateBookingUrlTemplate.replace('___ID___', this.editingBookingId);
+                                method = 'PUT';
+                                body = JSON.stringify({
+                                    resource_id: this.form.resource_id,
+                                    from: this.form.from,
+                                    to: this.form.to,
+                                });
+                            } else {
+                                url = "{{ route('admin.planning.monitor.order_item.book', ['orderItemId' => '___ID___']) }}".replace('___ID___', this.form.order_item_id);
+                                method = 'POST';
+                                body = JSON.stringify({
+                                    resource_id: this.form.resource_id,
+                                    from: this.form.from,
+                                    to: this.form.to,
+                                    replace_existing: !!this.form.replace_existing
+                                });
+                            }
+
                             const res = await fetch(url, {
-                                method: 'POST',
+                                method,
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'Accept': 'application/json',
                                     'X-CSRF-TOKEN': csrfToken,
                                     'X-Requested-With': 'XMLHttpRequest'
                                 },
-                                body: JSON.stringify({
-                                    resource_id: this.form.resource_id,
-                                    from: this.form.from,
-                                    to: this.form.to,
-                                    replace_existing: !!this.form.replace_existing
-                                })
+                                body
                             });
 
                             if (res.ok) {
                                 this.$refs.bookModal.toggle();
-                                this.$emitter.emit('add-flash', {type: 'success', message: 'Ingeboekt'});
-                                this.form = {
-                                    order_item_id: null,
-                                    resource_id: null,
-                                    from: '',
-                                    to: '',
-                                    replace_existing: true
-                                };
-                                setTimeout(() => {
-                                    this.$refs.calendar.loading = false;
-                                    this.loadAvailability().catch(error => {
-                                        console.error('Error reloading availability:', error);
-                                        this.$refs.calendar.loading = false;
-                                    });
-                                }, 100);
+                                this.$emitter.emit('add-flash', {
+                                    type: 'success',
+                                    message: this.isEditing ? 'Boeking bijgewerkt' : 'Ingeboekt'
+                                });
+                                this.resetFormAndReload();
                             } else {
                                 const data = await res.json().catch(() => ({}));
                                 let errMsg = data.message;
@@ -507,11 +546,71 @@
                         } catch (error) {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
-                                message: `Fout bij inboeken: ${error.message}`
+                                message: `Fout bij ${this.isEditing ? 'bijwerken' : 'inboeken'}: ${error.message}`
                             });
                         } finally {
                             this.$refs.calendar.loading = false;
                         }
+                    },
+                    async deleteBooking() {
+                        if (!this.editingBookingId) return;
+                        if (!confirm('Weet je zeker dat je deze boeking wilt verwijderen?')) return;
+
+                        if (this.$refs.calendar.loading) return;
+                        this.$refs.calendar.loading = true;
+
+                        try {
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                            if (!csrfToken) {
+                                throw new Error('CSRF token niet gevonden');
+                            }
+
+                            const url = this.deleteBookingUrlTemplate.replace('___ID___', this.editingBookingId);
+                            const res = await fetch(url, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+
+                            if (res.ok) {
+                                this.$refs.bookModal.toggle();
+                                this.$emitter.emit('add-flash', {type: 'success', message: 'Boeking verwijderd'});
+                                this.resetFormAndReload();
+                            } else {
+                                const data = await res.json().catch(() => ({}));
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: data.message || `HTTP ${res.status}: ${res.statusText}`
+                                });
+                            }
+                        } catch (error) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: `Fout bij verwijderen: ${error.message}`
+                            });
+                        } finally {
+                            this.$refs.calendar.loading = false;
+                        }
+                    },
+                    resetFormAndReload() {
+                        this.form = {
+                            order_item_id: null,
+                            resource_id: null,
+                            from: '',
+                            to: '',
+                            replace_existing: true
+                        };
+                        this.resetEditState();
+                        setTimeout(() => {
+                            this.$refs.calendar.loading = false;
+                            this.loadAvailability().catch(error => {
+                                console.error('Error reloading availability:', error);
+                                this.$refs.calendar.loading = false;
+                            });
+                        }, 100);
                     }
                 }
             });

@@ -107,4 +107,6 @@ Route::middleware(['user'])->controller(ResourcePlanningMonitorController::class
     Route::get('order/{orderId}/availability', 'orderAvailability')->name('admin.planning.monitor.order.availability');
     Route::get('order/{orderId}/resource-types', 'orderResourceTypes')->name('admin.planning.monitor.order.resource_types');
     Route::post('order-item/{orderItemId}/book', 'bookOrderItem')->name('admin.planning.monitor.order_item.book');
+    Route::put('booking/{bookingId}', 'updateBooking')->name('admin.planning.monitor.booking.update');
+    Route::delete('booking/{bookingId}', 'deleteBooking')->name('admin.planning.monitor.booking.delete');
 });

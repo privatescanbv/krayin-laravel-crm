@@ -17,7 +17,7 @@
         .calendar-block-available { cursor: pointer; }
         .calendar-block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .calendar-block-occupied { cursor: default; min-height: 20px; font-size: 12px; line-height: 1.25; }
-        .filters-bar { position: relative; z-index: 10; }
+        .filters-bar { position: relative; z-index: 50; }
         .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
         .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -36,6 +36,8 @@
         .month-block-available { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); }
         .month-block-occupied { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); cursor: not-allowed; }
         .calendar-block-outside-availability { border: 2px dashed #dc2626 !important; }
+        .calendar-block-editable { cursor: pointer !important; }
+        .calendar-block-editable:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     </style>
 
     <script type="text/x-template" id="v-planning-calendar-template">
@@ -96,10 +98,10 @@
 
                         <!-- Rendered blocks from server -->
                         <div v-for="block in getBlocksForDay(d-1)" :key="block.key"
-                             :class="['calendar-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied', block.outside_availability ? 'calendar-block-outside-availability' : '']"
+                             :class="['calendar-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied', block.outside_availability ? 'calendar-block-outside-availability' : '', isEditableBlock(block) ? 'calendar-block-editable' : '']"
                              :style="blockStyle(block)"
                              :title="getBlockTooltip(block)"
-                             @click.stop="block.clickable ? handleBlockClick(block) : null">
+                             @click.stop="handleAnyBlockClick(block)">
                             <template v-if="block.type === 'occupied'">
                                 <div class="flex flex-col gap-0.5 min-h-0 min-w-0 flex-1">
                                     <div class="flex items-start justify-between gap-1 min-w-0">
@@ -151,9 +153,9 @@
 
                     <!-- Blocks for this day -->
                     <div v-for="block in getBlocksForMonthDay(day.date)" :key="block.key"
-                         :class="['month-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied']"
+                         :class="['month-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied', isEditableBlock(block) ? 'calendar-block-editable' : '']"
                          :title="getBlockTooltip(block)"
-                         @click="block.clickable ? handleBlockClick(block) : null">
+                         @click="handleAnyBlockClick(block)">
                         <template v-if="block.type === 'occupied'">
                             <div class="flex items-start justify-between gap-1">
                                 <div class="font-semibold truncate">@{{ block.person_name || block.lead_name || 'Onbekend' }}</div>
@@ -189,6 +191,7 @@
                 viewType: { type: String, default: 'week' },
                 availabilityUrl: { type: String, required: true },
                 autoLoad: { type: Boolean, default: true },
+                currentOrderId: { type: Number, default: null },
             },
             data() {
                 return {
@@ -616,6 +619,18 @@
                     from.setHours(Math.floor(totalMinutes / 60) + 8, totalMinutes % 60, 0, 0);
 
                     this.$emit('column-click', { from });
+                },
+                isEditableBlock(block) {
+                    return block.type === 'occupied'
+                        && this.currentOrderId !== null
+                        && block.order_id === this.currentOrderId;
+                },
+                handleAnyBlockClick(block) {
+                    if (block.clickable) {
+                        this.handleBlockClick(block);
+                    } else if (this.isEditableBlock(block)) {
+                        this.$emit('occupied-block-click', block);
+                    }
                 },
                 handleBlockClick(block) {
                     this.$emit('block-click', block);

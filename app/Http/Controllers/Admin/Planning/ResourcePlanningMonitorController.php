@@ -198,6 +198,90 @@ class ResourcePlanningMonitorController extends Controller
         }
     }
 
+    public function updateBooking(Request $request, int $bookingId): JsonResponse
+    {
+        try {
+            $request->validate([
+                'resource_id' => ['required', 'integer', 'exists:resources,id'],
+                'from'        => ['required', 'date'],
+                'to'          => ['required', 'date', 'after:from'],
+            ]);
+
+            $booking = ResourceOrderItem::with([
+                'orderItem.product.resourceType',
+                'orderItem.resourceType',
+                'orderItem.product.productType',
+            ])->findOrFail($bookingId);
+
+            $resource = Resource::with('resourceType', 'shifts')->findOrFail((int) $request->input('resource_id'));
+
+            $requiredType = $booking->orderItem->resolvedResourceTypeName();
+            $resourceTypeName = $resource->resourceType?->name;
+            if ($requiredType !== $resourceTypeName) {
+                return response()->json([
+                    'message'       => sprintf(
+                        'Dit orderregel vereist \'%s\', maar de gekozen resource is van het type \'%s\'.',
+                        $requiredType ?? 'Onbekend',
+                        $resourceTypeName ?? 'Onbekend'
+                    ),
+                    'required_type' => $requiredType,
+                    'resource_type' => $resourceTypeName,
+                ], 422);
+            }
+
+            $from = CarbonImmutable::parse($request->input('from'));
+            $to = CarbonImmutable::parse($request->input('to'));
+
+            if ($error = $this->validateBookingAvailability($resource, $from, $to)) {
+                return $error;
+            }
+
+            $booking->update([
+                'resource_id' => (int) $request->input('resource_id'),
+                'from'        => Carbon::parse($request->input('from')),
+                'to'          => Carbon::parse($request->input('to')),
+                'updated_by'  => auth()->id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Boeking bijgewerkt',
+                'data'    => $booking->fresh(),
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error updating ResourceOrderItem from monitor', [
+                'error'        => $e->getMessage(),
+                'trace'        => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij bijwerken: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function deleteBooking(Request $request, int $bookingId): JsonResponse
+    {
+        try {
+            $booking = ResourceOrderItem::findOrFail($bookingId);
+            $booking->delete();
+
+            return response()->json([
+                'message' => 'Boeking verwijderd',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error deleting ResourceOrderItem from monitor', [
+                'error'      => $e->getMessage(),
+                'trace'      => $e->getTraceAsString(),
+                'booking_id' => $bookingId,
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij verwijderen: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
     private function getWeekAvailability(Request $request): JsonResponse
     {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
@@ -442,6 +526,7 @@ class ResourcePlanningMonitorController extends Controller
                         'resource_name'        => $resource->name,
                         'clickable'            => false,
                         'booking_id'           => $occupancy->id,
+                        'order_item_id'        => $occupancy->orderitem_id,
                         'lead_name'            => $leadName,
                         'person_name'          => $personName,
                         'product_name'         => $productName,
@@ -595,6 +680,7 @@ class ResourcePlanningMonitorController extends Controller
         // Get order items with their existing bookings
         $orderItems = $order->orderItems()->with([
             'product',
+            'person',
             'resourceType',
             'product.productType',
             'product.resourceType',
@@ -625,10 +711,10 @@ class ResourcePlanningMonitorController extends Controller
             'order_items' => $orderItems->map(fn ($item) => [
                 'id'                     => $item->id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
+                'person_name'            => $item->person?->name ?? null,
                 'quantity'               => $item->quantity,
                 'status'                 => $item->status,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
-                // Only plan if product has partner products linked to active clinics
                 'can_plan'               => $item->isPlannable(),
                 'bookings'               => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
@@ -681,6 +767,7 @@ class ResourcePlanningMonitorController extends Controller
         // Get order items with their existing bookings
         $orderItems = $order->orderItems()->with([
             'product',
+            'person',
             'resourceType',
             'product.productType',
             'product.resourceType',
@@ -711,6 +798,7 @@ class ResourcePlanningMonitorController extends Controller
             'order_items' => $orderItems->map(fn ($item) => [
                 'id'                     => $item->id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
+                'person_name'            => $item->person?->name ?? null,
                 'quantity'               => $item->quantity,
                 'status'                 => $item->status,
                 'required_resource_type' => $item->resolvedResourceTypeName(),

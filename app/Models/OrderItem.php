@@ -244,6 +244,22 @@ class OrderItem extends Model
     }
 
     /**
+     * Central display label: product name + person name.
+     * Single source of truth for UI presentation of order items.
+     */
+    public function getDisplayLabel(): string
+    {
+        $parts = [$this->getProductName() ?: 'Onbekend product'];
+
+        $personName = $this->person?->name;
+        if (! empty($personName)) {
+            $parts[] = $personName;
+        }
+
+        return implode(' — ', $parts);
+    }
+
+    /**
      * 1. description order item
      * 2. description partner product
      * 3. description product (designed as template for partner product)

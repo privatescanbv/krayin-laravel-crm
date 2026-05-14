@@ -243,7 +243,6 @@
                             resource_id: null,
                             from: '',
                             to: '',
-                            replace_existing: true
                         },
                         isEditing: false,
                         editingBookingId: null,
@@ -473,7 +472,6 @@
                         this.form.resource_id = block.resource_id;
                         this.form.from = toLocal(new Date(block.from));
                         this.form.to = toLocal(new Date(block.to));
-                        this.form.replace_existing = false;
                         this.$refs.bookModal.toggle();
                     },
                     async submitBooking() {
@@ -513,7 +511,7 @@
                                     resource_id: this.form.resource_id,
                                     from: this.form.from,
                                     to: this.form.to,
-                                    replace_existing: !!this.form.replace_existing
+                                    replace_existing: true
                                 });
                             }
 
@@ -604,7 +602,6 @@
                             resource_id: null,
                             from: '',
                             to: '',
-                            replace_existing: true
                         };
                         this.resetEditState();
                         setTimeout(() => {

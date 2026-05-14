@@ -134,14 +134,6 @@
                 </span>
             </div>
 
-            <!-- Replace existing (only for new bookings) -->
-            <x-adminc::components.field
-                v-if="!isEditing"
-                type="checkbox"
-                name="replace_existing"
-                label="Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderitem)"
-                v-model="form.replace_existing"
-            />
 
         </div>
     </x-slot:content>

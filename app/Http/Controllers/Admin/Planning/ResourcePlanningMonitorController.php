@@ -679,7 +679,7 @@ class ResourcePlanningMonitorController extends Controller
 
         // Get order items with their existing bookings
         $orderItems = $order->orderItems()->with([
-            'product',
+            'product.partnerProducts',
             'person',
             'resourceType',
             'product.productType',
@@ -712,9 +712,10 @@ class ResourcePlanningMonitorController extends Controller
                 'id'                     => $item->id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
                 'person_name'            => $item->person?->name ?? null,
-                'quantity'               => $item->quantity,
-                'status'                 => $item->status,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
+                'quantity'               => $item->quantity,
+                'duration'               => $item->product?->partnerProducts?->first()?->duration,
+                'status'                 => $item->status,
                 'can_plan'               => $item->isPlannable(),
                 'bookings'               => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
@@ -766,7 +767,7 @@ class ResourcePlanningMonitorController extends Controller
 
         // Get order items with their existing bookings
         $orderItems = $order->orderItems()->with([
-            'product',
+            'product.partnerProducts',
             'person',
             'resourceType',
             'product.productType',
@@ -799,9 +800,10 @@ class ResourcePlanningMonitorController extends Controller
                 'id'                     => $item->id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
                 'person_name'            => $item->person?->name ?? null,
-                'quantity'               => $item->quantity,
-                'status'                 => $item->status,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
+                'quantity'               => $item->quantity,
+                'duration'               => $item->product?->partnerProducts?->first()?->duration,
+                'status'                 => $item->status,
                 'can_plan'               => $item->isPlannable(),
                 'bookings'               => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,

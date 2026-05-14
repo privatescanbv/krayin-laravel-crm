@@ -37,7 +37,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            📅 @{{ orderItemLabel(item) }} - @{{ item.bookings.length }}x ingepland
+                            📅 @{{ orderItemLabel(item) }}
                         </option>
                     </optgroup>
                     <optgroup v-if="notPlanableItems.length > 0"

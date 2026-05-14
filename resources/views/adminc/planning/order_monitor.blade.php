@@ -55,7 +55,7 @@
              class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <v-order-resource-planning
                 :order-id="{{ $order->id }}"
-                :order-items='@json($orderItems)'
+                :initial-order-items='@json($orderItems)'
             ></v-order-resource-planning>
         </div>
     </div>
@@ -217,19 +217,22 @@
                         await this.$refs.calendar.loadAvailability(params);
                     },
                     onCalendarLoaded(data) {
-                        // Handle any post-load logic if needed
                         this.resources = data.resources || [];
+                        if (data.order_items) {
+                            this.orderItems = data.order_items;
+                        }
                     }
                 }
             };
 
             app.component('v-order-resource-planning', {
                 template: '#v-order-resource-planning-template',
-                props: ['orderId', 'orderItems'],
+                props: ['orderId', 'initialOrderItems'],
                 mixins: [planningCalendarMixin],
                 data() {
                     return {
                         ...planningCalendarMixin.data(),
+                        orderItems: JSON.parse(JSON.stringify(this.initialOrderItems)),
                         filters: {
                             ...planningCalendarMixin.data().filters,
                             order_item_ids: [],

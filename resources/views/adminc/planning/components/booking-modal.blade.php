@@ -1,7 +1,7 @@
 <!-- Book modal -->
 <x-admin::modal ref="bookModal">
     <x-slot:header>
-        Inboeken
+        @{{ isEditing ? 'Boeking bewerken' : 'Inboeken' }}
     </x-slot:header>
     <x-slot:content>
         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
@@ -27,7 +27,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            ✓ @{{ item.product_name }} (Aantal: @{{ item.quantity }})
+                            ✓ @{{ orderItemLabel(item) }}
                         </option>
                     </optgroup>
                     <optgroup v-if="plannedItems.length > 0"
@@ -37,7 +37,7 @@
                             :key="item.id"
                             :value="item.id"
                         >
-                            📅 @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - @{{ item.bookings.length }}x ingepland
+                            📅 @{{ orderItemLabel(item) }}
                         </option>
                     </optgroup>
                     <optgroup v-if="notPlanableItems.length > 0"
@@ -48,7 +48,7 @@
                             :value="item.id"
                             disabled
                         >
-                            ⚠ @{{ item.product_name }} (Aantal: @{{ item.quantity }}) - Niet planbaar
+                            ⚠ @{{ orderItemLabel(item) }} - Niet planbaar
                         </option>
                     </optgroup>
                 </select>
@@ -134,26 +134,30 @@
                 </span>
             </div>
 
-            <!-- Replace existing -->
-            <x-adminc::components.field
-                type="checkbox"
-                name="replace_existing"
-                label="Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderitem)"
-                v-model="form.replace_existing"
-            />
 
         </div>
     </x-slot:content>
     <x-slot:footer>
-        <div class="flex justify-end gap-3">
-            <button
-                class="secondary-button"
-                @click="$refs.bookModal.toggle()">Annuleren
-            </button>
-            <button
-                class="primary-button"
-                @click="submitBooking">Opslaan
-            </button>
+        <div class="flex justify-between">
+            <div>
+                <button
+                    v-if="isEditing && editingBookingId"
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                    @click="deleteBooking"
+                >
+                    Verwijderen
+                </button>
+            </div>
+            <div class="flex gap-3">
+                <button
+                    class="secondary-button"
+                    @click="$refs.bookModal.toggle()">Annuleren
+                </button>
+                <button
+                    class="primary-button"
+                    @click="submitBooking">@{{ isEditing ? 'Bijwerken' : 'Opslaan' }}
+                </button>
+            </div>
         </div>
     </x-slot:footer>
 </x-admin::modal>

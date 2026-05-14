@@ -71,6 +71,14 @@ class OrderItemPlanningController extends Controller
 
             $replace = $request->boolean('replace_existing', true);
 
+            $existingCount = ResourceOrderItem::where('orderitem_id', $orderItem->id)->count();
+
+            if (! $replace && $existingCount > 0) {
+                return response()->json([
+                    'message' => 'Dit orderitem is al ingepland. Gebruik de optie "vervang bestaande afspraak" of bewerk de bestaande boeking.',
+                ], 422);
+            }
+
             $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
                 if ($replace) {
                     ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();

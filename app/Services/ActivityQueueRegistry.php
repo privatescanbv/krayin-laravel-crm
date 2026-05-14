@@ -133,7 +133,7 @@ class ActivityQueueRegistry
                 },
             ],
 
-            // Onze openstaande taken – all internal tasks still open.
+            // Onze openstaande taken – all internal tasks still open (excl. sales tasks).
             'our-tasks' => [
                 'key'   => 'our-tasks',
                 'label' => 'Onze openstaande taken',
@@ -144,11 +144,12 @@ class ActivityQueueRegistry
                 'apply' => static function (Builder $query): void {
                     $query
                         ->where('activities.type', ActivityType::TASK->value)
-                        ->where('activities.is_done', false);
+                        ->where('activities.is_done', false)
+                        ->whereNull('activities.sales_lead_id');
                 },
             ],
 
-            // Mijn openstaande taken – same as above, but only for current user.
+            // Mijn openstaande taken – same as above, but only for current user (excl. sales tasks).
             'my-tasks' => [
                 'key'   => 'my-tasks',
                 'label' => 'Mijn openstaande taken',
@@ -159,7 +160,8 @@ class ActivityQueueRegistry
                 'apply' => static function (Builder $query, ?int $currentUserId): void {
                     $query
                         ->where('activities.type', ActivityType::TASK->value)
-                        ->where('activities.is_done', false);
+                        ->where('activities.is_done', false)
+                        ->whereNull('activities.sales_lead_id');
 
                     if ($currentUserId) {
                         $query->where('activities.user_id', $currentUserId);

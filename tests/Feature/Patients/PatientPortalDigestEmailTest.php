@@ -113,8 +113,10 @@ test('send command emails due digest and clears schedule using new content templ
     Carbon::setTestNow(Carbon::parse('2026-04-16 14:00:00', 'Europe/Amsterdam'));
 
     $person = Person::factory()->create([
-        'last_name' => 'Jansen',
-        'emails'    => [['value' => 'patient@example.com', 'is_default' => true]],
+        'last_name'        => 'Jansen',
+        'emails'           => [['value' => 'patient@example.com', 'is_default' => true]],
+        'is_active'        => true,
+        'keycloak_user_id' => (string) \Illuminate\Support\Str::uuid(),
     ]);
 
     PatientNotification::factory()->count(2)->create([
@@ -155,6 +157,8 @@ test('second notification after first email triggers a second digest email after
     $person = Person::factory()->create([
         'last_name'                           => 'Jansen',
         'emails'                              => [['value' => 'patient@example.com', 'is_default' => true]],
+        'is_active'                           => true,
+        'keycloak_user_id'                    => (string) \Illuminate\Support\Str::uuid(),
         'patient_portal_last_notify_email_at' => $firstSentAt,
         'patient_portal_notify_scheduled_at'  => null,
     ]);
@@ -240,7 +244,9 @@ test('send command fails when new content email template is missing', function (
     EmailTemplate::query()->where('code', EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT->value)->delete();
 
     $person = Person::factory()->create([
-        'emails' => [['value' => 'patient@example.com', 'is_default' => true]],
+        'is_active'        => true,
+        'keycloak_user_id' => (string) \Illuminate\Support\Str::uuid(),
+        'emails'           => [['value' => 'patient@example.com', 'is_default' => true]],
     ]);
 
     PatientNotification::factory()->create([

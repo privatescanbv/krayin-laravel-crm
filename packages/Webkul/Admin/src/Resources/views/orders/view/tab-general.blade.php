@@ -233,11 +233,11 @@
                 <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
                 <span class="font-medium text-gray-800 dark:text-white">
                     {{ $order->firstExaminationCarbon()?->format('d-m-Y H:i') ?? '-' }}
-                    @if ($order->hasFirstExaminationOverride())
-                        <span class="text-xs text-gray-400 dark:text-gray-500">
-                            Berekend: {{ $order->earliestScheduledResourceSlotStart()?->format('d-m-Y H:i') }}
-                        </span>
-                    @endif
+{{--                    @if ($order->hasFirstExaminationOverride())--}}
+{{--                        <span class="text-xs text-gray-400 dark:text-gray-500">--}}
+{{--                            Berekend: {{ $order->earliestScheduledResourceSlotStart()?->format('d-m-Y H:i') }}--}}
+{{--                        </span>--}}
+{{--                    @endif--}}
                 </span>
             </div>
 

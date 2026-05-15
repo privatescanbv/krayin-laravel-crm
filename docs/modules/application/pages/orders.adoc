@@ -1,0 +1,180 @@
+=== Orders
+
+Een order wordt aangemaakt vanuit een gewonnen salestraject en doorloopt een vaste pipeline van intake tot afsluiting.
+
+==== Pipeline (Privatescan)
+
+[cols="1,3", options="header"]
+|===
+| Status | Betekenis
+| Bevestigen | Order aangemaakt, nog niet ingepland
+| Ingepland | Datum/resource gekoppeld, nog niet bevestigd naar patiënt
+| Bevestigd | Afspraakbevestiging verstuurd naar patiënt
+| Wachten op uitvoering | Klaar voor onderzoek; AFB wordt automatisch verstuurd
+| Uitgevoerd | Onderzoek afgerond
+| Rapporten ontvangen | Resultaten beschikbaar
+| Gewonnen | Volledig afgerond
+| Verloren | Geannuleerd
+|===
+
+Herniapoli heeft een eigen parallelle pipeline (Voorbereiden → Ingepland → ...).
+
+---
+
+==== Inplannen
+
+. Open de order → klik *Resource Planner* (knop rechtsboven in de Algemene informatie sectie).
+. Selecteer een vrij tijdslot voor elke order-item (bijv. MRI scanner, arts).
+. Na opslaan worden de resource-blokken zichtbaar in de dagplanning (`/admin/clinic-guide`).
+. De orderstatus springt automatisch naar *Ingepland* zodra alle planbare items een tijdslot hebben.
+
+---
+
+==== Afspraakbevestiging versturen
+
+. Ga naar de order → klik de knop *Bevestigen* (of navigeer direct naar `/admin/orders/view/{id}/confirm`).
+. Kies een e-mailtemplate per persoon (of gecombineerd voor de hele order).
+. Klik *Brief opslaan* — dit genereert de PDF-bevestiging.
+. Klik *Versturen* om de bevestigingsmail te versturen.
++
+De mail bevat: afsprakenoverzicht per persoon, adresgegevens kliniek, betalingsinformatie en eventueel de GVL-formulierlink.
+
+. Na verzenden springt de status naar *Bevestigd*.
+
+*Meerdere personen:* bij orders met meerdere patiënten (bijv. ouder + kind) kan per persoon een aparte brief worden aangemaakt en verstuurd.
+
+---
+
+==== Patiëntportaal
+
+Zodra een order de status *Bevestigd* heeft bereikt én een bekende onderzoeksdatum heeft, verschijnt de order automatisch als afspraak in het patiëntportaal.
+
+De patiënt ziet:
+
+* Datum en tijd van het onderzoek
+* Kliniek en locatie
+* Toekomstige en afgesloten afspraken (filter: aankomend / verleden)
+
+*Portaalaccount aanmaken:* via de persoonpagina → *Portaalaccount aanmaken*. De patiënt ontvangt een welkomstmail met inloggegevens.
+
+*Nieuwe content melding:* wanneer er nieuw materiaal beschikbaar wordt gesteld (bijv. een rapport), wordt automatisch een notificatiemail verstuurd.
+
+---
+
+==== AFB (Aanvraag Formulier Beeldvorming)
+
+De AFB is een formulier dat de kliniek informeert over het aangevraagde onderzoek. Het wordt als PDF per afdeling (bijv. radiologie, cardiologie) per patiënt gegenereerd.
+
+===== Automatisch versturen
+
+Orders in de status *Wachten op uitvoering* worden elke dag om 11:00 automatisch verwerkt (`afb:send-daily`). Orders waarbij het onderzoek de volgende dag plaatsvindt, worden dan verstuurd naar de betreffende klinieksafdelingen.
+
+===== Handmatig versturen
+
+Wanneer een order binnen 24 uur gepland staat en de AFB nog niet is verstuurd, verschijnt bovenaan de orderpagina een amber melding:
+
+ AFB: handmatige verzending nodig
+
+Klik op de knop in deze banner om de AFB direct te versturen.
+
+===== Wat wordt er verstuurd?
+
+* Per afdeling één e-mail met per patiënt een gegenereerde AFB-PDF als bijlage.
+* Indien de GVL-anamnese ingevuld is (status: Voltooid), wordt het GVL-formulier als extra PDF meegestuurd.
+
+===== AFB-status per order
+
+In de sectie *AFB status* op de orderpagina is per patiënt en afdeling zichtbaar of de AFB is verstuurd, inclusief tijdstip en een link om het formulier te bekijken.
+
+---
+
+==== AFB corrigeren (correctie-flow)
+
+Als een AFB foutief is verstuurd of opnieuw verstuurd moet worden (bijv. na een herplanning):
+
+. Ga naar de order → sectie *AFB status*.
+. Klik *Verwijder* naast de verzonden AFB van de betreffende patiënt.
+. Bevestig de actie in het dialoogvenster.
++
+De AFB wordt verwijderd. De order staat nu opnieuw open voor verzending.
+
+. Plan indien nodig opnieuw in via *Resource Planner* (nieuw tijdslot koppelen).
+. Wacht tot de automatische batch om 11:00, *of* stuur handmatig via de amber banner als het onderzoek binnen 24 uur plaatsvindt.
+
+NOTE: Na verwijderen is de AFB niet meer zichtbaar in de status-sectie totdat er een nieuwe verstuurd is. De eerder gegenereerde PDF blijft bewaard in de e-mailhistorie van de order.
+
+---
+
+==== AFB veldmapping
+
+Onderstaande tabel legt uit welk veld op het AFB-formulier (Duitstalig) gevuld wordt vanuit welke databron in het CRM.
+
+===== Koptekst
+
+[cols="2,4", options="header"]
+|===
+| Veld (AFB) | Bron
+| Klinik/Krankenhaus | `Clinic.registration_form_clinic_name`
+| Datum | Datum van genereren (vandaag)
+| Von | `Order.user.name` → fallback: `SalesLead.user.name`
+| Verk.nr | `Order.order_number`
+|===
+
+===== Patientendaten
+
+[cols="2,4", options="header"]
+|===
+| Veld (AFB) | Bron
+| Anrede | `Person.salutation` (label, bijv. _Dhr._ / _Mevr._)
+| Geb. Datum | `Person.date_of_birth`
+| Vorname | `Person.first_name`
+| Nachname(n) | `Person.full_last_name`
+| Straße | `Person.address` → straat + huisnummer + toevoeging
+| PLZ | `Person.address.postal_code`
+| Ort | `Person.address.city`
+| Land | `Person.address.country`
+| Länge (cm) | `Anamnesis.height`
+| Gewicht (kg) | `Anamnesis.weight`
+|===
+
+*Welke persoon?* Als order-items een patiënt (`person_id`) hebben, wordt per persoon een apart AFB-document gegenereerd. Zonder expliciete koppeling wordt de contactpersoon van de saleslead gebruikt (of de eerste persoon van de lead).
+
+===== Medizinische Anamnese
+
+Alle velden komen uit het `Anamnesis`-record dat gekoppeld is aan de persoon én de salesorder (of lead). Bij meerdere records wordt het meest recent bijgewerkte gebruikt.
+
+[cols="2,2,4", options="header"]
+|===
+| Veld (AFB) | Ja/Nein of tekst | CRM-veld
+| Platzangst | tekst | `Anamnesis.claustrophobia`
+| Diabetes | Ja / Nein | `Anamnesis.diabetes` + `diabetes_notes`
+| Metalle | Ja / Nein | `Anamnesis.metals` + `metals_notes`
+| Herz OP | Ja / Nein | `Anamnesis.heart_surgery` + `heart_surgery_notes`
+| Gerät/Implantat | Ja / Nein | `Anamnesis.implant` + `implant_notes`
+| Allergien | Ja / Nein | `Anamnesis.allergies` + `allergies_notes`
+| Kontraindic. | Ja / Nein | `Anamnesis.glaucoma` + `glaucoma_notes`
+| Anmerkung | tekst | `Anamnesis.remarks`
+|===
+
+===== Untersuchungen
+
+[cols="2,4", options="header"]
+|===
+| Veld (AFB) | Bron
+| Datum | Eerste onderzoeksdatum (`Order.firstExaminationCarbon()`)
+| Tijdstip per rij | Starttijd van het geplande resource-slot (`ResourceOrderItem.from`)
+| Omschrijving per rij | 1. Handmatige override `OrderItem.afb_description` +
+2. Kliniek-specifieke productomschrijving `PartnerProduct.clinic_description` +
+3. Generieke productnaam/-omschrijving
+|===
+
+Alleen onderzoeken van de betreffende klinieksafdeling worden getoond. Er verschijnt een rij per gepland resource-slot.
+
+===== Anamnese / Zusatz Informationen
+
+[cols="2,4", options="header"]
+|===
+| Sectie (AFB) | CRM-veld
+| Anamnese | `Anamnesis.comment_clinic` (vrij tekstveld, bedoeld voor toelichting aan kliniek.  Let op: in het Duits invullen)
+| Zusatz Informationen | `Anamnesis.description`
+|===

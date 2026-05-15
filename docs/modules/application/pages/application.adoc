@@ -35,6 +35,8 @@ include::anamnesis-form.adoc[]
 
 include::email.adoc[]
 
+include::orders.adoc[]
+
 ==== Login
 
 [plantuml]

@@ -103,7 +103,7 @@
                     </div>
                 </div>
             </div>
-            @if($lead->has_diagnosis_form || $lead->mri_status)
+            @if($lead->diagnoseform_pdf_url || $lead->mri_status)
             <div class="flex flex-col border-t border-gray-200 dark:border-gray-800">
                 <div class="flex items-center gap-3 p-4">
                     <span class="icon-file text-2xl text-gray-400"></span>
@@ -111,7 +111,7 @@
                     <div class="flex flex-col">
                         <span class="font-semibold text-gray-800 dark:text-white">Diagnoseformulier</span>
 
-                        <span class="text-xs {{ ($lead->has_diagnosis_form ?? false) ? 'text-green-600' : 'text-red-600' }}">
+                        <span class="text-xs {{ $lead->diagnoseform_pdf_url ? 'text-green-600' : 'text-red-600' }}">
                             <a href="{{ ($lead->diagnoseform_pdf_url ?? '') }}" target="_blank">Download van website</a> | <a href="{{ ($lead->diagnose_download_url ?? '') }}" target="_blank">Download interne</a>
                         </span>
                     </div>

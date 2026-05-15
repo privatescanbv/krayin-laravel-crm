@@ -32,6 +32,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
     Route::get('{orderId}/confirm', 'confirm')->name('admin.orders.confirm');
     Route::post('{id}/send-afb', 'sendAfb')->name('admin.orders.send_afb');
+    Route::delete('{orderId}/afb/{personDocumentId}', [OrderController::class, 'deleteAfbPersonDocument'])->name('admin.orders.afb.delete');
 
     // Order confirmation letter routes
     Route::get('confirmation/templates', 'getConfirmationTemplates')->name('admin.orders.confirmation.templates');

@@ -1,4 +1,4 @@
-@php use App\Enums\Departments; use App\Enums\PipelineStage; @endphp
+@php use App\Enums\Departments; use App\Enums\PipelineStage; use App\Services\Afb\AfbDispatchService; @endphp
 @props([
     'order',
     'afbNeedsManualBanner' => false,
@@ -22,7 +22,7 @@
                         @else
                             .
                         @endif
-                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om 06:00
+                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om {{ AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR }}:00
                         verstuurd;
                         binnen dit venster moet u de AFB nu zelf versturen naar de kliniek.
                     </p>
@@ -257,15 +257,8 @@
 
     <!-- AFB Status Card -->
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div class="mb-3 flex items-center justify-between">
+        <div class="mb-3">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">AFB status</h3>
-            @if(!($avbDispatchReadiness['is_herniapoli'] ?? false) && bouncer()->hasPermission('orders.edit'))
-                <v-order-afb-send-button
-                    send-url="{{ $afbSendUrl }}"
-                    label="AFB versturen"
-                    :enabled="{{ $afbLateBookingActive ? 'true' : 'false' }}"
-                ></v-order-afb-send-button>
-            @endif
         </div>
 
         {{-- AFB dispatch status --}}
@@ -351,6 +344,11 @@
                                        class="text-xs text-indigo-600 hover:underline dark:text-indigo-400">
                                         Bekijk formulier
                                     </a>
+                                    @if (bouncer()->hasPermission('orders.edit'))
+                                        <v-afb-delete-button
+                                            delete-url="{{ route('admin.orders.afb.delete', ['orderId' => $order->id, 'personDocumentId' => $dispatch->id]) }}"
+                                        ></v-afb-delete-button>
+                                    @endif
                                 </div>
                             @else
                                 <span

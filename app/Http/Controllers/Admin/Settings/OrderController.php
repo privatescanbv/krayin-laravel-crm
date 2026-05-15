@@ -14,6 +14,7 @@ use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
 use App\Http\Requests\Admin\OrderPaymentRequest;
+use App\Models\AfbPersonDocument;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderPayment;
@@ -402,7 +403,6 @@ class OrderController extends SimpleEntityController
         $avbDispatchReadiness = $this->afbDispatchService->getAvbDispatchReadiness($order);
         $afbNeedsManualBanner = $avbDispatchReadiness['needs_manual_send'];
         $afbHasBatchSuccess = $this->afbDispatchService->hasSuccessfulBatchDispatchForOrder($order);
-        $afbLateBookingActive = $this->afbDispatchService->isLateBookingWindowActive($order);
 
         $latestAfbDocs = $order->latestSuccessfulAfbDocuments()
             ->keyBy(fn ($doc) => ($doc->person_id ?? '').'_'.$doc->dispatch?->clinic_department_id);
@@ -445,7 +445,6 @@ class OrderController extends SimpleEntityController
             'afbHasBatchSuccess'   => $afbHasBatchSuccess,
             'afbSendUrl'           => route('admin.orders.send_afb', $order->id),
             'afbStatusRows'        => $afbStatusRows,
-            'afbLateBookingActive' => $afbLateBookingActive,
             'avbDispatchReadiness' => $avbDispatchReadiness,
             'totalChecks'          => $totalChecks,
             'completedChecks'      => $completedChecks,
@@ -630,6 +629,18 @@ class OrderController extends SimpleEntityController
         }
 
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
+    }
+
+    public function deleteAfbPersonDocument(int $orderId, int $personDocumentId): JsonResponse
+    {
+        $order = Order::findOrFail($orderId);
+
+        $doc = AfbPersonDocument::where('order_id', $order->id)->findOrFail($personDocumentId);
+        $doc->delete();
+
+        return response()->json([
+            'message' => 'AFB verwijderd. De order kan nu opnieuw worden verstuurd.',
+        ]);
     }
 
     public function sendAfb(int $id): JsonResponse

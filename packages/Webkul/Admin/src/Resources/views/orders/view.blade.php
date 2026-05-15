@@ -230,6 +230,100 @@
         </script>
     @endPushOnce
 
+    @pushOnce('scripts', 'order-view-afb-delete-button')
+        <script type="text/x-template" id="v-afb-delete-button-template">
+            <button
+                type="button"
+                class="text-xs font-medium text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-400"
+                :disabled="deleting"
+                @click="confirmDelete"
+            >
+                @{{ deleting ? 'Bezig...' : 'Verwijder' }}
+            </button>
+        </script>
+
+        <script type="module">
+            app.component('v-afb-delete-button', {
+                template: '#v-afb-delete-button-template',
+
+                props: {
+                    deleteUrl: {
+                        type: String,
+                        required: true,
+                    },
+                },
+
+                data() {
+                    return {
+                        deleting: false,
+                    };
+                },
+
+                methods: {
+                    confirmDelete() {
+                        if (this.deleting) {
+                            return;
+                        }
+
+                        this.$emitter.emit('open-confirm-modal', {
+                            title: 'AFB verwijderen',
+                            message: 'Weet u zeker dat u deze AFB wilt verwijderen?',
+                            options: {
+                                btnDisagree: 'Annuleren',
+                                btnAgree: 'Verwijder',
+                            },
+                            agree: () => this.deleteAfb(),
+                        });
+                    },
+
+                    async deleteAfb() {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        if (!token) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'CSRF token niet gevonden.',
+                            });
+
+                            return;
+                        }
+
+                        this.deleting = true;
+
+                        try {
+                            const response = await fetch(this.deleteUrl, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': token,
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                            });
+                            const data = await response.json().catch(() => ({}));
+
+                            if (!response.ok) {
+                                throw new Error(data.message || 'AFB verwijderen mislukt.');
+                            }
+
+                            this.$emitter.emit('add-flash', {
+                                type: 'success',
+                                message: data.message || 'AFB verwijderd.',
+                            });
+
+                            window.location.reload();
+                        } catch (error) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: error.message || 'AFB verwijderen mislukt.',
+                            });
+                        } finally {
+                            this.deleting = false;
+                        }
+                    },
+                },
+            });
+        </script>
+    @endPushOnce
+
     @pushOnce('scripts', 'order-view-delete-action')
         <script type="text/x-template" id="v-order-delete-template">
             <button

@@ -37,6 +37,7 @@ class HerniaCreateLeadRequest extends FormRequest
             'diagnoseform_pdf_url' => ['nullable', 'string'],
 
             // Marketing / UTM tracking fields
+            'origin_form'    => ['nullable', 'string'],
             'source'         => ['nullable', 'string'],
             'medium'         => ['nullable', 'string'],
             'campaign'       => ['nullable', 'string'],

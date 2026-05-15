@@ -1,7 +1,10 @@
 @props([
     'order'
 ])
-@php use Webkul\Admin\Http\Controllers\order\ActivityController; @endphp
+@php
+    use App\Enums\PipelineStage;
+    use Webkul\Admin\Http\Controllers\order\ActivityController;
+@endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $order->name }}

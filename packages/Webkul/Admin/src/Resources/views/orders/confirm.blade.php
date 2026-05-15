@@ -716,11 +716,6 @@
 
                     async nextStep() {
                         if (this.currentStep === 0) {
-                            const content = this.getTinyMCEContent('confirmation-letter-editor');
-                            if (!content || !String(content).trim()) {
-                                this.emitFlash('error', 'Genereer eerst de orderbevestiging en vul de inhoud in.');
-                                return;
-                            }
                             const saved = await this.persistConfirmationLetter();
                             if (!saved) {
                                 return;
@@ -799,11 +794,7 @@
 
                     async persistConfirmationLetter() {
                         window.tinymce?.triggerSave?.();
-                        const content = this.getTinyMCEContent('confirmation-letter-editor');
-                        if (!content || !String(content).trim()) {
-                            this.emitFlash('error', 'Geen inhoud om op te slaan');
-                            return false;
-                        }
+                        const content = this.getTinyMCEContent('confirmation-letter-editor') ?? '';
                         this.isSavingLetter = true;
                         try {
                             let url;

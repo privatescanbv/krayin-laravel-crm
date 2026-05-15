@@ -48,6 +48,36 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Algemene informatie Order</h3>
 
             <div class="direction-row flex items-center gap-4">
+                @if ($order->sales_lead_id)
+                    @php
+                        $confirmStageIds = [
+                            \App\Enums\PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+                            \App\Enums\PipelineStage::ORDER_WACHTEN_UITVOERING_HERNIA->id(),
+                            \App\Enums\PipelineStage::ORDER_INGEPLAND->id(),
+                            \App\Enums\PipelineStage::ORDER_INGEPLAND_HERNIA->id(),
+                        ];
+                        $confirmDisabled = ! in_array($order->pipeline_stage_id, $confirmStageIds);
+                        $confirmProgress = ($order->combine_order === false)
+                            ? $order->confirmationProgress()
+                            : null;
+                    @endphp
+                    <a
+                        href="{{ route('admin.orders.confirm', $order->id) }}"
+                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text {{ $confirmDisabled ? 'pointer-events-none opacity-60' : '' }}"
+                        @if($confirmDisabled) aria-disabled="true" tabindex="-1" @endif
+                        title="{{ $confirmDisabled ? 'Eerst order op Ingepland zetten' : '' }}"
+                    >
+                        @if ($confirmProgress && $confirmProgress['total'] > 0)
+                            @if ($confirmProgress['confirmed'] >= $confirmProgress['total'])
+                                <span class="mr-1 text-green-600">&#10003;</span>Afspraak bevestigd
+                            @else
+                                Afspraak bevestigen ({{ $confirmProgress['confirmed'] }}/{{ $confirmProgress['total'] }})
+                            @endif
+                        @else
+                            Afspraak bevestigen
+                        @endif
+                    </a>
+                @endif
                 @if (bouncer()->hasPermission('orders.edit'))
                     <a href="{{ route('admin.planning.monitor.order', ['orderId' => $order->id]) }}"
                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">

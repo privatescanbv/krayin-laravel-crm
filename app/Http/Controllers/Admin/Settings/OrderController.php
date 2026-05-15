@@ -862,13 +862,6 @@ class OrderController extends SimpleEntityController
             ], 422);
         }
 
-        // Validate that confirmation letter content exists
-        if (empty($order->confirmation_letter_content)) {
-            return response()->json([
-                'message' => 'De orderbevestiging brief moet eerst worden gegenereerd en opgeslagen voordat de order mail kan worden gemaakt.',
-            ], 422);
-        }
-
         $mailData = $this->orderMailService->buildMailData($order);
 
         return response()->json($mailData);
@@ -1015,7 +1008,7 @@ class OrderController extends SimpleEntityController
     public function saveConfirmationLetter(Request $request, int $orderId): JsonResponse
     {
         $request->validate([
-            'content' => 'required|string',
+            'content' => 'nullable|string',
         ]);
 
         $order = $this->orderRepository->findOrFail($orderId);
@@ -1143,7 +1136,7 @@ class OrderController extends SimpleEntityController
 
     public function savePersonConfirmationLetter(Request $request, int $orderId, int $personId): JsonResponse
     {
-        $request->validate(['content' => 'required|string']);
+        $request->validate(['content' => 'nullable|string']);
 
         Order::findOrFail($orderId);
         Person::findOrFail($personId);
@@ -1188,12 +1181,6 @@ class OrderController extends SimpleEntityController
             ->where('person_id', $personId)
             ->first();
 
-        if (! $confirmation || empty($confirmation->confirmation_letter_content)) {
-            return response()->json([
-                'message' => 'De brief voor deze persoon moet eerst worden gegenereerd.',
-            ], 422);
-        }
-
         $mailData = $this->orderMailService->buildMailData($order, $person);
 
         $defaultEmail = collect($person->emails ?? [])
@@ -1227,25 +1214,26 @@ class OrderController extends SimpleEntityController
             ->where('person_id', $personId)
             ->first();
 
-        if (! $confirmation || empty($confirmation->confirmation_letter_content)) {
-            return response()->json(['message' => 'Geen brief gevonden voor deze persoon.'], 422);
-        }
-
-        if ($confirmation->isEmailSent()) {
+        if ($confirmation?->isEmailSent()) {
             return response()->json(['message' => 'Deze persoon is al bevestigd.'], 422);
         }
 
-        try {
-            $this->storePersonConfirmationPdf($order, $person, $confirmation, auth()->id());
-        } catch (Throwable $e) {
-            Log::error('Failed to create per-person confirmation PDF', [
-                'order_id'  => $orderId,
-                'person_id' => $personId,
-                'error'     => $e->getMessage(),
-            ]);
+        if ($confirmation?->isLetterSaved()) {
+            try {
+                $this->storePersonConfirmationPdf($order, $person, $confirmation, auth()->id());
+            } catch (Throwable $e) {
+                Log::error('Failed to create per-person confirmation PDF', [
+                    'order_id'  => $orderId,
+                    'person_id' => $personId,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
         }
 
-        $confirmation->update(['email_sent_at' => now()]);
+        OrderPersonConfirmation::updateOrCreate(
+            ['order_id' => $orderId, 'person_id' => $personId],
+            ['email_sent_at' => now()]
+        );
 
         $allDone = $order->allPersonsConfirmed();
 

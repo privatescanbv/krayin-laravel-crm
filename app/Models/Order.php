@@ -403,8 +403,13 @@ class Order extends Model
      */
     public function scopeAppointmentEligible(Builder $query): Builder
     {
+        $allowedStageIds = array_map(
+            fn (PipelineStage $s) => $s->id(),
+            PipelineStage::getOrderStagesAfterPlanned(),
+        );
+
         return $query
-            ->whereNotIn('pipeline_stage_id', PipelineStage::getOrderStagesIdsBeforeConfirmed())
+            ->whereIn('pipeline_stage_id', $allowedStageIds)
             ->where(function (Builder $q) {
                 $q->whereNotNull('first_examination_at')
                     ->orWhereHas('orderItems', function (Builder $orderItems) {

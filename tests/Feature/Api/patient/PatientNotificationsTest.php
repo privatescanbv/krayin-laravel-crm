@@ -499,7 +499,7 @@ it('returns Dutch translated strings when person has no preferred_language', fun
         ->getJson("/api/patient/{$keycloakUserId}/notifications");
 
     $response->assertOk();
-    $response->assertJsonPath('data.0.title', 'Document beschikbaar');
+    $response->assertJsonPath('data.0.title', 'Documenten beschikbaar');
     $response->assertJsonPath('data.0.summary', 'De volgende documenten staan voor u klaar: rapport.pdf, factuur.pdf');
 });
 

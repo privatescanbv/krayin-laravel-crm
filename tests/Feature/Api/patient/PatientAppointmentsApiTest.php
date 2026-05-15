@@ -306,3 +306,69 @@ test('patient appointments endpoint supports future/past filter', function () {
         ],
     ]);
 });
+
+test('verloren order is not shown as patient appointment', function () {
+    $keycloakId = 'kc-user-appointments-verloren';
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakId]);
+
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $verlorenOrder = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_VERLOREN->id(),
+        'first_examination_at' => now()->addDay(),
+    ]);
+    $verlorenOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()]);
+
+    $verlorenHerniaOrder = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_VERLOREN_HERNIA->id(),
+        'first_examination_at' => now()->addDay(),
+    ]);
+    $verlorenHerniaOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN_HERNIA->id()]);
+
+    $response = $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakId}/appointments");
+
+    $response->assertOk();
+    $response->assertJsonCount(0, 'data');
+});
+
+test('ingepland order is shown as patient appointment', function () {
+    $keycloakId = 'kc-user-appointments-ingepland';
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakId]);
+
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $clinic = Clinic::factory()->create(['name' => 'Clinic Ingepland']);
+    $resource = Resource::factory()->create(['clinic_id' => $clinic->id]);
+
+    $ingeplandOrder = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_INGEPLAND->id(),
+        'first_examination_at' => now()->addDay(),
+    ]);
+
+    $orderItem = OrderItem::factory()->create(['order_id' => $ingeplandOrder->id]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $orderItem->id,
+        'resource_id'  => $resource->id,
+        'from'         => now()->addDay(),
+        'to'           => now()->addDay()->addHour(),
+    ]);
+
+    $ingeplandOrder->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id()]);
+
+    $response = $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakId}/appointments");
+
+    $response->assertOk();
+    $response->assertJsonCount(1, 'data');
+    $response->assertJsonFragment([
+        'id'         => 'order-'.$ingeplandOrder->id,
+        'patient_id' => (string) $person->id,
+        'clinic_id'  => (string) $clinic->id,
+    ]);
+});

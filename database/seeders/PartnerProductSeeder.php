@@ -30,7 +30,7 @@ class PartnerProductSeeder extends BaseSeeder
                     fn (Resource $resource) => (int) ($resource->clinicDepartment?->clinic_id) === (int) $clinic->id
                 )
                 ->mapWithKeys(function (Resource $resource) {
-                    $typeName = optional($resource->resourceType)->name ?? 'unknown';
+                    $typeName = strtolower(optional($resource->resourceType)->name ?? 'unknown');
 
                     return [
                         $typeName => [
@@ -109,15 +109,16 @@ class PartnerProductSeeder extends BaseSeeder
         if (! $clinic) {
             throw new Exception("Clinic not found for external_id: {$productData['clinic_external_id']}");
         }
-        $resourceType = ResourceType::where('name', strtolower($productData['resourcetype']))->first();
+        $productResourceType = strtolower($productData['resourcetype']);
+        $resourceType = ResourceType::where('name', $productResourceType)->first();
         if (! $resourceType) {
             throw new Exception("Resource Type not found: {$productData['resourcetype']}");
         }
 
         $availableTypes = array_keys($mappedResources[$clinic->id] ?? []);
-        $resourceId = $mappedResources[$clinic->id][$resourceType->name]['id']
+        $resourceId = $mappedResources[$clinic->id][$productResourceType]['id']
             ?? throw new Exception(
-                'No resource of type "'.$resourceType->name.'" found for clinic "'.$clinic->name.'". '.
+                'No resource of type "'.$productResourceType.'" found for clinic "'.$clinic->name.'". '.
                 'Available types: ['.implode(', ', $availableTypes).']'
             );
         // Parse reporting field (comma-separated string matching ProductReports enum labels)

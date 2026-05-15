@@ -26,7 +26,7 @@ class ClinicDepartmentSeeder extends BaseSeeder
             return;
         }
 
-        $clinics = Clinic::where('is_active', true)->get();
+        $clinics = Clinic::all();
         $activeNames = $clinics->pluck('name')->all();
         $byClinicName = $this->departmentsByClinicName();
 

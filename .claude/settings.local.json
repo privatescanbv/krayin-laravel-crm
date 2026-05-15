@@ -82,7 +82,10 @@
       "Bash(security dump-trust-settings *)",
       "mcp__kepa-mysql__mysql_query",
       "Bash(xargs basename -a)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(awk '-F;' 'NR==1 {for\\(i=1;i<=NF;i++\\) print i\": \"$i}')",
+      "Bash(awk -F';' 'NR>1 {print $19}' /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/database/seeders/data/partner_products.csv)",
+      "Bash(awk *)"
     ]
   }
 }

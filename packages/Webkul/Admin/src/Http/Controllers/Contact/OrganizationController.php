@@ -251,7 +251,7 @@ class OrganizationController extends Controller
      */
     public function search()
     {
-        $searchTerm = request('search');
+        $searchTerm = request('query') ?? request('search');
 
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $organizations = $this->organizationRepository

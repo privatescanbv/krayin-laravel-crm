@@ -35,11 +35,11 @@
 
         <div class="space-y-4">
             {{-- Description --}}
-            @if ($anamnesis->description)
+            @if ($anamnesis->comment_clinic)
                 <div class="p-3 bg-gray-50 rounded-md border border-gray-100 dark:bg-gray-700/50 dark:border-gray-600">
 
                     <read-more
-                        :text='@json($anamnesis->description ?? "")'
+                        :text='@json($anamnesis->comment_clinic ?? "")'
                         :lines="5"
                     />
 

@@ -20,8 +20,10 @@ test('it sends one notification email per patient and updates last_notified_by_e
     Mail::fake();
 
     $person = Person::factory()->create([
-        'last_name' => 'Jansen',
-        'emails'    => [['value' => 'patient@example.com', 'is_default' => true]],
+        'last_name'         => 'Jansen',
+        'emails'            => [['value' => 'patient@example.com', 'is_default' => true]],
+        'is_active'         => true,
+        'keycloak_user_id'  => '11111111-2222-3333-4444-555555555555',
     ]);
 
     PatientNotification::factory()->count(2)->create([
@@ -46,4 +48,62 @@ test('it sends one notification email per patient and updates last_notified_by_e
     expect($updatedCount)->toBe(2);
 
     Mail::assertQueued(EmailMailable::class, 1);
+});
+
+test('it does not send when person is inactive', function () {
+    Mail::fake();
+
+    $person = Person::factory()->create([
+        'last_name'         => 'Inactive',
+        'emails'            => [['value' => 'patient@example.com', 'is_default' => true]],
+        'is_active'         => false,
+        'keycloak_user_id'  => '11111111-2222-3333-4444-555555555555',
+    ]);
+
+    PatientNotification::factory()->create([
+        'patient_id'                => $person->id,
+        'dismissed_at'              => null,
+        'last_notified_by_email_at' => null,
+    ]);
+
+    $person->forceFill([
+        'patient_portal_notify_scheduled_at' => Carbon::now()->subMinute(),
+    ])->save();
+
+    $this->artisan('patient:send-notification-email')->assertExitCode(0);
+
+    Mail::assertNothingQueued();
+    expect(PatientNotification::query()
+        ->where('patient_id', $person->id)
+        ->whereNotNull('last_notified_by_email_at')
+        ->exists())->toBeFalse();
+});
+
+test('it does not send when person has no keycloak account', function () {
+    Mail::fake();
+
+    $person = Person::factory()->create([
+        'last_name'         => 'NoPortal',
+        'emails'            => [['value' => 'patient@example.com', 'is_default' => true]],
+        'is_active'         => true,
+        'keycloak_user_id'  => null,
+    ]);
+
+    PatientNotification::factory()->create([
+        'patient_id'                => $person->id,
+        'dismissed_at'              => null,
+        'last_notified_by_email_at' => null,
+    ]);
+
+    $person->forceFill([
+        'patient_portal_notify_scheduled_at' => Carbon::now()->subMinute(),
+    ])->save();
+
+    $this->artisan('patient:send-notification-email')->assertExitCode(0);
+
+    Mail::assertNothingQueued();
+    expect(PatientNotification::query()
+        ->where('patient_id', $person->id)
+        ->whereNotNull('last_notified_by_email_at')
+        ->exists())->toBeFalse();
 });

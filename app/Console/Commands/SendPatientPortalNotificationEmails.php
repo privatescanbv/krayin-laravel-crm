@@ -32,6 +32,8 @@ class SendPatientPortalNotificationEmails extends Command
         $portalUrl = (string) config('services.portal.patient.web_url', '');
 
         $persons = Person::query()
+            ->where('is_active', true)
+            ->whereNotNull('keycloak_user_id')
             ->whereNotNull('patient_portal_notify_scheduled_at')
             ->where('patient_portal_notify_scheduled_at', '<=', now())
             ->whereExists(function ($q) {
@@ -71,7 +73,7 @@ class SendPatientPortalNotificationEmails extends Command
                     'exception'     => $e,
                 ]);
 
-                if ($e instanceof RuntimeException && str_contains($e->getMessage(), 'Email template')) {
+                if ($e instanceof \RuntimeException && str_contains($e->getMessage(), 'Email template')) {
                     return Command::FAILURE;
                 }
             }

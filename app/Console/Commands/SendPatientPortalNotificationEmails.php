@@ -55,6 +55,15 @@ class SendPatientPortalNotificationEmails extends Command
             try {
                 $this->sendForPerson($person, $portalUrl);
             } catch (Throwable $e) {
+                if (str_contains($e->getMessage(), 'Email sending blocked')) {
+                    Log::warning('Patient portal digest skipped: recipient blocked by allowlist', [
+                        'patient_id'    => $person->id,
+                        'patient_email' => $person->findDefaultEmail(),
+                    ]);
+
+                    continue;
+                }
+
                 $failed++;
                 Log::error('Patient portal digest: failed for person', [
                     'patient_id'    => $person->id,

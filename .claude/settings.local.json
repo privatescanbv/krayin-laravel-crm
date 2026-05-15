@@ -85,7 +85,8 @@
       "Bash(git stash *)",
       "Bash(awk '-F;' 'NR==1 {for\\(i=1;i<=NF;i++\\) print i\": \"$i}')",
       "Bash(awk -F';' 'NR>1 {print $19}' /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/database/seeders/data/partner_products.csv)",
-      "Bash(awk *)"
+      "Bash(awk *)",
+      "mcp__plugin_sentry_sentry__get_sentry_resource"
     ]
   }
 }

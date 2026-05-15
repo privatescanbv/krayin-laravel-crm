@@ -8,7 +8,6 @@ use App\Services\Mail\CrmMailService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 use Throwable;
 use Webkul\Contact\Models\Person;
 
@@ -50,33 +49,30 @@ class SendPatientPortalNotificationEmails extends Command
             return Command::SUCCESS;
         }
 
-        $failed = false;
+        $failed = 0;
 
         foreach ($persons as $person) {
             try {
                 $this->sendForPerson($person, $portalUrl);
-            } catch (RuntimeException $e) {
-                if (str_contains($e->getMessage(), 'Email template')) {
-                    $this->error($e->getMessage());
-                    Log::error('Patient portal digest: template missing', ['error' => $e->getMessage()]);
+            } catch (Throwable $e) {
+                $failed++;
+                Log::error('Patient portal digest: failed for person', [
+                    'patient_id'    => $person->id,
+                    'patient_email' => $person->findDefaultEmail(),
+                    'exception'     => $e,
+                ]);
 
+                if ($e instanceof RuntimeException && str_contains($e->getMessage(), 'Email template')) {
                     return Command::FAILURE;
                 }
-                $failed = true;
-                Log::error('Failed sending patient portal digest email', [
-                    'patient_id' => $person->id,
-                    'error'      => $e->getMessage(),
-                ]);
-            } catch (Throwable $e) {
-                $failed = true;
-                Log::error('Failed sending patient portal digest email', [
-                    'patient_id' => $person->id,
-                    'error'      => $e->getMessage(),
-                ]);
             }
         }
 
-        return $failed ? Command::FAILURE : Command::SUCCESS;
+        if ($failed > 0) {
+            Log::warning("Patient portal digest: {$failed}/{$persons->count()} failed.");
+        }
+
+        return $failed > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 
     private function sendForPerson(Person $person, string $portalUrl): void

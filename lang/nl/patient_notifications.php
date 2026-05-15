@@ -2,11 +2,11 @@
 
 return [
     'file' => [
-        'title'   => 'Document beschikbaar',
+        'title'   => 'Documenten beschikbaar',
         'summary' => 'De volgende documenten staan voor u klaar: :files',
     ],
     'gvl' => [
-        'title'   => 'GVL formulier beschikbaar',
+        'title'   => 'Gezondheidsvragenlijst beschikbaar',
         'summary' => 'Er staat een gezondheidsverklaring voor u klaar om in te vullen.',
     ],
 ];

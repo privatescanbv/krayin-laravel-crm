@@ -65,6 +65,12 @@ Voor monitoring en foutanalyse zetten we Sentry in. Hiermee kunnen we technische
 * **Versiebeheer & Continuous Integration**
 Git en CI zijn ondergebracht in GitHub. Dit biedt overzichtelijke versiecontrole, pull requests, en geautomatiseerde tests bij elke wijziging.
 
+
+=== Tooling en kosten
+
+link:https://docs.google.com/spreadsheets/d/1vvzTMvJQpx4oGzq5g5MiCKBZr1UPCc2yuUc02yLJ6uw/edit?gid=1231716762#gid=1231716762[Kostenoverzicht]
+
+
 === Bekende Issues & Oplossingen
 
 ==== Log schrijfrechten probleem (OPGELOST)

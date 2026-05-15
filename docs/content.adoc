@@ -2,6 +2,10 @@
 
 include::modules/project/pages/project.adoc[]
 
+== Handleiding
+
+include::modules/application/pages/application.adoc[]
+
 == Functioneel ontwerp
 
 include::modules/functional_design/pages/functional.adoc[]
@@ -9,10 +13,6 @@ include::modules/functional_design/pages/functional.adoc[]
 == Flows
 
 include::modules/flows/pages/flows.adoc[]
-
-== Gebruikersinterface
-
-include::modules/application/pages/application.adoc[]
 
 == Technisch ontwerp
 

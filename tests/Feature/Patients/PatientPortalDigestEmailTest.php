@@ -8,11 +8,11 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 use Webkul\EmailTemplate\Models\EmailTemplate;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 

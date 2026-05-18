@@ -155,13 +155,7 @@ class GraphMailService extends AbstractEmailProcessor
 
             if ($response->successful()) {
                 foreach ($response->json('value') ?? [] as $attachment) {
-                    $this->attachmentRepository->create([
-                        'email_id'     => $email->id,
-                        'name'         => $attachment['name'] ?? 'attachment',
-                        'content_type' => $attachment['contentType'] ?? 'application/octet-stream',
-                        'size'         => $attachment['size'] ?? 0,
-                        'content'      => base64_decode($attachment['contentBytes'] ?? ''),
-                    ]);
+                    $this->attachmentRepository->createFromGraphData($email, $attachment);
                 }
             }
         } catch (Exception $e) {

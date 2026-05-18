@@ -364,6 +364,42 @@ class GraphMailServiceTest extends TestCase
         ]);
     }
 
+    public function test_process_attachments_calls_create_from_graph_data(): void
+    {
+        $email = new Email;
+        $email->id = 99;
+
+        $message = ['id' => 'msg-attach'];
+
+        Http::fake([
+            '*/oauth2/v2.0/token' => Http::response([
+                'access_token' => 'fake-token',
+                'expires_in'   => 3600,
+            ]),
+            '*/messages/msg-attach/attachments' => Http::response([
+                'value' => [[
+                    'name'         => 'test.pdf',
+                    'contentType'  => 'application/pdf',
+                    'contentBytes' => base64_encode('fake'),
+                    'size'         => 4,
+                ]],
+            ]),
+        ]);
+
+        $this->attachmentRepository
+            ->expects($this->once())
+            ->method('createFromGraphData')
+            ->with(
+                $this->equalTo($email),
+                $this->callback(fn ($a) => $a['name'] === 'test.pdf')
+            );
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('processAttachments');
+        $method->setAccessible(true);
+        $method->invoke($this->service, $email, $message);
+    }
+
     public function test_log_sync_complete_updates_email_log()
     {
         $emailLog = EmailLog::create([

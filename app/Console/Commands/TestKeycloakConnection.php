@@ -50,8 +50,8 @@ class TestKeycloakConnection extends Command
         $this->newLine();
 
         // 3. Admin token (optionally repeated to surface intermittent failures)
-        $repeat  = max(1, (int) $this->option('repeat'));
-        $failed  = 0;
+        $repeat = max(1, (int) $this->option('repeat'));
+        $failed = 0;
         $tokenUrl = KeycloakConfig::internalUrl('/realms/master/protocol/openid-connect/token');
         $this->line('<fg=cyan>Admin token ('.$repeat.'×): '.$tokenUrl.'</>');
 
@@ -59,7 +59,7 @@ class TestKeycloakConnection extends Command
         for ($i = 1; $i <= $repeat; $i++) {
             $start = microtime(true);
             $token = $this->getRawAdminToken($tokenUrl);
-            $ms    = round((microtime(true) - $start) * 1000);
+            $ms = round((microtime(true) - $start) * 1000);
 
             if ($token) {
                 $this->line("  [{$i}/{$repeat}] <fg=green>✓ token obtained</> ({$ms} ms, ".strlen($token).' chars)');
@@ -112,7 +112,7 @@ class TestKeycloakConnection extends Command
         // 6. Round-trip: list users (simulates what PersonObserver triggers)
         $this->line('<fg=cyan>Round-trip: list users (simulates PersonObserver → PersonKeycloakService):</>');
         try {
-            $url      = KeycloakConfig::internalUrl('/admin/realms/'.$realm.'/users?max=1');
+            $url = KeycloakConfig::internalUrl('/admin/realms/'.$realm.'/users?max=1');
             $response = Http::withToken($lastToken)->timeout(5)->get($url);
             if ($response->successful()) {
                 $this->line('<fg=green>  ✓ Users endpoint reachable (HTTP '.$response->status().')</>');

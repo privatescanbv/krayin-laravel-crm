@@ -59,6 +59,37 @@ class AttachmentRepository extends Repository
     }
 
     /**
+     * Store a Microsoft Graph attachment to disk and create the DB record.
+     * Graph delivers file content as base64 in 'contentBytes'.
+     */
+    public function createFromGraphData(Email $email, array $graphAttachment): void
+    {
+        $name    = $graphAttachment['name'] ?? 'attachment';
+        $content = base64_decode($graphAttachment['contentBytes'] ?? '');
+
+        $safeBasename = SafeStorageFilename::forPathSegment($name);
+        $directory    = 'emails/'.$email->id;
+        $path         = $directory.'/'.$safeBasename;
+        $counter      = 0;
+        [$stem, $ext] = self::stemAndExtensionFromBasename($safeBasename);
+
+        while (Storage::exists($path)) {
+            $counter++;
+            $path = $directory.'/'.$stem.'_'.$counter.$ext;
+        }
+
+        Storage::put($path, $content);
+
+        $this->create([
+            'email_id'     => $email->id,
+            'name'         => $name,
+            'content_type' => $graphAttachment['contentType'] ?? 'application/octet-stream',
+            'size'         => strlen($content) ?: ($graphAttachment['size'] ?? 0),
+            'path'         => $path,
+        ]);
+    }
+
+    /**
      * Get the path for the attachment.
      */
     private function prepareData(Email $email, $attachment): array

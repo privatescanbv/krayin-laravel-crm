@@ -261,6 +261,15 @@ class EmailController extends Controller
     {
         $attachment = $this->attachmentRepository->findOrFail($id);
 
+        if (empty($attachment->path)) {
+            Log::warning('EmailController@download: Attachment has no file path', [
+                'attachment_id' => $id,
+            ]);
+            session()->flash('error', trans('admin::app.mail.download-failed'));
+
+            return redirect()->back();
+        }
+
         try {
             // Use the friendly name from the database for the download filename
             $downloadName = $attachment->name ?: basename($attachment->path);

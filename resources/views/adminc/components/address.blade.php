@@ -131,7 +131,6 @@
                     value="{{ old($resolvedErrorNamePrefix.'.house_number', $resolvedAddress?->house_number ?? '') }}"
                     placeholder="123"
                     id="{{ $addressId }}_house_number"
-                    :disabled="isset($readonly) && $readonly"
                     :readonly="isset($readonly) && $readonly"
                 />
             </div>

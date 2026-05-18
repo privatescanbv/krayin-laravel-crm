@@ -12,6 +12,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 use Webkul\EmailTemplate\Models\EmailTemplate;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -116,7 +117,7 @@ test('send command emails due digest and clears schedule using new content templ
         'last_name'        => 'Jansen',
         'emails'           => [['value' => 'patient@example.com', 'is_default' => true]],
         'is_active'        => true,
-        'keycloak_user_id' => (string) \Illuminate\Support\Str::uuid(),
+        'keycloak_user_id' => (string) Str::uuid(),
     ]);
 
     PatientNotification::factory()->count(2)->create([
@@ -158,7 +159,7 @@ test('second notification after first email triggers a second digest email after
         'last_name'                           => 'Jansen',
         'emails'                              => [['value' => 'patient@example.com', 'is_default' => true]],
         'is_active'                           => true,
-        'keycloak_user_id'                    => (string) \Illuminate\Support\Str::uuid(),
+        'keycloak_user_id'                    => (string) Str::uuid(),
         'patient_portal_last_notify_email_at' => $firstSentAt,
         'patient_portal_notify_scheduled_at'  => null,
     ]);
@@ -245,7 +246,7 @@ test('send command fails when new content email template is missing', function (
 
     $person = Person::factory()->create([
         'is_active'        => true,
-        'keycloak_user_id' => (string) \Illuminate\Support\Str::uuid(),
+        'keycloak_user_id' => (string) Str::uuid(),
         'emails'           => [['value' => 'patient@example.com', 'is_default' => true]],
     ]);
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderItemStatus;
+use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -10,6 +11,7 @@ use App\Models\SalesLead;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Webkul\Lead\Models\Stage;
 
 class OrderStatusService
 {
@@ -25,9 +27,17 @@ class OrderStatusService
      */
     public function calculate(Order $order): int
     {
-
-        // Determine department to pick correct pipeline stages
-        $isHernia = SalesLead::isHerniaPoli($order->sales_lead_id);
+        // Determine which pipeline the order is in via its current stage.
+        // This is the source of truth when an order has been manually moved to a
+        // different pipeline than its salesLead's department. Fall back to the
+        // salesLead department only when the order has no stage yet.
+        if (is_null($order->pipeline_stage_id)) {
+            $isHernia = SalesLead::isHerniaPoli($order->sales_lead_id);
+        } else {
+            $isHernia = Stage::where('id', $order->pipeline_stage_id)
+                ->where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value)
+                ->exists();
+        }
 
         $firstStageId = $isHernia
             ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()

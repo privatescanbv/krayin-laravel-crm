@@ -77,6 +77,7 @@ class AddressLookupController extends Controller
                 'street'  => $street,
                 'city'    => $city,
                 'state'   => $state,
+                'country' => 'Nederland',
                 'message' => 'Adres succesvol opgehaald.',
                 'debug'   => $result, // Tijdelijk voor debugging
             ]);

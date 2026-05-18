@@ -10,6 +10,7 @@ use App\Enums\NotificationReferenceType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
+use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
@@ -60,6 +61,7 @@ use Webkul\Admin\Http\Resources\OrderLookupResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Email\Repositories\AttachmentRepository;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\StageProxy;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Product\Models\Product;
@@ -1572,6 +1574,16 @@ class OrderController extends SimpleEntityController
             $orderOrgSectionInitialIsBusiness = (bool) $order->is_business;
         }
 
+        $psStages = Stage::where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'sort_order', 'is_won', 'is_lost'])
+            ->toArray();
+
+        $herniaStages = Stage::where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'sort_order', 'is_won', 'is_lost'])
+            ->toArray();
+
         return [
             $this->entityName         => $entity,
 
@@ -1586,6 +1598,11 @@ class OrderController extends SimpleEntityController
             'orderOrgSectionInitialIsBusiness' => $orderOrgSectionInitialIsBusiness,
             'orderOrgSectionHintOrg'           => $suggestedOrderOrganization,
             'computedExaminationAt'            => $order->earliestScheduledResourceSlotStart(),
+            'orderPipelineStages'              => [
+                'privatescan' => $psStages,
+                'hernia'      => $herniaStages,
+            ],
+            'orderCurrentDepartmentIsHernia'   => $order->stage?->lead_pipeline_id === PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value,
         ];
     }
 

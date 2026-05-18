@@ -336,6 +336,7 @@
                             streetId: addressId + '_street',
                             cityId: addressId + '_city',
                             stateId: addressId + '_state',
+                            countryId: addressId + '_country',
                         };
                     }
 
@@ -347,6 +348,7 @@
                     const street = document.getElementById(addressConfig.streetId);
                     const city = document.getElementById(addressConfig.cityId);
                     const state = document.getElementById(addressConfig.stateId);
+                    const country = document.getElementById(addressConfig.countryId || addressId + '_country');
 
                     if (!postcode || !huisnummer) {
                         alert('Adresvelden niet gevonden');
@@ -388,6 +390,10 @@
                                     state.value = data.state || '';
                                     // Trigger input event to notify any listeners
                                     state.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                if (country) {
+                                    country.value = data.country || 'Nederland';
+                                    country.dispatchEvent(new Event('input', { bubbles: true }));
                                 }
                             } else {
                                 alert(data.message || 'Adres niet gevonden.');
@@ -440,7 +446,8 @@
                             houseNumberId: 'new_org_address_house_number',
                             streetId: 'new_org_address_street',
                             cityId: 'new_org_address_city',
-                            stateId: 'new_org_address_state'
+                            stateId: 'new_org_address_state',
+                            countryId: 'new_org_address_country'
                         };
                     }
                     initializeAddressLookupButton('new_org_address');

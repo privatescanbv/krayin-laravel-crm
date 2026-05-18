@@ -158,25 +158,41 @@ use Webkul\Lead\Models\Stage;
 
                             </x-admin::form.control-group>
 
+                            {{-- Afdeling-selector --}}
                             @php
-                                $orderStages = $orders->stage
-                                    ? Stage::where('lead_pipeline_id', $orders->stage->lead_pipeline_id)->orderBy('sort_order')->get()
-                                    : collect();
+                                $currentAfdeling = $orderCurrentDepartmentIsHernia ? 'hernia' : 'privatescan';
+                                $initialStages   = $orderPipelineStages[$currentAfdeling];
                             @endphp
-                            <x-adminc::components.field
-                                type="select"
-                                name="pipeline_stage_id"
-                                label="Status"
-                                value="{{ $orders->pipeline_stage_id ?? '' }}"
-                                rules="required"
-                            >
-                                @foreach($orderStages as $stage)
-                                    <option
-                                        value="{{ $stage->id }}" {{ $orders->pipeline_stage_id == $stage->id ? 'selected' : '' }}>
-                                        {{ $stage->name }}
-                                    </option>
-                                @endforeach
-                            </x-adminc::components.field>
+                            <div class="mb-3">
+                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Afdeling</label>
+                                <select id="order-afdeling-select"
+                                        data-stages='@json($orderPipelineStages)'
+                                        data-current-pipeline="{{ $currentAfdeling }}"
+                                        data-current-stage-id="{{ $orders->pipeline_stage_id ?? '' }}"
+                                        class="block w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                    <option value="privatescan" {{ $currentAfdeling === 'privatescan' ? 'selected' : '' }}>Privatescan</option>
+                                    <option value="hernia"      {{ $currentAfdeling === 'hernia'      ? 'selected' : '' }}>Herniapoli</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-400">Afgeleid van de sales lead. Wijzigen verplaatst de order naar de equivalente stage in de nieuwe pipeline.</p>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="mb-1 block text-sm font-medium text-gray-700 required dark:text-gray-300">Status</label>
+                                <select
+                                    id="order-stage-select"
+                                    name="pipeline_stage_id"
+                                    required
+                                    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-all dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                >
+                                    @foreach($initialStages as $stage)
+                                        <option
+                                            value="{{ $stage['id'] }}"
+                                            {{ (int)($orders->pipeline_stage_id ?? 0) === $stage['id'] ? 'selected' : '' }}>
+                                            {{ $stage['name'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
                             @php
                                 $storedDate = $orders->first_examination_at?->format('Y-m-d');
@@ -588,6 +604,49 @@ use Webkul\Lead\Models\Stage;
                 if (hidden) hidden.value = toggle.checked ? '1' : '0';
             });
 
+            // Afdeling-selector: swap stage options when department changes.
+            // Uses event delegation so it works regardless of Vue slot render timing.
+            document.addEventListener('change', function (e) {
+                if (e.target?.id !== 'order-afdeling-select') return;
+
+                const afdelingSelect = e.target;
+                const stageSelect    = document.getElementById('order-stage-select');
+                if (!stageSelect) return;
+
+                let allStages, currentPipelineKey, currentStageId;
+                try {
+                    allStages         = JSON.parse(afdelingSelect.dataset.stages || '{}');
+                    currentPipelineKey = afdelingSelect.dataset.currentPipeline || 'privatescan';
+                    currentStageId     = afdelingSelect.dataset.currentStageId
+                        ? parseInt(afdelingSelect.dataset.currentStageId, 10)
+                        : null;
+                } catch (err) {
+                    return;
+                }
+
+                const key    = afdelingSelect.value;
+                const stages = allStages[key] || [];
+
+                // Map by positional index within each pipeline (sort_order differs between pipelines)
+                const currentStages = allStages[currentPipelineKey] || [];
+                const currentIndex  = currentStageId !== null
+                    ? currentStages.findIndex(function (s) { return s.id === currentStageId; })
+                    : -1;
+
+                const target = (currentIndex >= 0 && currentIndex < stages.length)
+                    ? stages[currentIndex]
+                    : (stages[0] || null);
+
+                stageSelect.innerHTML = '';
+                stages.forEach(function (stage) {
+                    const opt       = document.createElement('option');
+                    opt.value       = stage.id;
+                    opt.textContent = stage.name;
+                    opt.selected    = target !== null && stage.id === target.id;
+                    stageSelect.appendChild(opt);
+                });
+            });
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
@@ -800,4 +859,5 @@ use Webkul\Lead\Models\Stage;
         </script>
 
     @endPushOnce
+
 </x-admin::layouts>

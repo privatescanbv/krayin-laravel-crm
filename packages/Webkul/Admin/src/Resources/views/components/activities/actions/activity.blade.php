@@ -105,7 +105,7 @@
                                     type="textarea"
                                     name="comment"
                                     :label="trans('admin::app.components.activities.actions.activity.description')"
-                                    rules="max:500"
+                                    rules="max:1024"
                                 />
 
 

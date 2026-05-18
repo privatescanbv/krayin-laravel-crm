@@ -104,7 +104,7 @@ class Email extends Mailable
         });
 
         foreach ($this->email->attachments as $attachment) {
-            $this->attachFromStorage($attachment->path);
+            $this->attachFromStorage($attachment->path, $attachment->name);
         }
 
         Log::info('Outgoing mail threading debug', [

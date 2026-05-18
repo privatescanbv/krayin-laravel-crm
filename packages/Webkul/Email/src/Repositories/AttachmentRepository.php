@@ -2,15 +2,28 @@
 
 namespace Webkul\Email\Repositories;
 
+use App\Support\SafeStorageFilename;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Webklex\PHPIMAP\Attachment as ImapAttachment;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Email\Contracts\Attachment;
 use Webkul\Email\Contracts\Email;
-use Webklex\PHPIMAP\Attachment as ImapAttachment;
 
 class AttachmentRepository extends Repository
 {
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private static function stemAndExtensionFromBasename(string $basename): array
+    {
+        if (! preg_match('/^(.+)\.([^.]{1,40})$/u', $basename, $matches)) {
+            return [$basename, ''];
+        }
+
+        return [$matches[1], '.'.$matches[2]];
+    }
+
     /**
      * Specify model class name.
      */
@@ -52,20 +65,20 @@ class AttachmentRepository extends Repository
     {
         $filename = null;
         $mimeType = null;
-        $content  = null;
-        $size     = null;
+        $content = null;
+        $size = null;
 
         if ($attachment instanceof UploadedFile) {
             $filename = $attachment->getClientOriginalName();
             $mimeType = $attachment->getClientMimeType() ?: $attachment->getMimeType();
-            $content  = @file_get_contents($attachment->getRealPath());
-            $size     = $attachment->getSize();
+            $content = @file_get_contents($attachment->getRealPath());
+            $size = $attachment->getSize();
         } elseif ($attachment instanceof ImapAttachment) {
             $filename = $attachment->getName();
             $mimeType = $attachment->getMimeType();
-            $content  = $attachment->getContent();
+            $content = $attachment->getContent();
             // Size might not be available directly; compute from content as fallback
-            $size     = method_exists($attachment, 'getSize') ? $attachment->getSize() : (is_string($content) ? strlen($content) : null);
+            $size = method_exists($attachment, 'getSize') ? $attachment->getSize() : (is_string($content) ? strlen($content) : null);
         } else {
             // Unsupported type; attempt to best-effort handle if it exposes similar API
             if (is_object($attachment)) {
@@ -80,8 +93,18 @@ class AttachmentRepository extends Repository
             }
         }
 
-        $filename = $filename ?: 'attachment';
-        $path = 'emails/'.$email->id.'/'.$filename;
+        $originalName = $filename ?: 'attachment';
+        $directory = 'emails/'.$email->id;
+        $safeBasename = SafeStorageFilename::forPathSegment($originalName);
+
+        $path = $directory.'/'.$safeBasename;
+        $counter = 0;
+        [$stem, $extension] = self::stemAndExtensionFromBasename($safeBasename);
+
+        while (Storage::exists($path)) {
+            $counter++;
+            $path = $directory.'/'.$stem.'_'.$counter.$extension;
+        }
 
         if ($content !== null) {
             Storage::put($path, $content);
@@ -92,7 +115,7 @@ class AttachmentRepository extends Repository
 
         $attributes = [
             'path'         => $path,
-            'name'         => $filename,
+            'name'         => $originalName,
             'content_type' => $mimeType,
             'size'         => $size ?: Storage::size($path),
             'email_id'     => $email->id,

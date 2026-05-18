@@ -56,7 +56,7 @@ class KeycloakService
         $tokenUrl = $this->resolveKeycloakUrl('/realms/master/protocol/openid-connect/token');
 
         $adminUsername = config('services.keycloak.admin_username', 'admin');
-        $adminPassword = config('services.keycloak.admin_password', 'c8f4b3a8e69');
+        $adminPassword = config('services.keycloak.admin_password');
 
         try {
             $response = Http::asForm()->post($tokenUrl, [

@@ -50,7 +50,7 @@ return [
         'realm'                       => env('KEYCLOAK_REALM', 'master'),
         'default_role_id'             => env('KEYCLOAK_DEFAULT_ROLE_ID', 1),
         'admin_username'              => env('KEYCLOAK_ADMIN', 'admin'),
-        'admin_password'              => env('KEYCLOAK_ADMIN_PASSWORD', 'changeme'),
+        'admin_password'              => env('KEYCLOAK_ADMIN_PASSWORD'),
         'themes'                      => [
             'login' => 'privatescan',
         ],

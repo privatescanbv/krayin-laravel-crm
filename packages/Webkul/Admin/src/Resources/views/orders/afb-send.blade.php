@@ -33,18 +33,7 @@
         <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <v-afb-send-wizard
                 :order-id="{{ $order->id }}"
-                :initial-rows='@json($afbStatusRows->map(fn ($row) => [
-                    "department_id" => $row["department"]->id,
-                    "department_name" => $row["department"]->name,
-                    "clinic_id" => $row["department"]->clinic_id,
-                    "clinic_name" => $row["department"]->clinic?->name,
-                    "person_id" => $row["person"]?->id,
-                    "person_name" => $row["person"]?->name,
-                    "dispatch_id" => $row["dispatch"]?->id,
-                    "dispatch_sent_at" => $row["dispatch"]?->sent_at?->format("d-m-Y H:i"),
-                    "dispatch_pdf_url" => $row["dispatch"] ? route("admin.clinic-guide.afb-pdf.view", ["personDocumentId" => $row["dispatch"]->id]) : null,
-                    "delete_url" => $row["dispatch"] ? route("admin.orders.afb.delete", ["orderId" => $order->id, "personDocumentId" => $row["dispatch"]->id]) : null,
-                ])->values())'
+                :initial-rows='@json($initialRows)'
                 view-url="{{ route('admin.orders.view', $order->id) }}"
             ></v-afb-send-wizard>
         </div>

@@ -27,7 +27,7 @@ use Webkul\Email\Models\Email;
 
 class AfbDispatchService
 {
-    public const AFB_LATE_BOOKING_CUTOFF_HOUR = 11;
+    public const AFB_LATE_BOOKING_CUTOFF_HOUR = 12;
 
     public function __construct(
         private readonly AfbDocumentGenerator $afbDocumentGenerator,

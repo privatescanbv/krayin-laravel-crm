@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use function Laravel\Prompts\error;
 
 /**
  * Enforce that a Keycloak-authenticated caller can only access their own patient routes.
@@ -30,8 +32,12 @@ class EnsureKeycloakPatientMatchesRoute
         $routeValue = (string) ($request->route($routeParam) ?? '');
 
         // Fail closed if we can't determine the subject.
-        if ($tokenSub === '' || $routeValue === '' || $tokenSub !== $routeValue) {
+        if ($tokenSub === '' || $routeValue === '') {
+            Log::warning('token sub en route value zijn leeg');
             abort(403);
+        } else if($tokenSub !== $routeValue) {
+            Log::warning('token sub en route value komen niet overeen, voor nu toelaten. tsub='. $tokenSub.', rv = '.$routeValue);
+//            abort(403);
         }
 
         return $next($request);

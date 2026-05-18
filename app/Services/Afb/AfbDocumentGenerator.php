@@ -236,7 +236,7 @@ class AfbDocumentGenerator
             'medical' => [
                 'height'              => $anamnesis?->height,
                 'weight'              => $anamnesis?->weight,
-                'claustrophobia'      => $this->emptyToNull($anamnesis?->claustrophobia),
+                'claustrophobia'      => $this->formatBoolean($anamnesis?->claustrophobia),
                 'diabetes'            => $this->formatBoolean($anamnesis?->diabetes),
                 'diabetes_notes'      => $this->emptyToNull($anamnesis?->diabetes_notes),
                 'metals'              => $this->formatBoolean($anamnesis?->metals),

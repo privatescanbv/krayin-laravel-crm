@@ -172,6 +172,32 @@ test('afb generator maps crm fields into afb layout', function () {
     // Summary row: Start = earliest resource_orderitem.from (09:30 + 30m = 10:00), not first_examination_at time.
 });
 
+test('afb generator renders boolean anamnesis fields as Ja/Nein not 1/empty', function () {
+    $context = createOrderForClinic(Carbon::parse('2026-03-31 09:30:00'));
+
+    // Isolate: only claustrophobia=true, all others false so we can assert each individually.
+    Anamnesis::where('sales_id', $context['order']->salesLead->id)
+        ->where('person_id', $context['person']->id)
+        ->update([
+            'claustrophobia' => true,
+            'diabetes'       => false,
+            'metals'         => false,
+            'heart_surgery'  => false,
+            'implant'        => false,
+            'allergies'      => false,
+            'glaucoma'       => false,
+        ]);
+
+    $generator = app(AfbDocumentGenerator::class);
+    $html = $generator->renderHtmlForOrderAndDepartment($context['order']->fresh(), $context['department'])['html'];
+
+    expect($html)
+        ->toContain('Ja')
+        ->toContain('Nein')
+        ->not->toContain('>1<')
+        ->not->toContain('> 1<');
+});
+
 test('daily afb command queues one batch job per department', function () {
     Bus::fake();
 

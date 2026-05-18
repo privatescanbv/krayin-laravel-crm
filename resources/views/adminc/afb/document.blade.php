@@ -125,7 +125,7 @@
             </tr>
             <tr>
                 <td class="label">Platzangst</td>
-                <td>{{ $afb['medical']['claustrophobia'] }}</td>
+                <td>{{ $afb['medical']['claustrophobia'] ?? '-' }}</td>
                 <td colspan="2">&nbsp;</td>
             </tr>
             <tr>

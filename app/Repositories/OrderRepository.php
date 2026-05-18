@@ -83,14 +83,31 @@ class OrderRepository extends Repository
     }
 
     /**
-     * Clean up unapproved orders, when sales is lost.
-     * This way we clean data and frees the agenda for clinics to plan other persons.
+     * When sales is lost, mark non-won linked orders as lost on the order pipeline (Privatescan or Hernia).
+     * Updates run per model so {@see \App\Observers\OrderObserver} can clear planning and set order lines to LOST.
      */
     public function cleanUpFromLostSales(string $salesId): void
     {
-        Order::where('sales_lead_id', $salesId)
+        $sales = SalesLead::with('lead.department')->find($salesId);
+
+        if (! $sales) {
+            return;
+        }
+
+        $lostOrderStageId = Order::lostOrderStageId($sales->lead?->department);
+        $closedAt = $sales->closed_at ?? now();
+
+        Order::query()
+            ->where('sales_lead_id', $salesId)
             ->whereDoesntHave('stage', fn ($q) => $q->where('is_won', true))
-            ->delete();
+            ->get()
+            ->each(function (Order $order) use ($lostOrderStageId, $sales, $closedAt) {
+                $order->update([
+                    'pipeline_stage_id' => $lostOrderStageId,
+                    'lost_reason'       => $sales->lost_reason,
+                    'closed_at'         => $closedAt,
+                ]);
+            });
     }
 
     /**

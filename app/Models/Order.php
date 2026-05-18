@@ -105,6 +105,18 @@ class Order extends Model
         return PipelineStage::ORDER_CONFIRM->id();
     }
 
+    /**
+     * Order-pipeline "Verloren" stage for the lead's department (Privatescan vs Hernia).
+     */
+    public static function lostOrderStageId(?Department $department): int
+    {
+        if ($department !== null && $department->name === Departments::HERNIA->value) {
+            return PipelineStage::ORDER_VERLOREN_HERNIA->id();
+        }
+
+        return PipelineStage::ORDER_VERLOREN->id();
+    }
+
     public function setFirstExaminationAtAttribute(mixed $value): void
     {
         if ($value === null || $value === '') {

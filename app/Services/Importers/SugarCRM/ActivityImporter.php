@@ -4,7 +4,9 @@ namespace App\Services\Importers\SugarCRM;
 
 use App\Console\Commands\AbstractSugarCRMImport;
 use App\Enums\ActivityStatus;
+use App\Enums\ActivityType;
 use App\Models\Department;
+use App\Models\Order;
 use App\Services\ActivityStatusService;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
@@ -426,6 +428,130 @@ class ActivityImporter
     }
 
     /**
+     * Extract task activities from SugarCRM for the given Sugar order UUIDs.
+     * Tasks in Sugar are linked to orders via parent_id + parent_type.
+     *
+     * @param  string[]  $sugarOrderIds  Sugar order UUIDs (pcrm_salesorder.id)
+     * @return array [sugar_order_id => [task_data1, task_data2, ...]]
+     */
+    public function extractTaskActivitiesForOrders(array $sugarOrderIds, string $parentType = 'PCRM_SalesOrder'): array
+    {
+        if (empty($sugarOrderIds)) {
+            return [];
+        }
+
+        try {
+            $this->command->validateTableExists($this->connection, ['tasks']);
+
+            $sql = DB::connection($this->connection)
+                ->table('tasks as t')
+                ->select([
+                    't.id',
+                    't.name',
+                    't.date_entered',
+                    't.date_modified',
+                    't.assigned_user_id',
+                    't.created_by',
+                    't.description',
+                    't.deleted',
+                    't.date_due',
+                    't.date_start',
+                    't.status',
+                    't.parent_type',
+                    't.parent_id',
+                ])
+                ->whereIn('t.parent_id', $sugarOrderIds)
+                ->where('t.parent_type', '=', $parentType)
+                ->where('t.deleted', '=', 0)
+                ->orderBy('t.date_entered', 'asc');
+
+            $this->command->infoVV('Extracting task activities for orders: '.$sql->toRawSql());
+            $tasks = $sql->get();
+            $this->command->infoV('Found '.$tasks->count().' task activities for orders');
+
+            $result = [];
+            foreach ($tasks as $task) {
+                $result[$task->parent_id][] = $task;
+            }
+
+            return $result;
+        } catch (QueryException $e) {
+            $this->command->error('SQL Error while extracting task activities for orders: '.$e->getMessage());
+            throw new Exception('Task activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
+        } catch (Exception $e) {
+            $this->command->error('Failed to extract task activities for orders: '.$e->getMessage());
+            throw new Exception('Task activities extraction failed: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Import task activities for a single order.
+     *
+     * @param  Order  $order  The CRM order (must have sales_lead_id set)
+     * @param  array  $taskActivities  All task activities grouped by Sugar order UUID
+     * @return array{imported: int, skipped: int}
+     */
+    public function importTaskActivitiesForOrder(Order $order, array $taskActivities): array
+    {
+        $imported = 0;
+        $skipped = 0;
+
+        $orderTasks = $taskActivities[$order->external_id] ?? [];
+        if (empty($orderTasks)) {
+            return ['imported' => $imported, 'skipped' => $skipped];
+        }
+
+        $this->command->infoV('Importing '.count($orderTasks)." task(s) for order external_id={$order->external_id}");
+
+        foreach ($orderTasks as $taskData) {
+            try {
+                $existing = Activity::where('external_id', $taskData->id)->first();
+                if ($existing) {
+                    if ($existing->order_id !== $order->id) {
+                        $existing->update([
+                            'order_id'      => $order->id,
+                            'sales_lead_id' => $order->sales_lead_id,
+                        ]);
+                        $this->command->infoV("Re-linked task {$taskData->id} to order {$order->external_id}");
+                    }
+                    $skipped++;
+
+                    continue;
+                }
+
+                $activityData = [
+                    'title'         => $taskData->name ?? 'Taak',
+                    'type'          => ActivityType::TASK->value,
+                    'comment'       => $taskData->description ?? '',
+                    'external_id'   => $taskData->id,
+                    'additional'    => ['status' => $taskData->status],
+                    'schedule_from' => $this->parseSugarDate($taskData->date_start ?? $taskData->date_due),
+                    'schedule_to'   => $this->parseSugarDate($taskData->date_due),
+                    'is_done'       => $this->mapTaskStatus($taskData->status),
+                    'user_id'       => $this->mapAssignedUser($taskData->assigned_user_id),
+                    'order_id'      => $order->id,
+                    'sales_lead_id' => $order->sales_lead_id,
+                ];
+
+                $timestamps = [
+                    'created_at' => $this->parseSugarDate($taskData->date_entered),
+                    'updated_at' => $this->parseSugarDate($taskData->date_modified),
+                ];
+
+                $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+                $this->syncActivityStatus($activity);
+
+                $this->command->infoV("✓ Imported task: {$taskData->name} for order {$order->external_id}");
+                $imported++;
+            } catch (Exception $e) {
+                $this->command->error("Failed to import task {$taskData->id}: ".$e->getMessage());
+            }
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
      * Get the imported folder ID
      *
      * @return int|null
@@ -512,5 +638,10 @@ class ActivityImporter
         $this->command->infoV("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
 
         return $user->id;
+    }
+
+    private function mapTaskStatus(?string $status): bool
+    {
+        return in_array(strtolower(trim((string) $status)), ['completed', 'deferred'], true);
     }
 }

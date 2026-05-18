@@ -44,7 +44,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             {--limit=-1 : Number of records to import}
                             {--order-ids=* : Specific order numbers to import, e.g. 202600625 (ignores limit)}
                             {--import-leads : Import missing linked leads (with persons) before importing orders}
-                            {--dry-run : Show what would be imported without actually importing}';
+                            {--dry-run : Show what would be imported without actually importing}
+                            {--tasks-only : Only import tasks for all existing orders (skip order import)}
+                            {--tasks-parent-type=PCRM_SalesOrder : SugarCRM parent_type value used to link tasks to orders}';
 
     /**
      * The console command description.
@@ -70,6 +72,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $limit = (int) $this->option('limit');
         $orderIds = $this->option('order-ids');
         $dryRun = $this->option('dry-run');
+        if ($this->option('tasks-only')) {
+            $this->importTasksForExistingOrders($connection);
+
+            return self::SUCCESS;
+        }
+
         $this->info('Starting order import from SugarCRM...');
         $this->infoV("Connection: {$connection}");
         $this->infoV("Table: {$table}");
@@ -202,6 +210,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 Order::withoutEvents(function () use ($records, $connection) {
                     $this->importRecords($records, $connection);
                 });
+
+                $this->importTasksForOrders($records, $connection);
             });
         } catch (Exception $e) {
             $this->error('Error: '.$e->getMessage());
@@ -1551,5 +1561,82 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         return 'Particulier';
+    }
+
+    private function importTasksForOrders(Collection $records, string $connection): void
+    {
+        $sugarOrderIds = $records->pluck('id')->filter()->values()->all();
+        if (empty($sugarOrderIds)) {
+            return;
+        }
+
+        $parentType = (string) $this->option('tasks-parent-type');
+        $this->info('Importing tasks for '.count($sugarOrderIds)." order(s) (parent_type={$parentType})...");
+
+        $activityImporter = new \App\Services\Importers\SugarCRM\ActivityImporter($this, $connection);
+
+        try {
+            $taskActivities = $activityImporter->extractTaskActivitiesForOrders($sugarOrderIds, $parentType);
+        } catch (Exception $e) {
+            $this->warn('Task import skipped: '.$e->getMessage());
+
+            return;
+        }
+
+        $totalImported = 0;
+        $totalSkipped = 0;
+
+        foreach ($records as $record) {
+            $order = Order::where('external_id', $record->id)->first();
+            if (! $order) {
+                continue;
+            }
+
+            $stats = $activityImporter->importTaskActivitiesForOrder($order, $taskActivities);
+            $totalImported += $stats['imported'];
+            $totalSkipped += $stats['skipped'];
+        }
+
+        $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
+    }
+
+    private function importTasksForExistingOrders(string $connection): void
+    {
+        $parentType = (string) $this->option('tasks-parent-type');
+
+        $sugarOrderIds = Order::whereNotNull('external_id')
+            ->pluck('external_id')
+            ->filter()
+            ->values()
+            ->all();
+
+        if (empty($sugarOrderIds)) {
+            $this->info('No orders with external_id found.');
+
+            return;
+        }
+
+        $this->info('Importing tasks for '.count($sugarOrderIds)." existing order(s) (parent_type={$parentType})...");
+
+        $activityImporter = new \App\Services\Importers\SugarCRM\ActivityImporter($this, $connection);
+
+        try {
+            $taskActivities = $activityImporter->extractTaskActivitiesForOrders($sugarOrderIds, $parentType);
+        } catch (Exception $e) {
+            $this->warn('Task import skipped: '.$e->getMessage());
+
+            return;
+        }
+
+        $totalImported = 0;
+        $totalSkipped = 0;
+
+        Order::whereNotNull('external_id')->each(function (Order $order) use ($activityImporter, $taskActivities, &$totalImported, &$totalSkipped) {
+            $stats = $activityImporter->importTaskActivitiesForOrder($order, $taskActivities);
+            $totalImported += $stats['imported'];
+            $totalSkipped += $stats['skipped'];
+        });
+
+        $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
     }
 }

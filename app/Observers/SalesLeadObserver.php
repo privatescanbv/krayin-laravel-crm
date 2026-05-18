@@ -17,19 +17,31 @@ use Webkul\Lead\Models\Stage;
 class SalesLeadObserver
 {
     /**
-     * Create a new observer instance.
+     * @var array<int, true>
      */
+    private static array $pipelineStageSavePending = [];
+
     public function __construct(
         protected WebhookService $webhookService,
         private readonly SalesToLostAction $salesToLostAction,
     ) {}
 
+    public function saving(SalesLead $salesLead): void
+    {
+        if ($salesLead->exists && $salesLead->isDirty('pipeline_stage_id')) {
+            self::$pipelineStageSavePending[$salesLead->id] = true;
+        }
+    }
+
     /**
-     * Handle the SalesLead "updating" event.
      * When department_id changes, reset pipeline_stage_id to the default stage of the new sales pipeline.
      */
     public function updating(SalesLead $salesLead): void
     {
+        if ($salesLead->isDirty('pipeline_stage_id')) {
+            self::$pipelineStageSavePending[$salesLead->id] = true;
+        }
+
         if (! $salesLead->isDirty('department_id')) {
             return;
         }
@@ -47,32 +59,32 @@ class SalesLeadObserver
 
         if ($defaultStage) {
             $salesLead->pipeline_stage_id = $defaultStage->id;
+            self::$pipelineStageSavePending[$salesLead->id] = true;
         }
     }
 
-    /**
-     * Handle the SalesLead "created" event.
-     */
     public function created(SalesLead $salesLead): void
     {
         Event::dispatch('sale.update_stage.after', $salesLead);
         $this->sendWebhook($salesLead, 'SalesLeadObserver@created');
     }
 
-    /**
-     * Handle the SalesLead "updated" event.
-     */
     public function updated(SalesLead $salesLead): void
     {
-        if ($salesLead->pipeline_stage_id !== $salesLead->getOriginal('pipeline_stage_id')) {
-            // Send webhook if stage has changed and the stage is actually different
-            if ($salesLead->isDirty('pipeline_stage_id')) {
-                Event::dispatch('sale.update_stage.after', $salesLead);
-                $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
-            }
-            if ($salesLead->stage->is_lost) {
-                $this->salesToLostAction->execute($salesLead);
-            }
+        $changes = $salesLead->getChanges();
+
+        if (self::$pipelineStageSavePending[$salesLead->id] ?? false) {
+            unset(self::$pipelineStageSavePending[$salesLead->id]);
+
+            Event::dispatch('sale.update_stage.after', $salesLead);
+            $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
+        }
+
+        $salesLead->load('stage');
+
+        if ($salesLead->stage?->is_lost
+            && (array_key_exists('pipeline_stage_id', $changes) || array_key_exists('lost_reason', $changes))) {
+            $this->salesToLostAction->execute($salesLead);
         }
     }
 

@@ -464,9 +464,19 @@ class OrderController extends SimpleEntityController
 
     public function activities(int $id): AnonymousResourceCollection
     {
-        $order = $this->orderRepository->findOrFail($id);
+        $order = $this->orderRepository->with(['salesLead'])->findOrFail($id);
 
-        $query = $order->activities();
+        $leadId = $order->salesLead?->lead_id;
+
+        $query = Activity::query()->where(function ($q) use ($order, $leadId) {
+            $q->where('order_id', $order->id);
+            if ($order->sales_lead_id) {
+                $q->orWhere('sales_lead_id', $order->sales_lead_id);
+            }
+            if ($leadId) {
+                $q->orWhere('lead_id', $leadId);
+            }
+        });
 
         $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
 

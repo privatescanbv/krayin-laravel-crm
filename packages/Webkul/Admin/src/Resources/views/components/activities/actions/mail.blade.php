@@ -466,7 +466,9 @@
                         const controlName = (this.entityControlName || '').toString().toLowerCase();
                         const entityTypeStr = (this.entity?.entity_type || this.entity?.type || '').toString().toLowerCase();
 
-                        if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
+                        if (controlName === 'order_id') {
+                            entityType = this.templateTypes.ORDER;
+                        } else if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
                             entityType = this.templateTypes.ORDER;
                         } else if (controlName === 'lead_id' || entityTypeStr === 'lead' || entityTypeStr === 'leads') {
                             entityType = this.templateTypes.LEAD;
@@ -549,6 +551,11 @@
                         // Prioritize entityControlName over entity type
                         if (controlName === 'person_id') {
                             addEntity('person', this.entity.id);
+                        } else if (controlName === 'order_id') {
+                            addEntity('order', this.entity.id);
+                            if (this.entity.sales_lead_id) {
+                                addEntity('sales_lead', this.entity.sales_lead_id);
+                            }
                         } else if (controlName === 'sales_lead_id') {
                             addEntity('sales_lead', this.entity.id);
                         } else if (controlName === 'lead_id') {
@@ -951,8 +958,8 @@
                         fallbackUrlTemplate = "{{ route('admin.leads.emails.store', 'replaceEntityId') }}";
                     } else if (this.entityControlName === 'sales_lead_id') {
                         fallbackUrlTemplate = "{{ route('admin.sales-leads.emails.store', 'replaceEntityId') }}";
-                    } else if (this.entityControlName === 'person_id') {
-                        // Persons use the general mail store route, person_id is sent via form data
+                    } else if (this.entityControlName === 'person_id' || this.entityControlName === 'order_id') {
+                        // Persons and orders use the general mail store route; entity id is sent via form data
                         fallbackUrlTemplate = "{{ route('admin.mail.store') }}";
                     } else {
                         // Default to leads for backward compatibility
@@ -963,8 +970,8 @@
                     if (this.storeUrl && this.storeUrl.length) {
                         resolvedStoreUrl = this.storeUrl;
                     } else if (fallbackUrlTemplate) {
-                        // For person_id, use the route as-is (no entity ID in URL)
-                        if (this.entityControlName === 'person_id') {
+                        // For person_id and order_id, use the route as-is (no entity ID in URL)
+                        if (this.entityControlName === 'person_id' || this.entityControlName === 'order_id') {
                             resolvedStoreUrl = fallbackUrlTemplate;
                         } else if (entityId) {
                             resolvedStoreUrl = fallbackUrlTemplate.replace('replaceEntityId', entityId);
@@ -981,6 +988,11 @@
                     }
 
                     const formData = new FormData(this.$refs.mailActionForm);
+
+                    if (this.entityControlName === 'order_id' && this.entity?.sales_lead_id
+                        && !formData.get('sales_lead_id')) {
+                        formData.append('sales_lead_id', this.entity.sales_lead_id);
+                    }
 
                     this.$axios.post(resolvedStoreUrl, formData, {
                         headers: {

@@ -439,10 +439,19 @@ class OrderController extends SimpleEntityController
         $totalChecks = $order->orderChecks->count();
         $completedChecks = $order->orderChecks->where('done', true)->count();
 
+        $composeMailEmails = [];
+        if ($order->salesLead?->persons && $order->salesLead->persons->isNotEmpty()) {
+            $composeMailEmails[] = [
+                'value'      => $order->salesLead->defaultEmailContactPerson() ?: '',
+                'is_default' => true,
+            ];
+        }
+
         return view('admin::orders.view', [
             'order'                => $order,
             'activitiesCount'      => $activitiesCount,
             'personsWithAnamnesis' => $personsWithAnamnesis,
+            'composeMailEmails'    => $composeMailEmails,
             'afbNeedsManualBanner' => $afbNeedsManualBanner,
             'afbHasBatchSuccess'   => $afbHasBatchSuccess,
             'afbSendUrl'           => route('admin.orders.send_afb', $order->id),

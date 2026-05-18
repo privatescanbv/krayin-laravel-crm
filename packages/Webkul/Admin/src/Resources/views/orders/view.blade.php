@@ -38,6 +38,13 @@
                     <div class="flex flex-wrap gap-2">
                         {!! view_render_event('admin.orders.view.actions.before', ['order' => $order]) !!}
 
+                        @if (bouncer()->hasPermission('mail.create'))
+                            <x-admin::activities.actions.mail
+                                :entity="$order"
+                                entity-control-name="order_id"
+                                :emails="$composeMailEmails ?? []"
+                            />
+                        @endif
 
                         @if (bouncer()->hasPermission('activities.create'))
                             <!-- Report Upload Action -->

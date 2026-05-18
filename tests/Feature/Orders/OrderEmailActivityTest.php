@@ -60,3 +60,15 @@ test('email stored via EmailController with order_id gets order_id persisted', f
     expect($email)->not->toBeNull()
         ->and($email->subject)->toBe('Order bevestiging mail');
 });
+
+test('order view exposes compose mail recipient hints for the mail action', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $order = Order::factory()->create();
+
+    $response = $this->get(route('admin.orders.view', $order->id));
+
+    $response->assertOk();
+    $response->assertViewHas('composeMailEmails', fn ($emails) => is_array($emails));
+});

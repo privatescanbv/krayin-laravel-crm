@@ -18,6 +18,7 @@ use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Repositories\AddressRepository;
 use App\Repositories\SalesLeadRepository;
+use App\Services\Importers\SugarCRM\ActivityImporter;
 use App\Services\OrderCheckService;
 use Exception;
 use Illuminate\Support\Collection;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -1573,7 +1575,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $parentType = (string) $this->option('tasks-parent-type');
         $this->info('Importing tasks for '.count($sugarOrderIds)." order(s) (parent_type={$parentType})...");
 
-        $activityImporter = new \App\Services\Importers\SugarCRM\ActivityImporter($this, $connection);
+        $activityImporter = new ActivityImporter($this, $connection);
 
         try {
             $taskActivities = $activityImporter->extractTaskActivitiesForOrders($sugarOrderIds, $parentType);
@@ -1583,16 +1585,29 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return;
         }
 
+        $ordersByExternalId = Order::whereIn('external_id', $sugarOrderIds)
+            ->where(function ($q) {
+                $q->whereNull('pipeline_stage_id')
+                    ->orWhereHas('stage', fn ($sq) => $sq->where('is_won', false)->where('is_lost', false));
+            })
+            ->get()
+            ->keyBy('external_id');
+
+        $allTaskIds = collect($taskActivities)->flatten()->pluck('id')->filter()->values()->all();
+        $existingActivities = ! empty($allTaskIds)
+            ? Activity::whereIn('external_id', $allTaskIds)->get()->keyBy('external_id')
+            : collect();
+
         $totalImported = 0;
         $totalSkipped = 0;
 
-        foreach ($records as $record) {
-            $order = Order::where('external_id', $record->id)->first();
+        foreach ($sugarOrderIds as $sugarOrderId) {
+            $order = $ordersByExternalId->get($sugarOrderId);
             if (! $order) {
                 continue;
             }
 
-            $stats = $activityImporter->importTaskActivitiesForOrder($order, $taskActivities);
+            $stats = $activityImporter->importTaskActivitiesForOrder($order, $taskActivities, $existingActivities);
             $totalImported += $stats['imported'];
             $totalSkipped += $stats['skipped'];
         }
@@ -1605,6 +1620,10 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $parentType = (string) $this->option('tasks-parent-type');
 
         $sugarOrderIds = Order::whereNotNull('external_id')
+            ->where(function ($q) {
+                $q->whereNull('pipeline_stage_id')
+                    ->orWhereHas('stage', fn ($sq) => $sq->where('is_won', false)->where('is_lost', false));
+            })
             ->pluck('external_id')
             ->filter()
             ->values()
@@ -1618,7 +1637,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info('Importing tasks for '.count($sugarOrderIds)." existing order(s) (parent_type={$parentType})...");
 
-        $activityImporter = new \App\Services\Importers\SugarCRM\ActivityImporter($this, $connection);
+        $activityImporter = new ActivityImporter($this, $connection);
 
         try {
             $taskActivities = $activityImporter->extractTaskActivitiesForOrders($sugarOrderIds, $parentType);
@@ -1628,14 +1647,26 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return;
         }
 
+        $ordersByExternalId = Order::whereIn('external_id', $sugarOrderIds)->get()->keyBy('external_id');
+
+        $allTaskIds = collect($taskActivities)->flatten()->pluck('id')->filter()->values()->all();
+        $existingActivities = ! empty($allTaskIds)
+            ? Activity::whereIn('external_id', $allTaskIds)->get()->keyBy('external_id')
+            : collect();
+
         $totalImported = 0;
         $totalSkipped = 0;
 
-        Order::whereNotNull('external_id')->each(function (Order $order) use ($activityImporter, $taskActivities, &$totalImported, &$totalSkipped) {
-            $stats = $activityImporter->importTaskActivitiesForOrder($order, $taskActivities);
+        foreach ($sugarOrderIds as $sugarOrderId) {
+            $order = $ordersByExternalId->get($sugarOrderId);
+            if (! $order) {
+                continue;
+            }
+
+            $stats = $activityImporter->importTaskActivitiesForOrder($order, $taskActivities, $existingActivities);
             $totalImported += $stats['imported'];
             $totalSkipped += $stats['skipped'];
-        });
+        }
 
         $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
     }

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Schema;
 use Mockery;
 use Webkul\Activity\Models\Activity;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 
 uses(RefreshDatabase::class);
 
@@ -102,7 +103,7 @@ test('importTaskActivitiesForOrder maakt activiteit aan gekoppeld aan order', fu
     $activity = Activity::where('external_id', 'sugar-task-001')->first();
     expect($activity)->not->toBeNull()
         ->and($activity->order_id)->toBe($order->id)
-        ->and($activity->sales_lead_id)->toBe($order->sales_lead_id)
+        ->and($activity->sales_lead_id)->toBeNull()
         ->and($activity->type)->toBe(ActivityType::TASK)
         ->and($activity->title)->toBe('Test taak');
 });
@@ -160,4 +161,25 @@ test('import:orders --tasks-only importeert taken voor bestaande orders', functi
     expect($activity)->not->toBeNull()
         ->and($activity->order_id)->toBe($order->id)
         ->and($activity->type)->toBe(ActivityType::TASK);
+});
+
+test('--tasks-only slaat taken over voor gewonnen en verloren orders', function () {
+    $wonStage = Stage::where('is_won', true)->first();
+    $wonOrder = makeOrderWithSalesLead('sugar-order-won-x');
+    $wonOrder->update(['pipeline_stage_id' => $wonStage?->id]);
+    insertTask('sugar-task-won-x', 'sugar-order-won-x');
+
+    $lostStage = Stage::where('is_lost', true)->first();
+    $lostOrder = makeOrderWithSalesLead('sugar-order-lost-x');
+    $lostOrder->update(['pipeline_stage_id' => $lostStage?->id]);
+    insertTask('sugar-task-lost-x', 'sugar-order-lost-x');
+
+    $this->artisan('import:orders', [
+        '--tasks-only'        => true,
+        '--connection'        => 'sugarcrm',
+        '--tasks-parent-type' => 'PCRM_SalesOrder',
+    ])->assertSuccessful();
+
+    expect(Activity::where('external_id', 'sugar-task-won-x')->count())->toBe(0);
+    expect(Activity::where('external_id', 'sugar-task-lost-x')->count())->toBe(0);
 });

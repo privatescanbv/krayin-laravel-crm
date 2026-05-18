@@ -11,6 +11,7 @@ use App\Services\ActivityStatusService;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Enums\EmailFolderEnum;
@@ -487,12 +488,15 @@ class ActivityImporter
     /**
      * Import task activities for a single order.
      *
-     * @param  Order  $order  The CRM order (must have sales_lead_id set)
+     * @param  Order  $order  The CRM order to link tasks to
      * @param  array  $taskActivities  All task activities grouped by Sugar order UUID
      * @return array{imported: int, skipped: int}
      */
-    public function importTaskActivitiesForOrder(Order $order, array $taskActivities): array
-    {
+    public function importTaskActivitiesForOrder(
+        Order $order,
+        array $taskActivities,
+        ?Collection $existingActivities = null,
+    ): array {
         $imported = 0;
         $skipped = 0;
 
@@ -505,13 +509,12 @@ class ActivityImporter
 
         foreach ($orderTasks as $taskData) {
             try {
-                $existing = Activity::where('external_id', $taskData->id)->first();
+                $existing = $existingActivities !== null
+                    ? $existingActivities->get($taskData->id)
+                    : Activity::where('external_id', $taskData->id)->first();
                 if ($existing) {
                     if ($existing->order_id !== $order->id) {
-                        $existing->update([
-                            'order_id'      => $order->id,
-                            'sales_lead_id' => $order->sales_lead_id,
-                        ]);
+                        $existing->update(['order_id' => $order->id]);
                         $this->command->infoV("Re-linked task {$taskData->id} to order {$order->external_id}");
                     }
                     $skipped++;
@@ -530,7 +533,6 @@ class ActivityImporter
                     'is_done'       => $this->mapTaskStatus($taskData->status),
                     'user_id'       => $this->mapAssignedUser($taskData->assigned_user_id),
                     'order_id'      => $order->id,
-                    'sales_lead_id' => $order->sales_lead_id,
                 ];
 
                 $timestamps = [

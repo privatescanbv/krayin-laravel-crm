@@ -38,7 +38,13 @@
                         </p>
                     @endif
                 </div>
-                <v-order-afb-send-button send-url="{{ $afbSendUrl }}"></v-order-afb-send-button>
+                <div class="flex flex-col gap-2 shrink-0">
+                    <v-order-afb-send-button send-url="{{ $afbSendUrl }}"></v-order-afb-send-button>
+                    <a href="{{ route('admin.orders.afb_send', $order->id) }}"
+                       class="secondary-button text-center text-xs whitespace-nowrap">
+                        Email samenstellen
+                    </a>
+                </div>
             </div>
         </div>
     @endif
@@ -287,8 +293,15 @@
 
     <!-- AFB Status Card -->
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div class="mb-3">
+        <div class="mb-3 flex items-center justify-between">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">AFB status</h3>
+            @if (bouncer()->hasPermission('orders.edit'))
+                <a href="{{ route('admin.orders.afb_send', $order->id) }}"
+                   class="secondary-button flex items-center gap-1 border text-xs hover:border-neutral-text hover:text-neutral-text">
+                    <span class="icon-mail text-sm"></span>
+                    <span>Handmatig verzenden</span>
+                </a>
+            @endif
         </div>
 
         {{-- AFB dispatch status --}}

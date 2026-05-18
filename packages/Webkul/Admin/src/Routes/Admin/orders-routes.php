@@ -34,6 +34,12 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::post('{id}/send-afb', 'sendAfb')->name('admin.orders.send_afb');
     Route::delete('{orderId}/afb/{personDocumentId}', [OrderController::class, 'deleteAfbPersonDocument'])->name('admin.orders.afb.delete');
 
+    // Manual AFB send screen
+    Route::get('{orderId}/afb-send', 'afbSendPage')->name('admin.orders.afb_send');
+    Route::get('{orderId}/afb-send/{departmentId}/prepare', 'afbSendPrepare')->name('admin.orders.afb_send.prepare');
+    Route::post('{orderId}/afb-send/{departmentId}/send', 'afbSendManual')->name('admin.orders.afb_send.send');
+    Route::get('{orderId}/afb-send/{departmentId}/attachment/{type}/{personId?}', 'afbSendAttachment')->name('admin.orders.afb_send.attachment');
+
     // Order confirmation letter routes
     Route::get('confirmation/templates', 'getConfirmationTemplates')->name('admin.orders.confirmation.templates');
     Route::get('{orderId}/confirmation/template-content', 'getConfirmationTemplateContent')->name('admin.orders.confirmation.template-content');

@@ -15,7 +15,11 @@ use App\Enums\PipelineType;
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
 use App\Http\Requests\Admin\OrderPaymentRequest;
+use App\Enums\AfbDispatchStatus;
+use App\Enums\AfbDispatchType;
+use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderPayment;
@@ -24,6 +28,7 @@ use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
 use App\Services\Afb\AfbDispatchService;
+use App\Services\Afb\AfbDocumentGenerator;
 use App\Services\FormService;
 use App\Services\Mail\CrmMailService;
 use App\Services\OrderCheckService;
@@ -46,6 +51,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
@@ -80,6 +87,7 @@ class OrderController extends SimpleEntityController
         protected PipelineCookieService $pipelineCookieService,
         private readonly CrmMailService $crmMailService,
         private AfbDispatchService $afbDispatchService,
+        private readonly AfbDocumentGenerator $afbDocumentGenerator,
         private readonly AttachmentRepository $attachmentRepository,
     ) {
         parent::__construct($orderRepository);
@@ -674,6 +682,378 @@ class OrderController extends SimpleEntityController
             Log::error('AFB dispatch mislukt', ['order_id' => $id, 'error' => $e->getMessage()]);
 
             return response()->json(['message' => 'AFB versturen mislukt: '.$e->getMessage()], 500);
+        }
+    }
+
+    public function afbSendPage(int $orderId): View
+    {
+        $order = $this->orderRepository->with([
+            'salesLead.persons',
+            'orderItems.product',
+            'orderItems.person',
+            'orderItems.resourceOrderItems.resource.clinicDepartment.clinic',
+            'afbPersonDocuments.dispatch.clinicDepartment',
+        ])->findOrFail($orderId);
+
+        $latestAfbDocs = $order->latestSuccessfulAfbDocuments()
+            ->keyBy(fn ($doc) => ($doc->person_id ?? '').'_'.$doc->dispatch?->clinic_department_id);
+
+        $afbStatusRows = $order->orderItems
+            ->flatMap(function ($item) {
+                return $item->resourceOrderItems
+                    ->map(fn ($roi) => $roi->resource?->clinicDepartment)
+                    ->filter()
+                    ->map(fn ($dept) => [
+                        'department' => $dept,
+                        'person_id'  => $item->person_id !== null ? (int) $item->person_id : null,
+                    ]);
+            })
+            ->unique(fn ($row) => $row['department']->id.'|'.($row['person_id'] ?? ''))
+            ->sortBy(fn ($row) => $row['department']->name.'|'.($row['person_id'] ?? ''))
+            ->map(function ($row) use ($order, $latestAfbDocs) {
+                $personId = $row['person_id'];
+                $deptId = $row['department']->id;
+                $docKey = ($personId ?? '').'_'.$deptId;
+
+                return [
+                    'department' => $row['department'],
+                    'person'     => $personId !== null
+                        ? $order->orderItems->pluck('person')->filter()->firstWhere('id', $personId)
+                        : null,
+                    'dispatch'   => $latestAfbDocs->get($docKey),
+                ];
+            })
+            ->values();
+
+        return view('admin::orders.afb-send', [
+            'order'         => $order,
+            'afbStatusRows' => $afbStatusRows,
+        ]);
+    }
+
+    public function afbSendPrepare(int $orderId, int $departmentId): JsonResponse
+    {
+        $order = $this->orderRepository->with([
+            'salesLead.persons',
+            'orderItems.product.partnerProducts.clinics',
+            'orderItems.person',
+            'orderItems.resourceOrderItems.resource.clinicDepartment.clinic',
+        ])->findOrFail($orderId);
+
+        $department = ClinicDepartment::with('clinic')->findOrFail($departmentId);
+        $personId = request()->query('person_id') ? (int) request()->query('person_id') : null;
+
+        $recipientEmail = $department->email ?? '';
+        $clinic = $department->clinic;
+
+        $person = $personId
+            ? $order->orderItems->pluck('person')->filter()->firstWhere('id', $personId)
+            : null;
+
+        $subject = sprintf(
+            'AFB Manuell - %s (Order %s)',
+            $clinic->registration_form_clinic_name ?: $clinic->name,
+            $order->order_number ?: $order->id
+        );
+
+        $body = view('adminc.afb.dispatch_email', [
+            'clinic'       => $clinic,
+            'type'         => AfbDispatchType::INDIVIDUAL->value,
+            'orderNumbers' => [$order->order_number ?: (string) $order->id],
+            'sentAt'       => now()->format('d-m-Y H:i'),
+        ])->render();
+
+        $attachmentPreviews = [];
+
+        $afbResult = $this->afbDocumentGenerator->renderHtmlForOrderAndDepartment($order, $department, $person);
+        if ($afbResult['person']) {
+            $attachmentPreviews[] = [
+                'name' => sprintf('AFB - %s.pdf', $afbResult['person']->name ?? 'Patiënt'),
+                'type' => 'afb',
+            ];
+        } else {
+            $attachmentPreviews[] = [
+                'name' => 'AFB - Patiënt.pdf',
+                'type' => 'afb',
+            ];
+        }
+
+        if ($person) {
+            $anamnesis = \App\Models\Anamnesis::where('person_id', $person->id)
+                ->whereNotNull('gvl_form_link')
+                ->latest()
+                ->first();
+
+            if ($anamnesis) {
+                $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+                if ($formId) {
+                    try {
+                        $formStatus = $this->formService->getFormStatusAsString($formId);
+                        if ($formStatus === \App\Enums\FormStatus::Completed) {
+                            $attachmentPreviews[] = [
+                                'name' => sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
+                                'type' => 'gvl',
+                            ];
+                        }
+                    } catch (Throwable $e) {
+                        // GVL not available
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'subject'         => $subject,
+            'body'            => $body,
+            'recipient_email' => $recipientEmail,
+            'clinic_name'     => $clinic->name,
+            'department_name' => $department->name,
+            'person_name'     => $person?->name,
+            'attachments'     => $attachmentPreviews,
+        ]);
+    }
+
+    public function afbSendManual(Request $request, int $orderId, int $departmentId): JsonResponse
+    {
+        $request->validate([
+            'subject'   => 'required|string|max:500',
+            'reply'     => 'required|string',
+            'reply_to'  => 'required|email',
+            'person_id' => 'nullable|integer',
+        ]);
+
+        $order = Order::with([
+            'salesLead.persons',
+            'orderItems.product.partnerProducts.clinics',
+            'orderItems.person.address',
+            'orderItems.resourceOrderItems.resource.clinicDepartment.clinic',
+        ])->findOrFail($orderId);
+
+        $department = ClinicDepartment::with('clinic')->findOrFail($departmentId);
+        $personId = $request->input('person_id') ? (int) $request->input('person_id') : null;
+        $person = $personId
+            ? $order->orderItems->pluck('person')->filter()->firstWhere('id', $personId)
+            : null;
+
+        try {
+            $dispatch = AfbDispatch::create([
+                'clinic_id'            => $department->clinic_id,
+                'clinic_department_id' => $departmentId,
+                'type'                 => AfbDispatchType::INDIVIDUAL->value,
+                'status'               => AfbDispatchStatus::FAILED->value,
+                'attempt'              => 1,
+                'last_attempt_at'      => now(),
+            ]);
+
+            $generatedDocs = $this->afbDocumentGenerator->generateForOrderAndDepartment($order, $department);
+
+            if ($person) {
+                $generatedDocs = array_values(array_filter($generatedDocs, fn ($doc) => $doc['person_id'] === $personId || $doc['person_id'] === null));
+            }
+
+            $email = $this->crmMailService->createEmail([
+                'subject'   => $request->input('subject'),
+                'reply'     => $request->input('reply'),
+                'reply_to'  => [$request->input('reply_to')],
+                'name'      => 'AFB handmatige verzending',
+                'source'    => 'web',
+                'user_type' => 'user',
+                'clinic_id' => $department->clinic_id,
+            ]);
+
+            foreach ($generatedDocs as $doc) {
+                $this->syncToMailDisk($doc['file_path']);
+
+                $email->attachments()->create([
+                    'name'         => $doc['file_name'],
+                    'path'         => $doc['file_path'],
+                    'size'         => Storage::size($doc['file_path']),
+                    'content_type' => 'application/pdf',
+                ]);
+            }
+
+            $this->attachGvlPdfsForManualSend($email, $generatedDocs);
+
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $uploadedFile) {
+                    $path = $uploadedFile->store('afb/manual-attachments', 'public');
+                    $email->attachments()->create([
+                        'name'         => $uploadedFile->getClientOriginalName(),
+                        'path'         => $path,
+                        'size'         => $uploadedFile->getSize(),
+                        'content_type' => $uploadedFile->getMimeType(),
+                    ]);
+                }
+            }
+
+            $this->crmMailService->sendEmail($email);
+
+            DB::transaction(function () use ($generatedDocs, $dispatch, $email, $order) {
+                foreach ($generatedDocs as $doc) {
+                    AfbPersonDocument::create([
+                        'afb_dispatch_id' => $dispatch->id,
+                        'order_id'        => $order->id,
+                        'order_item_ids'  => $doc['order_item_ids'],
+                        'person_id'       => $doc['person_id'],
+                        'patient_name'    => $doc['patient_name'],
+                        'file_name'       => $doc['file_name'],
+                        'file_path'       => $doc['file_path'],
+                        'sent_at'         => now(),
+                    ]);
+                }
+
+                $dispatch->update([
+                    'email_id' => $email->id,
+                    'status'   => AfbDispatchStatus::SUCCESS->value,
+                    'sent_at'  => now(),
+                ]);
+            });
+
+            return response()->json([
+                'message' => 'AFB succesvol verzonden naar '.$department->name.'.',
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Handmatige AFB dispatch mislukt', [
+                'order_id'             => $orderId,
+                'clinic_department_id' => $departmentId,
+                'error'                => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'AFB versturen mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function afbSendAttachment(int $orderId, int $departmentId, string $type, ?int $personId = null): Response
+    {
+        $order = Order::with([
+            'salesLead.persons',
+            'orderItems.product.partnerProducts.clinics',
+            'orderItems.person.address',
+            'orderItems.resourceOrderItems.resource.clinicDepartment.clinic',
+        ])->findOrFail($orderId);
+
+        $department = ClinicDepartment::with('clinic')->findOrFail($departmentId);
+
+        if ($type === 'afb') {
+            $person = $personId
+                ? $order->orderItems->pluck('person')->filter()->firstWhere('id', $personId)
+                : null;
+
+            $result = $this->afbDocumentGenerator->renderHtmlForOrderAndDepartment($order, $department, $person);
+
+            $pdf = Pdf::loadHTML($result['html'])
+                ->setPaper('A4', 'portrait');
+
+            return $pdf->download(sprintf('afb_%s_%s.pdf',
+                Str::slug($department->clinic->name),
+                $order->order_number ?: $order->id
+            ));
+        }
+
+        if ($type === 'gvl' && $personId) {
+            $anamnesis = \App\Models\Anamnesis::where('person_id', $personId)
+                ->whereNotNull('gvl_form_link')
+                ->latest()
+                ->first();
+
+            if (! $anamnesis) {
+                abort(404, 'Geen GVL formulier gevonden.');
+            }
+
+            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+
+            if (! $formId) {
+                abort(404, 'Geen geldig GVL formulier ID.');
+            }
+
+            $response = $this->formService->downloadForm($formId);
+
+            if (! $response->successful()) {
+                abort(502, 'GVL PDF ophalen mislukt.');
+            }
+
+            return response($response->body(), 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => sprintf('attachment; filename="gvl-%d.pdf"', $personId),
+            ]);
+        }
+
+        abort(404);
+    }
+
+    private function syncToMailDisk(string $path): void
+    {
+        if (Storage::exists($path)) {
+            return;
+        }
+
+        $localDisk = Storage::disk('local');
+
+        if (! $localDisk->exists($path)) {
+            throw new \RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
+        }
+
+        Storage::put($path, $localDisk->get($path));
+    }
+
+    private function attachGvlPdfsForManualSend(\Webkul\Email\Models\Email $email, array $generatedDocuments): void
+    {
+        $personIds = collect($generatedDocuments)
+            ->pluck('person_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($personIds as $personId) {
+            $anamnesis = \App\Models\Anamnesis::query()
+                ->where('person_id', $personId)
+                ->whereNotNull('gvl_form_link')
+                ->latest()
+                ->first();
+
+            if (! $anamnesis) {
+                continue;
+            }
+
+            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+
+            if (! $formId) {
+                continue;
+            }
+
+            try {
+                $formStatus = $this->formService->getFormStatusAsString($formId);
+
+                if ($formStatus !== \App\Enums\FormStatus::Completed) {
+                    continue;
+                }
+
+                $response = $this->formService->downloadForm($formId);
+
+                if (! $response->successful()) {
+                    continue;
+                }
+
+                $fileName = sprintf('gvl-%d-%s.pdf', $personId, now()->format('Ymd'));
+                $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
+
+                Storage::put($filePath, $response->body());
+
+                $email->attachments()->create([
+                    'name'         => $fileName,
+                    'path'         => $filePath,
+                    'size'         => strlen($response->body()),
+                    'content_type' => 'application/pdf',
+                ]);
+            } catch (Throwable $e) {
+                Log::warning('GVL PDF bijlage mislukt bij handmatige AFB', [
+                    'person_id'     => $personId,
+                    'form_id'       => $formId,
+                    'error_message' => $e->getMessage(),
+                ]);
+            }
         }
     }
 

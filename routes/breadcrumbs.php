@@ -218,6 +218,16 @@ Breadcrumbs::for('orders.edit', function (BreadcrumbTrail $trail, $order) {
     $trail->push('Order bewerken', route('admin.orders.edit', $order->id));
 });
 
+// Orders > AFB Send
+Breadcrumbs::for('orders.afb-send', function (BreadcrumbTrail $trail, $order) {
+    $trail->parent('orders');
+    if ($order->salesLead) {
+        $trail->push($order->salesLead->name, route('admin.sales-leads.view', $order->salesLead->id));
+    }
+    $trail->push('Order bewerken', route('admin.orders.edit', $order->id));
+    $trail->push('AFB handmatig verzenden', route('admin.orders.afb_send', $order->id));
+});
+
 // Orders > Confirm
 Breadcrumbs::for('orders.confirm', function (BreadcrumbTrail $trail, $order) {
     $trail->parent('orders');

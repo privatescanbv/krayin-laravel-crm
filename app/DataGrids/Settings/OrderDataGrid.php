@@ -12,6 +12,7 @@ class OrderDataGrid extends DataGrid
     {
         $queryBuilder = DB::table('orders')
             ->leftJoin('lead_pipeline_stages', 'orders.pipeline_stage_id', '=', 'lead_pipeline_stages.id')
+            ->leftJoin('salesleads', 'orders.sales_lead_id', '=', 'salesleads.id')
             ->addSelect(
                 'orders.id',
                 'orders.title',
@@ -20,7 +21,8 @@ class OrderDataGrid extends DataGrid
                 'lead_pipeline_stages.name as stage_name',
                 'lead_pipeline_stages.is_won',
                 'lead_pipeline_stages.is_lost',
-                'lead_pipeline_stages.sort_order as stage_sort_order'
+                'lead_pipeline_stages.sort_order as stage_sort_order',
+                'salesleads.name as sales_lead_name'
             );
 
         $this->addFilter('id', 'orders.id');
@@ -30,6 +32,19 @@ class OrderDataGrid extends DataGrid
          */
         if ($salesLeadId = request('sales_lead_id')) {
             $queryBuilder->where('orders.sales_lead_id', (int) $salesLeadId);
+        }
+
+        if ($relatedId = request('related_sales_lead_id')) {
+            $queryBuilder->whereIn('orders.sales_lead_id', function ($q) use ($relatedId) {
+                $q->select('target_saleslead_id')
+                    ->from('saleslead_relations')
+                    ->where('source_saleslead_id', (int) $relatedId)
+                    ->union(
+                        DB::table('saleslead_relations')
+                            ->select('source_saleslead_id')
+                            ->where('target_saleslead_id', (int) $relatedId)
+                    );
+            });
         }
 
         /**
@@ -105,6 +120,17 @@ class OrderDataGrid extends DataGrid
                 return $row->stage_name ?? 'Onbekend';
             },
         ]);
+
+        if (request('related_sales_lead_id')) {
+            $this->addColumn([
+                'index'      => 'sales_lead_name',
+                'label'      => 'Sales',
+                'type'       => 'string',
+                'searchable' => false,
+                'filterable' => false,
+                'sortable'   => true,
+            ]);
+        }
     }
 
     public function prepareActions(): void
@@ -148,10 +174,11 @@ class OrderDataGrid extends DataGrid
         $column = $requestedSort['column'] ?? $this->sortColumn ?? $this->primaryColumn;
 
         $columnMap = [
-            'id'          => 'orders.id',
-            'title'       => 'orders.title',
-            'total_price' => 'orders.total_price',
-            'stage_name'  => 'lead_pipeline_stages.name',
+            'id'              => 'orders.id',
+            'title'           => 'orders.title',
+            'total_price'     => 'orders.total_price',
+            'stage_name'      => 'lead_pipeline_stages.name',
+            'sales_lead_name' => 'salesleads.name',
         ];
 
         $column = $columnMap[$column] ?? $column;

@@ -50,7 +50,7 @@ class OrderPaymentController extends Controller
             'type'     => 'required|in:'.implode(',', array_column(PaymentType::cases(), 'value')),
             'method'   => 'required|in:'.implode(',', array_column(PaymentMethod::cases(), 'value')),
             'paid_at'  => 'nullable|date',
-            'currency' => 'nullable|string|in:'.implode(',', array_column(Currency::cases(), 'value')),
+            'currency' => 'required|string|in:'.implode(',', array_column(Currency::cases(), 'value')),
         ];
     }
 }

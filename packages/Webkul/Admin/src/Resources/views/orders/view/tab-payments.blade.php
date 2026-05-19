@@ -323,7 +323,7 @@
                 if (typeSelect) typeSelect.value = payment.type || '';
                 if (methodSelect) methodSelect.value = payment.method || '';
                 if (paidAtInput) paidAtInput.value = payment.paid_at || '';
-                if (currencySelect) currencySelect.value = payment.currency || '';
+                if (currencySelect) currencySelect.value = payment.currency || '{{ $defaultCurrencyCode }}';
             } else {
                 if (titleEl) titleEl.textContent = 'Nieuwe betaling';
                 if (paymentIdInput) paymentIdInput.value = '';
@@ -331,10 +331,7 @@
                 if (typeSelect) typeSelect.selectedIndex = 0;
                 if (methodSelect) methodSelect.selectedIndex = 0;
                 if (paidAtInput) paidAtInput.value = today;
-                if (currencySelect && currencySelect.value === '') {
-                    var selected = currencySelect.querySelector('option[selected]');
-                    currencySelect.value = selected ? selected.value : '{{ $defaultCurrencyCode }}';
-                }
+                if (currencySelect) currencySelect.value = '{{ $defaultCurrencyCode }}';
             }
 
             formWrapper.classList.remove('hidden');
@@ -418,7 +415,7 @@
                 type: typeSelect ? typeSelect.value : null,
                 method: methodSelect ? methodSelect.value : null,
                 paid_at: paidAtInput ? (paidAtInput.value || null) : null,
-                currency: currencySelect ? (currencySelect.value || null) : null
+                currency: currencySelect ? (currencySelect.value || '{{ $defaultCurrencyCode }}') : '{{ $defaultCurrencyCode }}'
             };
 
             var paymentId = paymentIdInput ? paymentIdInput.value : '';

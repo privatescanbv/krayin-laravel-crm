@@ -177,7 +177,7 @@
         </div>
 
         @php
-            $payments = $order->payments;
+            $payments = $order->payments()->with('creator')->get();
         @endphp
 
         @if ($payments->isEmpty())
@@ -194,6 +194,7 @@
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Methode</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Datum</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Valuta</th>
+                            <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Toegevoegd door</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Acties</th>
                         </tr>
                     </thead>
@@ -229,6 +230,10 @@
                                 </td>
                                 <td class="px-2 py-2 text-gray-600 dark:text-gray-400">
                                     {{ $currencyCode }}
+                                </td>
+                                <td class="px-2 py-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    {{ $payment->creator?->name ?? '—' }}<br>
+                                    <span class="text-gray-400 dark:text-gray-500">{{ $payment->created_at->format('d-m-Y H:i') }}</span>
                                 </td>
                                 <td class="px-2 py-2 whitespace-nowrap">
                                     <button

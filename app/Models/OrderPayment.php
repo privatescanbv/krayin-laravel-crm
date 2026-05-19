@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class OrderPayment extends Model
 {
+    use HasAuditTrail;
+
     protected $table = 'order_payments';
 
     protected $fillable = [
@@ -23,6 +26,8 @@ class OrderPayment extends Model
         'method',
         'paid_at',
         'currency',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

@@ -1620,10 +1620,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $parentType = (string) $this->option('tasks-parent-type');
 
         $sugarOrderIds = Order::whereNotNull('external_id')
-            ->where(function ($q) {
-                $q->whereNull('pipeline_stage_id')
-                    ->orWhereHas('stage', fn ($sq) => $sq->where('is_won', false)->where('is_lost', false));
-            })
             ->pluck('external_id')
             ->filter()
             ->values()

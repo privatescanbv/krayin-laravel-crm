@@ -216,7 +216,7 @@
                                             </p>
 
                                             <p class="text-gray-500">
-                                                @{{ person.emails.map((item) => `${item.value}(${item.label})`).join(', ') }}
+                                                @{{ (Array.isArray(person.emails) ? person.emails : []).map((item) => `${item.value}(${item.label})`).join(', ') }}
                                             </p>
                                         </div>
                                     </div>

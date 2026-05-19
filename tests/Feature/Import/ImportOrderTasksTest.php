@@ -163,7 +163,7 @@ test('import:orders --tasks-only importeert taken voor bestaande orders', functi
         ->and($activity->type)->toBe(ActivityType::TASK);
 });
 
-test('--tasks-only slaat taken over voor gewonnen en verloren orders', function () {
+test('--tasks-only importeert ook taken voor gewonnen en verloren orders', function () {
     $wonStage = Stage::where('is_won', true)->first();
     $wonOrder = makeOrderWithSalesLead('sugar-order-won-x');
     $wonOrder->update(['pipeline_stage_id' => $wonStage?->id]);
@@ -180,6 +180,6 @@ test('--tasks-only slaat taken over voor gewonnen en verloren orders', function 
         '--tasks-parent-type' => 'PCRM_SalesOrder',
     ])->assertSuccessful();
 
-    expect(Activity::where('external_id', 'sugar-task-won-x')->count())->toBe(0);
-    expect(Activity::where('external_id', 'sugar-task-lost-x')->count())->toBe(0);
+    expect(Activity::where('external_id', 'sugar-task-won-x')->count())->toBe(1);
+    expect(Activity::where('external_id', 'sugar-task-lost-x')->count())->toBe(1);
 });

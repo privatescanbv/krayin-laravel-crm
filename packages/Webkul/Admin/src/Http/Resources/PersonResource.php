@@ -22,8 +22,8 @@ class PersonResource extends JsonResource
         $data = [
             'id'              => $this->id,
             'name'            => $this->name,
-            'emails'          => $this->emails,
-            'phones'          => $this->phones, // Alias for compatibility
+            'emails'          => $this->emails ?? [],
+            'phones'          => $this->phones ?? [],
             'organization'    => $this->organization ? new OrganizationResource($this->organization) : null,
             'address'         => $this->when(
                 $this->relationLoaded('address'),

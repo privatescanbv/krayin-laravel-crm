@@ -41,6 +41,9 @@ class AddressLookupController extends Controller
             ], 400);
         }
 
+        // Normalize: strip whitespace and uppercase so the API receives e.g. "1234AB"
+        $postcode = strtoupper(preg_replace('/\s+/', '', $postcode));
+
         // Huisnummer validatie (moet een nummer zijn)
         if (! is_numeric($huisnummer)) {
             return response()->json([

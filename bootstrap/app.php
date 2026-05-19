@@ -88,6 +88,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('emails:cleanup-graph-inbox')->daily();
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping();
+        $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);

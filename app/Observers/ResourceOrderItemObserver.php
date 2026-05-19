@@ -42,6 +42,7 @@ class ResourceOrderItemObserver
 
         if (! $orderItem || ! $orderItem->product_id) {
             Log::error('Could not update purchase price, no related product');
+
             return;
         }
 

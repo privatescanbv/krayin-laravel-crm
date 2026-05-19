@@ -117,13 +117,16 @@ class ResourcePlanningMonitorController extends Controller
 
     public function bookOrderItem(Request $request, int $orderItemId): JsonResponse
     {
+        $request->validate([
+            'resource_id'      => ['required', 'integer', 'exists:resources,id'],
+            'from'             => ['required', 'date'],
+            'to'               => ['required', 'date', 'after:from'],
+            'replace_existing' => ['sometimes', 'boolean'],
+        ], [
+            'to.after' => 'Het eindtijdstip moet na het begintijdstip liggen.',
+        ]);
+
         try {
-            $request->validate([
-                'resource_id'      => ['required', 'integer', 'exists:resources,id'],
-                'from'             => ['required', 'date'],
-                'to'               => ['required', 'date', 'after:from'],
-                'replace_existing' => ['sometimes', 'boolean'],
-            ]);
             $replace = $request->boolean('replace_existing', true);
 
             // Load orderItem with product + resourceType
@@ -208,12 +211,15 @@ class ResourcePlanningMonitorController extends Controller
 
     public function updateBooking(Request $request, int $bookingId): JsonResponse
     {
+        $request->validate([
+            'resource_id' => ['required', 'integer', 'exists:resources,id'],
+            'from'        => ['required', 'date'],
+            'to'          => ['required', 'date', 'after:from'],
+        ], [
+            'to.after' => 'Het eindtijdstip moet na het begintijdstip liggen.',
+        ]);
+
         try {
-            $request->validate([
-                'resource_id' => ['required', 'integer', 'exists:resources,id'],
-                'from'        => ['required', 'date'],
-                'to'          => ['required', 'date', 'after:from'],
-            ]);
 
             $booking = ResourceOrderItem::with([
                 'orderItem.product.resourceType',

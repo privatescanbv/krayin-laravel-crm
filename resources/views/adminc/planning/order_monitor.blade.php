@@ -370,16 +370,18 @@
                         this.form.resource_id = firstMatch ? firstMatch.id : null;
                     },
                     calculateEndTime() {
-                        if (!this.form.from || !this.selectedOrderItem || !this.selectedOrderItem.duration) {
+                        if (!this.form.from) {
                             return;
                         }
 
+                        const pad = (n) => String(n).padStart(2, '0');
                         const startTime = new Date(this.form.from);
-                        const durationMinutes = this.selectedOrderItem.duration;
+                        const durationMinutes = (this.selectedOrderItem && this.selectedOrderItem.duration)
+                            ? this.selectedOrderItem.duration
+                            : 30;
                         const endTime = new Date(startTime.getTime() + (durationMinutes * 60 * 1000));
 
                         // Format to datetime-local format (YYYY-MM-DDTHH:MM)
-                        const pad = (n) => String(n).padStart(2, '0');
                         this.form.to = `${endTime.getFullYear()}-${pad(endTime.getMonth() + 1)}-${pad(endTime.getDate())}T${pad(endTime.getHours())}:${pad(endTime.getMinutes())}`;
                     },
                     async loadOrderResourceTypes() {
@@ -538,6 +540,10 @@
                                 let errMsg = data.message;
                                 if (!errMsg && (data.required_type !== undefined || data.resource_type !== undefined)) {
                                     errMsg = `Dit orderregel vereist '${data.required_type ?? 'Onbekend'}', maar de gekozen resource is van het type '${data.resource_type ?? 'Onbekend'}'. Kies een passende resource of een ander orderregel.`;
+                                }
+                                if (!errMsg && data.errors) {
+                                    const firstField = Object.values(data.errors)[0];
+                                    errMsg = Array.isArray(firstField) ? firstField[0] : firstField;
                                 }
                                 this.$emitter.emit('add-flash', {
                                     type: 'error',

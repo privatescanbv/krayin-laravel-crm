@@ -227,11 +227,11 @@
                                                 </td>
 
                                                 <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-700 dark:text-gray-300">
-                                                    @{{ formatCurrency(order.total_price) }}
+                                                    @{{ formatCurrency(order.inkoop_price) }}
                                                 </td>
 
                                                 <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-500 dark:text-gray-400">
-                                                    @{{ formatCurrency(order.inkoop_price) }}
+                                                    @{{ formatCurrency(order.total_price) }}
                                                 </td>
                                             </tr>
                                         </template>

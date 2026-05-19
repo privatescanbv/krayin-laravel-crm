@@ -84,6 +84,15 @@
                             Omzet per medewerker
                         </a>
                     </li>
+                    <li>
+                        <a
+                            href="{{ route('admin.reports.revenue-by-month.index') }}"
+                            class="flex items-center gap-2 text-sm text-brandColor hover:underline"
+                        >
+                            <span class="icon-stats-up text-xs"></span>
+                            Omzet per maand
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

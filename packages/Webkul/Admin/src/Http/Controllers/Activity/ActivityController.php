@@ -551,7 +551,10 @@ class ActivityController extends Controller
     {
         $activity = $this->activityRepository->findOrFail($id);
         $leadId = $activity->lead_id;
+        $orderId = $activity->order_id;
+        $salesLeadId = $activity->sales_lead_id;
         $firstPersonId = $activity->person_id;
+
         try {
             Event::dispatch('activity.delete.before', $id);
             $activity->delete();
@@ -568,6 +571,7 @@ class ActivityController extends Controller
                     ],
                 ]);
             }
+
             session()->flash('success', 'Activiteit is verwijderd.');
 
             $returnUrl = $this->resolveReturnUrl();
@@ -575,11 +579,23 @@ class ActivityController extends Controller
                 return redirect($returnUrl);
             }
 
-            if (! is_null($leadId)) {
+            if ($leadId) {
                 return redirect()->route('admin.leads.view', $leadId);
-            } else {
+            }
+
+            if ($orderId) {
+                return redirect()->route('admin.orders.view', $orderId);
+            }
+
+            if ($salesLeadId) {
+                return redirect()->route('admin.sales_leads.view', $salesLeadId);
+            }
+
+            if ($firstPersonId) {
                 return redirect()->route('admin.contacts.persons.view', $firstPersonId);
             }
+
+            return redirect()->route('admin.activities.index');
         } catch (Exception $exception) {
             logger()->error('Could not delete activity: '.$exception->getMessage());
 

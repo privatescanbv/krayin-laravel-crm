@@ -654,7 +654,7 @@ test('getAvbDispatchReadiness returns ready with planned_at for batch window', f
     expect($readiness['is_ready'])->toBeTrue()
         ->and($readiness['is_late'])->toBeFalse()
         ->and($readiness['planned_at'])->not->toBeNull()
-        ->and($readiness['planned_at']->format('H:i'))->toBe('06:00')
+        ->and($readiness['planned_at']->format('H:i'))->toBe(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')
         ->and($readiness['planned_at']->toDateString())->toBe($examAt->copy()->subDay()->toDateString())
         ->and($readiness['reasons'])->toBeEmpty();
 });

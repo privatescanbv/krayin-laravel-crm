@@ -27,7 +27,7 @@ use Webkul\Email\Models\Email;
 
 class AfbDispatchService
 {
-    public const AFB_LATE_BOOKING_CUTOFF_HOUR = 12;
+    public const AFB_LATE_BOOKING_CUTOFF_HOUR = 11;
 
     public function __construct(
         private readonly AfbDocumentGenerator $afbDocumentGenerator,
@@ -327,7 +327,7 @@ class AfbDispatchService
                 ->exists();
 
         $plannedAt = ($examAt && ! $examAt->isPast())
-            ? $examAt->copy()->subDay()->setTime(6, 0, 0)
+            ? $examAt->copy()->subDay()->setTime(self::AFB_LATE_BOOKING_CUTOFF_HOUR, 0, 0)
             : null;
 
         return [

@@ -15,7 +15,17 @@ class PartnerProductDataGrid extends DataGrid
     {
         $queryBuilder = DB::table('partner_products')
             ->whereNull('partner_products.deleted_at')
+            ->leftJoin('clinic_partner_product', 'clinic_partner_product.partner_product_id', '=', 'partner_products.id')
+            ->leftJoin('clinics', 'clinics.id', '=', 'clinic_partner_product.clinic_id')
             ->addSelect(
+                'partner_products.id',
+                'partner_products.name',
+                'partner_products.currency',
+                'partner_products.active',
+                'partner_products.reporting',
+                DB::raw('MIN(clinics.id) as clinic_id')
+            )
+            ->groupBy(
                 'partner_products.id',
                 'partner_products.name',
                 'partner_products.currency',
@@ -26,10 +36,19 @@ class PartnerProductDataGrid extends DataGrid
         $this->addFilter('id', 'partner_products.id');
         $this->addFilter('active', 'partner_products.active');
 
-        // Default filter: only active resources unless user provides a filter
         $requestedFilters = request()->input('filters', []);
         if (! array_key_exists('active', $requestedFilters)) {
             $queryBuilder->where('partner_products.active', 1);
+        }
+
+        $this->applyEntitySelectorFilter($queryBuilder, $requestedFilters, 'clinic_id', 'clinics.id');
+
+        $originalFilters = request()->input('filters');
+        if (! empty($requestedFilters)) {
+            request()->merge(['filters' => $requestedFilters]);
+        } elseif ($originalFilters !== null) {
+            request()->request->remove('filters');
+            request()->query->remove('filters');
         }
 
         return $queryBuilder;
@@ -108,6 +127,21 @@ class PartnerProductDataGrid extends DataGrid
                     ? "<span class='icon-tick text-status-active-text text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
                     : "<span class='icon-cross-large text-status-expired-text text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
             },
+        ]);
+
+        $this->addColumn([
+            'index'              => 'clinic_id',
+            'type'               => 'string',
+            'label'              => 'Kliniek',
+            'searchable'         => false,
+            'filterable'         => true,
+            'sortable'           => false,
+            'filterable_type'    => 'entity_selector',
+            'filterable_options' => [
+                'search_route' => route('admin.clinics.search'),
+                'entity_type'  => 'clinic',
+            ],
+            'visibility' => false,
         ]);
     }
 

@@ -96,7 +96,8 @@
             <x-admin::table.td class="!px-2">
                 <div v-if="item.planning_summary" class="text-xs text-gray-700 dark:text-gray-300">
                     <div v-for="(booking, idx) in item.planning_summary" :key="idx" class="mb-1">
-                        <strong>@{{ booking.resource }}</strong><br>
+                        <a v-if="booking.resource_id" :href="`/admin/settings/resources/edit/${booking.resource_id}`" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">@{{ booking.resource }}</a>
+                        <strong v-else>@{{ booking.resource }}</strong><br>
                         @{{ booking.from }} - @{{ booking.to }}
                     </div>
                 </div>
@@ -205,6 +206,7 @@
                     if (!bookings || !bookings.length) return null;
                     return bookings.map(b => ({
                         resource: b.resource?.name || 'Onbekend',
+                        resource_id: b.resource?.id || null,
                         from: this.formatDateTime(b.from),
                         to: this.formatDateTime(b.to)
                     }));

@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Enums\OrderItemStatus;
+use App\Enums\PurchasePriceType;
+use App\Models\PartnerProduct;
 use App\Models\ResourceOrderItem;
 use App\Services\Afb\AfbDispatchService;
 use App\Services\OrderStatusService;
@@ -21,6 +23,7 @@ class ResourceOrderItemObserver
     public function created(ResourceOrderItem $resourceOrderItem): void
     {
         $this->updateOrderItemStatus($resourceOrderItem);
+        $this->capturePartnerProductPrice($resourceOrderItem);
 
         $order = $resourceOrderItem->orderItem?->order;
     }
@@ -31,6 +34,42 @@ class ResourceOrderItemObserver
     public function deleted(ResourceOrderItem $resourceOrderItem): void
     {
         $this->updateOrderItemStatus($resourceOrderItem);
+    }
+
+    private function capturePartnerProductPrice(ResourceOrderItem $resourceOrderItem): void
+    {
+        $orderItem = $resourceOrderItem->orderItem;
+
+        if (! $orderItem || ! $orderItem->product_id) {
+            Log::error('Could not update purchase price, no related product');
+            return;
+        }
+
+        $clinicId = $resourceOrderItem->resource()->with('clinicDepartment')->first()
+            ?->clinicDepartment
+            ?->clinic_id;
+
+        if (! $clinicId) {
+            return;
+        }
+        $partnerPrice = PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)
+            ->with('purchasePrice')
+            ->first()
+            ?->purchasePrice;
+
+        if (! $partnerPrice) {
+            return;
+        }
+
+        $orderItem->purchasePrice()->updateOrCreate([], [
+            'type'                      => PurchasePriceType::MAIN,
+            'purchase_price_misc'       => $partnerPrice->purchase_price_misc,
+            'purchase_price_doctor'     => $partnerPrice->purchase_price_doctor,
+            'purchase_price_cardiology' => $partnerPrice->purchase_price_cardiology,
+            'purchase_price_clinic'     => $partnerPrice->purchase_price_clinic,
+            'purchase_price_radiology'  => $partnerPrice->purchase_price_radiology,
+            'purchase_price'            => $partnerPrice->purchase_price,
+        ]);
     }
 
     /**

@@ -88,7 +88,8 @@
       "Bash(awk *)",
       "mcp__plugin_sentry_sentry__get_sentry_resource",
       "Skill(sentry:sentry-workflow)",
-      "WebFetch(domain:skills.sentry.dev)"
+      "WebFetch(domain:skills.sentry.dev)",
+      "Bash(vendor/bin/sail php -r ' *)"
     ]
   }
 }

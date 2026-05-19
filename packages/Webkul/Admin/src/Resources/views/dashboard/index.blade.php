@@ -70,6 +70,22 @@
 
             <!-- Revenue by Types -->
             @include('admin::dashboard.index.revenue-by-types')
+
+            <div class="rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
+                <p class="mb-3 text-base font-semibold dark:text-gray-300">Rapportages</p>
+
+                <ul class="flex flex-col gap-2">
+                    <li>
+                        <a
+                            href="{{ route('admin.reports.revenue-by-employee.index') }}"
+                            class="flex items-center gap-2 text-sm text-brandColor hover:underline"
+                        >
+                            <span class="icon-stats-up text-xs"></span>
+                            Omzet per medewerker
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         {!! view_render_event('admin.dashboard.index.content.left.after') !!}

@@ -3,7 +3,10 @@
 namespace Tests\Feature\Activities;
 
 use App\Enums\ActivityType;
+use App\Enums\Departments;
 use App\Enums\PipelineStage;
+use App\Models\Department;
+use App\Models\Order;
 use App\Models\SalesLead;
 use App\Services\ActivityQueueRegistry;
 use App\Services\ActivityQueueRepository;
@@ -212,7 +215,7 @@ it('computes open_and_overdue_counts_per_queue_consistently_with_filters', funct
         ->and($counts['overdue'])->toBe(1);
 });
 
-it('excludes sales-linked tasks from the our-tasks and my-tasks queues', function () {
+it('includes sales-linked tasks in the our-tasks and my-tasks queues', function () {
     $adminRole = Role::factory()->create([
         'permission_type' => 'all',
         'permissions'     => null,
@@ -229,7 +232,6 @@ it('excludes sales-linked tasks from the our-tasks and my-tasks queues', functio
 
     $salesLead = SalesLead::factory()->create();
 
-    // Task linked to a sales lead – should be excluded.
     Activity::create([
         'type'          => ActivityType::TASK->value,
         'user_id'       => $admin->id,
@@ -241,7 +243,6 @@ it('excludes sales-linked tasks from the our-tasks and my-tasks queues', functio
         'sales_lead_id' => $salesLead->id,
     ]);
 
-    // Regular task (no sales_lead_id) – should be included.
     Activity::create([
         'type'          => ActivityType::TASK->value,
         'user_id'       => $admin->id,
@@ -258,8 +259,68 @@ it('excludes sales-linked tasks from the our-tasks and my-tasks queues', functio
     $repo = app(ActivityQueueRepository::class);
 
     $ourTasksCounts = $repo->counts('our-tasks');
-    expect($ourTasksCounts['open'])->toBe(1);
+    expect($ourTasksCounts['open'])->toBe(2);
 
     $myTasksCounts = $repo->counts('my-tasks');
-    expect($myTasksCounts['open'])->toBe(1);
+    expect($myTasksCounts['open'])->toBe(2);
+});
+
+it('filters our-tasks by saleslead and order entity department not only group name', function () {
+    $adminRole = Role::factory()->create([
+        'permission_type' => 'all',
+        'permissions'     => null,
+    ]);
+
+    $admin = User::factory()->create([
+        'role_id'         => $adminRole->id,
+        'view_permission' => 'global',
+        'status'          => 1,
+    ]);
+
+    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
+    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
+
+    $lead = Lead::factory()->create(['department_id' => $herniaDepartment->id]);
+    $salesLead = SalesLead::factory()->create([
+        'lead_id'       => $lead->id,
+        'department_id' => $privatescanDepartment->id,
+    ]);
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+
+    $salesTask = Activity::create([
+        'type'          => ActivityType::TASK->value,
+        'user_id'       => $admin->id,
+        'title'         => 'Saleslead task',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $herniaGroup->id,
+        'sales_lead_id' => $salesLead->id,
+    ]);
+
+    $orderTask = Activity::create([
+        'type'          => ActivityType::TASK->value,
+        'user_id'       => $admin->id,
+        'title'         => 'Order task',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $herniaGroup->id,
+        'order_id'      => $order->id,
+    ]);
+
+    $this->actingAs($admin, 'user');
+
+    /** @var ActivityQueueRepository $repo */
+    $repo = app(ActivityQueueRepository::class);
+
+    expect($repo->counts('our-tasks', Departments::PRIVATESCAN->value)['open'])->toBe(2)
+        ->and($repo->counts('our-tasks', Departments::HERNIA->value)['open'])->toBe(0);
+
+    $response = get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::PRIVATESCAN->value));
+    $response->assertOk();
+
+    $ids = getDatagridIds($response);
+    expect($ids)->toContain($salesTask->id, $orderTask->id);
 });

@@ -36,19 +36,21 @@ class ActivityGroupResolver
                 }
             }
 
-            // 2. Via sales lead → lead
+            // 2. Via sales lead department (own department_id takes precedence over lead)
             if ($activity->sales_lead_id) {
-                $salesLead = SalesLead::with('lead')->find($activity->sales_lead_id);
-                if ($salesLead?->lead) {
-                    return Department::getGroupIdForLead($salesLead->lead);
+                $salesLead = SalesLead::with('lead.department', 'department')->find($activity->sales_lead_id);
+                $department = $salesLead?->getDepartment();
+                if ($department) {
+                    return Department::getGroupIdForDepartmentId($department->id);
                 }
             }
 
-            // 3. Via order → sales lead → lead
+            // 3. Via order → sales lead department
             if ($activity->order_id) {
-                $order = Order::with('salesLead.lead')->find($activity->order_id);
-                if ($order?->salesLead?->lead) {
-                    return Department::getGroupIdForLead($order->salesLead->lead);
+                $order = Order::with('salesLead.lead.department', 'salesLead.department')->find($activity->order_id);
+                $department = $order?->salesLead?->getDepartment();
+                if ($department) {
+                    return Department::getGroupIdForDepartmentId($department->id);
                 }
             }
         } catch (Exception $e) {

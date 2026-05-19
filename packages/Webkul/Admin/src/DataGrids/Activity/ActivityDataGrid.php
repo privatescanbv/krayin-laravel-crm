@@ -2,8 +2,9 @@
 
 namespace Webkul\Admin\DataGrids\Activity;
 
-use App\Enums\ActivityType;
+use App\Enums\Departments;
 use App\Enums\EntityType;
+use App\Services\Activities\ActivityDepartmentFilter;
 use App\Services\ActivityQueueRegistry;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
@@ -88,8 +89,8 @@ class ActivityDataGrid extends DataGrid
 
         // Apply department filter when in queue mode
         $department = request()->get('department');
-        if ($queueKey && $department && in_array($department, ['Privatescan', 'Herniapoli'], true)) {
-            $queryBuilder->where('groups.name', $department);
+        if ($queueKey && $department && in_array($department, Departments::allValues(), true)) {
+            ActivityDepartmentFilter::applyToQuery($queryBuilder, $department);
         }
 
         if (! $queueKey) {

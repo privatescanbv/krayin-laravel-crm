@@ -90,7 +90,9 @@ Uitgevoerd wachten op operatieverslag → Rapporten ontvangen.
 image::../images/06-onze-taken.png[Onze openstaande taken werkbak]
 
 *Wat zit erin?*
-Alle interne *taken* (type: taak) die nog open staan voor het hele team — ongeacht aan wie ze zijn toegewezen.
+Alle open *taken* (type: taak) voor het hele team — ongeacht aan wie ze zijn toegewezen. Dit omvat taken gekoppeld aan leads, salesleads en orders.
+
+*Afdelingsfilter:* Taken worden getoond op basis van de afdeling van de gekoppelde entiteit (lead, saleslead of order), niet alleen op basis van de toegewezen groep.
 
 *Wanneer gebruik je dit?*
 Gebruik deze bak als teamoverzicht:

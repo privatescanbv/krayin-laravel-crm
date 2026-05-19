@@ -23,6 +23,20 @@ return [
         'icon-class' => 'icon-dashboard',
     ],
 
+    [
+        'key'        => 'reports',
+        'name'       => 'Rapporten',
+        'route'      => 'admin.reports.revenue-by-employee.index',
+        'sort'       => 2,
+        'icon-class' => 'icon-stats-up',
+    ], [
+        'key'        => 'reports.revenue-by-employee',
+        'name'       => 'Omzet per medewerker',
+        'route'      => 'admin.reports.revenue-by-employee.index',
+        'sort'       => 1,
+        'icon-class' => 'icon-stats-up',
+    ],
+
     /**
      * Leads.
      */
@@ -30,7 +44,7 @@ return [
         'key'        => 'leads',
         'name'       => 'admin::app.layouts.leads',
         'route'      => 'admin.leads.index',
-        'sort'       => 2,
+        'sort'       => 3,
         'icon-class' => 'icon-leads',
     ],
 
@@ -38,7 +52,7 @@ return [
         'key'        => 'clinic-guide',
         'name'       => 'Dagplanning',
         'route'      => 'admin.clinic-guide.index',
-        'sort'       => 3,
+        'sort'       => 4,
         'icon-class' => 'icon-activity',
     ],
 
@@ -46,7 +60,7 @@ return [
         'key'        => 'sales-leads',
         'name'       => 'admin::app.layouts.sales-leads',
         'route'      => 'admin.sales-leads.index',
-        'sort'       => 4,
+        'sort'       => 5,
         'icon-class' => 'icon-setting',
     ],
 
@@ -54,7 +68,7 @@ return [
         'key'        => 'orders',
         'name'       => 'Orders',
         'route'      => 'admin.orders.index',
-        'sort'       => 5,
+        'sort'       => 6,
         'icon-class' => 'icon-quote',
     ],
 
@@ -66,7 +80,7 @@ return [
         'name'       => 'admin::app.layouts.mail.title',
         'route'      => 'admin.mail.index',
         'params'     => ['route' => 'inbox'],
-        'sort'       => 6,
+        'sort'       => 7,
         'icon-class' => 'icon-mail',
     ],
     /**
@@ -76,7 +90,7 @@ return [
         'key'        => 'activities',
         'name'       => 'Activiteiten',
         'route'      => 'admin.activities.index',
-        'sort'       => 7,
+        'sort'       => 8,
         'icon-class' => 'icon-activity',
     ],
 
@@ -88,14 +102,14 @@ return [
         'acl'        => 'contacts.persons',
         'name'       => 'admin::app.layouts.persons',
         'route'      => 'admin.contacts.persons.index',
-        'sort'       => 8,
+        'sort'       => 9,
         'icon-class' => 'icon-contact',
     ], [
         'key'        => 'organizations',
         'acl'        => 'contacts.organizations',
         'name'       => 'admin::app.layouts.organizations',
         'route'      => 'admin.contacts.organizations.index',
-        'sort'       => 9,
+        'sort'       => 10,
         'icon-class' => 'icon-organization',
     ],
 
@@ -107,13 +121,13 @@ return [
         'name'       => 'admin::app.layouts.products',
         'acl'        => 'products',
         'route'      => 'admin.products.index',
-        'sort'       => 10,
+        'sort'       => 11,
         'icon-class' => 'icon-product',
     ], [
         'key'        => 'resource_planning',
         'name'       => 'Monitor resource planning',
         'route'      => 'admin.planning.monitor.index',
-        'sort'       => 11,
+        'sort'       => 12,
         'icon-class' => 'icon-activity',
     ],
     [
@@ -121,7 +135,7 @@ return [
         'acl'        => 'settings.clinics',
         'name'       => 'Klinieken',
         'route'      => 'admin.clinics.index',
-        'sort'       => 12,
+        'sort'       => 13,
         'icon-class' => 'icon-organization',
     ],
 
@@ -132,7 +146,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 13,
+        'sort'       => 14,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',
@@ -354,7 +368,7 @@ return [
         'key'        => 'patient_portal',
         'name'       => 'Patient Portaal',
         'url'        => config('services.portal.patient.web_url'),
-        'sort'       => 15,
+        'sort'       => 16,
         'icon-class' => 'icon-forward',
     ],
 
@@ -365,7 +379,7 @@ return [
         'key'        => 'documentation',
         'name'       => 'Documentation',
         'route'      => 'admin.docs.index',
-        'sort'       => 16,
+        'sort'       => 17,
         'icon-class' => 'icon-file',
     ],
 ];

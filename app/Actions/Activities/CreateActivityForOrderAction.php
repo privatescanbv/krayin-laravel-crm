@@ -21,7 +21,10 @@ class CreateActivityForOrderAction extends AbstractCreateActivityAction
     public function execute(Order $order, bool $isDone, array $activityData): Activity
     {
         $activityData['order_id'] = $order->id;
-        $groupId = Department::getGroupIdForLead($order->salesLead->lead);
+        $department = $order->salesLead?->getDepartment();
+        $groupId = $department
+            ? Department::getGroupIdForDepartmentId($department->id)
+            : Department::getGroupIdForLead($order->salesLead->lead);
 
         return $this->createActivity('order_id', $order->id, $groupId, $isDone, $activityData);
     }

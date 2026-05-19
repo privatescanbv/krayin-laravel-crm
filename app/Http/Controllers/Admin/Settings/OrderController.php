@@ -60,6 +60,7 @@ use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
+use RuntimeException;
 use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -69,6 +70,7 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\OrderLookupResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\StageProxy;
@@ -2153,13 +2155,13 @@ class OrderController extends SimpleEntityController
         $localDisk = Storage::disk('local');
 
         if (! $localDisk->exists($path)) {
-            throw new \RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
+            throw new RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
         }
 
         Storage::put($path, $localDisk->get($path));
     }
 
-    private function attachGvlPdfsForManualSend(\Webkul\Email\Models\Email $email, array $generatedDocuments): void
+    private function attachGvlPdfsForManualSend(Email $email, array $generatedDocuments): void
     {
         $personIds = collect($generatedDocuments)
             ->pluck('person_id')

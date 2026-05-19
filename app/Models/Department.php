@@ -90,18 +90,18 @@ class Department extends Model
     {
         if (! $lead->department_id) {
             logger()->warning("Lead {$lead->id} has no department_id, defaulting to Privatescan group");
-            // Resolve Privatescan department's default group id
-            $privatescanDepartmentId = self::findPrivateScanId();
 
-            return Group::query()
-                ->where('department_id', $privatescanDepartmentId)
-                ->value('id');
+            return self::getGroupIdForDepartmentId(self::findPrivateScanId());
         }
 
-        // Find group by department_id for efficient lookup
+        return self::getGroupIdForDepartmentId($lead->department_id);
+    }
+
+    public static function getGroupIdForDepartmentId(int $departmentId): int
+    {
         return Group::query()
             ->select(['id'])
-            ->where('department_id', $lead->department_id)
+            ->where('department_id', $departmentId)
             ->firstOrFail()
             ->id;
     }

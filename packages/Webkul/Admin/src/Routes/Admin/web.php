@@ -73,3 +73,8 @@ require 'operational-dashboard-routes.php';
  * Afletteren routes.
  */
 require 'afletteren-routes.php';
+
+/**
+ * Reports routes.
+ */
+require 'reports-routes.php';

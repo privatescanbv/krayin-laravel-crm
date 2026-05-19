@@ -21,7 +21,10 @@ class CreateActivityForSalesLeadAction extends AbstractCreateActivityAction
     public function execute(SalesLead $sales, bool $isDone, array $activityData): Activity
     {
         $activityData['sales_lead_id'] = $sales->id;
-        $groupId = Department::getGroupIdForLead($sales->lead);
+        $department = $sales->getDepartment();
+        $groupId = $department
+            ? Department::getGroupIdForDepartmentId($department->id)
+            : Department::getGroupIdForLead($sales->lead);
 
         return $this->createActivity('sales_lead_id', $sales->id, $groupId, $isDone, $activityData);
     }

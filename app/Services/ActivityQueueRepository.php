@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ActivityType;
 use App\Enums\Departments;
+use App\Services\Activities\ActivityDepartmentFilter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -57,7 +58,7 @@ class ActivityQueueRepository
 
         // Department filter — same logic as ActivityDataGrid.
         if ($department && in_array($department, Departments::allValues(), true)) {
-            $baseQuery->where('groups.name', $department);
+            ActivityDepartmentFilter::applyToQuery($baseQuery, $department);
         }
 
         $openQuery = (clone $baseQuery)->where('activities.is_done', false);

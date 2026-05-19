@@ -35,6 +35,8 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
 
     // Fetch persons linked to an entity (for file upload portal selector)
     Route::get('persons-for-entity', 'personsForEntity')->name('admin.activities.persons-for-entity');
+
+    Route::get('default-group', 'getDefaultGroupForEntity')->name('admin.activities.default-group');
 });
 
 Route::controller(ActivityAssignmentController::class)->prefix('activities')->group(function () {

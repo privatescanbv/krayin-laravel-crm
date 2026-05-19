@@ -133,6 +133,7 @@
                                     name="group_id"
                                     :label="trans('admin::app.activities.group')"
                                     v-model="selectedGroupId"
+                                    rules="required"
                                 >
                                     <option value="">{{ __('admin::app.activities.select-group') }}</option>
                                     @foreach (app(Webkul\User\Repositories\GroupRepository::class)->all() as $group)
@@ -216,18 +217,19 @@
                     @endforeach
                 ];
 
+                const taskType = types.find((type) => type.value === '{{ ActivityType::TASK->value }}');
+
                 return {
                     isStoring: false,
                     availableTypes: types,
-                    selectedTypeValue: types.length > 0 ? types[0].value : null,
+                    selectedTypeValue: taskType ? taskType.value : (types.length > 0 ? types[0].value : null),
                     selectedGroupId: null,
                 }
             },
 
             mounted() {
-                // Auto-select group based on lead's department
-                if (this.entity && this.entityControlName === 'lead_id' && this.entity.department_id) {
-                    this.setDefaultGroupFromDepartment();
+                if (this.entity?.id && this.supportsDefaultGroup()) {
+                    this.setDefaultGroupFromEntity();
                 }
             },
 
@@ -240,16 +242,40 @@
                     // Reactivity handled by v-model on selectedTypeValue
                 },
 
-                setDefaultGroupFromDepartment() {
-                    // Fetch the default group for this lead's department
-                    this.$axios.get(`/admin/leads/${this.entity.id}/default-group`)
+                supportsDefaultGroup() {
+                    return ['lead_id', 'order_id', 'workflow_lead_id'].includes(this.entityControlName);
+                },
+
+                defaultGroupEntityType() {
+                    const map = {
+                        lead_id: 'lead',
+                        order_id: 'order',
+                        workflow_lead_id: 'sales_lead',
+                    };
+
+                    return map[this.entityControlName] ?? null;
+                },
+
+                setDefaultGroupFromEntity() {
+                    const entityType = this.defaultGroupEntityType();
+
+                    if (! entityType) {
+                        return;
+                    }
+
+                    this.$axios.get("{{ route('admin.activities.default-group') }}", {
+                        params: {
+                            entity: entityType,
+                            entity_id: this.entity.id,
+                        },
+                    })
                         .then(response => {
                             if (response.data.group_id) {
                                 this.selectedGroupId = response.data.group_id;
                             }
                         })
                         .catch(error => {
-                            console.warn('Could not fetch default group for lead:', error);
+                            console.warn('Could not fetch default group for entity:', error);
                         });
                 },
 

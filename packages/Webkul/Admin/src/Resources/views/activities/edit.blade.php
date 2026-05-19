@@ -207,6 +207,7 @@
                         name="group_id"
                         :label="__('admin::app.activities.group')"
                         :value="old('group_id', $activity->group_id)"
+                        rules="required"
                     >
                         <option value="">{{ __('admin::app.activities.select-group') }}</option>
                         @foreach ($groups as $group)

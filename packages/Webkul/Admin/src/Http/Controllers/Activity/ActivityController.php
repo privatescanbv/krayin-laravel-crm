@@ -38,7 +38,6 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
-use Webkul\User\Models\Group;
 use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
@@ -141,7 +140,7 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'files', 'portalPersons'])->findOrFail($id);
+        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'files', 'portalPersons', 'group'])->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
@@ -162,6 +161,7 @@ class ActivityController extends Controller
     {
         $this->validate(request(), [
             'type'          => 'required',
+            'group_id'      => 'required|exists:groups,id',
             'comment'       => 'required_if:type,note',
             'schedule_from' => 'required_unless:type,note,file',
             'schedule_to'   => 'required_unless:type,note,file',
@@ -187,12 +187,6 @@ class ActivityController extends Controller
         unset($data['publish_to_portal']);
 
         Activity::normalizeForeignKeys($data);
-
-        // Ensure group_id is set and valid for lead activities
-        $result = $this->ensureGroupIdForLeadActivity($data);
-        if ($result !== null) {
-            return $result;
-        }
 
         $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => (request('type') == ActivityType::NOTE->value || request('type') == ActivityType::FILE->value) ? 1 : 0,
@@ -317,6 +311,10 @@ class ActivityController extends Controller
                 return redirect()->back();
             }
         }
+
+        $this->validate(request(), [
+            'group_id' => 'required|exists:groups,id',
+        ]);
 
         Event::dispatch('activity.update.before', $id);
 
@@ -632,46 +630,63 @@ class ActivityController extends Controller
     }
 
     /**
-     * Ensure group_id is set for lead activities by auto-determining from lead's department.
-     *
-     * @param  array  $data  Activity data (passed by reference)
-     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|null
+     * Resolve default user group for an entity (lead, order, sales lead).
      */
-    private function ensureGroupIdForLeadActivity(array &$data)
+    public function getDefaultGroupForEntity(): JsonResponse
     {
-        // If lead_id is provided, group_id is required
-        if (! empty($data['lead_id'])) {
-            $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
-            if (! isset($data['group_id']) || ! $data['group_id']) {
-                try {
-                    $data['group_id'] = Department::getGroupIdForLead($lead);
-                } catch (Exception $e) {
-                    if (request()->ajax()) {
-                        return response()->json([
-                            'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
-                        ], 422);
-                    }
-                    session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+        $entity = request('entity');
+        $entityId = (int) request('entity_id');
 
-                    return redirect()->back();
-                }
-            } else {
-                // Validate provided group_id belongs to the same department as the lead
-                $group = Group::query()->find($data['group_id']);
-                if (! $group || ($group->department_id !== $lead->department_id)) {
-                    if (request()->ajax()) {
-                        return response()->json([
-                            'message' => 'De opgegeven groep komt niet overeen met het departement van de lead.',
-                        ], 422);
-                    }
-                    session()->flash('error', 'De opgegeven groep komt niet overeen met het departement van de lead.');
-
-                    return redirect()->back();
-                }
-            }
+        try {
+            $groupId = match ($entity) {
+                'lead' => Department::getGroupIdForLead(
+                    app(LeadRepository::class)->findOrFail($entityId)
+                ),
+                'order' => $this->resolveDefaultGroupIdForOrder($entityId),
+                'sales_lead' => $this->resolveDefaultGroupIdForSalesLead($entityId),
+                default => throw new Exception("Unknown entity type: {$entity}"),
+            };
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Kan geen standaardgroep bepalen voor deze entiteit.',
+            ], 422);
         }
 
-        return null; // Success - no error response needed
+        return response()->json([
+            'group_id' => $groupId,
+        ]);
+    }
+
+    private function resolveDefaultGroupIdForOrder(int $orderId): int
+    {
+        $order = Order::with('salesLead.lead')->findOrFail($orderId);
+        $department = $order->salesLead?->getDepartment();
+
+        if ($department) {
+            return Department::getGroupIdForDepartmentId($department->id);
+        }
+
+        if ($order->salesLead?->lead) {
+            return Department::getGroupIdForLead($order->salesLead->lead);
+        }
+
+        return Department::getGroupIdForDepartmentId(Department::findPrivateScanId());
+    }
+
+    private function resolveDefaultGroupIdForSalesLead(int $salesLeadId): int
+    {
+        $salesLead = SalesLead::with('lead.department', 'department')->findOrFail($salesLeadId);
+        $department = $salesLead->getDepartment();
+
+        if ($department) {
+            return Department::getGroupIdForDepartmentId($department->id);
+        }
+
+        if ($salesLead->lead) {
+            return Department::getGroupIdForLead($salesLead->lead);
+        }
+
+        return Department::getGroupIdForDepartmentId(Department::findPrivateScanId());
     }
 
     /**

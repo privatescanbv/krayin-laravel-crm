@@ -100,6 +100,15 @@
                         <div class="text-sm text-gray-900 dark:text-gray-100">
                             {{ $activity->user?->name ?? '-' }}
                         </div>
+                    <div class="mb-3">
+                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">
+                            @lang('admin::app.activities.group')
+                        </div>
+                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                            {{ $activity->group?->name ?? '-' }}
+                        </div>
+                    </div>
+
                     </div>
 
                     <div class="mb-3">

@@ -92,7 +92,7 @@ image::../images/06-onze-taken.png[Onze openstaande taken werkbak]
 *Wat zit erin?*
 Alle open *taken* (type: taak) voor het hele team — ongeacht aan wie ze zijn toegewezen. Dit omvat taken gekoppeld aan leads, salesleads en orders.
 
-*Afdelingsfilter:* Taken worden getoond op basis van de afdeling van de gekoppelde entiteit (lead, saleslead of order), niet alleen op basis van de toegewezen groep.
+*Afdelingsfilter:* Taken worden getoond op basis van de *gekozen gebruikersgroep* van de activiteit (Privatescan of Herniapoli), niet op basis van de afdeling van de gekoppelde entiteit.
 
 *Wanneer gebruik je dit?*
 Gebruik deze bak als teamoverzicht:

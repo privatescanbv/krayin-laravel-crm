@@ -1,11 +1,14 @@
 <?php
 
 use App\Enums\ActivityType;
+use App\Enums\Departments;
+use App\Models\Department;
 use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
+use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
 
 uses(RefreshDatabase::class);
@@ -35,10 +38,17 @@ test('file activity store persists order_id and sales_lead_id from multipart req
 
     $order = Order::factory()->create();
 
+    $department = Department::create(['name' => Departments::PRIVATESCAN->value]);
+    $group = Group::create([
+        'name'          => 'Privatescan',
+        'department_id' => $department->id,
+    ]);
+
     $file = UploadedFile::fake()->create('scan.pdf', 12, 'application/pdf');
 
     $response = $this->post(route('admin.activities.store'), [
         'type'                => 'file',
+        'group_id'            => (string) $group->id,
         'order_id'            => (string) $order->id,
         'sales_lead_id'       => (string) $order->sales_lead_id,
         'title'               => 'Testbestand',

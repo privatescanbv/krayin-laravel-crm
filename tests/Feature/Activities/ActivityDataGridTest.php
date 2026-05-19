@@ -265,7 +265,7 @@ it('includes sales-linked tasks in the our-tasks and my-tasks queues', function 
     expect($myTasksCounts['open'])->toBe(2);
 });
 
-it('filters our-tasks by saleslead and order entity department not only group name', function () {
+it('filters our-tasks by activity group department not saleslead or order entity department', function () {
     $adminRole = Role::factory()->create([
         'permission_type' => 'all',
         'permissions'     => null,
@@ -279,7 +279,7 @@ it('filters our-tasks by saleslead and order entity department not only group na
 
     $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
-    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
+    $herniaGroup = Group::where('department_id', $herniaDepartment->id)->firstOrFail();
 
     $lead = Lead::factory()->create(['department_id' => $herniaDepartment->id]);
     $salesLead = SalesLead::factory()->create([
@@ -315,12 +315,17 @@ it('filters our-tasks by saleslead and order entity department not only group na
     /** @var ActivityQueueRepository $repo */
     $repo = app(ActivityQueueRepository::class);
 
-    expect($repo->counts('our-tasks', Departments::PRIVATESCAN->value)['open'])->toBe(2)
-        ->and($repo->counts('our-tasks', Departments::HERNIA->value)['open'])->toBe(0);
+    expect($repo->counts('our-tasks', Departments::PRIVATESCAN->value)['open'])->toBe(0)
+        ->and($repo->counts('our-tasks', Departments::HERNIA->value)['open'])->toBe(2);
 
-    $response = get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::PRIVATESCAN->value));
-    $response->assertOk();
+    $herniaResponse = get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::HERNIA->value));
+    $herniaResponse->assertOk();
 
-    $ids = getDatagridIds($response);
-    expect($ids)->toContain($salesTask->id, $orderTask->id);
+    $herniaIds = getDatagridIds($herniaResponse);
+    expect($herniaIds)->toContain($salesTask->id, $orderTask->id);
+
+    $privatescanIds = getDatagridIds(
+        get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::PRIVATESCAN->value))
+    );
+    expect($privatescanIds)->not->toContain($salesTask->id, $orderTask->id);
 });

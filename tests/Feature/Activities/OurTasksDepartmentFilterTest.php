@@ -33,11 +33,18 @@ function createGlobalAdmin(): User
     ]);
 }
 
-it('filters our-tasks by direct lead department regardless of group name', function () {
+function groupForDepartment(string $departmentName): Group
+{
+    $department = Department::where('name', $departmentName)->firstOrFail();
+
+    return Group::where('department_id', $department->id)->firstOrFail();
+}
+
+it('filters our-tasks by activity user group department not lead department', function () {
     $admin = createGlobalAdmin();
 
     $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
-    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
 
     $lead = Lead::factory()->create(['department_id' => $privatescanDepartment->id]);
 
@@ -57,27 +64,26 @@ it('filters our-tasks by direct lead department regardless of group name', funct
     /** @var ActivityQueueRepository $repo */
     $repo = app(ActivityQueueRepository::class);
 
-    expect($repo->counts('our-tasks', Departments::PRIVATESCAN->value)['open'])->toBe(1)
-        ->and($repo->counts('our-tasks', Departments::HERNIA->value)['open'])->toBe(0);
+    expect($repo->counts('our-tasks', Departments::PRIVATESCAN->value)['open'])->toBe(0)
+        ->and($repo->counts('our-tasks', Departments::HERNIA->value)['open'])->toBe(1);
 
-    $response = get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::PRIVATESCAN->value));
-    $response->assertOk();
+    $herniaIds = getDatagridIds(
+        get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::HERNIA->value))
+    );
 
-    expect(getDatagridIds($response))->toContain($leadTask->id);
+    expect($herniaIds)->toContain($leadTask->id);
 });
 
-it('isolates our-tasks per department across salesleads', function () {
+it('isolates our-tasks per department by activity group', function () {
     $admin = createGlobalAdmin();
-    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
-
-    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
-    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
+    $privatescanGroup = groupForDepartment(Departments::PRIVATESCAN->value);
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
 
     $privatescanSalesLead = SalesLead::factory()->create([
-        'department_id' => $privatescanDepartment->id,
+        'department_id' => Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail()->id,
     ]);
     $herniaSalesLead = SalesLead::factory()->create([
-        'department_id' => $herniaDepartment->id,
+        'department_id' => Department::where('name', Departments::HERNIA->value)->firstOrFail()->id,
     ]);
 
     $privatescanTask = Activity::create([
@@ -87,7 +93,7 @@ it('isolates our-tasks per department across salesleads', function () {
         'schedule_from' => now(),
         'schedule_to'   => now()->addDay(),
         'is_done'       => 0,
-        'group_id'      => $herniaGroup->id,
+        'group_id'      => $privatescanGroup->id,
         'sales_lead_id' => $privatescanSalesLead->id,
     ]);
 
@@ -124,12 +130,10 @@ it('isolates our-tasks per department across salesleads', function () {
 
 it('excludes completed tasks and non-task types from our-tasks department filter', function () {
     $admin = createGlobalAdmin();
-
-    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
-    $privatescanGroup = Group::where('name', 'Privatescan')->firstOrFail();
+    $privatescanGroup = groupForDepartment(Departments::PRIVATESCAN->value);
 
     $salesLead = SalesLead::factory()->create([
-        'department_id' => $privatescanDepartment->id,
+        'department_id' => Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail()->id,
     ]);
 
     $openTask = Activity::create([
@@ -180,20 +184,12 @@ it('excludes completed tasks and non-task types from our-tasks department filter
         ->and($ids)->toHaveCount(1);
 });
 
-it('filters my-tasks by department and assigned user', function () {
+it('filters my-tasks by activity group department and assigned user', function () {
     $admin = createGlobalAdmin();
     $otherUser = createGlobalAdmin();
 
-    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
-    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
-    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
-
-    $privatescanSalesLead = SalesLead::factory()->create([
-        'department_id' => $privatescanDepartment->id,
-    ]);
-    $herniaSalesLead = SalesLead::factory()->create([
-        'department_id' => $herniaDepartment->id,
-    ]);
+    $privatescanGroup = groupForDepartment(Departments::PRIVATESCAN->value);
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
 
     $myPrivatescanTask = Activity::create([
         'type'          => ActivityType::TASK->value,
@@ -202,8 +198,7 @@ it('filters my-tasks by department and assigned user', function () {
         'schedule_from' => now(),
         'schedule_to'   => now()->addDay(),
         'is_done'       => 0,
-        'group_id'      => $herniaGroup->id,
-        'sales_lead_id' => $privatescanSalesLead->id,
+        'group_id'      => $privatescanGroup->id,
     ]);
 
     Activity::create([
@@ -214,7 +209,6 @@ it('filters my-tasks by department and assigned user', function () {
         'schedule_to'   => now()->addDay(),
         'is_done'       => 0,
         'group_id'      => $herniaGroup->id,
-        'sales_lead_id' => $herniaSalesLead->id,
     ]);
 
     Activity::create([
@@ -224,8 +218,7 @@ it('filters my-tasks by department and assigned user', function () {
         'schedule_from' => now(),
         'schedule_to'   => now()->addDay(),
         'is_done'       => 0,
-        'group_id'      => $herniaGroup->id,
-        'sales_lead_id' => $privatescanSalesLead->id,
+        'group_id'      => $privatescanGroup->id,
     ]);
 
     $this->actingAs($admin, 'user');
@@ -244,19 +237,44 @@ it('filters my-tasks by department and assigned user', function () {
         ->and($ids)->toHaveCount(1);
 });
 
+it('excludes calls from my-tasks even with matching group', function () {
+    $admin = createGlobalAdmin();
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
+
+    $call = Activity::create([
+        'type'          => ActivityType::CALL->value,
+        'user_id'       => $admin->id,
+        'title'         => 'My call',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $herniaGroup->id,
+    ]);
+
+    $task = Activity::create([
+        'type'          => ActivityType::TASK->value,
+        'user_id'       => $admin->id,
+        'title'         => 'My task',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $herniaGroup->id,
+    ]);
+
+    $this->actingAs($admin, 'user');
+
+    $ids = getDatagridIds(
+        get('/admin/operational-dashboard/queues?queue=my-tasks&department='.urlencode(Departments::HERNIA->value))
+    );
+
+    expect($ids)->toContain($task->id)
+        ->and($ids)->not->toContain($call->id);
+});
+
 it('returns department-scoped counts from the operational dashboard counts endpoint', function () {
     $admin = createGlobalAdmin();
-    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
-
-    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
-    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
-
-    $privatescanSalesLead = SalesLead::factory()->create([
-        'department_id' => $privatescanDepartment->id,
-    ]);
-    $herniaSalesLead = SalesLead::factory()->create([
-        'department_id' => $herniaDepartment->id,
-    ]);
+    $privatescanGroup = groupForDepartment(Departments::PRIVATESCAN->value);
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
 
     Activity::create([
         'type'          => ActivityType::TASK->value,
@@ -265,8 +283,7 @@ it('returns department-scoped counts from the operational dashboard counts endpo
         'schedule_from' => now()->subDay(),
         'schedule_to'   => now()->subDay(),
         'is_done'       => 0,
-        'group_id'      => $herniaGroup->id,
-        'sales_lead_id' => $privatescanSalesLead->id,
+        'group_id'      => $privatescanGroup->id,
     ]);
 
     Activity::create([
@@ -277,7 +294,6 @@ it('returns department-scoped counts from the operational dashboard counts endpo
         'schedule_to'   => now()->addDay(),
         'is_done'       => 0,
         'group_id'      => $herniaGroup->id,
-        'sales_lead_id' => $herniaSalesLead->id,
     ]);
 
     $this->actingAs($admin, 'user');
@@ -297,9 +313,9 @@ it('returns department-scoped counts from the operational dashboard counts endpo
         ->and($ourTasksFromApi['overdue'])->toBe(1);
 });
 
-it('filters order tasks by saleslead department via order_id only', function () {
+it('filters order tasks by activity group not saleslead department', function () {
     $admin = createGlobalAdmin();
-    $herniaGroup = Group::where('name', 'Hernia')->firstOrFail();
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
 
     $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
@@ -331,6 +347,34 @@ it('filters order tasks by saleslead department via order_id only', function () 
         get('/admin/operational-dashboard/queues?queue=our-tasks&department='.urlencode(Departments::HERNIA->value))
     );
 
-    expect($privatescanIds)->toContain($orderTask->id)
-        ->and($herniaIds)->not->toContain($orderTask->id);
+    expect($herniaIds)->toContain($orderTask->id)
+        ->and($privatescanIds)->not->toContain($orderTask->id);
+});
+
+it('shows my-tasks for order activity with hernia group on privatescan saleslead', function () {
+    $admin = createGlobalAdmin();
+    $herniaGroup = groupForDepartment(Departments::HERNIA->value);
+    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+
+    $salesLead = SalesLead::factory()->create(['department_id' => $privatescanDepartment->id]);
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+
+    $task = Activity::create([
+        'type'          => ActivityType::TASK->value,
+        'user_id'       => $admin->id,
+        'title'         => 'Order task with Hernia group',
+        'schedule_from' => now(),
+        'schedule_to'   => now()->addDay(),
+        'is_done'       => 0,
+        'group_id'      => $herniaGroup->id,
+        'order_id'      => $order->id,
+    ]);
+
+    $this->actingAs($admin, 'user');
+
+    $ids = getDatagridIds(
+        get('/admin/operational-dashboard/queues?queue=my-tasks&department='.urlencode(Departments::HERNIA->value))
+    );
+
+    expect($ids)->toContain($task->id);
 });

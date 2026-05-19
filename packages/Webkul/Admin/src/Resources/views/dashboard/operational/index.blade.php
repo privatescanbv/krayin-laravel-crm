@@ -133,6 +133,7 @@
                             src="{{ '/admin/operational-dashboard/queues?return_url=' . urlencode(request()->fullUrl()) }}"
                             :isMultiRow="true"
                             no-auto-load
+                            v-bind:load-params="datagridLoadParams"
                             ref="datagrid"
                         >
                             <template #body="{
@@ -352,6 +353,18 @@
                         const dept = this.departments.find(d => d.key === this.activeDepartment);
                         return (dept && dept.key !== 'all') ? dept.label : null;
                     },
+                    datagridLoadParams() {
+                        const params = {
+                            queue: this.activeQueueKey,
+                            return_url: window.location.href,
+                        };
+
+                        if (this.departmentFilter) {
+                            params.department = this.departmentFilter;
+                        }
+
+                        return params;
+                    },
                 },
 
                 methods: {
@@ -373,23 +386,12 @@
 
                         this.activeQueueKey = key;
                         this.updateUrl();
-
-                        if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                            const params = { queue: this.activeQueueKey, return_url: window.location.href };
-                            if (this.departmentFilter) params.department = this.departmentFilter;
-                            this.$refs.datagrid.get(params);
-                        }
                     },
 
                     setActiveDepartment(dept) {
                         this.activeDepartment = dept;
                         this.updateUrl();
                         this.refreshCounts();
-                        if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                            const params = { queue: this.activeQueueKey, return_url: window.location.href };
-                            if (this.departmentFilter) params.department = this.departmentFilter;
-                            this.$refs.datagrid.get(params);
-                        }
                     },
 
                     async refreshCounts() {
@@ -546,12 +548,6 @@
 
                     if (this.departmentFilter) {
                         this.refreshCounts();
-                    }
-
-                    if (this.$refs.datagrid && typeof this.$refs.datagrid.get === 'function') {
-                        const params = { queue: this.activeQueueKey };
-                        if (this.departmentFilter) params.department = this.departmentFilter;
-                        this.$refs.datagrid.get(params);
                     }
                 },
             });

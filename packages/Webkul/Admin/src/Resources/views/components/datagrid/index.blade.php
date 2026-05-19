@@ -85,10 +85,12 @@
         app.component('v-datagrid', {
             template: '#v-datagrid-template',
 
-            props: ['src', 'noAutoLoad'],
+            props: ['src', 'noAutoLoad', 'loadParams'],
 
             data() {
                 return {
+                    hasBooted: false,
+
                     isLoading: false,
 
                     available: {
@@ -161,6 +163,21 @@
 
                 'applied.massActions.indices': function (newIndices, oldIndices) {
                     this.setCurrentSelectionMode();
+                },
+
+                loadParams: {
+                    handler(newVal, oldVal) {
+                        if (! this.hasBooted || ! this.noAutoLoad || ! newVal || ! oldVal) {
+                            return;
+                        }
+
+                        if (newVal.queue === oldVal.queue && newVal.department === oldVal.department) {
+                            return;
+                        }
+
+                        this.get(newVal);
+                    },
+                    deep: true,
                 },
             },
 
@@ -249,16 +266,30 @@
                                 }
                             });
 
-                            if (!this.noAutoLoad) {
+                            if (! this.noAutoLoad) {
                                 this.get(this.persistentParams);
+                            } else {
+                                this.applyLoadParams();
                             }
+
+                            this.hasBooted = true;
 
                             return;
                         }
                     }
 
-                    if (!this.noAutoLoad) {
+                    if (! this.noAutoLoad) {
                         this.get(this.persistentParams);
+                    } else {
+                        this.applyLoadParams();
+                    }
+
+                    this.hasBooted = true;
+                },
+
+                applyLoadParams() {
+                    if (this.noAutoLoad && this.loadParams) {
+                        this.get(this.loadParams);
                     }
                 },
 
@@ -371,6 +402,9 @@
 
                             this.available.meta = meta;
 
+                            this.isLoading = false;
+                        })
+                        .catch(() => {
                             this.isLoading = false;
                         });
                 },

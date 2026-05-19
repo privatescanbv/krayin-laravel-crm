@@ -134,3 +134,65 @@ test('saleslead kanban shows records per stage including pipeline filter', funct
     $wlIds = collect($json)->flatMap(fn ($s) => $s['leads']['data'])->pluck('id');
     expect($wlIds)->toContain($wlStage1->id)->and($wlIds)->toContain($wlStage2->id);
 });
+
+test('saleslead kanban respects sort order for a single stage', function () {
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    $older = SalesLead::create([
+        'name'              => 'Older Sales Lead',
+        'description'       => 'Older',
+        'pipeline_stage_id' => $this->stage->id,
+        'lead_id'           => $lead->id,
+        'user_id'           => $this->user->id,
+        'created_at'        => now()->subDays(2),
+    ]);
+
+    $newer = SalesLead::create([
+        'name'              => 'Newer Sales Lead',
+        'description'       => 'Newer',
+        'pipeline_stage_id' => $this->stage->id,
+        'lead_id'           => $lead->id,
+        'user_id'           => $this->user->id,
+        'created_at'        => now()->subDay(),
+    ]);
+
+    $ascResponse = $this->getJson(route('admin.sales-leads.get', [
+        'pipeline_id'         => $this->pipeline->id,
+        'pipeline_stage_id'   => $this->stage->id,
+        'sort'                => 'created_at',
+        'order'               => 'asc',
+        'limit'               => 10,
+    ]));
+
+    $ascResponse->assertOk();
+
+    $ascIds = collect($ascResponse->json())
+        ->flatMap(fn ($stage) => $stage['leads']['data'])
+        ->pluck('id')
+        ->values()
+        ->all();
+
+    expect($ascIds)->toBe([$older->id, $newer->id]);
+
+    $descResponse = $this->getJson(route('admin.sales-leads.get', [
+        'pipeline_id'         => $this->pipeline->id,
+        'pipeline_stage_id'   => $this->stage->id,
+        'sort'                => 'created_at',
+        'order'               => 'desc',
+        'limit'               => 10,
+    ]));
+
+    $descResponse->assertOk();
+
+    $descIds = collect($descResponse->json())
+        ->flatMap(fn ($stage) => $stage['leads']['data'])
+        ->pluck('id')
+        ->values()
+        ->all();
+
+    expect($descIds)->toBe([$newer->id, $older->id]);
+});

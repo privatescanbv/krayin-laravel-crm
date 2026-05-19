@@ -102,6 +102,10 @@ class SalesLeadController extends Controller
             ? $stages->filter(fn ($s) => ! $s->is_won && ! $s->is_lost)
             : $stages;
 
+        if ($request->filled('pipeline_stage_id')) {
+            $filteredStages = $filteredStages->where('id', (int) $request->query('pipeline_stage_id'));
+        }
+
         $stageIds = $filteredStages->pluck('id')->all();
 
         // Pre-compute totals for all stages in one query (avoids N+1 COUNT per stage)
@@ -112,6 +116,17 @@ class SalesLeadController extends Controller
             ->pluck('total', 'pipeline_stage_id');
 
         $perPage = (int) $request->query('limit', 10);
+        $page = max(1, (int) $request->query('page', 1));
+
+        $sort = (string) $request->query('sort', 'created_at');
+        $order = in_array($request->query('order'), ['asc', 'desc'], true)
+            ? $request->query('order')
+            : 'desc';
+
+        if ($sort !== 'created_at') {
+            $sort = 'created_at';
+        }
+
         $data = [];
 
         foreach ($filteredStages as $stage) {
@@ -132,8 +147,8 @@ class SalesLeadController extends Controller
                         'emails as unread_emails_count'       => fn ($q) => $q->where('is_read', 0),
                     ])
                     ->where('pipeline_stage_id', $stage->id)
-                    ->orderByDesc('created_at')
-                    ->paginate($perPage, ['*'], 'page');
+                    ->orderBy($sort, $order)
+                    ->paginate($perPage, ['*'], 'page', $page);
 
                 $salesLeads = collect($paginator->items())->map(function ($salesLead) use ($stagePayload) {
                     $person = $salesLead->persons->first();

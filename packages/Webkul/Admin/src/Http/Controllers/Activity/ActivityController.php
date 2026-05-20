@@ -313,7 +313,7 @@ class ActivityController extends Controller
         }
 
         $this->validate(request(), [
-            'group_id' => 'required|exists:groups,id',
+            'group_id' => 'nullable|exists:groups,id',
         ]);
 
         Event::dispatch('activity.update.before', $id);

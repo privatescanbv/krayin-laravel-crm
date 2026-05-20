@@ -20,6 +20,14 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
 
     Route::put('edit/{id}', 'update')->name('admin.activities.update');
 
+    Route::post('{id}/mark-done', 'markDone')
+        ->name('admin.activities.mark-done')
+        ->middleware('bouncer.permission:activities.edit');
+
+    Route::post('{id}/reopen', 'reopen')
+        ->name('admin.activities.reopen')
+        ->middleware('bouncer.permission:activities.edit');
+
     Route::get('download/{id}', 'download')->name('admin.activities.file_download');
 
     Route::delete('{id}', 'destroy')->name('admin.activities.delete');

@@ -315,12 +315,9 @@
     @endPushOnce
 
     <!-- Hidden form used by Afronden button in view -->
-    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif" method="POST"
+    <form id="activity-complete-form" action="{{ route('admin.activities.mark-done', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif" method="POST"
           class="hidden">
         @csrf
-        <input type="hidden" name="_method" value="PUT"/>
-        <input type="hidden" name="is_done" value="1"/>
-        <input type="hidden" name="status" value="done"/>
     </form>
 
     @if($activity->lead)

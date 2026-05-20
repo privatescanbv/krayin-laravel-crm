@@ -475,6 +475,91 @@ class ActivityController extends Controller
     }
 
     /**
+     * Mark a single activity as done without requiring a full update payload.
+     */
+    public function markDone(int $id): RedirectResponse|JsonResponse
+    {
+        $activity = $this->activityRepository->findOrFail($id);
+
+        Event::dispatch('activity.update.before', $id);
+
+        $activity->is_done = 1;
+        $activity->status  = ActivityStatus::DONE;
+        $activity->save();
+
+        $this->webhookService->sendWebhook([
+            'type'     => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
+            'activity' => [
+                'id'            => $activity->id,
+                'type'          => $activity->type,
+                'title'         => $activity->title,
+                'comment'       => $activity->comment,
+                'schedule_from' => $activity->schedule_from,
+                'schedule_to'   => $activity->schedule_to,
+                'lead_id'       => $activity->lead_id,
+            ],
+        ], WebhookType::LEAD_ACTIVITY_IS_DONE);
+
+        Event::dispatch('activity.update.after', $activity);
+
+        if (request()->ajax()) {
+            return response()->json([
+                'data'    => new ActivityResource($activity),
+                'message' => trans('admin::app.activities.update-success'),
+            ]);
+        }
+
+        session()->flash('success', trans('admin::app.activities.update-success'));
+
+        $returnUrl = $this->resolveReturnUrl();
+        if ($returnUrl) {
+            return redirect($returnUrl);
+        }
+
+        if ($activity->order_id) {
+            return redirect()->route('admin.orders.view', $activity->order_id);
+        }
+
+        if ($activity->lead_id) {
+            return redirect()->route('admin.leads.view', $activity->lead_id);
+        }
+
+        return redirect()->route('admin.activities.index');
+    }
+
+    /**
+     * Reopen a completed activity (set is_done = 0).
+     */
+    public function reopen(int $id): RedirectResponse|JsonResponse
+    {
+        $activity = $this->activityRepository->findOrFail($id);
+
+        Event::dispatch('activity.update.before', $id);
+
+        $activity->is_done = 0;
+        $activity->status  = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, null);
+        $activity->save();
+
+        Event::dispatch('activity.update.after', $activity);
+
+        if (request()->ajax()) {
+            return response()->json([
+                'data'    => new ActivityResource($activity),
+                'message' => trans('admin::app.activities.update-success'),
+            ]);
+        }
+
+        session()->flash('success', trans('admin::app.activities.update-success'));
+
+        $returnUrl = $this->resolveReturnUrl();
+        if ($returnUrl) {
+            return redirect($returnUrl);
+        }
+
+        return redirect()->route('admin.activities.edit', $id);
+    }
+
+    /**
      * Mass Update the specified resources.
      */
     public function massUpdate(MassUpdateRequest $massUpdateRequest): JsonResponse

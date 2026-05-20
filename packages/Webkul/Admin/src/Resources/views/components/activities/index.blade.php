@@ -440,9 +440,7 @@
                         agree: () => {
                             this.isUpdating[activity.id] = true;
 
-                            this.$axios.put("{{ route('admin.activities.update', 'replaceId') }}".replace('replaceId', activity.id), {
-                                    'is_done': 1
-                                })
+                            this.$axios.post("{{ route('admin.activities.mark-done', 'replaceId') }}".replace('replaceId', activity.id))
                                 .then((response) => {
                                     this.isUpdating[activity.id] = false;
 

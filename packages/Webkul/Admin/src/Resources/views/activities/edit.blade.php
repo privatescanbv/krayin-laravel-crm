@@ -262,21 +262,16 @@
 
     <!-- Hidden form used by Afronden button -->
     <form id="activity-complete-form"
-          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
+          action="{{ route('admin.activities.mark-done', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
           method="POST" class="hidden">
         @csrf
-        <input type="hidden" name="_method" value="PUT"/>
-        <input type="hidden" name="is_done" value="1"/>
-        <input type="hidden" name="status" value="done"/>
     </form>
 
     <!-- Hidden form used by Heropenen button -->
     <form id="activity-reopen-form"
-          action="{{ route('admin.activities.update', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
+          action="{{ route('admin.activities.reopen', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
           method="POST" class="hidden">
         @csrf
-        <input type="hidden" name="_method" value="PUT"/>
-        <input type="hidden" name="is_done" value="0"/>
     </form>
 
     {!! view_render_event('admin.activities.edit.form.after') !!}

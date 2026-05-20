@@ -100,6 +100,8 @@
       "Bash(git *)",
       "Bash(truncate -s -1 /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/packages/Webkul/Admin/src/resources/views/components/activities/index.blade.php)",
       "mcp__plugin_laravel-boost_laravel-boost__browser-logs"
+      "Bash(vendor/bin/sail php *)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm status --short)"
     ]
   }
 }

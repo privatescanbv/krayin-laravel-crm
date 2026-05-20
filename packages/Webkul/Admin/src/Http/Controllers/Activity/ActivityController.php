@@ -161,7 +161,7 @@ class ActivityController extends Controller
     {
         $this->validate(request(), [
             'type'          => 'required',
-            'group_id'      => 'required|exists:groups,id',
+            'group_id'      => 'nullable|exists:groups,id',
             'comment'       => 'required_if:type,note',
             'schedule_from' => 'required_unless:type,note,file',
             'schedule_to'   => 'required_unless:type,note,file',

@@ -141,9 +141,9 @@ class Order extends Model
             return null;
         }
 
-        $time = $this->first_examination_time ?? $computed?->format('H:i') ?? '00:00';
+        $time = filled($this->first_examination_time) ? $this->first_examination_time : ($computed?->format('H:i') ?? '00:00');
 
-        return Carbon::parse("$date $time:00");
+        return Carbon::parse("$date $time");
     }
 
     public function hasFirstExaminationOverride(): bool

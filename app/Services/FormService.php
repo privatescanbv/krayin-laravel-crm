@@ -370,7 +370,7 @@ class FormService
         $result = $this->parseResponse($response, ['url' => $url], true);
 
         if (! $response->successful()) {
-            Log::error('FormService: Could not remove session for person', ['status' => $result['status'], 'response' => $result['json']]);
+            Log::warning('FormService: Could not remove session for person', ['status' => $result['status'], 'response' => $result['json']]);
         } else {
 
             Log::info('FormService: Eemoving session for person success', [

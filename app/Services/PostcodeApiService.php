@@ -28,7 +28,11 @@ class PostcodeApiService
         if ($response->successful()) {
             return $response->json();
         }
-        Log::error("Could not execute address lookup, http response {$response->status()}, body: ".$response->body());
+        if ($response->status() === 404) {
+            Log::warning('Could not execute address lookup, address not found, http response 404, body: '.$response->body());
+        } else {
+            Log::error("Could not execute address lookup, http response {$response->status()}, body: ".$response->body());
+        }
 
         return null;
     }

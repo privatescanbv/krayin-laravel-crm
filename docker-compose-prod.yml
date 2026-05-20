@@ -32,7 +32,7 @@ services:
           - "patient.${PRIVATESCAN_BASE_DOMAIN}"
 
   crm:
-    image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:prod
     container_name: crm
     restart: unless-stopped
     stdin_open: true

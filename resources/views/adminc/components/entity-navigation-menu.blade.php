@@ -7,6 +7,7 @@
     'showResources' => false,
     'showAfbDispatches' => false,
     'showDepartments' => false,
+    'showInkoopAfletteren' => false,
     'showLeads' => false,
     'showSales' => false,
     'showPatientMessages' => false,
@@ -135,6 +136,18 @@
             >
                 <span class="icon-organization text-xl"></span>
                 Afdelingen
+            </button>
+        @endif
+
+        @if ($showInkoopAfletteren)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'inkoop-afletteren'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('inkoop-afletteren')"
+            >
+                <span class="icon-upload text-xl"></span>
+                Inkoop afletteren
             </button>
         @endif
 

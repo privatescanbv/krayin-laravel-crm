@@ -75,6 +75,11 @@ require 'operational-dashboard-routes.php';
 require 'afletteren-routes.php';
 
 /**
+ * Inkoop routes.
+ */
+require 'inkoop-routes.php';
+
+/**
  * Reports routes.
  */
 require 'reports-routes.php';

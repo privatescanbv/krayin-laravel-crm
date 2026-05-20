@@ -90,7 +90,8 @@
       "Skill(sentry:sentry-workflow)",
       "WebFetch(domain:skills.sentry.dev)",
       "Bash(vendor/bin/sail php -r ' *)",
-      "Bash(vendor/bin/sail php *)"
+      "Bash(vendor/bin/sail php *)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm status --short)"
     ]
   }
 }

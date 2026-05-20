@@ -53,6 +53,7 @@
                 :showOrders="false"
                 :showAnamnesis="false"
                 :showMarketing="false"
+                :showInkoopAfletteren="true"
                 :showPartnerProducts="true"
                 :showResources="true"
                 :showAfbDispatches="true"
@@ -112,6 +113,10 @@
 
             <div v-else-if="leadDetailSection === 'afdelingen'" class="flex w-full flex-col gap-4 rounded-lg">
                 <x-adminc::clinics.partials.departments :clinic="$clinic"/>
+            </div>
+
+            <div v-else-if="leadDetailSection === 'inkoop-afletteren'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc::clinics.partials.tab-inkoop-afletteren', ['clinic' => $clinic])
             </div>
         </div>
 
@@ -255,7 +260,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources', 'afb-verzendingen', 'afdelingen'];
+                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources', 'afb-verzendingen', 'afdelingen', 'inkoop-afletteren'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

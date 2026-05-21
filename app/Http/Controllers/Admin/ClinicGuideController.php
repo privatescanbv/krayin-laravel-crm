@@ -57,11 +57,12 @@ class ClinicGuideController extends Controller
                 'salesLead.lead',
                 'salesLead.contactPerson',
                 'orderItems' => function ($query) {
-                    $query->whereHas('product', function ($q) {
-                        $q->whereHas('partnerProducts', function ($q) {
-                            $q->whereHas('clinics');
-                        });
-                    })->with(['product', 'person', 'resourceOrderItems']);
+                    $query->where('status', '!=', OrderItemStatus::LOST->value)
+                        ->whereHas('product', function ($q) {
+                            $q->whereHas('partnerProducts', function ($q) {
+                                $q->whereHas('clinics');
+                            });
+                        })->with(['product', 'person', 'resourceOrderItems']);
                 },
                 'stage',
                 'user',

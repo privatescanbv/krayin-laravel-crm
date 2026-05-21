@@ -53,9 +53,8 @@
             </div>
         </template>
 
-        <!-- When no relationship exists: show Panel 1 (suggestions) and Panel 3 (manual select) -->
-        <template v-else>
-            <!-- Panel 1: Suggestions -->
+        <!-- When no relationship exists: show Panel 1 (suggestions) -->
+        <template v-if="!hasRelationships">
             <div class="flex flex-col gap-2">
                 <label class="font-semibold text-gray-800 dark:text-gray-300 flex items-center gap-2">
                     <span>Suggesties op basis van afzender</span>
@@ -80,23 +79,23 @@
                     </button>
                 @endif
             </div>
-
-            <!-- Panel 3: Manual entity selector -->
-            <div class="flex flex-col gap-2">
-                <label class="font-semibold text-gray-800 dark:text-gray-300">
-                    Koppel handmatig
-                </label>
-                <v-entity-linker
-                    :email="email"
-                    :lead-search-route="'{{ route('admin.leads.search') }}'"
-                    :sales-lead-search-route="'{{ route('admin.sales-leads.search') }}'"
-                    :order-search-route="'{{ route('admin.orders.search') }}'"
-                    @link-entity="linkEntity"
-                    @unlink-entity="unlinkEntity"
-                    :unlinking="unlinking"
-                ></v-entity-linker>
-            </div>
         </template>
+
+        <!-- Panel 3: Manual entity selector — always visible -->
+        <div class="flex flex-col gap-2">
+            <label class="font-semibold text-gray-800 dark:text-gray-300">
+                Koppel handmatig
+            </label>
+            <v-entity-linker
+                :email="email"
+                :lead-search-route="'{{ route('admin.leads.search') }}'"
+                :sales-lead-search-route="'{{ route('admin.sales-leads.search') }}'"
+                :order-search-route="'{{ route('admin.orders.search') }}'"
+                @link-entity="linkEntity"
+                @unlink-entity="unlinkEntity"
+                :unlinking="unlinking"
+            ></v-entity-linker>
+        </div>
     </div>
 
     <!-- Create Contact Modal -->

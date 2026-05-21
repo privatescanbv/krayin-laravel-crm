@@ -1074,6 +1074,8 @@
 
         <!-- Email Form Vue Component -->
         <script type="module">
+            @php $userSig = auth()->guard('user')->user()?->signature ?? ''; @endphp
+
             app.component('v-email-form', {
                 template: '#v-email-form-template',
 
@@ -1088,6 +1090,8 @@
                         isStoring: false,
 
                         subject: '',
+
+                        userSignature: {!! json_encode($userSig, JSON_HEX_TAG) !!},
                     };
                 },
 
@@ -1182,13 +1186,11 @@
                     },
 
                     'action.email.reply'(newVal) {
-                        // When the original email reply content changes (e.g., when switching emails), update TinyMCE
                         if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
-                            if (newVal && newVal.trim()) {
-                                this.$nextTick(() => {
-                                    this.setContentInTinyMCE(newVal);
-                                });
-                            }
+                            this.$nextTick(() => {
+                                const original = newVal || '';
+                                this.setContentInTinyMCE(this.userSignature ? this.userSignature + original : original);
+                            });
                         }
                     },
                 },
@@ -1200,7 +1202,8 @@
                     // For reply/reply-all, use the original email content
                     let contentToSet = '';
                     if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
-                        contentToSet = this.action.email?.reply || '';
+                        const original = this.action.email?.reply || '';
+                        contentToSet = this.userSignature ? this.userSignature + original : original;
                     } else if (this.reply && this.reply.trim()) {
                         contentToSet = this.reply;
                     }

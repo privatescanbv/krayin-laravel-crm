@@ -23,26 +23,6 @@ return [
         'icon-class' => 'icon-dashboard',
     ],
 
-    [
-        'key'        => 'reports',
-        'name'       => 'Rapporten',
-        'route'      => 'admin.reports.revenue-by-employee.index',
-        'sort'       => 2,
-        'icon-class' => 'icon-stats-up',
-    ], [
-        'key'        => 'reports.revenue-by-employee',
-        'name'       => 'Omzet per medewerker',
-        'route'      => 'admin.reports.revenue-by-employee.index',
-        'sort'       => 1,
-        'icon-class' => 'icon-stats-up',
-    ], [
-        'key'        => 'reports.revenue-by-month',
-        'name'       => 'Omzet per maand',
-        'route'      => 'admin.reports.revenue-by-month.index',
-        'sort'       => 2,
-        'icon-class' => 'icon-stats-up',
-    ],
-
     /**
      * Leads.
      */

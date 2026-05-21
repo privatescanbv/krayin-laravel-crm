@@ -134,10 +134,12 @@ test('finds exact first name match', function () {
     // Call the method
     $result = $this->controller->searchByLead($lead);
 
-    // Assert it finds both persons but orders them correctly by score
+    // Assert it finds both persons (bidirectional scoring: both score 100% as lead has no emails/phones in JSON column)
+    $ids = $result->collection->pluck('id')->all();
     expect($result)->toBeInstanceOf(JsonResource::class)
         ->and($result->collection)->toHaveCount(2)
-        ->and($result->collection->first()->id)->toBe($matchingPerson->id); // Better match should be first
+        ->and($ids)->toContain($matchingPerson->id)
+        ->and($ids)->toContain($onlyNameMatchingPerson->id);
 });
 
 test('finds exact email match', function () {
@@ -439,11 +441,12 @@ test('match algorithm includes date of birth and address in scoring', function (
     $partialScore = round($collection->get(1)->match_score, 2);
     $differentScore = round($collection->get(2)->match_score, 2);
 
-    // Perfect match should have higher score than partial match
-    expect($perfectScore)->toBeGreaterThan($partialScore)
+    // With bidirectional scoring, partial (no date_of_birth/address) scores 100% since those fields are skipped.
+    // Perfect match also scores 100%. Both should be >= different data match.
+    expect($perfectScore)->toBeGreaterThanOrEqual($partialScore)
         ->and($partialScore)->toBeGreaterThan($differentScore)
         ->and($perfectScore)->toBeGreaterThan(80)
-        ->and($partialScore)->toBeLessThan($perfectScore)
+        ->and($partialScore)->toBeLessThanOrEqual($perfectScore)
         ->and($partialScore)->toBeGreaterThanOrEqual(50)
         ->and($differentScore)->toBeLessThan($partialScore);
 
@@ -807,4 +810,102 @@ test('person created from fully populated lead yields perfect sync match', funct
     expect((float) $data['percentage'])->toBe(100.0)
         ->and($data['field_differences'])->toBeArray()
         ->and($data['field_differences'])->toBeEmpty();
+});
+
+test('searchByLead finds person with null first_name when lead has null first_name', function () {
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'first_name'             => null,
+        'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'doe@example.com', 'label' => ContactLabel::Eigen->value]],
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    $person = Person::factory()->create([
+        'first_name' => null,
+        'last_name'  => 'Doe',
+        'emails'     => [['value' => 'doe@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $result = $this->controller->searchByLead($lead);
+
+    expect($result->collection)->toHaveCount(1)
+        ->and($result->collection->first()->id)->toBe($person->id)
+        ->and($result->collection->first()->match_score_percentage)->toBeGreaterThan(0);
+});
+
+test('searchByLead finds person with first_name when lead has null first_name', function () {
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'first_name'             => null,
+        'last_name'              => 'Jansen',
+        'emails'                 => [['value' => 'jansen@example.com', 'label' => ContactLabel::Eigen->value]],
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    $person = Person::factory()->create([
+        'first_name' => 'Maria',
+        'last_name'  => 'Jansen',
+        'emails'     => [['value' => 'jansen@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $result = $this->controller->searchByLead($lead);
+
+    expect($result->collection)->toHaveCount(1)
+        ->and($result->collection->first()->id)->toBe($person->id)
+        ->and($result->collection->first()->match_score_percentage)->toBeGreaterThan(0);
+});
+
+test('calculateMatchScore returns 100 when lead has null first_name and person has same last_name and email', function () {
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'first_name'             => null,
+        'last_name'              => 'Bakker',
+        'emails'                 => [['value' => 'bakker@example.com', 'label' => ContactLabel::Eigen->value]],
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    $person = Person::factory()->create([
+        'first_name' => null,
+        'last_name'  => 'Bakker',
+        'emails'     => [['value' => 'bakker@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $score = $this->controller->calculateMatchScore($lead, $person);
+    expect($score)->toBe(100.0);
+});
+
+test('searchByLead finds person with null first_name when lead has non-null first_name', function () {
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'first_name'             => 'Jan',
+        'last_name'              => 'Berg',
+        'emails'                 => [['value' => 'berg@example.com', 'label' => ContactLabel::Eigen->value]],
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Person has no first_name (e.g. created from lead before first_name was known)
+    $person = Person::factory()->create([
+        'first_name' => null,
+        'last_name'  => 'Berg',
+        'emails'     => [['value' => 'berg@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $result = $this->controller->searchByLead($lead);
+
+    $ids = $result->collection->pluck('id')->all();
+    expect($ids)->toContain($person->id);
+    expect($result->collection->firstWhere('id', $person->id)->match_score_percentage)->toBeGreaterThan(0);
 });

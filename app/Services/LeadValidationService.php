@@ -16,7 +16,7 @@ class LeadValidationService
     {
         $rules = array_merge(
             [
-                'first_name'                     => 'required|string|max:255',
+                'first_name'                     => 'nullable|string|max:255',
                 'last_name'                      => 'required|string|max:255',
                 'description'                    => 'nullable|string',
                 'mri_status'                     => ['nullable', new Enum(MRIStatus::class)],

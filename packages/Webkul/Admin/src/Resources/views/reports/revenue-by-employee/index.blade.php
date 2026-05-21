@@ -246,6 +246,20 @@
                                         </td>
                                     </tr>
                                 </tbody>
+
+                                <tfoot v-if="employees.length">
+                                    <tr class="border-t-2 border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50">
+                                        <td class="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-white">
+                                            Totaal
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.week_inkoop, 0)) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.week_total, 0)) }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

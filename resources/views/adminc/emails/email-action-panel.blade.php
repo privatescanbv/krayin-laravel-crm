@@ -567,12 +567,13 @@
                     params.append('email', this.senderEmail);
                 }
                 if (this.email?.name) {
-                    const nameParts = this.email.name.split(' ');
-                    if (nameParts.length > 0) {
-                        params.append('first_name', nameParts[0]);
-                    }
-                    if (nameParts.length > 1) {
-                        params.append('last_name', nameParts.slice(1).join(' '));
+                    const parts = this.email.name.trim().split(/\s+/);
+                    if (parts.length >= 1) params.append('first_name', parts[0]);
+                    if (parts.length === 2) {
+                        params.append('last_name', parts[1]);
+                    } else if (parts.length >= 3) {
+                        params.append('lastname_prefix', parts.slice(1, -1).join(' '));
+                        params.append('last_name', parts[parts.length - 1]);
                     }
                 }
                 window.location.href = '{{ route('admin.leads.create') }}?' + params.toString();

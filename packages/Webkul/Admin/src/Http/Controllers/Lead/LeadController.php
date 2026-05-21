@@ -383,9 +383,10 @@ class LeadController extends Controller
         $queryEmail = request('email');
         $queryFirstName = request('first_name');
         $queryLastName = request('last_name');
+        $queryLastnamePrefix = request('lastname_prefix');
         $queryPhone = request('phone');
 
-        if ($queryEmail || $queryFirstName || $queryLastName || $queryPhone) {
+        if ($queryEmail || $queryFirstName || $queryLastName || $queryLastnamePrefix || $queryPhone) {
             // If no person is prefilled, create a prefilled lead person from query params
             if (!$prefilledLeadPerson) {
                 $prefilledLeadPerson = [];
@@ -414,6 +415,9 @@ class LeadController extends Controller
             }
             if ($queryLastName && empty($prefilledLeadPerson['last_name'])) {
                 $prefilledLeadPerson['last_name'] = $queryLastName;
+            }
+            if ($queryLastnamePrefix && empty($prefilledLeadPerson['lastname_prefix'])) {
+                $prefilledLeadPerson['lastname_prefix'] = $queryLastnamePrefix;
             }
 
             // Set phone if provided

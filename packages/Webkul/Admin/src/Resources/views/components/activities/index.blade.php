@@ -56,19 +56,7 @@
                         </span>
                     </div>
 
-                    <!-- Inbox Tab -->
-                    <div
-                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
-                        :class="selectedType == 'inbox' ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
-                        @click="selectedType = 'inbox'"
-                    >
-                        Inbox
-                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
-                            @{{ countInbox }}
-                        </span>
-                    </div>
-
-                    <!-- Other Tabs -->
+                    <!-- Other Tabs (Gepland, Alles, Bestanden, Logboek) -->
                     <div
                         v-for="type in types"
                         class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
@@ -81,6 +69,18 @@
                             class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white"
                         >
                             @{{ countUnprocessedFiles }}
+                        </span>
+                    </div>
+
+                    <!-- Inbox Tab -->
+                    <div
+                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
+                        :class="selectedType == 'inbox' ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
+                        @click="selectedType = 'inbox'"
+                    >
+                        Inbox
+                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
+                            @{{ countInbox }}
                         </span>
                     </div>
 
@@ -229,12 +229,12 @@
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
                         },
                         {
-                            name: 'file',
-                            label: "Bestanden",
-                        },
-                        {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
+                        },
+                        {
+                            name: 'file',
+                            label: "Bestanden",
                         },
                         {
                             name: 'system',

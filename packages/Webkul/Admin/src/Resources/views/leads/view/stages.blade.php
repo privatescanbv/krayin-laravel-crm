@@ -334,8 +334,8 @@
 
                     const performUpdate = async (extra = {}) => {
                         try {
-                            const response = await this.$axios.put("{!! $updateUrl !!}", params ?? {
-                                'lead_pipeline_stage_id': stage.id,
+                            const response = await this.$axios.put("{!! $updateUrl !!}", {
+                                ...(params ?? { 'lead_pipeline_stage_id': stage.id }),
                                 ...extra,
                             });
                             this.isUpdating = false;

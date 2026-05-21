@@ -90,7 +90,13 @@
       "Skill(sentry:sentry-workflow)",
       "WebFetch(domain:skills.sentry.dev)",
       "Bash(vendor/bin/sail php -r ' *)",
-      "Bash(vendor/bin/sail php *)"
+      "Bash(vendor/bin/sail php *)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm log --oneline --follow -- app/Services/Storage/LaravelDocumentStorage.php app/Providers/AppServiceProvider.php packages/Webkul/Email/src/Repositories/AttachmentRepository.php)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm log --all --oneline -- app/Services/Storage/LaravelDocumentStorage.php)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm log --all --oneline -- packages/Webkul/Email/src/Repositories/AttachmentRepository.php)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f --stat)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f -- packages/Webkul/Email/src/Repositories/AttachmentRepository.php)",
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f -- app/Console/Commands/FixEmailAttachmentPaths.php)"
     ]
   }
 }

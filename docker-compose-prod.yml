@@ -68,7 +68,7 @@ services:
       - traefik.docker.network=public
       - logging=promtail
     volumes:
-      - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
+#      - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
       - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app/public'
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost/up" ]

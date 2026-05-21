@@ -2,9 +2,11 @@
 
 namespace Webkul\Admin\Http\Controllers\Concerns;
 
+use App\Models\Order;
 use Illuminate\Support\Collection;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Attachment;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
@@ -35,7 +37,7 @@ trait ConcatsEmailActivities
         $salesLeadIds = $person->salesLeads->pluck('id')->toArray();
 
         $orderIds = ! empty($salesLeadIds)
-            ? \App\Models\Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id')->toArray()
+            ? Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id')->toArray()
             : [];
 
         return Email::forPersonThread(
@@ -74,21 +76,42 @@ trait ConcatsEmailActivities
             ? Activity::whereIn('id', $activityIds)->get()->keyBy('id')
             : collect();
 
-        $mapped = $emails->map(function (Email $email) use ($user, $attachmentRepository, $linkedActivities) {
-            $subject = $email->getThreadChain()->pluck('subject')
-                ->implode(' / ');
+        // Bulk-load folders to avoid N+1 (one query instead of one per email)
+        $folderIds = $emails->pluck('folder_id')->filter()->unique()->values()->all();
+        $folders = $folderIds
+            ? Folder::whereIn('id', $folderIds)->get()->keyBy('id')
+            : collect();
 
+        // Bulk-load attachments to avoid N+1 (one query instead of one per email)
+        $emailIds = $emails->pluck('id')->all();
+        $attachmentsByEmail = $emailIds
+            ? Attachment::whereIn('email_id', $emailIds)->get()->groupBy('email_id')
+            : collect();
+
+        $mapped = $emails->map(function (Email $email) use ($user, $linkedActivities, $folders, $attachmentsByEmail) {
             $linkedActivity = $email->activity_id ? ($linkedActivities[$email->activity_id] ?? null) : null;
-            $folder = $email->folder_id ? Folder::find($email->folder_id) : null;
+            $folder = $email->folder_id ? ($folders[$email->folder_id] ?? null) : null;
 
             $linkedEntityType = $linkedActivity
                 ? 'activity'
                 : ($email->order_id ? 'order' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))));
 
+            $emailAttachments = ($attachmentsByEmail[$email->id] ?? collect())->map(function ($attachment) {
+                return (object) [
+                    'id'                  => $attachment->id,
+                    'name'                => $attachment->name,
+                    'path'                => $attachment->path,
+                    'url'                 => $attachment->url,
+                    'is_email_attachment' => true,
+                    'created_at'          => $attachment->created_at,
+                    'updated_at'          => $attachment->updated_at,
+                ];
+            })->values()->toArray();
+
             return (object) [
                 'id'             => $email->id,
                 'parent_id'      => $email->parent_id,
-                'title'          => $subject,
+                'title'          => $email->subject,
                 'type'           => 'email',
                 'is_done'        => 1,
                 'is_read'        => $email->is_read,
@@ -105,17 +128,7 @@ trait ConcatsEmailActivities
                     'cc'      => $this->toArray($email->cc),
                     'bcc'     => $this->toArray($email->bcc),
                 ],
-                'files'          => $attachmentRepository->findWhere(['email_id' => $email->id])->map(function ($attachment) {
-                    return (object) [
-                        'id'                  => $attachment->id,
-                        'name'                => $attachment->name,
-                        'path'                => $attachment->path,
-                        'url'                 => $attachment->url,
-                        'is_email_attachment' => true,
-                        'created_at'          => $attachment->created_at,
-                        'updated_at'          => $attachment->updated_at,
-                    ];
-                })->toArray(),
+                'files'          => $emailAttachments,
                 'emailLinkedEntityType' => $linkedEntityType,
                 'activity_id'    => $email->activity_id,
                 'activity_title' => $linkedActivity?->title,

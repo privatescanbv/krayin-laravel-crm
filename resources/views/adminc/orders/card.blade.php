@@ -6,7 +6,7 @@
     $entity = $order;
     $entityName = 'order';
     $entityViewURL = route('admin.orders.view', $entity->id);
-    $person = $order->salesLead->getContactPersonOrFirstPerson();
+    $person = $order->salesLead?->getContactPersonOrFirstPerson();
     $age = null;
     if(!is_null($person)) {
         $entity = $person;

@@ -85,7 +85,7 @@ services:
     volumes:
       - '.:/usr/share/nginx/html'
       - './certs:/certs:ro'
-      - './crm_storage:/usr/share/nginx/html/storage/app/public'
+      - './crm_storage:/usr/share/nginx/html/storage/app'
     extra_hosts:
       - "clinicdev.local.privatescan.nl:host-gateway"
       - "patientdev.local.privatescan.nl:host-gateway"

@@ -96,7 +96,9 @@
       "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm log --all --oneline -- packages/Webkul/Email/src/Repositories/AttachmentRepository.php)",
       "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f --stat)",
       "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f -- packages/Webkul/Email/src/Repositories/AttachmentRepository.php)",
-      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f -- app/Console/Commands/FixEmailAttachmentPaths.php)"
+      "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm show d447f7a8f -- app/Console/Commands/FixEmailAttachmentPaths.php)",
+      "Bash(git *)",
+      "Bash(truncate -s -1 /Users/mark/workplace/privatescan/crm/krayin-laravel-crm/packages/Webkul/Admin/src/resources/views/components/activities/index.blade.php)"
     ]
   }
 }

@@ -13,6 +13,7 @@ use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Models\SalesLeadRelation;
+use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
 use App\Services\PipelineCookieService;
 use App\Services\StageTransitionAttributes;
@@ -51,6 +52,7 @@ class SalesLeadController extends Controller
         private readonly PipelineCookieService $pipelineCookieService,
         private readonly ActivityRepository $activityRepository,
         private readonly AttachmentRepository $attachmentRepository,
+        private readonly OrderRepository $orderRepository,
     ) {}
 
     public function index(Request $request)
@@ -531,8 +533,34 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::findOrFail($id);
 
-        $salesLead->orders()->delete();
-        $salesLead->delete();
+        request()->validate([
+            'lost_reason' => ['nullable', new Enum(LostReason::class)],
+        ]);
+
+        // Zoek de lost-stage op in de pipeline van deze sales
+        $salesLead->load('stage.pipeline.stages');
+        $stage = $salesLead->stage;
+        $pipeline = $stage?->pipeline;
+        $lostStage = $pipeline?->stages()->where('is_lost', true)->first();
+
+        if (! $lostStage) {
+            return response()->json([
+                'message' => 'Geen "Verloren" status gevonden voor deze pipeline.',
+            ], 422);
+        }
+
+        $lostReason = request('lost_reason')
+            ? LostReason::from(request('lost_reason'))
+            : LostReason::DataEntry;
+
+        $salesLead->update([
+            'pipeline_stage_id' => $lostStage->id,
+            'lost_reason'       => $lostReason->value,
+            'closed_at'         => now(),
+        ]);
+
+        $this->completeAllOpenActivitiesForLead($salesLead->id);
+        $this->orderRepository->cleanUpFromLostSales($salesLead->id);
 
         return response()->json(['message' => __('messages.sales.deleted')]);
     }

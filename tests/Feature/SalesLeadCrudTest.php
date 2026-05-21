@@ -132,7 +132,18 @@ test('can update workflow lead (ajax json)', function () {
     ]);
 });
 
-test('can delete workflow lead', function () {
+test('deleting a workflow lead marks it as lost instead of hard deleting', function () {
+    $lostStage = Stage::where('lead_pipeline_id', test()->pipeline->id)->where('is_lost', true)->first();
+    if (! $lostStage) {
+        $lostStage = Stage::create([
+            'name'             => 'Verloren',
+            'code'             => 'lost',
+            'lead_pipeline_id' => test()->pipeline->id,
+            'sort_order'       => 99,
+            'is_lost'          => true,
+        ]);
+    }
+
     $lead = Lead::factory()->create();
     $salesLead = SalesLead::create([
         'name'              => 'Delete Me',
@@ -143,8 +154,10 @@ test('can delete workflow lead', function () {
     $response = $this->deleteJson(route('admin.sales-leads.delete', ['id' => $salesLead->id]));
     $response->assertOk();
 
-    $this->assertDatabaseMissing('salesleads', [
-        'id' => $salesLead->id,
+    // delete() now marks as lost instead of hard deleting
+    $this->assertDatabaseHas('salesleads', [
+        'id'                => $salesLead->id,
+        'pipeline_stage_id' => $lostStage->id,
     ]);
 });
 
@@ -165,9 +178,9 @@ test('can create Sales with person relationships', function () {
     $response->assertStatus(302);
 
     $salesLead = SalesLead::where('name', 'Sales with Persons')->first();
-    expect($salesLead)->not->toBeNull();
-    expect($salesLead->persons()->count())->toBe(2);
-    expect($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
+    expect($salesLead)->not->toBeNull()
+        ->and($salesLead->persons()->count())->toBe(2)
+        ->and($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
 
     // Check database relationships
     $this->assertDatabaseHas('saleslead_persons', [
@@ -199,9 +212,9 @@ test('can copy persons from lead when creating Sales', function () {
     $response->assertStatus(302);
 
     $salesLead = SalesLead::where('name', 'Sales with Copied Persons')->first();
-    expect($salesLead)->not->toBeNull();
-    expect($salesLead->persons()->count())->toBe(2);
-    expect($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
+    expect($salesLead)->not->toBeNull()
+        ->and($salesLead->persons()->count())->toBe(2)
+        ->and($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
 });
 
 test('can update Sales person relationships', function () {
@@ -233,9 +246,9 @@ test('can update Sales person relationships', function () {
 
     // Refresh the Sales
     $salesLead->refresh();
-    expect($salesLead->persons()->count())->toBe(2);
-    expect($salesLead->persons->pluck('id')->toArray())->toContain($person2->id, $person3->id);
-    expect($salesLead->persons->pluck('id')->toArray())->not->toContain($person1->id);
+    expect($salesLead->persons()->count())->toBe(2)
+        ->and($salesLead->persons->pluck('id')->toArray())->toContain($person2->id, $person3->id)
+        ->and($salesLead->persons->pluck('id')->toArray())->not->toContain($person1->id);
 
     // Check database relationships
     $this->assertDatabaseHas('saleslead_persons', [

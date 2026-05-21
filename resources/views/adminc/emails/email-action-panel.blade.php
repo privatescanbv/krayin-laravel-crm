@@ -53,9 +53,8 @@
             </div>
         </template>
 
-        <!-- When no relationship exists: show Panel 1 (suggestions) and Panel 3 (manual select) -->
-        <template v-else>
-            <!-- Panel 1: Suggestions -->
+        <!-- When no relationship exists: show Panel 1 (suggestions) -->
+        <template v-if="!hasRelationships">
             <div class="flex flex-col gap-2">
                 <label class="font-semibold text-gray-800 dark:text-gray-300 flex items-center gap-2">
                     <span>Suggesties op basis van afzender</span>
@@ -80,23 +79,23 @@
                     </button>
                 @endif
             </div>
-
-            <!-- Panel 3: Manual entity selector -->
-            <div class="flex flex-col gap-2">
-                <label class="font-semibold text-gray-800 dark:text-gray-300">
-                    Koppel handmatig
-                </label>
-                <v-entity-linker
-                    :email="email"
-                    :lead-search-route="'{{ route('admin.leads.search') }}'"
-                    :sales-lead-search-route="'{{ route('admin.sales-leads.search') }}'"
-                    :order-search-route="'{{ route('admin.orders.search') }}'"
-                    @link-entity="linkEntity"
-                    @unlink-entity="unlinkEntity"
-                    :unlinking="unlinking"
-                ></v-entity-linker>
-            </div>
         </template>
+
+        <!-- Panel 3: Manual entity selector — always visible -->
+        <div class="flex flex-col gap-2">
+            <label class="font-semibold text-gray-800 dark:text-gray-300">
+                Koppel handmatig
+            </label>
+            <v-entity-linker
+                :email="email"
+                :lead-search-route="'{{ route('admin.leads.search') }}'"
+                :sales-lead-search-route="'{{ route('admin.sales-leads.search') }}'"
+                :order-search-route="'{{ route('admin.orders.search') }}'"
+                @link-entity="linkEntity"
+                @unlink-entity="unlinkEntity"
+                :unlinking="unlinking"
+            ></v-entity-linker>
+        </div>
     </div>
 
     <!-- Create Contact Modal -->
@@ -568,12 +567,13 @@
                     params.append('email', this.senderEmail);
                 }
                 if (this.email?.name) {
-                    const nameParts = this.email.name.split(' ');
-                    if (nameParts.length > 0) {
-                        params.append('first_name', nameParts[0]);
-                    }
-                    if (nameParts.length > 1) {
-                        params.append('last_name', nameParts.slice(1).join(' '));
+                    const parts = this.email.name.trim().split(/\s+/);
+                    if (parts.length >= 1) params.append('first_name', parts[0]);
+                    if (parts.length === 2) {
+                        params.append('last_name', parts[1]);
+                    } else if (parts.length >= 3) {
+                        params.append('lastname_prefix', parts.slice(1, -1).join(' '));
+                        params.append('last_name', parts[parts.length - 1]);
                     }
                 }
                 window.location.href = '{{ route('admin.leads.create') }}?' + params.toString();

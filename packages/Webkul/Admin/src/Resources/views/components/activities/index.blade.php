@@ -56,18 +56,6 @@
                         </span>
                     </div>
 
-                    <!-- Inbox Tab -->
-                    <div
-                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
-                        :class="selectedType == 'inbox' ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
-                        @click="selectedType = 'inbox'"
-                    >
-                        Inbox
-                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
-                            @{{ countInbox }}
-                        </span>
-                    </div>
-
                     <!-- Other Tabs -->
                     <div
                         v-for="type in types"
@@ -81,6 +69,18 @@
                             class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white"
                         >
                             @{{ countUnprocessedFiles }}
+                        </span>
+                    </div>
+
+                    <!-- Inbox Tab -->
+                    <div
+                        class="flex cursor-pointer items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-all hover:text-gray-800 dark:text-white dark:hover:text-white"
+                        :class="selectedType == 'inbox' ? 'border-brandColor text-brandColor' : 'border-transparent text-gray-600'"
+                        @click="selectedType = 'inbox'"
+                    >
+                        Inbox
+                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
+                            @{{ countInbox }}
                         </span>
                     </div>
 
@@ -229,12 +229,12 @@
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
                         },
                         {
-                            name: 'file',
-                            label: "Bestanden",
-                        },
-                        {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
+                        },
+                        {
+                            name: 'file',
+                            label: "Bestanden",
                         },
                         {
                             name: 'system',
@@ -246,13 +246,13 @@
                 filterTypes: {
                     type: Array,
                     default: [
-                        @foreach (App\Enums\ActivityType::cases() as $type)
+                            @foreach (App\Enums\ActivityType::cases() as $type)
                             @if ($type !== App\Enums\ActivityType::SYSTEM)
-                                {
-                                    name: '{{ $type->value }}',
-                                    label: '{{ $type->label() }}',
-                                },
-                            @endif
+                        {
+                            name: '{{ $type->value }}',
+                            label: '{{ $type->label() }}',
+                        },
+                        @endif
                         @endforeach
                     ],
                 },
@@ -355,8 +355,8 @@
                     // console.log('selectedType = '+this.selectedType + ', activityTypeFilter = ' + this.activityTypeFilter);
                     // console.log(JSON.parse(JSON.stringify(this.activities)));
                     if (this.selectedType === 'action_needed') {
-                         return this.activities
-                             .filter(activity => ! activity.is_done && this.isPastDay(activity.schedule_to || activity.schedule_from))
+                        return this.activities
+                            .filter(activity => ! activity.is_done && this.isPastDay(activity.schedule_to || activity.schedule_from))
                             .sort((a, b) => {
                                 const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
                                 const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
@@ -367,11 +367,11 @@
                     if (this.selectedType === 'inbox' && this.activityTypeFilter === 'all') {
                         return this.activities
                             .filter(activity => ['email', 'patient_message'].includes(activity.type))
-                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                            .sort(this.sortOpenFirstThenByDate);
                     } else if (this.selectedType === 'inbox') {
                         return this.activities
                             .filter(activity => activity.type === this.activityTypeFilter)
-                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                            .sort(this.sortOpenFirstThenByDate);
                     } else if (this.selectedType == 'planned') {
                         return this.activities
                             .filter(activity => ! activity.is_done && !['email', 'patient_message'].includes(activity.type))
@@ -384,7 +384,7 @@
                     } else if (this.selectedType == 'file') {
                         return this.activities.filter(activity =>
                             activity.type == 'file' && (this.showCompleted || !activity.is_done)
-                        );
+                        ).sort(this.sortOpenFirstThenByDate);
                     } else if (this.selectedType == 'system') {
                         return this.activities.filter(activity => activity.type == 'system');
                     }
@@ -401,12 +401,12 @@
                         console.log('filter all and filter on all = ' + this.activityTypeFilter);
                         filtered = filtered.filter(activity => activity.type !== 'system' && activity.type === this.activityTypeFilter);
                     } else if (this.selectedType != 'all' && !['action_needed', 'inbox', 'planned', 'system'].includes(this.selectedType)) {
-                         // Fallback for extraTypes
-                         console.log('filter fallback = ' + this.activityTypeFilter);
-                         filtered = filtered.filter(activity => activity.type == this.selectedType);
+                        // Fallback for extraTypes
+                        console.log('filter fallback = ' + this.activityTypeFilter);
+                        filtered = filtered.filter(activity => activity.type == this.selectedType);
                     }
 
-                    return filtered;
+                    return filtered.sort(this.sortOpenFirstThenByDate);
                 }
             },
 
@@ -423,6 +423,19 @@
             },
 
             methods: {
+                sortOpenFirstThenByDate(a, b) {
+                    if (!a.is_done && b.is_done) return -1;
+                    if (a.is_done && !b.is_done) return 1;
+                    if (!a.is_done && !b.is_done) {
+                        const aDeadline = a.schedule_to || a.schedule_from;
+                        const bDeadline = b.schedule_to || b.schedule_from;
+                        if (aDeadline && bDeadline) return new Date(aDeadline) - new Date(bDeadline);
+                        if (aDeadline) return -1;
+                        if (bDeadline) return 1;
+                    }
+                    return new Date(b.created_at) - new Date(a.created_at);
+                },
+
                 get() {
                     this.isLoading = true;
                     this.$axios.get(this.endpoint)
@@ -485,10 +498,10 @@
                             let emailId = activity.parent_id ?? activity.id;
 
                             this.$axios.delete(this.emailDetachEndpoint, {
-                                    data: {
-                                        email_id: emailId,
-                                    }
-                                })
+                                data: {
+                                    email_id: emailId,
+                                }
+                            })
                                 .then((response) => {
                                     let relatedActivities = this.activities.filter(activity => activity.parent_id == emailId || activity.id == emailId);
 

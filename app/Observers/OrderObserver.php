@@ -33,6 +33,21 @@ class OrderObserver
         Event::dispatch('order.update_stage.after', $order);
     }
 
+    public function deleting(Order $order): bool
+    {
+        $order->loadMissing(['salesLead.department', 'salesLead.lead.department']);
+
+        $department = $order->salesLead?->getDepartment();
+        $lostStageId = Order::lostOrderStageId($department);
+
+        $order->update([
+            'pipeline_stage_id' => $lostStageId,
+            'closed_at'         => $order->closed_at ?? now(),
+        ]);
+
+        return false;
+    }
+
     /**
      * Handle the Order "updated" event.
      */

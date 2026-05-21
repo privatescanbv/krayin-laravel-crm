@@ -62,7 +62,7 @@
             type="text"
             name="initials"
             :label="__('Initialen')"
-            value="{{ $entity?->initials ?? '' }}"
+            value="{{ old('initials', $entity?->initials ?? '') }}"
             placeholder="J.A."
             :readonly="!$mayEditPersonFields"
         />
@@ -73,7 +73,7 @@
             type="text"
             name="first_name"
             :label="__('Voornaam')"
-            value="{{ $entity?->first_name ?? '' }}"
+            value="{{ old('first_name', $entity?->first_name ?? '') }}"
             placeholder="Voornaam"
             rules="required"
             :readonly="!$mayEditPersonFields"
@@ -88,7 +88,7 @@
             type="text"
             name="lastname_prefix"
             :label="__('Tussenvoegsel')"
-            value="{{ $entity?->lastname_prefix ?? '' }}"
+            value="{{ old('lastname_prefix', $entity?->lastname_prefix ?? '') }}"
             placeholder="van, de, den, etc."
             :readonly="!$mayEditPersonFields"
         />
@@ -99,7 +99,7 @@
             type="text"
             name="last_name"
             :label="__('admin::app.leads.merge.field-last-name-birth')"
-            value="{{ $entity?->last_name ?? '' }}"
+            value="{{ old('last_name', $entity?->last_name ?? '') }}"
             placeholder="Achternaam"
             rules="required"
             :readonly="!$mayEditPersonFields"
@@ -115,7 +115,7 @@
             type="text"
             name="married_name_prefix"
             :label="__('Tussenvoegsel')"
-            value="{{ $entity?->married_name_prefix ?? '' }}"
+            value="{{ old('married_name_prefix', $entity?->married_name_prefix ?? '') }}"
             placeholder="van, de, den, etc."
             :readonly="!$mayEditPersonFields"
         />
@@ -127,7 +127,7 @@
             name="married_name"
             label="Aangetrouwde achternaam"
             placeholder="Aangetrouwde achternaam"
-            value="{{ $entity?->married_name ?? '' }}"
+            value="{{ old('married_name', $entity?->married_name ?? '') }}"
             :readonly="!$mayEditPersonFields"
         />
     </div>
@@ -138,7 +138,7 @@
         type="date"
         name="date_of_birth"
         :label="__('Geboortedatum')"
-        value="{{ $entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : '' }}"
+        value="{{ old('date_of_birth', $entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : '') }}"
         :readonly="!$mayEditPersonFields"
     />
 
@@ -169,7 +169,7 @@
         type="text"
         name="national_identification_number"
         label="Burgerservicenummer (BSN)"
-        value="{{ $entity?->national_identification_number ?? '' }}"
+        value="{{ old('national_identification_number', $entity?->national_identification_number ?? '') }}"
         placeholder="fake-text-anti-autocomplete"
         :disabled="!$mayEditPersonFields"
         :readonly="!$mayEditPersonFields"

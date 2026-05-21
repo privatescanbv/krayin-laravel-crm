@@ -69,7 +69,7 @@ services:
       - logging=promtail
     volumes:
       - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
-      - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app/public'
+      - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app'
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost/up" ]
       interval: 30s

@@ -385,12 +385,12 @@ class Order extends Model
 
     public function isHerniapoli(): bool
     {
-        return $this->stage?->lead_pipeline_id === PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value;
+        return (int) $this->stage?->lead_pipeline_id === PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value;
     }
 
     public function getNameAttribute(): string
     {
-        return $this->order_number.' '.$this->salesLead->name;
+        return $this->order_number.' '.($this->salesLead?->name ?? '');
     }
 
     public function getOpenActivitiesCountAttribute(): int

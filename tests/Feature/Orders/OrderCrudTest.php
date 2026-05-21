@@ -117,14 +117,16 @@ test('can update order invoice_number and is_business', function () {
     expect($order->organization_id)->toBe($org->id);
 });
 
-test('can delete order', function () {
+test('deleting an order marks it as lost instead of hard deleting', function () {
     $order = Order::factory()->create();
 
     $response = $this->deleteJson(route('admin.orders.delete', ['id' => $order->id]));
     $response->assertOk();
 
-    $this->assertDatabaseMissing('orders', [
-        'id' => $order->id,
+    // OrderObserver::deleting() returns false to prevent hard delete and sets the order to lost stage
+    $this->assertDatabaseHas('orders', [
+        'id'                => $order->id,
+        'pipeline_stage_id' => \App\Enums\PipelineStage::ORDER_VERLOREN->id(),
     ]);
 });
 

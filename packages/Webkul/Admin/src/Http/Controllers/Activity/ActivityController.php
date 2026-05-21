@@ -609,7 +609,7 @@ class ActivityController extends Controller
             $disk = $file->resolveDisk();
 
             if ($disk === null) {
-                logger()->warning('Activity file download failed: file missing on all disks', [
+                logger()->error('Activity file download failed: file missing on all disks', [
                     'activity_file_id' => $file->id,
                     'path'             => $file->path,
                 ]);

@@ -64,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->singleton(OrderCheckService::class);
-        $this->app->bind(DocumentStorage::class, LaravelDocumentStorage::class);
+        $this->app->bind(DocumentStorage::class, fn () => new LaravelDocumentStorage(config('filesystems.default', 'public')));
 
         $this->app->singleton(ApiHttpTrafficLogger::class, DefaultApiHttpTrafficLogger::class);
     }

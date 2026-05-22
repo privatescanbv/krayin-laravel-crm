@@ -3,6 +3,7 @@
 namespace Tests\Feature\Settings;
 
 use App\Enums\OrderItemStatus;
+use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
@@ -126,7 +127,7 @@ test('deleting an order marks it as lost instead of hard deleting', function () 
     // OrderObserver::deleting() returns false to prevent hard delete and sets the order to lost stage
     $this->assertDatabaseHas('orders', [
         'id'                => $order->id,
-        'pipeline_stage_id' => \App\Enums\PipelineStage::ORDER_VERLOREN->id(),
+        'pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id(),
     ]);
 });
 

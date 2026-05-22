@@ -807,12 +807,12 @@ class OrderController extends SimpleEntityController
 
         if ($person) {
             $anamnesis = Anamnesis::where('person_id', $person->id)
-                ->whereNotNull('gvl_form_link')
+                ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
             if ($anamnesis) {
-                $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+                $formId = $anamnesis->gvl_form_id;
                 if ($formId) {
                     try {
                         $formStatus = $this->formService->getFormStatusAsString($formId);
@@ -981,7 +981,7 @@ class OrderController extends SimpleEntityController
 
         if ($type === 'gvl' && $personId) {
             $anamnesis = Anamnesis::where('person_id', $personId)
-                ->whereNotNull('gvl_form_link')
+                ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
@@ -989,7 +989,7 @@ class OrderController extends SimpleEntityController
                 abort(404, 'Geen GVL formulier gevonden.');
             }
 
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            $formId = $anamnesis->gvl_form_id;
 
             if (! $formId) {
                 abort(404, 'Geen geldig GVL formulier ID.');
@@ -2172,7 +2172,7 @@ class OrderController extends SimpleEntityController
         foreach ($personIds as $personId) {
             $anamnesis = Anamnesis::query()
                 ->where('person_id', $personId)
-                ->whereNotNull('gvl_form_link')
+                ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
@@ -2180,7 +2180,7 @@ class OrderController extends SimpleEntityController
                 continue;
             }
 
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            $formId = $anamnesis->gvl_form_id;
 
             if (! $formId) {
                 continue;

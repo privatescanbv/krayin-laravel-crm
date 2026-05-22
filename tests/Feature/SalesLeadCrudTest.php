@@ -318,9 +318,8 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
     $person = Person::factory()->create();
     $lead->attachPersons([$person->id]);
 
-    $originalLink = 'https://forms.example.com/forms/123';
     $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
-    $anamnesis->update(['gvl_form_link' => $originalLink]);
+    $anamnesis->update(['gvl_form_id' => '123']);
 
     Http::fake([
         'http://forms/api/forms/123' => Http::response([], 200),
@@ -332,8 +331,8 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
         ->assertJsonPath('message', 'GVL formulier is ontkoppeld.');
 
     $this->assertDatabaseHas('anamnesis', [
-        'id'            => $anamnesis->id,
-        'gvl_form_link' => null,
+        'id'          => $anamnesis->id,
+        'gvl_form_id' => null,
     ]);
 
     Http::assertSent(function ($request) {
@@ -393,9 +392,8 @@ test('gvl form stays linked to anamnesis when forms api responds with error', fu
     $person = Person::factory()->create();
     $lead->attachPersons([$person->id]);
 
-    $originalLink = 'https://forms.example.com/forms/456';
     $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
-    $anamnesis->update(['gvl_form_link' => $originalLink]);
+    $anamnesis->update(['gvl_form_id' => '456']);
 
     Http::fake([
         'http://forms/api/forms/456' => Http::response(['message' => 'not found'], 404),
@@ -407,8 +405,8 @@ test('gvl form stays linked to anamnesis when forms api responds with error', fu
         ->assertJsonPath('message', 'not found');
 
     $this->assertDatabaseHas('anamnesis', [
-        'id'            => $anamnesis->id,
-        'gvl_form_link' => $originalLink,
+        'id'          => $anamnesis->id,
+        'gvl_form_id' => '456',
     ]);
 
     Http::assertSent(function ($request) {

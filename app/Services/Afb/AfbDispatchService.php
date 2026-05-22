@@ -535,7 +535,7 @@ class AfbDispatchService
         foreach ($personIds as $personId) {
             $anamnesis = Anamnesis::query()
                 ->where('person_id', $personId)
-                ->whereNotNull('gvl_form_link')
+                ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
@@ -543,7 +543,7 @@ class AfbDispatchService
                 continue;
             }
 
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            $formId = $anamnesis->gvl_form_id;
 
             if (! $formId) {
                 continue;

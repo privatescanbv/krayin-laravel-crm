@@ -76,7 +76,7 @@ class Anamnesis extends Model
         'lead_id',
         'sales_id',
         'person_id',
-        'gvl_form_link',
+        'gvl_form_id',
         'created_by',
         'updated_by',
     ];
@@ -201,5 +201,14 @@ class Anamnesis extends Model
     public function getLabelAttribute(): string
     {
         return $this->person?->name ?? $this->lead?->title ?? $this->sales?->name ?? 'Onbekend';
+    }
+
+    public function getGvlFormLinkAttribute(): ?string
+    {
+        if (empty($this->gvl_form_id)) {
+            return null;
+        }
+
+        return rtrim(config('services.portal.patient.web_url'), '/').'/patient/forms/'.$this->gvl_form_id.'/step/1';
     }
 }

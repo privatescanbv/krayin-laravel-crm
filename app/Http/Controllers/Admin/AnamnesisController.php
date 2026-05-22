@@ -280,13 +280,13 @@ class AnamnesisController extends Controller
 
     public function cleanUpForLead(string $personId, string $leadId): void
     {
-        $anamnesis = Anamnesis::select(['id', 'gvl_form_link'])
+        $anamnesis = Anamnesis::select(['id', 'gvl_form_id'])
             ->where('person_id', $personId)
             ->where('lead_id', $leadId)
             ->firstOrFail();
-        logger()->info('Running clean up action for lead, gvl form found: '.$anamnesis->gvl_form_link);
-        if ($anamnesis->gvl_form_link) {
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+        logger()->info('Running clean up action for lead, gvl form found: '.$anamnesis->gvl_form_id);
+        if ($anamnesis->gvl_form_id) {
+            $formId = $anamnesis->gvl_form_id;
             if (! $this->formService->getFormStatusAsString($formId)->isCompleted()) {
                 $this->doDetachGvlForm($anamnesis->id);
             }
@@ -300,19 +300,19 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::findOrFail($anamnesisid);
 
-        if (empty($anamnesis->gvl_form_link)) {
+        if (empty($anamnesis->gvl_form_id)) {
             return response()->json([
                 'message' => 'Er is geen GVL formulier gekoppeld aan deze anamnesis.',
             ], 422);
         }
 
         try {
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            $formId = $anamnesis->gvl_form_id;
 
             if ($formId === null) {
                 Log::error('AnamnesisController@detachGvlForm could not resolve form id from URL', [
-                    'anamnesis_id'  => $anamnesisid,
-                    'gvl_form_link' => $anamnesis->gvl_form_link,
+                    'anamnesis_id' => $anamnesisid,
+                    'gvl_form_id'  => $anamnesis->gvl_form_id,
                 ]);
                 throw new Exception('Could not resolve form id from url: '.$anamnesis->gvl_form_link);
             }
@@ -335,7 +335,7 @@ class AnamnesisController extends Controller
             }
 
             $anamnesis->update([
-                'gvl_form_link' => null,
+                'gvl_form_id' => null,
             ]);
 
             // clean up patient notification related to this form
@@ -374,14 +374,14 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::findOrFail($anamnesisId);
 
-        if (empty($anamnesis->gvl_form_link)) {
+        if (empty($anamnesis->gvl_form_id)) {
             return response()->json([
                 'message' => 'Er is geen GVL formulier gekoppeld aan deze anamnesis.',
             ], 422);
         }
 
         try {
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            $formId = $anamnesis->gvl_form_id;
 
             if (! $formId) {
                 return response()->json([
@@ -620,7 +620,7 @@ class AnamnesisController extends Controller
 
         // Save the link to the anamnesis
         $anamnesis->update([
-            'gvl_form_link' => $formLink,
+            'gvl_form_id' => $this->formService->extractFormIdFromUrl($formLink),
         ]);
 
         return [$result['json']['data']['id'],  $formLink];

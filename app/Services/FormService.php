@@ -342,7 +342,7 @@ class FormService
     public function findRelatedEntityByFormId(string $showFormUrl): array
     {
         $person = Anamnesis::select('person_id')
-            ->where('gvl_form_link', $showFormUrl)
+            ->where('gvl_form_id', $this->extractFormIdFromUrl($showFormUrl) ?? $showFormUrl)
             ->firstOrFail();
 
         $result = $this->leadAndSalesService->findOpenByPerson($person->person_id);

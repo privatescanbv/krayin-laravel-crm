@@ -328,9 +328,9 @@ test('it returns template body with gvl template and person entity', function ()
     ]);
 
     $anamnesis = Anamnesis::factory()->create([
-        'person_id'     => $person->id,
-        'lead_id'       => $lead->id,
-        'gvl_form_link' => 'https://example.com/gvl-form/12345',
+        'person_id'   => $person->id,
+        'lead_id'     => $lead->id,
+        'gvl_form_id' => '12345',
     ]);
 
     $template = EmailTemplate::factory()->create([
@@ -359,7 +359,7 @@ test('it returns template body with gvl template and person entity', function ()
 
     $content = $response->json('data.content');
     expect($content)->toContain('Person')
-        ->and($content)->toContain('https://example.com/gvl-form/12345')
+        ->and($content)->toContain('https://patientdev.local.privatescan.nl/patient/forms/12345/step/1')
         ->and($content)->not->toContain('{{ $gvl_form_link }}');
 });
 

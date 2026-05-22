@@ -447,8 +447,8 @@ class EmailTemplateRenderingService
 
         if (! $anamnesis) {
             $anamnesis = Anamnesis::where('person_id', $personId)
-                ->whereNotNull('gvl_form_link')
-                ->where('gvl_form_link', '!=', '')
+                ->whereNotNull('gvl_form_id')
+                ->where('gvl_form_id', '!=', '')
                 ->latest('updated_at')
                 ->first();
         }

@@ -565,10 +565,14 @@ class PersonController extends Controller
             return response()->json(['message' => 'lead_id and person_id are required'], 422);
         }
 
-        try {
-            $lead = Lead::findOrFail($leadId);
-            $person = Person::findOrFail($personId);
+        $lead = Lead::find($leadId);
+        $person = Person::find($personId);
 
+        if (! $lead || ! $person) {
+            return response()->json(['message' => 'Lead or person not found'], 404);
+        }
+
+        try {
             $result = $this->buildLeadToPersonMatchBreakdown($lead, $person);
 
             // Compute legacy breakdown data for UI (weights and matched flags)

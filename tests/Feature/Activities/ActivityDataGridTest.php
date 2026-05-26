@@ -4,7 +4,6 @@ namespace Tests\Feature\Activities;
 
 use App\Enums\ActivityType;
 use App\Enums\Departments;
-use App\Enums\PipelineStage;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;

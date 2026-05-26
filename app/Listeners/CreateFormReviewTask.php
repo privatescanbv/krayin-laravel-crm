@@ -6,6 +6,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Events\PatientFormCompletedEvent;
 use App\Models\Anamnesis;
+use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
 
@@ -44,9 +45,20 @@ class CreateFormReviewTask
         }
 
         if ($anamnesis->sales_id) {
-            $payload['sales_lead_id'] = $anamnesis->sales_id;
-        } elseif ($anamnesis->lead_id) {
-            $payload['lead_id'] = $anamnesis->lead_id;
+            $order = Order::where('sales_lead_id', $anamnesis->sales_id)
+                ->where(function ($q) {
+                    $q->whereNull('pipeline_stage_id')
+                        ->orWhereHas('stage', fn($s) => $s->where('is_won', false)->where('is_lost', false));
+                })
+                ->latest()
+                ->first();
+
+            if ($order) {
+                $payload['order_id'] = $order->id;
+            } else {
+                //fall back to lead
+                $payload['lead_id'] = $anamnesis->lead_id;
+            }
         }
 
         $this->activityRepository->create($payload);

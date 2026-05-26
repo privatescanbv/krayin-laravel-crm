@@ -11,6 +11,7 @@ use App\Events\PatientFormStatusUpdatedEvent;
 use App\Listeners\CreateFormReviewTask;
 use App\Listeners\UpdateAnamnesisFormStatus;
 use App\Models\Anamnesis;
+use App\Models\Order;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,7 @@ use Mockery;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 
 uses(RefreshDatabase::class);
 
@@ -133,18 +135,27 @@ test('CreateFormReviewTask listener creates task activity with 5-day deadline', 
         ->and($activity->schedule_to->diffInDays(now(), true))->toBeGreaterThanOrEqual(4)->toBeLessThanOrEqual(5);
 });
 
-test('CreateFormReviewTask listener links task activity to lead from anamnesis gvl form link', function () {
+test('CreateFormReviewTask listener links task activity to active order before lead from anamnesis gvl form link', function () {
     $this->seed(TestSeeder::class);
 
     $person = Person::factory()->create();
     $lead = Lead::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $stage = Stage::factory()->create([
+        'is_won'  => false,
+        'is_lost' => false,
+    ]);
+    $order = Order::factory()->create([
+        'sales_lead_id'     => $salesLead->id,
+        'pipeline_stage_id' => $stage->id,
+    ]);
     $formId = 'form-lead-123';
 
     Anamnesis::factory()->create([
         'gvl_form_id' => $formId,
         'lead_id'     => $lead->id,
         'person_id'   => $person->id,
-        'sales_id'    => null,
+        'sales_id'    => $salesLead->id,
     ]);
 
     $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
@@ -156,15 +167,24 @@ test('CreateFormReviewTask listener links task activity to lead from anamnesis g
         ->first();
 
     expect($activity)->not->toBeNull()
-        ->and($activity->lead_id)->toBe($lead->id)
+        ->and($activity->order_id)->toBe($order->id)
+        ->and($activity->lead_id)->toBeNull()
         ->and($activity->sales_lead_id)->toBeNull();
 });
 
-test('CreateFormReviewTask listener links task activity to sales lead from anamnesis gvl form link', function () {
+test('CreateFormReviewTask listener links task activity to active order before sales lead from anamnesis gvl form link', function () {
     $this->seed(TestSeeder::class);
 
     $person = Person::factory()->create();
     $salesLead = SalesLead::factory()->create();
+    $stage = Stage::factory()->create([
+        'is_won'  => false,
+        'is_lost' => false,
+    ]);
+    $order = Order::factory()->create([
+        'sales_lead_id'     => $salesLead->id,
+        'pipeline_stage_id' => $stage->id,
+    ]);
     $formId = 'form-sales-123';
 
     Anamnesis::factory()->create([
@@ -183,8 +203,43 @@ test('CreateFormReviewTask listener links task activity to sales lead from anamn
         ->first();
 
     expect($activity)->not->toBeNull()
-        ->and($activity->sales_lead_id)->toBe($salesLead->id)
+        ->and($activity->order_id)->toBe($order->id)
+        ->and($activity->sales_lead_id)->toBeNull()
         ->and($activity->lead_id)->toBeNull();
+});
+
+test('CreateFormReviewTask listener falls back to lead_id when no active order exists', function () {
+    $this->seed(TestSeeder::class);
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $lead = Lead::factory()->create();
+    $lostStage = Stage::factory()->lost()->create();
+    Order::factory()->create([
+        'sales_lead_id'     => $salesLead->id,
+        'pipeline_stage_id' => $lostStage->id,
+    ]);
+    $formId = 'form-sales-fallback-123';
+
+    Anamnesis::factory()->create([
+        'gvl_form_id' => $formId,
+        'lead_id'     => $lead->id,
+        'person_id'   => $person->id,
+        'sales_id'    => $salesLead->id,
+    ]);
+
+    $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
+    $listener = app(CreateFormReviewTask::class);
+    $listener->handle($event);
+
+    $activity = Activity::where('person_id', $person->id)
+        ->where('type', ActivityType::TASK->value)
+        ->first();
+
+    expect($activity)->not->toBeNull()
+        ->and($activity->lead_id)->toBe($lead->id)
+        ->and($activity->order_id)->toBeNull()
+        ->and($activity->sales_lead_id)->toBeNull();
 });
 
 test('CreateFormReviewTask listener logs error and skips activity when no anamnesis found', function () {

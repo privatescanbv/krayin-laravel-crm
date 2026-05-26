@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
+use App\Enums\FormStatus;
 use App\Enums\PipelineStage;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
+use App\Models\Anamnesis;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -390,4 +392,62 @@ test('clinic guide get defaults to today when no date parameter', function () {
     $response->assertOk();
     $response->assertJsonPath('date', now()->format('Y-m-d'));
     $response->assertJsonPath('count', 1);
+});
+
+test('clinic guide shows gvl_form_link when form status is completed', function () {
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->attachPersons([$person->id]);
+
+    $targetDate = '2026-07-10';
+    $order = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at' => Carbon::parse($targetDate)->setHour(10),
+    ]);
+    createClinicLinkedOrderItem($order->id, $person->id);
+
+    Anamnesis::query()
+        ->where('sales_id', $salesLead->id)
+        ->where('person_id', $person->id)
+        ->firstOrFail()
+        ->update([
+            'gvl_form_id'     => 99,
+            'gvl_form_link'   => 'https://form.example.com/test-gvl',
+            'gvl_form_status' => FormStatus::Completed->value,
+        ]);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    expect($response->json('orders.0.gvl_form_link'))->not->toBeNull();
+});
+
+test('clinic guide hides gvl_form_link when form status is not completed', function () {
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->attachPersons([$person->id]);
+
+    $targetDate = '2026-07-11';
+    $order = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at' => Carbon::parse($targetDate)->setHour(10),
+    ]);
+    createClinicLinkedOrderItem($order->id, $person->id);
+
+    Anamnesis::query()
+        ->where('sales_id', $salesLead->id)
+        ->where('person_id', $person->id)
+        ->firstOrFail()
+        ->update([
+            'gvl_form_id'     => 100,
+            'gvl_form_link'   => 'https://form.example.com/test-gvl',
+            'gvl_form_status' => FormStatus::Step1_completed->value,
+        ]);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    expect($response->json('orders.0.gvl_form_link'))->toBeNull();
 });

@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 use Webkul\Email\Models\Email;
@@ -428,6 +429,69 @@ class AfbDispatchService
             ->exists();
     }
 
+    public function attachGvlPdfsToEmail(Email $email, array $generatedDocuments): void
+    {
+        $personNames = collect($generatedDocuments)
+            ->whereNotNull('person_id')
+            ->mapWithKeys(fn ($doc) => [(int) $doc['person_id'] => $doc['patient_name'] ?? '']);
+
+        foreach ($personNames->keys() as $personId) {
+            $anamnesis = Anamnesis::query()
+                ->where('person_id', $personId)
+                ->whereNotNull('gvl_form_id')
+                ->latest()
+                ->first();
+
+            if (! $anamnesis) {
+                continue;
+            }
+
+            $formId = $anamnesis->gvl_form_id;
+
+            try {
+                if ($anamnesis->gvl_form_status !== FormStatus::Completed) {
+                    continue;
+                }
+
+                $response = $this->formService->downloadForm($formId);
+
+                if (! $response->successful()) {
+                    Log::error('GVL PDF download mislukt', [
+                        'person_id' => $personId,
+                        'form_id'   => $formId,
+                        'status'    => $response->status(),
+                    ]);
+
+                    continue;
+                }
+
+                $pdfContent = $response->body();
+                $fileName = sprintf(
+                    'gvl-%d-%s-%s.pdf',
+                    $personId,
+                    Str::slug($personNames->get($personId) ?? ''),
+                    now()->format('Ymd')
+                );
+                $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
+
+                Storage::put($filePath, $pdfContent);
+
+                $email->attachments()->create([
+                    'name'         => $fileName,
+                    'path'         => $filePath,
+                    'size'         => strlen($pdfContent),
+                    'content_type' => 'application/pdf',
+                ]);
+            } catch (Throwable $e) {
+                Log::error('GVL PDF bijlage mislukt', [
+                    'person_id'     => $personId,
+                    'form_id'       => $formId,
+                    'error_message' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
     private function createDispatchEmail(
         ClinicDepartment $department,
         AfbDispatchType $type,
@@ -522,70 +586,5 @@ class AfbDispatchService
         }
 
         Storage::put($path, $localDisk->get($path));
-    }
-
-    private function attachGvlPdfsToEmail(Email $email, array $generatedDocuments): void
-    {
-        $personIds = collect($generatedDocuments)
-            ->pluck('person_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        foreach ($personIds as $personId) {
-            $anamnesis = Anamnesis::query()
-                ->where('person_id', $personId)
-                ->whereNotNull('gvl_form_id')
-                ->latest()
-                ->first();
-
-            if (! $anamnesis) {
-                continue;
-            }
-
-            $formId = $anamnesis->gvl_form_id;
-
-            if (! $formId) {
-                continue;
-            }
-
-            try {
-                $formStatus = $this->formService->getFormStatusAsString($formId);
-
-                if ($formStatus !== FormStatus::Completed) {
-                    continue;
-                }
-
-                $response = $this->formService->downloadForm($formId);
-
-                if (! $response->successful()) {
-                    Log::warning('GVL PDF download mislukt', [
-                        'person_id' => $personId,
-                        'form_id'   => $formId,
-                        'status'    => $response->status(),
-                    ]);
-
-                    continue;
-                }
-
-                $fileName = sprintf('gvl-%d-%s.pdf', $personId, now()->format('Ymd'));
-                $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
-
-                Storage::put($filePath, $response->body());
-
-                $email->attachments()->create([
-                    'name'         => $fileName,
-                    'path'         => $filePath,
-                    'size'         => strlen($response->body()),
-                    'content_type' => 'application/pdf',
-                ]);
-            } catch (Throwable $e) {
-                Log::warning('GVL PDF bijlage mislukt', [
-                    'person_id'     => $personId,
-                    'form_id'       => $formId,
-                    'error_message' => $e->getMessage(),
-                ]);
-            }
-        }
     }
 }

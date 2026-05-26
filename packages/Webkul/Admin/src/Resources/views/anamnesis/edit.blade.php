@@ -110,9 +110,9 @@
 
                             <x-admin::gvl-form-link
                                 :gvlFormLink="$anamnesis->gvl_form_link"
+                                :gvlFormStatus="$anamnesis->gvl_form_status"
                                 :attachUrl="route('admin.anamnesis.gvl-form.attach', $anamnesis->id)"
                                 :detachUrl="route('admin.anamnesis.gvl-form.detach', $anamnesis->id)"
-                                :statusUrl="route('admin.anamnesis.gvl-form.status', $anamnesis->id)"
                                 :entityId="$anamnesis->id"
                                 entityType="anamnesis"
                                 :personId="$anamnesis->person_id"

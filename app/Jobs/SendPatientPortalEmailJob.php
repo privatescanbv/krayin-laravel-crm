@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\EmailTemplateCode;
-use App\Exceptions\Mail\EmailSendingBlockedException;
 use App\Models\PatientNotification;
 use App\Services\Mail\CrmMailService;
 use Illuminate\Bus\Queueable;

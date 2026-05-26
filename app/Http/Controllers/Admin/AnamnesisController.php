@@ -231,14 +231,13 @@ class AnamnesisController extends Controller
 
     public function cleanUpForLead(string $personId, string $leadId): void
     {
-        $anamnesis = Anamnesis::select(['id', 'gvl_form_id'])
+        $anamnesis = Anamnesis::select(['id', 'gvl_form_id', 'gvl_form_status'])
             ->where('person_id', $personId)
             ->where('lead_id', $leadId)
             ->firstOrFail();
         logger()->info('Running clean up action for lead, gvl form found: '.$anamnesis->gvl_form_id);
         if ($anamnesis->gvl_form_id) {
-            $formId = $anamnesis->gvl_form_id;
-            if (! $this->formService->getFormStatusAsString($formId)->isCompleted()) {
+            if (! $anamnesis->gvl_form_status?->isCompleted()) {
                 $this->doDetachGvlForm($anamnesis->id);
             }
         }
@@ -286,7 +285,8 @@ class AnamnesisController extends Controller
             }
 
             $anamnesis->update([
-                'gvl_form_id' => null,
+                'gvl_form_id'     => null,
+                'gvl_form_status' => null,
             ]);
 
             // clean up patient notification related to this form
@@ -326,30 +326,11 @@ class AnamnesisController extends Controller
             ], 422);
         }
 
-        try {
-            $formId = $anamnesis->gvl_form_id;
-
-            if (! $formId) {
-                return response()->json([
-                    'message' => 'Kon formulier ID niet extraheren uit URL.',
-                ], 422);
-            }
-
-            $status = $this->formService->getFormStatus($formId);
-
-            return response()->json([
-                'data' => $status,
-            ]);
-        } catch (Exception $e) {
-            Log::error('AnamnesisController@getGvlFormStatus failed', [
-                'anamnesis_id' => $anamnesisId,
-                'error'        => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Fout bij ophalen formulier status: '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'data' => [
+                'status' => $anamnesis->gvl_form_status?->value,
+            ],
+        ]);
     }
 
     public function syncLatestWithOlder(string $personId)

@@ -2,6 +2,7 @@
 
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
+use App\Enums\FormStatus;
 use App\Enums\OrderItemStatus;
 use App\Enums\PersonSalutation;
 use App\Enums\PipelineStage;
@@ -22,11 +23,13 @@ use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Services\Afb\AfbDispatchService;
 use App\Services\Afb\AfbDocumentGenerator;
+use App\Services\FormService;
 use Carbon\Carbon;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
@@ -1033,4 +1036,39 @@ test('send afb endpoint returns already sent message when all departments dispat
     $response->assertOk()
         ->assertJsonFragment(['message' => 'AFB was al verstuurd of condities zijn niet van toepassing.']);
     Bus::assertNotDispatched(SendAfbDispatchJob::class);
+});
+
+test('gvl pdf attachment filename includes slugified person name', function () {
+    Mail::fake();
+
+    $examAt = now()->addDays(2)->setTime(10, 0);
+    $context = createOrderForClinic($examAt);
+    $person = $context['person'];
+    $formId = 42;
+
+    Anamnesis::where('person_id', $person->id)->update([
+        'gvl_form_id'     => $formId,
+        'gvl_form_status' => FormStatus::Completed->value,
+    ]);
+
+    $mockResponse = Mockery::mock(\Illuminate\Http\Client\Response::class);
+    $mockResponse->shouldReceive('successful')->andReturn(true);
+    $mockResponse->shouldReceive('body')->andReturn('%PDF-fake');
+
+    $this->mock(FormService::class, function ($mock) use ($formId, $mockResponse) {
+        $mock->shouldReceive('downloadForm')->with($formId)->andReturn($mockResponse);
+    });
+
+    app(AfbDispatchService::class)->sendDispatch(
+        departmentId: $context['department']->id,
+        orderIds: [$context['order']->id],
+        type: AfbDispatchType::INDIVIDUAL,
+        attempt: 1
+    );
+
+    $email = Email::where('clinic_id', $context['clinic']->id)->first();
+    $gvlAttachment = $email->attachments->first(fn ($a) => str_starts_with($a->name, 'gvl-'));
+
+    expect($gvlAttachment)->not->toBeNull()
+        ->and($gvlAttachment->name)->toContain(Str::slug($person->name));
 });

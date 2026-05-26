@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
+use App\Enums\FormStatus;
 use App\Enums\FormType;
 use App\Events\PatientFormCompletedEvent;
+use App\Events\PatientFormStatusUpdatedEvent;
 use App\Listeners\CreateFormReviewTask;
+use App\Listeners\UpdateAnamnesisFormStatus;
 use App\Models\Anamnesis;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
@@ -24,8 +27,8 @@ beforeEach(function () {
     Config::set('api.keys', ['valid-api-key-123']);
 });
 
-test('PUT webhooks/event with completed status dispatches PatientFormCompletedEvent', function () {
-    Event::fake([PatientFormCompletedEvent::class]);
+test('PUT webhooks/event with completed status dispatches PatientFormCompletedEvent and PatientFormStatusUpdatedEvent', function () {
+    Event::fake([PatientFormCompletedEvent::class, PatientFormStatusUpdatedEvent::class]);
 
     $person = Person::factory()->create();
 
@@ -46,10 +49,14 @@ test('PUT webhooks/event with completed status dispatches PatientFormCompletedEv
     Event::assertDispatched(PatientFormCompletedEvent::class, function ($event) use ($person) {
         return $event->formId === 'form-abc-123' && $event->person->id === $person->id;
     });
+
+    Event::assertDispatched(PatientFormStatusUpdatedEvent::class, function ($event) {
+        return $event->formId === 'form-abc-123' && $event->status === FormStatus::Completed;
+    });
 });
 
-test('PUT webhooks/event with non-completed status does not dispatch event', function () {
-    Event::fake([PatientFormCompletedEvent::class]);
+test('PUT webhooks/event with step1 status dispatches only PatientFormStatusUpdatedEvent', function () {
+    Event::fake([PatientFormCompletedEvent::class, PatientFormStatusUpdatedEvent::class]);
 
     $person = Person::factory()->create();
 
@@ -58,16 +65,18 @@ test('PUT webhooks/event with non-completed status does not dispatch event', fun
             'entity_type' => 'forms',
             'id'          => 'form-abc-456',
             'action'      => 'STATUS_UPDATE',
-            'status'      => 'in_progress',
+            'status'      => 'step1',
             'url'         => 'https://forms.example.com/form-abc-456',
             'person_id'   => $person->id,
             'form_type'   => 'privatescan',
         ]);
 
     $response->assertOk();
-    $response->assertJson(['status' => 'ok']);
 
     Event::assertNotDispatched(PatientFormCompletedEvent::class);
+    Event::assertDispatched(PatientFormStatusUpdatedEvent::class, function ($event) {
+        return $event->formId === 'form-abc-456' && $event->status === FormStatus::Step1_completed;
+    });
 });
 
 test('PUT webhooks/event returns 422 when required fields are missing', function () {
@@ -192,4 +201,51 @@ test('CreateFormReviewTask listener logs error and skips activity when no anamne
     $listener->handle($event);
 
     expect(Activity::where('person_id', $person->id)->where('type', ActivityType::TASK->value)->exists())->toBeFalse();
+});
+
+test('UpdateAnamnesisFormStatus listener updates gvl_form_status on matching anamnesis', function () {
+    $lead = Lead::factory()->create();
+    $formId = 'form-status-123';
+
+    $anamnesis = Anamnesis::factory()->create([
+        'gvl_form_id'     => $formId,
+        'gvl_form_status' => FormStatus::New,
+        'lead_id'         => $lead->id,
+        'sales_id'        => null,
+    ]);
+
+    $event = new PatientFormStatusUpdatedEvent($formId, FormStatus::Step2_completed, FormType::PrivateScan);
+    $listener = app(UpdateAnamnesisFormStatus::class);
+    $listener->handle($event);
+
+    expect($anamnesis->fresh()->gvl_form_status)->toBe(FormStatus::Step2_completed);
+});
+
+test('UpdateAnamnesisFormStatus listener sets status to completed', function () {
+    $lead = Lead::factory()->create();
+    $formId = 'form-done-456';
+
+    $anamnesis = Anamnesis::factory()->create([
+        'gvl_form_id'     => $formId,
+        'gvl_form_status' => FormStatus::Step3_completed,
+        'lead_id'         => $lead->id,
+        'sales_id'        => null,
+    ]);
+
+    $event = new PatientFormStatusUpdatedEvent($formId, FormStatus::Completed, FormType::PrivateScan);
+    $listener = app(UpdateAnamnesisFormStatus::class);
+    $listener->handle($event);
+
+    expect($anamnesis->fresh()->gvl_form_status)->toBe(FormStatus::Completed);
+});
+
+test('UpdateAnamnesisFormStatus listener logs error when no anamnesis found', function () {
+    Log::shouldReceive('info')->zeroOrMoreTimes();
+    Log::shouldReceive('error')
+        ->once()
+        ->with('UpdateAnamnesisFormStatus: geen anamnese gevonden voor formulier', \Mockery::on(fn ($ctx) => $ctx['form_id'] === 'form-missing-789'));
+
+    $event = new PatientFormStatusUpdatedEvent('form-missing-789', FormStatus::Step1_completed, FormType::PrivateScan);
+    $listener = app(UpdateAnamnesisFormStatus::class);
+    $listener->handle($event);
 });

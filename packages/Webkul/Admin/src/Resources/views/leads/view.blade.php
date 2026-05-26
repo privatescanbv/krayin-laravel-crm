@@ -140,6 +140,10 @@
                     <span>{{ $lead->user?->name ?: "-" }}</span>
                 </div>
                 <div class="flex justify-between">
+                    <span>Afdeling:</span>
+                    <span>{{ $lead->department()?->name ?? '—' }}</span>
+                </div>
+                <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $lead->created_at->format('d-m-Y') }}</span>
                 </div>

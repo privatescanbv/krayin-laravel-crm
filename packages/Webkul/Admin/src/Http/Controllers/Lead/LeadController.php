@@ -173,12 +173,20 @@ class LeadController extends Controller
             }
         }
 
-        // Compute total leads per stage in one DB query to avoid running pagination on empty stages
+        // Compute total leads per stage in one DB query to avoid running pagination on empty stages.
+        // Must use LeadRepository (not DB::table) so soft-deleted leads and user scoping match the paginated query.
         $stageIds = $stages->pluck('id')->all();
-        $totalsByStage = DB::table('leads')
-            ->select('lead_pipeline_stage_id', DB::raw('COUNT(*) as total'))
+        $totalsQuery = app(LeadRepository::class)
+            ->pushCriteria(app(RequestCriteria::class))
             ->where('lead_pipeline_id', $pipeline->id)
-            ->whereIn('lead_pipeline_stage_id', $stageIds)
+            ->whereIn('lead_pipeline_stage_id', $stageIds);
+
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $totalsQuery->whereIn('leads.user_id', $userIds);
+        }
+
+        $totalsByStage = $totalsQuery
+            ->select('lead_pipeline_stage_id', DB::raw('COUNT(*) as total'))
             ->groupBy('lead_pipeline_stage_id')
             ->pluck('total', 'lead_pipeline_stage_id');
 
@@ -253,18 +261,16 @@ class LeadController extends Controller
                     $lead->setRelation('stage', $stage);
                 }
 
-                $lastPage = (int) ceil($totalForStage / max($perPage, 1));
-
                 $data[$stage->id]['leads'] = [
                     'data' => LeadKanbanResource::collection($paginator),
 
                     'meta' => [
                         'current_page' => $paginator->currentPage(),
                         'from' => $paginator->firstItem(),
-                        'last_page' => $lastPage,
+                        'last_page' => $paginator->lastPage(),
                         'per_page' => $paginator->perPage(),
                         'to' => $paginator->lastItem(),
-                        'total' => $totalForStage,
+                        'total' => $paginator->total(),
                     ],
                 ];
             } else {

@@ -76,63 +76,6 @@ class ActivityQueueRegistry
         $backofficeOrderStageIds = PipelineStage::getBackofficeStageIds();
 
         return [
-            // Frontoffice – new incoming website requests.
-            'frontoffice' => [
-                'key'   => 'frontoffice',
-                'label' => 'Frontoffice',
-                'sort'  => [
-                    'column' => 'created_at',
-                    'order'  => 'desc',
-                ],
-                'apply' => static function (Builder $query) use ($frontofficeLeadStageIds): void {
-                    $query
-                        ->whereIn('leads.lead_pipeline_stage_id', $frontofficeLeadStageIds)
-                        ->where('activities.is_done', false);
-                },
-            ],
-
-            // Sales – leads currently in advising stages.
-            'sales' => [
-                'key'   => 'sales',
-                'label' => 'Sales',
-                // Use default urgency-based sort from the datagrid.
-                'apply' => static function (Builder $query) use ($salesLeadStageIds): void {
-                    $query
-                        ->whereIn('leads.lead_pipeline_stage_id', $salesLeadStageIds)
-                        ->where('activities.is_done', false);
-                },
-            ],
-
-            // Midoffice – orders before execution.
-            'midoffice' => [
-                'key'   => 'midoffice',
-                'label' => 'Midoffice',
-                'sort'  => [
-                    'column' => 'schedule_to',
-                    'order'  => 'asc',
-                ],
-                'apply' => static function (Builder $query) use ($midofficeOrderStageIds): void {
-                    $query
-                        ->whereIn('orders.pipeline_stage_id', $midofficeOrderStageIds)
-                        ->where('activities.is_done', false);
-                },
-            ],
-
-            // Backoffice – orders after execution.
-            'backoffice' => [
-                'key'   => 'backoffice',
-                'label' => 'Backoffice',
-                'sort'  => [
-                    'column' => 'schedule_to',
-                    'order'  => 'asc',
-                ],
-                'apply' => static function (Builder $query) use ($backofficeOrderStageIds): void {
-                    $query
-                        ->whereIn('orders.pipeline_stage_id', $backofficeOrderStageIds)
-                        ->where('activities.is_done', false);
-                },
-            ],
-
             // Onze openstaande taken – all open tasks (lead, sales, order, etc.).
             'our-tasks' => [
                 'key'   => 'our-tasks',

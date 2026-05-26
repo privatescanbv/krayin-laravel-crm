@@ -48,6 +48,9 @@ class AddressRepository extends Repository
             return null;
         }
 
+        // Strip UI-only meta keys (e.g. _clear) before processing address fields
+        $addressFields = array_diff_key($addressData, array_flip(['_clear']));
+
         // Normalize empty strings to null so cleared fields are stored as null
         $normalized = array_map(function ($value) {
             if (is_string($value) && trim($value) === '') {
@@ -55,7 +58,7 @@ class AddressRepository extends Repository
             }
 
             return $value;
-        }, $addressData);
+        }, $addressFields);
 
         // Filter to filled fields only for update behavior decision
         $filled = array_filter($normalized, function ($value) {

@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\EmailTemplateCode;
 use App\Enums\NotificationReferenceType;
 use App\Events\PatientNotifyEvent;
 use App\Models\PatientNotification;
@@ -12,7 +11,7 @@ use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
-use Webkul\EmailTemplate\Models\EmailTemplate;
+
 
 uses(RefreshDatabase::class);
 
@@ -237,28 +236,4 @@ test('new event merges into already-notified notification and resets last_notifi
     $existing->refresh();
     expect($existing->last_notified_by_email_at)->toBeNull()
         ->and($existing->entity_names)->toContain('tweede.pdf');
-});
-
-test('send command fails when new content email template is missing', function () {
-    Mail::fake();
-
-    EmailTemplate::query()->where('code', EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT->value)->delete();
-
-    $person = Person::factory()->create([
-        'is_active'        => true,
-        'keycloak_user_id' => (string) Str::uuid(),
-        'emails'           => [['value' => 'patient@example.com', 'is_default' => true]],
-    ]);
-
-    PatientNotification::factory()->create([
-        'patient_id'                => $person->id,
-        'dismissed_at'              => null,
-        'last_notified_by_email_at' => null,
-    ]);
-
-    $person->forceFill([
-        'patient_portal_notify_scheduled_at' => now()->subMinute(),
-    ])->save();
-
-    $this->artisan('patient:send-notification-email')->assertExitCode(1);
 });

@@ -201,10 +201,17 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
             return new SentMessage($message, $envelope);
         } catch (Exception $e) {
-            Log::error('Microsoft Graph mail transport error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            if (! str_starts_with($e->getMessage(), 'Email sending blocked')) {
+                Log::error('Microsoft Graph mail transport error', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            } else {
+                Log::warning('Microsoft Graph mail transport error', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
 
             throw $e;
         }

@@ -377,7 +377,7 @@ test('it merges acknowledge-order-mail variables from OrderMailService for order
 
     EmailTemplate::factory()->create([
         'name'     => 'Afspraak bevestiging API test',
-        'code'     => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value,
+        'code'     => 'acknowledge-order-mail-augusta',
         'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
         'language' => EmailTemplateLanguage::NEDERLANDS->value,
         'subject'  => 'Order {{ order_reference }}',
@@ -385,7 +385,7 @@ test('it merges acknowledge-order-mail variables from OrderMailService for order
     ]);
 
     $response = $this->postJson(route('admin.mail.template_content_body'), [
-        'email_template_identifier' => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value,
+        'email_template_identifier' => 'acknowledge-order-mail-augusta',
         'entities'                  => [
             'order' => $order->id,
         ],

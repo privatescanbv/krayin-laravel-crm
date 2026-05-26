@@ -147,21 +147,22 @@ class InkoopStep2Controller extends Controller
 
     private function findOrderItemsByPerson(Collection $persons): Collection
     {
-        return $persons->mapWithKeys(function (InkoopPerson $person) {
-            return [
-                $person->id => OrderItem::query()
-                    ->with([
-                        'product',
-                        'person',
-                        'order.orderItems.invoicePurchasePrice',
-                        'order.orderItems.purchasePrice',
-                        'invoicePurchasePrice',
-                    ])
-                    ->where('person_id', $person->crm_id)
-                    ->orderByDesc('id')
-                    ->get(),
-            ];
-        });
+        $allOrderItems = OrderItem::query()
+            ->with([
+                'product',
+                'person',
+                'order.orderItems.invoicePurchasePrice',
+                'order.orderItems.purchasePrice',
+                'invoicePurchasePrice',
+            ])
+            ->whereIn('person_id', $persons->pluck('crm_id'))
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('person_id');
+
+        return $persons->mapWithKeys(
+            fn (InkoopPerson $person) => [$person->id => $allOrderItems->get($person->crm_id, collect())]
+        );
     }
 
     private function formatOrderItemsByPerson(Collection $orderItemsByPerson): array

@@ -140,41 +140,8 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::with('person', 'lead')->findOrFail($id);
 
-        if (! $anamnesis->person) {
-            return response()->json([
-                'message' => 'Anamnesis heeft geen gekoppelde persoon.',
-            ], 422);
-        }
-
-        // Check if GVL form already exists
-        if (! empty($anamnesis->gvl_form_link)) {
-            return response()->json([
-                'message'       => 'GVL formulier is al gekoppeld.',
-                'gvl_form_link' => $anamnesis->gvl_form_link,
-            ], 422);
-        }
-
         try {
-            // Create form request for this person
-            [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
-
-            // Reload the anamnesis to get updated gvl_form_link
-            $anamnesis->refresh();
-
-            // Notify patient that GVL form is ready
-            PatientNotifyEvent::dispatch(
-                $anamnesis->person_id,
-                $formLink,
-                NotificationReferenceType::GVL_FORM,
-                $formId,
-                false,
-                auth()->id()
-            );
-
-            return response()->json([
-                'message'       => 'GVL formulier is gekoppeld.',
-                'gvl_form_link' => $formLink,
-            ], 200);
+            return $this->attachGvlFormToAnamnesis($anamnesis);
         } catch (Exception $e) {
             Log::error('AnamnesisController@attachGvlForm failed', [
                 'anamnesis_id' => $id,
@@ -231,33 +198,17 @@ class AnamnesisController extends Controller
                 ], 422);
             }
 
-            // Check if GVL form already exists
-            if (! empty($anamnesis->gvl_form_link)) {
-                return response()->json([
-                    'message'       => 'GVL formulier is al gekoppeld.',
-                    'gvl_form_link' => $anamnesis->gvl_form_link,
-                ], 422);
+            $response = $this->attachGvlFormToAnamnesis($anamnesis);
+
+            if ($response->getStatusCode() !== 200) {
+                return $response;
             }
 
-            // Create form request for this person
-            [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
-
-            // Reload the anamnesis to get updated gvl_form_link
-            $anamnesis->refresh();
-
-            // Notify patient that GVL form is ready
-            PatientNotifyEvent::dispatch(
-                $anamnesis->person_id,
-                $formLink,
-                NotificationReferenceType::GVL_FORM,
-                $formId,
-                false,
-                auth()->id()
-            );
+            $payload = $response->getData(true);
 
             return response()->json([
                 'message'       => 'Anamnesis aangemaakt en GVL formulier gekoppeld.',
-                'gvl_form_link' => $formLink,
+                'gvl_form_link' => $payload['gvl_form_link'],
                 'anamnesis_id'  => $anamnesis->id,
             ], 200);
         } catch (Exception $e) {
@@ -365,12 +316,7 @@ class AnamnesisController extends Controller
         }
     }
 
-    public function getGvlFormStatus(Request $request, string $id): JsonResponse
-    {
-        return $this->getGvlFormStatus2($id);
-    }
-
-    public function getGvlFormStatus2(string $anamnesisId): JsonResponse
+    public function getGvlFormStatus(string $anamnesisId): JsonResponse
     {
         $anamnesis = Anamnesis::findOrFail($anamnesisId);
 
@@ -624,6 +570,40 @@ class AnamnesisController extends Controller
         ]);
 
         return [$result['json']['data']['id'],  $formLink];
+    }
+
+    private function attachGvlFormToAnamnesis(Anamnesis $anamnesis): JsonResponse
+    {
+        if (! $anamnesis->person) {
+            return response()->json([
+                'message' => 'Anamnesis heeft geen gekoppelde persoon.',
+            ], 422);
+        }
+
+        if (! empty($anamnesis->gvl_form_link)) {
+            return response()->json([
+                'message'       => 'GVL formulier is al gekoppeld.',
+                'gvl_form_link' => $anamnesis->gvl_form_link,
+            ], 422);
+        }
+
+        [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
+
+        $anamnesis->refresh();
+
+        PatientNotifyEvent::dispatch(
+            $anamnesis->person_id,
+            $formLink,
+            NotificationReferenceType::GVL_FORM,
+            $formId,
+            false,
+            auth()->id()
+        );
+
+        return response()->json([
+            'message'       => 'GVL formulier is gekoppeld.',
+            'gvl_form_link' => $formLink,
+        ], 200);
     }
 
     // todo move to repro

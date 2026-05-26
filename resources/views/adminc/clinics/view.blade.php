@@ -63,16 +63,6 @@
             <!-- Footer with creation and modification dates -->
             <div
                 class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <!-- Suite CRM link -->
-                @if (!empty($clinic->sugar_link))
-                    <div class="flex justify-between">
-                        <span>Sugar Link:</span>
-                        <span>
-                            <a href="{{ $clinic->sugar_link }}" target="_blank">{{ $clinic->external_id }}</a>
-                        </span>
-                    </div>
-                @endif
-
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $clinic->created_at->format('d-m-Y') }}</span>

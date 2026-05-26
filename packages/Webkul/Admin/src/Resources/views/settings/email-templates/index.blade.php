@@ -5,6 +5,13 @@
     </x-slot>
 
     <div class="flex flex-col gap-4">
+        @if (! empty($missingCodes))
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                <span class="font-semibold">Ontbrekende e-mail template codes:</span>
+                {{ implode(', ', $missingCodes) }}
+            </div>
+        @endif
+
         <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.settings.email_template.index.breadcrumbs.before') !!}

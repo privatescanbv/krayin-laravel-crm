@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\EmailTemplateCode;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use App\Models\Address;

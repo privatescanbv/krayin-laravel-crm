@@ -10,6 +10,16 @@ use Webkul\Core\Menu\MenuItem;
 class Menu
 {
     /**
+     * Menu area for admin.
+     */
+    const ADMIN = 'admin';
+
+    /**
+     * Menu area for customer.
+     */
+    const CUSTOMER = 'customer';
+
+    /**
      * Menu items.
      */
     private array $items = [];
@@ -25,14 +35,9 @@ class Menu
     private string $currentKey = '';
 
     /**
-     * Menu area for admin.
+     * Cached result of getItems() per area.
      */
-    const ADMIN = 'admin';
-
-    /**
-     * Menu area for customer.
-     */
-    const CUSTOMER = 'customer';
+    private array $cachedItems = [];
 
     /**
      * Add a new menu item.
@@ -51,10 +56,8 @@ class Menu
             throw new Exception('Area must be provided to get menu items.');
         }
 
-        static $items;
-
-        if ($items) {
-            return $items;
+        if (isset($this->cachedItems[$area])) {
+            return $this->cachedItems[$area];
         }
 
         $configMenu = collect(config("menu.$area"))->map(function ($item) {
@@ -79,12 +82,12 @@ class Menu
         }
 
         if (! $this->items) {
-        $this->prepareMenuItems();
+            $this->prepareMenuItems();
         }
 
-        $items = collect($this->items)->sortBy(fn ($item) => $item->getPosition());
+        $this->cachedItems[$area] = collect($this->items)->sortBy(fn ($item) => $item->getPosition());
 
-        return $items;
+        return $this->cachedItems[$area];
     }
 
     /**
@@ -99,6 +102,16 @@ class Menu
         $filteredItems = $items->filter(fn ($item) => in_array($item->getKey(), $keysArray));
 
         return is_array($keys) ? $filteredItems : $filteredItems->first();
+    }
+
+    /**
+     * Get current active menu.
+     */
+    public function getCurrentActiveMenu(?string $area = null): ?MenuItem
+    {
+        $currentKey = implode('.', array_slice(explode('.', $this->currentKey), 0, 2));
+
+        return $this->findMatchingItem($this->getItems($area), $currentKey);
     }
 
     /**
@@ -184,16 +197,6 @@ class Menu
                     children: $subSubMenuItems,
                 );
             });
-    }
-
-    /**
-     * Get current active menu.
-     */
-    public function getCurrentActiveMenu(?string $area = null): ?MenuItem
-    {
-        $currentKey = implode('.', array_slice(explode('.', $this->currentKey), 0, 2));
-
-        return $this->findMatchingItem($this->getItems($area), $currentKey);
     }
 
     /**

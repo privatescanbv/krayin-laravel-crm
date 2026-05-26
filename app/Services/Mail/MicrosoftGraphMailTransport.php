@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use App\Exceptions\Mail\EmailSendingBlockedException;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -200,18 +201,16 @@ class MicrosoftGraphMailTransport implements TransportInterface
             }
 
             return new SentMessage($message, $envelope);
+        } catch (EmailSendingBlockedException $e) {
+            Log::warning('Microsoft Graph mail transport blocked', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         } catch (Exception $e) {
-            if (! str_starts_with($e->getMessage(), 'Email sending blocked')) {
-                Log::error('Microsoft Graph mail transport error', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-            } else {
-                Log::warning('Microsoft Graph mail transport error', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-            }
+            Log::error('Microsoft Graph mail transport error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             throw $e;
         }
@@ -253,7 +252,12 @@ class MicrosoftGraphMailTransport implements TransportInterface
             if (config('app.env') == 'production') {
                 return;
             }
-            throw new Exception('Email sending blocked: no allowed recipient patterns configured and APP_ENV is not production');
+
+            $message = 'Email sending blocked: no allowed recipient patterns configured and APP_ENV is not production';
+
+            Log::warning($message);
+
+            throw new EmailSendingBlockedException($message);
         }
 
         // Remove quotes if present (Laravel env() can return quoted strings)
@@ -287,12 +291,14 @@ class MicrosoftGraphMailTransport implements TransportInterface
             }
         }
 
-        // If any recipients are invalid, throw exception
+        // If any recipients are invalid, log as warning and abort (expected on staging/dev allowlists)
         if (! empty($invalidRecipients)) {
-            throw new Exception(
-                'Email sending blocked: The following recipients are not allowed: '.implode(', ', $invalidRecipients).
-                '. Allowed patterns: '.implode(', ', $patterns)
-            );
+            $message = 'Email sending blocked: The following recipients are not allowed: '.implode(', ', $invalidRecipients).
+                '. Allowed patterns: '.implode(', ', $patterns);
+
+            Log::warning($message);
+
+            throw new EmailSendingBlockedException($message);
         }
     }
 

@@ -12,7 +12,6 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Mails\Email as EmailMailable;
 use Webkul\Email\Models\Email;
 
-
 uses(RefreshDatabase::class);
 
 beforeEach(function () {

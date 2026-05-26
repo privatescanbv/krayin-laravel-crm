@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\Mail\EmailSendingBlockedException;
 use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BouncerPermissionMiddleware;
@@ -89,6 +90,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping();
         $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
+        $schedule->command('email-templates:verify-codes')->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);
@@ -100,6 +102,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->dontReport([
             NotFoundHttpException::class,
+            EmailSendingBlockedException::class,
         ]);
 
         $exceptions->reportable(function (Throwable $e) {

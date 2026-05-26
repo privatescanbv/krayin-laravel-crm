@@ -201,6 +201,39 @@ test('afb generator renders boolean anamnesis fields as Ja/Nein not 1/empty', fu
         ->not->toContain('> 1<');
 });
 
+test('lost order items are excluded from rendered afb html', function () {
+    $examAt = Carbon::parse('2026-03-31 09:30:00');
+    $context = createOrderForClinic($examAt);
+
+    $product = Product::factory()->create([
+        'name' => 'LOST MRI Knie',
+    ]);
+    $lostItem = OrderItem::factory()->create([
+        'order_id'        => $context['order']->id,
+        'product_id'      => $product->id,
+        'person_id'       => $context['person']->id,
+        'name'            => 'LOST MRI Knie',
+        'afb_description' => 'LOST MRI Knie onderzoek',
+    ]);
+    $resource = Resource::where('clinic_department_id', $context['department']->id)->firstOrFail();
+
+    ResourceOrderItem::factory()->create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $lostItem->id,
+        'from'         => $examAt->copy()->addMinutes(45),
+        'to'           => $examAt->copy()->addMinutes(75),
+    ]);
+    $lostItem->update(['status' => OrderItemStatus::LOST->value]);
+
+    $html = app(AfbDocumentGenerator::class)
+        ->renderHtmlForOrderAndDepartment($context['order']->fresh(), $context['department'])['html'];
+
+    expect($html)
+        ->toContain('MRT HWS zonder KM')
+        ->not->toContain('LOST MRI Knie onderzoek')
+        ->not->toContain('LOST MRI Knie');
+});
+
 test('daily afb command queues one batch job per department', function () {
     Bus::fake();
 

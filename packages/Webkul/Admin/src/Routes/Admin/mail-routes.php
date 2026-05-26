@@ -1,10 +1,18 @@
 <?php
 
+use App\Http\Controllers\Admin\MailEmailLlmController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Mail\EmailController;
 use Webkul\Admin\Http\Controllers\Mail\TagController;
 
 Route::prefix('mail')->group(function () {
+    Route::controller(MailEmailLlmController::class)->group(function () {
+        Route::post('{id}/llm-sender-extraction', 'runSenderExtraction')
+            ->name('admin.mail.llm_sender_extraction');
+        Route::post('{id}/apply-suggestion', 'applySuggestion')
+            ->name('admin.mail.apply_suggestion');
+    });
+
     Route::controller(EmailController::class)->group(function () {
         // Specific routes must come FIRST, before any catch-all routes
         Route::get('templates', 'get')->name('admin.mail.templates');

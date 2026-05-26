@@ -40,6 +40,7 @@ class Email extends Model implements EmailContract
         'cc'            => 'array',
         'bcc'           => 'array',
         'reference_ids' => 'array',
+        'llm_metadata'  => 'array',
     ];
 
     /**
@@ -73,6 +74,7 @@ class Email extends Model implements EmailContract
         'unique_id',
         'message_id',
         'reference_ids',
+        'llm_metadata',
         'reply',
         'person_id',
         'parent_id',

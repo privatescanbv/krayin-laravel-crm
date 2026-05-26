@@ -2,12 +2,10 @@
 
 use App\Models\Clinic;
 use App\Models\SalesLead;
-use App\Services\Mail\GraphMailService;
-use App\Services\Mail\MicrosoftGraphTokenService;
+use App\Services\Mail\EmailEntityLinker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
-use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
@@ -16,28 +14,12 @@ use Webkul\Lead\Models\Stage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config(['mail.graph.client_id' => 'test-client-id']);
-    config(['mail.graph.client_secret' => 'test-client-secret']);
-    config(['mail.graph.tenant_id' => 'test-tenant-id']);
-    config(['mail.graph.mailbox' => 'test@example.com']);
-    config(['mail.graph.sender_domain' => 'example.com']);
-
-    $emailRepository = test()->createMock(EmailRepository::class);
-    $attachmentRepository = test()->createMock(AttachmentRepository::class);
-
-    $this->processor = new GraphMailService(
-        $emailRepository,
-        $attachmentRepository,
-        new MicrosoftGraphTokenService,
-    );
-
-    $this->method = new ReflectionMethod($this->processor, 'linkToExistingEntities');
-    $this->method->setAccessible(true);
+    $this->linker = new EmailEntityLinker;
 });
 
 function callLink(array $emailData, string $emailAddress): array
 {
-    return test()->method->invoke(test()->processor, $emailData, $emailAddress);
+    return test()->linker->link($emailData, $emailAddress);
 }
 
 function createActiveStage(): Stage

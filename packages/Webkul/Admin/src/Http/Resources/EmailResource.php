@@ -33,6 +33,7 @@ class EmailResource extends JsonResource
             'unique_id'     => $this->unique_id,
             'message_id'    => $this->message_id,
             'reference_ids' => $this->reference_ids,
+            'llm_metadata'  => $this->llm_metadata,
             'person'        => $this->person ? new PersonResource($this->person) : null,
             'lead'          => $this->lead ? new LeadResource($this->lead) : null,
             'order_id'      => $this->order_id,

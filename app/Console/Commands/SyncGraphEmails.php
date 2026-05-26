@@ -43,12 +43,11 @@ class SyncGraphEmails extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(GraphMailService $graphService)
     {
         $this->info('Starting Microsoft Graph email sync...');
 
         try {
-            $graphService = new GraphMailService($this->emailRepository, $this->attachmentRepository, $this->tokenService);
             $graphService->processMessagesFromAllFolders();
 
             $this->info('Microsoft Graph email sync completed successfully.');

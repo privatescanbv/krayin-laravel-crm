@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\EmailLog;
 use App\Services\Mail\AbstractEmailProcessor;
+use App\Services\Mail\EmailEntityLinker;
 use App\Services\Mail\GraphMailService;
 use App\Services\Mail\MicrosoftGraphTokenService;
 use Carbon\Carbon;
@@ -45,6 +46,7 @@ class GraphMailServiceTest extends TestCase
         $this->service = new GraphMailService(
             $this->emailRepository,
             $this->attachmentRepository,
+            new EmailEntityLinker,
             $this->tokenService,
         );
     }

@@ -1,13 +1,30 @@
 @php
+    use App\Services\Mail\EmailLlmLinkingService;
     // Prepare email data with accessors for Vue component
     $emailData = $email->getAttributes();
     $emailData['sender_email'] = $email->sender_email;
     $emailData['has_relationships'] = $email->has_relationships;
+    $emailData['llm_metadata'] = $email->llm_metadata;
+    $defaultLlmPrompt = config('ai_prompts.email_sender_extraction');
+
+    $linkingService = app(EmailLlmLinkingService::class);
+    $initialSuggestions = $linkingService->suggestionsForEmailView($email);
+    $linkedToSales = $email->sales_lead_id && $email->has_relationships;
+    $suggestionsHeading = $linkedToSales && $initialSuggestions !== []
+        ? 'Actieve orders voor deze sales'
+        : null;
+    $hasCachedLlmExtraction = $linkingService->hasUsableCachedExtraction($email);
+    $technicalOutputUsers = config('services.llm.email_linking.technical_output_users', []);
+    $adminEmail = strtolower((string) (auth()->guard('user')->user()?->email ?? ''));
+    $showLlmTechnicalOutput = config('services.llm.email_linking.technical_output_enabled')
+        || ($adminEmail !== '' && in_array($adminEmail, $technicalOutputUsers, true));
+    $initialLlmMetadata = is_array($email->llm_metadata) ? $email->llm_metadata : null;
 @endphp
 
 @pushOnce('scripts')
 @include('adminc.emails.email-suggestions')
 @include('adminc.emails.entity-linker')
+@include('adminc.emails.email-llm-linking')
 <script
     type="text/x-template"
     id="v-action-email-template"
@@ -51,6 +68,18 @@
                     </button>
                 </div>
             </div>
+            <v-email-llm-linking
+                v-if="hasRelationships"
+                :email-id="{{ $email->id }}"
+                :default-prompt='@json($defaultLlmPrompt)'
+                :initial-suggestions='@json($initialSuggestions)'
+                :suggestions-heading='@json($suggestionsHeading)'
+                :has-cached-llm-extraction="@json($hasCachedLlmExtraction)"
+                :initial-llm-metadata='@json($initialLlmMetadata)'
+                :show-technical-output="@json($showLlmTechnicalOutput)"
+                run-route="{{ route('admin.mail.llm_sender_extraction', $email->id) }}"
+                apply-suggestion-route="{{ route('admin.mail.apply_suggestion', $email->id) }}"
+            ></v-email-llm-linking>
         </template>
 
         <!-- When no relationship exists: show Panel 1 (suggestions) -->
@@ -64,10 +93,31 @@
                         aria-label="Uitleg: Klik op een suggestie om deze te koppelen aan de mail"
                     ></i>
                 </label>
-                <v-email-suggestions
-                    :email="email"
-                    @link-entity="linkEntity"
-                ></v-email-suggestions>
+                <div class="flex flex-col gap-2">
+                    <div
+                        v-if="showNoSuggestionsMessage"
+                        class="text-sm text-gray-500 dark:text-gray-400"
+                    >
+                        Geen suggesties gevonden
+                    </div>
+                    <v-email-suggestions
+                        :email="email"
+                        @loaded="senderSuggestionCount = $event"
+                        @link-entity="linkEntity"
+                    ></v-email-suggestions>
+                    <v-email-llm-linking
+                        :email-id="{{ $email->id }}"
+                        :default-prompt='@json($defaultLlmPrompt)'
+                        :initial-suggestions='@json($initialSuggestions)'
+                        :suggestions-heading='@json($suggestionsHeading)'
+                        :has-cached-llm-extraction="@json($hasCachedLlmExtraction)"
+                        :initial-llm-metadata='@json($initialLlmMetadata)'
+                        :show-technical-output="@json($showLlmTechnicalOutput)"
+                        run-route="{{ route('admin.mail.llm_sender_extraction', $email->id) }}"
+                        apply-suggestion-route="{{ route('admin.mail.apply_suggestion', $email->id) }}"
+                        @suggestions-changed="aiSuggestionCount = $event"
+                    ></v-email-llm-linking>
+                </div>
                 @if (bouncer()->hasPermission('leads.create'))
                     <button
                         type="button"
@@ -133,10 +183,17 @@
                     '#ECFCCB': '#65A30D',
                     '#DCFCE7': '#16A34A',
                 },
+
+                senderSuggestionCount: null,
+                aiSuggestionCount: {{ count($initialSuggestions) }},
             };
         },
 
         computed: {
+            showNoSuggestionsMessage() {
+                return this.senderSuggestionCount === 0 && this.aiSuggestionCount === 0;
+            },
+
             hasRelationships() {
                 if (this.email && Object.prototype.hasOwnProperty.call(this.email, 'has_relationships')) {
                     return !!this.email.has_relationships;

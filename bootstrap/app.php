@@ -135,7 +135,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
                         'user_id' => optional(optional(auth()->guard('user'))->user())->id,
                         'request_data' => optional($request)->all(),
                         'headers' => optional(optional($request)->headers)->all(),
-                        'session_id' => optional(session())->getId(),
+                        'session_id' => rescue(fn () => session()->getId()),
                     ]);
                 }
             } catch (Exception $logException) {

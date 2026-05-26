@@ -66,11 +66,7 @@ class EmailRepository extends Repository
         } // (e.g., system emails that don't need to be linked to a specific entity)
 
         if (! is_null($parent)) {
-            foreach (EmailModel::entityLinkForeignKeys() as $foreignKey) {
-                if (! empty($parent->{$foreignKey})) {
-                    $data[$foreignKey] = $parent->{$foreignKey};
-                }
-            }
+            $data = array_merge($data, EmailModel::entityLinksToInheritFrom($parent));
         }
 
         $isDraft = $data['is_draft'] ?? false;
@@ -125,7 +121,38 @@ class EmailRepository extends Repository
             }
         }
 
-        return parent::update($this->sanitizeEmails($data), $id);
+        $email = parent::update($this->sanitizeEmails($data), $id);
+
+        $this->propagateEntityLinksToThread($email, $data);
+
+        return $email;
+    }
+
+    /**
+     * Propagate entity link fields to every email in the thread.
+     */
+    private function propagateEntityLinksToThread(Email $email, array $data): void
+    {
+        $linkUpdates = [];
+
+        foreach (EmailModel::entityLinkForeignKeys() as $foreignKey) {
+            if (array_key_exists($foreignKey, $data)) {
+                $linkUpdates[$foreignKey] = $data[$foreignKey] ?: null;
+            }
+        }
+
+        if ($linkUpdates === []) {
+            return;
+        }
+
+        $threadIds = array_filter(
+            $email->getThreadEmailIds(),
+            fn (int $threadId) => $threadId !== $email->id
+        );
+
+        foreach ($threadIds as $threadId) {
+            parent::update($linkUpdates, $threadId);
+        }
     }
 
     /**

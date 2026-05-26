@@ -6,6 +6,7 @@ use App\Services\Mail\GraphMailService;
 use App\Services\Mail\MicrosoftGraphTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Lead\Models\Lead;
@@ -112,8 +113,8 @@ test('links active sales lead via person', function () {
 
     $result = callLink(['subject' => 'Test'], 'patient@example.com');
 
-    expect($result['person_id'])->toEqual($person->id)
-        ->and($result['sales_lead_id'])->toEqual($salesLead->id);
+    expect($result['sales_lead_id'])->toEqual($salesLead->id)
+        ->and($result)->not->toHaveKey('person_id');
 });
 
 test('skips won sales lead', function () {
@@ -290,10 +291,10 @@ test('links all entity types simultaneously', function () {
 
     $result = callLink(['subject' => 'Test'], $email);
 
-    expect($result['person_id'])->toEqual($person->id)
-        ->and($result['sales_lead_id'])->toEqual($salesLead->id)
-        ->and($result['lead_id'])->toEqual($lead->id)
-        ->and($result['clinic_id'])->toEqual($clinic->id);
+    expect($result['sales_lead_id'])->toEqual($salesLead->id)
+        ->and($result['clinic_id'])->toEqual($clinic->id)
+        ->and($result)->not->toHaveKey('person_id')
+        ->and($result)->not->toHaveKey('lead_id');
 });
 
 test('preserves existing email data', function () {
@@ -307,4 +308,36 @@ test('preserves existing email data', function () {
 
     expect($result['subject'])->toEqual('Test Subject')
         ->and($result['message_id'])->toEqual('abc123');
+});
+
+test('reply inherits sales link only and not person from parent thread', function () {
+    $activeStage = createActiveStage();
+
+    $person = Person::factory()->create([
+        'emails' => [['value' => 'patient@example.com', 'is_default' => true]],
+    ]);
+
+    $salesLead = SalesLead::factory()->create([
+        'pipeline_stage_id' => $activeStage->id,
+    ]);
+    $salesLead->persons()->attach($person->id);
+
+    $parent = Email::create([
+        'subject'        => 'Parent',
+        'from'           => ['address' => 'patient@example.com', 'name' => 'Patient'],
+        'reply'          => 'Body',
+        'sales_lead_id'  => $salesLead->id,
+        'person_id'      => $person->id,
+    ]);
+
+    $child = app(EmailRepository::class)->create([
+        'parent_id' => $parent->id,
+        'subject'   => 'Re: Parent',
+        'reply'     => 'Reply',
+        'reply_to'  => ['patient@example.com'],
+    ]);
+
+    expect($child->sales_lead_id)->toBe($salesLead->id)
+        ->and($child->person_id)->toBeNull()
+        ->and($child->lead_id)->toBeNull();
 });

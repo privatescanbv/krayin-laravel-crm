@@ -182,12 +182,9 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     /**
      * Link email to existing entities based on sender email address.
      *
-     * Priority (first match wins per entity type, all types are checked):
-     *  1. Person   – match sender against persons.emails JSON (value field).
-     *  2. SalesLead – newest active (stage not is_won/is_lost) sales lead linked to the matched person.
-     *  3. Lead      – newest active (stage not is_won/is_lost) lead linked to the matched person,
-     *                 or by lead.emails JSON if no person was found.
-     *  4. Clinic    – match sender domain against clinic.emails JSON (plain string array).
+     * When an active sales lead is found for the sender, only {@code sales_lead_id} is set.
+     * Person/lead links are omitted because the UI resolves those upward from sales.
+     * Clinic matching is independent and may coexist with any other link.
      *
      * Note: reply/parent relation copying is handled separately in EmailRepository::create().
      */
@@ -197,13 +194,9 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             return $emailData;
         }
 
-        // 1. Find person by email address
         $person = Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
 
         if ($person) {
-            $emailData['person_id'] = $person->id;
-
-            // 2. Find newest active sales lead via person
             $salesLead = SalesLead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
                 ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
                 ->latest()
@@ -211,19 +204,19 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
             if ($salesLead) {
                 $emailData['sales_lead_id'] = $salesLead->id;
-            }
+            } else {
+                $emailData['person_id'] = $person->id;
 
-            // 3. Find newest active lead via person
-            $lead = Lead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
-                ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
-                ->latest()
-                ->first();
+                $lead = Lead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
+                    ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
+                    ->latest()
+                    ->first();
 
-            if ($lead) {
-                $emailData['lead_id'] = $lead->id;
+                if ($lead) {
+                    $emailData['lead_id'] = $lead->id;
+                }
             }
         } else {
-            // 3b. No person found – try to match lead directly by emails JSON
             $lead = Lead::where('emails', 'like', '%'.$emailAddress.'%')
                 ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
                 ->latest()
@@ -234,7 +227,6 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             }
         }
 
-        // 4. Find clinic by sender email address
         $clinic = Clinic::where('emails', 'like', '%'.$emailAddress.'%')->first();
 
         if ($clinic) {

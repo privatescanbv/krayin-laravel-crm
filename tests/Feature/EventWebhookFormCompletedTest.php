@@ -17,6 +17,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Mockery;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -243,7 +244,7 @@ test('UpdateAnamnesisFormStatus listener logs error when no anamnesis found', fu
     Log::shouldReceive('info')->zeroOrMoreTimes();
     Log::shouldReceive('error')
         ->once()
-        ->with('UpdateAnamnesisFormStatus: geen anamnese gevonden voor formulier', \Mockery::on(fn ($ctx) => $ctx['form_id'] === 'form-missing-789'));
+        ->with('UpdateAnamnesisFormStatus: geen anamnese gevonden voor formulier', Mockery::on(fn ($ctx) => $ctx['form_id'] === 'form-missing-789'));
 
     $event = new PatientFormStatusUpdatedEvent('form-missing-789', FormStatus::Step1_completed, FormType::PrivateScan);
     $listener = app(UpdateAnamnesisFormStatus::class);

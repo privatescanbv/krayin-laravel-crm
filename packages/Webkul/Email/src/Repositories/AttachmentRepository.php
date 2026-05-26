@@ -90,6 +90,43 @@ class AttachmentRepository extends Repository
     }
 
     /**
+     * Copy attachments from a source email to a target email (e.g. forward).
+     */
+    public function copyAttachmentsToEmail(Email $targetEmail, Email $sourceEmail): void
+    {
+        $sourceEmail->loadMissing('attachments');
+
+        foreach ($sourceEmail->attachments as $attachment) {
+            if (empty($attachment->path) || ! Storage::exists($attachment->path)) {
+                continue;
+            }
+
+            $originalName = $attachment->name ?: basename($attachment->path);
+            $directory = 'emails/'.$targetEmail->id;
+            $safeBasename = SafeStorageFilename::forPathSegment($originalName);
+
+            $path = $directory.'/'.$safeBasename;
+            $counter = 0;
+            [$stem, $extension] = self::stemAndExtensionFromBasename($safeBasename);
+
+            while (Storage::exists($path)) {
+                $counter++;
+                $path = $directory.'/'.$stem.'_'.$counter.$extension;
+            }
+
+            Storage::put($path, Storage::get($attachment->path));
+
+            $this->create([
+                'email_id'     => $targetEmail->id,
+                'name'         => $originalName,
+                'content_type' => $attachment->content_type,
+                'size'         => $attachment->size ?: Storage::size($path),
+                'path'         => $path,
+            ]);
+        }
+    }
+
+    /**
      * Get the path for the attachment.
      */
     private function prepareData(Email $email, $attachment): array

@@ -65,7 +65,7 @@ class Email extends Mailable
 
         $this->from($emailAddress ?? config('mail.from.address'), $name);
 
-        $isReply = (bool) $this->email->parent_id;
+        $isReply = (bool) $this->email->parent_id && ! $this->isForward();
         $subject = $this->buildSubjectLine();
 
         $this->to($this->email->reply_to)
@@ -123,7 +123,7 @@ class Email extends Mailable
 
     private function buildSubjectLine(): string
     {
-        if (! $this->email->parent_id) {
+        if (! $this->email->parent_id || $this->isForward()) {
             return $this->email->subject;
         }
 
@@ -134,5 +134,10 @@ class Email extends Mailable
         }
 
         return 'Re: '.$parentSubject;
+    }
+
+    private function isForward(): bool
+    {
+        return (bool) preg_match('/^Fwd:\s/i', $this->email->subject ?? '');
     }
 }

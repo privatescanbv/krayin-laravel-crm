@@ -65,7 +65,7 @@ enum OrderPurchaseStatus: string
             self::FULLY_RECEIVED           => 'Geheel ontvangen',
             self::PARTIALLY_RECEIVED       => 'Gedeeltelijk ontvangen',
             self::NOT_RECEIVED             => 'Niet ontvangen',
-            self::INVOICE_WITHOUT_PURCHASE => 'Invoice zonder inkoopprijs',
+            self::INVOICE_WITHOUT_PURCHASE => 'Factuur zonder inkoopprijs',
             self::NO_PURCHASE_PRICE        => 'Geen inkoopprijs',
             self::UNKNOWN                  => 'Onbekend',
         };

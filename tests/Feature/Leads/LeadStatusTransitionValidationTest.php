@@ -124,20 +124,19 @@ test('it works with lead model update stage method', function () {
 // Removed test for removing transition rules as this functionality is no longer supported
 
 test('it validates required fields for first stage transition', function () {
-    // Create a lead without first_name and last_name
+    // Create a lead without last_name (first_name is optional)
     $incompleteLead = Lead::create([
         'lead_pipeline_id'       => test()->pipeline->id,
         'lead_pipeline_stage_id' => test()->startStage->id,
     ]);
 
-    // Attempt to transition should fail due to missing required fields
+    // Attempt to transition should fail due to missing last_name
     expect(fn () => LeadStatusTransitionValidator::validateTransition($incompleteLead, test()->followUpStage->id))
         ->toThrow(ValidationException::class);
 
-    // Now add the required fields
+    // Add only last_name (first_name remains null — it is optional)
     $incompleteLead->update([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'last_name' => 'Doe',
     ]);
 
     // Also attach the required minimum persons (1)
@@ -146,6 +145,6 @@ test('it validates required fields for first stage transition', function () {
         'emails' => [['value' => 'alice@example.com', 'is_default' => true]],
     ]);
     $incompleteLead->attachPersons([$person->id]);
-    // Transition should now succeed
+    // Transition should now succeed without first_name
     LeadStatusTransitionValidator::validateTransition($incompleteLead, test()->followUpStage->id);
 });

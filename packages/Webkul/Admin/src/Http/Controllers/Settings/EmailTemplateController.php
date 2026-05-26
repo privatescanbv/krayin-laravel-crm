@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use App\Enums\EmailTemplateCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
@@ -9,6 +10,7 @@ use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Settings\EmailTemplateDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Automation\Helpers\Entity;
+use Webkul\EmailTemplate\Models\EmailTemplate;
 use Webkul\EmailTemplate\Repositories\EmailTemplateRepository;
 use App\Enums\EmailTemplateType;
 use App\Enums\EmailTemplateLanguage;
@@ -35,7 +37,15 @@ class EmailTemplateController extends Controller
             return datagrid(EmailTemplateDataGrid::class)->process();
         }
 
-        return view('admin::settings.email-templates.index');
+        $existing = EmailTemplate::whereNotNull('code')->pluck('code')->all();
+
+        $missingCodes = collect(EmailTemplateCode::cases())
+            ->filter(fn ($case) => ! in_array($case->value, $existing))
+            ->map(fn ($case) => $case->value)
+            ->values()
+            ->all();
+
+        return view('admin::settings.email-templates.index', ['missingCodes' => $missingCodes]);
     }
 
     /**
@@ -96,7 +106,7 @@ class EmailTemplateController extends Controller
         $placeholders = $this->workflowEntityHelper->getEmailTemplatePlaceholders();
         $templateTypes = EmailTemplateType::allWithLabels();
         $templateLanguages = EmailTemplateLanguage::allWithLabels();
-        
+
         // Get selected departments as Department models for entity selector
         $selectedDepartments = $this->getSelectedDepartmentsForEntitySelector($emailTemplate->departments ?? []);
 
@@ -172,14 +182,14 @@ class EmailTemplateController extends Controller
         if (!is_array($departmentIds)) {
             $departmentIds = $departmentIds ? [$departmentIds] : [];
         }
-        
+
         // Filter empty values and convert to integers
         $departmentIds = array_values(array_filter(array_map('intval', $departmentIds)));
-        
+
         if (empty($departmentIds)) {
             return [];
         }
-        
+
         // Convert IDs to names
         return Department::whereIn('id', $departmentIds)->pluck('name')->toArray();
     }
@@ -192,7 +202,7 @@ class EmailTemplateController extends Controller
         if (empty($departmentNames)) {
             return [];
         }
-        
+
         return Department::whereIn('name', $departmentNames)
             ->get()
             ->map(fn ($dept) => [

@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientFormCompletedEvent;
+use App\Events\PatientFormStatusUpdatedEvent;
 use App\Events\PatientNotifyEvent;
 use App\Listeners\CreateFormReviewTask;
 use App\Listeners\CreatePatientNotification;
 use App\Listeners\NotifyPatientFormCompleted;
 use App\Listeners\SchedulePatientPortalNotifyEmail;
 use App\Listeners\StoreOrderConfirmationPdf;
+use App\Listeners\UpdateAnamnesisFormStatus;
 use App\Observers\SalesLeadListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -39,6 +41,9 @@ class EventServiceProvider extends ServiceProvider
         PatientFormCompletedEvent::class => [
             CreateFormReviewTask::class,
             NotifyPatientFormCompleted::class,
+        ],
+        PatientFormStatusUpdatedEvent::class => [
+            UpdateAnamnesisFormStatus::class,
         ],
     ];
 

@@ -353,13 +353,14 @@ services:
       retries: 5
 
   llama:
-    image: ghcr.io/ggml-org/llama.cpp:server
+    image: ghcr.io/ggml-org/llama.cpp@sha256:fec38a24f7b0f15bffcee5fa31532d821c5b9eb8d6c1c1e92ddf24b0cf10e239
     container_name: llama
     restart: unless-stopped
     volumes:
       - /home/apps/models:/models:ro
     environment:
       - GGML_NO_GPU=1
+      - LD_LIBRARY_PATH=/app
     command: >
       -m /models/medgemma-27b-text-it-Q3_K_M.gguf
       -c 8192
@@ -398,13 +399,14 @@ services:
       start_period: 60s
 
   llama-fast:
-    image: ghcr.io/ggml-org/llama.cpp:server
+    image: ghcr.io/ggml-org/llama.cpp@sha256:fec38a24f7b0f15bffcee5fa31532d821c5b9eb8d6c1c1e92ddf24b0cf10e239
     container_name: llama-fast
     restart: unless-stopped
     volumes:
       - /home/apps/models:/models:ro
     environment:
       - GGML_NO_GPU=1
+      - LD_LIBRARY_PATH=/app
     command: >
       -m /models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
       -c 8192
@@ -443,13 +445,14 @@ services:
       start_period: 60s
 
   llama-qwen:
-    image: ghcr.io/ggml-org/llama.cpp:server
+    image: ghcr.io/ggml-org/llama.cpp@sha256:fec38a24f7b0f15bffcee5fa31532d821c5b9eb8d6c1c1e92ddf24b0cf10e239
     container_name: llama-qwen
     restart: unless-stopped
     volumes:
       - /home/apps/models:/models:ro
     environment:
       - GGML_NO_GPU=1
+      - LD_LIBRARY_PATH=/app
     command: >
       -m /models/Qwen2.5-7B-Instruct-Q4_K_M.gguf
       --ctx-size 8192

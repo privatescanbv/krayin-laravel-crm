@@ -147,7 +147,7 @@
 
                 <div
                     class="flex flex-wrap gap-2"
-                    v-if="email.attachments.length"
+                    v-if="email.attachments?.length"
                 >
                     <div
                         class="group relative flex items-center gap-2 rounded-md border border-gray-300 bg-neutral-bg px-2 py-1.5 dark:border-gray-800 dark:bg-gray-900"

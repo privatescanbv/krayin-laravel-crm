@@ -135,19 +135,13 @@
             <!-- Footer with creation and modification dates -->
             <div
                 class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <!-- Suite CRM link -->
-                @if (!empty($lead->sugar_link))
-                    <div class="flex justify-between">
-                        <span>Sugar Link:</span>
-                        <span>
-                            <a href="{{ $lead->sugar_link }}" target="_blank">{{ $lead->external_id }}</a>
-                        </span>
-                    </div>
-                @endif
-
                 <div class="flex justify-between">
                     <span>Toegewezen aan:</span>
                     <span>{{ $lead->user?->name ?: "-" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Afdeling:</span>
+                    <span>{{ $lead->department()?->name ?? '—' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>

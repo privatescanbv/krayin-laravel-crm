@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\EmailTemplateCode;
 use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use App\Models\Address;
@@ -328,9 +327,9 @@ test('it returns template body with gvl template and person entity', function ()
     ]);
 
     $anamnesis = Anamnesis::factory()->create([
-        'person_id'     => $person->id,
-        'lead_id'       => $lead->id,
-        'gvl_form_link' => 'https://example.com/gvl-form/12345',
+        'person_id'   => $person->id,
+        'lead_id'     => $lead->id,
+        'gvl_form_id' => '12345',
     ]);
 
     $template = EmailTemplate::factory()->create([
@@ -359,7 +358,7 @@ test('it returns template body with gvl template and person entity', function ()
 
     $content = $response->json('data.content');
     expect($content)->toContain('Person')
-        ->and($content)->toContain('https://example.com/gvl-form/12345')
+        ->and($content)->toContain('https://patientdev.local.privatescan.nl/patient/forms/12345/step/1')
         ->and($content)->not->toContain('{{ $gvl_form_link }}');
 });
 
@@ -377,7 +376,7 @@ test('it merges acknowledge-order-mail variables from OrderMailService for order
 
     EmailTemplate::factory()->create([
         'name'     => 'Afspraak bevestiging API test',
-        'code'     => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value,
+        'code'     => 'acknowledge-order-mail-augusta',
         'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
         'language' => EmailTemplateLanguage::NEDERLANDS->value,
         'subject'  => 'Order {{ order_reference }}',
@@ -385,7 +384,7 @@ test('it merges acknowledge-order-mail variables from OrderMailService for order
     ]);
 
     $response = $this->postJson(route('admin.mail.template_content_body'), [
-        'email_template_identifier' => EmailTemplateCode::ACKNOWLEDGE_ORDER_MAIL->value,
+        'email_template_identifier' => 'acknowledge-order-mail-augusta',
         'entities'                  => [
             'order' => $order->id,
         ],

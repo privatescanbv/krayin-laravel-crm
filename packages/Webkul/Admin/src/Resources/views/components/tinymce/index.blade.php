@@ -212,6 +212,10 @@
                         directionality: 'ltr',
                         browser_spellcheck: true,
                         contextmenu: 'link table spellchecker',
+                        @if($showPlaceholders)
+                        // Preserve template placeholder URLs in links (avoid prepending document_base_url)
+                        convert_urls: false,
+                        @endif
                         setup: (editor) => {
                             @if($showPlaceholders)
                             editor.ui.registry.addMenuButton('placeholders', {

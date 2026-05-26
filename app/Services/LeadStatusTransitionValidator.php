@@ -152,7 +152,7 @@ class LeadStatusTransitionValidator
             PipelineStage::allStageAfterNewExcludingLost(),
             [
                 'min_persons'     => 1,
-                'required_fields' => ['first_name', 'last_name'],
+                'required_fields' => ['last_name'],
                 'message'         => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
             ]
         );

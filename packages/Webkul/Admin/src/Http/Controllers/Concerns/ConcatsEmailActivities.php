@@ -82,10 +82,15 @@ trait ConcatsEmailActivities
             ? Folder::whereIn('id', $folderIds)->get()->keyBy('id')
             : collect();
 
-        // Bulk-load attachments to avoid N+1 (one query instead of one per email)
-        $emailIds = $emails->pluck('id')->all();
-        $attachmentsByEmail = $emailIds
-            ? Attachment::whereIn('email_id', $emailIds)->get()->groupBy('email_id')
+        // Bulk-load attachments for entire threads to avoid N+1
+        $threadEmailIds = $emails
+            ->flatMap(fn (Email $email) => $email->getThreadEmailIds())
+            ->unique()
+            ->values()
+            ->all();
+
+        $attachmentsByEmail = $threadEmailIds
+            ? Attachment::whereIn('email_id', $threadEmailIds)->get()->groupBy('email_id')
             : collect();
 
         $mapped = $emails->map(function (Email $email) use ($user, $linkedActivities, $folders, $attachmentsByEmail) {
@@ -96,17 +101,22 @@ trait ConcatsEmailActivities
                 ? 'activity'
                 : ($email->order_id ? 'order' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : ($email->sales_lead_id ? 'sales' : ($email->clinic_id ? 'clinic' : 'unknown')))));
 
-            $emailAttachments = ($attachmentsByEmail[$email->id] ?? collect())->map(function ($attachment) {
-                return (object) [
-                    'id'                  => $attachment->id,
-                    'name'                => $attachment->name,
-                    'path'                => $attachment->path,
-                    'url'                 => $attachment->url,
-                    'is_email_attachment' => true,
-                    'created_at'          => $attachment->created_at,
-                    'updated_at'          => $attachment->updated_at,
-                ];
-            })->values()->toArray();
+            $emailAttachments = collect($email->getThreadEmailIds())
+                ->flatMap(fn (int $threadEmailId) => $attachmentsByEmail[$threadEmailId] ?? collect())
+                ->unique('id')
+                ->map(function ($attachment) {
+                    return (object) [
+                        'id'                  => $attachment->id,
+                        'name'                => $attachment->name,
+                        'path'                => $attachment->path,
+                        'url'                 => $attachment->url,
+                        'is_email_attachment' => true,
+                        'created_at'          => $attachment->created_at,
+                        'updated_at'          => $attachment->updated_at,
+                    ];
+                })
+                ->values()
+                ->toArray();
 
             return (object) [
                 'id'             => $email->id,

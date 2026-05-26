@@ -121,7 +121,7 @@ class PersonController extends Controller
 
         // Search persons with the same first + last name as this lead.
         // Keep permission filtering consistent with the regular search() endpoint.
-        if ($leadFirstName === '' || $leadLastName === '') {
+        if ($leadLastName === '') {
             $result = PersonResource::collection(collect());
         } else {
             $repository = $this->personRepository->with(['address']);
@@ -481,7 +481,13 @@ class PersonController extends Controller
     {
         $persons = Person::query()
             ->with(['address'])
-            ->where('first_name', 'like', '%' . $lead->first_name . '%')
+            ->when(
+                !empty($lead->first_name),
+                fn ($q) => $q->where(function ($sub) use ($lead) {
+                    $sub->where('first_name', 'like', '%' . $lead->first_name . '%')
+                        ->orWhereNull('first_name');
+                })
+            )
             ->where(function ($query) use ($lead) {
                 $query->where('last_name', 'like', '%' . $lead->last_name . '%')
                     ->orWhere('married_name', 'like', '%' . $lead->married_name . '%');
@@ -559,10 +565,14 @@ class PersonController extends Controller
             return response()->json(['message' => 'lead_id and person_id are required'], 422);
         }
 
-        try {
-            $lead = Lead::findOrFail($leadId);
-            $person = Person::findOrFail($personId);
+        $lead = Lead::find($leadId);
+        $person = Person::find($personId);
 
+        if (! $lead || ! $person) {
+            return response()->json(['message' => 'Lead or person not found'], 404);
+        }
+
+        try {
             $result = $this->buildLeadToPersonMatchBreakdown($lead, $person);
 
             // Compute legacy breakdown data for UI (weights and matched flags)
@@ -761,12 +771,12 @@ class PersonController extends Controller
 
         // Check regular fields
         foreach ($comparableFields as $field) {
-            $leadValue = $lead->$field ?? null;
+            $leadValue   = $lead->$field ?? null;
+            $personValue = $person->$field ?? null;
 
-            // Only consider fields that have a value in the lead
-            if ($this->hasValue($leadValue)) {
+            // Only compare fields where both sides have a value
+            if ($this->hasValue($leadValue) && $this->hasValue($personValue)) {
                 $totalFields++;
-                $personValue = $person->$field ?? null;
 
                 // Use lead perspective for array subset logic on emails/phones
                 if ($this->valuesMatch($leadValue, $personValue, $field, 'lead')) {
@@ -778,12 +788,12 @@ class PersonController extends Controller
         // Check address fields
         if ($lead->address) {
             foreach ($addressFields as $field) {
-                $leadValue = $lead->address->$field ?? null;
+                $leadValue   = $lead->address->$field ?? null;
+                $personValue = $person->address->$field ?? null;
 
-                // Only consider fields that have a value in the lead
-                if ($this->hasValue($leadValue)) {
+                // Only compare fields where both sides have a value
+                if ($this->hasValue($leadValue) && $this->hasValue($personValue)) {
                     $totalFields++;
-                    $personValue = $person->address->$field ?? null;
 
                     if ($this->valuesMatch($leadValue, $personValue, $field)) {
                         $matchingFields++;

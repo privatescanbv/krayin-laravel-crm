@@ -87,8 +87,25 @@ class EmailController extends Controller
     {
         try {
             $email = $this->emailRepository
-                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'salesLead', 'clinic', 'order'])
+                ->with(['parent'])
                 ->findOrFail(request('id'));
+
+            $email = $email->getThreadRoot();
+
+            $email->load([
+                'emails',
+                'attachments',
+                'emails.attachments',
+                'tags',
+                'lead',
+                'lead.tags',
+                'lead.source',
+                'lead.type',
+                'person',
+                'salesLead',
+                'clinic',
+                'order',
+            ]);
 
             if (request('route') == 'draft') {
                 return response()->json([

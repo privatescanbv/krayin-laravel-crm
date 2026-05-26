@@ -15,7 +15,7 @@ class PersonValidationService
         return array_merge(
             [
                 // Required personal fields
-                'first_name' => 'required|string|max:255',
+                'first_name' => 'nullable|string|max:255',
                 'last_name'  => 'required|string|max:255',
                 'job_title'  => 'nullable|string|max:255',
             ],

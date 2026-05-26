@@ -75,7 +75,6 @@
             :label="__('Voornaam')"
             value="{{ old('first_name', $entity?->first_name ?? '') }}"
             placeholder="Voornaam"
-            rules="required"
             :readonly="!$mayEditPersonFields"
         />
     </div>

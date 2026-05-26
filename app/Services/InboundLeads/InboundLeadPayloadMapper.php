@@ -40,7 +40,7 @@ class InboundLeadPayloadMapper
 
         return array_filter([
             'salutation'           => $this->mapSalutation($payload['salutation'] ?? null),
-            'first_name'           => $this->nullIfEmpty($payload['first_name'] ?? null) ?? 'Onbekend',
+            'first_name'           => $this->nullIfEmpty($payload['first_name'] ?? null) ?? null,
             'last_name'            => $this->nullIfEmpty($payload['last_name'] ?? null),
             'date_of_birth'        => $this->nullIfEmpty($payload['birthdate'] ?? null),
             'description'          => $this->nullIfEmpty($payload['description'] ?? null),

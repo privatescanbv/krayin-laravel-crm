@@ -53,6 +53,7 @@
                 :showOrders="false"
                 :showAnamnesis="false"
                 :showMarketing="false"
+                :showInkoopAfletteren="true"
                 :showPartnerProducts="true"
                 :showResources="true"
                 :showAfbDispatches="true"
@@ -62,16 +63,6 @@
             <!-- Footer with creation and modification dates -->
             <div
                 class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <!-- Suite CRM link -->
-                @if (!empty($clinic->sugar_link))
-                    <div class="flex justify-between">
-                        <span>Sugar Link:</span>
-                        <span>
-                            <a href="{{ $clinic->sugar_link }}" target="_blank">{{ $clinic->external_id }}</a>
-                        </span>
-                    </div>
-                @endif
-
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $clinic->created_at->format('d-m-Y') }}</span>
@@ -112,6 +103,10 @@
 
             <div v-else-if="leadDetailSection === 'afdelingen'" class="flex w-full flex-col gap-4 rounded-lg">
                 <x-adminc::clinics.partials.departments :clinic="$clinic"/>
+            </div>
+
+            <div v-else-if="leadDetailSection === 'inkoop-afletteren'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc::clinics.partials.tab-inkoop-afletteren', ['clinic' => $clinic])
             </div>
         </div>
 
@@ -255,7 +250,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources', 'afb-verzendingen', 'afdelingen'];
+                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources', 'afb-verzendingen', 'afdelingen', 'inkoop-afletteren'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

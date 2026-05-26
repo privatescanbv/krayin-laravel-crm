@@ -12,7 +12,7 @@ enum FormStatus: string
     case Step3_completed = 'step3';
     case Completed = 'completed';
 
-    public static function mapFrom(string $status)
+    public static function mapFrom(string $status): FormStatus
     {
         foreach (self::cases() as $case) {
             if ($case->value === $status) {

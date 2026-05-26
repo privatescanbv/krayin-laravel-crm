@@ -164,7 +164,8 @@ class FormService
      */
     public function downloadForm(int $formId): Response
     {
-        $url = $this->buildApiUrl("/api/forms/{$formId}/download");
+        // GET /api/forms/{id}/download?lang=de
+        $url = $this->buildApiUrl("/api/forms/{$formId}/download?lang=de");
 
         return $this->makeRequest('get', $url, ['form_id' => $formId, 'url' => $url]);
     }
@@ -342,7 +343,7 @@ class FormService
     public function findRelatedEntityByFormId(string $showFormUrl): array
     {
         $person = Anamnesis::select('person_id')
-            ->where('gvl_form_link', $showFormUrl)
+            ->where('gvl_form_id', $this->extractFormIdFromUrl($showFormUrl) ?? $showFormUrl)
             ->firstOrFail();
 
         $result = $this->leadAndSalesService->findOpenByPerson($person->person_id);

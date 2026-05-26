@@ -70,7 +70,6 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Admin\Http\Resources\OrderLookupResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Traits\PDFHandler;
-use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\StageProxy;
@@ -807,25 +806,15 @@ class OrderController extends SimpleEntityController
 
         if ($person) {
             $anamnesis = Anamnesis::where('person_id', $person->id)
-                ->whereNotNull('gvl_form_link')
+                ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
-            if ($anamnesis) {
-                $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
-                if ($formId) {
-                    try {
-                        $formStatus = $this->formService->getFormStatusAsString($formId);
-                        if ($formStatus === FormStatus::Completed) {
-                            $attachmentPreviews[] = [
-                                'name' => sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
-                                'type' => 'gvl',
-                            ];
-                        }
-                    } catch (Throwable $e) {
-                        // GVL not available
-                    }
-                }
+            if ($anamnesis && $anamnesis->gvl_form_status === FormStatus::Completed) {
+                $attachmentPreviews[] = [
+                    'name' => sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
+                    'type' => 'gvl',
+                ];
             }
         }
 
@@ -899,7 +888,7 @@ class OrderController extends SimpleEntityController
                 ]);
             }
 
-            $this->attachGvlPdfsForManualSend($email, $generatedDocs);
+            $this->afbDispatchService->attachGvlPdfsToEmail($email, $generatedDocs);
 
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $uploadedFile) {
@@ -981,7 +970,7 @@ class OrderController extends SimpleEntityController
 
         if ($type === 'gvl' && $personId) {
             $anamnesis = Anamnesis::where('person_id', $personId)
-                ->whereNotNull('gvl_form_link')
+                ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
@@ -989,7 +978,7 @@ class OrderController extends SimpleEntityController
                 abort(404, 'Geen GVL formulier gevonden.');
             }
 
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
+            $formId = $anamnesis->gvl_form_id;
 
             if (! $formId) {
                 abort(404, 'Geen geldig GVL formulier ID.');
@@ -2160,90 +2149,6 @@ class OrderController extends SimpleEntityController
 
         Storage::put($path, $localDisk->get($path));
     }
-
-    private function attachGvlPdfsForManualSend(Email $email, array $generatedDocuments): void
-    {
-        $personIds = collect($generatedDocuments)
-            ->pluck('person_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        foreach ($personIds as $personId) {
-            $anamnesis = Anamnesis::query()
-                ->where('person_id', $personId)
-                ->whereNotNull('gvl_form_link')
-                ->latest()
-                ->first();
-
-            if (! $anamnesis) {
-                continue;
-            }
-
-            $formId = $this->formService->extractFormIdFromUrl($anamnesis->gvl_form_link);
-
-            if (! $formId) {
-                continue;
-            }
-
-            try {
-                $formStatus = $this->formService->getFormStatusAsString($formId);
-
-                if ($formStatus !== FormStatus::Completed) {
-                    continue;
-                }
-
-                $response = $this->formService->downloadForm($formId);
-
-                if (! $response->successful()) {
-                    continue;
-                }
-
-                $fileName = sprintf('gvl-%d-%s.pdf', $personId, now()->format('Ymd'));
-                $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
-
-                Storage::put($filePath, $response->body());
-
-                $email->attachments()->create([
-                    'name'         => $fileName,
-                    'path'         => $filePath,
-                    'size'         => strlen($response->body()),
-                    'content_type' => 'application/pdf',
-                ]);
-            } catch (Throwable $e) {
-                Log::warning('GVL PDF bijlage mislukt bij handmatige AFB', [
-                    'person_id'     => $personId,
-                    'form_id'       => $formId,
-                    'error_message' => $e->getMessage(),
-                ]);
-            }
-        }
-    }
-
-    //    /**
-    //     * Build template variables for order confirmation templates.
-    //     */
-    //    protected function buildOrderTemplateVariables(Order $order): array
-    //    {
-    //        // Resolve customer name from sales lead
-    //        $customerName = 'heer/mevrouw';
-    //        if ($order->salesLead) {
-    //            if ($order->salesLead->contactPerson) {
-    //                $person = $order->salesLead->contactPerson;
-    //                $customerName = trim(($person->first_name ?? '').' '.($person->last_name ?? ''));
-    //                if (empty($customerName)) {
-    //                    $customerName = $person->name ?? 'heer/mevrouw';
-    //                }
-    //            } elseif ($order->salesLead->lead) {
-    //                $customerName = $order->salesLead->lead->name ?? 'heer/mevrouw';
-    //            }
-    //        }
-    //
-    //        return [
-    //            'order'         => $order,
-    //            'customer_name' => $customerName,
-    //        ];
-    //    }
 
     private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
     {

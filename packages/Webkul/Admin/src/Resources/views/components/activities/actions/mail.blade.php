@@ -989,11 +989,6 @@
 
                     const formData = new FormData(this.$refs.mailActionForm);
 
-                    if (this.entityControlName === 'order_id' && this.entity?.sales_lead_id
-                        && !formData.get('sales_lead_id')) {
-                        formData.append('sales_lead_id', this.entity.sales_lead_id);
-                    }
-
                     this.$axios.post(resolvedStoreUrl, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data'

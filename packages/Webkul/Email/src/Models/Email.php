@@ -547,6 +547,28 @@ class Email extends Model implements EmailContract
             ->where('is_read', 0);
     }
 
+    /**
+     * Entity links copied to replies/forwards: omit person/lead when sales is already linked.
+     *
+     * @return array<string, int>
+     */
+    public static function entityLinksToInheritFrom(self $email): array
+    {
+        $links = [];
+
+        foreach (self::entityLinkForeignKeys() as $foreignKey) {
+            if (! empty($email->{$foreignKey})) {
+                $links[$foreignKey] = $email->{$foreignKey};
+            }
+        }
+
+        if (! empty($links['sales_lead_id'])) {
+            unset($links['person_id'], $links['lead_id']);
+        }
+
+        return $links;
+    }
+
     public function getThreadRoot(): self
     {
         $email = $this;
@@ -556,6 +578,35 @@ class Email extends Model implements EmailContract
         }
 
         return $email;
+    }
+
+    /**
+     * All email IDs in this thread (root + descendants).
+     *
+     * @return list<int>
+     */
+    public function getThreadEmailIds(): array
+    {
+        $root = $this->getThreadRoot();
+        $ids = [$root->id];
+        $queue = [$root->id];
+
+        while ($queue !== []) {
+            $parentId = array_shift($queue);
+            $childIds = self::query()
+                ->where('parent_id', $parentId)
+                ->pluck('id')
+                ->all();
+
+            foreach ($childIds as $childId) {
+                if (! in_array($childId, $ids, true)) {
+                    $ids[] = $childId;
+                    $queue[] = $childId;
+                }
+            }
+        }
+
+        return $ids;
     }
 
     /**

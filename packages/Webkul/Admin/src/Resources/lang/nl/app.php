@@ -2724,7 +2724,7 @@ return [
             'weight'                     => 'Gewicht (kg)',
             'metals'                     => 'Heeft u metaal in uw lichaam?',
             'metals_notes'               => 'Toelichting metalen',
-            'medications'                => 'Gebruikt u Metformine?',
+            'medications'                => 'Gebruikt u Medicijnen?',
             'medications_notes'          => 'Toelichting medicijnen',
             'glaucoma'                   => 'Heeft u glaucoom?',
             'glaucoma_notes'             => 'Toelichting glaucoom',

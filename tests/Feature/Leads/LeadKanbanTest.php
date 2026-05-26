@@ -421,3 +421,35 @@ test('it returns optimized response structure', function () {
         }
     }
 });
+
+test('it excludes soft deleted leads from kanban stage totals', function () {
+    $this->adminUser->update(['view_permission' => 'global']);
+
+    $activeLead = Lead::factory()->create([
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stages[0]->id,
+        'user_id'                => $this->adminUser->id,
+    ]);
+
+    $deletedLead = Lead::factory()->create([
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stages[0]->id,
+        'user_id'                => $this->adminUser->id,
+    ]);
+    $deletedLead->delete();
+
+    expect(Lead::find($activeLead->id))->not->toBeNull()
+        ->and(Lead::onlyTrashed()->find($deletedLead->id))->not->toBeNull();
+
+    $activeLead->refresh();
+
+    $response = $this->actingAs($this->adminUser, 'user')
+        ->getJson("/admin/leads/get?pipeline_id={$activeLead->lead_pipeline_id}");
+
+    $response->assertStatus(200);
+
+    $stageData = $response->json()[$activeLead->lead_pipeline_stage_id];
+
+    expect($stageData['leads']['meta']['total'])->toBe(1)
+        ->and($stageData['leads']['data'])->toHaveCount(1);
+});

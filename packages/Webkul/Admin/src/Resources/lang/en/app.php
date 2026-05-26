@@ -2728,7 +2728,7 @@ return [
             'weight'                     => 'Weight (kg)',
             'metals'                     => 'Do you have metal in your body?',
             'metals_notes'               => 'Metal details',
-            'medications'                => 'Do you use Metformin?',
+            'medications'                => 'Do you use Medication?',
             'medications_notes'          => 'Medication details',
             'glaucoma'                   => 'Do you have glaucoma?',
             'glaucoma_notes'             => 'Glaucoma details',

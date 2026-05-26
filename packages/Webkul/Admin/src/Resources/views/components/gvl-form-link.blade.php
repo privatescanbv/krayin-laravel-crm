@@ -1,8 +1,8 @@
 @props([
     'gvlFormLink' => null,
+    'gvlFormStatus' => null,
     'attachUrl' => null,
     'detachUrl' => null,
-    'statusUrl' => null,
     'entityId' => null,
     'entityType' => 'order',
     'personId' => null,
@@ -14,6 +14,17 @@
 
     $showNoPortalWarning = $personId && ! $personHasPortalAccount && $gvlFormLink;
     $openFormUrl = GvlFormLink::adminOpenUrl($gvlFormLink, $personId ? (int) $personId : null, (bool) $personHasPortalAccount);
+
+    $statusLabels = [
+        'new'       => ['Nieuw', 'text-gray-600'],
+        'step1'     => ['Stap 1', 'text-yellow-600'],
+        'step2'     => ['Stap 2', 'text-activity-note-text'],
+        'step3'     => ['Stap 3', 'text-status-active-text'],
+        'completed' => ['Voltooid', 'text-status-active-text'],
+        'Onbekend' => ['Onbekend', 'text-red-600'],
+    ];
+    $statusValue = $gvlFormStatus->value ?? 'Onbekend';
+    [$statusText, $statusColor] = $statusLabels[$statusValue] ?? ['Onbekend', 'text-gray-400'];
 @endphp
 
 <x-admin::form.control-group>
@@ -65,7 +76,7 @@
                 </a>
                 <span class="text-gray-400">|</span>
                 <span class="text-gray-500">Status: </span>
-                <span class="gvl-status font-medium" data-url="{{ $statusUrl }}">Laden...</span>
+                <span class="font-medium {{ $statusColor }}">{{ $statusText }}</span>
             @endif
         </div>
     @endif
@@ -125,68 +136,5 @@
             btn.textContent = originalText;
         }
     });
-
-    // Load statuses - cache results in memory (survives Vue re-renders)
-    const statusMap = {
-        new: ['Nieuw', 'text-gray-600'],
-        step1: ['Stap 1', 'text-yellow-600'],
-        step2: ['Stap 2', 'text-activity-note-text'],
-        step3: ['Stap 3', 'text-status-active-text'],
-        completed: ['Voltooid', 'text-status-active-text'],
-    };
-
-    const statusCache = new Map(); // url -> {text, color}
-    const pendingUrls = new Set(); // urls currently being fetched
-
-    const loadStatuses = () => {
-        document.querySelectorAll('.gvl-status[data-url]').forEach(async (el) => {
-            const url = el.dataset.url;
-
-            // If cached, apply immediately
-            if (statusCache.has(url)) {
-                const { text, color } = statusCache.get(url);
-                el.textContent = text;
-                el.className = `gvl-status font-medium ${color}`;
-                return;
-            }
-
-            // If already fetching, skip
-            if (pendingUrls.has(url)) return;
-            pendingUrls.add(url);
-
-            try {
-                const res = await fetch(url, { headers: { Accept: 'application/json' } });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const data = await res.json();
-                const status = (data.data?.status || data.data?.state || '').toLowerCase();
-                const [text, color] = statusMap[status] || ['Onbekend', 'text-gray-400'];
-
-                // Cache and apply
-                statusCache.set(url, { text, color });
-                el.textContent = text;
-                el.className = `gvl-status font-medium ${color}`;
-            } catch {
-                statusCache.set(url, { text: 'Niet beschikbaar', color: 'text-gray-400' });
-                el.textContent = 'Niet beschikbaar';
-                el.className = 'gvl-status font-medium text-gray-400';
-            } finally {
-                pendingUrls.delete(url);
-            }
-        });
-    };
-
-    // Init when ready (with retries for Vue async rendering)
-    const init = () => {
-        loadStatuses();
-        setTimeout(loadStatuses, 500);
-        setTimeout(loadStatuses, 1500);
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
 </script>
 @endPushOnce

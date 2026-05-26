@@ -370,20 +370,16 @@
                 async calculateExistingMatchScores() {
                     if (!this.lead || !this.lead.id || this.selectedPersons.length === 0) return;
 
-                    try {
-                        const response = await axios.get(`/admin/contacts/persons/searchByLead/${this.lead.id}`);
-                        const personsWithScores = response.data.data || [];
-
-                        // Update match scores for existing persons
-                        this.selectedPersons.forEach((person, index) => {
-                            const personWithScore = personsWithScores.find(p => p.id === person.id);
-                            if (personWithScore && personWithScore.match_score_percentage) {
-                                this.selectedPersons[index].match_score_percentage = personWithScore.match_score_percentage;
+                    await Promise.all(this.selectedPersons.map(async (person, index) => {
+                        try {
+                            const url = `/admin/contacts/persons/searchByLead?lead_id=${this.lead.id}&person_id=${person.id}`;
+                            const response = await axios.get(url);
+                            const pct = response.data?.person?.match_score_percentage;
+                            if (pct !== undefined && pct !== null) {
+                                this.selectedPersons.splice(index, 1, { ...this.selectedPersons[index], match_score_percentage: pct });
                             }
-                        });
-                    } catch (error) {
-                        console.warn('Kon match scores niet berekenen:', error);
-                    }
+                        } catch (_) {}
+                    }));
                 },
 
                 async createPersonFromLead() {

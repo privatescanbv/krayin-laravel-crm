@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\FormStatus;
 use App\Enums\FormType;
 use App\Events\PatientFormCompletedEvent;
+use App\Events\PatientFormStatusUpdatedEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EventWebhookRequest;
 use Illuminate\Http\JsonResponse;
@@ -40,10 +42,18 @@ class EventWebhookController extends Controller
             'form_type'   => $request->input('form_type'),
         ]);
 
-        if ($request->input('status') === 'completed' && $request->get('entity_type') === 'forms') {
-            /** @var Person $person */
-            $person = Person::findOrFail($request->integer('person_id'));
-            PatientFormCompletedEvent::dispatch($person, $request->input('id'), FormType::from($request->input('form_type')));
+        if ($request->get('entity_type') === 'forms') {
+            PatientFormStatusUpdatedEvent::dispatch(
+                $request->input('id'),
+                FormStatus::mapFrom($request->input('status')),
+                FormType::from($request->input('form_type')),
+            );
+
+            if ($request->input('status') === 'completed') {
+                /** @var Person $person */
+                $person = Person::findOrFail($request->integer('person_id'));
+                PatientFormCompletedEvent::dispatch($person, $request->input('id'), FormType::from($request->input('form_type')));
+            }
         }
 
         return response()->json(['status' => 'ok']);

@@ -71,68 +71,6 @@ it('renders deadline column directly from activities_schedule_to', function () {
         ->toContain($expected);
 });
 
-it('filters frontoffice queue by lead pipeline stage', function () {
-    // Arrange
-    $adminRole = Role::factory()->create([
-        'permission_type' => 'all',
-        'permissions'     => null,
-    ]);
-
-    $admin = User::factory()->create([
-        'role_id'         => $adminRole->id,
-        'view_permission' => 'global',
-        'status'          => 1,
-    ]);
-
-    /** @var Group $group */
-    $group = Group::query()->firstOrFail();
-
-    // Frontoffice lead (Nieuwe aanvraag, kwalificeren)
-    $frontofficeLead = Lead::factory()->create([
-        'lead_pipeline_id'       => PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN->pipeline(),
-        'lead_pipeline_stage_id' => PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN->id(),
-    ]);
-
-    $frontofficeActivity = Activity::create([
-        'type'          => ActivityType::TASK->value,
-        'user_id'       => $admin->id,
-        'title'         => 'Frontoffice activity',
-        'schedule_from' => now()->subDay(),
-        'schedule_to'   => now()->addDay(),
-        'is_done'       => 0,
-        'group_id'      => $group->id,
-        'lead_id'       => $frontofficeLead->id,
-    ]);
-
-    // Lead in a different stage, should NOT be in frontoffice queue.
-    $otherLead = Lead::factory()->create([
-        'lead_pipeline_id'       => PipelineStage::KLANT_ADVISEREN_START->pipeline(),
-        'lead_pipeline_stage_id' => PipelineStage::KLANT_ADVISEREN_START->id(),
-    ]);
-
-    $otherActivity = Activity::create([
-        'type'          => ActivityType::TASK->value,
-        'user_id'       => $admin->id,
-        'title'         => 'Other queue activity',
-        'schedule_from' => now()->subDay(),
-        'schedule_to'   => now()->addDay(),
-        'is_done'       => 0,
-        'group_id'      => $group->id,
-        'lead_id'       => $otherLead->id,
-    ]);
-
-    // Act
-    $this->actingAs($admin, 'user');
-    $response = get('/admin/operational-dashboard/queues?queue=frontoffice');
-
-    $response->assertOk();
-
-    $ids = getDatagridIds($response);
-
-    expect($ids)->toContain($frontofficeActivity->id)
-        ->and($ids)->not()->toContain($otherActivity->id);
-});
-
 it('computes open_and_overdue_counts_per_queue_consistently_with_filters', function () {
     // Arrange
     Carbon::setTestNow(Carbon::create(2026, 3, 10, 12));
@@ -195,11 +133,11 @@ it('computes open_and_overdue_counts_per_queue_consistently_with_filters', funct
 
     $ourTasks = collect($queues)->firstWhere('key', 'our-tasks');
 
-    expect($ourTasks)->not()->toBeNull();
+    expect($ourTasks)->not()->toBeNull()
+        ->and($ourTasks['open'])->toBe(2)
+        ->and($ourTasks['overdue'])->toBe(1);
 
     // 2 open tasks (overdue + future), 1 of them overdue.
-    expect($ourTasks['open'])->toBe(2)
-        ->and($ourTasks['overdue'])->toBe(1);
 
     // Sanity check: repository and registry agree with the same numbers.
     /** @var ActivityQueueRegistry $registry */

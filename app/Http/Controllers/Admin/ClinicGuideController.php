@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AfbDispatchStatus;
+use App\Enums\FormStatus;
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Http\Controllers\Controller;
@@ -114,9 +115,13 @@ class ClinicGuideController extends Controller
                 ->groupBy('person_id')
                 ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords, $afbByPerson) {
                     $person = $items->first()->person;
-                    $gvlFormLink = $anamnesisRecords
-                        ->firstWhere('person_id', (int) $personId)
-                        ?->gvl_form_link;
+                    $anamnesis = $anamnesisRecords->firstWhere('person_id', (int) $personId);
+                    $gvlFormLink = $anamnesis?->gvl_form_link;
+
+                    $adminGvlLink = null;
+                    if ($gvlFormLink && $anamnesis?->gvl_form_status === FormStatus::Completed) {
+                        $adminGvlLink = GvlFormLink::adminOpenUrlForPerson($gvlFormLink, $person);
+                    }
 
                     $afbDocuments = ($afbByPerson->get((int) $personId) ?? collect())
                         ->map(fn ($doc) => [
@@ -141,7 +146,7 @@ class ClinicGuideController extends Controller
                             'phones'        => $person->phones ?? [],
                             'emails'        => $person->emails ?? [],
                         ] : null,
-                        'gvl_form_link'  => GvlFormLink::adminOpenUrlForPerson($gvlFormLink, $person),
+                        'gvl_form_link'  => $adminGvlLink,
                         'afb_documents'  => $afbDocuments,
                         'order_items'    => $items->map(fn ($item) => [
                             'product_name' => $item->product?->name,

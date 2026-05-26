@@ -293,7 +293,7 @@ class SalesLead extends AbstractEntity
                 case 'trigger_webhook':
                     try {
                         $this->triggerWebhook($action['value'], $sales);
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         report($e);
                     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FormStatus;
 use App\Enums\FormType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,7 +20,7 @@ class EventWebhookRequest extends FormRequest
             'entity_type'      => ['required', 'string', 'in:forms'],
             'id'               => ['required'],
             'action'           => ['required', 'string', 'in:STATUS_UPDATE'],
-            'status'           => ['required', 'string'],
+            'status'           => ['required', 'string', Rule::enum(FormStatus::class)],
             'url'              => ['required', 'string'],
             'person_id'        => ['required', 'integer', 'exists:persons,id'],
             'form_type'        => ['required', Rule::enum(FormType::class)],

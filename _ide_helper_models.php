@@ -187,7 +187,8 @@ namespace App\Models{
  * @property int|null $lead_id
  * @property int|null $sales_id
  * @property int|null $person_id
- * @property string|null $gvl_form_link
+ * @property string|null $gvl_form_id
+ * @property-read string|null $gvl_form_link
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
@@ -1359,4 +1360,3 @@ namespace App\Models{
 	#[\AllowDynamicProperties]
 	class IdeHelperUser {}
 }
-

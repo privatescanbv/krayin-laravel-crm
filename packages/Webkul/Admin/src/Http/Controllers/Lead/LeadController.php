@@ -173,6 +173,9 @@ class LeadController extends Controller
             }
         }
 
+        // Normalize `name:X` search token to first_name/last_name/married_name before RequestCriteria runs.
+        $this->normalizeGetSearchParams();
+
         // Compute total leads per stage in one DB query to avoid running pagination on empty stages.
         // Must use LeadRepository (not DB::table) so soft-deleted leads and user scoping match the paginated query.
         $stageIds = $stages->pluck('id')->all();
@@ -1800,5 +1803,25 @@ class LeadController extends Controller
             'Content-Type'        => $response->header('Content-Type') ?: 'application/pdf',
             'Content-Disposition' => $response->header('Content-Disposition') ?: 'attachment; filename="diagnosis-form-'.$lead->diagnosis_form_id.'.pdf"',
         ]);
+    }
+
+    private function normalizeGetSearchParams(): void
+    {
+        $search = (string) request()->query('search', '');
+        $searchFields = (string) request()->query('searchFields', '');
+        $searchJoin = (string) request()->query('searchJoin', 'and');
+
+        [$search, $searchFields, $searchJoin] = $this->normalizeNameSearch(
+            $this->getSearchConfig()['name_fields'],
+            $search,
+            $searchFields,
+            $searchJoin
+        );
+
+        request()->query->replace(array_merge(request()->query->all(), [
+            'search'       => $search,
+            'searchFields' => $searchFields,
+            'searchJoin'   => $searchJoin,
+        ]));
     }
 }

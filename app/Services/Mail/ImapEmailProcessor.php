@@ -32,9 +32,10 @@ class ImapEmailProcessor extends AbstractEmailProcessor
 
     public function __construct(
         EmailRepository $emailRepository,
-        AttachmentRepository $attachmentRepository
+        AttachmentRepository $attachmentRepository,
+        EmailEntityLinker $emailEntityLinker,
     ) {
-        parent::__construct($emailRepository, $attachmentRepository);
+        parent::__construct($emailRepository, $attachmentRepository, $emailEntityLinker);
 
         // Skip IMAP connection during testing or when database is not available
         if (! $this->isDatabaseAvailable()) {

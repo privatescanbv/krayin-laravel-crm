@@ -180,7 +180,7 @@ test('person sees lead activity with entity_source type lead and url', function 
 test('person sees saleslead activity with entity_source type sales and url', function () {
     $person = Person::factory()->create();
     $salesLead = SalesLead::factory()->create();
-    \Illuminate\Support\Facades\DB::table('saleslead_persons')->insert([
+    DB::table('saleslead_persons')->insert([
         'saleslead_id' => $salesLead->id,
         'person_id'    => $person->id,
     ]);

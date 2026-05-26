@@ -33,9 +33,10 @@ class GraphMailService extends AbstractEmailProcessor
     public function __construct(
         EmailRepository $emailRepository,
         AttachmentRepository $attachmentRepository,
+        EmailEntityLinker $emailEntityLinker,
         private readonly MicrosoftGraphTokenService $tokenService,
     ) {
-        parent::__construct($emailRepository, $attachmentRepository);
+        parent::__construct($emailRepository, $attachmentRepository, $emailEntityLinker);
         $this->mailbox = config('mail.graph.mailbox');
     }
 

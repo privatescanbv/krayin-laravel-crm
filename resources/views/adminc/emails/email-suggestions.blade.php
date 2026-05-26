@@ -13,10 +13,7 @@
             <div v-if="isLoading" class="flex items-center justify-center p-4">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-gray-100"></div>
             </div>
-            <div v-else-if="suggestions.length === 0 && !isLoading" class="text-sm text-gray-500 dark:text-gray-400 p-2">
-                Geen suggesties gevonden
-            </div>
-            <div v-else class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+            <div v-else-if="suggestions.length > 0" class="flex flex-col gap-2 max-h-64 overflow-y-auto">
                 <div
                     v-for="suggestion in suggestions"
                     :key="`${suggestion.type}-${suggestion.id}`"
@@ -58,7 +55,7 @@
                 personSearchRoute: String,
                 salesLeadSearchRoute: String,
             },
-            emits: ['link-entity'],
+            emits: ['link-entity', 'loaded'],
             data() {
                 return {
                     suggestions: [],
@@ -81,6 +78,7 @@
                     console.log('Searching suggestions for email:', senderEmail);
                     if (!senderEmail || typeof senderEmail !== 'string') {
                         this.suggestions = [];
+                        this.$emit('loaded', 0);
                         return;
                     }
 
@@ -133,6 +131,7 @@
                         this.suggestions = [];
                     } finally {
                         this.isLoading = false;
+                        this.$emit('loaded', this.suggestions.length);
                     }
                 },
 

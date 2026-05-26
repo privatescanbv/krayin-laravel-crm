@@ -81,7 +81,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->command('emails:sync-graph')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('emails:sync-graph')->everyMinute()->withoutOverlapping();
         $schedule->command('activities:release-overdue')->hourly();
         $schedule->command('activities:sync-statuses')->hourly();
         $schedule->command('duplicates:refresh-cache --clear')->hourly();

@@ -2,18 +2,16 @@
 
 namespace App\Services\Mail;
 
-use App\Models\Clinic;
+use App\Enums\EmailEntityLink;
+use App\Jobs\LinkInboundEmailViaLlmJob;
 use App\Models\EmailLog;
-use App\Models\SalesLead;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Webkul\Contact\Models\Person;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
-use Webkul\Lead\Models\Lead;
 
 /**
  * Shared orchestration logic for all inbound email processors.
@@ -37,7 +35,8 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
     public function __construct(
         protected EmailRepository $emailRepository,
-        protected AttachmentRepository $attachmentRepository
+        protected AttachmentRepository $attachmentRepository,
+        protected EmailEntityLinker $emailEntityLinker,
     ) {
         // Constructor logic can be added here if needed
     }
@@ -133,6 +132,14 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
         $email = $this->emailRepository->create($emailData);
 
+        if (
+            config('services.llm.email_linking.enabled')
+            && ! $this->emailHasEntityLinks($email)
+            && ForwardedEmailDetector::looksLikeForward((string) $email->subject, (string) ($email->reply ?? ''))
+        ) {
+            LinkInboundEmailViaLlmJob::dispatch($email->id);
+        }
+
         Log::info('Processed email', [
             'message_id' => $messageId,
             'email_id'   => $email->id,
@@ -190,50 +197,13 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      */
     protected function linkToExistingEntities(array $emailData, string $emailAddress): array
     {
-        if (empty($emailAddress)) {
-            return $emailData;
-        }
+        return $this->emailEntityLinker->link($emailData, $emailAddress);
+    }
 
-        $person = Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
+    protected function emailHasEntityLinks(Email $email): bool
+    {
+        return array_any(EmailEntityLink::foreignKeys(), fn ($foreignKey) => ! empty($email->{$foreignKey}));
 
-        if ($person) {
-            $salesLead = SalesLead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
-                ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
-                ->latest()
-                ->first();
-
-            if ($salesLead) {
-                $emailData['sales_lead_id'] = $salesLead->id;
-            } else {
-                $emailData['person_id'] = $person->id;
-
-                $lead = Lead::whereHas('persons', fn ($q) => $q->where('persons.id', $person->id))
-                    ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
-                    ->latest()
-                    ->first();
-
-                if ($lead) {
-                    $emailData['lead_id'] = $lead->id;
-                }
-            }
-        } else {
-            $lead = Lead::where('emails', 'like', '%'.$emailAddress.'%')
-                ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false))
-                ->latest()
-                ->first();
-
-            if ($lead) {
-                $emailData['lead_id'] = $lead->id;
-            }
-        }
-
-        $clinic = Clinic::where('emails', 'like', '%'.$emailAddress.'%')->first();
-
-        if ($clinic) {
-            $emailData['clinic_id'] = $clinic->id;
-        }
-
-        return $emailData;
     }
 
     /**

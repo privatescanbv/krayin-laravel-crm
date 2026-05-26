@@ -89,4 +89,22 @@ return [
         'project_id' => env('MARKER_IO_PROJECT_ID', '69c4f36fee5027410256aa51'),
     ],
 
+    'llm' => [
+        'base_url'      => env('LLM_BASE_URL', 'https://newcrm.dev.privatescan.nl/llm-qwen/v1'),
+        'api_key'       => env('LLM_API_KEY', 'dummy'),
+        'temperature'   => (float) env('LLM_TEMPERATURE', 0.0),
+        'timeout'       => (int) env('LLM_TIMEOUT', 180),
+        'model'         => env('LLM_MODEL', 'local-llama'),
+        'email_linking' => [
+            'enabled'                  => filter_var(env('LLM_EMAIL_LINKING_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+            'body_max_chars'           => (int) env('LLM_EMAIL_BODY_MAX_CHARS', 6000),
+            'technical_output_enabled' => filter_var(env('LLM_EMAIL_TECHNICAL_OUTPUT', false), FILTER_VALIDATE_BOOLEAN),
+            'technical_output_users'   => array_values(array_filter(array_map(
+                static fn (string $email): string => strtolower(trim($email)),
+                explode(',', (string) env('LLM_EMAIL_TECHNICAL_OUTPUT_USERS', 'mark.bulthuis@privatescan.nl,mark.klaucke@privatescan.nl'))
+            ))),
+        ],
+        'response_format_json' => filter_var(env('LLM_RESPONSE_FORMAT_JSON', true), FILTER_VALIDATE_BOOLEAN),
+    ],
+
 ];

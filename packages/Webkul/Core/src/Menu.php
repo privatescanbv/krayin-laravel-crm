@@ -69,9 +69,7 @@ class Menu
 
         switch ($area) {
             case self::ADMIN:
-                $this->configMenu = $configMenu
-                    ->filter(fn ($item) => bouncer()->hasPermission($item['acl'] ?? $item['key']))
-                    ->toArray();
+                $this->configMenu = $this->filterAdminMenuByPermissions($configMenu);
                 break;
 
             default:
@@ -104,6 +102,31 @@ class Menu
     }
 
     /**
+     * Filter admin menu items by ACL and drop nested items whose root parent is not allowed.
+     */
+    private function filterAdminMenuByPermissions(Collection $configMenu): array
+    {
+        $filtered = $configMenu->filter(
+            fn ($item) => bouncer()->hasPermission($item['acl'] ?? $item['key'])
+        );
+
+        $allowedKeys = $filtered->pluck('key')->flip();
+
+        return $filtered
+            ->filter(function ($item) use ($allowedKeys) {
+                if (! str_contains($item['key'], '.')) {
+                    return true;
+                }
+
+                $rootKey = explode('.', $item['key'], 2)[0];
+
+                return isset($allowedKeys[$rootKey]);
+            })
+            ->values()
+            ->toArray();
+    }
+
+    /**
      * Prepare menu items.
      */
     private function prepareMenuItems(): void
@@ -122,6 +145,10 @@ class Menu
         $menu = Arr::undot(Arr::dot($menuWithDotNotation));
 
         foreach ($menu as $menuItemKey => $menuItem) {
+            if (! isset($menuItem['name'])) {
+                continue;
+            }
+
             $this->addItem(new MenuItem(
                 key: $menuItemKey,
                 name: trans($menuItem['name']),
@@ -142,7 +169,7 @@ class Menu
     {
         return collect($menuItem)
             ->sortBy('sort')
-            ->filter(fn ($value) => is_array($value))
+            ->filter(fn ($value) => is_array($value) && isset($value['name'], $value['key']))
             ->map(function ($subMenuItem) {
                 $subSubMenuItems = $this->processSubMenuItems($subMenuItem);
 

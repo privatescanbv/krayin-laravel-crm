@@ -90,6 +90,18 @@ class EmailRepository extends Repository
 
         $this->attachmentRepository->uploadAttachments($email, $data);
 
+        if (($data['email_action'] ?? null) === 'forward') {
+            $sourceEmailId = $data['forward_from_email_id'] ?? $data['parent_id'] ?? null;
+
+            if ($sourceEmailId) {
+                $sourceEmail = $this->find($sourceEmailId);
+
+                if ($sourceEmail) {
+                    $this->attachmentRepository->copyAttachmentsToEmail($email, $sourceEmail);
+                }
+            }
+        }
+
         return $email;
     }
 

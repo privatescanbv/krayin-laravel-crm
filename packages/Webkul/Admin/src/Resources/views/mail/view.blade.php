@@ -166,6 +166,16 @@
                                         name="parent_id"
                                         value="{{ request('id') }}"
                                     />
+                                    <input
+                                        type="hidden"
+                                        name="email_action"
+                                        :value="getActionType"
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name="forward_from_email_id"
+                                        :value="email.id"
+                                    />
                                     {{-- mark email as read, employee is sending the mail here --}}
                                     <x-admin::form.control-group.control
                                         type="hidden"
@@ -252,6 +262,43 @@
                                             :tinymce="true"
                                             :label="trans('admin::app.mail.view.message')"
                                         />
+
+                                    <!-- Forwarded attachments from original email -->
+                                    <div
+                                        v-if="getActionType === 'forward' && forwardedAttachments.length"
+                                        class="mt-2"
+                                    >
+                                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            @lang('admin::app.mail.view.forward-attachments-title')
+                                        </label>
+
+                                        <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                                            @lang('admin::app.mail.view.forward-attachments-help')
+                                        </p>
+
+                                        <div class="space-y-1">
+                                            <div
+                                                v-for="attachment in forwardedAttachments"
+                                                :key="attachment.id"
+                                                class="flex items-center gap-2 rounded-lg bg-blue-50 p-2 text-sm text-gray-600 dark:bg-blue-900/20 dark:text-gray-400"
+                                            >
+                                                <span class="icon-attachment text-lg text-blue-600"></span>
+
+                                                <a
+                                                    :href="attachmentDownloadUrl(attachment.id)"
+                                                    class="truncate hover:underline"
+                                                    target="_blank"
+                                                    @click.stop
+                                                >
+                                                    @{{ attachment.name || attachment.path }}
+                                                </a>
+
+                                                <span class="ml-auto shrink-0 text-xs font-medium text-blue-600">
+                                                    @lang('admin::app.mail.view.forward-attachments-badge')
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <!-- Attachments -->
                                     <x-admin::form.control-group>
@@ -1166,6 +1213,14 @@
                     getActionType() {
                         return this.action[this.email.id].type;
                     },
+
+                    forwardedAttachments() {
+                        if (this.getActionType !== 'forward') {
+                            return [];
+                        }
+
+                        return this.email?.attachments || [];
+                    },
                 },
 
                 watch: {
@@ -1218,6 +1273,10 @@
                 },
 
                 methods: {
+                    attachmentDownloadUrl(id) {
+                        return '{{ route('admin.mail.attachment_download', ':id') }}'.replace(':id', id);
+                    },
+
                     updateSubject() {
                         const type = this.getActionType;
                         const currentSubject = this.email.subject || '';

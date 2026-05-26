@@ -7,10 +7,22 @@
         @endif
     </x-slot>
 
+    @push('styles')
+        <style>
+            body:has(.mail-inbox-root) .flex.min-h-\[calc\(100vh-62px\)\] > .mt-auto {
+                display: none;
+            }
+
+            body:has(.mail-inbox-root) .flex.min-h-\[calc\(100vh-62px\)\] > .px-4 {
+                padding-bottom: 0;
+            }
+        </style>
+    @endpush
+
     <!-- Gmail-like Email Interface -->
-    <div class="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="mail-inbox-root flex h-[calc(100dvh-62px)] max-h-[calc(100dvh-62px)] overflow-hidden bg-gray-50 dark:bg-gray-900">
         <!-- Sidebar -->
-        <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div class="flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
             <!-- Folders List -->
             <div class="flex-1 overflow-y-auto">
                 <div class="p-2">
@@ -71,8 +83,8 @@
 
 
 
-    <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+        <div class="flex shrink-0 items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.mail.create.breadcrumbs.before') !!}
 
@@ -110,10 +122,12 @@
         </div>
 
         <!-- Compose Mail Vue Component -->
-        <v-mail ref="composeMail">
-            <!-- Datagrid Shimmer -->
-            <x-admin::shimmer.mail.datagrid :is-multi-row="true"/>
-        </v-mail>
+        <div class="min-h-0 flex-1 overflow-y-auto">
+            <v-mail ref="composeMail">
+                <!-- Datagrid Shimmer -->
+                <x-admin::shimmer.mail.datagrid :is-multi-row="true"/>
+            </v-mail>
+        </div>
     </div>
     </div>
 

@@ -10,6 +10,9 @@ use Webkul\Marketing\Contracts\Campaign;
 
 class CampaignMail extends Mailable
 {
+    public int $tries = 3;
+    public array $backoff = [60, 300];
+
     /**
      * Create a new message instance.
      *

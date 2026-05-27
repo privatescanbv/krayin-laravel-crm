@@ -48,7 +48,7 @@ class CreateFormReviewTask
             $order = Order::where('sales_lead_id', $anamnesis->sales_id)
                 ->where(function ($q) {
                     $q->whereNull('pipeline_stage_id')
-                        ->orWhereHas('stage', fn($s) => $s->where('is_won', false)->where('is_lost', false));
+                        ->orWhereHas('stage', fn ($s) => $s->where('is_won', false)->where('is_lost', false));
                 })
                 ->latest()
                 ->first();
@@ -56,7 +56,7 @@ class CreateFormReviewTask
             if ($order) {
                 $payload['order_id'] = $order->id;
             } else {
-                //fall back to lead
+                // fall back to lead
                 $payload['lead_id'] = $anamnesis->lead_id;
             }
         }

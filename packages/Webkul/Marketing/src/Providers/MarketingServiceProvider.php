@@ -2,10 +2,9 @@
 
 namespace Webkul\Marketing\Providers;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Webkul\Marketing\Console\Commands\CampaignCommand;
 
+// Not used for Privatescan, disabled.
 class MarketingServiceProvider extends ServiceProvider
 {
     /**
@@ -14,31 +13,30 @@ class MarketingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
-
-        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
-            $schedule->command('campaign:process')->daily();
-        });
+        //        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+//            $schedule->command('campaign:process')->daily();
+//        });
     }
 
-    /**
-     * Register services.
-     */
-    public function register(): void
-    {
-        $this->registerCommands();
-
-        $this->app->register(ModuleServiceProvider::class);
-    }
-
-    /**
-     * Register the commands.
-     */
-    private function registerCommands(): void
-    {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                CampaignCommand::class,
-            ]);
-        }
-    }
+//    /**
+//     * Register services.
+//     */
+//    public function register(): void
+//    {
+//        $this->registerCommands();
+//
+//        $this->app->register(ModuleServiceProvider::class);
+//    }
+//
+//    /**
+//     * Register the commands.
+//     */
+//    private function registerCommands(): void
+//    {
+//        if ($this->app->runningInConsole()) {
+//            $this->commands([
+//                CampaignCommand::class,
+//            ]);
+//        }
+//    }
 }

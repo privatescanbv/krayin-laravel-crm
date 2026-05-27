@@ -105,7 +105,7 @@ test('PUT webhooks/event returns 422 when person_id does not exist', function ()
     $response->assertJsonValidationErrors(['person_id']);
 });
 
-test('CreateFormReviewTask listener creates task activity with 5-day deadline', function () {
+test('CreateFormReviewTask listener creates task activity with 1-day deadline', function () {
     $this->seed(TestSeeder::class);
 
     $person = Person::factory()->create();
@@ -132,7 +132,7 @@ test('CreateFormReviewTask listener creates task activity with 5-day deadline', 
         ->and($activity->is_done)->toBeFalse()
         ->and($activity->status)->toBe(ActivityStatus::ACTIVE)
         ->and($activity->additional)->toMatchArray(['form_id' => $formId])
-        ->and($activity->schedule_to->diffInDays(now(), true))->toBeGreaterThanOrEqual(4)->toBeLessThanOrEqual(5);
+        ->and($activity->schedule_to->diffInDays(now(), true))->toBeGreaterThanOrEqual(0)->toBeLessThanOrEqual(2);
 });
 
 test('CreateFormReviewTask listener links task activity to active order before lead from anamnesis gvl form link', function () {

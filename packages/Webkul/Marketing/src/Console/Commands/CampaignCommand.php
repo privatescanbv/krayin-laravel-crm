@@ -36,14 +36,15 @@ class CampaignCommand extends Command
      */
     public function handle()
     {
-        $this->info('🚀 Starting campaign processing...');
-
-        try {
-            $this->campaignHelper->process();
-
-            $this->info('✅ Campaign processing completed successfully!');
-        } catch (\Exception $e) {
-            $this->error('❌ An error occurred during campaign processing: '.$e->getMessage());
-        }
+        $this->error("Disabled for Privatescan, should not be called.");
+//        $this->info('🚀 Starting campaign processing...');
+//
+//        try {
+//            $this->campaignHelper->process();
+//
+//            $this->info('✅ Campaign processing completed successfully!');
+//        } catch (\Exception $e) {
+//            $this->error('❌ An error occurred during campaign processing: '.$e->getMessage());
+//        }
     }
 }

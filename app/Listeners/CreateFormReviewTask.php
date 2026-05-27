@@ -28,7 +28,7 @@ class CreateFormReviewTask
             'comment'       => "Patiënt heeft {$event->formType->label()} formulier ingevuld (ID: {$event->formId}).",
             'person_id'     => $event->person->id,
             'schedule_from' => now(),
-            'schedule_to'   => now()->addDays(5),
+            'schedule_to'   => now(),
             'is_done'       => false,
             'status'        => ActivityStatus::ACTIVE,
             'additional'    => [

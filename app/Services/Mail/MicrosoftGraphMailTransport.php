@@ -206,6 +206,8 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            return null;
         } catch (Exception $e) {
             Log::error('Microsoft Graph mail transport error', [
                 'error' => $e->getMessage(),

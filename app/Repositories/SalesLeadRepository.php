@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Anamnesis;
+use App\Models\Department;
 use App\Models\SalesLead;
 use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
@@ -69,11 +70,11 @@ class SalesLeadRepository extends Repository
 
             $salesLead = $this->createSalesLeadFromLead($lead, $attributeOverrides, []);
 
-            // Create initial order for this sales lead (order department may differ from sales lead)
+            // Create initial order (uses order_department_id_after_won when set on lead, else sales lead department)
             $this->orderRepository->createFromSalesLead(
                 $salesLead->id,
                 $salesLead->name,
-                $lead->resolveOrderDepartmentAfterWon()
+                $this->resolveOrderDepartmentForWonLead($lead, $salesLead)
             );
 
             // Add a system activity on the lead linking to this new sales lead view
@@ -212,6 +213,18 @@ class SalesLeadRepository extends Repository
         }
 
         return $defaultStageId;
+    }
+
+    /**
+     * Order pipeline department: explicit lead choice when set, otherwise follow the new sales lead.
+     */
+    private function resolveOrderDepartmentForWonLead(Lead $lead, SalesLead $salesLead): ?Department
+    {
+        if ($lead->order_department_id_after_won !== null) {
+            return $lead->resolveOrderDepartmentAfterWon();
+        }
+
+        return $salesLead->getDepartment();
     }
 
     /**

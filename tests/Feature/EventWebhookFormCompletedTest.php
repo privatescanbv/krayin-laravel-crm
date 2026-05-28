@@ -123,11 +123,12 @@ test('CreateFormReviewTask listener creates task activity with 1-day deadline', 
     $listener = app(CreateFormReviewTask::class);
     $listener->handle($event);
 
-    $activity = Activity::where('person_id', $person->id)
+    $activity = Activity::where('lead_id', $lead->id)
         ->where('type', ActivityType::TASK->value)
         ->first();
 
     expect($activity)->not->toBeNull()
+        ->and($activity->person_id)->toBeNull()
         ->and($activity->title)->toBe('GVL controleren')
         ->and($activity->is_done)->toBeFalse()
         ->and($activity->status)->toBe(ActivityStatus::ACTIVE)
@@ -162,11 +163,12 @@ test('CreateFormReviewTask listener links task activity to active order before l
     $listener = app(CreateFormReviewTask::class);
     $listener->handle($event);
 
-    $activity = Activity::where('person_id', $person->id)
+    $activity = Activity::where('order_id', $order->id)
         ->where('type', ActivityType::TASK->value)
         ->first();
 
     expect($activity)->not->toBeNull()
+        ->and($activity->person_id)->toBeNull()
         ->and($activity->order_id)->toBe($order->id)
         ->and($activity->lead_id)->toBeNull()
         ->and($activity->sales_lead_id)->toBeNull();
@@ -198,11 +200,12 @@ test('CreateFormReviewTask listener links task activity to active order before s
     $listener = app(CreateFormReviewTask::class);
     $listener->handle($event);
 
-    $activity = Activity::where('person_id', $person->id)
+    $activity = Activity::where('order_id', $order->id)
         ->where('type', ActivityType::TASK->value)
         ->first();
 
     expect($activity)->not->toBeNull()
+        ->and($activity->person_id)->toBeNull()
         ->and($activity->order_id)->toBe($order->id)
         ->and($activity->sales_lead_id)->toBeNull()
         ->and($activity->lead_id)->toBeNull();
@@ -232,14 +235,50 @@ test('CreateFormReviewTask listener falls back to lead_id when no active order e
     $listener = app(CreateFormReviewTask::class);
     $listener->handle($event);
 
-    $activity = Activity::where('person_id', $person->id)
+    $activity = Activity::where('lead_id', $lead->id)
         ->where('type', ActivityType::TASK->value)
         ->first();
 
     expect($activity)->not->toBeNull()
+        ->and($activity->person_id)->toBeNull()
         ->and($activity->lead_id)->toBe($lead->id)
         ->and($activity->order_id)->toBeNull()
         ->and($activity->sales_lead_id)->toBeNull();
+});
+
+test('CreateFormReviewTask listener finds active order via lead when anamnesis has no sales_id', function () {
+    $this->seed(TestSeeder::class);
+
+    $person = Person::factory()->create();
+    $lead = Lead::factory()->create();
+    $salesLead = SalesLead::factory()->create(['lead_id' => $lead->id]);
+    $stage = Stage::factory()->create([
+        'is_won'  => false,
+        'is_lost' => false,
+    ]);
+    $order = Order::factory()->create([
+        'sales_lead_id'     => $salesLead->id,
+        'pipeline_stage_id' => $stage->id,
+    ]);
+    $formId = 'form-lead-order-123';
+
+    Anamnesis::factory()->create([
+        'gvl_form_id' => $formId,
+        'lead_id'     => $lead->id,
+        'person_id'   => $person->id,
+        'sales_id'    => null,
+    ]);
+
+    $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
+    app(CreateFormReviewTask::class)->handle($event);
+
+    $activity = Activity::where('order_id', $order->id)
+        ->where('type', ActivityType::TASK->value)
+        ->first();
+
+    expect($activity)->not->toBeNull()
+        ->and($activity->person_id)->toBeNull()
+        ->and($activity->lead_id)->toBeNull();
 });
 
 test('CreateFormReviewTask listener logs error and skips activity when no anamnesis found', function () {

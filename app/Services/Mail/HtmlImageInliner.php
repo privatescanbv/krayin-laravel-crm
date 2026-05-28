@@ -4,6 +4,7 @@ namespace App\Services\Mail;
 
 use DOMDocument;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Replaces relative and CRM-hosted <img src="..."> URLs in HTML with
@@ -47,7 +48,7 @@ class HtmlImageInliner
                 $data = base64_encode(file_get_contents($path));
                 $img->setAttribute('src', "data:{$mime};base64,{$data}");
                 $changed = true;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Log::warning('HtmlImageInliner: could not embed image', [
                     'src'   => $src,
                     'path'  => $path,

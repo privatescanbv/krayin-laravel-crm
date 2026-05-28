@@ -453,6 +453,17 @@ class Order extends Model
         return (bool) $this->stage?->is_lost;
     }
 
+    /**
+     * Orders without a pipeline stage, or in a stage that is neither won nor lost.
+     */
+    public function scopeInOpenStage(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereNull('pipeline_stage_id')
+                ->orWhereHas('stage', fn (Builder $s) => $s->where('is_won', false)->where('is_lost', false));
+        });
+    }
+
     public function isHerniapoli(): bool
     {
         return (int) $this->stage?->lead_pipeline_id === PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value;

@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\PatientNotification;
+use App\Services\Anamnesis\AnamnesisOrderResolver;
 use App\Services\FormService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -33,7 +34,8 @@ class AnamnesisController extends Controller
      */
     public function __construct(
         protected LeadRepository $leadRepository,
-        protected FormService $formService
+        protected FormService $formService,
+        protected AnamnesisOrderResolver $anamnesisOrderResolver,
     ) {}
 
     /**
@@ -472,8 +474,8 @@ class AnamnesisController extends Controller
         $lastNameWithPrefix = trim(($person->lastname_prefix ? $person->lastname_prefix.' ' : '').$lastName);
         $maidenNameWithPrefix = trim(($person->married_name_prefix ? $person->married_name_prefix.' ' : '').($person->married_name ?? ''));
 
-        // Determine form type from lead department
-        $department = $lead->department;
+        // Determine form type from active order department, fallback to lead department
+        $department = $this->anamnesisOrderResolver->resolveFormDepartment($anamnesis);
         $formType = $this->mapFormTypeFromDepartment($department);
 
         $formData = [

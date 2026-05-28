@@ -469,6 +469,15 @@ class Order extends Model
         return (int) $this->stage?->lead_pipeline_id === PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value;
     }
 
+    public function getPipelineDepartment(): Department
+    {
+        $name = $this->isHerniapoli()
+            ? Departments::HERNIA->value
+            : Departments::PRIVATESCAN->value;
+
+        return Department::query()->where('name', $name)->firstOrFail();
+    }
+
     public function getNameAttribute(): string
     {
         return $this->order_number.' '.($this->salesLead?->name ?? '');

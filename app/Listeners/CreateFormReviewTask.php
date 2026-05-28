@@ -9,8 +9,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Events\PatientFormCompletedEvent;
 use App\Models\Anamnesis;
-use App\Models\Order;
-use App\Models\SalesLead;
+use App\Services\Anamnesis\AnamnesisOrderResolver;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
@@ -21,6 +20,7 @@ class CreateFormReviewTask
         private readonly ActivityRepository $activityRepository,
         private readonly CreateActivityForOrderAction $createActivityForOrderAction,
         private readonly CreateActivityForLeadAction $createActivityForLeadAction,
+        private readonly AnamnesisOrderResolver $anamnesisOrderResolver,
     ) {}
 
     public function handle(PatientFormCompletedEvent $event): void
@@ -48,7 +48,7 @@ class CreateFormReviewTask
             return;
         }
 
-        $order = $this->findActiveOrderForAnamnesis($anamnesis);
+        $order = $this->anamnesisOrderResolver->findActiveOrderForAnamnesis($anamnesis);
         if ($order) {
             try {
                 $this->createActivityForOrderAction->execute($order, false, $payload);
@@ -81,34 +81,5 @@ class CreateFormReviewTask
         $this->activityRepository->create(array_merge($payload, [
             'person_id' => $event->person->id,
         ]));
-    }
-
-    private function findActiveOrderForAnamnesis(Anamnesis $anamnesis): ?Order
-    {
-        if ($anamnesis->sales_id) {
-            $order = Order::query()
-                ->inOpenStage()
-                ->where('sales_lead_id', $anamnesis->sales_id)
-                ->latest()
-                ->first();
-
-            if ($order) {
-                return $order;
-            }
-        }
-
-        if ($anamnesis->lead_id) {
-            $salesLeadIds = SalesLead::where('lead_id', $anamnesis->lead_id)->pluck('id');
-
-            if ($salesLeadIds->isNotEmpty()) {
-                return Order::query()
-                    ->inOpenStage()
-                    ->whereIn('sales_lead_id', $salesLeadIds)
-                    ->latest()
-                    ->first();
-            }
-        }
-
-        return null;
     }
 }

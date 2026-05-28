@@ -40,10 +40,10 @@
                 </div>
                 <div class="flex flex-col gap-2 shrink-0">
                     <v-order-afb-send-button send-url="{{ $afbSendUrl }}"></v-order-afb-send-button>
-                    <a href="{{ route('admin.orders.afb_send', $order->id) }}"
-                       class="secondary-button text-center text-xs whitespace-nowrap">
-                        Email samenstellen
-                    </a>
+{{--                    <a href="{{ route('admin.orders.afb_send', $order->id) }}"--}}
+{{--                       class="secondary-button text-center text-xs whitespace-nowrap">--}}
+{{--                        Email samenstellen--}}
+{{--                    </a>--}}
                 </div>
             </div>
         </div>

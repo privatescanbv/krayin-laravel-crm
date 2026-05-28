@@ -229,7 +229,7 @@ test('clinic guide get includes afb_documents when AFB was sent successfully', f
 });
 
 test('clinic guide AFB PDF view serves PDF inline', function () {
-    Storage::fake('local');
+    Storage::fake();
 
     $person = Person::factory()->create();
     $salesLead = SalesLead::factory()->create();
@@ -249,7 +249,7 @@ test('clinic guide AFB PDF view serves PDF inline', function () {
     ]);
 
     $relativePath = 'afb/inline-'.uniqid('', true).'.pdf';
-    Storage::disk('local')->put($relativePath, '%PDF-1.4 inline');
+    Storage::disk()->put($relativePath, '%PDF-1.4 inline');
 
     $doc = AfbPersonDocument::query()->create([
         'afb_dispatch_id' => $dispatch->id,

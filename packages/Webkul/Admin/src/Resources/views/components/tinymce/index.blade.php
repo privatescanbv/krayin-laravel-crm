@@ -207,11 +207,12 @@
 
                     tinyMCEHelper.initTinyMCE({
                         selector: vm.selector,
-                        plugins: 'media wordcount save fullscreen code table lists link',
-                        toolbar: '{{ $showPlaceholders ? 'placeholders | ' : '' }}bold italic strikethrough forecolor backcolor alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
+                        plugins: 'image media wordcount save fullscreen code table lists link',
+                        toolbar: '{{ $showPlaceholders ? 'placeholders | ' : '' }}bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
+                        image_advtab: true,
                         directionality: 'ltr',
                         browser_spellcheck: true,
-                        contextmenu: 'link table spellchecker',
+                        contextmenu: 'link image table spellchecker',
                         @if($showPlaceholders)
                         // Preserve template placeholder URLs in links (avoid prepending document_base_url)
                         convert_urls: false,

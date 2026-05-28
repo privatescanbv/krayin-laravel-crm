@@ -137,6 +137,14 @@ class ActivityQueueRegistry
                         ->where('activities.is_done', false);
                 },
             ],
+
+            'unread-emails' => [
+                'key'   => 'unread-emails',
+                'label' => 'Ongelezen emails',
+                'type'  => 'email',
+                'sort'  => null,
+                'apply' => static fn () => null,
+            ],
         ];
     }
 }

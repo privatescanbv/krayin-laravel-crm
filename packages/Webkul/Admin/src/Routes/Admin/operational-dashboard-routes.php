@@ -11,5 +11,7 @@ Route::controller(OperationalDashboardController::class)
         Route::get('queues', 'getQueue')->name('admin.operational-dashboard.queue');
 
         Route::get('counts', 'getCounts')->name('admin.operational-dashboard.counts');
+
+        Route::get('emails', 'getEmails')->name('admin.operational-dashboard.emails');
     });
 

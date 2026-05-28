@@ -1,6 +1,15 @@
 @props([
     'order' => null
 ])
+
+@php
+    use App\Enums\OrderItemStatus;
+
+    $orderItemStatuses = collect(OrderItemStatus::cases())->map(fn (OrderItemStatus $status) => [
+        'value' => $status->value,
+        'label' => $status->label(),
+    ])->values();
+@endphp
 <div id="order-items" class="flex flex-col gap-4">
     <div class="flex flex-col gap-1">
         <p class="text-base font-semibold text-gray-800 dark:text-white">Orderitems</p>
@@ -9,8 +18,9 @@
 
     <v-order-item-list
         :errors="errors"
-        :data='@json((isset($order) ? $order->orderItems : []))'
+        :data='@json((isset($order) ? $order->orderItems : collect())->values())'
         :persons='@json($persons ?? [])'
+        :status-options='@json($orderItemStatuses)'
         edit-base-url="{{ rtrim(route('admin.order_items.edit', ['id' => 0]), '0') }}"
     ></v-order-item-list>
 </div>
@@ -32,10 +42,27 @@
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
                     <template v-for="(item, index) in items" :key="`${resetKey}-${item.id ?? index}`">
-                        <v-order-item :item="item" :index="index" :errors="errors" :persons="personsData" :edit-base-url="editBaseUrl" @onRemoveItem="removeItem($event)"></v-order-item>
+                        <v-order-item
+                            :item="item"
+                            :index="index"
+                            :errors="errors"
+                            :persons="personsData"
+                            :status-options="statusOptions"
+                            :edit-base-url="editBaseUrl"
+                            @onRemoveItem="removeItem($event)"
+                            @onRestoreItem="restoreItem($event)"
+                        ></v-order-item>
                     </template>
                 </x-admin::table.tbody>
             </x-admin::table>
+
+            <input
+                v-for="removedId in removedItemIds"
+                :key="`removed-${removedId}`"
+                type="hidden"
+                name="removed_order_item_ids[]"
+                :value="removedId"
+            >
 
             <button type="button" class="mt-2 inline-flex items-center gap-1 rounded-md bg-brandColor px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:opacity-90" @click="addItem">Regel toevoegen</button>
         </div>
@@ -88,10 +115,23 @@
                 </x-admin::form.control-group>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 text-center">
-                <span v-if="item.status" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full" :class="getStatusClass(item.status)">
-                    @{{ getStatusLabel(item.status) }}
-                </span>
-                <span v-else class="text-gray-400 text-xs">-</span>
+                <select
+                    v-if="item.id"
+                    :name="`${inputName}[status]`"
+                    class="min-w-[7rem] rounded-md border bg-white px-2 py-1.5 text-xs font-medium text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                    :class="getStatusClass(item.status)"
+                    v-model="item.status"
+                    @change="onStatusChange"
+                >
+                    <option
+                        v-for="opt in statusOptions"
+                        :key="opt.value"
+                        :value="opt.value"
+                    >
+                        @{{ opt.label }}
+                    </option>
+                </select>
+                <span v-else class="text-gray-400 text-xs">Nieuw (na opslaan)</span>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2">
                 <div v-if="item.planning_summary" class="text-xs text-gray-700 dark:text-gray-300">
@@ -111,16 +151,27 @@
                     <a v-if="item.id" :href="editBaseUrl + item.id" title="Bewerken">
                         <i class="icon-edit cursor-pointer text-2xl"></i>
                     </a>
-                    <i @click="removeItem" class="icon-delete cursor-pointer text-2xl"></i>
                 </div>
             </x-admin::table.td>
         </x-admin::table.thead.tr>
     </script>
 
     <script type="module">
+        const normalizeOrderItemStatus = (status) => {
+            if (status == null || status === '') {
+                return 'new';
+            }
+
+            if (typeof status === 'object' && status.value) {
+                return status.value;
+            }
+
+            return String(status);
+        };
+
         app.component('v-order-item-list', {
             template: '#v-order-item-list-template',
-            props: ['errors', 'data', 'persons', 'editBaseUrl'],
+            props: ['errors', 'data', 'persons', 'editBaseUrl', 'statusOptions'],
             data() {
                 // Locaal kopiëren: this.personsData bestaat nog niet op de instance tijdens data().
                 const personsData = this.persons && typeof this.persons === 'object' ? { ...this.persons } : {};
@@ -132,21 +183,24 @@
                 return {
                     personsData,
                     resetKey: 0,
+                    removedItemIds: [],
                     items: this.data && this.data.length ? this.data.map(r => {
-                        console.log('Processing order item data:', r);
                         // Get product name with path if available
                         const productName = (r.product && r.product.name_with_path)
                             || (r.product && r.product.name)
                             || r.product_name
                             || null;
+                        const persistedId = r.id !== undefined && r.id !== null && r.id !== ''
+                            ? Number(r.id)
+                            : null;
                         return {
-                            id: r.id ?? null,
+                            id: Number.isFinite(persistedId) ? persistedId : null,
                             product_id: r.product_id ?? null,
                             product_name: productName,
                             person_id: r.person_id ?? null,
                             quantity: r.quantity ?? 1,
                             total_price: r.total_price ?? 0,
-                            status: r.status ?? null,
+                            status: normalizeOrderItemStatus(r.status),
                             // include product and partner products info if present (server eager-loaded)
                             product: r.product || null,
                             partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
@@ -184,23 +238,11 @@
                     const defaultPersonId = keys.length ? keys[0] : null;
                     this.items.push({ id: null, product_id: null, product_name: null, person_id: defaultPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
                 },
-                removeItem(item) {
-                    this.$emitter.emit('open-confirm-modal', {
-                        agree: () => {
-                            if (this.items.length === 1) {
-                                this.items = [];
-                                this.resetKey++;
-                                this.$nextTick(() => {
-                                    const k = Object.keys(this.personsData || {});
-                                    const pid = k.length ? k[0] : null;
-                                    this.items.push({ id: null, product_id: null, product_name: null, person_id: pid, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false });
-                                });
-                            } else {
-                                const index = this.items.indexOf(item);
-                                if (index !== -1) this.items.splice(index, 1);
-                            }
-                        },
-                    });
+                restoreItem(itemId) {
+                    const index = this.removedItemIds.indexOf(itemId);
+                    if (index !== -1) {
+                        this.removedItemIds.splice(index, 1);
+                    }
                 },
                 formatPlanningSummary(bookings) {
                     if (!bookings || !bookings.length) return null;
@@ -226,7 +268,7 @@
 
         app.component('v-order-item', {
             template: '#v-order-item-template',
-            props: ['index', 'item', 'errors', 'persons', 'editBaseUrl'],
+            props: ['index', 'item', 'errors', 'persons', 'editBaseUrl', 'statusOptions'],
             data() {
                 return {
                     productPrice: null, // Store the product price for calculations
@@ -234,7 +276,11 @@
             },
             computed: {
                 inputName() {
-                    return this.item.id ? `items[${this.item.id}]` : `items[item_${this.index}]`;
+                    if (this.item.id != null && this.item.id !== '') {
+                        return `items[${this.item.id}]`;
+                    }
+
+                    return `items[item_${this.index}]`;
                 },
             },
             methods: {
@@ -270,14 +316,10 @@
                     try { console.log('[v-order-item] removeItem'); } catch (e) {}
                     this.$emit('onRemoveItem', this.item);
                 },
-                getStatusLabel(status) {
-                    const labels = {
-                        'new': 'Nieuw',
-                        'planned': 'Ingepland',
-                        'won': 'Gewonnen',
-                        'lost': 'Verloren'
-                    };
-                    return labels[status] || status;
+                onStatusChange() {
+                    if (this.item.id && this.item.status !== 'lost') {
+                        this.$emit('onRestoreItem', this.item.id);
+                    }
                 },
                 getStatusClass(status) {
                     const classes = {

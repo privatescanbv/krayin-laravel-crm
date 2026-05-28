@@ -530,10 +530,12 @@ class OrderController extends SimpleEntityController
 
         $order = $this->orderRepository->update($payload, $id);
 
-        // Preserve existing order items: update by ID, create new ones, delete missing
-        if ($request->has('items')) {
-            // Load current items keyed by id for quick lookup
+        // Preserve existing order items: update by ID, create new ones, mark removed as LOST
+        if ($request->has('items') || $request->has('removed_order_item_ids')) {
             $currentItems = $order->orderItems()->get()->keyBy('id');
+            $currentActiveItems = $currentItems->filter(
+                fn ($item) => $item->status !== OrderItemStatus::LOST
+            );
             $updatedItemIds = [];
 
             if (is_array($items) && ! empty($items)) {
@@ -574,7 +576,10 @@ class OrderController extends SimpleEntityController
                         'sort_order'  => $sortCounter++,
                     ];
 
-                    // If key is a numeric id and exists, update without touching status
+                    if (! empty($item['status'])) {
+                        $attributes['status'] = OrderItemStatus::from((string) $item['status']);
+                    }
+
                     if (is_numeric($key) && $currentItems->has((int) $key)) {
                         $current = $currentItems->get((int) $key);
                         $current->update($attributes);
@@ -582,17 +587,35 @@ class OrderController extends SimpleEntityController
                     } else {
                         // New item: create with default status NEW
                         // Status will be automatically calculated by OrderItemObserver
-                        $order->orderItems()->create($attributes);
+                        $newItem = $order->orderItems()->create($attributes);
+                        $updatedItemIds[] = $newItem->id;
                     }
                 }
             }
 
-            // Soft-remove items that are in DB but not in the update list (status verloren)
-            $itemsToRemove = $currentItems->keys()->diff($updatedItemIds);
-            foreach ($itemsToRemove as $itemId) {
+            $explicitlyRemovedIds = collect($request->input('removed_order_item_ids', []))
+                ->map(fn ($id) => (int) $id)
+                ->filter(fn ($id) => $id > 0)
+                ->unique()
+                ->values();
+
+            foreach ($explicitlyRemovedIds as $itemId) {
                 $item = $currentItems->get($itemId);
                 if ($item && $item->status !== OrderItemStatus::LOST) {
                     $item->update(['status' => OrderItemStatus::LOST]);
+                }
+                $updatedItemIds[] = $itemId;
+            }
+
+            // When the UI sends explicit removals, trust those IDs only. Otherwise fall back to
+            // diffing the payload (API clients / legacy behaviour).
+            if (! $request->has('removed_order_item_ids')) {
+                $itemsToRemove = $currentActiveItems->keys()->diff(collect($updatedItemIds)->unique());
+                foreach ($itemsToRemove as $itemId) {
+                    $item = $currentItems->get($itemId);
+                    if ($item && $item->status !== OrderItemStatus::LOST) {
+                        $item->update(['status' => OrderItemStatus::LOST]);
+                    }
                 }
             }
 
@@ -2016,8 +2039,11 @@ class OrderController extends SimpleEntityController
                 'integer',
                 'exists:persons,id',
             ],
-            'items.*.quantity'     => ['nullable', 'integer', 'min:1'],
-            'items.*.total_price'  => ['nullable', 'numeric', 'min:0'],
+            'items.*.quantity'              => ['nullable', 'integer', 'min:1'],
+            'items.*.total_price'           => ['nullable', 'numeric', 'min:0'],
+            'items.*.status'                => ['nullable', new Enum(OrderItemStatus::class)],
+            'removed_order_item_ids'        => ['nullable', 'array'],
+            'removed_order_item_ids.*'      => ['integer', 'exists:order_items,id'],
         ], [
             'items.*.person_id.required_with' => 'Elk orderitem met een product moet een persoon hebben.',
         ]);

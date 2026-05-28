@@ -486,6 +486,7 @@ use Webkul\Lead\Models\Stage;
                     if (!hidden) return;
 
                     hidden.value = target;
+                    window.dispatchEvent(new CustomEvent('crm-form-before-submit'));
                     form.submit();
                 }
 

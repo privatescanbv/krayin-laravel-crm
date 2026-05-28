@@ -5,17 +5,20 @@ namespace Webkul\Admin\Http\Controllers\Dashboard;
 use App\Enums\Departments;
 use App\Services\ActivityQueueRegistry;
 use App\Services\ActivityQueueRepository;
+use App\Services\EmailInboxService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Email\Models\Email;
 
 class OperationalDashboardController extends Controller
 {
     public function __construct(
         protected ActivityQueueRegistry $queueRegistry,
         protected ActivityQueueRepository $queueRepository,
+        protected EmailInboxService $emailInboxService,
     ) {
     }
 
@@ -34,14 +37,25 @@ class OperationalDashboardController extends Controller
         foreach ($this->queueRegistry->all() as $definition) {
             $key = $definition['key'];
 
-            $counts = $this->queueRepository->counts($key, $department);
-
-            $queues[] = [
-                'key'     => $key,
-                'label'   => $definition['label'],
-                'open'    => $counts['open'],
-                'overdue' => $counts['overdue'],
-            ];
+            if (($definition['type'] ?? 'activity') === 'email') {
+                $count = $this->emailInboxService->unreadCount();
+                $queues[] = [
+                    'key'     => $key,
+                    'label'   => $definition['label'],
+                    'type'    => 'email',
+                    'open'    => $count,
+                    'overdue' => 0,
+                ];
+            } else {
+                $counts = $this->queueRepository->counts($key, $department);
+                $queues[] = [
+                    'key'     => $key,
+                    'label'   => $definition['label'],
+                    'type'    => 'activity',
+                    'open'    => $counts['open'],
+                    'overdue' => $counts['overdue'],
+                ];
+            }
         }
 
         $defaultQueueKey = $queues[0]['key'] ?? 'frontoffice';
@@ -68,12 +82,21 @@ class OperationalDashboardController extends Controller
 
         $queues = [];
         foreach ($this->queueRegistry->all() as $definition) {
-            $counts = $this->queueRepository->counts($definition['key'], $department);
-            $queues[] = [
-                'key'     => $definition['key'],
-                'open'    => $counts['open'],
-                'overdue' => $counts['overdue'],
-            ];
+            if (($definition['type'] ?? 'activity') === 'email') {
+                $count = $this->emailInboxService->unreadCount();
+                $queues[] = [
+                    'key'     => $definition['key'],
+                    'open'    => $count,
+                    'overdue' => 0,
+                ];
+            } else {
+                $counts = $this->queueRepository->counts($definition['key'], $department);
+                $queues[] = [
+                    'key'     => $definition['key'],
+                    'open'    => $counts['open'],
+                    'overdue' => $counts['overdue'],
+                ];
+            }
         }
 
         return response()->json($queues);
@@ -105,6 +128,34 @@ class OperationalDashboardController extends Controller
         }
 
         return datagrid(ActivityDataGrid::class)->process();
+    }
+
+    public function getEmails(): JsonResponse
+    {
+        $emails = $this->emailInboxService->unreadList();
+
+        return response()->json($emails->map(fn (Email $e) => [
+            'id'         => $e->id,
+            'subject'    => $e->subject ?: '(geen onderwerp)',
+            'from'       => is_array($e->from) ? ($e->from['name'] ?? $e->from['email'] ?? '') : (string) $e->from,
+            'created_at' => $e->created_at?->format('d-m-Y H:i'),
+            'link'       => $this->resolveEmailLink($e),
+        ]));
+    }
+
+    private function resolveEmailLink(Email $email): string
+    {
+        if ($email->order_id) {
+            return "/admin/orders/view/{$email->order_id}";
+        }
+        if ($email->lead_id) {
+            return "/admin/leads/view/{$email->lead_id}";
+        }
+        if ($email->person_id) {
+            return "/admin/contacts/persons/view/{$email->person_id}";
+        }
+
+        return '/admin/mails/inbox';
     }
 
     private function getInitialDepartmentForCurrentUser(): string

@@ -148,13 +148,20 @@
                         this.updateHiddenInputs();
                     });
 
-                    // Ensure hidden inputs are updated when form is submitted
                     const form = this.$el.closest('form');
                     if (form) {
-                        form.addEventListener('submit', () => {
-                            this.updateHiddenInputs();
-                        });
+                        form.addEventListener('submit', this.syncHiddenInputsBeforeSubmit);
                     }
+
+                    window.addEventListener('crm-form-before-submit', this.syncHiddenInputsBeforeSubmit);
+                },
+                beforeUnmount() {
+                    const form = this.$el?.closest('form');
+                    if (form) {
+                        form.removeEventListener('submit', this.syncHiddenInputsBeforeSubmit);
+                    }
+                    window.removeEventListener('crm-form-before-submit', this.syncHiddenInputsBeforeSubmit);
+                    this.removeHiddenInputsForName(form);
                 },
                 methods: {
                     onSearch() {
@@ -218,37 +225,40 @@
                     emitCreateNew() {
                         this.$emit('create-new', { query: this.search });
                     },
-                    updateHiddenInputs() {
-                        // Ensure hidden inputs are synchronized with selectedItems for form submission
-                        const form = this.$el.closest('form');
-                        if (!form || !this.name) {
+                    syncHiddenInputsBeforeSubmit() {
+                        this.updateHiddenInputs();
+                    },
+                    removeHiddenInputsForName(form) {
+                        if (! form || ! this.name) {
                             return;
                         }
 
-                        // Remove all existing hidden inputs for this field
-                        const selector = this.multiple
-                            ? `input[type="hidden"][name^="${this.name}["], input[type="hidden"][name="${this.name}[]"]`
-                            : `input[type="hidden"][name="${this.name}"]`;
-                        const existingInputs = form.querySelectorAll(selector);
-                        existingInputs.forEach(input => input.remove());
+                        Array.from(form.querySelectorAll('input[type="hidden"]')).forEach((input) => {
+                            if (input.name === this.name) {
+                                input.remove();
+                            }
+                        });
+                    },
+                    updateHiddenInputs() {
+                        const form = this.$el?.closest('form');
+                        if (! form || ! this.name) {
+                            return;
+                        }
 
-                        // Add new hidden inputs for selected items
+                        this.removeHiddenInputsForName(form);
+
                         if (this.selectedItems.length > 0) {
                             this.selectedItems.forEach((item) => {
                                 const input = document.createElement('input');
                                 input.type = 'hidden';
-                                // For multiple select, use array notation with [] for Laravel
                                 input.name = this.multiple ? `${this.name}[]` : this.name;
                                 const itemId = item.id ?? item.value ?? '';
-                                // Only add non-empty values
                                 if (itemId) {
                                     input.value = itemId;
                                     form.appendChild(input);
                                 }
                             });
                         }
-                        // Note: For multiple select, if no items are selected, Laravel will receive an empty array
-                        // when the field name ends with [] and no inputs are present
                     }
                 }
             });

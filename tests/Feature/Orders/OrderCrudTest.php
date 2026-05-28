@@ -308,6 +308,192 @@ test('removing an order item from the update payload sets its status to lost ins
     $this->assertDatabaseHas('order_items', ['id' => $removedItem->id]);
 });
 
+test('removing one of three order items marks only that line as lost', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $personA = Person::factory()->create();
+    $personB = Person::factory()->create();
+    $personC = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 40.00]);
+
+    $itemA = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personA->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+    $itemB = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personB->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+    $itemC = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personC->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+
+    $linePayload = fn (OrderItem $item, Person $person) => [
+        'product_id'  => $product->id,
+        'person_id'   => $person->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+    ];
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), [
+        'title'         => 'Updated Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
+        'items'         => [
+            $itemA->id => $linePayload($itemA, $personA),
+            $itemC->id => $linePayload($itemC, $personC),
+        ],
+        'removed_order_item_ids' => [$itemB->id],
+    ]);
+    $response->assertOk();
+
+    expect($itemB->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and($itemA->fresh()->status)->toBe(OrderItemStatus::NEW)
+        ->and($itemC->fresh()->status)->toBe(OrderItemStatus::NEW);
+});
+
+test('explicit removed_order_item_ids prevents other active lines from becoming lost when payload is incomplete', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $personA = Person::factory()->create();
+    $personB = Person::factory()->create();
+    $personC = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 40.00]);
+
+    $itemA = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personA->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+    $itemB = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personB->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+    $itemC = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personC->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), [
+        'title'         => 'Updated Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
+        'items'         => [
+            $itemA->id => [
+                'product_id'  => $product->id,
+                'person_id'   => $personA->id,
+                'quantity'    => 1,
+                'total_price' => 40.00,
+            ],
+        ],
+        'removed_order_item_ids' => [$itemB->id],
+    ]);
+    $response->assertOk();
+
+    expect($itemB->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and($itemA->fresh()->status)->toBe(OrderItemStatus::NEW)
+        ->and($itemC->fresh()->status)->toBe(OrderItemStatus::NEW);
+});
+
+test('lost order item can be restored to new via order update', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 40.00]);
+
+    $lostItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $person->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::LOST->value,
+    ]);
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), [
+        'title'         => 'Updated Order',
+        'total_price'   => 0,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
+        'items'         => [
+            $lostItem->id => [
+                'product_id'  => $product->id,
+                'person_id'   => $person->id,
+                'quantity'    => 1,
+                'total_price' => 40.00,
+                'status'      => OrderItemStatus::NEW->value,
+            ],
+        ],
+    ]);
+    $response->assertOk();
+
+    expect($lostItem->fresh()->status)->toBe(OrderItemStatus::NEW);
+});
+
+test('already lost order items are not affected when removing an active line', function () {
+    $order = Order::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $personA = Person::factory()->create();
+    $personB = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 40.00]);
+
+    $lostItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personA->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::LOST->value,
+    ]);
+    $activeItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'product_id'  => $product->id,
+        'person_id'   => $personB->id,
+        'quantity'    => 1,
+        'total_price' => 40.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), [
+        'title'                  => 'Updated Order',
+        'total_price'            => 0,
+        'sales_lead_id'          => $salesLead->id,
+        '_method'                => 'put',
+        'items'                  => [],
+        'removed_order_item_ids' => [$activeItem->id],
+    ]);
+    $response->assertOk();
+
+    expect($activeItem->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and($lostItem->fresh()->status)->toBe(OrderItemStatus::LOST);
+});
+
 test('order item total_price uses provided value when not zero', function () {
     $salesLead = SalesLead::factory()->create();
     $person = Person::factory()->create();

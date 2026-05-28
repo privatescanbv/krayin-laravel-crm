@@ -123,13 +123,14 @@
                                     v-if="activeQueue"
                                     class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                                 >
-                                    @{{ activeQueue.open }} activiteiten
+                                    @{{ activeQueue.open }} @{{ activeQueue.type === 'email' ? 'emails' : 'activiteiten' }}
                                 </span>
                             </div>
                         </div>
 
-                        <!-- Datagrid -->
+                        <!-- Datagrid (activiteiten-werkbakken) -->
                         <x-admin::datagrid
+                            v-if="activeQueue?.type !== 'email'"
                             src="{{ '/admin/operational-dashboard/queues?return_url=' . urlencode(request()->fullUrl()) }}"
                             :isMultiRow="true"
                             no-auto-load
@@ -260,12 +261,34 @@
                                 </template>
                             </template>
                         </x-admin::datagrid>
+
+                        <!-- Email-lijst (ongelezen emails werkbak) -->
+                        <template v-if="activeQueue?.type === 'email'">
+                            Klik <a href="https://crm.local.privatescan.nl/admin/mail/inbox" target="_blank">hier</a> om deze in de inbox te bekijken.
+{{--                            <div v-if="emailsLoading" class="py-8 text-center text-gray-500">Laden…</div>--}}
+{{--                            <div v-else-if="emails.length === 0" class="py-8 text-center text-gray-400">Geen ongelezen emails.</div>--}}
+{{--                            <div v-else>--}}
+{{--                                <a--}}
+{{--                                    v-for="email in emails"--}}
+{{--                                    :key="email.id"--}}
+{{--                                    :href="email.link"--}}
+{{--                                    class="flex items-center justify-between border-b px-4 py-3 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"--}}
+{{--                                >--}}
+{{--                                    <div class="flex flex-col gap-0.5">--}}
+{{--                                        <span class="font-medium text-gray-900 dark:text-white">@{{ email.subject }}</span>--}}
+{{--                                        <span class="text-sm text-gray-500">@{{ email.from }}</span>--}}
+{{--                                    </div>--}}
+{{--                                    <span class="text-xs text-gray-400">@{{ email.created_at }}</span>--}}
+{{--                                </a>--}}
+{{--                            </div>--}}
+                        </template>
                     </div>
                 </div>
             </div>
 
             <!-- Assignment Conflict Modal (identical to activities index) -->
-            <div v-if="assignmentModal.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div v-if="assignmentModal.show"
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                 <div class="bg-white rounded-lg p-6 max-w-md mx-4 dark:bg-gray-800">
                     <h3 class="text-lg font-semibold mb-4 dark:text-white">
                         Activiteit al toegekend
@@ -327,8 +350,10 @@
                         departments: this.initialDepartments,
                         activeQueueKey: this.initialQueueKey,
                         activeDepartment: this.initialDepartment,
+                        emails: [],
+                        emailsLoading: false,
                         currentUserId: {{ auth()->guard('user')->id() ?? 'null' }},
-                        canTakeover: (function() {
+                        canTakeover: (function () {
                             const user = {{ auth()->guard('user')->user()->id ?? 'null' }};
                             const canTakeover = {{ (function() {
                                 $user = auth()->guard('user')->user();
@@ -367,7 +392,26 @@
                     },
                 },
 
+                watch: {
+                    activeQueueKey() {
+                        this.updateUrl();
+                        if (this.activeQueue?.type === 'email') {
+                            this.loadEmails();
+                        }
+                    },
+                },
+
                 methods: {
+                    async loadEmails() {
+                        this.emailsLoading = true;
+                        try {
+                            const r = await this.$axios.get('/admin/operational-dashboard/emails');
+                            this.emails = r.data;
+                        } finally {
+                            this.emailsLoading = false;
+                        }
+                    },
+
                     updateUrl() {
                         const params = new URLSearchParams(window.location.search);
                         params.set('queue', this.activeQueueKey);
@@ -385,7 +429,7 @@
                         }
 
                         this.activeQueueKey = key;
-                        this.updateUrl();
+                        // updateUrl() and email loading are handled by the activeQueueKey watcher
                     },
 
                     setActiveDepartment(dept) {
@@ -540,6 +584,10 @@
                         if (dept) {
                             this.activeDepartment = dept.key;
                         }
+                    }
+
+                    if (this.activeQueue?.type === 'email') {
+                        this.loadEmails();
                     }
                 },
 

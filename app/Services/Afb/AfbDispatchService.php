@@ -36,15 +36,126 @@ class AfbDispatchService
         private readonly FormService $formService,
     ) {}
 
-    public function queueDailyBatchDispatches(Carbon $date): int
+    /**
+     * @return array<int, array<int>>
+     */
+    public function resolveDailyBatchGroups(Carbon $date): array
     {
-        $groupedOrderIds = ResourceOrderItem::onDate($date)
+        return ResourceOrderItem::onDate($date)
             ->forAfbDispatch()
             ->with(['resource:id,clinic_department_id', 'orderItem:id,order_id'])
             ->get()
             ->groupBy(fn ($roi) => (int) $roi->resource->clinic_department_id)
             ->map(fn ($rois) => $rois->pluck('orderItem.order_id')->map(fn ($id) => (int) $id)->unique()->values()->all())
             ->all();
+    }
+
+    /**
+     * Preview what the daily batch would queue and send, without jobs, e-mail or database writes.
+     *
+     * @return array{
+     *     date: string,
+     *     job_count: int,
+     *     batches: list<array{
+     *         department_id: int,
+     *         department_name: string,
+     *         clinic_name: string,
+     *         department_email: ?string,
+     *         resource_slot_count: int,
+     *         queued_order_ids: list<int>,
+     *         would_send: list<array{order_id: int, order_number: ?string, stage: ?string}>,
+     *         skipped: list<array{order_id: int, order_number: ?string, stage: ?string, reason: string}>,
+     *         would_dispatch_email: bool
+     *     }>
+     * }
+     */
+    public function previewDailyBatchDispatches(Carbon $date): array
+    {
+        $groupedOrderIds = $this->resolveDailyBatchGroups($date);
+
+        $slotsByDepartment = ResourceOrderItem::onDate($date)
+            ->forAfbDispatch()
+            ->with(['resource:id,clinic_department_id'])
+            ->get()
+            ->groupBy(fn ($roi) => (int) $roi->resource->clinic_department_id)
+            ->map(fn ($rois) => $rois->count());
+
+        $batches = [];
+
+        foreach ($groupedOrderIds as $departmentId => $orderIds) {
+            $department = ClinicDepartment::with('clinic')->find($departmentId);
+
+            $orders = Order::query()
+                ->whereIn('id', $orderIds)
+                ->with('stage')
+                ->get()
+                ->keyBy('id');
+
+            $wouldSend = [];
+            $skipped = [];
+
+            foreach ($orderIds as $orderId) {
+                $order = $orders->get($orderId);
+                $skipReason = $this->getDailyBatchOrderSkipReason($order, (int) $departmentId);
+
+                $row = [
+                    'order_id'     => $orderId,
+                    'order_number' => $order?->order_number,
+                    'stage'        => $order?->stage?->name,
+                ];
+
+                if ($skipReason === null) {
+                    $wouldSend[] = $row;
+                } else {
+                    $skipped[] = [...$row, 'reason' => $skipReason];
+                }
+            }
+
+            $batches[] = [
+                'department_id'        => (int) $departmentId,
+                'department_name'      => $department?->name ?? "(afdeling #{$departmentId})",
+                'clinic_name'          => $department?->clinic?->name ?? '—',
+                'department_email'     => $department?->email,
+                'resource_slot_count'  => (int) ($slotsByDepartment[(int) $departmentId] ?? 0),
+                'queued_order_ids'     => $orderIds,
+                'would_send'           => $wouldSend,
+                'skipped'              => $skipped,
+                'would_dispatch_email' => $wouldSend !== [],
+            ];
+        }
+
+        return [
+            'date'      => $date->toDateString(),
+            'job_count' => count($batches),
+            'batches'   => $batches,
+        ];
+    }
+
+    public function getDailyBatchOrderSkipReason(?Order $order, int $departmentId): ?string
+    {
+        if ($order === null) {
+            return 'Order niet gevonden';
+        }
+
+        if ($order->isHerniapoli()) {
+            return 'Herniapoli (geen AFB)';
+        }
+
+        if (! $this->isInDispatchableStage($order)) {
+            return 'Order staat niet in de juiste status voor AFB dispatch';
+        }
+
+        if ($this->isAlreadySentToDepartment((int) $order->id, $departmentId)
+            && ! $this->hasUnincludedActiveItems((int) $order->id, $departmentId)) {
+            return 'Al succesvol verzonden naar deze afdeling';
+        }
+
+        return null;
+    }
+
+    public function queueDailyBatchDispatches(Carbon $date): int
+    {
+        $groupedOrderIds = $this->resolveDailyBatchGroups($date);
 
         foreach ($groupedOrderIds as $departmentId => $orderIds) {
             SendAfbDispatchJob::dispatch($departmentId, $orderIds, AfbDispatchType::BATCH->value);

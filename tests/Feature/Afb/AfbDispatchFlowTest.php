@@ -250,6 +250,48 @@ test('daily afb command queues one batch job per department', function () {
     });
 });
 
+test('daily afb dry-run does not queue jobs and shows preview output', function () {
+    Bus::fake();
+
+    $targetDate = now()->addDays(3)->setTime(10, 0);
+    $context = createOrderForClinic($targetDate);
+
+    $preview = app(AfbDispatchService::class)->previewDailyBatchDispatches($targetDate->copy()->startOfDay());
+
+    expect($preview['job_count'])->toBe(1)
+        ->and($preview['batches'][0]['would_send'][0]['order_id'])->toBe($context['order']->id);
+
+    $this->artisan('afb:send-daily --date='.$targetDate->toDateString().' --dry-run')
+        ->expectsOutputToContain('DRY-RUN')
+        ->expectsOutputToContain('Batch-jobs die zouden worden gequeued: 1')
+        ->expectsOutputToContain((string) $context['order']->id)
+        ->assertExitCode(0);
+
+    Bus::assertNothingDispatched();
+});
+
+test('previewDailyBatchDispatches marks already sent orders as skipped', function () {
+    Mail::fake();
+
+    $targetDate = now()->addDays(3)->setTime(10, 0);
+    $context = createOrderForClinic($targetDate);
+    $service = app(AfbDispatchService::class);
+
+    $service->sendDispatch(
+        departmentId: $context['department']->id,
+        orderIds: [$context['order']->id],
+        type: AfbDispatchType::BATCH,
+        attempt: 1
+    );
+
+    $preview = $service->previewDailyBatchDispatches($targetDate->copy()->startOfDay());
+
+    expect($preview['job_count'])->toBe(1)
+        ->and($preview['batches'][0]['would_send'])->toBe([])
+        ->and($preview['batches'][0]['skipped'][0]['order_id'])->toBe($context['order']->id)
+        ->and($preview['batches'][0]['skipped'][0]['reason'])->toBe('Al succesvol verzonden naar deze afdeling');
+});
+
 test('late booking planning queues individual afb dispatch', function () {
     Bus::fake();
 

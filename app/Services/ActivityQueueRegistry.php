@@ -138,6 +138,21 @@ class ActivityQueueRegistry
                 },
             ],
 
+            'form-reviews' => [
+                'key'   => 'form-reviews',
+                'label' => 'Formulieren controleren',
+                'sort'  => [
+                    'column' => 'created_at',
+                    'order'  => 'desc',
+                ],
+                'apply' => static function (Builder $query): void {
+                    $query
+                        ->where('activities.type', ActivityType::TASK->value)
+                        ->where('activities.is_done', false)
+                        ->whereNotNull('activities.additional->form_id');
+                },
+            ],
+
             'unread-emails' => [
                 'key'   => 'unread-emails',
                 'label' => 'Ongelezen emails',

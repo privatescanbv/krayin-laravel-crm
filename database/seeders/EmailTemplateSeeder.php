@@ -176,7 +176,7 @@ HTML,
     </ul>
     <p><strong>Hoe opent u een gezondheidsportaal op Privatescan.nl?</strong></p>
     <ol>
-        <li>Ga naar <a href="{{ portal_url }}" target="_blank" rel="noopener">{{ $loginUrl }}</a>.</li>
+        <li>Ga naar <a href="{{ loginUrlWithUsernameHint }}" target="_blank" rel="noopener">{{ $loginUrl }}</a>.</li>
         <li>Klik op de knop <strong>Inloggen</strong> op de hoofdpagina.</li>
         <li>Log in met uw gegevens.</li>
         <li>Logt u voor de eerste keer in? Dan wordt u gevraagd het contract met uw zorgverlener digitaal te ondertekenen.</li>

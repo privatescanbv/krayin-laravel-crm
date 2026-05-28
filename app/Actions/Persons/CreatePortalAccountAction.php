@@ -3,6 +3,7 @@
 namespace App\Actions\Persons;
 
 use App\Enums\EmailTemplateCode;
+use App\Enums\KeyCloakClient;
 use App\Services\Mail\CrmMailService;
 use App\Services\PersonKeycloakService;
 use Exception;
@@ -103,19 +104,29 @@ class CreatePortalAccountAction
         $portalUrl = (string) config('services.portal.patient.web_url', '');
         $linkEmailToEntities = $lead !== null ? ['lead_id' => (string) $lead->id] : [];
 
-        $this->crmMailService->sendToPersonTemplate(
-            $person,
-            EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION,
-            [
-                'lastname'          => (string) ($person->last_name ?? ''),
-                'portal_url'        => $portalUrl,
-                'portal_link'       => $portalUrl,
-                'person'            => $person,
-                'temporaryPassword' => $temporaryPassword,
-                'loginUrl'          => config('services.portal.patient.web_url'),
-            ],
-            $linkEmailToEntities,
-            isNotify: true
-        );
+        try {
+            $emailPerson = $person->findDefaultEmailOrError();
+            $this->crmMailService->sendToPersonTemplate(
+                $person,
+                EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION,
+                [
+                    'lastname'          => (string) ($person->last_name ?? ''),
+                    'portal_url'        => $portalUrl,
+                    'portal_link'       => $portalUrl,
+                    'person'            => $person,
+                    'temporaryPassword' => $temporaryPassword,
+                    'loginUrl'          => config('services.portal.patient.web_url'),
+                    'loginUrlWithUsernameHint' => config('services.keycloak.base_url_external').'/realms/crm/protocol/openid-connect/auth?client_id='.KeyCloakClient::PATIENT->clientId().'&redirect_uri='.config('services.portal.patient.web_url').'%2Fcallback&response_type=code&scope=openid&login_hint='.$emailPerson,
+                ],
+                $linkEmailToEntities,
+                isNotify: true
+            );
+
+        } catch (Exception $e) {
+            Log::error('Failed to send portal welcome mail: person has no default email address', [
+            'person_id' => $person->id,
+                'error'     => $e->getMessage(),
+            ]);
+        }
     }
 }

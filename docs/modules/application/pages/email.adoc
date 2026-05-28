@@ -252,6 +252,16 @@ Beschikbaar wanneer een User is meegegeven (bijv. wachtwoord reset, systeemnotif
 
 | `{{ user.* }}`
 | Nested toegang tot alle User-attributen
+
+| `{{ loginUrl }}`
+| Url naar patient portaal [welkomstmail]
+
+| `{{ loginUrlWithUsernameHint }}`
+| Url naar patient portaal met ingevulde emailadres (default van die patient) [welkomstmail]
+
+| `{{ temporaryPassword }}`
+| Tijdelijk wachtwoord na aanmaken account voor deze patient [welkomstmail]
+
 |===
 
 ====== Lead-context

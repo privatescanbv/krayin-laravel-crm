@@ -20,6 +20,7 @@ class OrderItemObserver
     {
         $this->updateOrderItemStatus($orderItem);
         $this->updatePartnerProductChecks($orderItem);
+        $orderItem->order?->recalculateTotalPrice();
     }
 
     /**
@@ -40,6 +41,10 @@ class OrderItemObserver
             $this->updatePartnerProductChecks($orderItem);
         }
 
+        if ($orderItem->wasChanged('status') || $orderItem->wasChanged('total_price')) {
+            $orderItem->order?->recalculateTotalPrice();
+        }
+
         // After updating an order item, check if we need to update the parent order status
         $this->updateParentOrderStatus($orderItem);
     }
@@ -49,6 +54,7 @@ class OrderItemObserver
      */
     public function deleted(OrderItem $orderItem): void
     {
+        $orderItem->order?->recalculateTotalPrice();
         // After deleting an order item, check if we need to update the parent order status
         $this->updateParentOrderStatus($orderItem);
         $this->updatePartnerProductChecks($orderItem);

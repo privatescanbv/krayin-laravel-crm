@@ -110,12 +110,12 @@ class CreatePortalAccountAction
                 $person,
                 EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION,
                 [
-                    'lastname'          => (string) ($person->last_name ?? ''),
-                    'portal_url'        => $portalUrl,
-                    'portal_link'       => $portalUrl,
-                    'person'            => $person,
-                    'temporaryPassword' => $temporaryPassword,
-                    'loginUrl'          => config('services.portal.patient.web_url'),
+                    'lastname'                 => (string) ($person->last_name ?? ''),
+                    'portal_url'               => $portalUrl,
+                    'portal_link'              => $portalUrl,
+                    'person'                   => $person,
+                    'temporaryPassword'        => $temporaryPassword,
+                    'loginUrl'                 => config('services.portal.patient.web_url'),
                     'loginUrlWithUsernameHint' => config('services.keycloak.base_url_external').'/realms/crm/protocol/openid-connect/auth?client_id='.KeyCloakClient::PATIENT->clientId().'&redirect_uri='.config('services.portal.patient.web_url').'%2Fcallback&response_type=code&scope=openid&login_hint='.$emailPerson,
                 ],
                 $linkEmailToEntities,
@@ -124,7 +124,7 @@ class CreatePortalAccountAction
 
         } catch (Exception $e) {
             Log::error('Failed to send portal welcome mail: person has no default email address', [
-            'person_id' => $person->id,
+                'person_id' => $person->id,
                 'error'     => $e->getMessage(),
             ]);
         }

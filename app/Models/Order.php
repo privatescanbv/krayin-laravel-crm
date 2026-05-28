@@ -335,6 +335,17 @@ class Order extends Model
     }
 
     /**
+     * Herbereken total_price op basis van niet-LOST orderregels en sla op zonder observers.
+     */
+    public function recalculateTotalPrice(): void
+    {
+        $this->total_price = $this->orderItems()
+            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->sum('total_price');
+        $this->saveQuietly();
+    }
+
+    /**
      * Betaalstatus klant: vergelijk netto betaald bedrag met total_price.
      */
     public function paymentStatus(): OrderPaymentStatus
@@ -354,7 +365,9 @@ class Order extends Model
         $this->loadMissing('orderItems.product.partnerProducts.purchasePrice');
 
         return round(
-            (float) $this->orderItems->sum(fn ($item) => (float) $item->resolvedPurchasePrice()->purchase_price),
+            (float) $this->orderItems
+                ->reject(fn ($item) => $item->status === OrderItemStatus::LOST)
+                ->sum(fn ($item) => (float) $item->resolvedPurchasePrice()->purchase_price),
             2
         );
     }
@@ -366,7 +379,9 @@ class Order extends Model
     {
         $purchaseTotal = $this->totalPurchasePrice();
         $invoiceTotal = round(
-            (float) $this->orderItems->sum(fn ($item) => (float) ($item->invoicePurchasePrice?->purchase_price ?? 0)),
+            (float) $this->orderItems
+                ->reject(fn ($item) => $item->status === OrderItemStatus::LOST)
+                ->sum(fn ($item) => (float) ($item->invoicePurchasePrice?->purchase_price ?? 0)),
             2
         );
 

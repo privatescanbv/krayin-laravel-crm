@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\Email\Models\Email;
 
 class OperationalDashboardController extends Controller
 {
@@ -128,34 +127,6 @@ class OperationalDashboardController extends Controller
         }
 
         return datagrid(ActivityDataGrid::class)->process();
-    }
-
-    public function getEmails(): JsonResponse
-    {
-        $emails = $this->emailInboxService->unreadList();
-
-        return response()->json($emails->map(fn (Email $e) => [
-            'id'         => $e->id,
-            'subject'    => $e->subject ?: '(geen onderwerp)',
-            'from'       => is_array($e->from) ? ($e->from['name'] ?? $e->from['email'] ?? '') : (string) $e->from,
-            'created_at' => $e->created_at?->format('d-m-Y H:i'),
-            'link'       => $this->resolveEmailLink($e),
-        ]));
-    }
-
-    private function resolveEmailLink(Email $email): string
-    {
-        if ($email->order_id) {
-            return "/admin/orders/view/{$email->order_id}";
-        }
-        if ($email->lead_id) {
-            return "/admin/leads/view/{$email->lead_id}";
-        }
-        if ($email->person_id) {
-            return "/admin/contacts/persons/view/{$email->person_id}";
-        }
-
-        return '/admin/mails/inbox';
     }
 
     private function getInitialDepartmentForCurrentUser(): string

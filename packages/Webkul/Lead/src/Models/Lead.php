@@ -95,6 +95,7 @@ class Lead extends Model implements LeadContract
         'phones',
         'lead_channel_id',
         'department_id',
+        'order_department_id_after_won',
         'organization_id',
         'contact_person_id',
         'created_by',
@@ -452,6 +453,40 @@ class Lead extends Model implements LeadContract
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Department chosen when the lead was marked won (Order pipeline target).
+     */
+    public function orderDepartmentAfterWon()
+    {
+        return $this->belongsTo(Department::class, 'order_department_id_after_won');
+    }
+
+    /**
+     * Resolve the department used for Order creation after won.
+     */
+    public function resolveOrderDepartmentAfterWon(): ?Department
+    {
+        $departmentId = $this->order_department_id_after_won ?? $this->department_id;
+
+        if (! $departmentId) {
+            return null;
+        }
+
+        if ($this->relationLoaded('orderDepartmentAfterWon') && (int) $this->order_department_id_after_won === (int) $departmentId) {
+            return $this->orderDepartmentAfterWon;
+        }
+
+        if (
+            ! $this->order_department_id_after_won
+            && $this->relationLoaded('department')
+            && (int) $this->department_id === (int) $departmentId
+        ) {
+            return $this->department;
+        }
+
+        return Department::find($departmentId);
     }
 
     /**

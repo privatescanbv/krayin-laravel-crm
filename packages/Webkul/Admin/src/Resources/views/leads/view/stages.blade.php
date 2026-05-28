@@ -1,5 +1,7 @@
 @php
+    use App\Enums\Departments;
     use App\Enums\LostReason;
+    use App\Models\Department;
     use Webkul\User\Models\User;
 @endphp
 @props([
@@ -22,6 +24,11 @@
     // Users for assignment dropdown (won stage)
     $assignableUsers = User::where('status', 1)->orderBy('first_name')->orderBy('last_name')->get();
     $currentUserId = $isOrder ? ($order->user_id ?? null) : ($leadOrNull?->user_id ?? null);
+    $departmentOptions = collect(Departments::cases())
+        ->mapWithKeys(fn ($case) => [
+            Department::query()->where('name', $case->value)->value('id') => $case->value,
+        ])
+        ->filter(fn ($name, $id) => $id !== null);
 @endphp
 
     <!-- Stages Navigation -->
@@ -136,6 +143,25 @@
                                             <x-admin::form.control-group.error control-name="user_id" />
                                         </x-admin::form.control-group>
 
+                                        @if (! $isSalesLead && ! $isOrder)
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label class="required">
+                                                Order afdeling
+                                            </x-admin::form.control-group.label>
+                                            <select
+                                                name="order_department_id_after_won"
+                                                class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                                v-model="nextStage.order_department_id_after_won"
+                                                required
+                                            >
+                                                <option value="">Selecteer afdeling...</option>
+                                                @foreach ($departmentOptions as $id => $name)
+                                                    <option value="{{ $id }}">{{ $name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </x-admin::form.control-group>
+                                        @endif
+
                                         <x-adminc::components.field
                                             type="date"
                                             name="closed_at"
@@ -201,6 +227,10 @@
                     isUpdating: false,
 
                     isOrderContext: {{ $isOrder ? 'true' : 'false' }},
+
+                    isLeadContext: {{ (! $isSalesLead && ! $isOrder) ? 'true' : 'false' }},
+
+                    defaultDepartmentId: {{ $leadOrNull?->department_id ?? 'null' }},
 
                     currentStage: @json($displayStage),
 
@@ -304,6 +334,12 @@
                         this.nextStage.user_id = this.currentUserId ? String(this.currentUserId) : '';
                     }
 
+                    if (this.isLeadContext && this.isWonStage(this.nextStage) && !this.nextStage.order_department_id_after_won) {
+                        this.nextStage.order_department_id_after_won = this.defaultDepartmentId
+                            ? String(this.defaultDepartmentId)
+                            : '';
+                    }
+
                     this.$refs.stageUpdateModal.open();
                 },
 
@@ -313,8 +349,20 @@
                     };
 
                     if (this.isWonStage(this.nextStage)) {
+                        if (this.isLeadContext && ! String(this.nextStage.order_department_id_after_won || '').trim()) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Order afdeling is verplicht bij status "Gewonnen"'
+                            });
+                            return;
+                        }
+
                         params.closed_at = this.nextStage.closed_at;
                         params.user_id = this.nextStage.user_id;
+
+                        if (this.isLeadContext) {
+                            params.order_department_id_after_won = this.nextStage.order_department_id_after_won;
+                        }
                     } else if (this.isLostStage(this.nextStage)) {
                         params.lost_reason = this.nextStage.lost_reason;
                         params.closed_at = this.nextStage.closed_at;

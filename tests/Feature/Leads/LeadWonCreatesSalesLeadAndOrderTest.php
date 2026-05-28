@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ActivityType;
+use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Enums\PipelineStageDefaultKeys;
@@ -250,4 +251,54 @@ test('lead won creates sales lead when existing one is in won/lost stage', funct
     // Assert: an order was created for the new SalesLead
     $newOrder = Order::where('sales_lead_id', $newSalesLead->id)->first();
     $this->assertNotNull($newOrder, 'Order should be created for new SalesLead');
+});
+
+test('lead won with alternate order department creates order on chosen department', function (): void {
+    $user = User::factory()->create();
+    $source = Source::create(['name' => 'Website']);
+    $type = Type::create(['name' => 'New Lead']);
+    $herniaDepartment = Department::create(['name' => Departments::HERNIA->value]);
+    $privatescanDepartment = Department::create(['name' => Departments::PRIVATESCAN->value]);
+
+    $person = Person::factory()->create([
+        'first_name' => 'Jane',
+        'last_name'  => 'Smith',
+        'emails'     => [['value' => 'jane.smith@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'     => [['value' => '+31698765432', 'label' => 'mobile', 'is_default' => true]],
+    ]);
+
+    $lead = new Lead([
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_HERNIA_ID->value,
+        'lead_pipeline_stage_id' => PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA->id(),
+        'status'                 => 1,
+        'first_name'             => 'Jane',
+        'last_name'              => 'Smith',
+        'emails'                 => [['value' => 'jane.smith@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'                 => [['value' => '+31698765432', 'label' => 'mobile', 'is_default' => true]],
+        'description'            => 'Hernia lead routed to Privatescan after won',
+        'user_id'                => $user->id,
+        'lead_source_id'         => $source->id,
+        'lead_type_id'           => $type->id,
+        'department_id'          => $herniaDepartment->id,
+    ]);
+    $lead->save();
+    $lead->attachPersons([$person->id]);
+
+    $lead->update([
+        'lead_pipeline_stage_id'        => PipelineStage::WON_HERNIA->id(),
+        'order_department_id_after_won' => $privatescanDepartment->id,
+    ]);
+
+    $lead->refresh();
+    expect($lead->department_id)->toBe($herniaDepartment->id);
+    expect($lead->order_department_id_after_won)->toBe($privatescanDepartment->id);
+
+    $salesLead = SalesLead::where('lead_id', $lead->id)->first();
+    expect($salesLead)->not->toBeNull();
+    expect($salesLead->department_id)->toBe($herniaDepartment->id);
+    expect($salesLead->pipeline_stage_id)->toBe(PipelineStage::SALES_DOCTOR_ASSESSMENT_HERNIA->id());
+
+    $order = Order::where('sales_lead_id', $salesLead->id)->first();
+    expect($order)->not->toBeNull();
+    expect($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_CONFIRM->id());
 });

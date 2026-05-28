@@ -262,25 +262,14 @@
                             </template>
                         </x-admin::datagrid>
 
-                        <!-- Email-lijst (ongelezen emails werkbak) -->
+                        <!-- Email werkbak: teller zit al in de tab-badge; alleen link naar inbox -->
                         <template v-if="activeQueue?.type === 'email'">
-                            Klik <a href="https://crm.local.privatescan.nl/admin/mail/inbox" target="_blank">hier</a> om deze in de inbox te bekijken.
-{{--                            <div v-if="emailsLoading" class="py-8 text-center text-gray-500">Laden…</div>--}}
-{{--                            <div v-else-if="emails.length === 0" class="py-8 text-center text-gray-400">Geen ongelezen emails.</div>--}}
-{{--                            <div v-else>--}}
-{{--                                <a--}}
-{{--                                    v-for="email in emails"--}}
-{{--                                    :key="email.id"--}}
-{{--                                    :href="email.link"--}}
-{{--                                    class="flex items-center justify-between border-b px-4 py-3 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"--}}
-{{--                                >--}}
-{{--                                    <div class="flex flex-col gap-0.5">--}}
-{{--                                        <span class="font-medium text-gray-900 dark:text-white">@{{ email.subject }}</span>--}}
-{{--                                        <span class="text-sm text-gray-500">@{{ email.from }}</span>--}}
-{{--                                    </div>--}}
-{{--                                    <span class="text-xs text-gray-400">@{{ email.created_at }}</span>--}}
-{{--                                </a>--}}
-{{--                            </div>--}}
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                @{{ activeQueue.open }} ongelezen
+                                <a href="/admin/mail/inbox" target="_blank" class="ml-1 text-brandColor underline">
+                                    Bekijk in inbox
+                                </a>
+                            </p>
                         </template>
                     </div>
                 </div>
@@ -350,8 +339,6 @@
                         departments: this.initialDepartments,
                         activeQueueKey: this.initialQueueKey,
                         activeDepartment: this.initialDepartment,
-                        emails: [],
-                        emailsLoading: false,
                         currentUserId: {{ auth()->guard('user')->id() ?? 'null' }},
                         canTakeover: (function () {
                             const user = {{ auth()->guard('user')->user()->id ?? 'null' }};
@@ -395,23 +382,10 @@
                 watch: {
                     activeQueueKey() {
                         this.updateUrl();
-                        if (this.activeQueue?.type === 'email') {
-                            this.loadEmails();
-                        }
                     },
                 },
 
                 methods: {
-                    async loadEmails() {
-                        this.emailsLoading = true;
-                        try {
-                            const r = await this.$axios.get('/admin/operational-dashboard/emails');
-                            this.emails = r.data;
-                        } finally {
-                            this.emailsLoading = false;
-                        }
-                    },
-
                     updateUrl() {
                         const params = new URLSearchParams(window.location.search);
                         params.set('queue', this.activeQueueKey);
@@ -584,10 +558,6 @@
                         if (dept) {
                             this.activeDepartment = dept.key;
                         }
-                    }
-
-                    if (this.activeQueue?.type === 'email') {
-                        this.loadEmails();
                     }
                 },
 

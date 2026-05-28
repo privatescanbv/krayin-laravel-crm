@@ -1,8 +1,15 @@
 @php
+    use App\Enums\Departments;
     use App\Enums\LostReason;
+    use App\Models\Department;
     use Webkul\User\Models\User;
 
     $assignableUsers = User::where('status', 1)->orderBy('first_name')->orderBy('last_name')->get();
+    $departmentOptions = collect(Departments::cases())
+        ->mapWithKeys(fn ($case) => [
+            Department::query()->where('name', $case->value)->value('id') => $case->value,
+        ])
+        ->filter(fn ($name, $id) => $id !== null);
 @endphp
 @props([
     'type',
@@ -502,6 +509,23 @@
                                         <option value="">Selecteer medewerker...</option>
                                         @foreach ($assignableUsers as $user)
                                             <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-admin::form.control-group>
+
+                                <x-admin::form.control-group v-if="entityType === 'leads'">
+                                    <x-admin::form.control-group.label class="required">
+                                        Order afdeling
+                                    </x-admin::form.control-group.label>
+                                    <select
+                                        name="order_department_id_after_won"
+                                        class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                        v-model="currentStageUpdate.order_department_id_after_won"
+                                        required
+                                    >
+                                        <option value="">Selecteer afdeling...</option>
+                                        @foreach ($departmentOptions as $id => $name)
+                                            <option value="{{ $id }}">{{ $name }}</option>
                                         @endforeach
                                     </select>
                                 </x-admin::form.control-group>
@@ -1050,6 +1074,7 @@
                             lost_reason: '',
                             closed_at: new Date().toISOString().slice(0, 10),
                             user_id: String(lead.user_id || lead.user?.id || ''),
+                            order_department_id_after_won: String(lead.department_id || ''),
                         };
 
                         this.$nextTick(() => {
@@ -1074,8 +1099,20 @@
                         let extraData = {};
 
                         if (update.type === 'won') {
+                            if (this.entityType === 'leads' && ! String(update.order_department_id_after_won || '').trim()) {
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: 'Order afdeling is verplicht bij status "Gewonnen"'
+                                });
+                                return;
+                            }
+
                             extraData.closed_at = update.closed_at;
                             extraData.user_id = update.user_id;
+
+                            if (this.entityType === 'leads') {
+                                extraData.order_department_id_after_won = update.order_department_id_after_won;
+                            }
                         } else {
                             extraData.lost_reason = update.lost_reason;
                             extraData.closed_at = update.closed_at;

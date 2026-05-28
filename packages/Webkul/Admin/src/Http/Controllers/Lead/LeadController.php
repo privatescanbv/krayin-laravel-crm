@@ -235,6 +235,7 @@ class LeadController extends Controller
                     'leads.lead_pipeline_id',
                     'leads.lead_pipeline_stage_id',
                     'leads.user_id',
+                    'leads.department_id',
                     'leads.mri_status',
                     'leads.lost_reason',
                     'leads.diagnosis_form_id',
@@ -821,6 +822,7 @@ class LeadController extends Controller
             'lost_reason' => ['nullable', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
             'user_id' => 'nullable|exists:users,id',
+            'order_department_id_after_won' => 'nullable|exists:departments,id',
         ]);
         $closeOpenActivities = request()->has('close_open_activities') && request()->input('close_open_activities');
 
@@ -830,7 +832,8 @@ class LeadController extends Controller
             $closeOpenActivities,
             request()->input('lost_reason'),
             request()->input('closed_at'),
-            request()->input('user_id'));
+            request()->input('user_id'),
+            request()->input('order_department_id_after_won'));
     }
 
     /**
@@ -842,7 +845,8 @@ class LeadController extends Controller
         bool $closeOpenActivities,
         ?string $lostReason,
         ?string $closedAt,
-        ?string $userId = null
+        ?string $userId = null,
+        ?string $orderDepartmentIdAfterWon = null
     ): JsonResponse
     {
         $lead = $this->leadRepository->findOrFail($leadId);
@@ -897,6 +901,11 @@ class LeadController extends Controller
         if ($targetStage && StageTransitionAttributes::isWonOrLost($targetStage) && ! is_null($userId)) {
             $data['user_id'] = $userId;
         }
+
+        if ($targetStage && $targetStage->is_won) {
+            $data['order_department_id_after_won'] = $orderDepartmentIdAfterWon ?: $lead->department_id;
+        }
+
         // update state after closing activiteit, otherwise new activities will be closed
         $lead = $this->leadRepository->update(
             array_merge($data, ['entity_type' => 'leads']),

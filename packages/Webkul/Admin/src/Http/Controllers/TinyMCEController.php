@@ -21,6 +21,10 @@ class TinyMCEController extends Controller
      */
     public function upload(): JsonResponse
     {
+        if (! config('tinymce.images_enabled')) {
+            return response()->json(['message' => 'Image uploads are disabled.'], 403);
+        }
+
         $media = $this->storeMedia();
 
         if (! empty($media)) {

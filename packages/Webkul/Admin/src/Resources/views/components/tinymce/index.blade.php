@@ -1,6 +1,17 @@
 @php
     $showPlaceholders = request()->routeIs('admin.settings.email_templates.*');
     $placeholders = $showPlaceholders ? app('\Webkul\Automation\Helpers\Entity')->getEmailTemplatePlaceholders() : [];
+    $imagesEnabled = config('tinymce.images_enabled');
+    $placeholderToolbarPrefix = $showPlaceholders ? 'placeholders | ' : '';
+    $tinymcePlugins = $imagesEnabled
+        ? 'image media wordcount save fullscreen code table lists link'
+        : 'media wordcount save fullscreen code table lists link';
+    $tinymceToolbar = $imagesEnabled
+        ? "{$placeholderToolbarPrefix}bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table"
+        : "{$placeholderToolbarPrefix}bold italic strikethrough forecolor backcolor alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table";
+    $tinymceContextmenu = $imagesEnabled
+        ? 'link image table spellchecker'
+        : 'link table spellchecker';
 @endphp
 
 <v-tinymce {{ $attributes }}></v-tinymce>
@@ -114,18 +125,22 @@
                                 content_style: "body { font-family: 'Trebuchet MS', sans-serif; font-size: 10.5pt; color: #00539F; }",
                             };
 
+                            @if ($imagesEnabled)
                             const image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
                                 self2.uploadImageHandler(config, blobInfo, resolve, reject, progress);
                             });
+                            @endif
 
                             tinymce.init({
                                 ...config,
 
+                                @if ($imagesEnabled)
                                 file_picker_callback: function(cb, value, meta) {
                                     self2.filePickerCallback(config, cb, value, meta);
                                 },
 
                                 images_upload_handler: image_upload_handler,
+                                @endif
                             });
                         },
 
@@ -207,12 +222,14 @@
 
                     tinyMCEHelper.initTinyMCE({
                         selector: vm.selector,
-                        plugins: 'image media wordcount save fullscreen code table lists link',
-                        toolbar: '{{ $showPlaceholders ? 'placeholders | ' : '' }}bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
+                        plugins: @json($tinymcePlugins),
+                        toolbar: @json($tinymceToolbar),
+                        @if ($imagesEnabled)
                         image_advtab: true,
+                        @endif
                         directionality: 'ltr',
                         browser_spellcheck: true,
-                        contextmenu: 'link image table spellchecker',
+                        contextmenu: @json($tinymceContextmenu),
                         @if($showPlaceholders)
                         // Preserve template placeholder URLs in links (avoid prepending document_base_url)
                         convert_urls: false,

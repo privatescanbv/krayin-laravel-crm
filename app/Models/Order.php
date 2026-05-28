@@ -211,6 +211,61 @@ class Order extends Model
         return $fromTimes->sortBy(fn (Carbon $c) => $c->getTimestamp())->first();
     }
 
+    /**
+     * Returns all dates on which this order appears in the clinic guide, each with its display time.
+     *
+     * - Entry 0 (day 1): date + time from firstExaminationCarbon() — honours the stored date/time override.
+     * - Entry 1+ (later days): each unique date from non-LOST resource_orderitem slots that falls on a
+     *   different calendar day than day 1. Display time = earliest slot start on that day.
+     *
+     * Sorted ascending by date. Used by ClinicGuideController and matchesClinicGuideDate().
+     *
+     * @return Collection<int, array{date: Carbon, at: Carbon}>
+     */
+    public function clinicGuideDays(): Collection
+    {
+        $this->loadMissing('orderItems.resourceOrderItems');
+
+        $firstAt = $this->firstExaminationCarbon();
+        $days = collect();
+
+        if ($firstAt !== null) {
+            $days->push(['date' => $firstAt->copy()->startOfDay(), 'at' => $firstAt]);
+        }
+
+        $slotsByDate = $this->orderItems
+            ->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)
+            ->flatMap(fn (OrderItem $item) => $item->resourceOrderItems)
+            ->pluck('from')
+            ->filter()
+            ->map(fn ($from) => Carbon::parse($from))
+            ->groupBy(fn (Carbon $c) => $c->toDateString());
+
+        foreach ($slotsByDate as $dateStr => $slots) {
+            $slotDate = Carbon::parse($dateStr)->startOfDay();
+
+            if ($firstAt !== null && $slotDate->isSameDay($firstAt)) {
+                continue;
+            }
+
+            $earliest = $slots->sortBy(fn (Carbon $c) => $c->getTimestamp())->first();
+            $days->push(['date' => $slotDate, 'at' => $earliest]);
+        }
+
+        return $days->sortBy(fn (array $entry) => $entry['date']->getTimestamp())->values();
+    }
+
+    /**
+     * Returns the display datetime for this order on the given date, or null if not planned on that date.
+     */
+    public function clinicGuideEntryForDate(Carbon $date): ?Carbon
+    {
+        return $this->clinicGuideDays()
+            ->filter(fn (array $entry) => $entry['date']->isSameDay($date))
+            ->pluck('at')
+            ->first();
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(OrderPayment::class);

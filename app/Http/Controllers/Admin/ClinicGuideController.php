@@ -39,8 +39,7 @@ class ClinicGuideController extends Controller
             default       => PipelineStage::getOrderStagesIdsForClinicGuide(),
         };
 
-        $startOfDay = Carbon::parse($date)->startOfDay();
-        $endOfDay = Carbon::parse($date)->endOfDay();
+        $selectedDate = Carbon::parse($date);
 
         $orders = Order::query()
             ->whereIn('pipeline_stage_id', $stageIds)
@@ -71,23 +70,19 @@ class ClinicGuideController extends Controller
                 'afbPersonDocuments.dispatch.clinicDepartment',
             ])
             ->get()
-            ->filter(function (Order $order) use ($startOfDay, $endOfDay) {
-                $at = $order->firstExaminationCarbon();
-
-                return $at !== null && $at->between($startOfDay, $endOfDay);
-            })
-            ->sortBy(fn (Order $order) => $order->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
+            ->filter(fn (Order $order) => $order->clinicGuideEntryForDate($selectedDate) !== null)
+            ->sortBy(fn (Order $order) => $order->clinicGuideEntryForDate($selectedDate)?->getTimestamp() ?? PHP_INT_MAX)
             ->values();
 
-        $data = $orders->flatMap(function (Order $order) {
+        $data = $orders->flatMap(function (Order $order) use ($selectedDate) {
             $salesLead = $order->salesLead;
 
-            $firstExaminationDateTime = $order->firstExaminationCarbon();
+            $entryAt = $order->clinicGuideEntryForDate($selectedDate);
             $orderData = [
                 'id'                   => $order->id,
                 'title'                => $order->title,
-                'first_examination_at' => $firstExaminationDateTime?->toIso8601String(),
-                'time'                 => $firstExaminationDateTime?->format('H:i'),
+                'first_examination_at' => $entryAt?->toIso8601String(),
+                'time'                 => $entryAt?->format('H:i'),
                 'total_price'          => $order->total_price,
                 'stage'                => $order->stage ? [
                     'name'    => $order->stage->name,
@@ -111,9 +106,26 @@ class ClinicGuideController extends Controller
 
             $afbByPerson = $order->latestSuccessfulAfbDocuments()->groupBy('person_id');
 
-            return $order->orderItems
+            // Only show items that are scheduled on $selectedDate.
+            // Items with no slots at all belong to day 1 (not yet planned but part of the first examination).
+            $firstDayDate = $order->clinicGuideDays()->first()['date'] ?? null;
+            $isDay1 = $firstDayDate && $selectedDate->isSameDay($firstDayDate);
+
+            $itemsForDay = $order->orderItems->filter(function ($item) use ($selectedDate, $isDay1) {
+                $hasSlotOnDate = $item->resourceOrderItems->contains(
+                    fn ($roi) => $roi->from && Carbon::parse($roi->from)->isSameDay($selectedDate)
+                );
+
+                if ($hasSlotOnDate) {
+                    return true;
+                }
+
+                return $isDay1 && $item->resourceOrderItems->isEmpty();
+            });
+
+            return $itemsForDay
                 ->groupBy('person_id')
-                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords, $afbByPerson) {
+                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords, $afbByPerson, $selectedDate) {
                     $person = $items->first()->person;
                     $anamnesis = $anamnesisRecords->firstWhere('person_id', (int) $personId);
                     $gvlFormLink = $anamnesis?->gvl_form_link;
@@ -152,7 +164,10 @@ class ClinicGuideController extends Controller
                             'product_name' => $item->product?->name,
                             'person_name'  => $item->person?->name,
                             'quantity'     => $item->quantity,
-                            'start_time'   => $item->resourceOrderItems->sortBy('from')->first()?->from?->format('H:i'),
+                            'start_time'   => $item->resourceOrderItems
+                                ->filter(fn ($roi) => $roi->from && Carbon::parse($roi->from)->isSameDay($selectedDate))
+                                ->sortBy('from')
+                                ->first()?->from?->format('H:i'),
                         ]),
                         'order_url'      => $orderUrl,
                     ];

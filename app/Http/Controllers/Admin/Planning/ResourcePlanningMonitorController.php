@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Planning;
 
+use App\Enums\OrderItemStatus;
 use App\Http\Controllers\Admin\Planning\Concerns\ResourceAvailabilityTrait;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
@@ -60,6 +61,11 @@ class ResourcePlanningMonitorController extends Controller
             'salesLead.lead',
         ])->findOrFail($orderId);
 
+        $order->setRelation(
+            'orderItems',
+            $order->orderItems->reject(fn (OrderItem $item) => $item->status === OrderItemStatus::LOST)->values()
+        );
+
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = app(ResourceRepository::class)
             ->allWithActiveClinics(['clinicDepartment.clinic'], ['id', 'name', 'clinic_department_id', 'resource_type_id']);
@@ -82,6 +88,7 @@ class ResourcePlanningMonitorController extends Controller
         ])->findOrFail($orderId);
 
         $resourceTypeNames = $order->orderItems
+            ->reject(fn (OrderItem $item) => $item->status === OrderItemStatus::LOST)
             ->map(fn (OrderItem $item) => $item->resolvedResourceTypeName())
             ->filter()
             ->unique()
@@ -691,8 +698,8 @@ class ResourcePlanningMonitorController extends Controller
             }
         }
 
-        // Get order items with their existing bookings
-        $orderItems = $order->orderItems()->with([
+        // Get order items with their existing bookings (LOST items excluded)
+        $orderItems = $order->orderItems()->where('status', '!=', OrderItemStatus::LOST->value)->with([
             'product.partnerProducts',
             'person',
             'resourceType',
@@ -779,8 +786,8 @@ class ResourcePlanningMonitorController extends Controller
             }
         }
 
-        // Get order items with their existing bookings
-        $orderItems = $order->orderItems()->with([
+        // Get order items with their existing bookings (LOST items excluded)
+        $orderItems = $order->orderItems()->where('status', '!=', OrderItemStatus::LOST->value)->with([
             'product.partnerProducts',
             'person',
             'resourceType',

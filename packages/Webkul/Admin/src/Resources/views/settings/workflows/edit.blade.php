@@ -514,8 +514,7 @@
             type="text/x-template"
             id="v-workflow-action-item-template"
         >
-            <!-- Table Body -->
-            <x-admin::table.thead.tr>
+            <x-admin::table.tbody.tr>
                 <x-admin::table.td>
                     <select
                         :name="['actions[' + index + '][id]']"
@@ -524,102 +523,118 @@
                         v-model="action.id"
                     >
                         <option
-                            v-for='action in actions[entityType]'
-                            :value="action.id"
-                            :text="action.name"
+                            v-for="opt in actions[entityType]"
+                            :value="opt.id"
+                            :text="opt.name"
                         ></option>
                     </select>
                 </x-admin::table.td>
 
                 <x-admin::table.td>
-                        <div class="flex flex-col gap-2 w-full">
-                            <div v-for="attr in matchedAction.attributes" :key="attr.id">
-                                <label class="text-xs text-gray-600">@{{ attr.name }}</label>
+                    <div
+                        v-if="matchedAction && matchedAction.attributes && matchedAction.attributes.length > 1"
+                        class="flex w-full flex-col gap-2"
+                    >
+                        <div
+                            v-for="attr in matchedAction.attributes"
+                            :key="attr.id"
+                        >
+                            <label class="text-xs text-gray-600">@{{ attr.name }}</label>
 
-                                <!-- TEXT -->
-                                <input
-                                    v-if="attr.type === 'text'"
-                                    type="text"
-                                    class="border px-2 py-1 w-full"
-                                    :name="`actions[${index}][attributes][${attr.id}]`"
-                                    v-model="action.attributes[attr.id]"
-                                />
+                            <input
+                                v-if="attr.type === 'text'"
+                                type="text"
+                                class="w-full border px-2 py-1"
+                                :name="`actions[${index}][attributes][${attr.id}]`"
+                                v-model="action.attributes[attr.id]"
+                            />
 
-                                <!-- TEXTAREA -->
-                                <textarea
-                                    v-if="attr.type === 'textarea'"
-                                    class="border px-2 py-1 w-full"
-                                    :name="`actions[${index}][attributes][${attr.id}]`"
-                                    v-model="action.attributes[attr.id]"
-                                ></textarea>
+                            <textarea
+                                v-if="attr.type === 'textarea'"
+                                class="w-full border px-2 py-1"
+                                :name="`actions[${index}][attributes][${attr.id}]`"
+                                v-model="action.attributes[attr.id]"
+                            ></textarea>
 
-                                <!-- SELECT -->
-                                <select
-                                    v-if="attr.type === 'select'"
-                                    class="border px-2 py-1 w-full"
-                                    :name="`actions[${index}][attributes][${attr.id}]`"
-                                    v-model="action.attributes[attr.id]"
-                                >
-                                    <option v-for="opt in attr.options" :value="opt.id">@{{ opt.name }}</option>
-                                </select>
-
-                                <!-- INTEGER (number) -->
-                                <input
-                                    v-if="attr.type === 'integer'"
-                                    type="number"
-                                    min="0"
-                                    class="border px-2 py-1 w-full"
-                                    :name="`actions[${index}][attributes][${attr.id}]`"
-                                    v-model="action.attributes[attr.id]"
-                                    placeholder=""
-                                />
-                            </div>
-
-
-                            <template v-if="matchedAction && matchedAction.options">
-                                <select
-                                    :name="`actions[${index}][value]`"
-                                    class=" flex h-10 w-full rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 max-sm:max-w-full max-sm:flex-auto"
-                                    v-model="action.value"
-                                >
-                                    <option
-                                        v-for='option in matchedAction.options'
-                                        :value="option.id"
-                                        :text="option.name"
-                                    ></option>
-                                </select>
-                            </template>
-
-                            <template
-                                v-if="
-                                    matchedAction
-                                    && ! matchedAction.attributes
-                                    && ! matchedAction.options
-                                    && ! matchedAction.request_methods
-                                "
+                            <select
+                                v-if="attr.type === 'select'"
+                                class="w-full border px-2 py-1"
+                                :name="`actions[${index}][attributes][${attr.id}]`"
+                                v-model="action.attributes[attr.id]"
                             >
-                                <v-field
-                                    :name="`actions[${index}][value]`"
-                                    :id="`actions[${index}][value]`"
-                                    v-slot="{ field, errorMessage }"
-                                    v-model="action.value"
+                                <option
+                                    v-for="option in attr.options"
+                                    :value="option.id"
                                 >
-                                    <input
-                                        type="text"
-                                        v-bind="field"
-                                        :class="{ 'border border-error': errorMessage }"
-                                        class="flex h-10 w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    />
-                                </v-field>
+                                    @{{ option.name }}
+                                </option>
+                            </select>
 
-                                <v-error-message
-                                    :name="`actions[${index}][value]`"
-                                    class="mt-1 text-xs italic text-red-500"
-                                    as="p"
-                                >
-                                </v-error-message>
-                            </template>
+                            <input
+                                v-if="attr.type === 'integer'"
+                                type="number"
+                                min="0"
+                                class="w-full border px-2 py-1"
+                                :name="`actions[${index}][attributes][${attr.id}]`"
+                                v-model="action.attributes[attr.id]"
+                            />
                         </div>
+                    </div>
+
+                    <div v-else-if="matchedAction && matchedAction.attributes && matchedAction.attributes.length === 1">
+                        <label class="text-xs text-gray-600">@{{ matchedAction.attributes[0].name }}</label>
+
+                        <input
+                            type="text"
+                            class="w-full border px-2 py-1"
+                            :name="`actions[${index}][attributes][${matchedAction.attributes[0].id}]`"
+                            v-model="action.attributes[matchedAction.attributes[0].id]"
+                        />
+                    </div>
+
+                    <div v-else-if="matchedAction && matchedAction.options">
+                        <select
+                            :name="`actions[${index}][value]`"
+                            class="flex h-10 w-full rounded-md border bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 max-sm:max-w-full max-sm:flex-auto"
+                            v-model="action.value"
+                        >
+                            <option
+                                v-for="option in matchedAction.options"
+                                :value="option.id"
+                                :text="option.name"
+                            ></option>
+                        </select>
+                    </div>
+
+                    <template
+                        v-else-if="
+                            matchedAction
+                            && ! matchedAction.attributes
+                            && ! matchedAction.options
+                            && ! matchedAction.request_methods
+                        "
+                    >
+                        <v-field
+                            :name="`actions[${index}][value]`"
+                            :id="`actions[${index}][value]`"
+                            v-slot="{ field, errorMessage }"
+                            v-model="action.value"
+                        >
+                            <input
+                                type="text"
+                                v-bind="field"
+                                :class="{ 'border border-error': errorMessage }"
+                                class="flex h-10 w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                            />
+                        </v-field>
+
+                        <v-error-message
+                            :name="`actions[${index}][value]`"
+                            class="mt-1 text-xs italic text-red-500"
+                            as="p"
+                        >
+                        </v-error-message>
+                    </template>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="text-right">
@@ -628,7 +643,7 @@
                         @click="removeAction"
                     ></span>
                 </x-admin::table.td>
-            </x-admin::table.thead.tr>
+            </x-admin::table.tbody.tr>
         </script>
 
         <script type="module">
@@ -744,12 +759,8 @@
                     addAction() {
                         this.actions.push({
                             id: '',
-                            attributes: {
-                                title: '',
-                                description: '',
-                                type: '',
-                                deadline_in_days: '',
-                            }
+                            attributes: {},
+                            value: '',
                         });
                     },
 
@@ -1029,61 +1040,29 @@
                     /**
                      * Get the matched action.
                      *
-                     * @returns {Object}
+                     * @returns {Object|null}
                      */
                     matchedAction() {
-                        if (!this.entityType || !this.actions[this.entityType]) return null;
-                        return this.actions[this.entityType].find(a => a.id === this.action.id) || null;
-                    },
-
-                    /**
-                     * Get the matched attribute.
-                     *
-                     * @return {void}
-                     */
-                    matchedAttribute() {
-                        const action = this.matchedAction;
-                        if (!action || !action.attributes) {
-                            return null;
-                        }
-
-                        // Als gebruiker net actie heeft gekozen, nog geen attribute geselecteerd
-                        if (!this.action.attribute) {
-                            return null;
-                        }
-
-                        const attr = action.attributes.find(a => a.id === this.action.attribute);
-
-                        if (!attr) {
-                            return null;
-                        }
-
-                        // Initialiseer value voor diverse types
-                        if (attr.type === 'text' && typeof this.action.attributes[attr.id] !== 'string') {
-                            this.action.attributes[attr.id] = '';
-                        }
-
-                        if (attr.type === 'textarea' && typeof this.action.attributes[attr.id] !== 'string') {
-                            this.action.attributes[attr.id] = '';
-                        }
-
-                        if (attr.type === 'select' && !this.action.attributes[attr.id]) {
-                            this.action.attributes[attr.id] = '';
-                        }
-
-                        if (attr.type === 'integer' && (this.action.attributes[attr.id] === undefined || this.action.attributes[attr.id] === null)) {
-                            this.action.attributes[attr.id] = '';
-                        }
-
-                        return attr;
+                        return this.actions[this.entityType]?.find(a => a.id === this.action.id) ?? null;
                     },
                 },
                 watch: {
                     'action.id'() {
-                        const a = this.matchedAction;
-                        if (!a?.attributes?.length || !this.action.attributes) return;
-                        a.attributes.forEach(attr => {
-                            if (attr.id in this.action.attributes) return;
+                        const matched = this.matchedAction;
+
+                        if (! matched?.attributes?.length) {
+                            return;
+                        }
+
+                        if (! this.action.attributes) {
+                            this.action.attributes = {};
+                        }
+
+                        matched.attributes.forEach(attr => {
+                            if (attr.id in this.action.attributes) {
+                                return;
+                            }
+
                             this.action.attributes[attr.id] = '';
                         });
                     },

@@ -191,7 +191,7 @@ class ClinicGuideController extends Controller
             ->whereHas('dispatch', fn ($q) => $q->where('status', AfbDispatchStatus::SUCCESS->value))
             ->findOrFail($personDocumentId);
 
-        $disk = Storage::disk('local');
+        $disk = Storage::disk();
 
         if (! $disk->exists($document->file_path)) {
             abort(404, 'AFB-document niet gevonden.');

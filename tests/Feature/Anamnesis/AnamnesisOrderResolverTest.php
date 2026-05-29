@@ -2,6 +2,7 @@
 
 use App\Enums\Departments;
 use App\Enums\FormType;
+use App\Enums\PipelineDefaultKeys;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\Order;
@@ -41,7 +42,7 @@ test('AnamnesisOrderResolver resolveFormDepartment uses order pipeline departmen
     $stage = Stage::factory()->create([
         'is_won'           => false,
         'is_lost'          => false,
-        'lead_pipeline_id' => \App\Enums\PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
+        'lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value,
     ]);
     Order::factory()->create([
         'sales_lead_id'     => $salesLead->id,

@@ -125,6 +125,11 @@ class MicrosoftGraphMailTransport implements TransportInterface
             // Validate recipients against allowed patterns (safety net)
             $this->validateRecipients($toRecipients, $ccRecipients, $bccRecipients);
 
+            $messageIdHeader = $email->getHeaders()->get('Message-ID');
+            $internetMessageId = $messageIdHeader
+                ? '<'.trim($messageIdHeader->getBodyAsString(), '<>').'>'
+                : null;
+
             // Build message payload
             $payload = [
                 'message' => [
@@ -145,6 +150,10 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 ],
                 'saveToSentItems' => true,
             ];
+
+            if ($internetMessageId !== null) {
+                $payload['message']['internetMessageId'] = $internetMessageId;
+            }
             if ($this->enableLog) {
                 logger()->info('Mail payload ', ['payload'=>$payload]);
             }

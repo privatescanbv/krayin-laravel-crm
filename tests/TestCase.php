@@ -61,6 +61,7 @@ abstract class TestCase extends BaseTestCase
 
         // Use default mail receiver driver instead of microsoft-graph to prevent GraphMailService instantiation
         config(['mail-receiver.default' => 'webklex-imap']);
+        config(['SENTRY_LARAVEL_DSN' => null]);
     }
 
     /**

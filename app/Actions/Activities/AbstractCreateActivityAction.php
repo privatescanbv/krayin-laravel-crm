@@ -28,7 +28,7 @@ abstract class AbstractCreateActivityAction
             ->exists();
 
         if ($isDuplicate) {
-            throw new DuplicateException('Duplicate activity: same title already exists and is not done: '. ($activityData['title'] ?? '').', fkField='.$fkField.', fkValue='.$fkValue);
+            throw new DuplicateException('Duplicate activity: same title already exists and is not done: '.($activityData['title'] ?? '').', fkField='.$fkField.', fkValue='.$fkValue);
         }
 
         return $this->activityRepository->create(array_merge($activityData, [

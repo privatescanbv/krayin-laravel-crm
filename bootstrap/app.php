@@ -91,6 +91,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping();
         $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
         $schedule->command('email-templates:verify-codes')->hourly();
+        $schedule->command('queue:monitor-failed-jobs')->everyFiveMinutes()->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);

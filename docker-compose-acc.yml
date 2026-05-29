@@ -413,6 +413,7 @@ services:
       --threads 8
       --parallel 1
       --port 8080
+      --embeddings
     labels:
       - traefik.enable=true
       - traefik.docker.network=public
@@ -463,6 +464,7 @@ services:
       --jinja
       --host 0.0.0.0
       --port 8080
+      --embeddings
     labels:
       - traefik.enable=true
       - traefik.docker.network=public

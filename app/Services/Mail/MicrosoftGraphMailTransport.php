@@ -176,13 +176,23 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 ->post($url, $payload);
 
             if (! $response->successful()) {
-                Log::error('Failed to send email via Microsoft Graph', [
-                    'status'   => $response->status(),
-                    'response' => substr($response->body(), 50).' ...',
-                    'subject'  => $email->getSubject(),
-                ]);
+                // If the token expired mid-flight, refresh and retry once.
+                if ($response->status() === 401 && str_contains($response->body(), 'InvalidAuthenticationToken')) {
+                    Log::warning('Microsoft Graph token expired mid-flight, refreshing and retrying');
+                    $this->tokenService->clearToken();
+                    $accessToken = $this->tokenService->getAccessToken();
+                    $response = Http::withToken($accessToken)->post($url, $payload);
+                }
 
-                throw new Exception('Failed to send email: '.$response->body());
+                if (! $response->successful()) {
+                    Log::error('Failed to send email via Microsoft Graph', [
+                        'status'   => $response->status(),
+                        'response' => substr($response->body(), 0, 500),
+                        'subject'  => $email->getSubject(),
+                    ]);
+
+                    throw new Exception('Failed to send email: '.$response->body());
+                }
             }
             // Build default Envelope when not provided
             if ($envelope === null) {

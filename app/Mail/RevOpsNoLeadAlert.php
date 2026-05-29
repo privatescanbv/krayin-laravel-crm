@@ -8,7 +8,9 @@ use Webkul\Lead\Models\Lead;
 
 class RevOpsNoLeadAlert extends Mailable
 {
-    public function __construct(public readonly Departments $department, public readonly ?Lead $lastLead) {}
+    public function __construct(public readonly Departments $department, public readonly ?Lead $lastLead)
+    {
+    }
 
     public function build(): self
     {

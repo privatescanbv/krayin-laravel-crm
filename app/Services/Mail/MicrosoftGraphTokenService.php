@@ -24,14 +24,16 @@ class MicrosoftGraphTokenService
 {
     private ?string $accessToken = null;
 
+    private ?int $expiresAt = null;
+
     /**
-     * Return a valid access token, requesting a new one if not yet cached.
+     * Return a valid access token, requesting a new one if expired or not yet cached.
      *
      * @throws Exception when credentials are missing or the token request fails
      */
     public function getAccessToken(): string
     {
-        if ($this->accessToken !== null) {
+        if ($this->accessToken !== null && $this->expiresAt !== null && time() < $this->expiresAt) {
             return $this->accessToken;
         }
 
@@ -59,6 +61,8 @@ class MicrosoftGraphTokenService
             }
 
             $this->accessToken = $response->json('access_token');
+            $expiresIn = (int) $response->json('expires_in', 3600);
+            $this->expiresAt = time() + $expiresIn - 60; // 60s buffer before actual expiry
 
             return $this->accessToken;
         } catch (Exception $e) {
@@ -66,5 +70,11 @@ class MicrosoftGraphTokenService
 
             throw $e;
         }
+    }
+
+    public function clearToken(): void
+    {
+        $this->accessToken = null;
+        $this->expiresAt = null;
     }
 }

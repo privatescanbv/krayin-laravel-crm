@@ -330,18 +330,18 @@ test('resources with finite duration shifts are shown when active', function ():
 
     $resource = resourceWithActiveClinic();
 
+    $start = now()->startOfWeek();
+
     Shift::query()->create([
         'resource_id'         => $resource->id,
         'available'           => true,
-        'period_start'        => now()->subDays(5)->format('Y-m-d'),
-        'period_end'          => now()->addDays(10)->format('Y-m-d'),
+        'period_start'        => $start->copy()->subDay()->format('Y-m-d'),
+        'period_end'          => $start->copy()->addDays(14)->format('Y-m-d'),
         'weekday_time_blocks' => [
             '1' => [['from' => '08:00', 'to' => '16:00']],
             '2' => [['from' => '08:00', 'to' => '16:00']],
         ],
     ]);
-
-    $start = now()->startOfWeek();
     $end = (clone $start)->addDays(6)->endOfDay();
 
     $resp = $this->getJson(route('admin.planning.monitor.availability', [

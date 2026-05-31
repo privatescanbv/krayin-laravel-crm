@@ -90,6 +90,11 @@ class Lead extends AbstractEntity
 
         $webhooksOptions = $this->webhookRepository->all(['id', 'name']);
 
+        $userOptions = app(\Webkul\User\Repositories\UserRepository::class)
+            ->all(['id', 'name'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])
+            ->toArray();
+
         return [
             [
                 'id'         => 'update_lead',
@@ -143,6 +148,15 @@ class Lead extends AbstractEntity
                         'name' => 'Deadline in dagen (optioneel)',
                         'type' => 'integer',
                     ],
+                    [
+                        'id'      => 'user_id',
+                        'name'    => 'Toewijzen aan',
+                        'type'    => 'select',
+                        'options' => array_merge(
+                            [['id' => '', 'name' => '— Geen specifieke gebruiker —']],
+                            $userOptions
+                        ),
+                    ],
                 ],
             ],
         ];
@@ -161,6 +175,7 @@ class Lead extends AbstractEntity
                     $type = $action['attributes']['type'];
                     $comment = $action['attributes']['comment'] ?? '';
                     $deadlineDays = $action['attributes']['deadline_in_days'] ?? null;
+                    $assignedUserId = ($action['attributes']['user_id'] ?? null) ?: null;
                     $scheduleFrom = now();
                     $scheduleTo = (is_numeric($deadlineDays) && (int) $deadlineDays >= 0)
                         ? now()->addDays((int) $deadlineDays)
@@ -171,7 +186,7 @@ class Lead extends AbstractEntity
                                 'title' => $title,
                                 'type' => $type,
                                 'comment' => $comment,
-                                'user_id' => null,
+                                'user_id' => $assignedUserId,
                                 'schedule_from' => $scheduleFrom,
                                 'schedule_to' => $scheduleTo,
                                 'file' => null,

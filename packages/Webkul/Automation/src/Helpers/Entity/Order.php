@@ -14,6 +14,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Automation\Repositories\WebhookRepository;
 use Webkul\Automation\Services\WebhookService;
 use Webkul\Lead\Models\Pipeline;
+use Webkul\User\Repositories\UserRepository;
 
 class Order extends AbstractEntity
 {
@@ -70,6 +71,8 @@ class Order extends AbstractEntity
 
     public function getActions(): array
     {
+        $userOptions = app(UserRepository::class)->allAsOptions();
+
         return [
             [
                 'id'         => 'create_activity',
@@ -99,6 +102,15 @@ class Order extends AbstractEntity
                         'name' => 'Deadline in dagen (optioneel)',
                         'type' => 'integer',
                     ],
+                    [
+                        'id'      => 'user_id',
+                        'name'    => 'Toewijzen aan',
+                        'type'    => 'select',
+                        'options' => array_merge(
+                            [['id' => '', 'name' => '— Geen specifieke gebruiker —']],
+                            $userOptions
+                        ),
+                    ],
                 ],
             ],
         ];
@@ -110,12 +122,13 @@ class Order extends AbstractEntity
             Log::info("workflow start orders, {$action['id']}");
             switch ($action['id']) {
                 case 'create_activity':
-                    $title   = $action['attributes']['title'];
-                    $type    = $action['attributes']['type'];
-                    $comment = $action['attributes']['comment'] ?? '';
-                    $deadlineDays = $action['attributes']['deadline_in_days'] ?? null;
-                    $scheduleFrom = now();
-                    $scheduleTo = (is_numeric($deadlineDays) && (int) $deadlineDays >= 0)
+                    $title          = $action['attributes']['title'];
+                    $type           = $action['attributes']['type'];
+                    $comment        = $action['attributes']['comment'] ?? '';
+                    $deadlineDays   = $action['attributes']['deadline_in_days'] ?? null;
+                    $assignedUserId = ($action['attributes']['user_id'] ?? null) ?: null;
+                    $scheduleFrom   = now();
+                    $scheduleTo     = (is_numeric($deadlineDays) && (int) $deadlineDays >= 0)
                         ? now()->addDays((int) $deadlineDays)
                         : now()->addWeek();
                     try {
@@ -126,7 +139,7 @@ class Order extends AbstractEntity
                                 'title'         => $title,
                                 'type'          => $type,
                                 'comment'       => $comment,
-                                'user_id'       => null,
+                                'user_id'       => $assignedUserId,
                                 'schedule_from' => $scheduleFrom,
                                 'schedule_to'   => $scheduleTo,
                             ]

@@ -1046,8 +1046,18 @@
                         return this.actions[this.entityType]?.find(a => a.id === this.action.id) ?? null;
                     },
                 },
+                mounted() {
+                    this.initMissingAttributes();
+                },
+
                 watch: {
                     'action.id'() {
+                        this.initMissingAttributes();
+                    },
+                },
+
+                methods: {
+                    initMissingAttributes() {
                         const matched = this.matchedAction;
 
                         if (! matched?.attributes?.length) {
@@ -1066,13 +1076,7 @@
                             this.action.attributes[attr.id] = '';
                         });
                     },
-                },
-                methods: {
-                    /**
-                     * Remove the action.
-                     *
-                     * @returns {void}
-                     */
+
                     removeAction() {
                         this.$emit('onRemoveAction', this.action);
                     },

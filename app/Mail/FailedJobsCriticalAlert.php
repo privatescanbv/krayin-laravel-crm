@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 class FailedJobsCriticalAlert extends Mailable
 {
     public readonly string $appName;
+
     public readonly string $environment;
 
     public readonly string $timestamp;

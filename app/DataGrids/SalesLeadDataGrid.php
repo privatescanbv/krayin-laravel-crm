@@ -76,7 +76,7 @@ class SalesLeadDataGrid extends DataGrid
         $this->addFilter('description', 'salesleads.description');
         $this->addFilter('stage_name', 'lead_pipeline_stages.name');
         $this->addFilter('lead_title', 'leads.title');
-        $this->addFilter('user_name', 'users.name');
+        $this->addFilter('user_name', DB::raw("CONCAT_WS(' ', users.first_name, users.last_name)"));
         $this->addFilter('created_at', 'salesleads.created_at');
 
         return $queryBuilder;

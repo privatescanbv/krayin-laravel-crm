@@ -54,6 +54,13 @@ class UserRepository extends Repository
                 ->orderBy('first_name', 'asc')
                 ->orderBy('last_name', 'asc');
         })->all();
+    }
 
+    public function allAsOptions(): array
+    {
+        return $this->scopeQuery(fn ($q) => $q->where('status', 1)->orderBy('first_name')->orderBy('last_name'))
+            ->all(['id', 'first_name', 'last_name'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])
+            ->toArray();
     }
 }

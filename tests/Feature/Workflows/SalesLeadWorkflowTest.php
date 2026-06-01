@@ -112,3 +112,47 @@ test('setting a lead to won stage creates a sales lead with a workflow activity'
 
     expect($workflowActivityCount)->toBeGreaterThanOrEqual(1);
 });
+
+test('workflow create_activity with user_id assigns that user to the created activity', function () {
+    $user = User::factory()->create();
+    $stage = PipelineStage::SALES_IN_BEHANDELING; // id=13, no auto-workflow by default
+
+    // Create a workflow for this stage with user_id set
+    \Webkul\Automation\Models\Workflow::create([
+        'name'           => 'Test user assignment',
+        'description'    => 'Test',
+        'entity_type'    => 'saleslead',
+        'event'          => 'sale.update_stage.after',
+        'condition_type' => 'and',
+        'conditions'     => [
+            [
+                'value'          => (string) $stage->id(),
+                'operator'       => '==',
+                'attribute'      => 'pipeline_stage_id',
+                'attribute_type' => 'select',
+            ],
+        ],
+        'actions' => [
+            [
+                'id'         => 'create_activity',
+                'attributes' => [
+                    'title'            => 'Assigned test activity',
+                    'type'             => ActivityType::TASK->value,
+                    'deadline_in_days' => 1,
+                    'user_id'          => $user->id,
+                ],
+            ],
+        ],
+    ]);
+
+    $salesLead = SalesLead::factory()->create([
+        'pipeline_stage_id' => $stage->id(),
+    ]);
+
+    $activity = Activity::where('sales_lead_id', $salesLead->id)
+        ->where('type', '!=', ActivityType::SYSTEM->value)
+        ->first();
+
+    expect($activity)->not->toBeNull();
+    expect($activity->user_id)->toBe($user->id);
+});

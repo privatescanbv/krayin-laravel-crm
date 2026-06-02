@@ -1,3 +1,4 @@
+@php use App\Enums\EmailTemplateType; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @if(isset($folder))
@@ -20,9 +21,11 @@
     @endpush
 
     <!-- Gmail-like Email Interface -->
-    <div class="mail-inbox-root flex h-[calc(100dvh-62px)] max-h-[calc(100dvh-62px)] overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div
+        class="mail-inbox-root flex h-[calc(100dvh-62px)] max-h-[calc(100dvh-62px)] overflow-hidden bg-gray-50 dark:bg-gray-900">
         <!-- Sidebar -->
-        <div class="flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <div
+            class="flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
             <!-- Folders List -->
             <div class="flex-1 overflow-y-auto">
                 <div class="p-2">
@@ -45,14 +48,16 @@
                                               {{ $currentRoute === $folder['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-700' }}">
                                         <i class="icon-folder text-lg"></i>
                                         {{ $folder['name'] }}
-                                        <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                                        <span
+                                            class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
                                             {{ $folder['count'] ?? 0 }}
                                         </span>
                                     </a>
 
                                     <!-- Child Folders -->
                                     @if(isset($folder['children']) && is_array($folder['children']) && count($folder['children']) > 0)
-                                        <div class="ml-8 space-y-1 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
+                                        <div
+                                            class="ml-8 space-y-1 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
                                             @foreach ($folder['children'] as $child)
                                                 @if(isset($child['name']))
                                                     <a href="{{ route('admin.mail.index', ['route' => $child['name']]) }}"
@@ -60,7 +65,8 @@
                                                               {{ $currentRoute === $child['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-600 hover:bg-neutral-bg dark:text-gray-400 dark:hover:bg-gray-700' }}">
                                                         <i class="icon-folder text-sm opacity-75"></i>
                                                         <span class="text-sm">{{ $child['name'] }}</span>
-                                                        <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                                                        <span
+                                                            class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
                                                             {{ $child['count'] ?? 0 }}
                                                         </span>
                                                     </a>
@@ -82,53 +88,53 @@
         </div>
 
 
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+            <div
+                class="flex shrink-0 items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                <div class="flex flex-col gap-2">
+                    {!! view_render_event('admin.mail.create.breadcrumbs.before') !!}
 
-    <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
-        <div class="flex shrink-0 items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            <div class="flex flex-col gap-2">
-                {!! view_render_event('admin.mail.create.breadcrumbs.before') !!}
+                    <!-- breadcrumbs -->
+                    <x-admin::breadcrumbs
+                        name="mail.route"
+                        :entity="request('route')"
+                    />
 
-                <!-- breadcrumbs -->
-                <x-admin::breadcrumbs
-                    name="mail.route"
-                    :entity="request('route')"
-                />
+                    {!! view_render_event('admin.mail.create.breadcrumbs.after') !!}
 
-                {!! view_render_event('admin.mail.create.breadcrumbs.after') !!}
-
-                <div class="text-xl font-bold dark:text-white">
-                    {{ request('route') }}
+                    <div class="text-xl font-bold dark:text-white">
+                        {{ request('route') }}
+                    </div>
                 </div>
-            </div>
 
-            <div class="flex items-center gap-x-2.5">
                 <div class="flex items-center gap-x-2.5">
-                    {!! view_render_event('admin.mail.create.compose_mail_btn.before') !!}
+                    <div class="flex items-center gap-x-2.5">
+                        {!! view_render_event('admin.mail.create.compose_mail_btn.before') !!}
 
-                    <!-- Create button for person -->
-                    @if (bouncer()->hasPermission('mail.create'))
-                        <button
-                            type="button"
-                            class="primary-button"
-                            @click="$refs.composeMail.toggleModal()"
-                        >
-                            @lang('admin::app.mail.index.compose-mail-btn')
-                        </button>
-                    @endif
+                        <!-- Create button for person -->
+                        @if (bouncer()->hasPermission('mail.create'))
+                            <button
+                                type="button"
+                                class="primary-button"
+                                @click="$refs.composeMail.toggleModal()"
+                            >
+                                @lang('admin::app.mail.index.compose-mail-btn')
+                            </button>
+                        @endif
 
-                    {!! view_render_event('admin.mail.create.compose_mail_btn.after') !!}
+                        {!! view_render_event('admin.mail.create.compose_mail_btn.after') !!}
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Compose Mail Vue Component -->
-        <div class="min-h-0 flex-1 overflow-y-auto">
-            <v-mail ref="composeMail">
-                <!-- Datagrid Shimmer -->
-                <x-admin::shimmer.mail.datagrid :is-multi-row="true"/>
-            </v-mail>
+            <!-- Compose Mail Vue Component -->
+            <div class="min-h-0 flex-1 overflow-y-auto">
+                <v-mail ref="composeMail">
+                    <!-- Datagrid Shimmer -->
+                    <x-admin::shimmer.mail.datagrid :is-multi-row="true"/>
+                </v-mail>
+            </div>
         </div>
-    </div>
     </div>
 
     @pushOnce('scripts')
@@ -152,11 +158,12 @@
                     performAction
                 }">
                     <template v-if="isLoading">
-                        <x-admin::shimmer.mail.datagrid.table.head />
+                        <x-admin::shimmer.mail.datagrid.table.head/>
                     </template>
 
                     <template v-else>
-                        <div class="row grid grid-cols-[2fr_2fr_6fr_.8fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
+                        <div
+                            class="row grid grid-cols-[2fr_2fr_6fr_.8fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
                             <div
                                 class="flex items-center gap-6"
                                 v-for="(columnGroup, index) in [['reply_to'], ['entity_type'], ['subject', 'reply'], ['created_at']]"
@@ -214,7 +221,8 @@
                         </div>
 
                         <!-- Mobile Sort/Filter Header -->
-                        <div class="hidden border-b bg-gray-50 px-4 py-3 text-black dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 max-lg:block">
+                        <div
+                            class="hidden border-b bg-gray-50 px-4 py-3 text-black dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 max-lg:block">
                             <div class="flex items-center justify-between">
                                 <!-- Mass Actions for Mobile -->
                                 <div v-if="available.massActions.length">
@@ -242,7 +250,8 @@
 
                                 <!-- Mobile Sort Dropdown -->
                                 <div v-if="available.columns.some(column => column.sortable)">
-                                    <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
+                                    <x-admin::dropdown
+                                        position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
                                         <x-slot:toggle>
                                             <div class="flex items-center gap-1">
                                                 <button
@@ -256,23 +265,23 @@
                                                     <span class="icon-down-arrow text-2xl"></span>
                                                 </button>
                                             </div>
-                                        </x-slot>
+                                            </x-slot>
 
-                                        <x-slot:menu>
-                                            <x-admin::dropdown.menu.item
-                                                v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
-                                                @click="sort(column)"
-                                            >
-                                                <div class="flex items-center gap-2">
-                                                    <span v-html="column.label"></span>
-                                                    <i
-                                                        class="align-text-bottom text-base text-gray-600 dark:text-gray-300"
-                                                        :class="[applied.sort.order === 'asc' ? 'icon-stats-down': 'icon-stats-up']"
-                                                        v-if="column.index == applied.sort.column"
-                                                    ></i>
-                                                </div>
-                                            </x-admin::dropdown.menu.item>
-                                        </x-slot>
+                                            <x-slot:menu>
+                                                <x-admin::dropdown.menu.item
+                                                    v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
+                                                    @click="sort(column)"
+                                                >
+                                                    <div class="flex items-center gap-2">
+                                                        <span v-html="column.label"></span>
+                                                        <i
+                                                            class="align-text-bottom text-base text-gray-600 dark:text-gray-300"
+                                                            :class="[applied.sort.order === 'asc' ? 'icon-stats-down': 'icon-stats-up']"
+                                                            v-if="column.index == applied.sort.column"
+                                                        ></i>
+                                                    </div>
+                                                </x-admin::dropdown.menu.item>
+                                                </x-slot>
                                     </x-admin::dropdown>
                                 </div>
                             </div>
@@ -290,7 +299,7 @@
                 }">
 
                     <template v-if="isLoading">
-                        <x-admin::shimmer.mail.datagrid.table.body />
+                        <x-admin::shimmer.mail.datagrid.table.body/>
                     </template>
 
                     <template v-else>
@@ -303,7 +312,8 @@
                             <!-- Col 1: Name + checkbox + unread dot -->
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="relative flex items-center">
-                                    <span class="absolute -right-2 h-1.5 w-1.5 rounded-full bg-sky-600 dark:bg-white" v-if="record && (record.is_read === 0 || record.is_read === false || record.is_read === '0')"></span>
+                                    <span class="absolute -right-2 h-1.5 w-1.5 rounded-full bg-sky-600 dark:bg-white"
+                                          v-if="record && (record.is_read === 0 || record.is_read === false || record.is_read === '0')"></span>
                                     <input
                                         type="checkbox"
                                         :name="`mass_action_select_record_${record.id}`"
@@ -319,12 +329,12 @@
                                         @click.stop
                                     ></label>
                                 </div>
-                                <x-admin::avatar ::name="record.name ?? record.from" />
-{{--                                <span class="truncate">@{{ record.name }}</span>--}}
-{{--                                <span class="truncate">@{{ record.from.email }}</span>--}}
-{{--                                <span class="truncate">--}}
-{{--                                    @{{ Array.isArray(record.reply_to) ? record.reply_to.join(', ') : record.reply_to || '' }}--}}
-{{--                                </span>--}}
+                                <x-admin::avatar ::name="record.name ?? record.from"/>
+                                {{--                                <span class="truncate">@{{ record.name }}</span>--}}
+                                {{--                                <span class="truncate">@{{ record.from.email }}</span>--}}
+                                {{--                                <span class="truncate">--}}
+                                {{--                                    @{{ Array.isArray(record.reply_to) ? record.reply_to.join(', ') : record.reply_to || '' }}--}}
+                                {{--                                </span>--}}
                             </div>
                             <!-- Col 2: Related entity -->
                             <div class="text-sm text-gray-800 dark:text-gray-300">
@@ -334,7 +344,8 @@
                             <!-- Col 3: Subject / preview with tags/attachments -->
                             <div class="min-w-0" :class="{ 'pl-16': record.parent_id }">
                                 <div class="flex items-center gap-2">
-                                    <p class="line-clamp-1 text-sm text-gray-900 dark:text-gray-100" :class="{ 'font-bold': !record.is_read }" v-text="record.subject"></p>
+                                    <p class="line-clamp-1 text-sm text-gray-900 dark:text-gray-100"
+                                       :class="{ 'font-bold': !record.is_read }" v-text="record.subject"></p>
                                     <p v-html="record.attachments"></p>
                                 </div>
                                 <div class="mt-1 flex flex-wrap gap-1">
@@ -451,31 +462,31 @@
                                     <span v-else class="text-xl">⊞</span>
                                 </button>
                             </div>
-                        </x-slot>
+                            </x-slot>
 
-                        <x-slot:content>
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                name="id"
-                                id="id"
-                                v-model="draft.id"
-                            />
+                            <x-slot:content>
+                                <x-admin::form.control-group.control
+                                    type="hidden"
+                                    name="id"
+                                    id="id"
+                                    v-model="draft.id"
+                                />
 
-                            <!-- To -->
-                            <x-admin::form.control-group>
-                                <div class="relative">
-                                    <x-admin::form.control-group.controls.tags
-                                        name="reply_to"
-                                        class="w-[calc(100%-62px)]"
-                                        input-rules="email"
-                                        rules="required"
-                                        ::data="draft.reply_to"
-                                        :label="trans('admin::app.mail.index.mail.to')"
-                                        :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
-                                        ::allow-duplicates="false"
-                                    />
+                                <!-- To -->
+                                <x-admin::form.control-group>
+                                    <div class="relative">
+                                        <x-admin::form.control-group.controls.tags
+                                            name="reply_to"
+                                            class="w-[calc(100%-62px)]"
+                                            input-rules="email"
+                                            rules="required"
+                                            ::data="draft.reply_to"
+                                            :label="trans('admin::app.mail.index.mail.to')"
+                                            :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
+                                            ::allow-duplicates="false"
+                                        />
 
-                                    <div class="absolute top-[9px] flex items-center gap-2 ltr:right-2 rtl:left-2">
+                                        <div class="absolute top-[9px] flex items-center gap-2 ltr:right-2 rtl:left-2">
                                         <span
                                             class="cursor-pointer font-medium hover:underline dark:text-white"
                                             @click="showCC = ! showCC"
@@ -483,64 +494,64 @@
                                             @lang('admin::app.mail.index.mail.cc')
                                         </span>
 
-                                        <span
-                                            class="cursor-pointer font-medium hover:underline dark:text-white"
-                                            @click="showBCC = ! showBCC"
-                                        >
+                                            <span
+                                                class="cursor-pointer font-medium hover:underline dark:text-white"
+                                                @click="showBCC = ! showBCC"
+                                            >
                                             @lang('admin::app.mail.index.mail.bcc')
                                         </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.mail.index.mail.to')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.error control-name="reply_to" />
-
-                            </x-admin::form.control-group>
-
-                            <template v-if="showCC">
-                                <!-- Cc -->
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.controls.tags
-                                        name="cc"
-                                        class="w-[calc(100%-62px)]"
-                                        input-rules="email"
-                                        ::data="draft.cc"
-                                        :label="trans('admin::app.mail.index.mail.cc')"
-                                        :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.mail.index.mail.cc')
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.mail.index.mail.to')
                                     </x-admin::form.control-group.label>
 
-                                    <x-admin::form.control-group.error control-name="cc" />
+                                    <x-admin::form.control-group.error control-name="reply_to"/>
 
                                 </x-admin::form.control-group>
-                            </template>
 
-                            <template v-if="showBCC">
-                                <!-- Cc -->
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.controls.tags
-                                        name="bcc"
-                                        class="w-[calc(100%-62px)]"
-                                        input-rules="email"
-                                        ::data="draft.bcc"
-                                        :label="trans('admin::app.mail.index.mail.bcc')"
-                                        :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
-                                    />
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.mail.index.mail.bcc')
-                                    </x-admin::form.control-group.label>
+                                <template v-if="showCC">
+                                    <!-- Cc -->
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.controls.tags
+                                            name="cc"
+                                            class="w-[calc(100%-62px)]"
+                                            input-rules="email"
+                                            ::data="draft.cc"
+                                            :label="trans('admin::app.mail.index.mail.cc')"
+                                            :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
+                                        />
+                                        <x-admin::form.control-group.label>
+                                            @lang('admin::app.mail.index.mail.cc')
+                                        </x-admin::form.control-group.label>
 
-                                    <x-admin::form.control-group.error control-name="bcc" />
+                                        <x-admin::form.control-group.error control-name="cc"/>
 
-                                </x-admin::form.control-group>
-                            </template>
+                                    </x-admin::form.control-group>
+                                </template>
 
-                            <!-- Template Selector -->
-                            <x-adminc::components.field
+                                <template v-if="showBCC">
+                                    <!-- Cc -->
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.controls.tags
+                                            name="bcc"
+                                            class="w-[calc(100%-62px)]"
+                                            input-rules="email"
+                                            ::data="draft.bcc"
+                                            :label="trans('admin::app.mail.index.mail.bcc')"
+                                            :placeholder="trans('admin::app.mail.index.mail.enter-emails')"
+                                        />
+                                        <x-admin::form.control-group.label>
+                                            @lang('admin::app.mail.index.mail.bcc')
+                                        </x-admin::form.control-group.label>
+
+                                        <x-admin::form.control-group.error control-name="bcc"/>
+
+                                    </x-admin::form.control-group>
+                                </template>
+
+                                <!-- Template Selector -->
+                                <x-adminc::components.field
                                     type="select"
                                     id="email_template"
                                     name="email_template"
@@ -556,75 +567,75 @@
                                     >
                                         @{{ template.label }}
                                     </option>
-                            </x-adminc::components.field>
+                                </x-adminc::components.field>
 
 
-                            <!-- Subject -->
-                            <x-adminc::components.field
-                                type="text"
-                                id="subject"
-                                name="subject"
-                                rules="required"
-                                v-model="draft.subject"
-                                :label="trans('admin::app.mail.index.mail.subject')"
-                                :placeholder="trans('admin::app.mail.index.mail.subject')"
-                            />
-
-                            <!-- Content -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="reply"
-                                    id="reply"
+                                <!-- Subject -->
+                                <x-adminc::components.field
+                                    type="text"
+                                    id="subject"
+                                    name="subject"
                                     rules="required"
-                                    rows="12"
-                                    ::value="draft.reply"
-                                    :tinymce="true"
-                                    :label="trans('admin::app.mail.index.mail.message')"
+                                    v-model="draft.subject"
+                                    :label="trans('admin::app.mail.index.mail.subject')"
+                                    :placeholder="trans('admin::app.mail.index.mail.subject')"
                                 />
-                                <x-admin::form.control-group.error control-name="reply" />
 
-                            </x-admin::form.control-group>
-
-                            <!-- Attachments -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::attachments
-                                    allow-multiple="true"
-                                    hide-button="true"
-                                />
-                            </x-admin::form.control-group>
-                        </x-slot>
-
-                        <x-slot:footer>
-                            <div class="flex w-full items-center justify-between">
-                                <label
-                                    class="icon-attachment cursor-pointer rounded-md p-1 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
-                                    for="file-upload"
-                                ></label>
-
-                                <div class="flex items-center gap-4">
-                                    <button
-                                        type="submit"
-                                        ref="submitBtn"
-                                        class="transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800 dark:focus:bg-gray-800"
-                                        :disabled="isStoring"
-                                        @click="saveAsDraft = 1"
-                                    >
-                                        @lang('admin::app.mail.index.mail.draft')
-                                    </button>
-
-                                    <x-admin::button
-                                        class="primary-button"
-                                        type="submit"
-                                        ref="submitBtn"
-                                        :title="trans('admin::app.mail.index.mail.send-btn')"
-                                        ::loading="isStoring"
-                                        ::disabled="isStoring"
-                                        @click="saveAsDraft = 0"
+                                <!-- Content -->
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.control
+                                        type="textarea"
+                                        name="reply"
+                                        id="reply"
+                                        rules="required"
+                                        rows="12"
+                                        ::value="draft.reply"
+                                        :tinymce="true"
+                                        :label="trans('admin::app.mail.index.mail.message')"
                                     />
-                                </div>
-                            </div>
-                        </x-slot>
+                                    <x-admin::form.control-group.error control-name="reply"/>
+
+                                </x-admin::form.control-group>
+
+                                <!-- Attachments -->
+                                <x-admin::form.control-group class="!mb-0">
+                                    <x-admin::attachments
+                                        allow-multiple="true"
+                                        hide-button="true"
+                                    />
+                                </x-admin::form.control-group>
+                                </x-slot>
+
+                                <x-slot:footer>
+                                    <div class="flex w-full items-center justify-between">
+                                        <label
+                                            class="icon-attachment cursor-pointer rounded-md p-1 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
+                                            for="file-upload"
+                                        ></label>
+
+                                        <div class="flex items-center gap-4">
+                                            <button
+                                                type="submit"
+                                                ref="submitBtn"
+                                                class="transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800 dark:focus:bg-gray-800"
+                                                :disabled="isStoring"
+                                                @click="saveAsDraft = 1"
+                                            >
+                                                @lang('admin::app.mail.index.mail.draft')
+                                            </button>
+
+                                            <x-admin::button
+                                                class="primary-button"
+                                                type="submit"
+                                                ref="submitBtn"
+                                                :title="trans('admin::app.mail.index.mail.send-btn')"
+                                                ::loading="isStoring"
+                                                ::disabled="isStoring"
+                                                @click="saveAsDraft = 0"
+                                            />
+                                        </div>
+                                    </div>
+                                    </x-slot>
                     </x-admin::modal>
                 </form>
             </x-admin::form>
@@ -728,7 +739,9 @@
 
                 methods: {
                     loadTemplates() {
-                        this.$axios.get('{{ route('admin.mail.templates') }}')
+                        this.$axios.get('{{ route('admin.mail.templates') }}', {
+                            params: {entity_type: @json(EmailTemplateType::ALGEMEEN->value) }
+                        })
                             .then(response => {
                                 this.emailTemplates = response.data.data || [];
                             })
@@ -745,10 +758,10 @@
                         // For mail inbox compose, we don't have entity context
                         // Templates will be rendered without entity variables
                         this.$axios.get('{{ route('admin.mail.template_content') }}', {
-                                params: {
-                                    template: this.selectedTemplate,
-                                }
-                            })
+                            params: {
+                                template: this.selectedTemplate,
+                            }
+                        })
                             .then(response => {
                                 const templateContent = response.data.data.content || '';
                                 const signature = @json(auth()->guard('user')->user()->signature ?? '');
@@ -802,7 +815,7 @@
                             this.draft.reply = @json(auth()->guard('user')->user()->signature);
                         @endif
 
-                        this.$refs.toggleComposeModal.toggle();
+                            this.$refs.toggleComposeModal.toggle();
 
                         // Wait for TinyMCE to initialize, then set the signature
                         this.$nextTick(() => {
@@ -810,16 +823,16 @@
                                 if (window.tinymce && window.tinymce.get('reply')) {
                                     const editor = window.tinymce.get('reply');
                                     @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                                        if (!editor.getContent() || editor.getContent().trim() === '') {
-                                            editor.setContent(@json(auth()->guard('user')->user()->signature));
-                                        }
+                                    if (!editor.getContent() || editor.getContent().trim() === '') {
+                                        editor.setContent(@json(auth()->guard('user')->user()->signature));
+                                    }
                                     @endif
                                 }
                             }, 500);
                         });
                     },
 
-                    save(params, { resetForm, setErrors  }) {
+                    save(params, {resetForm, setErrors}) {
                         this.isStoring = true;
 
                         let formData = new FormData(this.$refs.mailForm);
@@ -831,30 +844,33 @@
                         }
 
                         this.$axios.post(this.draft.id ? "{{ route('admin.mail.update', ':id') }}".replace(':id', this.draft.id) : '{{ route('admin.mail.store') }}', formData, {
-                                headers: {
-                                    'Content-Type': 'multipart/form-data',
-                                },
-                            })
-                            .then ((response) => {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                            },
+                        })
+                            .then((response) => {
                                 this.$refs.datagrid.get();
 
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data?.message });
+                                this.$emitter.emit('add-flash', {type: 'success', message: response.data?.message});
 
                                 resetForm();
                             })
-                            .catch ((error) => {
+                            .catch((error) => {
                                 if (error?.response?.status == 422) {
                                     setErrors(error.response.data.errors);
                                 } else {
-                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: error.response.data.message
+                                    });
                                 }
                             }).finally(() => {
-                                this.$refs.toggleComposeModal.close();
+                            this.$refs.toggleComposeModal.close();
 
-                                this.isStoring = false;
+                            this.isStoring = false;
 
-                                this.resetForm();
-                            });
+                            this.resetForm();
+                        });
                     },
 
                     editModal(row) {
@@ -872,7 +888,8 @@
                                 this.showCC = this.draft.cc.length > 0;
                                 this.showBCC = this.draft.bcc.length > 0;
                             })
-                            .catch(error => {});
+                            .catch(error => {
+                            });
                     },
 
                     resetForm() {

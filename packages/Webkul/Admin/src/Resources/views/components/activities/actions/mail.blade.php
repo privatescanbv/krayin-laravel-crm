@@ -3,14 +3,14 @@
 @endphp
 
 @props([
-    'entity'            => null,
-    'entityControlName' => null,
-    'emails'            => [],
-    'storeUrl'          => null,
-    'showButton'        => true,
-    'activityId'        => null,
-    'defaultTemplate'   => null,
-    'orderId'           => null,
+    'entity'             => null,
+    'entityControlName'  => null,
+    'emails'             => [],
+    'storeUrl'           => null,
+    'showButton'         => true,
+    'activityId'         => null,
+    'defaultTemplate'    => null,
+    'orderId'            => null,
 ])
 
 <!-- Mail Button -->
@@ -463,20 +463,7 @@
                     if (this.entityTypeOverride) {
                         entityType = this.entityTypeOverride;
                     } else {
-                        const controlName = (this.entityControlName || '').toString().toLowerCase();
-                        const entityTypeStr = (this.entity?.entity_type || this.entity?.type || '').toString().toLowerCase();
-
-                        if (controlName === 'order_id') {
-                            entityType = this.templateTypes.ORDER;
-                        } else if (controlName === 'sales_lead_id' && entityTypeStr === 'order') {
-                            entityType = this.templateTypes.ORDER;
-                        } else if (controlName === 'lead_id' || entityTypeStr === 'lead' || entityTypeStr === 'leads') {
-                            entityType = this.templateTypes.LEAD;
-                        } else if (controlName === 'sales_lead_id') {
-                            entityType = this.templateTypes.ORDER;
-                        } else {
-                            entityType = this.templateTypes.LEAD;
-                        }
+                        entityType = this.templateTypes.ALGEMEEN;
                     }
 
                     try {

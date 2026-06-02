@@ -4,7 +4,7 @@ namespace App\Enums;
 
 enum EmailTemplateType: string
 {
-    case LEAD = 'lead';
+    case LEAD = 'lead'; // Not used, only in template seeder...so can't be deleted.
     case ALGEMEEN = 'algemeen';
     case ORDER_ACKNOWLEDGEMENT = 'order-acknowledgement';
     case ORDER_APPOINTMENT_CONFIRMATION = 'order-appointment-confirmation';
@@ -50,7 +50,7 @@ enum EmailTemplateType: string
     {
         return match ($this) {
             self::LEAD                           => 'Lead',
-            self::ALGEMEEN                       => 'Algemeen',
+            self::ALGEMEEN                       => 'Directe e-mails',
             self::ORDER_ACKNOWLEDGEMENT          => 'Order',
             self::ORDER_APPOINTMENT_CONFIRMATION => 'Order afspraakbevestiging',
             self::GVL                            => 'GVL',

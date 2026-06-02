@@ -2,7 +2,7 @@
     'order'
 ])
 @php
-    use App\Enums\PipelineStage;
+    use App\Enums\EmailTemplateType;use App\Enums\PipelineStage;
     use Webkul\Admin\Http\Controllers\order\ActivityController;
 @endphp
 <x-admin::layouts>
@@ -83,10 +83,10 @@
                     <span>Toegewezen aan:</span>
                     <span>{{ $order->user?->name }}</span>
                 </div>
-{{--                <div class="flex justify-between">--}}
-{{--                    <span>Kliniek Begeleidster:</span>--}}
-{{--                    <span>{{ $order->clinicCoordinator?->name ?? '-' }}</span>--}}
-{{--                </div>--}}
+                {{--                <div class="flex justify-between">--}}
+                {{--                    <span>Kliniek Begeleidster:</span>--}}
+                {{--                    <span>{{ $order->clinicCoordinator?->name ?? '-' }}</span>--}}
+                {{--                </div>--}}
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $order->created_at->format('d-m-Y') }}</span>
@@ -202,7 +202,7 @@
 
                         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                         if (!token) {
-                            this.$emitter.emit('add-flash', { type: 'error', message: 'CSRF token niet gevonden.' });
+                            this.$emitter.emit('add-flash', {type: 'error', message: 'CSRF token niet gevonden.'});
 
                             return;
                         }

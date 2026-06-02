@@ -331,7 +331,8 @@ class AfbDispatchService
     }
 
     /**
-     * @return bool true, if first examination is within the next 24 hours, and thus should be sent as late booking AFB.
+     * @return bool true when the batch deadline (the day before the examination at the cutoff hour)
+     *              has passed, so the order missed the automatic batch and must be sent as a late booking.
      */
     public function shouldSendAsLateBooking(Order $order): bool
     {
@@ -345,8 +346,7 @@ class AfbDispatchService
             return false;
         }
 
-        // Avoid Carbon 3 float diffInHours edge cases: compare against a fixed horizon.
-        return $examAt->lessThanOrEqualTo(now()->copy()->addHours(24));
+        return now()->greaterThan($this->getBatchDeadlineForExam($examAt));
     }
 
     /**
@@ -439,7 +439,7 @@ class AfbDispatchService
                 ->exists();
 
         $plannedAt = ($examAt && ! $examAt->isPast())
-            ? $examAt->copy()->subDay()->setTime(self::AFB_LATE_BOOKING_CUTOFF_HOUR, 0, 0)
+            ? $this->getBatchDeadlineForExam($examAt)
             : null;
 
         return [
@@ -601,6 +601,15 @@ class AfbDispatchService
                 ]);
             }
         }
+    }
+
+    /**
+     * The moment the daily batch (afb:send-daily) is scheduled to pick up this examination:
+     * the day before the examination at {@see self::AFB_LATE_BOOKING_CUTOFF_HOUR}:00.
+     */
+    private function getBatchDeadlineForExam(Carbon $examAt): Carbon
+    {
+        return $examAt->copy()->subDay()->setTime(self::AFB_LATE_BOOKING_CUTOFF_HOUR, 0, 0);
     }
 
     private function createDispatchEmail(

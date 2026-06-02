@@ -16,15 +16,14 @@
                 <div class="space-y-2">
                     <p class="font-semibold">AFB: handmatige verzending nodig</p>
                     <p class="text-amber-900/90 dark:text-amber-100/90">
-                        Het eerste onderzoek staat binnen 24 uur
+                        Het eerste onderzoek
                         @if ($order->firstExaminationCarbon())
-                            ({{ $order->firstExaminationCarbon()?->timezone(config('app.timezone'))->format('d-m-Y H:i') }}).
-                        @else
-                            .
+                            ({{ $order->firstExaminationCarbon()?->timezone(config('app.timezone'))->format('d-m-Y H:i') }})
                         @endif
-                        De gebruikelijke batch voor onderzoeken op een bepaalde dag wordt de dag ervóór om {{ AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR }}:00
-                        verstuurd;
-                        binnen dit venster moet u de AFB nu zelf versturen naar de kliniek.
+                        staat gepland, maar de batch-deadline (de dag vóór het onderzoek om
+                        {{ AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR }}:00) is verstreken.
+                        De gebruikelijke automatische batch wordt daardoor niet meer verstuurd;
+                        u moet de AFB nu zelf versturen naar de kliniek.
                     </p>
                     @if ($afbHasBatchSuccess)
                         <p class="text-xs text-amber-800 dark:text-amber-200/90">

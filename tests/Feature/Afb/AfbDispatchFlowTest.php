@@ -491,14 +491,16 @@ test('clinic view contains afb verzendingen navigation', function () {
 });
 
 test('order view shows manual afb banner when late booking and not yet sent', function () {
-    // ResourceOrderItemObserver queues late AFB when planning binnen 24u; zonder fake draait de job sync
+    // ResourceOrderItemObserver queues late AFB bij planning; zonder fake draait de job sync
     // en is de order al "verstuurd", waardoor de banner niet verschijnt.
     Bus::fake();
 
     // Banner is alleen zichtbaar met orders.edit; makeUser() uit beforeEach heeft die permissie niet.
     $this->actingAs(getDefaultAdmin(), 'user');
 
-    $examAt = now()->addHours(10);
+    // Na de batch-deadline (de dag vóór het onderzoek om 11:00), zodat de order te laat is voor de batch.
+    Carbon::setTestNow(Carbon::create(2026, 6, 1, 12, 0, 0));
+    $examAt = Carbon::create(2026, 6, 2, 14, 0, 0);
     $context = createOrderForClinic($examAt);
 
     expect(app(AfbDispatchService::class)->getAvbDispatchReadiness($context['order']->fresh())['needs_manual_send'])->toBeTrue();
@@ -737,15 +739,33 @@ test('getAvbDispatchReadiness returns ready with planned_at for batch window', f
         ->and($readiness['reasons'])->toBeEmpty();
 });
 
-test('getAvbDispatchReadiness returns ready and is_late for late-booking window', function () {
+test('getAvbDispatchReadiness returns ready and is_late once the batch deadline has passed', function () {
+    Carbon::setTestNow(Carbon::create(2026, 6, 1, 12, 0, 0));
+
     $service = app(AfbDispatchService::class);
-    $examAt = now()->addHours(10);
+    $examAt = Carbon::create(2026, 6, 2, 14, 0, 0);
     $context = createOrderForClinic($examAt);
 
     $readiness = $service->getAvbDispatchReadiness($context['order']);
 
     expect($readiness['is_ready'])->toBeTrue()
         ->and($readiness['is_late'])->toBeTrue()
+        ->and($readiness['needs_manual_send'])->toBeTrue()
+        ->and($readiness['reasons'])->toBeEmpty();
+});
+
+test('getAvbDispatchReadiness is not late before the batch deadline', function () {
+    Carbon::setTestNow(Carbon::create(2026, 6, 1, 10, 0, 0));
+
+    $service = app(AfbDispatchService::class);
+    $examAt = Carbon::create(2026, 6, 2, 14, 0, 0);
+    $context = createOrderForClinic($examAt);
+
+    $readiness = $service->getAvbDispatchReadiness($context['order']);
+
+    expect($readiness['is_ready'])->toBeTrue()
+        ->and($readiness['is_late'])->toBeFalse()
+        ->and($readiness['needs_manual_send'])->toBeFalse()
         ->and($readiness['reasons'])->toBeEmpty();
 });
 
@@ -1040,7 +1060,9 @@ test('banner shows when order item from last afb dispatch is marked lost', funct
     Mail::fake();
     $this->actingAs(getDefaultAdmin(), 'user');
 
-    $examAt = now()->addHours(10);
+    // Na de batch-deadline, zodat de order als late booking telt.
+    Carbon::setTestNow(Carbon::create(2026, 6, 1, 12, 0, 0));
+    $examAt = Carbon::create(2026, 6, 2, 14, 0, 0);
     $context = createOrderForClinic($examAt);
 
     $service = app(AfbDispatchService::class);

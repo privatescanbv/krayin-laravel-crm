@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Admin\Http\Controllers\Reports\OrdersByInvestigationDateController;
 use Webkul\Admin\Http\Controllers\Reports\RevenueByEmployeeController;
 use Webkul\Admin\Http\Controllers\Reports\RevenueByMonthController;
 
@@ -19,4 +20,11 @@ Route::controller(RevenueByMonthController::class)
     ->group(function () {
         Route::get('', 'index')->name('admin.reports.revenue-by-month.index');
         Route::get('data', 'data')->name('admin.reports.revenue-by-month.data');
+    });
+
+Route::controller(OrdersByInvestigationDateController::class)
+    ->prefix('reports/orders-by-investigation-date')
+    ->group(function () {
+        Route::get('', 'index')->name('admin.reports.orders-by-investigation-date.index');
+        Route::get('data', 'data')->name('admin.reports.orders-by-investigation-date.data');
     });

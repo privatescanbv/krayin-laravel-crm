@@ -12,6 +12,7 @@ use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
+use App\Traits\HasAuditTrail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ use Webkul\User\Models\UserProxy;
 
 class Activity extends Model implements ActivityContract
 {
+    use HasAuditTrail;
     /**
      * Define table name of property
      *
@@ -80,6 +82,8 @@ class Activity extends Model implements ActivityContract
         'clinic_id',
         'person_id',
         'external_id',
+        'updated_by',
+        'created_by',
     ];
 
     /**

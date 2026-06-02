@@ -192,6 +192,12 @@
                     <span>Bijgewerkt op:</span>
                     <span>{{ $activity->updated_at->format('d-m-Y') }}</span>
                 </div>
+                @if($activity->updater ?? $activity->creator)
+                <div class="flex justify-between">
+                    <span>Bijgewerkt door:</span>
+                    <span>{{ ($activity->updater ?? $activity->creator)?->name }}</span>
+                </div>
+                @endif
             </div>
         </div>
 

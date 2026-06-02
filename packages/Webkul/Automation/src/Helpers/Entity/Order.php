@@ -103,6 +103,11 @@ class Order extends AbstractEntity
                         'type' => 'integer',
                     ],
                     [
+                        'id'   => 'deadline_days_from_examination',
+                        'name' => 'Deadline berekenen met aantal dagen van onderzoek',
+                        'type' => 'integer',
+                    ],
+                    [
                         'id'      => 'user_id',
                         'name'    => 'Toewijzen aan',
                         'type'    => 'select',
@@ -122,15 +127,24 @@ class Order extends AbstractEntity
             Log::info("workflow start orders, {$action['id']}");
             switch ($action['id']) {
                 case 'create_activity':
-                    $title          = $action['attributes']['title'];
-                    $type           = $action['attributes']['type'];
-                    $comment        = $action['attributes']['comment'] ?? '';
-                    $deadlineDays   = $action['attributes']['deadline_in_days'] ?? null;
-                    $assignedUserId = ($action['attributes']['user_id'] ?? null) ?: null;
-                    $scheduleFrom   = now();
-                    $scheduleTo     = (is_numeric($deadlineDays) && (int) $deadlineDays >= 0)
-                        ? now()->addDays((int) $deadlineDays)
-                        : now()->addWeek();
+                    $title                      = $action['attributes']['title'];
+                    $type                       = $action['attributes']['type'];
+                    $comment                    = $action['attributes']['comment'] ?? '';
+                    $deadlineDays               = $action['attributes']['deadline_in_days'] ?? null;
+                    $deadlineDaysFromExamination = $action['attributes']['deadline_days_from_examination'] ?? null;
+                    $assignedUserId             = ($action['attributes']['user_id'] ?? null) ?: null;
+                    $scheduleFrom               = now();
+
+                    if (is_numeric($deadlineDaysFromExamination)) {
+                        $order->loadMissing('orderItems.resourceOrderItems');
+                        $baseDate   = $order->firstExaminationCarbon() ?? now();
+                        $scheduleTo = $baseDate->copy()->addDays((int) $deadlineDaysFromExamination)->setTime(17, 0);
+                        $scheduleFrom = $scheduleTo->copy()->setTime(8, 0);
+                    } elseif (is_numeric($deadlineDays) && (int) $deadlineDays >= 0) {
+                        $scheduleTo = now()->addDays((int) $deadlineDays);
+                    } else {
+                        $scheduleTo = now()->addWeek();
+                    }
                     try {
                         $this->createActivityForLeadOrSalesAction->execute(
                             $order,

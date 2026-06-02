@@ -1,5 +1,4 @@
-
-@php use App\Enums\ActivityType; @endphp
+@php use App\Enums\ActivityType;use App\Enums\LostReason; @endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $activity->title ?: __('admin::app.activities.view.title') }}
@@ -17,7 +16,7 @@
 
             <!-- Title -->
             <div class="text-xl font-bold dark:text-gray-300 flex items-center gap-2">
-                <x-admin::activities.icon :type="$activity->type" />
+                <x-admin::activities.icon :type="$activity->type"/>
                 <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
             </div>
 
@@ -80,7 +79,7 @@
 
 
                 <!-- Activity Relations -->
-                   @include('admin::activities.partials.relation_display', ['activity' => $activity])
+                @include('admin::activities.partials.relation_display', ['activity' => $activity])
             </div>
 
             <!-- Compact details -->
@@ -88,7 +87,8 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="mb-3">
                         <div
-                            class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.type'):
+                            class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.type')
+                            :
                         </div>
                         <div class="text-sm text-gray-900 dark:text-gray-100">
                             {{ $activity->type?->label() }}
@@ -100,14 +100,14 @@
                         <div class="text-sm text-gray-900 dark:text-gray-100">
                             {{ $activity->user?->name ?? '-' }}
                         </div>
-                    <div class="mb-3">
-                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">
-                            @lang('admin::app.activities.group')
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">
+                                @lang('admin::app.activities.group')
+                            </div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ $activity->group?->name ?? '-' }}
+                            </div>
                         </div>
-                        <div class="text-sm text-gray-900 dark:text-gray-100">
-                            {{ $activity->group?->name ?? '-' }}
-                        </div>
-                    </div>
 
                     </div>
 
@@ -136,9 +136,11 @@
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Patiëntportaal</div>
                             <div class="text-sm text-gray-900 dark:text-gray-100">
                                 @if($activity->portalPersons->isNotEmpty())
-                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">Gepubliceerd</span>
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">Gepubliceerd</span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">Niet gepubliceerd</span>
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">Niet gepubliceerd</span>
                                 @endif
                             </div>
                         </div>
@@ -148,7 +150,7 @@
             </div>
 
             @if($activity->lead)
-                <x-adminc::leads.card :lead="$activity->lead" />
+                <x-adminc::leads.card :lead="$activity->lead"/>
             @endif
 
             <div class="p-4 text-sm text-gray-700 dark:text-gray-300">
@@ -221,7 +223,7 @@
             })();
 
             // Vue.js component for Lead Afvoeren functionality
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 if (typeof app !== 'undefined') {
                     app.mixin({
                         mounted() {
@@ -275,27 +277,27 @@
                                     lost_reason: this.leadAfvoerenData.lost_reason,
                                     closed_at: this.leadAfvoerenData.closed_at
                                 })
-                                .then(response => {
-                                    this.isSubmitting = false;
-                                    this.$refs.leadAfvoerenModal.close();
+                                    .then(response => {
+                                        this.isSubmitting = false;
+                                        this.$refs.leadAfvoerenModal.close();
 
-                                    this.$emitter.emit('add-flash', {
-                                        type: 'success',
-                                        message: response.data.message
+                                        this.$emitter.emit('add-flash', {
+                                            type: 'success',
+                                            message: response.data.message
+                                        });
+
+                                        // Redirect to lead view
+                                        const viewUrl = "{{ route('admin.leads.view', 'REPLACE_ID') }}".replace('REPLACE_ID', String(leadId));
+                                        window.location.href = viewUrl;
+                                    })
+                                    .catch(error => {
+                                        this.isSubmitting = false;
+
+                                        this.$emitter.emit('add-flash', {
+                                            type: 'error',
+                                            message: error.response?.data?.message || 'Er is een fout opgetreden'
+                                        });
                                     });
-
-                                    // Redirect to lead view
-                                    const viewUrl = "{{ route('admin.leads.view', 'REPLACE_ID') }}".replace('REPLACE_ID', String(leadId));
-                                    window.location.href = viewUrl;
-                                })
-                                .catch(error => {
-                                    this.isSubmitting = false;
-
-                                    this.$emitter.emit('add-flash', {
-                                        type: 'error',
-                                        message: error.response?.data?.message || 'Er is een fout opgetreden'
-                                    });
-                                });
                             }
                         }
                     });
@@ -305,89 +307,92 @@
     @endPushOnce
 
     <!-- Hidden form used by Afronden button in view -->
-    <form id="activity-complete-form" action="{{ route('admin.activities.mark-done', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif" method="POST"
+    <form id="activity-complete-form"
+          action="{{ route('admin.activities.mark-done', $activity->id) }}@if(request('return_url'))?return_url={{ urlencode(request('return_url')) }}@endif"
+          method="POST"
           class="hidden">
         @csrf
     </form>
 
     @if($activity->lead)
-    <!-- Mail dialog component (hidden button, listens for open-email-dialog event from call status form) -->
-    <x-admin::activities.actions.mail
-        :entity="$activity->lead"
-        entity-control-name="lead_id"
-        :show-button="false"
-        :activity-id="$activity->id"
-    />
+        <!-- Mail dialog component (hidden button, listens for open-email-dialog event from call status form) -->
+        <x-admin::activities.actions.mail
+            :entity="$activity->lead"
+            entity-control-name="lead_id"
+            :show-button="false"
+            :activity-id="$activity->id"
+        />
     @endif
 
     @if($activity->lead)
-    <!-- Lead Afvoeren Modal -->
-    <x-admin::modal ref="leadAfvoerenModal">
-        <x-slot:header>
-            <h3 class="text-base font-semibold dark:text-white">
-                Lead afvoeren
-            </h3>
-        </x-slot>
+        <!-- Lead Afvoeren Modal -->
+        <x-admin::modal ref="leadAfvoerenModal">
+            <x-slot:header>
+                <h3 class="text-base font-semibold dark:text-white">
+                    Lead afvoeren
+                </h3>
+            </x-slot>
 
-        <x-slot:content>
-            <div class="mb-4">
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Weet je zeker dat je deze lead wilt afvoeren? Dit zal de lead op status "Verloren" zetten en alle opstaande activiteiten afronden.
-                </p>
-            </div>
+            <x-slot:content>
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        Weet je zeker dat je deze lead wilt afvoeren? Dit zal de lead op status "Verloren" zetten en
+                        alle opstaande activiteiten afronden.
+                    </p>
+                </div>
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.control
-                    type="date"
-                    name="closed_at"
-                    v-model="leadAfvoerenData.closed_at"
-                />
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.control
+                        type="date"
+                        name="closed_at"
+                        v-model="leadAfvoerenData.closed_at"
+                    />
 
-                <select
-                    name="lost_reason"
-                    class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
-                    v-model="leadAfvoerenData.lost_reason"
-                    required
+                    <select
+                        name="lost_reason"
+                        class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                        v-model="leadAfvoerenData.lost_reason"
+                        required
+                    >
+                        <option value="">Selecteer reden...</option>
+                        @foreach(LostReason::cases() as $reason)
+                            <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                        @endforeach
+                    </select>
+                    <x-admin::form.control-group.label>
+                        Reden van verlies
+                    </x-admin::form.control-group.label>
+
+                </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        Gesloten op
+                    </x-admin::form.control-group.label>
+
+                </x-admin::form.control-group>
+            </x-slot>
+
+            <x-slot:footer>
+                <button
+                    type="button"
+                    class="secondary-button"
+                    @click="$refs.leadAfvoerenModal.close()"
                 >
-                    <option value="">Selecteer reden...</option>
-                    @foreach(\App\Enums\LostReason::cases() as $reason)
-                        <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
-                    @endforeach
-                </select>
-                <x-admin::form.control-group.label>
-                    Reden van verlies
-                </x-admin::form.control-group.label>
+                    Annuleren
+                </button>
 
-            </x-admin::form.control-group>
-
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    Gesloten op
-                </x-admin::form.control-group.label>
-
-            </x-admin::form.control-group>
-        </x-slot>
-
-        <x-slot:footer>
-            <button
-                type="button"
-                class="secondary-button"
-                @click="$refs.leadAfvoerenModal.close()"
-            >
-                Annuleren
-            </button>
-
-            <button
-                type="button"
-                class="primary-button"
-                @click="submitLeadAfvoeren"
-                :disabled="!leadAfvoerenData.lost_reason || isSubmitting"
-            >
-                <span v-if="isSubmitting">Bezig...</span>
-                <span v-else>Lead afvoeren</span>
-            </button>
-        </x-slot>
-    </x-admin::modal>
+                <button
+                    type="button"
+                    class="primary-button"
+                    @click="submitLeadAfvoeren"
+                    :disabled="!leadAfvoerenData.lost_reason || isSubmitting"
+                >
+                    <span v-if="isSubmitting">Bezig...</span>
+                    <span v-else>Lead afvoeren</span>
+                </button>
+            </x-slot>
+        </x-admin::modal>
     @endif
 </x-admin::layouts>
 

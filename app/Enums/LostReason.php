@@ -31,6 +31,7 @@ enum LostReason: string
     case DataEntry = 'datainvoer';
     case NoReason = 'geen_reden';
     case NotMatching = 'Spoort_niet';
+    case InvalidActionEmployee = 'Onjuiste actie interne medewerker';
 
     public function label(): string
     {
@@ -62,6 +63,7 @@ enum LostReason: string
             self::DataEntry              => 'Data invoer achteraf',
             self::NoReason               => 'Geen reden',
             self::NotMatching            => 'Spoort niet',
+            self::InvalidActionEmployee  => 'Onjuiste actie interne medewerker',
         };
     }
 }

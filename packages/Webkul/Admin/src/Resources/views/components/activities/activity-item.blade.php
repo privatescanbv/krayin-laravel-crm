@@ -70,11 +70,11 @@
                         class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-error dark:bg-red-900/30 dark:text-red-400">
                         Te laat
                     </span>
-                    <span v-else-if="activity.schedule_from"
+                    <span v-else-if="!activity.is_done && activity.schedule_from"
                         class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                         Gepland
                     </span>
-                    <div v-if="activity.schedule_from" class="text-xs"
+                    <div v-if="!activity.is_done && activity.schedule_from" class="text-xs"
                         :class="{
                             'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_from) && !isPastDay(activity.schedule_to || activity.schedule_from),
                             'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to || activity.schedule_from),

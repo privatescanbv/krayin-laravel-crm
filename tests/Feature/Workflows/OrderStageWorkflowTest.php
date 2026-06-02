@@ -4,6 +4,7 @@ use App\Enums\ActivityType;
 use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\SalesLead;
+use Carbon\Carbon;
 use Database\Seeders\TestSeeder;
 use Database\Seeders\WorkflowSeeder;
 use Webkul\Activity\Models\Activity;
@@ -88,4 +89,100 @@ test('order workflow create_activity with user_id assigns that user to the creat
 
     expect($activity)->not->toBeNull();
     expect($activity->user_id)->toBe($user->id);
+});
+
+test('order workflow deadline_days_from_examination uses first examination date as base', function () {
+    $salesLead = SalesLead::factory()->create();
+    $examinationDate = now()->addDays(10)->startOfDay();
+
+    Workflow::create([
+        'name'           => 'Test examination deadline',
+        'description'    => 'Test',
+        'entity_type'    => 'orders',
+        'event'          => 'order.update_stage.after',
+        'condition_type' => 'and',
+        'conditions'     => [
+            [
+                'value'          => (string) PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->id(),
+                'operator'       => '==',
+                'attribute'      => 'pipeline_stage_id',
+                'attribute_type' => 'select',
+            ],
+        ],
+        'actions' => [
+            [
+                'id'         => 'create_activity',
+                'attributes' => [
+                    'title'                       => 'Examination deadline activity',
+                    'type'                        => ActivityType::TASK->value,
+                    'deadline_days_from_examination' => -2,
+                ],
+            ],
+        ],
+    ]);
+
+    $order = Order::factory()->create([
+        'sales_lead_id'      => $salesLead->id,
+        'pipeline_stage_id'  => PipelineStage::ORDER_VERLOREN->id(),
+        'first_examination_at' => $examinationDate->toDateString(),
+    ]);
+
+    $order->update(['pipeline_stage_id' => PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->id()]);
+
+    $activity = Activity::where('order_id', $order->id)
+        ->where('title', 'Examination deadline activity')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $expectedDate = $examinationDate->copy()->subDays(2)->toDateString();
+    expect(Carbon::parse($activity->schedule_to)->toDateString())->toBe($expectedDate);
+});
+
+test('order workflow deadline_days_from_examination falls back to now when examination date unknown', function () {
+    $salesLead = SalesLead::factory()->create();
+
+    Workflow::create([
+        'name'           => 'Test examination deadline fallback',
+        'description'    => 'Test',
+        'entity_type'    => 'orders',
+        'event'          => 'order.update_stage.after',
+        'condition_type' => 'and',
+        'conditions'     => [
+            [
+                'value'          => (string) PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->id(),
+                'operator'       => '==',
+                'attribute'      => 'pipeline_stage_id',
+                'attribute_type' => 'select',
+            ],
+        ],
+        'actions' => [
+            [
+                'id'         => 'create_activity',
+                'attributes' => [
+                    'title'                          => 'Fallback deadline activity',
+                    'type'                           => ActivityType::TASK->value,
+                    'deadline_days_from_examination' => 3,
+                ],
+            ],
+        ],
+    ]);
+
+    // Order without examination date or resource slots
+    $order = Order::factory()->create([
+        'sales_lead_id'      => $salesLead->id,
+        'pipeline_stage_id'  => PipelineStage::ORDER_VERLOREN->id(),
+        'first_examination_at' => null,
+    ]);
+
+    $order->update(['pipeline_stage_id' => PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->id()]);
+
+    $activity = Activity::where('order_id', $order->id)
+        ->where('title', 'Fallback deadline activity')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $expectedDate = now()->addDays(3)->toDateString();
+    expect(Carbon::parse($activity->schedule_to)->toDateString())->toBe($expectedDate);
 });

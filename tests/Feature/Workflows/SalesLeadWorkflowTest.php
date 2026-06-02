@@ -8,6 +8,7 @@ use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Database\Seeders\WorkflowSeeder;
 use Webkul\Activity\Models\Activity;
+use Webkul\Automation\Models\Workflow;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
@@ -118,7 +119,7 @@ test('workflow create_activity with user_id assigns that user to the created act
     $stage = PipelineStage::SALES_IN_BEHANDELING; // id=13, no auto-workflow by default
 
     // Create a workflow for this stage with user_id set
-    \Webkul\Automation\Models\Workflow::create([
+    Workflow::create([
         'name'           => 'Test user assignment',
         'description'    => 'Test',
         'entity_type'    => 'saleslead',

@@ -7,6 +7,7 @@ use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Database\Seeders\WorkflowSeeder;
 use Webkul\Activity\Models\Activity;
+use Webkul\Automation\Models\Workflow;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
@@ -46,7 +47,7 @@ test('order workflow create_activity with user_id assigns that user to the creat
     $user = User::factory()->create();
     $salesLead = SalesLead::factory()->create();
 
-    \Webkul\Automation\Models\Workflow::create([
+    Workflow::create([
         'name'           => 'Test order user assignment',
         'description'    => 'Test',
         'entity_type'    => 'orders',

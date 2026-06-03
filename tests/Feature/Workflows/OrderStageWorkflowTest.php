@@ -113,8 +113,8 @@ test('order workflow deadline_days_from_examination uses first examination date 
             [
                 'id'         => 'create_activity',
                 'attributes' => [
-                    'title'                       => 'Examination deadline activity',
-                    'type'                        => ActivityType::TASK->value,
+                    'title'                          => 'Examination deadline activity',
+                    'type'                           => ActivityType::TASK->value,
                     'deadline_days_from_examination' => -2,
                 ],
             ],
@@ -122,8 +122,8 @@ test('order workflow deadline_days_from_examination uses first examination date 
     ]);
 
     $order = Order::factory()->create([
-        'sales_lead_id'      => $salesLead->id,
-        'pipeline_stage_id'  => PipelineStage::ORDER_VERLOREN->id(),
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_VERLOREN->id(),
         'first_examination_at' => $examinationDate->toDateString(),
     ]);
 
@@ -170,8 +170,8 @@ test('order workflow deadline_days_from_examination falls back to now when exami
 
     // Order without examination date or resource slots
     $order = Order::factory()->create([
-        'sales_lead_id'      => $salesLead->id,
-        'pipeline_stage_id'  => PipelineStage::ORDER_VERLOREN->id(),
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_VERLOREN->id(),
         'first_examination_at' => null,
     ]);
 

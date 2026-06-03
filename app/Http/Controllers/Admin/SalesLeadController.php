@@ -460,10 +460,6 @@ class SalesLeadController extends Controller
             $salesQuery->where('is_done', $isDoneFilter);
         }
         $salesActivities = $salesQuery->get();
-        $salesActivities->each(fn ($a) => $a->entity_source = [
-            'type'  => 'sales',
-            'label' => 'Sales',
-        ]);
 
         // 2. Child order activities — label: 'Order: {title}'
         $orderActivities = collect();
@@ -479,18 +475,16 @@ class SalesLeadController extends Controller
                 $orderActivities->each(fn ($a) => $a->entity_source = [
                     'type'  => 'order',
                     'label' => 'Order: '.($orderTitles[$a->order_id] ?? $a->order_id),
+                    'url'   => route('admin.orders.view', $a->order_id),
                 ]);
             }
         }
 
         $all = $salesActivities->merge($orderActivities)->unique('id')->values();
-        $merged = $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository);
 
-        if (! is_null($isDoneFilter)) {
-            $merged = $merged->filter(fn ($a) => (int) $a->is_done === $isDoneFilter)->values();
-        }
-
-        return ActivityResource::collection($merged);
+        return ActivityResource::collection(
+            $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository)
+        );
     }
 
     public function storeActivity($id)

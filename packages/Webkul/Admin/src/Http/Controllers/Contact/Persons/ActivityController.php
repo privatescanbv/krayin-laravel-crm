@@ -39,47 +39,64 @@ class ActivityController extends Controller
      */
     public function index($id)
     {
-        // 1. Direct person activities (via person_id FK) — label: 'Persoon'
-        $personActivities = Activity::where('person_id', $id)->get();
-        $personActivities->each(fn ($a) => $a->entity_source = [
-            'type'  => 'person',
-            'label' => 'Persoon',
-        ]);
+        $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
 
-        // 2. Lead activities — label: 'Lead: {name}'
+        // 1. Eigen person-activiteiten — geen label
+        $personQuery = Activity::where('person_id', $id);
+        if (! is_null($isDoneFilter)) {
+            $personQuery->where('is_done', $isDoneFilter);
+        }
+        $personActivities = $personQuery->get();
+
+        // 2. Lead-activiteiten — label "Lead: naam"
         $leadIds = DB::table('lead_persons')->where('person_id', $id)->pluck('lead_id');
         $leadActivities = collect();
         if ($leadIds->isNotEmpty()) {
-            $leadNames = Lead::whereIn('id', $leadIds)->pluck('id');
-            $leadActivities = Activity::whereIn('lead_id', $leadIds)->get();
+            $leadNames = Lead::whereIn('id', $leadIds)->get(['id', 'first_name', 'last_name', 'lastname_prefix'])->pluck('name', 'id');
+            $leadQuery = Activity::whereIn('lead_id', $leadIds);
+            if (! is_null($isDoneFilter)) {
+                $leadQuery->where('is_done', $isDoneFilter);
+            }
+            $leadActivities = $leadQuery->get();
             $leadActivities->each(fn ($a) => $a->entity_source = [
                 'type'  => 'lead',
-                'label' => 'Lead: ' . ($leadNames[$a->lead_id] ?? $a->lead_id),
+                'label' => 'Lead: '.($leadNames[$a->lead_id] ?? $a->lead_id),
+                'url'   => route('admin.leads.view', $a->lead_id),
             ]);
         }
 
-        // 3. Sales lead activities — label: 'Sales: {name}'
+        // 3. SalesLead-activiteiten — label "Sales: naam"
         $salesLeadIds = DB::table('saleslead_persons')->where('person_id', $id)->pluck('saleslead_id');
         $salesActivities = collect();
         if ($salesLeadIds->isNotEmpty()) {
             $salesNames = SalesLead::whereIn('id', $salesLeadIds)->pluck('name', 'id');
-            $salesActivities = Activity::whereIn('sales_lead_id', $salesLeadIds)->get();
+            $salesQuery = Activity::whereIn('sales_lead_id', $salesLeadIds);
+            if (! is_null($isDoneFilter)) {
+                $salesQuery->where('is_done', $isDoneFilter);
+            }
+            $salesActivities = $salesQuery->get();
             $salesActivities->each(fn ($a) => $a->entity_source = [
                 'type'  => 'sales',
-                'label' => 'Sales: ' . ($salesNames[$a->sales_lead_id] ?? $a->sales_lead_id),
+                'label' => 'Sales: '.($salesNames[$a->sales_lead_id] ?? $a->sales_lead_id),
+                'url'   => route('admin.sales-leads.view', $a->sales_lead_id),
             ]);
         }
 
-        // 4. Order activities (via sales leads) — label: 'Order: {title}'
+        // 4. Order-activiteiten — label "Order: titel"
         $orderActivities = collect();
         if ($salesLeadIds->isNotEmpty()) {
             $orderIds = Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id');
             if ($orderIds->isNotEmpty()) {
                 $orderTitles = Order::whereIn('id', $orderIds)->pluck('title', 'id');
-                $orderActivities = Activity::whereIn('order_id', $orderIds)->get();
+                $orderQuery = Activity::whereIn('order_id', $orderIds);
+                if (! is_null($isDoneFilter)) {
+                    $orderQuery->where('is_done', $isDoneFilter);
+                }
+                $orderActivities = $orderQuery->get();
                 $orderActivities->each(fn ($a) => $a->entity_source = [
                     'type'  => 'order',
-                    'label' => 'Order: ' . ($orderTitles[$a->order_id] ?? $a->order_id),
+                    'label' => 'Order: '.($orderTitles[$a->order_id] ?? $a->order_id),
+                    'url'   => route('admin.orders.view', $a->order_id),
                 ]);
             }
         }

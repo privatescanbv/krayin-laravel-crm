@@ -477,19 +477,9 @@ class OrderController extends SimpleEntityController
     {
         $order = $this->orderRepository->with(['salesLead'])->findOrFail($id);
 
-        $leadId = $order->salesLead?->lead_id;
-
-        $query = Activity::query()->where(function ($q) use ($order, $leadId) {
-            $q->where('order_id', $order->id);
-            if ($order->sales_lead_id) {
-                $q->orWhere('sales_lead_id', $order->sales_lead_id);
-            }
-            if ($leadId) {
-                $q->orWhere('lead_id', $leadId);
-            }
-        });
-
         $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
+
+        $query = Activity::query()->where('order_id', $order->id);
 
         if (! is_null($isDoneFilter)) {
             $query->where('is_done', $isDoneFilter);
@@ -497,13 +487,9 @@ class OrderController extends SimpleEntityController
 
         $activities = $query->with('portalPersons')->get();
 
-        $merged = $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository);
-
-        if (! is_null($isDoneFilter)) {
-            $merged = $merged->filter(fn ($a) => (int) $a->is_done === $isDoneFilter)->values();
-        }
-
-        return ActivityResource::collection($merged);
+        return ActivityResource::collection(
+            $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository)
+        );
     }
 
     public function emailsDetach(int $id): JsonResponse

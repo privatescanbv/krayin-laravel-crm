@@ -115,12 +115,15 @@ class ActivityController extends Controller
      */
     public function index(string $leadId)
     {
-            $activities = $this->activityRepository
-                ->where('lead_id', $leadId)
-                ->get();
+        $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
+
+        $query = Activity::where('lead_id', $leadId);
+        if (! is_null($isDoneFilter)) {
+            $query->where('is_done', $isDoneFilter);
+        }
 
         return ActivityResource::collection(
-            $this->concatEmailActivitiesFor('lead', (int) $leadId, $activities, $this->attachmentRepository)
+            $this->concatEmailActivitiesFor('lead', (int) $leadId, $query->get(), $this->attachmentRepository)
         );
     }
 

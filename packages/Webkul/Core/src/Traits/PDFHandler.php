@@ -40,7 +40,7 @@ trait PDFHandler
 
         return PDF::loadHTML($this->adjustArabicAndPersianContent($html))
             ->setPaper('A4', 'portrait')
-            ->set_option('defaultFont', 'Courier')
+            ->set_option('defaultFont', 'Arial')
             ->download($fileName.'.pdf');
     }
 

@@ -4,28 +4,6 @@ This file provides guidance to Claude Code when working with this repository.
 
 ---
 
-# Primary Operating Mode
-
-Use Claude as planner, architect, reviewer and analyst.
-
-Use plugin Codex as the default execution engine for implementation work whenever possible. So Implement code changes.
-
-## Delegation Rule
-
-When a task is executable and low-risk, prefer Codex.
-
-Use:
-
-- /codex:rescue for implementation
-- /codex:review only when explicitly requested
-- /codex:status for long-running tasks
-- /codex:result to fetch outputs
-
-Claude should think briefly first, then delegate execution.
-Do not spend excessive Claude tokens writing code if Codex can do it.
-
----
-
 # Project Overview
 
 Krayin CRM is a Laravel-based CRM built on a modular architecture using Konekt Concord.

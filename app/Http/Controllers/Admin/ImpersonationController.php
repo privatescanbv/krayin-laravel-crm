@@ -43,6 +43,7 @@ class ImpersonationController extends Controller
             'person_name'      => $person->name,
             'keycloak_user_id' => $person->keycloak_user_id,
             'started_at'       => now()->toISOString(),
+            'expires_at'       => now()->addMinutes(config('services.impersonation.max_minutes', 180))->toISOString(),
         ]]);
 
         $this->impersonationService->logActivity($person, 'start', request());
@@ -87,6 +88,7 @@ class ImpersonationController extends Controller
             'person_name'      => $person->name,
             'keycloak_user_id' => $person->keycloak_user_id,
             'started_at'       => now()->toISOString(),
+            'expires_at'       => now()->addMinutes(config('services.impersonation.max_minutes', 480))->toISOString(),
         ]]);
 
         $this->impersonationService->logActivity($person, 'start', request());

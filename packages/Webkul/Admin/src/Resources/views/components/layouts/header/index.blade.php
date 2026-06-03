@@ -1,15 +1,17 @@
 @if ($impersonating = session('impersonating'))
-    <div class="sticky top-0 z-[10002] flex items-center justify-between bg-amber-500 px-4 py-2 text-sm text-white shadow-md">
-        <span class="font-semibold">
-            &#9888; U simuleert een sessie als patiënt: {{ $impersonating['person_name'] }}
-        </span>
-        <div class="flex items-center gap-4">
-            <a
-                href="{{ config('services.portal.patient.web_url') }}"
-                target="_blank"
-                class="underline hover:no-underline"
-            >Open patiëntportaal &#8599;</a>
-
+    @php
+        $impersonationExpiresAt = $impersonating['expires_at'] ?? null;
+        $impersonationExpired = $impersonationExpiresAt && \Carbon\Carbon::parse($impersonationExpiresAt)->isPast();
+        $impersonationMinutesLeft = $impersonationExpiresAt && ! $impersonationExpired
+            ? (int) now()->diffInMinutes(\Carbon\Carbon::parse($impersonationExpiresAt))
+            : null;
+        $impersonationNearExpiry = $impersonationMinutesLeft !== null && $impersonationMinutesLeft <= 15;
+    @endphp
+    @if ($impersonationExpired)
+        <div class="sticky top-0 z-[10002] flex items-center justify-between bg-red-600 px-4 py-2 text-sm text-white shadow-md">
+            <span class="font-semibold">
+                &#9888; Simulatiesessie verlopen voor: {{ $impersonating['person_name'] }}
+            </span>
             <form
                 method="POST"
                 action="{{ route('admin.contacts.impersonation.stop') }}"
@@ -18,11 +20,39 @@
                 <input type="hidden" name="_redirect" value="{{ url()->current() }}">
                 <button
                     type="submit"
-                    class="rounded bg-white px-3 py-1 font-semibold text-amber-700 hover:bg-amber-50"
-                >Stop simulatie</button>
+                    class="rounded bg-white px-3 py-1 font-semibold text-red-700 hover:bg-red-50"
+                >Sessie sluiten</button>
             </form>
         </div>
-    </div>
+    @else
+        <div class="sticky top-0 z-[10002] flex items-center justify-between {{ $impersonationNearExpiry ? 'bg-orange-600' : 'bg-amber-500' }} px-4 py-2 text-sm text-white shadow-md">
+            <span class="font-semibold">
+                &#9888; U simuleert een sessie als patiënt: {{ $impersonating['person_name'] }}
+                @if ($impersonationMinutesLeft !== null)
+                    <span class="ml-2 font-normal opacity-90">(nog {{ $impersonationMinutesLeft }} min.)</span>
+                @endif
+            </span>
+            <div class="flex items-center gap-4">
+                <a
+                    href="{{ config('services.portal.patient.web_url') }}"
+                    target="_blank"
+                    class="underline hover:no-underline"
+                >Open patiëntportaal &#8599;</a>
+
+                <form
+                    method="POST"
+                    action="{{ route('admin.contacts.impersonation.stop') }}"
+                    style="display:inline;">
+                    @csrf
+                    <input type="hidden" name="_redirect" value="{{ url()->current() }}">
+                    <button
+                        type="submit"
+                        class="rounded bg-white px-3 py-1 font-semibold text-amber-700 hover:bg-amber-50"
+                    >Stop simulatie</button>
+                </form>
+            </div>
+        </div>
+    @endif
 @endif
 
 <header class="sticky top-0 z-[10001] flex items-center justify-between gap-1 border-b bg-white px-4 py-2.5 transition-all dark:border-gray-800 dark:bg-gray-900">

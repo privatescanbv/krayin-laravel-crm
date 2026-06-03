@@ -4,9 +4,9 @@ namespace Webkul\Admin\DataGrids\Activity;
 
 use App\Enums\Departments;
 use App\Enums\EntityType;
+use App\Helpers\DatabaseHelper;
 use App\Services\Activities\ActivityDepartmentFilter;
 use App\Services\ActivityQueueRegistry;
-use App\Helpers\DatabaseHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -38,7 +38,7 @@ class ActivityDataGrid extends DataGrid
                 'activities.*',
                 'leads.lead_pipeline_id',
                 'users.id as assigned_user_id',
-                DB::raw(DatabaseHelper::concatUserName('users.', 'created_by')),
+                DB::raw(DatabaseHelper::concatUserName('users.', 'assigned_user_name')),
                 'groups.name as group_name',
                 // Also select related entity names where possible
                 'persons.name as person_name',
@@ -50,8 +50,9 @@ class ActivityDataGrid extends DataGrid
                         return "CAST((julianday(activities.schedule_to) - julianday('now')) AS INTEGER) as days_until_deadline";
                     }
                     if ($driver === 'pgsql') {
-                        return "(DATE(activities.schedule_to) - CURRENT_DATE) as days_until_deadline";
+                        return '(DATE(activities.schedule_to) - CURRENT_DATE) as days_until_deadline';
                     }
+
                     // default MySQL/MariaDB
                     return 'DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline';
                 })()),
@@ -66,7 +67,7 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             // Join persons directly via the person_id FK
             ->leftJoin('persons', 'activities.person_id', '=', 'persons.id')
-            ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
+            ->when(! auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
                     if ($userIds = bouncer()->getAuthorizedUserIds()) {
                         $query->whereIn('activities.user_id', $userIds)
@@ -97,7 +98,7 @@ class ActivityDataGrid extends DataGrid
             // Apply view filters - use default view if none specified
             $viewService = app(ViewService::class);
             $view = request()->get('view');
-            if (!$view) {
+            if (! $view) {
                 $defaultView = $viewService->getDefaultView();
                 $view = $defaultView['key'];
             }
@@ -115,11 +116,11 @@ class ActivityDataGrid extends DataGrid
                     if (($filter['operator'] ?? 'eq') !== 'custom') {
                         $columnKey = $filter['column'];
                         $value = $filter['value'];
-                        if (!isset($requestedFilters[$columnKey]) || !is_array($requestedFilters[$columnKey])) {
+                        if (! isset($requestedFilters[$columnKey]) || ! is_array($requestedFilters[$columnKey])) {
                             $requestedFilters[$columnKey] = [];
                         }
                         // Avoid duplicate entries
-                        if (!in_array($value, $requestedFilters[$columnKey], true)) {
+                        if (! in_array($value, $requestedFilters[$columnKey], true)) {
                             $requestedFilters[$columnKey][] = $value;
                         }
                     }
@@ -139,7 +140,7 @@ class ActivityDataGrid extends DataGrid
         // Default sorting: urgent tasks first, then newest
         // Only skip when an actual sort column is provided (front-end may send empty sort object)
         $requestedSort = request()->input('sort');
-        if (!is_array($requestedSort) || empty($requestedSort['column'])) {
+        if (! is_array($requestedSort) || empty($requestedSort['column'])) {
             $queryBuilder->orderByRaw('
                 CASE WHEN days_until_deadline IS NULL THEN 1 ELSE 0 END,
                 days_until_deadline ASC
@@ -169,13 +170,13 @@ class ActivityDataGrid extends DataGrid
         $filters = request()->input('filters', []);
         if (isset($filters['entity_type'])) {
             $values = $filters['entity_type'];
-            if (!is_array($values)) {
+            if (! is_array($values)) {
                 $values = [$values];
             }
             // Clean empty values
-            $values = array_values(array_filter($values, static fn($v) => $v !== null && $v !== ''));
+            $values = array_values(array_filter($values, static fn ($v) => $v !== null && $v !== ''));
 
-            if (!empty($values)) {
+            if (! empty($values)) {
                 $queryBuilder->having(function ($q) use ($values) {
                     foreach ($values as $i => $value) {
                         if ($i === 0) {
@@ -199,7 +200,7 @@ class ActivityDataGrid extends DataGrid
 
         // Update request with cleaned filters
         $originalFilters = request()->input('filters');
-        if (!empty($filters)) {
+        if (! empty($filters)) {
             request()->merge(['filters' => $filters]);
         } elseif ($originalFilters !== null) {
             // If filters was present but is now empty, remove it entirely to avoid validation issues
@@ -262,20 +263,20 @@ class ActivityDataGrid extends DataGrid
 
                 try {
                     $modelClass = $type->getModel();
-                    $entity     = $modelClass::find($row->entity_id);
-                    $display    = $entity ? ($entity->name ?? ('#' . $row->entity_id)) : ('#' . $row->entity_id);
+                    $entity = $modelClass::find($row->entity_id);
+                    $display = $entity ? ($entity->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
                 } catch (Throwable $e) {
                     logger()->warning('Unable to locate entity', [
                         'type'  => $row->entity_type,
                         'id'    => $row->entity_id,
                         'error' => $e->getMessage(),
                     ]);
-                    $display = '#' . $row->entity_id;
+                    $display = '#'.$row->entity_id;
                 }
 
                 return "<a class='text-brandColor hover:underline' target='_blank' href='"
-                    . route($type->getRoute(), $row->entity_id)
-                    . "'>" . e($display) . '</a>';
+                    .route($type->getRoute(), $row->entity_id)
+                    ."'>".e($display).'</a>';
             },
         ]);
 
@@ -300,6 +301,7 @@ class ActivityDataGrid extends DataGrid
                     'system'  => 'icon-system-generate',
                 ];
                 $icon = $map[$row->type] ?? 'icon-activity';
+
                 return "<span class='".$icon." text-lg'></span>";
             },
             'width'              => '20px',
@@ -320,15 +322,14 @@ class ActivityDataGrid extends DataGrid
             'closure'    => function ($row) {
                 $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
                 if (bouncer()->hasPermission('usettings.user.users.view')) {
-                    return "<a class='text-brandColor hover:underline' href='" . $route . "'>" . $row->created_by . '</a>';
+                    return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->assigned_user_name.'</a>';
                 } else {
-                    return $row->created_by;
+                    return $row->assigned_user_name;
                 }
             },
         ]);
 
         // Removed comment column as requested
-
 
         // Status column removed from UI (kept in DB/entity)
 
@@ -374,7 +375,7 @@ class ActivityDataGrid extends DataGrid
                 }
 
                 $date = date('d-m-Y H:i', $timestamp);
-                $days = (int)($row->days_until_deadline ?? 0);
+                $days = (int) ($row->days_until_deadline ?? 0);
                 if ($days < 0) {
                     $classes = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
                 } elseif ($days === 0) {
@@ -382,6 +383,7 @@ class ActivityDataGrid extends DataGrid
                 } else {
                     $classes = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
                 }
+
                 return "<span class='px-2 py-0.5 rounded-full text-xs ".$classes."'>".$date.'</span>';
             },
         ]);
@@ -407,9 +409,10 @@ class ActivityDataGrid extends DataGrid
                 'filterable' => false,
                 'sortable'   => false,
                 'closure'    => function ($row) {
-                    if ((int)($row->is_done ?? 0) === 1) {
+                    if ((int) ($row->is_done ?? 0) === 1) {
                         return "<span class='icon-tick text-status-active-text text-xl' title='Afgerond'></span>";
                     }
+
                     return '';
                 },
             ]);
@@ -422,7 +425,7 @@ class ActivityDataGrid extends DataGrid
     public function prepareActions(): void
     {
         $returnUrl = request()->query('return_url');
-        $returnSuffix = $returnUrl ? ('?return_url=' . urlencode($returnUrl)) : '';
+        $returnSuffix = $returnUrl ? ('?return_url='.urlencode($returnUrl)) : '';
 
         // View action (eye icon)
         $this->addAction([
@@ -430,7 +433,7 @@ class ActivityDataGrid extends DataGrid
             'icon'   => 'icon-eye',
             'title'  => trans('admin::app.activities.index.datagrid.view'),
             'method' => 'GET',
-            'url'    => fn ($row) => route('admin.activities.view', $row->id) . $returnSuffix,
+            'url'    => fn ($row) => route('admin.activities.view', $row->id).$returnSuffix,
         ]);
 
         if (bouncer()->hasPermission('activities.edit')) {
@@ -439,7 +442,7 @@ class ActivityDataGrid extends DataGrid
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.activities.index.datagrid.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.activities.edit', $row->id) . $returnSuffix,
+                'url'    => fn ($row) => route('admin.activities.edit', $row->id).$returnSuffix,
             ]);
         }
 
@@ -448,11 +451,11 @@ class ActivityDataGrid extends DataGrid
         // Add unassign action for activities assigned to current user
         $currentUserId = auth()->guard('user')->id();
         $this->addAction([
-            'index'  => 'unassign',
-            'icon'   => 'icon-undo',
-            'title'  => 'Ontkoppelen',
-            'method' => 'POST',
-            'url'    => fn ($row) => route('admin.activities.unassign', $row->id),
+            'index'     => 'unassign',
+            'icon'      => 'icon-undo',
+            'title'     => 'Ontkoppelen',
+            'method'    => 'POST',
+            'url'       => fn ($row) => route('admin.activities.unassign', $row->id),
             'condition' => fn ($row) => $row->user_id == $currentUserId,
         ]);
     }
@@ -464,5 +467,4 @@ class ActivityDataGrid extends DataGrid
     {
         // Intentionally left blank: no bulk/mass actions; also hides bulk selection UI
     }
-
 }

@@ -37,7 +37,9 @@ class LinkInboundEmailViaLlmJob implements ShouldQueue
 
         $result = $emailLlmLinkingService->extractAndLink(
             email: $email,
-            applyLinks: false
+            systemPrompt: null,
+            applyLinks: false,
+            trigger: 'automatic',
         );
 
         if ($result['status'] === 'error') {

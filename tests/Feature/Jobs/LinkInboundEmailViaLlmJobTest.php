@@ -25,7 +25,7 @@ test('links email using llm extracted sender addresses', function () {
         ->with(
             Mockery::on(fn ($model) => $model->id === $email->id),
             null,
-            true,
+            false,
             'automatic',
         )
         ->andReturn([

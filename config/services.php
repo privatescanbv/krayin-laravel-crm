@@ -56,6 +56,10 @@ return [
         ],
     ],
 
+    'impersonation' => [
+        'max_minutes' => (int) env('IMPERSONATION_MAX_MINUTES', 180),
+    ],
+
     'portal' => [
         'patient' => [
             'web_url'   => env('PATIENT_PORTAL_URL', 'https://patientdev.local.privatescan.nl'),

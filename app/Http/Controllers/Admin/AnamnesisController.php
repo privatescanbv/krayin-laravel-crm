@@ -10,7 +10,9 @@ use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Controller;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use App\Models\Order;
 use App\Models\PatientNotification;
+use App\Models\SalesLead;
 use App\Services\Anamnesis\AnamnesisOrderResolver;
 use App\Services\FormService;
 use Exception;
@@ -432,6 +434,90 @@ class AnamnesisController extends Controller
             'success',
             'Anamnesis succesvol bijgewerkt.'
         );
+    }
+
+    /**
+     * Create an override anamnesis at the order or sales level.
+     * Copies data from the source (inherited) anamnesis if provided.
+     */
+    public function override(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'order_id'             => 'nullable|integer|exists:orders,id',
+            'sales_id'             => 'nullable|integer|exists:salesleads,id',
+            'person_id'            => 'required|integer|exists:persons,id',
+            'source_anamnesis_id'  => 'nullable|string|exists:anamnesis,id',
+        ]);
+
+        if (empty($data['order_id']) && empty($data['sales_id'])) {
+            return back()->with('error', 'Order ID of Sales ID is verplicht.');
+        }
+
+        $personId = (int) $data['person_id'];
+
+        $lookupKey = ! empty($data['order_id'])
+            ? ['order_id' => (int) $data['order_id'], 'person_id' => $personId]
+            : ['sales_id' => (int) $data['sales_id'], 'person_id' => $personId];
+
+        $existing = Anamnesis::where($lookupKey)->first();
+        if ($existing) {
+            return back()->with('warning', 'Er bestaat al een anamnese op dit niveau voor deze persoon.');
+        }
+
+        $copyFields = [];
+        if (! empty($data['source_anamnesis_id'])) {
+            $source = Anamnesis::find($data['source_anamnesis_id']);
+            if ($source) {
+                $excludeFields = ['id', 'lead_id', 'sales_id', 'order_id', 'person_id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'gvl_form_id', 'gvl_form_status', 'gvl_form_type'];
+                $copyFields = collect($source->attributesToArray())
+                    ->except($excludeFields)
+                    ->toArray();
+            }
+        }
+
+        $createData = array_merge($copyFields, $lookupKey, [
+            'id'         => (string) Str::uuid(),
+            'name'       => 'Anamnese (overschrijving) voor '.\Webkul\Contact\Models\Person::findOrFail($personId)->name,
+            'created_by' => auth()->id() ?? 1,
+            'updated_by' => auth()->id() ?? 1,
+        ]);
+
+        Anamnesis::create($createData);
+
+        return back()->with('success', 'Anamnese overschrijving aangemaakt.');
+    }
+
+    /**
+     * Revert (delete) an override anamnesis at the order or sales level.
+     * Falls back to the inherited anamnesis from the parent level.
+     */
+    public function revertOverride(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'order_id'  => 'nullable|integer|exists:orders,id',
+            'sales_id'  => 'nullable|integer|exists:salesleads,id',
+            'person_id' => 'required|integer|exists:persons,id',
+        ]);
+
+        if (empty($data['order_id']) && empty($data['sales_id'])) {
+            return back()->with('error', 'Order ID of Sales ID is verplicht.');
+        }
+
+        $personId = (int) $data['person_id'];
+
+        $lookupKey = ! empty($data['order_id'])
+            ? ['order_id' => (int) $data['order_id'], 'person_id' => $personId]
+            : ['sales_id' => (int) $data['sales_id'], 'person_id' => $personId];
+
+        $anamnesis = Anamnesis::where($lookupKey)->first();
+
+        if (! $anamnesis) {
+            return back()->with('warning', 'Geen overschrijving gevonden om terug te zetten.');
+        }
+
+        $anamnesis->delete();
+
+        return back()->with('success', 'Anamnese overschrijving verwijderd. De anamnese van het bovenliggende niveau wordt nu weer gebruikt.');
     }
 
     public function mapFormTypeFromDepartment(?Department $department): string

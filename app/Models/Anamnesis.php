@@ -13,6 +13,11 @@ use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 /**
+ * Anamnesis inheritance chain: Order → Sales → Lead.
+ * Each level can optionally override the parent's anamnesis per person.
+ */
+
+/**
  * @mixin IdeHelperAnamnesis
  */
 class Anamnesis extends Model
@@ -77,6 +82,7 @@ class Anamnesis extends Model
         'advice_notes',
         'lead_id',
         'sales_id',
+        'order_id',
         'person_id',
         'gvl_form_id',
         'gvl_form_status',
@@ -110,6 +116,7 @@ class Anamnesis extends Model
         'active'                  => 'boolean',
         'lead_id'                 => 'integer',
         'sales_id'                => 'integer',
+        'order_id'                => 'integer',
         'person_id'               => 'integer',
         'created_by'              => 'integer',
         'updated_by'              => 'integer',
@@ -174,21 +181,23 @@ class Anamnesis extends Model
                 $model->gvl_form_status = FormStatus::New;
             }
 
-            // Enforce: sales_id OR lead_id must be filled.
-            if (empty($model->sales_id) && empty($model->lead_id)) {
+            // Enforce: at least one of order_id, sales_id, or lead_id must be filled.
+            if (empty($model->order_id) && empty($model->sales_id) && empty($model->lead_id)) {
                 throw ValidationException::withMessages([
-                    'sales_id' => ['sales_id of lead_id moet gevuld zijn.'],
-                    'lead_id'  => ['sales_id of lead_id moet gevuld zijn.'],
+                    'order_id' => ['order_id, sales_id of lead_id moet gevuld zijn.'],
+                    'sales_id' => ['order_id, sales_id of lead_id moet gevuld zijn.'],
+                    'lead_id'  => ['order_id, sales_id of lead_id moet gevuld zijn.'],
                 ]);
             }
 
-            // Light sanity validation (avoid silent invalid references)
             $salesLeadTable = (new SalesLead)->getTable();
             $leadTable = (new Lead)->getTable();
+            $orderTable = (new Order)->getTable();
 
             Validator::make($model->attributesToArray(), [
                 'sales_id' => ['nullable', 'integer', "exists:{$salesLeadTable},id"],
                 'lead_id'  => ['nullable', 'integer', "exists:{$leadTable},id"],
+                'order_id' => ['nullable', 'integer', "exists:{$orderTable},id"],
             ])->validate();
         });
     }
@@ -204,14 +213,36 @@ class Anamnesis extends Model
         return $this->belongsTo(SalesLead::class, 'sales_id');
     }
 
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id');
+    }
+
     public function person()
     {
         return $this->belongsTo(Person::class, 'person_id');
     }
 
+    /**
+     * Determine the inheritance source for display purposes.
+     * Returns 'order', 'sales', or 'lead'.
+     */
+    public function getSourceLevelAttribute(): string
+    {
+        if ($this->order_id) {
+            return 'order';
+        }
+
+        if ($this->sales_id) {
+            return 'sales';
+        }
+
+        return 'lead';
+    }
+
     public function getLabelAttribute(): string
     {
-        return $this->person?->name ?? $this->lead?->title ?? $this->sales?->name ?? 'Onbekend';
+        return $this->person?->name ?? $this->order?->title ?? $this->sales?->name ?? $this->lead?->title ?? 'Onbekend';
     }
 
     public function getGvlFormLinkAttribute(): ?string

@@ -484,6 +484,30 @@ class SalesLead extends Model
     }
 
     /**
+     * Resolve the effective anamnesis per person for this sales lead.
+     * Per person: sales-level override wins over lead-level.
+     */
+    public function resolveAnamnesisPerPerson(): \Illuminate\Support\Collection
+    {
+        $allAnamneses = $this->anamnesis;
+        $persons = $this->persons;
+
+        return $persons->mapWithKeys(function ($person) use ($allAnamneses) {
+            $personAnamneses = $allAnamneses->where('person_id', $person->id);
+
+            $effective = $personAnamneses->firstWhere(fn ($a) => $a->sales_id && ! $a->order_id)
+                ?? $personAnamneses->firstWhere(fn ($a) => $a->lead_id && ! $a->sales_id && ! $a->order_id);
+
+            return [$person->id => [
+                'person'       => $person,
+                'anamnesis'    => $effective,
+                'source'       => $effective?->source_level ?? 'lead',
+                'has_override' => $effective?->sales_id === $this->id,
+            ]];
+        });
+    }
+
+    /**
      * Create missing anamnesis records for this sales lead and the given person IDs.
      * Uses firstOrCreate to prevent duplicates.
      */

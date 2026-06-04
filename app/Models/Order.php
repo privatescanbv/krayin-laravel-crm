@@ -26,6 +26,8 @@ use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @mixin IdeHelperOrder
@@ -340,6 +342,68 @@ class Order extends Model
     public function personConfirmations(): HasMany
     {
         return $this->hasMany(OrderPersonConfirmation::class);
+    }
+
+    /**
+     * Anamnesis records linked directly to this order (via anamnesis.order_id).
+     */
+    public function anamnesisRecords(): HasMany
+    {
+        return $this->hasMany(Anamnesis::class, 'order_id');
+    }
+
+    /**
+     * Get effective anamnesis records for this order, following the inheritance chain:
+     * Order → Sales → Lead. Per person, the most specific level wins.
+     */
+    public function getAnamnesisAttribute()
+    {
+        try {
+            $salesLeadId = $this->sales_lead_id;
+            $leadId = $this->salesLead?->lead_id;
+
+            return Anamnesis::query()
+                ->where('order_id', $this->id)
+                ->when(
+                    $salesLeadId,
+                    fn ($query) => $query->orWhere('sales_id', $salesLeadId)
+                )
+                ->when(
+                    $leadId,
+                    fn ($query) => $query->orWhere('lead_id', $leadId)
+                )
+                ->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load anamnesis for order', ['order_id' => $this->id, 'error' => $e->getMessage()]);
+
+            return collect();
+        }
+    }
+
+    /**
+     * Resolve the effective anamnesis per person for this order.
+     * Returns a collection keyed by person_id, with each value containing
+     * the anamnesis and its source level ('order', 'sales', or 'lead').
+     */
+    public function resolveAnamnesisPerPerson(): Collection
+    {
+        $allAnamneses = $this->anamnesis;
+        $persons = $this->salesLead?->persons ?? collect();
+
+        return $persons->mapWithKeys(function ($person) use ($allAnamneses) {
+            $personAnamneses = $allAnamneses->where('person_id', $person->id);
+
+            $effective = $personAnamneses->firstWhere('order_id', $this->id)
+                ?? $personAnamneses->firstWhere(fn ($a) => $a->sales_id && ! $a->order_id)
+                ?? $personAnamneses->firstWhere(fn ($a) => $a->lead_id && ! $a->sales_id && ! $a->order_id);
+
+            return [$person->id => [
+                'person'    => $person,
+                'anamnesis' => $effective,
+                'source'    => $effective?->source_level ?? 'lead',
+                'has_override' => $effective?->order_id === $this->id,
+            ]];
+        });
     }
 
     /**

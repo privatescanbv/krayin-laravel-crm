@@ -87,6 +87,34 @@
         </script>
 
         <script type="module">
+            /**
+             * Matches PartnerProductBookingValidator: active partner product for product at resource's clinic.
+             */
+            function resourceCanBookProduct(resource, productId) {
+                if (!productId) {
+                    return true;
+                }
+                const bookable = resource.clinic_bookable_product_ids ?? [];
+                return bookable.includes(productId);
+            }
+
+            function filterResourcesForProduct(resources, productId, requiredResourceType = null) {
+                let candidates = resources;
+
+                if (requiredResourceType) {
+                    const byType = candidates.filter((r) => r.resource_type === requiredResourceType);
+                    if (byType.length > 0) {
+                        candidates = byType;
+                    }
+                }
+
+                if (productId) {
+                    candidates = candidates.filter((r) => resourceCanBookProduct(r, productId));
+                }
+
+                return candidates;
+            }
+
             // Common planning calendar mixin
             const planningCalendarMixin = {
                 data() {
@@ -119,6 +147,21 @@
                         // Filter by clinic if selected
                         if (this.filters.clinic_ids.length > 0) {
                             filtered = filtered.filter(r => this.filters.clinic_ids.includes(r.clinic_id));
+                        }
+
+                        // Narrow resource dropdown when order items are selected in the filter bar
+                        if (this.filters.order_item_ids?.length > 0 && this.orderItems?.length > 0) {
+                            const selectedItems = this.orderItems.filter((item) =>
+                                this.filters.order_item_ids.includes(item.id)
+                            );
+                            const productIds = [...new Set(
+                                selectedItems.map((item) => item.product_id).filter((id) => id != null)
+                            )];
+                            if (productIds.length > 0) {
+                                filtered = filtered.filter((r) =>
+                                    productIds.some((productId) => resourceCanBookProduct(r, productId))
+                                );
+                            }
                         }
 
                         return filtered.map(r => {
@@ -310,31 +353,14 @@
                         return true;
                     },
                     /**
-                     * Resources passend bij het geselecteerde orderregel.
-                     * Toon alleen resources met een actief partner product voor dit product.
-                     * Resources zonder actief partner product voor dit product worden nooit getoond.
+                     * Resources passend bij het geselecteerde orderregel (zelfde regels als PartnerProductBookingValidator).
                      */
                     bookingResourceOptions() {
-                        const req = this.selectedOrderItem?.required_resource_type;
-                        const productId = this.selectedOrderItem?.product_id ?? null;
-
-                        let candidates = this.resources;
-
-                        // Filter op resource_type
-                        if (req) {
-                            const byType = candidates.filter((r) => r.resource_type === req);
-                            if (byType.length > 0) candidates = byType;
-                        }
-
-                        // Toon alleen resources met een actief partner product voor dit product
-                        if (productId) {
-                            candidates = candidates.filter((r) => {
-                                const active = r.active_product_ids ?? [];
-                                return active.includes(productId);
-                            });
-                        }
-
-                        return candidates;
+                        return filterResourcesForProduct(
+                            this.resources,
+                            this.selectedOrderItem?.product_id ?? null,
+                            this.selectedOrderItem?.required_resource_type ?? null
+                        );
                     }
                 },
                 mounted() {
@@ -353,7 +379,13 @@
                             this.calculateEndTime();
                         }
                         this.syncBookingResourceId();
-                    }
+                    },
+                    'filters.order_item_ids': {
+                        handler() {
+                            this.loadAvailability();
+                        },
+                        deep: true,
+                    },
                 },
                 methods: {
                     ...planningCalendarMixin.methods,
@@ -372,18 +404,19 @@
                      * Als het orderregel wisselt: resource laten matchen met vereist type indien mogelijk.
                      */
                     syncBookingResourceId() {
-                        const req = this.selectedOrderItem?.required_resource_type;
-                        if (!req || this.form.resource_id == null || this.form.resource_id === '') {
+                        const options = this.bookingResourceOptions;
+                        if (this.form.resource_id == null || this.form.resource_id === '') {
+                            if (options.length === 1) {
+                                this.form.resource_id = options[0].id;
+                            }
                             return;
                         }
-                        const current = this.resources.find(
+                        const stillValid = options.some(
                             (r) => Number(r.id) === Number(this.form.resource_id)
                         );
-                        if (current && current.resource_type === req) {
-                            return;
+                        if (!stillValid) {
+                            this.form.resource_id = options.length > 0 ? options[0].id : null;
                         }
-                        const firstMatch = this.resources.find((r) => r.resource_type === req);
-                        this.form.resource_id = firstMatch ? firstMatch.id : null;
                     },
                     calculateEndTime() {
                         if (!this.form.from) {
@@ -436,15 +469,6 @@
                         const minutes = String(date.getMinutes()).padStart(2, '0');
                         return `${hours}:${minutes}`;
                     },
-                    firstUnplannedOrderItemMatchingResourceType(resourceTypeName) {
-                        if (!resourceTypeName) {
-                            return null;
-                        }
-
-                        return this.unplannedItems.find(
-                            (item) => item.required_resource_type === resourceTypeName
-                        ) ?? null;
-                    },
                     resetEditState() {
                         this.isEditing = false;
                         this.editingBookingId = null;
@@ -465,21 +489,49 @@
                     },
                     openBook(block) {
                         this.resetEditState();
-                        this.form.resource_id = block.resource_id;
                         const pad = (n) => String(n).padStart(2, '0');
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(block.from));
                         this.form.to = toLocal(new Date(block.to));
+
+                        const clickedResource = this.resources.find((r) => r.id === block.resource_id);
+
                         if (!this.form.order_item_id) {
-                            const resource = this.resources.find((r) => r.id === block.resource_id);
-                            const slotType = resource?.resource_type ?? null;
-                            const candidate = this.firstUnplannedOrderItemMatchingResourceType(slotType);
+                            const slotType = clickedResource?.resource_type ?? null;
+                            const candidate = this.firstUnplannedOrderItemForResource(clickedResource, slotType);
                             if (candidate) {
                                 this.form.order_item_id = candidate.id;
                             }
                         }
+
+                        this.$nextTick(() => {
+                            const options = this.bookingResourceOptions;
+                            const preferred = options.find((r) => r.id === block.resource_id);
+                            this.form.resource_id = preferred
+                                ? preferred.id
+                                : (options.length > 0 ? options[0].id : null);
+                            if (!this.form.to && this.form.from) {
+                                this.calculateEndTime();
+                            }
+                        });
+
                         this.$refs.bookModal.toggle();
-                        this.$nextTick(() => this.syncBookingResourceId());
+                    },
+                    /**
+                     * First unplanned item that can be booked on this resource (type + partner product at clinic).
+                     */
+                    firstUnplannedOrderItemForResource(resource, resourceTypeName) {
+                        const candidates = this.unplannedItems.filter((item) => {
+                            if (resourceTypeName && item.required_resource_type !== resourceTypeName) {
+                                return false;
+                            }
+                            if (!resource || !item.product_id) {
+                                return !resourceTypeName;
+                            }
+                            return resourceCanBookProduct(resource, item.product_id);
+                        });
+
+                        return candidates[0] ?? null;
                     },
                     openEditBooking(block) {
                         this.isEditing = true;

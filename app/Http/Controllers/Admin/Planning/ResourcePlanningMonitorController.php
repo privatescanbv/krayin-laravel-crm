@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Planning\Concerns\ResourceAvailabilityTrait;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PartnerProduct;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
@@ -19,6 +20,7 @@ use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -429,6 +431,41 @@ class ResourcePlanningMonitorController extends Controller
             $resourcesQuery->whereIn('id', array_map('intval', $resourceIds));
         }
 
+        // Filter by order items: only resources bookable at their clinic (matches PartnerProductBookingValidator)
+        if ($request->filled('order_item_ids')) {
+            $orderItemIds = array_map('intval', explode(',', $request->query('order_item_ids')));
+            $productIds = OrderItem::query()
+                ->whereIn('id', $orderItemIds)
+                ->whereNotNull('product_id')
+                ->pluck('product_id')
+                ->unique()
+                ->values();
+
+            if ($productIds->isNotEmpty()) {
+                $resourcesQuery->where(function ($outer) use ($productIds): void {
+                    foreach ($productIds as $productId) {
+                        $clinicIds = PartnerProduct::query()
+                            ->where('product_id', $productId)
+                            ->where('active', true)
+                            ->whereHas('clinics')
+                            ->with('clinics:id')
+                            ->get()
+                            ->flatMap(fn ($partnerProduct) => $partnerProduct->clinics->pluck('id'))
+                            ->unique()
+                            ->values();
+
+                        if ($clinicIds->isEmpty()) {
+                            $outer->whereRaw('0 = 1');
+
+                            continue;
+                        }
+
+                        $outer->orWhereHas('clinicDepartment', fn ($dept) => $dept->whereIn('clinic_id', $clinicIds));
+                    }
+                });
+            }
+        }
+
         /**
          * Include only resources that have at least one shift that overlaps the requested window.
          *
@@ -458,7 +495,34 @@ class ResourcePlanningMonitorController extends Controller
             });
         });
 
-        return $resourcesQuery->get();
+        $resources = $resourcesQuery->get();
+
+        return $this->attachClinicBookableProductIds($resources);
+    }
+
+    /**
+     * @param  Collection<int, resource>  $resources
+     * @return Collection<int, resource>
+     */
+    private function attachClinicBookableProductIds($resources)
+    {
+        $clinicIds = $resources
+            ->map(fn (Resource $resource) => $resource->clinicDepartment?->clinic_id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productIdsByClinic = PartnerProductBookingValidator::activeProductIdsByClinicIds($clinicIds);
+
+        foreach ($resources as $resource) {
+            $clinicId = $resource->clinicDepartment?->clinic_id;
+            $resource->setAttribute(
+                'clinic_bookable_product_ids',
+                $clinicId ? ($productIdsByClinic[$clinicId] ?? []) : []
+            );
+        }
+
+        return $resources;
     }
 
     private function getShifts($resources, CarbonImmutable $start, CarbonImmutable $end)
@@ -711,6 +775,7 @@ class ResourcePlanningMonitorController extends Controller
             ],
             'order_items' => $orderItems->map(fn ($item) => [
                 'id'                     => $item->id,
+                'product_id'             => $item->product_id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
                 'person_name'            => $item->person?->name ?? null,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
@@ -788,6 +853,7 @@ class ResourcePlanningMonitorController extends Controller
             ],
             'order_items' => $orderItems->map(fn ($item) => [
                 'id'                     => $item->id,
+                'product_id'             => $item->product_id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
                 'person_name'            => $item->person?->name ?? null,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
@@ -825,6 +891,11 @@ class ResourcePlanningMonitorController extends Controller
             'active_product_ids'         => $partnerProducts->where('active', true)->pluck('product_id')->filter()->unique()->values()->toArray(),
             // Product IDs for which this resource has any (active or inactive) partner product link
             'restricted_product_ids'     => $partnerProducts->pluck('product_id')->filter()->unique()->values()->toArray(),
+            // Product IDs bookable at this resource's clinic (matches PartnerProductBookingValidator)
+            'clinic_bookable_product_ids' => $r->getAttribute('clinic_bookable_product_ids')
+                ?? ($r->clinicDepartment?->clinic_id
+                    ? PartnerProductBookingValidator::activeProductIdsForClinic($r->clinicDepartment->clinic_id)
+                    : []),
         ];
     }
 }

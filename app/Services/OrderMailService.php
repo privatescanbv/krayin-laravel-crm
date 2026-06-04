@@ -255,11 +255,7 @@ class OrderMailService
 
     protected function renderItemsTable(Order $order, ?int $filterPersonId = null): string
     {
-        $items = collect($order->orderItems);
-
-        if ($filterPersonId !== null) {
-            $items = $items->where('person_id', $filterPersonId)->values();
-        }
+        $items = $order->displayableOrderItems($filterPersonId);
 
         if ($items->isEmpty()) {
             return '<p>Er zijn nog geen orderregels toegevoegd.</p>';
@@ -279,15 +275,7 @@ class OrderMailService
 
     protected function renderAppointmentsByPerson(Order $order, ?int $filterPersonId = null): string
     {
-        $items = $order->orderItems ?: collect();
-
-        if (! $items instanceof Collection) {
-            $items = collect($items);
-        }
-
-        if ($filterPersonId !== null) {
-            $items = $items->where('person_id', $filterPersonId)->values();
-        }
+        $items = $order->displayableOrderItems($filterPersonId);
 
         if ($items->isEmpty()) {
             return '<p>Er zijn nog geen afspraken ingepland.</p>';

@@ -175,7 +175,7 @@ class OrderRepository extends Repository
 
     public function resolveClinicDepartmentForOrder(Order $order): ?ClinicDepartment
     {
-        return $order->orderItems()->first()?->resourceOrderItem()->with('resource')->first()?->resource->clinicDepartment ?? null;
+        return $order->activeOrderItems()->first()?->resourceOrderItem()->with('resource')->first()?->resource->clinicDepartment ?? null;
     }
 
     /**
@@ -185,7 +185,7 @@ class OrderRepository extends Repository
      */
     private function resolveClinicForOrder(Order $order): ?Clinic
     {
-        return $order->orderItems()->first()?->resourceOrderItem()->with('resource.clinicDepartment.clinic')->first()?->resource->clinicDepartment?->clinic ?? null;
+        return $order->activeOrderItems()->first()?->resourceOrderItem()->with('resource.clinicDepartment.clinic')->first()?->resource->clinicDepartment?->clinic ?? null;
     }
 
     /**
@@ -272,14 +272,7 @@ class OrderRepository extends Repository
 
         $best = null;
 
-        foreach ($order->orderItems as $orderItem) {
-            if ($orderItem->status === OrderItemStatus::LOST) {
-                continue;
-            }
-
-            if ((int) ($orderItem->person_id ?? 0) !== $personId) {
-                continue;
-            }
+        foreach ($order->displayableOrderItems($personId) as $orderItem) {
 
             foreach ($orderItem->resourceOrderItems as $resourceOrderItem) {
                 if (! $resourceOrderItem->from) {
@@ -314,12 +307,8 @@ class OrderRepository extends Repository
     private function prepareAppointmentsByPerson(Order $order, ?int $filterPersonId = null): array
     {
         $appointmentsByPerson = [];
-        $items = $order->orderItems;
 
-        foreach ($items as $item) {
-            if ($filterPersonId !== null && $item->person_id !== $filterPersonId) {
-                continue;
-            }
+        foreach ($order->displayableOrderItems($filterPersonId) as $item) {
 
             $personId = $item->person_id ?? 'unknown';
             $personName = $item->person->name ?? 'Onbekend';

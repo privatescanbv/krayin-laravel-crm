@@ -1,22 +1,3 @@
-@php
-    use Illuminate\Support\Collection;
-
-    $items = $order->orderItems ?? collect();
-
-    if (! $items instanceof Collection) {
-        $items = collect($items);
-    }
-
-    $filterPersonId = $personId ?? null;
-    if ($filterPersonId) {
-        $items = $items->where('person_id', $filterPersonId)->values();
-    }
-
-    $totalPrice = $filterPersonId
-        ? $items->sum('total_price')
-        : ($order->total_price ?? 0);
-@endphp
-
 @if ($items->isEmpty())
     <p>Er zijn nog geen orderregels toegevoegd.</p>
 @else
@@ -55,4 +36,3 @@
         </tfoot>
     </table>
 @endif
-

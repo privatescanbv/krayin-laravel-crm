@@ -68,7 +68,7 @@
             <x-adminc::components.entity-navigation-menu
                 :activitiesCount="$activitiesCount"
                 :showOrders="false"
-                :showAnamnesis="false"
+                :showAnamnesis="true"
                 :showMarketing="false"
                 :showAfletteren="true"
                 :showPayments="true"
@@ -128,6 +128,14 @@
 
             <div v-else-if="leadDetailSection === 'gvl'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::orders.view.tab-gvl', ['order' => $order, 'personsWithAnamnesis' => $personsWithAnamnesis ?? []])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('admin::leads.view.anamnese-with-override', [
+                    'entity' => $order,
+                    'entityType' => 'order',
+                    'persons' => $order->salesLead?->persons ?? collect(),
+                ])
             </div>
         </div>
 
@@ -456,7 +464,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'afletteren', 'betalingen', 'gvl'];
+                                const validSections = ['algemeen', 'activiteiten', 'afletteren', 'betalingen', 'gvl', 'anamnese'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

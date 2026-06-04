@@ -153,7 +153,11 @@
             </div>
 
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('admin::leads.view.anamnese', ['anamneses' => $salesLead->anamnesis, 'persons' => $salesLead->persons])
+                @include('admin::leads.view.anamnese-with-override', [
+                    'entity' => $salesLead,
+                    'entityType' => 'sales',
+                    'persons' => $salesLead->persons,
+                ])
             </div>
 
             <div v-else-if="leadDetailSection === 'marketing'" class="flex w-full flex-col gap-4 rounded-lg">

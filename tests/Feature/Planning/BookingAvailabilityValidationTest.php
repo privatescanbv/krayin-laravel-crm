@@ -14,43 +14,15 @@ beforeEach(function () {
     $this->actingAs($user, 'user');
 });
 
-// ---------------------------------------------------------------------------
-// Helper: create a resource with a shift that covers the given date,
-//         with availability windows on every weekday (1-7) from 09:00-17:00.
-// ---------------------------------------------------------------------------
-function resourceWithShiftCovering(Carbon $date, bool $allowOutside = false): Resource
-{
-    $resource = Resource::factory()->create([
-        'allow_outside_availability' => $allowOutside,
-    ]);
-
-    Shift::factory()->create([
-        'resource_id'         => $resource->id,
-        'period_start'        => $date->copy()->subDay()->toDateString(),
-        'period_end'          => null, // infinite
-        'available'           => true,
-        'weekday_time_blocks' => [
-            1 => [['from' => '09:00', 'to' => '17:00']],
-            2 => [['from' => '09:00', 'to' => '17:00']],
-            3 => [['from' => '09:00', 'to' => '17:00']],
-            4 => [['from' => '09:00', 'to' => '17:00']],
-            5 => [['from' => '09:00', 'to' => '17:00']],
-            6 => [['from' => '09:00', 'to' => '17:00']],
-            7 => [['from' => '09:00', 'to' => '17:00']],
-        ],
-    ]);
-
-    return $resource->fresh('shifts');
-}
-
 // ===========================================================================
 // OrderItemPlanningController::book()  — route: admin.planning.order_item.book
 // ===========================================================================
 
 test('booking inside shift hours is allowed when allow_outside_availability is false', function () {
     $date = Carbon::tomorrow()->setTime(10, 0);
-    $resource = resourceWithShiftCovering($date);
     $orderItem = OrderItem::factory()->create();
+    $resource = resourceWithShiftCovering($date);
+    attachPartnerProductForOrderItemAndResource($orderItem, $resource);
 
     $response = $this->postJson(
         route('admin.planning.order_item.book', ['orderItemId' => $orderItem->id]),
@@ -87,8 +59,9 @@ test('booking outside shift hours is blocked when allow_outside_availability is 
 
 test('booking outside shift hours is allowed when allow_outside_availability is true', function () {
     $date = Carbon::tomorrow()->setTime(18, 0);
-    $resource = resourceWithShiftCovering($date, allowOutside: true);
     $orderItem = OrderItem::factory()->create();
+    $resource = resourceWithShiftCovering($date, allowOutside: true);
+    attachPartnerProductForOrderItemAndResource($orderItem, $resource);
 
     $response = $this->postJson(
         route('admin.planning.order_item.book', ['orderItemId' => $orderItem->id]),
@@ -146,8 +119,9 @@ test('booking on a day with no shift windows is blocked when allow_outside_avail
 });
 
 test('booking is allowed when resource has no shifts configured', function () {
-    $resource = Resource::factory()->create(['allow_outside_availability' => false]);
     $orderItem = OrderItem::factory()->create();
+    $resource = Resource::factory()->create(['allow_outside_availability' => false]);
+    attachPartnerProductForOrderItemAndResource($orderItem, $resource);
 
     $date = Carbon::tomorrow()->setTime(18, 0);
 

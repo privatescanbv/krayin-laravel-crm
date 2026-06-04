@@ -32,6 +32,7 @@
 
                 return [
                     'id' => $item->id,
+                    'product_id' => $item->product_id,
                     'product_name' => $item->getProductName() ?: 'Onbekend product',
                     'person_name' => $item->person?->name ?? null,
                     'required_resource_type' => $item->resolvedResourceTypeName(),
@@ -309,16 +310,31 @@
                         return true;
                     },
                     /**
-                     * Resources passend bij het geselecteerde orderregel (zelfde resource_type).
-                     * Fallback: alle resources als er geen match is (bijv. filter), zodat de gebruiker kan kiezen.
+                     * Resources passend bij het geselecteerde orderregel.
+                     * Toon alleen resources met een actief partner product voor dit product.
+                     * Resources zonder actief partner product voor dit product worden nooit getoond.
                      */
                     bookingResourceOptions() {
                         const req = this.selectedOrderItem?.required_resource_type;
-                        if (!req) {
-                            return this.resources;
+                        const productId = this.selectedOrderItem?.product_id ?? null;
+
+                        let candidates = this.resources;
+
+                        // Filter op resource_type
+                        if (req) {
+                            const byType = candidates.filter((r) => r.resource_type === req);
+                            if (byType.length > 0) candidates = byType;
                         }
-                        const filtered = this.resources.filter((r) => r.resource_type === req);
-                        return filtered.length > 0 ? filtered : this.resources;
+
+                        // Toon alleen resources met een actief partner product voor dit product
+                        if (productId) {
+                            candidates = candidates.filter((r) => {
+                                const active = r.active_product_ids ?? [];
+                                return active.includes(productId);
+                            });
+                        }
+
+                        return candidates;
                     }
                 },
                 mounted() {

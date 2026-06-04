@@ -58,6 +58,26 @@ test('product search response has correct structure', function () {
         ->and($firstItem['name'])->toBe($product->name);
 });
 
+test('inactive products are excluded from search results', function () {
+    $active = Product::factory()->create(['name' => 'MRI Scan', 'active' => true]);
+    $inactive = Product::factory()->create(['name' => 'MRI Scan Inactive', 'active' => false]);
+
+    $response = $this->performSearch('admin.products.search', ['query' => 'MRI']);
+
+    $this->assertEntityFound($response, $active->id);
+    $this->assertEntityNotFound($response, $inactive->id);
+});
+
+test('inactive products are excluded when searching without query', function () {
+    $active = Product::factory()->create(['name' => 'Active Product', 'active' => true]);
+    $inactive = Product::factory()->create(['name' => 'Inactive Product', 'active' => false]);
+
+    $response = $this->performSearch('admin.products.search');
+
+    $this->assertEntityFound($response, $active->id);
+    $this->assertEntityNotFound($response, $inactive->id);
+});
+
 test('product search is case insensitive', function () {
     $product1 = Product::factory()->create(['name' => 'MRI Scan']);
     $product2 = Product::factory()->create(['name' => 'mri scan with contrast']);

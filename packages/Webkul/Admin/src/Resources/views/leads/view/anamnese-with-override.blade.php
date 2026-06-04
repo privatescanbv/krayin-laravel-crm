@@ -64,6 +64,9 @@
                     </div>
 
                     <div class="flex items-center gap-2">
+                        @php
+                            $returnUrlAnamnese = strtok(url()->current(), '#') . '#anamnese';
+                        @endphp
                         @if ($isOrder)
                             @if ($hasOverride)
                                 <form method="POST" action="{{ route('admin.anamnesis.revert-override') }}" class="inline">
@@ -71,6 +74,7 @@
                                     @method('DELETE')
                                     <input type="hidden" name="order_id" value="{{ $entity->id }}">
                                     <input type="hidden" name="person_id" value="{{ $person->id }}">
+                                    <input type="hidden" name="return_url" value="{{ $returnUrlAnamnese }}">
                                     <button type="submit"
                                             class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                                             onclick="return confirm('Weet u zeker dat u de order-specifieke anamnese wilt verwijderen en wilt terugvallen op de Sales/Lead anamnese?')"
@@ -84,6 +88,7 @@
                                     @csrf
                                     <input type="hidden" name="order_id" value="{{ $entity->id }}">
                                     <input type="hidden" name="person_id" value="{{ $person->id }}">
+                                    <input type="hidden" name="return_url" value="{{ $returnUrlAnamnese }}">
                                     @if ($personAnamnesis)
                                         <input type="hidden" name="source_anamnesis_id" value="{{ $personAnamnesis->id }}">
                                     @endif
@@ -103,6 +108,7 @@
                                     @method('DELETE')
                                     <input type="hidden" name="sales_id" value="{{ $entity->id }}">
                                     <input type="hidden" name="person_id" value="{{ $person->id }}">
+                                    <input type="hidden" name="return_url" value="{{ $returnUrlAnamnese }}">
                                     <button type="submit"
                                             class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                                             onclick="return confirm('Weet u zeker dat u de sales-specifieke anamnese wilt verwijderen en wilt terugvallen op de Lead anamnese?')"
@@ -116,6 +122,7 @@
                                     @csrf
                                     <input type="hidden" name="sales_id" value="{{ $entity->id }}">
                                     <input type="hidden" name="person_id" value="{{ $person->id }}">
+                                    <input type="hidden" name="return_url" value="{{ $returnUrlAnamnese }}">
                                     @if ($personAnamnesis)
                                         <input type="hidden" name="source_anamnesis_id" value="{{ $personAnamnesis->id }}">
                                     @endif

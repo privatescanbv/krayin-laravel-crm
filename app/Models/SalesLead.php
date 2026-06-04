@@ -9,6 +9,7 @@ use BackedEnum;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -438,6 +439,7 @@ class SalesLead extends Model
                     ! empty($this->lead_id),
                     fn ($query) => $query->orWhere('lead_id', $this->lead_id)
                 )
+                ->with('gvlForms')
                 ->get();
         } catch (Exception $e) {
             Log::warning('Could not load anamnesis for sales', ['sales_id' => $this->id, 'error' => $e->getMessage()]);
@@ -478,16 +480,11 @@ class SalesLead extends Model
         return null;
     }
 
-    protected function getLeadForScoring(): ?Lead
-    {
-        return $this->lead;
-    }
-
     /**
      * Resolve the effective anamnesis per person for this sales lead.
      * Per person: sales-level override wins over lead-level.
      */
-    public function resolveAnamnesisPerPerson(): \Illuminate\Support\Collection
+    public function resolveAnamnesisPerPerson(): Collection
     {
         $allAnamneses = $this->anamnesis;
         $persons = $this->persons;
@@ -505,6 +502,11 @@ class SalesLead extends Model
                 'has_override' => $effective?->sales_id === $this->id,
             ]];
         });
+    }
+
+    protected function getLeadForScoring(): ?Lead
+    {
+        return $this->lead;
     }
 
     /**

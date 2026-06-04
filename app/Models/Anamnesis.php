@@ -7,6 +7,7 @@ use App\Enums\FormType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Models\Person;
@@ -84,9 +85,6 @@ class Anamnesis extends Model
         'sales_id',
         'order_id',
         'person_id',
-        'gvl_form_id',
-        'gvl_form_status',
-        'gvl_form_type',
         'created_by',
         'updated_by',
     ];
@@ -120,8 +118,6 @@ class Anamnesis extends Model
         'person_id'               => 'integer',
         'created_by'              => 'integer',
         'updated_by'              => 'integer',
-        'gvl_form_status'         => FormStatus::class,
-        'gvl_form_type'           => FormType::class,
     ];
 
     public static function getFieldsToCompare(): array
@@ -170,17 +166,12 @@ class Anamnesis extends Model
             'heart_attack_risk'          => 'admin::app.anamnesis.fields.heart_attack_risk',
             'active'                     => 'admin::app.anamnesis.fields.active',
             'advice_notes'               => 'admin::app.anamnesis.fields.advice_notes',
-            'gvl_form_status'            => 'admin::app.anamnesis.fields.gvl_form_status',
         ];
     }
 
     protected static function booted(): void
     {
         static::saving(function (self $model) {
-            if (! empty($model->gvl_form_id) && $model->gvl_form_status === null) {
-                $model->gvl_form_status = FormStatus::New;
-            }
-
             // Enforce: at least one of order_id, sales_id, or lead_id must be filled.
             if (empty($model->order_id) && empty($model->sales_id) && empty($model->lead_id)) {
                 throw ValidationException::withMessages([
@@ -245,12 +236,32 @@ class Anamnesis extends Model
         return $this->person?->name ?? $this->order?->title ?? $this->sales?->name ?? $this->lead?->title ?? 'Onbekend';
     }
 
-    public function getGvlFormLinkAttribute(): ?string
+    public function gvlForms(): HasMany
     {
-        if (empty($this->gvl_form_id)) {
-            return null;
+        return $this->hasMany(AnamnesisGvlForm::class);
+    }
+
+    public function getLatestGvlFormAttribute(): ?AnamnesisGvlForm
+    {
+        if ($this->relationLoaded('gvlForms')) {
+            return $this->gvlForms->sortByDesc('id')->first();
         }
 
-        return rtrim(config('services.portal.patient.web_url'), '/').'/patient/forms/'.$this->gvl_form_id.'/step/1';
+        return $this->gvlForms()->latest()->first();
+    }
+
+    public function getGvlFormLinkAttribute(): ?string
+    {
+        return $this->latestGvlForm?->gvl_form_link;
+    }
+
+    public function getGvlFormStatusAttribute(): ?FormStatus
+    {
+        return $this->latestGvlForm?->gvl_form_status;
+    }
+
+    public function getGvlFormTypeAttribute(): ?FormType
+    {
+        return $this->latestGvlForm?->gvl_form_type;
     }
 }

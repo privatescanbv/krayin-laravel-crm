@@ -23,13 +23,17 @@
                             <a href="{{ request('return_url') }}" class="text-activity-note-text hover:underline">
                                 ← Terug
                             </a>
-                        @elseif ($anamnesis->lead_id)
-                            <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}" class="text-activity-note-text hover:underline">
-                                ← Terug naar Lead
+                        @elseif ($anamnesis->order_id)
+                            <a href="{{ route('admin.orders.view', $anamnesis->order_id) }}#anamnese" class="text-activity-note-text hover:underline">
+                                ← Terug naar Order
                             </a>
-                        @else
-                            <a href="{{ route('admin.sales-leads.view', $anamnesis->sales_id) }}" class="text-activity-note-text hover:underline">
+                        @elseif ($anamnesis->sales_id)
+                            <a href="{{ route('admin.sales-leads.view', $anamnesis->sales_id) }}#anamnese" class="text-activity-note-text hover:underline">
                                 ← Terug naar Sales
+                            </a>
+                        @elseif ($anamnesis->lead_id)
+                            <a href="{{ route('admin.leads.view', $anamnesis->lead_id) }}#anamnese" class="text-activity-note-text hover:underline">
+                                ← Terug naar Lead
                             </a>
                         @endif
                     </div>
@@ -107,18 +111,10 @@
                         </div>
 
                         <div class="mb-4">
-
-                            <x-admin::gvl-form-link
-                                :gvlFormLink="$anamnesis->gvl_form_link"
-                                :gvlFormStatus="$anamnesis->gvl_form_status"
-                                :gvlFormType="$anamnesis->gvl_form_type"
-                                :attachUrl="route('admin.anamnesis.gvl-form.attach', $anamnesis->id)"
-                                :detachUrl="route('admin.anamnesis.gvl-form.detach', $anamnesis->id)"
-                                :entityId="$anamnesis->id"
-                                entityType="anamnesis"
-                                :personId="$anamnesis->person_id"
-                                :personHasPortalAccount="!empty($anamnesis->person?->keycloak_user_id)"
+                            <x-adminc::anamnesis.gvl-forms-list
+                                :anamnesis="$anamnesis"
                                 :defaultFormType="\App\Enums\FormType::defaultForAnamnesis($anamnesis)->value"
+                                :personHasPortalAccount="!empty($anamnesis->person?->keycloak_user_id)"
                             />
                         </div>
 

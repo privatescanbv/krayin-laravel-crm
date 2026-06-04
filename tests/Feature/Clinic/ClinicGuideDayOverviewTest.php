@@ -9,6 +9,7 @@ use App\Enums\PipelineStage;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -407,15 +408,15 @@ test('clinic guide shows gvl_form_link when form status is completed', function 
     ]);
     createClinicLinkedOrderItem($order->id, $person->id);
 
-    Anamnesis::query()
+    $anamnesis = Anamnesis::query()
         ->where('sales_id', $salesLead->id)
         ->where('person_id', $person->id)
-        ->firstOrFail()
-        ->update([
-            'gvl_form_id'     => 99,
-            'gvl_form_link'   => 'https://form.example.com/test-gvl',
-            'gvl_form_status' => FormStatus::Completed->value,
-        ]);
+        ->firstOrFail();
+    AnamnesisGvlForm::create([
+        'anamnesis_id'    => $anamnesis->id,
+        'gvl_form_id'     => '99',
+        'gvl_form_status' => FormStatus::Completed,
+    ]);
 
     $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
 
@@ -436,15 +437,15 @@ test('clinic guide hides gvl_form_link when form status is not completed', funct
     ]);
     createClinicLinkedOrderItem($order->id, $person->id);
 
-    Anamnesis::query()
+    $anamnesis2 = Anamnesis::query()
         ->where('sales_id', $salesLead->id)
         ->where('person_id', $person->id)
-        ->firstOrFail()
-        ->update([
-            'gvl_form_id'     => 100,
-            'gvl_form_link'   => 'https://form.example.com/test-gvl',
-            'gvl_form_status' => FormStatus::Step1_completed->value,
-        ]);
+        ->firstOrFail();
+    AnamnesisGvlForm::create([
+        'anamnesis_id'    => $anamnesis2->id,
+        'gvl_form_id'     => '100',
+        'gvl_form_status' => FormStatus::Step1_completed,
+    ]);
 
     $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
 

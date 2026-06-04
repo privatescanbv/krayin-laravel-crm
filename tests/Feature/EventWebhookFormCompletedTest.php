@@ -11,6 +11,7 @@ use App\Events\PatientFormStatusUpdatedEvent;
 use App\Listeners\CreateFormReviewTask;
 use App\Listeners\UpdateAnamnesisFormStatus;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
@@ -112,12 +113,12 @@ test('CreateFormReviewTask listener creates task activity with 1-day deadline', 
     $lead = Lead::factory()->create();
     $formId = 'form-abc-123';
 
-    Anamnesis::factory()->create([
-        'gvl_form_id' => $formId,
-        'lead_id'     => $lead->id,
-        'person_id'   => $person->id,
-        'sales_id'    => null,
+    $anamnesis = Anamnesis::factory()->create([
+        'lead_id'   => $lead->id,
+        'person_id' => $person->id,
+        'sales_id'  => null,
     ]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $anamnesis->id, 'gvl_form_id' => $formId]);
 
     $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
     $listener = app(CreateFormReviewTask::class);
@@ -152,12 +153,12 @@ test('CreateFormReviewTask listener links task activity to active order before l
     ]);
     $formId = 'form-lead-123';
 
-    Anamnesis::factory()->create([
-        'gvl_form_id' => $formId,
-        'lead_id'     => $lead->id,
-        'person_id'   => $person->id,
-        'sales_id'    => $salesLead->id,
+    $anamnesis = Anamnesis::factory()->create([
+        'lead_id'   => $lead->id,
+        'person_id' => $person->id,
+        'sales_id'  => $salesLead->id,
     ]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $anamnesis->id, 'gvl_form_id' => $formId]);
 
     $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
     $listener = app(CreateFormReviewTask::class);
@@ -189,12 +190,12 @@ test('CreateFormReviewTask listener links task activity to active order before s
     ]);
     $formId = 'form-sales-123';
 
-    Anamnesis::factory()->create([
-        'gvl_form_id' => $formId,
-        'lead_id'     => null,
-        'person_id'   => $person->id,
-        'sales_id'    => $salesLead->id,
+    $anamnesis = Anamnesis::factory()->create([
+        'lead_id'   => null,
+        'person_id' => $person->id,
+        'sales_id'  => $salesLead->id,
     ]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $anamnesis->id, 'gvl_form_id' => $formId]);
 
     $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
     $listener = app(CreateFormReviewTask::class);
@@ -224,12 +225,12 @@ test('CreateFormReviewTask listener falls back to lead_id when no active order e
     ]);
     $formId = 'form-sales-fallback-123';
 
-    Anamnesis::factory()->create([
-        'gvl_form_id' => $formId,
-        'lead_id'     => $lead->id,
-        'person_id'   => $person->id,
-        'sales_id'    => $salesLead->id,
+    $anamnesis = Anamnesis::factory()->create([
+        'lead_id'   => $lead->id,
+        'person_id' => $person->id,
+        'sales_id'  => $salesLead->id,
     ]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $anamnesis->id, 'gvl_form_id' => $formId]);
 
     $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
     $listener = app(CreateFormReviewTask::class);
@@ -262,12 +263,12 @@ test('CreateFormReviewTask listener finds active order via lead when anamnesis h
     ]);
     $formId = 'form-lead-order-123';
 
-    Anamnesis::factory()->create([
-        'gvl_form_id' => $formId,
-        'lead_id'     => $lead->id,
-        'person_id'   => $person->id,
-        'sales_id'    => null,
+    $anamnesis = Anamnesis::factory()->create([
+        'lead_id'   => $lead->id,
+        'person_id' => $person->id,
+        'sales_id'  => null,
     ]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $anamnesis->id, 'gvl_form_id' => $formId]);
 
     $event = new PatientFormCompletedEvent($person, $formId, FormType::PrivateScan);
     app(CreateFormReviewTask::class)->handle($event);
@@ -303,17 +304,20 @@ test('UpdateAnamnesisFormStatus listener updates gvl_form_status on matching ana
     $formId = 'form-status-123';
 
     $anamnesis = Anamnesis::factory()->create([
+        'lead_id'  => $lead->id,
+        'sales_id' => null,
+    ]);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id'    => $anamnesis->id,
         'gvl_form_id'     => $formId,
         'gvl_form_status' => FormStatus::New,
-        'lead_id'         => $lead->id,
-        'sales_id'        => null,
     ]);
 
     $event = new PatientFormStatusUpdatedEvent($formId, FormStatus::Step2_completed, FormType::PrivateScan);
     $listener = app(UpdateAnamnesisFormStatus::class);
     $listener->handle($event);
 
-    expect($anamnesis->fresh()->gvl_form_status)->toBe(FormStatus::Step2_completed);
+    expect($gvlForm->fresh()->gvl_form_status)->toBe(FormStatus::Step2_completed);
 });
 
 test('UpdateAnamnesisFormStatus listener sets status to completed', function () {
@@ -321,24 +325,27 @@ test('UpdateAnamnesisFormStatus listener sets status to completed', function () 
     $formId = 'form-done-456';
 
     $anamnesis = Anamnesis::factory()->create([
+        'lead_id'  => $lead->id,
+        'sales_id' => null,
+    ]);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id'    => $anamnesis->id,
         'gvl_form_id'     => $formId,
         'gvl_form_status' => FormStatus::Step3_completed,
-        'lead_id'         => $lead->id,
-        'sales_id'        => null,
     ]);
 
     $event = new PatientFormStatusUpdatedEvent($formId, FormStatus::Completed, FormType::PrivateScan);
     $listener = app(UpdateAnamnesisFormStatus::class);
     $listener->handle($event);
 
-    expect($anamnesis->fresh()->gvl_form_status)->toBe(FormStatus::Completed);
+    expect($gvlForm->fresh()->gvl_form_status)->toBe(FormStatus::Completed);
 });
 
 test('UpdateAnamnesisFormStatus listener logs error when no anamnesis found', function () {
     Log::shouldReceive('info')->zeroOrMoreTimes();
     Log::shouldReceive('error')
         ->once()
-        ->with('UpdateAnamnesisFormStatus: geen anamnese gevonden voor formulier', Mockery::on(fn ($ctx) => $ctx['form_id'] === 'form-missing-789'));
+        ->with('UpdateAnamnesisFormStatus: geen anamnese gvl-formulier gevonden', Mockery::on(fn ($ctx) => $ctx['form_id'] === 'form-missing-789'));
 
     $event = new PatientFormStatusUpdatedEvent('form-missing-789', FormStatus::Step1_completed, FormType::PrivateScan);
     $listener = app(UpdateAnamnesisFormStatus::class);

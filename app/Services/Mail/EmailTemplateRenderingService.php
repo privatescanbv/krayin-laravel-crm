@@ -5,6 +5,7 @@ namespace App\Services\Mail;
 use App\Enums\EmailTemplateCode;
 use App\Helpers\ValueNormalizer;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
@@ -453,11 +454,17 @@ class EmailTemplateRenderingService
         }
 
         if (! $anamnesis) {
-            $anamnesis = Anamnesis::where('person_id', $personId)
+            $anamnesisId = AnamnesisGvlForm::whereHas(
+                'anamnesis',
+                fn ($q) => $q->where('person_id', $personId)
+            )
                 ->whereNotNull('gvl_form_id')
-                ->where('gvl_form_id', '!=', '')
                 ->latest('updated_at')
-                ->first();
+                ->value('anamnesis_id');
+
+            if ($anamnesisId) {
+                $anamnesis = Anamnesis::find($anamnesisId);
+            }
         }
 
         if ($anamnesis && ! empty($anamnesis->gvl_form_link)) {

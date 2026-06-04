@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\SalesLead;
 use App\Services\FormService;
 use App\Services\LeadAndSalesService;
@@ -14,8 +15,12 @@ test('findRelatedEntityByFormId returns lead only when no sales found', function
     $person = Person::factory()->create();
     $lead = Lead::factory()->create();
     $anamnesis = Anamnesis::factory()->create([
-        'person_id'   => $person->id,
-        'gvl_form_id' => '1',
+        'person_id' => $person->id,
+        'lead_id'   => $lead->id,
+    ]);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '1',
     ]);
 
     $mock = Mockery::mock(LeadAndSalesService::class);
@@ -31,7 +36,7 @@ test('findRelatedEntityByFormId returns lead only when no sales found', function
 
     $service = app(FormService::class);
 
-    $result = $service->findRelatedEntityByFormId($anamnesis->gvl_form_id);
+    $result = $service->findRelatedEntityByFormId($gvlForm->gvl_form_id);
 
     expect($result['lead'])->not->toBeNull()
         ->and($result['lead']->id)->toBe($lead->id)
@@ -43,8 +48,12 @@ test('findRelatedEntityByFormId returns sales only when no lead found', function
     $person = Person::factory()->create();
     $sales = SalesLead::factory()->create();
     $anamnesis = Anamnesis::factory()->create([
-        'person_id'   => $person->id,
-        'gvl_form_id' => '2',
+        'person_id' => $person->id,
+        'sales_id'  => $sales->id,
+    ]);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '2',
     ]);
 
     $mock = Mockery::mock(LeadAndSalesService::class);
@@ -60,7 +69,7 @@ test('findRelatedEntityByFormId returns sales only when no lead found', function
 
     $service = app(FormService::class);
 
-    $result = $service->findRelatedEntityByFormId($anamnesis->gvl_form_id);
+    $result = $service->findRelatedEntityByFormId($gvlForm->gvl_form_id);
 
     expect($result['lead'])->toBeNull()
         ->and($result['sales'])->not->toBeNull()
@@ -71,8 +80,11 @@ test('findRelatedEntityByFormId returns sales only when no lead found', function
 test('findRelatedEntityByFormId returns nulls when neither lead nor sales found', function () {
     $person = Person::factory()->create();
     $anamnesis = Anamnesis::factory()->create([
-        'person_id'   => $person->id,
-        'gvl_form_id' => '3',
+        'person_id' => $person->id,
+    ]);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '3',
     ]);
 
     $mock = Mockery::mock(LeadAndSalesService::class);
@@ -88,7 +100,7 @@ test('findRelatedEntityByFormId returns nulls when neither lead nor sales found'
 
     $service = app(FormService::class);
 
-    $result = $service->findRelatedEntityByFormId($anamnesis->gvl_form_id);
+    $result = $service->findRelatedEntityByFormId($gvlForm->gvl_form_id);
 
     expect($result['lead'])->toBeNull()
         ->and($result['sales'])->toBeNull()

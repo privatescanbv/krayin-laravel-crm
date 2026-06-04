@@ -128,12 +128,14 @@ class ClinicGuideController extends Controller
                 ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords, $afbByPerson, $selectedDate) {
                     $person = $items->first()->person;
                     $anamnesis = $anamnesisRecords->firstWhere('person_id', (int) $personId);
-                    $gvlFormLink = $anamnesis?->gvl_form_link;
+                    $completedGvlForm = $anamnesis?->gvlForms
+                        ->filter(fn ($f) => $f->gvl_form_status === FormStatus::Completed)
+                        ->sortByDesc('id')
+                        ->first();
 
-                    $adminGvlLink = null;
-                    if ($gvlFormLink && $anamnesis?->gvl_form_status === FormStatus::Completed) {
-                        $adminGvlLink = GvlFormLink::adminOpenUrlForPerson($gvlFormLink, $person);
-                    }
+                    $adminGvlLink = $completedGvlForm
+                        ? GvlFormLink::adminOpenUrlForPerson($completedGvlForm->gvl_form_link, $person)
+                        : null;
 
                     $afbDocuments = ($afbByPerson->get((int) $personId) ?? collect())
                         ->map(fn ($doc) => [

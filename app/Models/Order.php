@@ -15,19 +15,19 @@ use App\Enums\PipelineStage;
 use App\Traits\HasAuditTrail;
 use BackedEnum;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 /**
  * @mixin IdeHelperOrder
@@ -410,9 +410,9 @@ class Order extends Model
                 ?? $personAnamneses->firstWhere(fn ($a) => $a->lead_id && ! $a->sales_id && ! $a->order_id);
 
             return [$person->id => [
-                'person'    => $person,
-                'anamnesis' => $effective,
-                'source'    => $effective?->source_level ?? 'lead',
+                'person'       => $person,
+                'anamnesis'    => $effective,
+                'source'       => $effective?->source_level ?? 'lead',
                 'has_override' => $effective?->order_id === $this->id,
             ]];
         });

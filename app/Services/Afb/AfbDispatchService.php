@@ -10,7 +10,7 @@ use App\Enums\PipelineStage;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
-use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -547,22 +547,22 @@ class AfbDispatchService
             ->mapWithKeys(fn ($doc) => [(int) $doc['person_id'] => $doc['patient_name'] ?? '']);
 
         foreach ($personNames->keys() as $personId) {
-            $anamnesis = Anamnesis::query()
-                ->where('person_id', $personId)
+            $gvlFormRecord = AnamnesisGvlForm::whereHas(
+                'anamnesis',
+                fn ($q) => $q->where('person_id', $personId)
+            )
+                ->where('gvl_form_status', FormStatus::Completed)
                 ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
-            if (! $anamnesis) {
+            if (! $gvlFormRecord) {
                 continue;
             }
 
-            $formId = $anamnesis->gvl_form_id;
+            $formId = $gvlFormRecord->gvl_form_id;
 
             try {
-                if ($anamnesis->gvl_form_status !== FormStatus::Completed) {
-                    continue;
-                }
 
                 $response = $this->formService->downloadForm($formId);
 

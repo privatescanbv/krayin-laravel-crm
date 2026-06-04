@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FormStatus;
 use App\Enums\FormType;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -348,16 +349,16 @@ class FormService
 
     public function findRelatedEntityByFormId(string $showFormUrl): array
     {
-        $person = Anamnesis::select('person_id')
-            ->where('gvl_form_id', $this->extractFormIdFromUrl($showFormUrl) ?? $showFormUrl)
-            ->firstOrFail();
+        $formId = $this->extractFormIdFromUrl($showFormUrl) ?? $showFormUrl;
+        $gvlForm = AnamnesisGvlForm::where('gvl_form_id', $formId)->firstOrFail();
+        $personId = Anamnesis::where('id', $gvlForm->anamnesis_id)->value('person_id');
 
-        $result = $this->leadAndSalesService->findOpenByPerson($person->person_id);
+        $result = $this->leadAndSalesService->findOpenByPerson($personId);
 
         return [
             'lead'      => $result['lead'] ?? null,
             'sales'     => $result['sales'] ?? null,
-            'person_id' => $person->person_id,
+            'person_id' => $personId,
         ];
     }
 

@@ -31,6 +31,21 @@
     :placeholder="trans('admin::app.products.create.description')"
 />
 
+<!-- Actief -->
+<div class="flex items-center gap-2 mb-2">
+    <input type="hidden" name="active" value="0"/>
+    <x-admin::form.control-group.control
+        type="checkbox"
+        name="active"
+        value="1"
+        :checked="old('active', $product->active ?? true)"
+        id="product-active"
+    />
+    <label for="product-active" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+        Actief
+    </label>
+</div>
+
 <!-- Grid met 2 kolommen: Valuta, Verkoopprijs -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-adminc::components.field
@@ -126,21 +141,7 @@
         :items='@json($selectedPartnerProducts ?? [])'
         item-edit-route="{{ rtrim(route('admin.partner_products.edit', ['id' => 0]), '0') }}{id}"
     />
-    <input type="hidden" name="active" value="0"/>
-    <x-admin::form.control-group.control
-        type="checkbox"
-        name="active"
-        value="1"
-        :label="trans('admin::app.partner_products.index.create.active')"
-        :checked="old('active', $product->active ?? 1)"
-    />
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.active')
-    </x-admin::form.control-group.label>
-
     <x-admin::form.control-group.error control-name="partner_products"/>
-
-    <x-admin::form.control-group.error control-name="active"/>
 
 </x-admin::form.control-group>
 

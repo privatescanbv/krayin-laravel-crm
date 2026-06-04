@@ -412,8 +412,6 @@ class OrderController extends SimpleEntityController
 
         $activitiesCount = $order->activities()->where('is_done', false)->count();
 
-        $personsWithAnamnesis = $this->buildOrderGvlPersonRows($order);
-
         $avbDispatchReadiness = $this->afbDispatchService->getAvbDispatchReadiness($order);
         $afbNeedsManualBanner = $avbDispatchReadiness['needs_manual_send'];
         $afbHasBatchSuccess = $this->afbDispatchService->hasSuccessfulBatchDispatchForOrder($order);
@@ -462,7 +460,6 @@ class OrderController extends SimpleEntityController
         return view('admin::orders.view', [
             'order'                => $order,
             'activitiesCount'      => $activitiesCount,
-            'personsWithAnamnesis' => $personsWithAnamnesis,
             'composeMailEmails'    => $composeMailEmails,
             'afbNeedsManualBanner' => $afbNeedsManualBanner,
             'afbHasBatchSuccess'   => $afbHasBatchSuccess,

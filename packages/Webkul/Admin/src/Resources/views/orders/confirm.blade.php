@@ -109,14 +109,9 @@
                                               class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">&ndash;</span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                        <button v-if="person.email_sent" type="button"
-                                                class="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                                                disabled>
-                                            <span>&#10003;</span> Voltooid
-                                        </button>
-                                        <button v-else type="button" @click="startPersonWizard(person)"
+                                        <button type="button" @click="startPersonWizard(person)"
                                                 class="primary-button text-xs !px-3 !py-1.5">
-                                            @{{ person.letter_saved ? 'Hervat' : 'Start' }}
+                                            @{{ person.email_sent ? 'Aanpassen' : (person.letter_saved ? 'Hervat' : 'Start') }}
                                         </button>
                                     </td>
                                 </tr>
@@ -645,7 +640,7 @@
 
                     // ---- Per-person overview ----
 
-                    startPersonWizard(person) {
+                    async startPersonWizard(person) {
                         this.selectedPerson = person;
                         this.currentStep = 0;
                         this.letterContent = '';
@@ -659,7 +654,7 @@
                         this.previewPdfBlobUrl = null;
 
                         // Load existing letter content if saved
-                        this.loadPersonLetterContent(person.id);
+                        await this.loadPersonLetterContent(person.id);
                     },
 
                     exitPersonWizard() {
@@ -671,28 +666,15 @@
 
                     async loadPersonLetterContent(personId) {
                         try {
-                            const resp = await fetch(`/admin/orders/${this.orderId}/confirmation/persons-status`, {
+                            const resp = await fetch(`/admin/orders/${this.orderId}/confirmation/person/${personId}/content`, {
                                 headers: {'Accept': 'application/json'},
                             });
-                            const data = await resp.json();
-                            const personData = (data.data || []).find(p => p.id === personId);
-                            if (personData) {
-                                // Update status in our local array
-                                const idx = this.personsStatus.findIndex(p => p.id === personId);
-                                if (idx !== -1) {
-                                    this.personsStatus.splice(idx, 1, personData);
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                if (data.data?.content) {
+                                    this.letterContent = data.data.content;
+                                    this.$nextTick(() => this.setTinyMCEContent('confirmation-letter-editor', this.letterContent));
                                 }
-                            }
-                        } catch (e) { /* non-critical */
-                        }
-
-                        // Try to load saved letter from the person confirmation
-                        try {
-                            const confirmation = this.personsStatus.find(p => p.id === personId);
-                            if (confirmation && confirmation.letter_saved) {
-                                // The letter content is stored server-side; we need to fetch it
-                                // For now we'll let the user re-generate or it will be loaded
-                                // when they previously saved via the save endpoint
                             }
                         } catch (e) { /* non-critical */
                         }

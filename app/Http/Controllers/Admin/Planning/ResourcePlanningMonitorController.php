@@ -887,11 +887,8 @@ class ResourcePlanningMonitorController extends Controller
             'has_infinite_duration'      => $r->hasInfiniteDuration(),
             'shifts_count'               => $r->shifts->count(),
             'allow_outside_availability' => (bool) $r->allow_outside_availability,
-            // Product IDs for which this resource has an active partner product link
-            'active_product_ids'         => $partnerProducts->where('active', true)->pluck('product_id')->filter()->unique()->values()->toArray(),
-            // Product IDs for which this resource has any (active or inactive) partner product link
-            'restricted_product_ids'     => $partnerProducts->pluck('product_id')->filter()->unique()->values()->toArray(),
-            // Product IDs bookable at this resource's clinic (matches PartnerProductBookingValidator)
+            // Product IDs bookable at this resource's clinic (active, non-deleted partner products).
+            // Used by resourceCanBookProduct() in the frontend and matches PartnerProductBookingValidator.
             'clinic_bookable_product_ids' => $r->getAttribute('clinic_bookable_product_ids')
                 ?? ($r->clinicDepartment?->clinic_id
                     ? PartnerProductBookingValidator::activeProductIdsForClinic($r->clinicDepartment->clinic_id)

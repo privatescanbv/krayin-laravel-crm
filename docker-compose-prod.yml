@@ -136,7 +136,7 @@ services:
       - public
 
   forms:
-    image: ghcr.io/privatescanbv/privateforms/forms:latest
+    image: ghcr.io/privatescanbv/privateforms/forms:prod
     container_name: forms
     restart: unless-stopped
     stdin_open: true

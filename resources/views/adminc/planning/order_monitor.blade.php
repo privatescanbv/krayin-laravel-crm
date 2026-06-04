@@ -88,7 +88,8 @@
 
         <script type="module">
             /**
-             * Matches PartnerProductBookingValidator: active partner product for product at resource's clinic.
+             * Returns true when the resource has an active partner product for this product.
+             * Uses clinic_bookable_product_ids supplied by the server (mapResource).
              */
             function resourceCanBookProduct(resource, productId) {
                 if (!productId) {
@@ -149,20 +150,10 @@
                             filtered = filtered.filter(r => this.filters.clinic_ids.includes(r.clinic_id));
                         }
 
-                        // Narrow resource dropdown when order items are selected in the filter bar
-                        if (this.filters.order_item_ids?.length > 0 && this.orderItems?.length > 0) {
-                            const selectedItems = this.orderItems.filter((item) =>
-                                this.filters.order_item_ids.includes(item.id)
-                            );
-                            const productIds = [...new Set(
-                                selectedItems.map((item) => item.product_id).filter((id) => id != null)
-                            )];
-                            if (productIds.length > 0) {
-                                filtered = filtered.filter((r) =>
-                                    productIds.some((productId) => resourceCanBookProduct(r, productId))
-                                );
-                            }
-                        }
+                        // Note: order_item_ids narrowing is intentionally NOT applied here.
+                        // Removing resources from this list when order items are selected causes
+                        // already-selected resources to lose their label (showing raw ID instead).
+                        // Order-item/product matching is only applied in bookingResourceOptions (modal).
 
                         return filtered.map(r => {
                             const clinic = this.clinics.find(c => c.id === r.clinic_id);
@@ -264,6 +255,12 @@
                         this.resources = data.resources || [];
                         if (data.order_items) {
                             this.orderItems = data.order_items;
+                        }
+                        // Remove selected resource IDs that are no longer in the returned list
+                        // to prevent the multiselect from showing raw IDs instead of names.
+                        if (this.filters.resource_ids.length > 0) {
+                            const available = new Set(this.resources.map(r => Number(r.id)));
+                            this.filters.resource_ids = this.filters.resource_ids.filter(id => available.has(Number(id)));
                         }
                     }
                 }

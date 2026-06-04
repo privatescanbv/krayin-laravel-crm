@@ -45,6 +45,8 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
     Route::get('persons-for-entity', 'personsForEntity')->name('admin.activities.persons-for-entity');
 
     Route::get('default-group', 'getDefaultGroupForEntity')->name('admin.activities.default-group');
+
+    Route::post('{id}/link-entity', 'linkEntity')->name('admin.activities.link-entity');
 });
 
 Route::controller(ActivityAssignmentController::class)->prefix('activities')->group(function () {

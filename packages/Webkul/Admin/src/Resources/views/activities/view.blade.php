@@ -192,24 +192,36 @@
                     <span>Bijgewerkt op:</span>
                     <span>{{ $activity->updated_at->format('d-m-Y') }}</span>
                 </div>
-                @if($activity->updater ?? $activity->creator)
                 <div class="flex justify-between">
                     <span>Bijgewerkt door:</span>
-                    <span>{{ ($activity->updater ?? $activity->creator)?->name }}</span>
+                    <span>{{ ($activity->updater ?? $activity->creator)?->name ?? '-' }}</span>
                 </div>
-                @endif
             </div>
         </div>
 
         <!-- Right Panel -->
-        @if($activity->type == ActivityType::CALL)
-            @include('admin::activities.partials.call')
-        @elseif($activity->type == ActivityType::PATIENT_MESSAGE)
-            @include('admin::activities.partials.patient-message')
-        @elseif($activity->type == ActivityType::FILE)
-            @include('admin::activities.partials.file')
-        @elseif($activity->type == ActivityType::SYSTEM)
-            @include('admin::activities.partials.system')
+        <div class="flex flex-1 flex-col gap-2">
+            @if($activity->type == ActivityType::CALL)
+                @include('admin::activities.partials.call')
+            @elseif($activity->type == ActivityType::PATIENT_MESSAGE)
+                @include('admin::activities.partials.patient-message')
+            @elseif($activity->type == ActivityType::FILE)
+                @include('admin::activities.partials.file')
+            @elseif($activity->type == ActivityType::SYSTEM)
+                @include('admin::activities.partials.system')
+            @endif
+        </div>
+
+        @if(bouncer()->hasPermission('activities.edit'))
+            <!-- Entity Link Panel -->
+            @include('admin::activities.partials.link-panel')
+            <div class="sticky top-4 flex w-[300px] max-w-full flex-col gap-2 max-sm:w-full self-start">
+                <div class="box-shadow rounded bg-white dark:bg-gray-900">
+                    <div class="flex flex-col gap-4 p-4">
+                        <v-activity-link-panel></v-activity-link-panel>
+                    </div>
+                </div>
+            </div>
         @endif
     </div>
     @pushOnce('scripts')

@@ -45,6 +45,15 @@ class User extends Authenticatable implements UserContract
         'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'last_login_at' => 'datetime',
+    ];
+
 
     /**
      * Perform a model update operation.

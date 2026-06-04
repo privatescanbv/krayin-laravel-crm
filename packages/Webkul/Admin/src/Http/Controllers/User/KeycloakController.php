@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
+use App\Actions\Users\RecordLastLogin;
 use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
 use Exception;
@@ -25,7 +26,8 @@ class KeycloakController extends Controller
      */
     public function __construct(
         protected UserRepository $userRepository,
-        protected KeycloakService $keycloakService
+        protected KeycloakService $keycloakService,
+        protected RecordLastLogin $recordLastLogin,
     ) {
     }
 
@@ -321,8 +323,12 @@ class KeycloakController extends Controller
                 return redirect()->route('admin.session.create');
             }
 
+            ($this->recordLastLogin)($user);
+
             return redirect()->to($availableNextMenu->getUrl());
         }
+
+        ($this->recordLastLogin)($user);
 
         session()->forget('url.intended');
         return redirect()->route(config('admin.home_route'));

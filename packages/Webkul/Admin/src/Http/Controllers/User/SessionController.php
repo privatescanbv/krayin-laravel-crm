@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
+use App\Actions\Users\RecordLastLogin;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -17,7 +18,8 @@ class SessionController extends Controller
      * @return void
      */
     public function __construct(
-        protected KeycloakService $keycloakService
+        protected KeycloakService $keycloakService,
+        protected RecordLastLogin $recordLastLogin,
     ) {
     }
     /**
@@ -119,8 +121,12 @@ class SessionController extends Controller
                 return redirect()->route('admin.session.create');
             }
 
+            ($this->recordLastLogin)($user);
+
             return redirect()->to($availableNextMenu->getUrl());
         }
+
+        ($this->recordLastLogin)($user);
 
         return redirect()->intended(route(config('admin.home_route')));
     }

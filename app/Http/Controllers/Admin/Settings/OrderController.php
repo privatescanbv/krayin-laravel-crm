@@ -230,6 +230,7 @@ class OrderController extends SimpleEntityController
 
                 return [
                     'id'                     => $order->id,
+                    'order_number'           => $order->order_number,
                     'title'                  => $order->title,
                     'total_price'            => $order->total_price,
                     'first_examination_at'   => $order->firstExaminationCarbon(),

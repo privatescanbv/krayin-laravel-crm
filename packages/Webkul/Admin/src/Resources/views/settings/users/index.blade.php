@@ -118,6 +118,9 @@
                                 @{{ record.status == 1 ? '@lang('admin::app.settings.users.index.active')' : '@lang('admin::app.settings.users.index.inactive')' }}
                             </span>
 
+                            <!-- Last login -->
+                            <p>@{{ record.last_login_at || '—' }}</p>
+
                             <!-- Users Creation Date -->
                             <p>@{{ record.created_at }}</p>
 

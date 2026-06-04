@@ -426,10 +426,10 @@
                                             <div class="flex flex-col min-w-0 flex-1">
                                                 <div class="flex items-center gap-2 min-w-0">
                                                     <span class="text-[10px] text-gray-500 whitespace-nowrap">
-                                                        #@{{ element.id }}
+                                                        @{{ element.order_number || ('#' + element.id) }}
                                                     </span>
                                                     <span class="text-sm font-medium truncate min-w-0">
-                                                        @{{ element.title || ('Order #' + element.id) }}
+                                                        @{{ element.title || ('Order ' + (element.order_number || element.id)) }}
                                                     </span>
                                                 </div>
                                             </div>

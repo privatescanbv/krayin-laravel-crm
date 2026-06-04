@@ -3,6 +3,7 @@
 use App\Enums\Departments;
 use App\Enums\FormType;
 use App\Enums\PipelineDefaultKeys;
+use App\Http\Controllers\Admin\AnamnesisController;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Models\Order;
@@ -98,7 +99,7 @@ test('AnamnesisOrderResolver resolveFormDepartment falls back to lead department
 });
 
 test('mapFormTypeFromDepartment maps hernia department to narcose form type', function (): void {
-    $controller = app(\App\Http\Controllers\Admin\AnamnesisController::class);
+    $controller = app(AnamnesisController::class);
     $herniaDept = Department::firstOrCreate(['name' => Departments::HERNIA->value]);
 
     expect($controller->mapFormTypeFromDepartment($herniaDept))->toBe(FormType::HerniaNarcoseForm->value);

@@ -2,6 +2,12 @@
 
 namespace App\Enums;
 
+use App\Models\Clinic;
+use App\Models\Order;
+use App\Models\SalesLead;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
+
 enum EntityType: string
 {
     case LEAD = 'lead';
@@ -83,11 +89,11 @@ enum EntityType: string
     public function getModel(): string
     {
         return match ($this) {
-            self::LEAD   => \Webkul\Lead\Models\Lead::class,
-            self::SALES  => \App\Models\SalesLead::class,
-            self::ORDER  => \App\Models\Order::class,
-            self::CLINIC => \App\Models\Clinic::class,
-            self::PERSON => \Webkul\Contact\Models\Person::class,
+            self::LEAD   => Lead::class,
+            self::SALES  => SalesLead::class,
+            self::ORDER  => Order::class,
+            self::CLINIC => Clinic::class,
+            self::PERSON => Person::class,
         };
     }
 }

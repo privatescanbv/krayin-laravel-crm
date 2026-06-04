@@ -1772,7 +1772,7 @@ class OrderController extends SimpleEntityController
      * Persons for the order GVL tab: unique persons from order lines (preserves order), otherwise sales lead persons.
      * Includes an anamnesis row when present; otherwise the tab can create one via create-and-attach GVL.
      *
-     * @return array<int, array{person: \Webkul\Contact\Models\Person, anamnesis: ?Anamnesis, lead_id: int}>
+     * @return array<int, array{person: Person, anamnesis: ?Anamnesis, lead_id: int}>
      */
     protected function buildOrderGvlPersonRows(Order $order): array
     {

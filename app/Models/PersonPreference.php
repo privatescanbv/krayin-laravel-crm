@@ -110,11 +110,11 @@ class PersonPreference extends Model
     public function getTypedValueAttribute(): mixed
     {
         return match ($this->value_type) {
-            'bool'   => (bool) $this->value,
-            'int'    => (int) $this->value,
-            'string' => (string) $this->value,
+            'bool'            => (bool) $this->value,
+            'int'             => (int) $this->value,
+            'string'          => (string) $this->value,
             'array', 'object' => $this->value,
-            default  => $this->value,
+            default           => $this->value,
         };
     }
 }

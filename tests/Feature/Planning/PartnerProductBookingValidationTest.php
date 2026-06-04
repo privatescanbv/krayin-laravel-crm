@@ -9,6 +9,7 @@ use App\Models\PartnerProduct;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
+use App\Services\Planning\PartnerProductBookingValidator;
 use Carbon\Carbon;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
@@ -36,6 +37,51 @@ test('order item book returns 422 when no active partner product for resource cl
     $response->assertStatus(422);
     expect($response->json('message'))->toContain('geen actief partnerproduct');
     $this->assertDatabaseMissing('resource_orderitem', ['orderitem_id' => $orderItem->id]);
+});
+
+test('soft deleted partner product is not bookable even when active flag is true', function () {
+    $clinic = Clinic::factory()->create();
+    $product = Product::factory()->create();
+    $department = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+    $resource = Resource::factory()->create(['clinic_department_id' => $department->id]);
+
+    $partnerProduct = PartnerProduct::factory()->create([
+        'product_id' => $product->id,
+        'active'     => true,
+    ]);
+    $partnerProduct->clinics()->sync([$clinic->id]);
+    $partnerProduct->delete();
+
+    $validator = app(PartnerProductBookingValidator::class);
+
+    expect($validator->canBook($resource, $product->id))->toBeFalse()
+        ->and(PartnerProductBookingValidator::activeProductIdsForClinic($clinic->id))
+        ->not->toContain($product->id);
+});
+
+test('order item book returns 422 when only soft deleted partner product exists for clinic', function () {
+    $date = Carbon::tomorrow()->setTime(10, 0);
+    $orderItem = OrderItem::factory()->create();
+    $resource = resourceWithShiftCovering($date);
+
+    $partnerProduct = PartnerProduct::factory()->create([
+        'product_id' => $orderItem->product_id,
+        'active'     => true,
+    ]);
+    $partnerProduct->clinics()->sync([$resource->clinicDepartment->clinic_id]);
+    $partnerProduct->delete();
+
+    $response = $this->postJson(
+        route('admin.planning.order_item.book', ['orderItemId' => $orderItem->id]),
+        [
+            'resource_id' => $resource->id,
+            'from'        => $date->toIso8601String(),
+            'to'          => $date->copy()->addHour()->toIso8601String(),
+        ]
+    );
+
+    $response->assertStatus(422);
+    expect($response->json('message'))->toContain('geen actief partnerproduct');
 });
 
 test('order item book succeeds when active partner product matches resource clinic', function () {

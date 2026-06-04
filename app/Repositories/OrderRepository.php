@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
+use App\Observers\OrderObserver;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -84,7 +85,7 @@ class OrderRepository extends Repository
 
     /**
      * When sales is lost, mark non-won linked orders as lost on the order pipeline (Privatescan or Hernia).
-     * Updates run per model so {@see \App\Observers\OrderObserver} can clear planning and set order lines to LOST.
+     * Updates run per model so {@see OrderObserver} can clear planning and set order lines to LOST.
      */
     public function cleanUpFromLostSales(string $salesId): void
     {

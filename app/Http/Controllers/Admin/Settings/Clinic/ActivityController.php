@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings\Clinic;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
@@ -86,7 +87,7 @@ class ActivityController extends Controller
      * Display a listing of the resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return AnonymousResourceCollection
      */
     public function index($id)
     {

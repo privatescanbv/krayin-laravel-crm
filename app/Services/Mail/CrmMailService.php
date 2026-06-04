@@ -6,6 +6,7 @@ use App\Enums\EmailTemplateCode;
 use App\Enums\PersonPreferenceKey;
 use App\Models\PersonPreference;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
@@ -46,7 +47,7 @@ class CrmMailService
      *
      * @return array{subject: string, html: string, template: EmailTemplate}
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException when template not found
+     * @throws ModelNotFoundException when template not found
      */
     public function renderTemplate(EmailTemplateCode $templateIdentifier, array $variables = []): array
     {

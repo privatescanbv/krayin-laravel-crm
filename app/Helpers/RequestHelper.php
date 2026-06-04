@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class RequestHelper
@@ -27,7 +28,7 @@ class RequestHelper
     /**
      * Sync a many-to-many relationship with filtered array values from request.
      *
-     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  Model  $model
      */
     public static function syncRelationFromRequest($model, string $relationName, Request $request, string $requestKey, array $default = []): void
     {

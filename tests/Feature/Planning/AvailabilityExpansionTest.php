@@ -12,6 +12,7 @@ use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
 use App\Models\SalesLead;
 use App\Models\Shift;
+use App\Repositories\ResourceRepository;
 use Carbon\CarbonImmutable;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +21,7 @@ use Webkul\Product\Models\Product;
 uses(RefreshDatabase::class);
 
 /**
- * Resource tied to a seeded active clinic (required by monitor {@see \App\Repositories\ResourceRepository::queryWithActiveClinics()}).
+ * Resource tied to a seeded active clinic (required by monitor {@see ResourceRepository::queryWithActiveClinics()}).
  */
 function resourceWithActiveClinic(): Resource
 {

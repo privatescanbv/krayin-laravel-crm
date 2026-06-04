@@ -393,7 +393,7 @@ class AfbDispatchService
     /**
      * Geeft de AFB dispatch-gereedheid terug voor weergave op de order view.
      *
-     * @return array{is_ready: bool, is_late: bool, is_all_sent: bool, needs_manual_send: bool, is_herniapoli: bool, planned_at: \Carbon\Carbon|null, reasons: list<string>}
+     * @return array{is_ready: bool, is_late: bool, is_all_sent: bool, needs_manual_send: bool, is_herniapoli: bool, planned_at: Carbon|null, reasons: list<string>}
      */
     public function getAvbDispatchReadiness(Order $order): array
     {

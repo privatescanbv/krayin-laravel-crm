@@ -6,6 +6,7 @@ use App\Models\PatientNotification;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
  * Response resource for patient notifications index endpoint.
@@ -15,7 +16,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * - meta: { current_page, per_page, total }
  *
  * @property array{
- *   notifications: \Illuminate\Support\Collection<int, PatientNotification>,
+ *   notifications: Collection<int, PatientNotification>,
  *   meta: array{current_page:int, per_page:int, total:int}
  * }|mixed $resource
  */

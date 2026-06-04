@@ -3,10 +3,12 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Throwable;
 
@@ -15,8 +17,8 @@ class ApiKeyAuth
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  Closure(Request): (Response|RedirectResponse)  $next
+     * @return Response|RedirectResponse
      */
     public function handle(Request $request, Closure $next)
     {
@@ -50,7 +52,7 @@ class ApiKeyAuth
                 try {
                     // Will throw on invalid/expired token; we don't actually need the user object here,
                     // only the fact that the token is accepted by Keycloak.
-                    /** @var \Laravel\Socialite\Two\AbstractProvider $provider */
+                    /** @var AbstractProvider $provider */
                     $provider = Socialite::driver('keycloak');
                     /** @var SocialiteUser $keycloakUser */
                     $keycloakUser = $provider->userFromToken($accessToken);

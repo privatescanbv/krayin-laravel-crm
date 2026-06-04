@@ -445,8 +445,8 @@ class ResourcePlanningMonitorController extends Controller
                 $resourcesQuery->where(function ($outer) use ($productIds): void {
                     foreach ($productIds as $productId) {
                         $clinicIds = PartnerProduct::query()
+                            ->bookable()
                             ->where('product_id', $productId)
-                            ->where('active', true)
                             ->whereHas('clinics')
                             ->with('clinics:id')
                             ->get()

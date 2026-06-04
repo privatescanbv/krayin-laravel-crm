@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ResourceDataGrid;
+use App\Models\Shift;
 use App\Repositories\ClinicDepartmentRepository;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
@@ -114,7 +115,7 @@ class ResourceController extends SimpleEntityController
     /**
      * Build a merged weekly summary of availability/unavailability.
      *
-     * @param  array<int, \App\Models\Shift>  $shifts
+     * @param  array<int, Shift>  $shifts
      * @return array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>
      */
     protected function buildMergedWeeklySummary(array $shifts): array
@@ -170,7 +171,7 @@ class ResourceController extends SimpleEntityController
      * Build per-period weekly summaries by segmenting overlapping date periods
      * into non-overlapping ranges with a constant set of active shifts.
      *
-     * @param  array<int, \App\Models\Shift>  $shifts
+     * @param  array<int, Shift>  $shifts
      * @return array<int, array{label: string, start: ?string, end: ?string, summary: array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>}>
      */
     protected function buildPeriodAwareWeeklySummaries(array $shifts, int $maxLookingForwardInMonths = 18): array

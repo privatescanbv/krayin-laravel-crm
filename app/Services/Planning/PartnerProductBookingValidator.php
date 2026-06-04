@@ -20,7 +20,7 @@ class PartnerProductBookingValidator
     public static function activeProductIdsForClinic(int $clinicId): array
     {
         return PartnerProduct::query()
-            ->where('active', true)
+            ->bookable()
             ->whereNotNull('product_id')
             ->whereHas('clinics', fn (Builder $query) => $query->where('clinics.id', $clinicId))
             ->pluck('product_id')
@@ -39,7 +39,7 @@ class PartnerProductBookingValidator
         }
 
         $rows = PartnerProduct::query()
-            ->where('active', true)
+            ->bookable()
             ->whereNotNull('product_id')
             ->whereHas('clinics', fn (Builder $query) => $query->whereIn('clinics.id', $clinicIds))
             ->with(['clinics' => fn ($query) => $query->whereIn('clinics.id', $clinicIds)->select('clinics.id')])
@@ -73,7 +73,7 @@ class PartnerProductBookingValidator
         }
 
         return PartnerProduct::forClinicAndProduct($clinicId, $productId)
-            ->where('active', true)
+            ->bookable()
             ->exists();
     }
 

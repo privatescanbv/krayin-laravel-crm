@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Pipeline;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Webkul\Lead\Models\Pipeline>
+ * @extends Factory<Pipeline>
  */
 class PipelineFactory extends Factory
 {

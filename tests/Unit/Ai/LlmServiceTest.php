@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Ai\LlmJsonParseException;
 use App\Services\Ai\LlmService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -100,7 +101,7 @@ test('parseJsonResponse throws LlmJsonParseException for invalid content', funct
     $service = new LlmService;
 
     $service->parseJsonResponse('Dit is geen JSON.');
-})->throws(\App\Services\Ai\LlmJsonParseException::class);
+})->throws(LlmJsonParseException::class);
 
 test('extractJson handles balanced braces inside strings', function () {
     $service = new LlmService;

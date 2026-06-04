@@ -239,9 +239,9 @@ abstract class AbstractSugarCRMImport extends Command
         }
 
         return match (strtolower(trim($sugarGender))) {
-            'male', 'm' => PersonGender::Man,
+            'male', 'm'   => PersonGender::Man,
             'female', 'f' => PersonGender::Female,
-            default => null,
+            default       => null,
         };
     }
 

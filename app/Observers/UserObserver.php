@@ -350,7 +350,7 @@ class UserObserver
                     'message' => $result['message'] ?? 'Unknown error',
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exception while updating user in Keycloak via observer', [
                 'user_id' => $user->id,
                 'email'   => $user->email,

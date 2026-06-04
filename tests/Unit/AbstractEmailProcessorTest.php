@@ -10,6 +10,7 @@ use App\Services\Mail\MicrosoftGraphTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
 use Tests\TestCase;
+use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
@@ -49,7 +50,7 @@ class AbstractEmailProcessorTest extends TestCase
 
     public function test_implements_inbound_email_processor_contract()
     {
-        $this->assertInstanceOf(\Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor::class, $this->processor);
+        $this->assertInstanceOf(InboundEmailProcessor::class, $this->processor);
     }
 
     public function test_process_message_handles_null_input()

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\User\Models\Role;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Webkul\User\Models\Role>
+ * @extends Factory<Role>
  */
 class RoleFactory extends Factory
 {

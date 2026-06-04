@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\FailedJobsCriticalAlert;
 use App\Mail\FailedJobsWarningAlert;
 use Illuminate\Console\Command;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -59,7 +60,7 @@ class MonitorFailedJobs extends Command
     }
 
     /**
-     * @param  \Closure(): \Illuminate\Mail\Mailable  $mailableFactory
+     * @param  \Closure(): Mailable  $mailableFactory
      */
     private function sendAlert(string $level, int $count, array $recipients, \Closure $mailableFactory): void
     {

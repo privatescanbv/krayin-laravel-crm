@@ -2,13 +2,14 @@
 
 use App\Mail\FailedJobsCriticalAlert;
 use App\Mail\FailedJobsWarningAlert;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 /**
  * Insert N fake failed_jobs rows for testing.

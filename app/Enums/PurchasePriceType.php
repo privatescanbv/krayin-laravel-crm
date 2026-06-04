@@ -2,10 +2,12 @@
 
 namespace App\Enums;
 
+use App\Models\PurchasePrice;
+
 /**
  * Discriminator voor rijen in `purchase_prices`: welke prijs-set het betreft op hetzelfde polymorfe `priceable`.
  *
- * Waarden komen één-op-één overeen met de databasekolom `type`. Het model {@see \App\Models\PurchasePrice}
+ * Waarden komen één-op-één overeen met de databasekolom `type`. Het model {@see PurchasePrice}
  * cast dit attribuut naar deze enum.
  */
 enum PurchasePriceType: string

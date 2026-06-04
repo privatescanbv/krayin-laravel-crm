@@ -160,6 +160,17 @@ class PartnerProduct extends BaseProduct
             ->whereHas('clinics', fn (Builder $query) => $query->where('clinics.id', $clinicId));
     }
 
+    /**
+     * Active, non-soft-deleted partner products eligible for planning/booking.
+     * SoftDeletes global scope also excludes deleted rows; deleted_at is explicit for clarity.
+     */
+    public function scopeBookable(Builder $query): Builder
+    {
+        return $query
+            ->where($query->getModel()->getTable().'.active', true)
+            ->whereNull($query->getModel()->getQualifiedDeletedAtColumn());
+    }
+
     public function getReportingOptions(): array
     {
         return ProductReports::getOptions();

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\FormStatus;
+use App\Enums\FormType;
 use App\Models\Anamnesis;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
@@ -110,15 +111,20 @@ class FormService
             throw new Exception('Lead has no email address.');
         }
 
+        $department = $lead->department;
+        $formType = ($department && $department->isHernia())
+            ? FormType::HerniaNarcoseForm->value
+            : FormType::PrivateScan->value;
+
         $formData = [
             'lead_id'         => (string) $lead->id,
             'firstname'       => $lead->first_name ?: '-',
             'lastname'        => $lead->last_name ?: '-',
             'fields'          => $fields,
+            'form_type'       => $formType,
         ];
 
         $url = $this->buildApiUrl('/api/leads/forms');
-
         Log::info('FormService: Creating diagnosis form for lead', [
             'lead_id'      => $lead->id,
             'url'          => $url,

@@ -1472,6 +1472,20 @@ class OrderController extends SimpleEntityController
         }
     }
 
+    public function getPersonConfirmationContent(int $orderId, int $personId): JsonResponse
+    {
+        Order::findOrFail($orderId);
+        Person::findOrFail($personId);
+
+        $confirmation = OrderPersonConfirmation::where('order_id', $orderId)
+            ->where('person_id', $personId)
+            ->first();
+
+        return response()->json([
+            'data' => ['content' => $confirmation?->confirmation_letter_content ?? ''],
+        ]);
+    }
+
     public function savePersonConfirmationLetter(Request $request, int $orderId, int $personId): JsonResponse
     {
         $request->validate(['content' => 'nullable|string']);
@@ -1551,10 +1565,6 @@ class OrderController extends SimpleEntityController
         $confirmation = OrderPersonConfirmation::where('order_id', $orderId)
             ->where('person_id', $personId)
             ->first();
-
-        if ($confirmation?->isEmailSent()) {
-            return response()->json(['message' => 'Deze persoon is al bevestigd.'], 422);
-        }
 
         if ($confirmation?->isLetterSaved()) {
             try {

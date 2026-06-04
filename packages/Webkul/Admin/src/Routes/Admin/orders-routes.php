@@ -49,6 +49,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
 
     // Per-person confirmation routes (combine_order = false)
     Route::get('{orderId}/confirmation/persons-status', 'personsConfirmationStatus')->name('admin.orders.confirmation.persons-status');
+    Route::get('{orderId}/confirmation/person/{personId}/content', 'getPersonConfirmationContent')->name('admin.orders.confirmation.person.content');
     Route::get('{orderId}/confirmation/person/{personId}/template-content', 'getPersonConfirmationTemplateContent')->name('admin.orders.confirmation.person.template-content');
     Route::post('{orderId}/confirmation/person/{personId}/save', 'savePersonConfirmationLetter')->name('admin.orders.confirmation.person.save');
     Route::post('{orderId}/confirmation/person/{personId}/preview-pdf', 'previewPersonConfirmationPdf')->name('admin.orders.confirmation.person.preview-pdf');

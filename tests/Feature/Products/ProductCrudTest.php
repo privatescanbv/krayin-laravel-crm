@@ -190,7 +190,7 @@ test('can change partner product selection', function () {
         ->and($partnerProduct2->product_id)->toBe($product->id);
 });
 
-test('validation fails when partner product has different resource type', function () {
+test('partner product with different resource type is allowed (OrderItem can override resource type)', function () {
     $resourceType1 = ResourceType::factory()->create();
     $resourceType2 = ResourceType::factory()->create();
 
@@ -212,7 +212,10 @@ test('validation fails when partner product has different resource type', functi
     ];
 
     $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
-    $response->assertSessionHasErrors('partner_products');
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct->refresh();
+    expect($partnerProduct->product_id)->toBe($product->id);
 });
 
 test('validation passes when partner product has same resource type', function () {
@@ -390,7 +393,7 @@ test('can update product and remove all partner products', function () {
         ->and($partnerProduct2->product_id)->toBeNull();
 });
 
-test('validation error message details resource type mismatch with ids', function () {
+test('partner product with different resource type is linked without error (mismatch allowed)', function () {
     $resourceType1 = ResourceType::factory()->create(['name' => 'Type A']);
     $resourceType2 = ResourceType::factory()->create(['name' => 'Type B']);
 
@@ -413,15 +416,10 @@ test('validation error message details resource type mismatch with ids', functio
     ];
 
     $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
-    $response->assertSessionHasErrors(['partner_products']);
-    $errors = session('errors');
-    $message = $errors->first('partner_products');
-
-    expect($message)->toContain('Mismatched Product')
-        ->toContain('Type: Type B')
-        ->toContain('ID: '.$resourceType2->id)
-        ->toContain('Required: '.$resourceType1->id);
+    $partnerProduct->refresh();
+    expect($partnerProduct->product_id)->toBe($product->id);
 });
 
 test('validation error message details resource type without mismatch with ids', function () {

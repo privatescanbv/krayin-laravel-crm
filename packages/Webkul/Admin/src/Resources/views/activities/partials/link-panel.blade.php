@@ -16,110 +16,151 @@
 
 @pushOnce('scripts')
     <script type="text/x-template" id="v-activity-link-panel-template">
-        <div class="flex flex-col gap-4">
-            <div class="font-semibold text-gray-800 dark:text-gray-300">
-                Koppeling beheren
-            </div>
-
-            <!-- Existing links -->
-            <template v-if="linkedEntities.length">
-                <div class="flex flex-col gap-2">
-                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                        Gekoppeld aan
+        <div>
+            {{-- Compact header: primary linked entity --}}
+            <template v-if="primaryEntity">
+                <div class="flex items-center gap-3 min-w-0">
+                    {{-- Initials avatar --}}
+                    <div class="h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm select-none"
+                         style="background: linear-gradient(135deg, #0d9488, #0f766e)">
+                        @{{ initials(primaryEntity.label) }}
                     </div>
-                    <div
-                        v-for="link in linkedEntities"
-                        :key="link.type + '-' + link.id"
-                        class="flex items-center justify-between rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-                    >
-                        <a
-                            v-if="link.url"
-                            :href="link.url"
-                            class="flex items-center gap-2 flex-1 hover:opacity-80 transition-opacity text-sm"
-                        >
-                            <span class="icon-link text-gray-600 dark:text-gray-300 text-base"></span>
-                            <div>
-                                <div class="font-medium text-gray-900 dark:text-gray-100">@{{ link.label }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">@{{ link.subtitle }}</div>
-                            </div>
+
+                    {{-- Label + name --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 leading-none mb-0.5">Gekoppeld aan</div>
+                        <a :href="primaryEntity.url"
+                           class="block font-semibold text-sm text-gray-900 dark:text-gray-100 hover:underline truncate leading-tight">
+                            @{{ primaryEntity.label }}
                         </a>
-                        <button
-                            type="button"
-                            @click="unlink(link.type)"
-                            :disabled="saving"
-                            class="flex items-center gap-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 disabled:opacity-50"
-                        >
-                            <span class="icon-delete text-sm"></span>
-                            Ontkoppel
-                        </button>
                     </div>
-                </div>
-            </template>
 
-            <template v-else>
-                <div class="text-sm text-gray-400 italic dark:text-gray-500">Geen koppelingen</div>
-            </template>
+                    {{-- Type badge --}}
+                    <span class="shrink-0 inline-flex items-center rounded-md bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700 px-2 py-0.5 text-xs font-semibold">
+                        @{{ primaryEntity.subtitle }}
+                    </span>
 
-            <!-- Search to link -->
-            <div class="flex flex-col gap-2">
-                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                    Koppel aan
-                </div>
-
-                <!-- Entity type selector -->
-                <div class="flex flex-wrap gap-1">
-                    <button
-                        v-for="opt in entityOptions"
-                        :key="opt.type"
-                        type="button"
-                        @click="selectEntityType(opt.type)"
-                        :class="[
-                        'rounded px-2 py-1 text-xs font-medium border transition-colors',
-                        activeEntityType === opt.type
-                            ? 'bg-brandColor text-white border-brandColor'
-                            : 'bg-white text-gray-600 border-gray-300 hover:bg-neutral-bg dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
-                    ]"
-                    >
-                        @{{ opt.label }}
+                    {{-- Koppelen button --}}
+                    <button type="button" @click="showPanel = !showPanel"
+                            class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <span class="icon-link text-sm"></span>
+                        Koppelen
+                        <span :class="showPanel ? 'icon-up-arrow' : 'icon-down-arrow'" class="text-xs"></span>
                     </button>
                 </div>
+            </template>
 
-                <!-- Search input -->
-                <template v-if="activeEntityType">
-                    <div class="relative">
-                        <input
-                            type="text"
-                            v-model="searchTerm"
-                            @input="onSearch"
-                            class="w-full rounded border border-gray-200 px-2.5 py-2 pr-10 text-sm text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                            placeholder="Zoeken..."
-                            ref="searchInput"
-                        />
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span v-if="isSearching" class="relative">
-                            <x-admin::spinner />
-                        </span>
-                        <i v-else class="fas fa-search text-gray-500 text-sm"></i>
-                    </span>
-                    </div>
+            {{-- No link state --}}
+            <template v-else>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm text-gray-400 italic dark:text-gray-500">Geen koppeling</span>
+                    <button type="button" @click="showPanel = !showPanel"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <span class="icon-link text-sm"></span>
+                        Koppelen
+                        <span :class="showPanel ? 'icon-up-arrow' : 'icon-down-arrow'" class="text-xs"></span>
+                    </button>
+                </div>
+            </template>
 
-                    <ul v-if="results.length" class="max-h-48 overflow-y-auto divide-y divide-gray-100 border rounded bg-white shadow dark:bg-gray-800 dark:border-gray-700">
-                        <li
-                            v-for="item in results"
-                            :key="item.id"
-                            @click="linkEntity(item)"
-                            class="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 dark:text-white dark:hover:bg-gray-700"
+            {{-- Dropdown management panel --}}
+            <div v-if="showPanel" class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 shadow-sm p-4 flex flex-col gap-3">
+
+                {{-- Existing links --}}
+                <template v-if="linkedEntities.length">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="text-xs font-medium text-gray-500 uppercase tracking-wide dark:text-gray-400">Gekoppeld aan</div>
+                        <div
+                            v-for="link in linkedEntities"
+                            :key="link.type + '-' + link.id"
+                            class="flex items-center justify-between rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
                         >
-                            <span class="font-medium">@{{ item.name ?? item.title ?? ('#' + item.id) }}</span>
-                        </li>
-                    </ul>
-
-                    <div v-if="searchTerm.length >= 2 && !isSearching && results.length === 0" class="text-xs text-gray-400 dark:text-gray-500">
-                        Geen resultaten gevonden
+                            <a
+                                v-if="link.url"
+                                :href="link.url"
+                                class="flex items-center gap-2 flex-1 hover:opacity-80 transition-opacity text-sm"
+                            >
+                                <span class="icon-link text-gray-600 dark:text-gray-300 text-base"></span>
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">@{{ link.label }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">@{{ link.subtitle }}</div>
+                                </div>
+                            </a>
+                            <button
+                                type="button"
+                                @click="unlink(link.type)"
+                                :disabled="saving"
+                                class="flex items-center gap-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 disabled:opacity-50"
+                            >
+                                <span class="icon-delete text-sm"></span>
+                                Ontkoppel
+                            </button>
+                        </div>
                     </div>
                 </template>
+                <template v-else>
+                    <div class="text-sm text-gray-400 italic dark:text-gray-500">Geen koppelingen</div>
+                </template>
 
-                <div v-if="saving" class="text-xs text-gray-500 dark:text-gray-400">Opslaan...</div>
+                {{-- Search to link --}}
+                <div class="flex flex-col gap-2">
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wide dark:text-gray-400">Koppel aan</div>
+
+                    {{-- Entity type selector --}}
+                    <div class="flex flex-wrap gap-1">
+                        <button
+                            v-for="opt in entityOptions"
+                            :key="opt.type"
+                            type="button"
+                            @click="selectEntityType(opt.type)"
+                            :class="[
+                                'rounded px-2 py-1 text-xs font-medium border transition-colors',
+                                activeEntityType === opt.type
+                                    ? 'bg-brandColor text-white border-brandColor'
+                                    : 'bg-white text-gray-600 border-gray-300 hover:bg-neutral-bg dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                            ]"
+                        >
+                            @{{ opt.label }}
+                        </button>
+                    </div>
+
+                    {{-- Search input --}}
+                    <template v-if="activeEntityType">
+                        <div class="relative">
+                            <input
+                                type="text"
+                                v-model="searchTerm"
+                                @input="onSearch"
+                                class="w-full rounded border border-gray-200 px-2.5 py-2 pr-10 text-sm text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                placeholder="Zoeken..."
+                                ref="searchInput"
+                            />
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span v-if="isSearching" class="relative">
+                                    <x-admin::spinner />
+                                </span>
+                                <i v-else class="fas fa-search text-gray-500 text-sm"></i>
+                            </span>
+                        </div>
+
+                        <ul v-if="results.length" class="max-h-48 overflow-y-auto divide-y divide-gray-100 border rounded bg-white shadow dark:bg-gray-800 dark:border-gray-700">
+                            <li
+                                v-for="item in results"
+                                :key="item.id"
+                                @click="linkEntity(item)"
+                                class="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 dark:text-white dark:hover:bg-gray-700"
+                            >
+                                <span class="font-medium">@{{ item.name ?? item.title ?? ('#' + item.id) }}</span>
+                            </li>
+                        </ul>
+
+                        <div v-if="searchTerm.length >= 2 && !isSearching && results.length === 0" class="text-xs text-gray-400 dark:text-gray-500">
+                            Geen resultaten gevonden
+                        </div>
+                    </template>
+
+                    <div v-if="saving" class="text-xs text-gray-500 dark:text-gray-400">Opslaan...</div>
+                </div>
             </div>
         </div>
     </script>
@@ -131,6 +172,8 @@
             data() {
                 return {
                     activity: @json($activityData),
+
+                    showPanel: false,
 
                     activeEntityType: null,
 
@@ -210,9 +253,22 @@
 
                     return links;
                 },
+
+                primaryEntity() {
+                    return this.linkedEntities[0] ?? null;
+                },
             },
 
             methods: {
+                initials(name) {
+                    if (!name) return '?';
+                    return name.split(' ')
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map(w => w[0].toUpperCase())
+                        .join('');
+                },
+
                 selectEntityType(type) {
                     this.activeEntityType = this.activeEntityType === type ? null : type;
                     this.searchTerm = '';

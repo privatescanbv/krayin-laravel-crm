@@ -8,9 +8,6 @@ use Webkul\User\Models\User;
 
 trait HasAuditTrail
 {
-    /**
-     * Boot the trait - automatically set audit trail fields
-     */
     protected static function bootHasAuditTrail(): void
     {
         static::creating(function (Model $model) {
@@ -27,6 +24,16 @@ trait HasAuditTrail
                 $model->updated_by = $auth->id();
             }
         });
+    }
+
+    public function initializeHasAuditTrail(): void
+    {
+        $this->mergeCasts([
+            'created_by' => 'integer',
+            'updated_by' => 'integer',
+            'created_at' => 'immutable_datetime',
+            'updated_at' => 'immutable_datetime',
+        ]);
     }
 
     /**

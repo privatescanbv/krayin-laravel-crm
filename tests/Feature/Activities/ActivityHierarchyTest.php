@@ -208,3 +208,17 @@ test('person does not see activities from unrelated entities', function () {
     expect($titles)->toContain('Person own')
         ->and($titles)->not->toContain('Unrelated sales');
 });
+
+test('activity view redirects to edit preserving return_url', function () {
+    $lead = makeLeadWithStage();
+    $activity = makeActivity(['lead_id' => $lead->id]);
+    $returnUrl = '/admin/leads/view/'.$lead->id.'#activiteiten';
+
+    $response = $this->get(
+        route('admin.activities.view', $activity->id).'?return_url='.urlencode($returnUrl)
+    );
+
+    $response->assertRedirect(
+        route('admin.activities.edit', $activity->id).'?return_url='.urlencode($returnUrl)
+    );
+});

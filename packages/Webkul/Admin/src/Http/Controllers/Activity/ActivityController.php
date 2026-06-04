@@ -136,22 +136,17 @@ class ActivityController extends Controller
     }
 
     /**
-     * Display the specified activity in view mode.
+     * Display the specified activity — redirects to the combined edit screen.
      */
-    public function view(int $id): View
+    public function view(int $id): \Illuminate\Http\RedirectResponse
     {
-        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'order', 'person','files', 'portalPersons', 'group'])->findOrFail($id);
-
-        $callStatuses = CallStatus::where('activity_id', $activity->id)
-            ->with('creator')
-            ->orderByDesc('created_at')
-            ->get();
+        $activity = $this->activityRepository->findOrFail($id);
 
         if (ActivityType::PATIENT_MESSAGE->value == $activity->type?->value) {
             $this->patientMessageService->markAllMessagesAsReadForEmployee($activity);
         }
 
-        return view('admin::activities.view', compact('activity', 'callStatuses'));
+        return $this->redirectToRoutePreservingReturnUrl('admin.activities.edit', $id);
     }
 
     /**
@@ -231,7 +226,10 @@ class ActivityController extends Controller
      */
     public function edit(int $id): View
     {
-        $activity = $this->activityRepository->with('portalPersons')->findOrFail($id);
+        $activity = $this->activityRepository->with([
+            'lead', 'salesLead', 'clinic', 'order', 'person',
+            'files', 'portalPersons', 'group', 'emails',
+        ])->findOrFail($id);
 
         $groups = app(GroupRepository::class)->all();
 
@@ -261,7 +259,12 @@ class ActivityController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityType', 'canTakeover', 'callStatuses'));
+        $taskComments = \App\Models\ActivityComment::where('activity_id', $activity->id)
+            ->with('creator')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityType', 'canTakeover', 'callStatuses', 'taskComments'));
     }
 
     /**
@@ -447,10 +450,8 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
-        // If a valid return_url is provided, prefer redirecting back to it
-        $returnUrl = $this->resolveReturnUrl();
-        if ($returnUrl) {
-            return redirect($returnUrl);
+        if ($redirect = $this->redirectIfResolvedReturnUrl()) {
+            return $redirect;
         }
 
         // Fallback: when completing an activity without a return_url, redirect to the related entity
@@ -511,9 +512,8 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
-        $returnUrl = $this->resolveReturnUrl();
-        if ($returnUrl) {
-            return redirect($returnUrl);
+        if ($redirect = $this->redirectIfResolvedReturnUrl()) {
+            return $redirect;
         }
 
         if ($activity->order_id) {
@@ -551,9 +551,8 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
-        $returnUrl = $this->resolveReturnUrl();
-        if ($returnUrl) {
-            return redirect($returnUrl);
+        if ($redirect = $this->redirectIfResolvedReturnUrl()) {
+            return $redirect;
         }
 
         return redirect()->route('admin.activities.edit', $id);
@@ -657,9 +656,8 @@ class ActivityController extends Controller
 
             session()->flash('success', 'Activiteit is verwijderd.');
 
-            $returnUrl = $this->resolveReturnUrl();
-            if ($returnUrl) {
-                return redirect($returnUrl);
+            if ($redirect = $this->redirectIfResolvedReturnUrl()) {
+                return $redirect;
             }
 
             if ($leadId) {

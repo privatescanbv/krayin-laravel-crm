@@ -55,8 +55,16 @@ class ActivityResource extends JsonResource
             'updated_at'         => $this->updated_at,
         ];
 
-        // Append call status summary/details for call activities
+        // Append last comment for task activities
         $typeValue = $this->type?->value ?? $this->type;
+        if ($typeValue === 'task' && $this->resource instanceof \Webkul\Activity\Models\Activity) {
+            $data['task_comments'] = $this->resource->comments()->with('creator')->latest()->get()->map(fn ($c) => [
+                'date' => $c->created_at->locale('nl')->isoFormat('D MMM'),
+                'name' => $c->creator?->name ?? '',
+                'text' => $c->comment,
+            ])->values();
+        }
+
         if ($typeValue === 'call') {
             $items = $this->whenLoaded('callStatuses') ? $this->callStatuses : $this->callStatuses()->with('creator')->get();
 

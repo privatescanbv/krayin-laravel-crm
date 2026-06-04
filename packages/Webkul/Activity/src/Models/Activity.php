@@ -241,6 +241,14 @@ class Activity extends Model implements ActivityContract
         return $this->hasMany(CallStatus::class, 'activity_id');
     }
 
+    /**
+     * Text comments linked to this activity (used by Task type).
+     */
+    public function comments()
+    {
+        return $this->hasMany(\App\Models\ActivityComment::class, 'activity_id');
+    }
+
     public function emails()
     {
         return $this->hasMany(EmailProxy::modelClass(), 'activity_id');

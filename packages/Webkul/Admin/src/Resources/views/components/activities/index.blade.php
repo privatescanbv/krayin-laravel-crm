@@ -6,6 +6,18 @@
     'extraTypes'          => null,
 ])
 
+@php
+    use App\Enums\EntityType;
+
+    $entitySourceBadgeClasses = [
+        EntityType::PERSON->value => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        EntityType::LEAD->value   => 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+        EntityType::SALES->value  => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+        EntityType::ORDER->value  => 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
+        EntityType::CLINIC->value => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
+    ];
+@endphp
+
 {!! view_render_event('admin.components.activities.before') !!}
 
 <!-- Lead Activities Vue Component -->
@@ -51,7 +63,10 @@
                         @click="selectedType = 'action_needed'"
                     >
                         Actie nodig
-                        <span class="flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-950 dark:text-white">
+                        <span
+                            class="flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                            :class="countActionNeeded > 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-950 dark:text-white'"
+                        >
                             @{{ countActionNeeded }}
                         </span>
                     </div>
@@ -86,22 +101,22 @@
 
                     {!! view_render_event('admin.components.activities.content.types.after') !!}
 
-                    <div class="ml-auto flex items-center py-3">
+                    <div class="ml-auto flex items-center py-3" v-if="selectedType == 'all'">
                         <button
                             type="button"
                             class="flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800"
-                            :class="showCompleted ? 'border-brandColor text-brandColor bg-brandColor/5' : 'border-gray-200 text-gray-500 bg-white dark:border-gray-700 dark:bg-gray-900'"
+                            :class="!showCompleted ? 'border-blue-400 text-blue-600 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-400' : 'border-gray-200 text-gray-500 bg-white dark:border-gray-700 dark:bg-gray-900'"
                             @click="showCompleted = !showCompleted"
                         >
-                            <span v-if="!showCompleted">Toon afgerond</span>
-                            <span v-else>Verberg afgerond</span>
+                            <span v-if="showCompleted">Alleen open taken</span>
+                            <span v-else>Toon afgerond</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="p-4">
                     <!-- Sub Tabs for All -->
-                    <div v-if="selectedType == 'all'" class="mb-4 flex gap-2 overflow-x-auto pb-2">
+                    <div v-if="selectedType == 'all' || selectedType == 'action_needed'" class="mb-4 flex gap-2 overflow-x-auto pb-2">
                         <div
                             class="cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
                             :class="activityTypeFilter == 'all' ? 'bg-gray-100 border-gray-400 dark:bg-gray-800 dark:border-gray-600' : 'bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800'"
@@ -144,7 +159,7 @@
                     </div>
 
                     <!-- Show Default Activities -->
-                    <template v-if="['action_needed', 'inbox', 'planned', 'file', 'all', 'system'].includes(selectedType)">
+                    <template v-if="['action_needed', 'inbox', 'file', 'all', 'system'].includes(selectedType)">
                         <div class="animate-[on-fade_0.5s_ease-in-out]">
                             {!! view_render_event('admin.components.activities.content.activity.list.before') !!}
 
@@ -225,10 +240,6 @@
                     type: Array,
                     default: [
                         {
-                            name: 'planned',
-                            label: "{{ trans('admin::app.components.activities.index.planned') }}",
-                        },
-                        {
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
                         },
@@ -276,7 +287,9 @@
 
                     activityTypeFilter: 'all',
 
-                    showCompleted: false,
+                    showCompleted: true,
+
+                    entitySourceBadgeClasses: @json($entitySourceBadgeClasses),
 
                     typeClasses: {
                         email: 'icon-mail bg-activity-email-bg text-activity-email-text dark:!text-activity-email-text',
@@ -327,17 +340,15 @@
                     },
 
                     timezone: "{{ config('app.timezone') }}",
-
-                    returnUrl: (typeof window !== 'undefined' ? window.location.href : ''),
                 }
             },
 
             computed: {
                 countActionNeeded() {
                     return this.activities.filter(activity =>
-                        ! activity.is_done &&
-                        this.isPastDay(activity.schedule_to || activity.schedule_from) &&
-                        ['call', 'meeting', 'task'].includes(activity.type)
+                        !activity.is_done &&
+                        activity.schedule_from &&
+                        this.isStartedOrToday(activity.schedule_from)
                     ).length;
                 },
 
@@ -355,13 +366,19 @@
                     // console.log('selectedType = '+this.selectedType + ', activityTypeFilter = ' + this.activityTypeFilter);
                     // console.log(JSON.parse(JSON.stringify(this.activities)));
                     if (this.selectedType === 'action_needed') {
-                        return this.activities
-                            .filter(activity => ! activity.is_done && this.isPastDay(activity.schedule_to || activity.schedule_from))
-                            .sort((a, b) => {
-                                const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
-                                const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
-                                return aTime - bTime;
-                            });
+                        let filtered = this.activities.filter(activity =>
+                            !activity.is_done &&
+                            activity.schedule_from &&
+                            this.isStartedOrToday(activity.schedule_from)
+                        );
+                        if (this.activityTypeFilter !== 'all') {
+                            filtered = filtered.filter(activity => activity.type === this.activityTypeFilter);
+                        }
+                        return filtered.sort((a, b) => {
+                            const aTime = a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
+                            const bTime = b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
+                            return aTime - bTime;
+                        });
                     }
 
                     if (this.selectedType === 'inbox' && this.activityTypeFilter === 'all') {
@@ -372,15 +389,6 @@
                         return this.activities
                             .filter(activity => activity.type === this.activityTypeFilter)
                             .sort(this.sortOpenFirstThenByDate);
-                    } else if (this.selectedType == 'planned') {
-                        return this.activities
-                            .filter(activity => ! activity.is_done && !['email', 'patient_message'].includes(activity.type))
-                            .slice()
-                            .sort((a, b) => {
-                                const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
-                                const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
-                                return aTime - bTime;
-                            });
                     } else if (this.selectedType == 'file') {
                         return this.activities.filter(activity =>
                             activity.type == 'file' && (this.showCompleted || !activity.is_done)
@@ -400,7 +408,7 @@
                     if (this.selectedType == 'all' && this.activityTypeFilter !== 'all') {
                         console.log('filter all and filter on all = ' + this.activityTypeFilter);
                         filtered = filtered.filter(activity => activity.type !== 'system' && activity.type === this.activityTypeFilter);
-                    } else if (this.selectedType != 'all' && !['action_needed', 'inbox', 'planned', 'system'].includes(this.selectedType)) {
+                    } else if (this.selectedType != 'all' && !['action_needed', 'inbox', 'system'].includes(this.selectedType)) {
                         // Fallback for extraTypes
                         console.log('filter fallback = ' + this.activityTypeFilter);
                         filtered = filtered.filter(activity => activity.type == this.selectedType);
@@ -408,6 +416,12 @@
 
                     return filtered.sort(this.sortOpenFirstThenByDate);
                 }
+            },
+
+            watch: {
+                selectedType() {
+                    this.activityTypeFilter = 'all';
+                },
             },
 
             mounted() {
@@ -458,6 +472,28 @@
                                     this.isUpdating[activity.id] = false;
 
                                     activity.is_done = 1;
+
+                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                })
+                                .catch((error) => {
+                                    this.isUpdating[activity.id] = false;
+
+                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                                });
+                        },
+                    });
+                },
+
+                reopen(activity) {
+                    this.$emitter.emit('open-confirm-modal', {
+                        agree: () => {
+                            this.isUpdating[activity.id] = true;
+
+                            this.$axios.post("{{ route('admin.activities.reopen', 'replaceId') }}".replace('replaceId', activity.id))
+                                .then((response) => {
+                                    this.isUpdating[activity.id] = false;
+
+                                    activity.is_done = 0;
 
                                     this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                                 })
@@ -583,6 +619,11 @@
                     return this.typeClasses[type] ?? this.typeClasses['default'];
                 },
 
+                getEntitySourceBadgeClass(type) {
+                    return this.entitySourceBadgeClasses[type]
+                        ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+                },
+
                 isToday(dateStr) {
                     if (!dateStr) return false;
                     const d = new Date(dateStr);
@@ -595,6 +636,13 @@
                 isPast(dateStr) {
                     if (!dateStr) return false;
                     return new Date(dateStr).getTime() < Date.now();
+                },
+
+                isStartedOrToday(dateStr) {
+                    if (!dateStr) return false;
+                    const d = new Date(dateStr);
+                    const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    return startOfDay.getTime() <= Date.now();
                 },
 
                 isPastDay(dateStr) {

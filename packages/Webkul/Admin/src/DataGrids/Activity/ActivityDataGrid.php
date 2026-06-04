@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Activity;
 
+use App\Enums\CallStatus;
 use App\Enums\Departments;
 use App\Enums\EntityType;
 use App\Helpers\DatabaseHelper;
@@ -58,7 +59,9 @@ class ActivityDataGrid extends DataGrid
                 })()),
                 // Add entity information — built dynamically from EntityType enum
                 DB::raw("CASE {$typeCases} ELSE NULL END as entity_type"),
-                DB::raw("CASE {$idCases} ELSE NULL END as entity_id")
+                DB::raw("CASE {$idCases} ELSE NULL END as entity_id"),
+                DB::raw($this->lastCallSummarySql()),
+                DB::raw($this->lastTaskSummarySql()),
             )
 
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
@@ -427,15 +430,6 @@ class ActivityDataGrid extends DataGrid
         $returnUrl = request()->query('return_url');
         $returnSuffix = $returnUrl ? ('?return_url='.urlencode($returnUrl)) : '';
 
-        // View action (eye icon)
-        $this->addAction([
-            'index'  => 'view',
-            'icon'   => 'icon-eye',
-            'title'  => trans('admin::app.activities.index.datagrid.view'),
-            'method' => 'GET',
-            'url'    => fn ($row) => route('admin.activities.view', $row->id).$returnSuffix,
-        ]);
-
         if (bouncer()->hasPermission('activities.edit')) {
             $this->addAction([
                 'index'  => 'edit',
@@ -466,5 +460,72 @@ class ActivityDataGrid extends DataGrid
     public function prepareMassActions(): void
     {
         // Intentionally left blank: no bulk/mass actions; also hides bulk selection UI
+    }
+
+    private function lastCallSummarySql(): string
+    {
+        $userName = DatabaseHelper::concat(['cu.first_name', 'cu.last_name'], ' ', true, true);
+        $select = DatabaseHelper::concat([
+            $this->formatActivitySummaryDate('cs'),
+            "' · '",
+            $userName,
+            "': '",
+            $this->callStatusCaseSql(),
+            $this->optionalDescriptionSuffixSql('cs.omschrijving'),
+        ], '', false, false);
+
+        return $this->latestActivitySubquery('call_statuses cs', 'cu', $select, 'last_call_summary');
+    }
+
+    private function lastTaskSummarySql(): string
+    {
+        $userName = DatabaseHelper::concat(['tu.first_name', 'tu.last_name'], ' ', true, true);
+        $select = DatabaseHelper::concat([
+            $this->formatActivitySummaryDate('ac'),
+            "' · '",
+            $userName,
+            "': '",
+            'ac.comment',
+        ], '', false, false);
+
+        return $this->latestActivitySubquery('activity_comments ac', 'tu', $select, 'last_task_summary');
+    }
+
+    private function callStatusCaseSql(string $column = 'cs.status'): string
+    {
+        $cases = implode(' ', array_map(
+            fn (CallStatus $status) => "WHEN '{$status->value}' THEN '{$status->label()}'",
+            CallStatus::cases()
+        ));
+
+        return "CASE {$column} {$cases} ELSE {$column} END";
+    }
+
+    private function optionalDescriptionSuffixSql(string $column): string
+    {
+        return 'CASE WHEN TRIM(COALESCE('.$column.", '')) != '' THEN "
+            .DatabaseHelper::concat(["' — '", $column], '', false, false)
+            ." ELSE '' END";
+    }
+
+    private function formatActivitySummaryDate(string $tableAlias): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%d-%m', {$tableAlias}.created_at)"
+            : "DATE_FORMAT({$tableAlias}.created_at, '%e %b')";
+    }
+
+    private function latestActivitySubquery(string $from, string $userAlias, string $select, string $resultAlias): string
+    {
+        [, $alias] = explode(' ', $from, 2);
+
+        return "(
+            SELECT {$select}
+            FROM {$from}
+            LEFT JOIN users {$userAlias} ON {$userAlias}.id = {$alias}.created_by
+            WHERE {$alias}.activity_id = activities.id
+            ORDER BY {$alias}.created_at DESC
+            LIMIT 1
+        ) as {$resultAlias}";
     }
 }

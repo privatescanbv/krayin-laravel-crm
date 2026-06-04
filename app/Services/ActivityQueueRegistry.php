@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ActivityType;
-use App\Enums\PipelineStage;
 use Illuminate\Database\Query\Builder;
 use InvalidArgumentException;
 
@@ -69,12 +68,6 @@ class ActivityQueueRegistry
      */
     private function definitions(): array
     {
-        // Helper sets for pipeline stages (IDs come from the central PipelineStage enum).
-        $frontofficeLeadStageIds = PipelineStage::getFrontOfficeStageIds();
-        $salesLeadStageIds = PipelineStage::getSalesOfficeStageIds();
-        $midofficeOrderStageIds = PipelineStage::getMidofficeStageIds();
-        $backofficeOrderStageIds = PipelineStage::getBackofficeStageIds();
-
         return [
             // Onze openstaande taken – all open tasks (lead, sales, order, etc.).
             'our-tasks' => [

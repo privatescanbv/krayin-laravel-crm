@@ -33,6 +33,8 @@
         <server name="TELESCOPE_ENABLED" value="0" />
         <!-- Disable Sentry during tests to prevent test exceptions from being reported -->
         <server name="SENTRY_LARAVEL_DSN" value="" />
+        <server name="LOG_CHANNEL" value="null" />
+        <server name="LOG_LEVEL" value="error" />
         <server name="TELESCOPE_DB_CONNECTION" value="sqlite" />
         <server name="DB_CONNECTION" value="sqlite" />
         <server name="DB_DATABASE" value=":memory:" />

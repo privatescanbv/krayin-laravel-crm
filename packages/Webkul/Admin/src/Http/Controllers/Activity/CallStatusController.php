@@ -97,6 +97,19 @@ class CallStatusController extends Controller
         return response()->json($response);
     }
 
+    public function destroy(int $activityId, int $callStatusId): JsonResponse
+    {
+        $callStatus = CallStatus::where('activity_id', $activityId)->findOrFail($callStatusId);
+
+        if ($callStatus->created_by !== auth()->guard('user')->id()) {
+            return response()->json(['message' => 'Niet toegestaan'], 403);
+        }
+
+        $callStatus->delete();
+
+        return response()->json(['message' => 'Belstatus verwijderd']);
+    }
+
     /**
      * Get the default email address for an activity.
      * First tries to get email from associated persons, then from the lead itself.

@@ -116,7 +116,17 @@
 
                                         <!-- Title Column -->
                                         <template v-else-if="column.index === 'title'">
-                                            <p class="text-gray-600 dark:text-gray-300 font-medium">@{{ record.title }}</p>
+                                            <div class="flex flex-col gap-0.5">
+                                                <p class="text-gray-600 dark:text-gray-300 font-medium">@{{ record.title }}</p>
+                                                <p v-if="record.last_call_summary"
+                                                   class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">
+                                                    @{{ record.last_call_summary }}
+                                                </p>
+                                                <p v-else-if="record.last_task_summary"
+                                                   class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">
+                                                    @{{ record.last_task_summary }}
+                                                </p>
+                                            </div>
                                         </template>
 
                                         <!-- Is Done Column -->

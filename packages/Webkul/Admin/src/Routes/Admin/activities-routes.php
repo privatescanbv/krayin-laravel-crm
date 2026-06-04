@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Activity\ActivityController;
 use Webkul\Admin\Http\Controllers\Activity\ActivityAssignmentController;
+use Webkul\Admin\Http\Controllers\Activity\ActivityCommentController;
 use Webkul\Admin\Http\Controllers\Activity\CallStatusController;
 
 Route::controller(ActivityController::class)->prefix('activities')->group(function () {
@@ -62,4 +63,11 @@ Route::controller(ActivityAssignmentController::class)->prefix('activities')->gr
 Route::controller(CallStatusController::class)->prefix('activities/{activityId}/call-statuses')->group(function () {
     Route::get('', 'index')->name('admin.activities.call-statuses.index');
     Route::post('', 'store')->name('admin.activities.call-statuses.store');
+    Route::delete('{callStatusId}', 'destroy')->name('admin.activities.call-statuses.destroy');
+});
+
+Route::controller(ActivityCommentController::class)->prefix('activities/{activityId}/comments')->group(function () {
+    Route::get('', 'index')->name('admin.activities.comments.index');
+    Route::post('', 'store')->name('admin.activities.comments.store');
+    Route::delete('{commentId}', 'destroy')->name('admin.activities.comments.destroy');
 });

@@ -5,16 +5,24 @@
 <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <div class="flex items-center justify-between mb-3">
         <h3 class="text-base font-semibold text-gray-800 dark:text-white">Belstatus</h3>
+        <button
+            type="button"
+            id="call-status-toggle"
+            class="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            onclick="window.__toggleCallStatusForm()"
+        >
+            <span class="icon-plus text-sm"></span>
+            Belstatus toevoegen
+        </button>
     </div>
 
-    <!-- Add new call status form (moved above the list) -->
-    <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
+    <!-- Add new call status form (hidden by default, shown on toggle) -->
+    <div id="call-status-add-form" class="hidden mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
         <form id="call-status-form" class="mt-2 space-y-2" aria-hidden="false">
             <x-adminc::components.field
                 type="select"
                 name="status"
                 label="Status"
-                rules="required"
             >
                 <option value="">Selecteer status...</option>
                 @foreach (CallStatus::cases() as $status)
@@ -53,9 +61,14 @@
                 <p class="text-[11px] text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
             </div>
 
-            <button id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="w-full primary-button">
-                <i class="icon-plus mr-2"></i>Toevoegen
-            </button>
+            <div class="flex gap-2">
+                <button id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="flex-1 primary-button">
+                    <i class="icon-plus mr-2"></i>Toevoegen
+                </button>
+                <button type="button" onclick="window.__toggleCallStatusForm()" class="secondary-button">
+                    Annuleren
+                </button>
+            </div>
         </form>
     </div>
 
@@ -88,6 +101,12 @@
 
 @push('scripts')
 <script>
+    window.__toggleCallStatusForm = function() {
+        const form = document.getElementById('call-status-add-form');
+        if (!form) return;
+        form.classList.toggle('hidden');
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         // Define robust global handler so inline onclick always works even if DOM is re-rendered
         window.__handleCallStatusSubmit = async function(e) {
@@ -168,6 +187,10 @@
 
                 list.prepend(wrapper);
                 form.reset();
+
+                // Hide the form again after successful submission
+                const addForm = document.getElementById('call-status-add-form');
+                if (addForm) addForm.classList.add('hidden');
 
                 if (data.send_email) {
                     window.dispatchEvent(new CustomEvent('open-email-dialog', { detail: { defaultEmail: data.default_email || null, activityId: data.activity_id } }));

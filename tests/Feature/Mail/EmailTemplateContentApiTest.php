@@ -4,6 +4,7 @@ use App\Enums\EmailTemplateLanguage;
 use App\Enums\EmailTemplateType;
 use App\Models\Address;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -327,9 +328,12 @@ test('it returns template body with gvl template and person entity', function ()
     ]);
 
     $anamnesis = Anamnesis::factory()->create([
-        'person_id'   => $person->id,
-        'lead_id'     => $lead->id,
-        'gvl_form_id' => '12345',
+        'person_id' => $person->id,
+        'lead_id'   => $lead->id,
+    ]);
+    AnamnesisGvlForm::create([
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '12345',
     ]);
 
     $template = EmailTemplate::factory()->create([

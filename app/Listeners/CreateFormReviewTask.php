@@ -8,7 +8,7 @@ use App\Actions\Activities\DuplicateException;
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Events\PatientFormCompletedEvent;
-use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Services\Anamnesis\AnamnesisOrderResolver;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -41,7 +41,7 @@ class CreateFormReviewTask
             ],
         ];
 
-        $anamnesis = Anamnesis::where('gvl_form_id', $event->formId)->first();
+        $anamnesis = AnamnesisGvlForm::where('gvl_form_id', $event->formId)->first()?->anamnesis;
         if ($anamnesis === null) {
             Log::error('CreateFormReviewTask: geen anamnese gevonden voor GVL formulier', ['form_id' => $event->formId]);
 

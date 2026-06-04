@@ -11,6 +11,10 @@ class AnamnesisOrderResolver
 {
     public function findActiveOrderForAnamnesis(Anamnesis $anamnesis): ?Order
     {
+        if ($anamnesis->order_id) {
+            return Order::query()->find($anamnesis->order_id);
+        }
+
         if ($anamnesis->sales_id) {
             $order = Order::query()
                 ->inOpenStage()

@@ -12,6 +12,7 @@ use App\Models\Address;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\Clinic;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
@@ -1142,11 +1143,13 @@ test('gvl pdf attachment filename includes slugified person name', function () {
     $examAt = now()->addDays(2)->setTime(10, 0);
     $context = createOrderForClinic($examAt);
     $person = $context['person'];
-    $formId = 42;
+    $formId = '42';
 
-    Anamnesis::where('person_id', $person->id)->update([
+    $anamnesis = Anamnesis::where('person_id', $person->id)->firstOrFail();
+    AnamnesisGvlForm::create([
+        'anamnesis_id'    => $anamnesis->id,
         'gvl_form_id'     => $formId,
-        'gvl_form_status' => FormStatus::Completed->value,
+        'gvl_form_status' => FormStatus::Completed,
     ]);
 
     $mockResponse = Mockery::mock(Response::class);

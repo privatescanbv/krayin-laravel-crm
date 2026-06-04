@@ -300,7 +300,7 @@ class Lead extends Model implements LeadContract
     public function getAnamnesisAttribute()
     {
         try {
-            return Anamnesis::where('lead_id', $this->id)->get();
+            return Anamnesis::where('lead_id', $this->id)->with('gvlForms')->get();
         } catch (Exception $e) {
             Log::warning('Could not load anamnesis for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
 

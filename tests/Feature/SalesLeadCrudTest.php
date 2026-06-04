@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\PipelineType;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
+use App\Models\Order;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Http;
@@ -319,20 +321,22 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
     $lead->attachPersons([$person->id]);
 
     $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
-    $anamnesis->update(['gvl_form_id' => '123']);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '123',
+    ]);
 
     Http::fake([
         'http://forms/api/forms/123' => Http::response([], 200),
     ]);
 
-    $response = $this->deleteJson(route('admin.anamnesis.gvl-form.detach', ['id' => $anamnesis->id]));
+    $response = $this->deleteJson(route('admin.anamnesis.gvl-form.detach', ['id' => $anamnesis->id, 'gvlFormRecordId' => $gvlForm->id]));
 
     $response->assertOk()
         ->assertJsonPath('message', 'GVL formulier is ontkoppeld.');
 
-    $this->assertDatabaseHas('anamnesis', [
-        'id'          => $anamnesis->id,
-        'gvl_form_id' => null,
+    $this->assertDatabaseMissing('anamnesis_gvl_forms', [
+        'id' => $gvlForm->id,
     ]);
 
     Http::assertSent(function ($request) {
@@ -340,6 +344,39 @@ test('can detach gvl form from anamnesis when forms api returns 200', function (
             && str_contains($request->url(), 'http://forms/api/forms/123')
             && ($request->header('X-API-KEY')[0] ?? null) === 'test-token';
     });
+});
+
+test('attaching gvl form works for order-level anamnesis override without lead', function () {
+    config([
+        'services.portal.patient.api_url'   => 'http://forms',
+        'services.portal.patient.api_token' => 'test-token',
+    ]);
+
+    $person = Person::factory()->create();
+    $order = Order::factory()->create();
+    $anamnesis = Anamnesis::factory()->create([
+        'order_id'  => $order->id,
+        'person_id' => $person->id,
+        'lead_id'   => null,
+        'sales_id'  => null,
+    ]);
+
+    Http::fake([
+        'http://forms/api/forms' => Http::response([
+            'data'     => ['id' => 88],
+            'form_url' => 'https://forms.example.com/forms/88/step/1',
+        ], 201),
+    ]);
+
+    $response = $this->postJson(route('admin.anamnesis.gvl-form.attach', ['id' => $anamnesis->id]));
+
+    $response->assertOk()
+        ->assertJsonPath('message', 'GVL formulier is gekoppeld.');
+
+    $this->assertDatabaseHas('anamnesis_gvl_forms', [
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '88',
+    ]);
 });
 
 test('attaching gvl form sends lastname_prefix and married_name_prefix combined in api request', function () {
@@ -393,19 +430,22 @@ test('gvl form stays linked to anamnesis when forms api responds with error', fu
     $lead->attachPersons([$person->id]);
 
     $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->firstOrFail();
-    $anamnesis->update(['gvl_form_id' => '456']);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id' => $anamnesis->id,
+        'gvl_form_id'  => '456',
+    ]);
 
     Http::fake([
         'http://forms/api/forms/456' => Http::response(['message' => 'not found'], 404),
     ]);
 
-    $response = $this->deleteJson(route('admin.anamnesis.gvl-form.detach', ['id' => $anamnesis->id]));
+    $response = $this->deleteJson(route('admin.anamnesis.gvl-form.detach', ['id' => $anamnesis->id, 'gvlFormRecordId' => $gvlForm->id]));
 
     $response->assertStatus(404)
         ->assertJsonPath('message', 'not found');
 
-    $this->assertDatabaseHas('anamnesis', [
-        'id'          => $anamnesis->id,
+    $this->assertDatabaseHas('anamnesis_gvl_forms', [
+        'id'          => $gvlForm->id,
         'gvl_form_id' => '456',
     ]);
 

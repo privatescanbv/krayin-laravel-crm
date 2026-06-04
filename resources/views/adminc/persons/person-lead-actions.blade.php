@@ -34,7 +34,7 @@
         }
     }
 
-    if ($personAnamnesis && !empty($personAnamnesis->gvl_form_link)) {
+    if ($personAnamnesis) {
         $anamnesisId = $personAnamnesis->id;
     }
 
@@ -65,7 +65,7 @@
             data-person-id="{{ $person->id }}"
             data-lead-id="{{ $entityId }}"
             data-default-email="{{ $defaultEmail['value'] ?? '' }}"
-            @if ($anamnesisId) data-anamnesis-id="{{ $anamnesisId }}" data-status-url="{{ route('admin.anamnesis.gvl-form.status', $anamnesisId) }}" @endif
+            @if ($anamnesisId) data-anamnesis-id="{{ $anamnesisId }}" data-status-url="{{ route('admin.anamnesis.gvl-form.latest-status', $anamnesisId) }}" @endif
         ></button>
     @endif
 

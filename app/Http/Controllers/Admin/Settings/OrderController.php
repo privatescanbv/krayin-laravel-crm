@@ -21,6 +21,7 @@ use App\Http\Requests\Admin\OrderPaymentRequest;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderCheck;
@@ -808,12 +809,14 @@ class OrderController extends SimpleEntityController
         }
 
         if ($person) {
-            $anamnesis = Anamnesis::where('person_id', $person->id)
-                ->whereNotNull('gvl_form_id')
-                ->latest()
-                ->first();
+            $hasCompletedGvlForm = AnamnesisGvlForm::whereHas(
+                'anamnesis',
+                fn ($q) => $q->where('person_id', $person->id)
+            )
+                ->where('gvl_form_status', FormStatus::Completed)
+                ->exists();
 
-            if ($anamnesis && $anamnesis->gvl_form_status === FormStatus::Completed) {
+            if ($hasCompletedGvlForm) {
                 $attachmentPreviews[] = [
                     'name' => sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
                     'type' => 'gvl',
@@ -972,16 +975,19 @@ class OrderController extends SimpleEntityController
         }
 
         if ($type === 'gvl' && $personId) {
-            $anamnesis = Anamnesis::where('person_id', $personId)
+            $gvlFormRecord = AnamnesisGvlForm::whereHas(
+                'anamnesis',
+                fn ($q) => $q->where('person_id', $personId)
+            )
                 ->whereNotNull('gvl_form_id')
                 ->latest()
                 ->first();
 
-            if (! $anamnesis) {
+            if (! $gvlFormRecord) {
                 abort(404, 'Geen GVL formulier gevonden.');
             }
 
-            $formId = $anamnesis->gvl_form_id;
+            $formId = $gvlFormRecord->gvl_form_id;
 
             if (! $formId) {
                 abort(404, 'Geen geldig GVL formulier ID.');

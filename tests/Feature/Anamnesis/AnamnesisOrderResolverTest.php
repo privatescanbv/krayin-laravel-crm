@@ -17,6 +17,19 @@ beforeEach(function (): void {
     $this->seed(TestSeeder::class);
 });
 
+test('AnamnesisOrderResolver finds order directly when anamnesis has order_id', function (): void {
+    $order = Order::factory()->create();
+
+    $anamnesis = Anamnesis::factory()->create([
+        'order_id' => $order->id,
+        'lead_id'  => null,
+        'sales_id' => null,
+    ]);
+
+    expect(app(AnamnesisOrderResolver::class)->findActiveOrderForAnamnesis($anamnesis)?->id)
+        ->toBe($order->id);
+});
+
 test('AnamnesisOrderResolver finds active order by sales_id', function (): void {
     $salesLead = SalesLead::factory()->create();
     $stage = Stage::factory()->create(['is_won' => false, 'is_lost' => false]);

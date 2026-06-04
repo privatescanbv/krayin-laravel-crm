@@ -2,12 +2,12 @@
     title="Anamnesis Gegevens Overnemen"
     :header-title="'Oudere Anamnesis overnemen voor ' . $person->name"
     header-description="Vergelijk en neem gegevens over van oudere anamneses."
-    :back-route="request()->filled('return_url') ? request('return_url') : route('admin.leads.view', $lastLeadId)"
+    :back-route="request()->filled('return_url') ? request('return_url') : $entityUrl"
     :form-action="route('admin.leads.sync-anamnesis-update', $anamnesis->person_id)"
     form-id="sync-anamnesis-form"
     :match-score="$bestMatch ?? null"
     match-score-title="Beste Match Score"
-    :redirect-route="request()->filled('return_url') ? request('return_url') : route('admin.leads.view', $lastLeadId)"
+    :redirect-route="request()->filled('return_url') ? request('return_url') : $entityUrl"
 >
     <x-slot:headerBefore>
         {!! view_render_event('admin.leads.sync_anamnesis.header.before', ['anamnesis' => $anamnesis]) !!}

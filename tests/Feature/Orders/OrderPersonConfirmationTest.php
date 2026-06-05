@@ -205,6 +205,83 @@ it('getPatientsFromActivity returns only direct person when person_id is set', f
     expect($sharedPatients)->toHaveCount(2);
 });
 
+it('returns existing confirmation letter content for a person', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'combine_order' => false,
+    ]);
+
+    OrderPersonConfirmation::create([
+        'order_id'                    => $order->id,
+        'person_id'                   => $person->id,
+        'confirmation_letter_content' => '<p>Bevestigingsbrief inhoud</p>',
+    ]);
+
+    $response = $this->getJson(
+        route('admin.orders.confirmation.person.content', ['orderId' => $order->id, 'personId' => $person->id])
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('data.content', '<p>Bevestigingsbrief inhoud</p>');
+});
+
+it('returns empty content when no confirmation exists for a person', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'combine_order' => false,
+    ]);
+
+    $response = $this->getJson(
+        route('admin.orders.confirmation.person.content', ['orderId' => $order->id, 'personId' => $person->id])
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('data.content', '');
+});
+
+it('allows marking a person as sent even when already sent', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'combine_order' => false,
+    ]);
+
+    // No letter content so isLetterSaved() = false (no PDF generation attempted)
+    OrderPersonConfirmation::create([
+        'order_id'     => $order->id,
+        'person_id'    => $person->id,
+        'email_sent_at' => now(),
+    ]);
+
+    $response = $this->postJson(
+        route('admin.orders.confirmation.person.sent', ['orderId' => $order->id, 'personId' => $person->id])
+    );
+
+    // Should not return 422 anymore (was previously blocked when already sent)
+    $response->assertStatus(200)
+        ->assertJsonPath('message', 'Persoon bevestigd.');
+});
+
 it('per-person documents are only visible to assigned person via API', function () {
     config(['api.keys' => ['test-api-key']]);
 

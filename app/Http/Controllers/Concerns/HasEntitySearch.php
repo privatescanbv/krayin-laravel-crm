@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Prettus\Repository\Contracts\CriteriaInterface;
 use Prettus\Repository\Contracts\RepositoryInterface;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -16,7 +17,7 @@ trait HasEntitySearch
      * for RequestCriteria, allowing entity selectors to work with repositories.
      *
      * @param  mixed  $repository  The repository to search (defaults to $this->repository)
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     protected function performEntitySearch(Request $request, $repository = null)
     {

@@ -7,7 +7,7 @@ use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Webkul\User\Models\User>
+ * @extends Factory<User>
  */
 class WebkulUserFactory extends Factory
 {
@@ -62,7 +62,7 @@ class WebkulUserFactory extends Factory
     /**
      * Indicate that the user is active.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function active()
     {
@@ -76,7 +76,7 @@ class WebkulUserFactory extends Factory
     /**
      * Indicate that the user is inactive.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function inactive()
     {
@@ -90,7 +90,7 @@ class WebkulUserFactory extends Factory
     /**
      * Indicate that the user has an API token.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function withApiToken()
     {
@@ -104,7 +104,7 @@ class WebkulUserFactory extends Factory
     /**
      * Indicate that the user has an image.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function withImage()
     {

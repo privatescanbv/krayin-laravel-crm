@@ -230,6 +230,7 @@ class OrderController extends SimpleEntityController
 
                 return [
                     'id'                     => $order->id,
+                    'order_number'           => $order->order_number,
                     'title'                  => $order->title,
                     'total_price'            => $order->total_price,
                     'first_examination_at'   => $order->firstExaminationCarbon(),
@@ -1771,7 +1772,7 @@ class OrderController extends SimpleEntityController
      * Persons for the order GVL tab: unique persons from order lines (preserves order), otherwise sales lead persons.
      * Includes an anamnesis row when present; otherwise the tab can create one via create-and-attach GVL.
      *
-     * @return array<int, array{person: \Webkul\Contact\Models\Person, anamnesis: ?Anamnesis, lead_id: int}>
+     * @return array<int, array{person: Person, anamnesis: ?Anamnesis, lead_id: int}>
      */
     protected function buildOrderGvlPersonRows(Order $order): array
     {

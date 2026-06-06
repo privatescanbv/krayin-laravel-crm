@@ -24,6 +24,7 @@ class UserDataGrid extends DataGrid
                 'email',
                 'image',
                 'status',
+                'last_login_at',
                 'created_at'
             )
             ->leftJoin('user_groups', 'id', '=', 'user_groups.user_id');
@@ -97,6 +98,16 @@ class UserDataGrid extends DataGrid
             'filterable' => true,
             'sortable'   => true,
             'searchable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'           => 'last_login_at',
+            'label'           => trans('admin::app.settings.users.index.datagrid.last-login-at'),
+            'type'            => 'date',
+            'sortable'        => true,
+            'searchable'      => true,
+            'filterable_type' => 'date_range',
+            'filterable'      => true,
         ]);
 
         $this->addColumn([

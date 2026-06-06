@@ -7,17 +7,20 @@ use App\Http\Controllers\Admin\Planning\Concerns\ResourceAvailabilityTrait;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PartnerProduct;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
 use App\Models\Shift;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
+use App\Services\Planning\PartnerProductBookingValidator;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -25,6 +28,10 @@ use Illuminate\View\View;
 class ResourcePlanningMonitorController extends Controller
 {
     use ResourceAvailabilityTrait;
+
+    public function __construct(
+        private readonly PartnerProductBookingValidator $partnerProductBookingValidator
+    ) {}
 
     public function index(Request $request): View
     {
@@ -143,8 +150,8 @@ class ResourcePlanningMonitorController extends Controller
                 'product.productType',
             ])->findOrFail($orderItemId);
 
-            // Load resource with resourceType and shifts
-            $resource = Resource::with('resourceType', 'shifts')->findOrFail((int) $request->input('resource_id'));
+            // Load resource with resourceType, shifts and clinic
+            $resource = Resource::with(['resourceType', 'shifts', 'clinicDepartment'])->findOrFail((int) $request->input('resource_id'));
 
             // -------------------------------
             // VALIDATION: ResourceType match
@@ -173,6 +180,10 @@ class ResourcePlanningMonitorController extends Controller
             $to = CarbonImmutable::parse($request->input('to'));
 
             if ($error = $this->validateBookingAvailability($resource, $from, $to)) {
+                return $error;
+            }
+
+            if ($error = $this->partnerProductBookingValidator->validate($orderItem, $resource)) {
                 return $error;
             }
 
@@ -234,7 +245,7 @@ class ResourcePlanningMonitorController extends Controller
                 'orderItem.product.productType',
             ])->findOrFail($bookingId);
 
-            $resource = Resource::with('resourceType', 'shifts')->findOrFail((int) $request->input('resource_id'));
+            $resource = Resource::with(['resourceType', 'shifts', 'clinicDepartment'])->findOrFail((int) $request->input('resource_id'));
 
             $requiredType = $booking->orderItem->resolvedResourceTypeName();
             $resourceTypeName = $resource->resourceType?->name;
@@ -254,6 +265,10 @@ class ResourcePlanningMonitorController extends Controller
             $to = CarbonImmutable::parse($request->input('to'));
 
             if ($error = $this->validateBookingAvailability($resource, $from, $to)) {
+                return $error;
+            }
+
+            if ($error = $this->partnerProductBookingValidator->validate($booking->orderItem, $resource)) {
                 return $error;
             }
 
@@ -341,20 +356,9 @@ class ResourcePlanningMonitorController extends Controller
 
         return response()->json([
             'view_type' => 'week',
-            'resources' => $resources->map(fn ($r) => [
-                'id'                         => $r->id,
-                'name'                       => $r->name,
-                'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
-                'clinic'                     => $r->clinicDepartment?->clinic?->name,
-                'resource_type'              => $r->resourceType?->name,
-                'resource_type_id'           => $r->resource_type_id,
-                'has_infinite_duration'      => $r->hasInfiniteDuration(),
-                'shifts_count'               => $r->shifts->count(),
-                'allow_outside_availability' => (bool) $r->allow_outside_availability,
-            ])->values(),
-            'blocks'   => $renderedBlocks,
-            'window'   => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'resources' => $resources->map(fn ($r) => $this->mapResource($r))->values(),
+            'blocks'    => $renderedBlocks,
+            'window'    => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
         ]);
     }
 
@@ -397,20 +401,9 @@ class ResourcePlanningMonitorController extends Controller
 
         return response()->json([
             'view_type' => 'month',
-            'resources' => $resources->map(fn ($r) => [
-                'id'                         => $r->id,
-                'name'                       => $r->name,
-                'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
-                'clinic'                     => $r->clinicDepartment?->clinic?->name,
-                'resource_type'              => $r->resourceType?->name,
-                'resource_type_id'           => $r->resource_type_id,
-                'has_infinite_duration'      => $r->hasInfiniteDuration(),
-                'shifts_count'               => $r->shifts->count(),
-                'allow_outside_availability' => (bool) $r->allow_outside_availability,
-            ])->values(),
-            'blocks'   => $renderedBlocks,
-            'window'   => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'resources' => $resources->map(fn ($r) => $this->mapResource($r))->values(),
+            'blocks'    => $renderedBlocks,
+            'window'    => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
         ]);
     }
 
@@ -418,7 +411,7 @@ class ResourcePlanningMonitorController extends Controller
     {
         $resourcesQuery = app(ResourceRepository::class)
             ->queryWithActiveClinics()
-            ->with('clinicDepartment.clinic', 'resourceType', 'shifts');
+            ->with('clinicDepartment.clinic', 'resourceType', 'shifts', 'partnerProducts');
 
         // Filter by resource types (multi-select)
         if ($request->filled('resource_type_ids')) {
@@ -436,6 +429,41 @@ class ResourcePlanningMonitorController extends Controller
         if ($request->filled('resource_ids')) {
             $resourceIds = explode(',', $request->query('resource_ids'));
             $resourcesQuery->whereIn('id', array_map('intval', $resourceIds));
+        }
+
+        // Filter by order items: only resources bookable at their clinic (matches PartnerProductBookingValidator)
+        if ($request->filled('order_item_ids')) {
+            $orderItemIds = array_map('intval', explode(',', $request->query('order_item_ids')));
+            $productIds = OrderItem::query()
+                ->whereIn('id', $orderItemIds)
+                ->whereNotNull('product_id')
+                ->pluck('product_id')
+                ->unique()
+                ->values();
+
+            if ($productIds->isNotEmpty()) {
+                $resourcesQuery->where(function ($outer) use ($productIds): void {
+                    foreach ($productIds as $productId) {
+                        $clinicIds = PartnerProduct::query()
+                            ->bookable()
+                            ->where('product_id', $productId)
+                            ->whereHas('clinics')
+                            ->with('clinics:id')
+                            ->get()
+                            ->flatMap(fn ($partnerProduct) => $partnerProduct->clinics->pluck('id'))
+                            ->unique()
+                            ->values();
+
+                        if ($clinicIds->isEmpty()) {
+                            $outer->whereRaw('0 = 1');
+
+                            continue;
+                        }
+
+                        $outer->orWhereHas('clinicDepartment', fn ($dept) => $dept->whereIn('clinic_id', $clinicIds));
+                    }
+                });
+            }
         }
 
         /**
@@ -467,7 +495,34 @@ class ResourcePlanningMonitorController extends Controller
             });
         });
 
-        return $resourcesQuery->get();
+        $resources = $resourcesQuery->get();
+
+        return $this->attachClinicBookableProductIds($resources);
+    }
+
+    /**
+     * @param  Collection<int, resource>  $resources
+     * @return Collection<int, resource>
+     */
+    private function attachClinicBookableProductIds($resources)
+    {
+        $clinicIds = $resources
+            ->map(fn (Resource $resource) => $resource->clinicDepartment?->clinic_id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productIdsByClinic = PartnerProductBookingValidator::activeProductIdsByClinicIds($clinicIds);
+
+        foreach ($resources as $resource) {
+            $clinicId = $resource->clinicDepartment?->clinic_id;
+            $resource->setAttribute(
+                'clinic_bookable_product_ids',
+                $clinicId ? ($productIdsByClinic[$clinicId] ?? []) : []
+            );
+        }
+
+        return $resources;
     }
 
     private function getShifts($resources, CarbonImmutable $start, CarbonImmutable $end)
@@ -710,19 +765,8 @@ class ResourcePlanningMonitorController extends Controller
         ])->get();
 
         return response()->json([
-            'view_type' => 'week',
-            'resources' => $resources->map(fn ($r) => [
-                'id'                         => $r->id,
-                'name'                       => $r->name,
-                'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
-                'clinic'                     => $r->clinicDepartment?->clinic?->name,
-                'resource_type'              => $r->resourceType?->name,
-                'resource_type_id'           => $r->resource_type_id,
-                'has_infinite_duration'      => $r->hasInfiniteDuration(),
-                'shifts_count'               => $r->shifts->count(),
-                'allow_outside_availability' => (bool) $r->allow_outside_availability,
-            ])->values(),
+            'view_type'  => 'week',
+            'resources'  => $resources->map(fn ($r) => $this->mapResource($r))->values(),
             'blocks'     => $renderedBlocks,
             'window'     => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
             'order'      => [
@@ -731,6 +775,7 @@ class ResourcePlanningMonitorController extends Controller
             ],
             'order_items' => $orderItems->map(fn ($item) => [
                 'id'                     => $item->id,
+                'product_id'             => $item->product_id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
                 'person_name'            => $item->person?->name ?? null,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
@@ -798,19 +843,8 @@ class ResourcePlanningMonitorController extends Controller
         ])->get();
 
         return response()->json([
-            'view_type' => 'month',
-            'resources' => $resources->map(fn ($r) => [
-                'id'                         => $r->id,
-                'name'                       => $r->name,
-                'notes'                      => $r->notes,
-                'clinic_id'                  => $r->clinicDepartment?->clinic_id,
-                'clinic'                     => $r->clinicDepartment?->clinic?->name,
-                'resource_type'              => $r->resourceType?->name,
-                'resource_type_id'           => $r->resource_type_id,
-                'has_infinite_duration'      => $r->hasInfiniteDuration(),
-                'shifts_count'               => $r->shifts->count(),
-                'allow_outside_availability' => (bool) $r->allow_outside_availability,
-            ])->values(),
+            'view_type'  => 'month',
+            'resources'  => $resources->map(fn ($r) => $this->mapResource($r))->values(),
             'blocks'     => $renderedBlocks,
             'window'     => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
             'order'      => [
@@ -819,6 +853,7 @@ class ResourcePlanningMonitorController extends Controller
             ],
             'order_items' => $orderItems->map(fn ($item) => [
                 'id'                     => $item->id,
+                'product_id'             => $item->product_id,
                 'product_name'           => $item->product?->name ?? 'Onbekend product',
                 'person_name'            => $item->person?->name ?? null,
                 'required_resource_type' => $item->resolvedResourceTypeName(),
@@ -835,5 +870,29 @@ class ResourcePlanningMonitorController extends Controller
                 ]),
             ]),
         ]);
+    }
+
+    private function mapResource($r): array
+    {
+        $partnerProducts = $r->relationLoaded('partnerProducts') ? $r->partnerProducts : collect();
+
+        return [
+            'id'                         => $r->id,
+            'name'                       => $r->name,
+            'notes'                      => $r->notes,
+            'clinic_id'                  => $r->clinicDepartment?->clinic_id,
+            'clinic'                     => $r->clinicDepartment?->clinic?->name,
+            'resource_type'              => $r->resourceType?->name,
+            'resource_type_id'           => $r->resource_type_id,
+            'has_infinite_duration'      => $r->hasInfiniteDuration(),
+            'shifts_count'               => $r->shifts->count(),
+            'allow_outside_availability' => (bool) $r->allow_outside_availability,
+            // Product IDs bookable at this resource's clinic (active, non-deleted partner products).
+            // Used by resourceCanBookProduct() in the frontend and matches PartnerProductBookingValidator.
+            'clinic_bookable_product_ids' => $r->getAttribute('clinic_bookable_product_ids')
+                ?? ($r->clinicDepartment?->clinic_id
+                    ? PartnerProductBookingValidator::activeProductIdsForClinic($r->clinicDepartment->clinic_id)
+                    : []),
+        ];
     }
 }

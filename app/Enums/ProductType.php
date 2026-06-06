@@ -48,7 +48,7 @@ enum ProductType: string
     {
         return match ($this) {
             self::LABORATORIUM, self::VERTALING, self::DIENSTEN, self::OVERIG => false,
-            default => true,
+            default                                                           => true,
         };
     }
 }

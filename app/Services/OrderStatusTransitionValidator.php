@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\Concerns\HasStatusTransitionRules;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Webkul\Lead\Models\Stage;
@@ -177,7 +178,7 @@ class OrderStatusTransitionValidator
             'orderItems.product.partnerProducts.resourceType',
         ]);
 
-        /** @var \Illuminate\Support\Collection<int,OrderItem> $items */
+        /** @var Collection<int,OrderItem> $items */
         $items = $order->orderItems;
 
         $violatingItems = $items->filter(

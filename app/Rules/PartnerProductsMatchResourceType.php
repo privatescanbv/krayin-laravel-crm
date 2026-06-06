@@ -2,7 +2,6 @@
 
 namespace App\Rules;
 
-use App\Models\PartnerProduct;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -25,22 +24,7 @@ class PartnerProductsMatchResourceType implements ValidationRule
             return;
         }
 
-        $partnerProducts = PartnerProduct::whereIn('id', $value)
-            ->whereNull('deleted_at')
-            ->get(['id', 'name', 'resource_type_id']);
-
-        $mismatchedInResourceOfPartnerProducts = $partnerProducts->filter(function ($partnerProduct) {
-            return $partnerProduct->resource_type_id !== $this->resourceTypeId;
-        });
-
-        if ($mismatchedInResourceOfPartnerProducts->isNotEmpty()) {
-            $names = $mismatchedInResourceOfPartnerProducts->map(function ($product) {
-                $typeName = $product->resourceType ? $product->resourceType->name : 'Geen';
-
-                return "{$product->name} (Type: {$typeName}, ID: {$product->resource_type_id} vs Required: {$this->resourceTypeId})";
-            })->join(', ');
-            $fail('admin::app.products.validation.partner-products-resource-type-mismatch')
-                ->translate(['products' => $names]);
-        }
+        // Resource type mismatch between partner products and product is intentionally allowed:
+        // OrderItem can override the resource type, which is needed for one-off products.
     }
 }

@@ -209,15 +209,24 @@
                                     class="flex h-full items-center place-self-end"
                                     v-if="available.actions.length"
                                 >
-                                    <span
-                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
-                                        :class="action.icon"
-                                        :title="action.title"
-                                        v-text="! action.icon ? action.title : ''"
-                                        v-for="action in record.actions"
-                                        @click="performAction(action)"
-                                    >
-                                    </span>
+                                    <template v-for="action in record.actions">
+                                        <a
+                                            v-if="action.method.toLowerCase() === 'get'"
+                                            :href="action.url"
+                                            :class="action.icon"
+                                            :title="action.title"
+                                            v-text="! action.icon ? action.title : ''"
+                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                        ></a>
+                                        <span
+                                            v-else
+                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            :class="action.icon"
+                                            :title="action.title"
+                                            v-text="! action.icon ? action.title : ''"
+                                            @click="performAction(action)"
+                                        ></span>
+                                    </template>
                                 </p>
                             </div>
 
@@ -250,15 +259,24 @@
                                             class="flex w-full items-center justify-end"
                                             v-if="available.actions.length"
                                         >
-                                            <span
-                                                class="dark:hover:bg-gray-80 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200"
-                                                :class="action.icon"
-                                                :title="action.title"
-                                                v-text="! action.icon ? action.title : ''"
-                                                v-for="action in record.actions"
-                                                @click="performAction(action)"
-                                            >
-                                            </span>
+                                            <template v-for="action in record.actions">
+                                                <a
+                                                    v-if="action.method.toLowerCase() === 'get'"
+                                                    :href="action.url"
+                                                    :class="action.icon"
+                                                    :title="action.title"
+                                                    v-text="! action.icon ? action.title : ''"
+                                                    class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
+                                                ></a>
+                                                <span
+                                                    v-else
+                                                    class="dark:hover:bg-gray-80 cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200"
+                                                    :class="action.icon"
+                                                    :title="action.title"
+                                                    v-text="! action.icon ? action.title : ''"
+                                                    @click="performAction(action)"
+                                                ></span>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>

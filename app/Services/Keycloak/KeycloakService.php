@@ -656,14 +656,14 @@ class KeycloakService
     }
 
     /**
-     * @return array{0: Person|null, 1: ModelUser|null}
+     * @return array{0: Person|null, 1: modelUser|null}
      */
     public function resolvePersonOrUser(string $keycloakUserId): array
     {
         $person = Person::where('keycloak_user_id', $keycloakUserId)->first();
         $user = null;
         if (is_null($person)) {
-            $user = ModelUser::where('keycloak_user_id', $keycloakUserId)->first();
+            $user = modelUser::where('keycloak_user_id', $keycloakUserId)->first();
             logger()->debug('User found by keycloak user id'.$keycloakUserId.', user id: '.($user ? $user->id : 'not found'));
 
         }

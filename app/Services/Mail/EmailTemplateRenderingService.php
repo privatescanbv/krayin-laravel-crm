@@ -426,9 +426,16 @@ class EmailTemplateRenderingService
      */
     private function renderOrderItemsTable(Order $order, ?int $personId = null): string
     {
+        $items = $order->displayableOrderItems($personId);
+
+        $totalPrice = $personId !== null
+            ? $items->sum('total_price')
+            : ($order->total_price ?? 0);
+
         return view('adminc.email_templates.order.order_items_table', [
-            'order'    => $order,
-            'personId' => $personId,
+            'items'          => $items,
+            'filterPersonId' => $personId,
+            'totalPrice'     => $totalPrice,
         ])->render();
     }
 

@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\Shift;
+use App\Services\Planning\PartnerProductBookingValidator;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Exception;
@@ -21,6 +22,10 @@ use Illuminate\View\View;
 class OrderItemPlanningController extends Controller
 {
     use ResourceAvailabilityTrait;
+
+    public function __construct(
+        private readonly PartnerProductBookingValidator $partnerProductBookingValidator
+    ) {}
 
     public function show(Request $request, int $orderItemId): View
     {
@@ -59,13 +64,17 @@ class OrderItemPlanningController extends Controller
                 'replace_existing' => ['sometimes', 'boolean'],
             ]);
 
-            $orderItem = OrderItem::findOrFail($orderItemId);
-            $resource = Resource::with('shifts')->findOrFail((int) $request->input('resource_id'));
+            $orderItem = OrderItem::with('product')->findOrFail($orderItemId);
+            $resource = Resource::with(['shifts', 'clinicDepartment'])->findOrFail((int) $request->input('resource_id'));
 
             $from = CarbonImmutable::parse($request->input('from'));
             $to = CarbonImmutable::parse($request->input('to'));
 
             if ($error = $this->validateBookingAvailability($resource, $from, $to)) {
+                return $error;
+            }
+
+            if ($error = $this->partnerProductBookingValidator->validate($orderItem, $resource)) {
                 return $error;
             }
 

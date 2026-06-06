@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Stage;
 
 /**
- * @extends Factory<\Webkul\Lead\Models\Stage>
+ * @extends Factory<Stage>
  */
 class StageFactory extends Factory
 {

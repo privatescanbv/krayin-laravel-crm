@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FormStatus;
+use App\Enums\FormType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -79,6 +80,7 @@ class Anamnesis extends Model
         'person_id',
         'gvl_form_id',
         'gvl_form_status',
+        'gvl_form_type',
         'created_by',
         'updated_by',
     ];
@@ -112,6 +114,7 @@ class Anamnesis extends Model
         'created_by'              => 'integer',
         'updated_by'              => 'integer',
         'gvl_form_status'         => FormStatus::class,
+        'gvl_form_type'           => FormType::class,
     ];
 
     public static function getFieldsToCompare(): array

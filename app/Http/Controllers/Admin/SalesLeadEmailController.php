@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Webkul\Admin\Http\Controllers\Mail\EmailController as BaseEmailController;
 
@@ -11,7 +12,7 @@ class SalesLeadEmailController extends BaseEmailController
      * Store a newly created resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function detach($id)
     {

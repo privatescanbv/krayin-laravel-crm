@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
 use App\Models\ResourceType;
+use App\Repositories\PartnerProductRepository;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
 beforeEach(function () {
@@ -48,7 +49,7 @@ test('soft deleted partner products are not returned in normal queries', functio
     ]);
 
     // Verify it's not returned by the repository
-    $repository = app(\App\Repositories\PartnerProductRepository::class);
+    $repository = app(PartnerProductRepository::class);
     $products = $repository->searchFormatted('Test Product');
     expect($products)->toHaveCount(0);
 });

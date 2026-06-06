@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Settings\Clinic;
 
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Webkul\Admin\Http\Controllers\Mail\EmailController as BaseEmailController;
 
@@ -10,7 +11,7 @@ class EmailController extends BaseEmailController
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store()
     {
@@ -26,7 +27,7 @@ class EmailController extends BaseEmailController
     /**
      * Detach email from clinic.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function detach(int $id)
     {

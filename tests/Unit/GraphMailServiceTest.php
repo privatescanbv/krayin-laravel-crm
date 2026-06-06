@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use ReflectionClass;
 use Tests\TestCase;
+use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
@@ -53,7 +54,7 @@ class GraphMailServiceTest extends TestCase
 
     public function test_implements_inbound_email_processor_contract()
     {
-        $this->assertInstanceOf(\Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor::class, $this->service);
+        $this->assertInstanceOf(InboundEmailProcessor::class, $this->service);
     }
 
     public function test_extends_abstract_email_processor()

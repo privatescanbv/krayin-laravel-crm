@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -86,7 +87,7 @@ test('database constraint prevents duplicate anamnesis insertion', function () {
             'lead_id'   => $lead->id,
             'person_id' => $person->id,
             'name'      => 'Duplicate anamnesis',
-        ]))->toThrow(\Illuminate\Database\QueryException::class);
+        ]))->toThrow(QueryException::class);
 
     // Second creation with same lead_id + person_id should fail
 });

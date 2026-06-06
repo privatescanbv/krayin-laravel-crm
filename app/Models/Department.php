@@ -81,7 +81,7 @@ class Department extends Model
      * Get group_id for a lead based on its department.
      * Uses the department_id relationship for efficient mapping.
      *
-     * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
+     * @param  Lead  $lead  The lead to get group_id for
      * @return int The group ID
      *
      * @throws Exception if lead has no department or no group found

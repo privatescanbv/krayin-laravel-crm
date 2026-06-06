@@ -11,6 +11,11 @@
 |
  */
 
+use App\Models\OrderItem;
+use App\Models\PartnerProduct;
+use App\Models\Resource;
+use App\Models\Shift;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\Sanctum;
@@ -93,4 +98,49 @@ function getDatagridIds($response): array
     $records = $payload['records'] ?? [];
 
     return collect($records)->pluck('id')->all();
+}
+
+/**
+ * Link an active partner product for the order item's product to the resource's clinic.
+ */
+function attachPartnerProductForOrderItemAndResource(OrderItem $orderItem, Resource $resource): PartnerProduct
+{
+    $resource->loadMissing('clinicDepartment');
+    $clinicId = $resource->clinicDepartment->clinic_id;
+
+    $partnerProduct = PartnerProduct::factory()->create([
+        'product_id' => $orderItem->product_id,
+        'active'     => true,
+    ]);
+    $partnerProduct->clinics()->sync([$clinicId]);
+
+    return $partnerProduct;
+}
+
+/**
+ * Create a resource with a shift covering the given date (weekdays 09:00–17:00).
+ */
+function resourceWithShiftCovering(Carbon $date, bool $allowOutside = false): Resource
+{
+    $resource = Resource::factory()->create([
+        'allow_outside_availability' => $allowOutside,
+    ]);
+
+    Shift::factory()->create([
+        'resource_id'         => $resource->id,
+        'period_start'        => $date->copy()->subDay()->toDateString(),
+        'period_end'          => null,
+        'available'           => true,
+        'weekday_time_blocks' => [
+            1 => [['from' => '09:00', 'to' => '17:00']],
+            2 => [['from' => '09:00', 'to' => '17:00']],
+            3 => [['from' => '09:00', 'to' => '17:00']],
+            4 => [['from' => '09:00', 'to' => '17:00']],
+            5 => [['from' => '09:00', 'to' => '17:00']],
+            6 => [['from' => '09:00', 'to' => '17:00']],
+            7 => [['from' => '09:00', 'to' => '17:00']],
+        ],
+    ]);
+
+    return $resource->fresh('shifts');
 }

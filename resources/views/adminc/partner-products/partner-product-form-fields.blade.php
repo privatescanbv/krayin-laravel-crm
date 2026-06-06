@@ -43,15 +43,16 @@
     />
 </div>
 
-<!-- Associated Product (Readonly) -->
-@if ($partnerProduct && $partnerProduct->product)
 <x-adminc::components.field
     type="textarea"
     name="description"
-    label="Omschrijving"
     value="{{ old('description', $partnerProduct->description ?? '') }}"
+    :label="trans('admin::app.partner_products.index.create.description')"
     :placeholder="trans('admin::app.partner_products.index.create.description')"
 />
+
+<!-- Associated Product (Readonly) -->
+@if ($partnerProduct && $partnerProduct->product)
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
         @lang('admin::app.partner_products.index.create.associated_product')

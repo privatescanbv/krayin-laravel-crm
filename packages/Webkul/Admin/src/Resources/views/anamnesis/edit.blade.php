@@ -111,12 +111,14 @@
                             <x-admin::gvl-form-link
                                 :gvlFormLink="$anamnesis->gvl_form_link"
                                 :gvlFormStatus="$anamnesis->gvl_form_status"
+                                :gvlFormType="$anamnesis->gvl_form_type"
                                 :attachUrl="route('admin.anamnesis.gvl-form.attach', $anamnesis->id)"
                                 :detachUrl="route('admin.anamnesis.gvl-form.detach', $anamnesis->id)"
                                 :entityId="$anamnesis->id"
                                 entityType="anamnesis"
                                 :personId="$anamnesis->person_id"
                                 :personHasPortalAccount="!empty($anamnesis->person?->keycloak_user_id)"
+                                :defaultFormType="\App\Enums\FormType::defaultForAnamnesis($anamnesis)->value"
                             />
                         </div>
 

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Helpers\ProductHelper;
 use App\Models\PartnerProduct;
+use Illuminate\Support\Collection;
 use Webkul\Core\Eloquent\Repository;
 
 class PartnerProductRepository extends Repository
@@ -26,7 +27,7 @@ class PartnerProductRepository extends Repository
     /**
      * Get partner products formatted for search/display with clinic names.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function searchFormatted(string $query = '', int $limit = 50)
     {

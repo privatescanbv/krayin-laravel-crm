@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
+use App\Actions\Users\RecordLastLogin;
 use Exception;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\ResetsPasswords;
@@ -13,6 +14,11 @@ use Webkul\Admin\Http\Controllers\Controller;
 class ResetPasswordController extends Controller
 {
     use ResetsPasswords;
+
+    public function __construct(
+        protected RecordLastLogin $recordLastLogin,
+    ) {
+    }
 
     /**
      * Display the password reset view for the given token.
@@ -84,6 +90,8 @@ class ResetPasswordController extends Controller
         event(new PasswordReset($admin));
 
         auth()->guard('user')->login($admin);
+
+        ($this->recordLastLogin)($admin);
     }
 
     /**

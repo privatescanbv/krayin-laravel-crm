@@ -171,10 +171,10 @@ class InboundLeadPayloadMapper
         $normalized = strtolower(trim((string) $value));
 
         return match ($normalized) {
-            'mr.', 'dhr', 'dhr.' => PersonSalutation::Dhr->value,
+            'mr.', 'dhr', 'dhr.'    => PersonSalutation::Dhr->value,
             'mrs.', 'mevr', 'mevr.' => PersonSalutation::Mevr->value,
-            ''      => null,
-            default => null,
+            ''                      => null,
+            default                 => null,
         };
     }
 

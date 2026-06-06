@@ -1,7 +1,34 @@
 <?php
 
+use App\Providers\AdmincServiceProvider;
+use App\Providers\AppServiceProvider;
+use App\Providers\AuditTrailServiceProvider;
+use App\Providers\AuthServiceProvider;
+use App\Providers\EventServiceProvider;
+use App\Providers\KeycloakServiceProvider;
+use App\Providers\LeadDuplicateCacheServiceProvider;
+use App\Providers\MicrosoftGraphMailServiceProvider;
+use App\Providers\RouteServiceProvider;
+use App\Providers\TelescopeServiceProvider;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
+use Konekt\Concord\ConcordServiceProvider;
+use Prettus\Repository\Providers\RepositoryServiceProvider;
+use Webkul\Activity\Providers\ActivityServiceProvider;
+use Webkul\Admin\Providers\AdminServiceProvider;
+use Webkul\Attribute\Providers\AttributeServiceProvider;
+use Webkul\Automation\Providers\WorkflowServiceProvider;
+use Webkul\Contact\Providers\ContactServiceProvider;
+use Webkul\Core\Providers\CoreServiceProvider;
+use Webkul\DataGrid\Providers\DataGridServiceProvider;
+use Webkul\DataTransfer\Providers\DataTransferServiceProvider;
+use Webkul\Email\Providers\EmailServiceProvider;
+use Webkul\EmailTemplate\Providers\EmailTemplateServiceProvider;
+use Webkul\Lead\Providers\LeadServiceProvider;
+use Webkul\Marketing\Providers\MarketingServiceProvider;
+use Webkul\Product\Providers\ProductServiceProvider;
+use Webkul\Tag\Providers\TagServiceProvider;
+use Webkul\User\Providers\UserServiceProvider;
 
 return [
 
@@ -199,42 +226,42 @@ return [
          * Package Service Providers...
          */
         Barryvdh\DomPDF\ServiceProvider::class,
-        Konekt\Concord\ConcordServiceProvider::class,
-        Prettus\Repository\Providers\RepositoryServiceProvider::class,
+        ConcordServiceProvider::class,
+        RepositoryServiceProvider::class,
 
         /*
          * Application Service Providers...
          */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AdmincServiceProvider::class,
-        App\Providers\AuditTrailServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        App\Providers\KeycloakServiceProvider::class,
+        AppServiceProvider::class,
+        AdmincServiceProvider::class,
+        AuditTrailServiceProvider::class,
+        AuthServiceProvider::class,
+        KeycloakServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
-        App\Providers\TelescopeServiceProvider::class,
-        App\Providers\LeadDuplicateCacheServiceProvider::class,
-        App\Providers\MicrosoftGraphMailServiceProvider::class,
+        EventServiceProvider::class,
+        RouteServiceProvider::class,
+        TelescopeServiceProvider::class,
+        LeadDuplicateCacheServiceProvider::class,
+        MicrosoftGraphMailServiceProvider::class,
 
         /*
          * Webkul Service Providers...
          */
-        Webkul\Activity\Providers\ActivityServiceProvider::class,
-        Webkul\Admin\Providers\AdminServiceProvider::class,
-        Webkul\Attribute\Providers\AttributeServiceProvider::class,
-        Webkul\Automation\Providers\WorkflowServiceProvider::class,
-        Webkul\Contact\Providers\ContactServiceProvider::class,
-        Webkul\Core\Providers\CoreServiceProvider::class,
-        Webkul\DataGrid\Providers\DataGridServiceProvider::class,
-        Webkul\DataTransfer\Providers\DataTransferServiceProvider::class,
-        Webkul\EmailTemplate\Providers\EmailTemplateServiceProvider::class,
-        Webkul\Email\Providers\EmailServiceProvider::class,
-        Webkul\Marketing\Providers\MarketingServiceProvider::class,
-        Webkul\Lead\Providers\LeadServiceProvider::class,
-        Webkul\Product\Providers\ProductServiceProvider::class,
-        Webkul\Tag\Providers\TagServiceProvider::class,
-        Webkul\User\Providers\UserServiceProvider::class,
+        ActivityServiceProvider::class,
+        AdminServiceProvider::class,
+        AttributeServiceProvider::class,
+        WorkflowServiceProvider::class,
+        ContactServiceProvider::class,
+        CoreServiceProvider::class,
+        DataGridServiceProvider::class,
+        DataTransferServiceProvider::class,
+        EmailTemplateServiceProvider::class,
+        EmailServiceProvider::class,
+        MarketingServiceProvider::class,
+        LeadServiceProvider::class,
+        ProductServiceProvider::class,
+        TagServiceProvider::class,
+        UserServiceProvider::class,
     ])->toArray(),
 
     /*

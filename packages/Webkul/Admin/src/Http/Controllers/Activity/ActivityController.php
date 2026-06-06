@@ -140,7 +140,7 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'files', 'portalPersons', 'group'])->findOrFail($id);
+        $activity = $this->activityRepository->with(['lead', 'salesLead', 'clinic', 'order', 'person','files', 'portalPersons', 'group'])->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
@@ -797,5 +797,28 @@ class ActivityController extends Controller
 
         return false;
 
+    }
+
+
+    /**
+     * Link or unlink entity FKs on an activity (person, lead, sales_lead, order, clinic).
+     * Accepts only nullable FK fields — all other activity fields are ignored.
+     */
+    public function linkEntity(int $id): JsonResponse
+    {
+        $activity = $this->activityRepository->findOrFail($id);
+
+        $allowed = ['person_id', 'lead_id', 'sales_lead_id', 'order_id', 'clinic_id'];
+
+        $data = array_intersect_key(request()->all(), array_flip($allowed));
+
+        Activity::normalizeForeignKeys($data);
+
+        $activity->update($data);
+
+        return response()->json([
+            'data'    => new ActivityResource($activity->refresh()),
+            'message' => 'Koppeling bijgewerkt.',
+        ]);
     }
 }

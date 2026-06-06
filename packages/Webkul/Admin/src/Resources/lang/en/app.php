@@ -1342,6 +1342,7 @@ return [
                 'datagrid' => [
                     'active'        => 'Active',
                     'created-at'    => 'Created At',
+                    'last-login-at' => 'Last login',
                     'delete'        => 'Delete',
                     'edit'          => 'Edit',
                     'email'         => 'Email',
@@ -1354,6 +1355,7 @@ return [
                 ],
 
                 'create' => [
+                    'last-login-at'    => 'Last login',
                     'confirm-password' => 'Confirm Password',
                     'email'            => 'Email',
                     'first-name'       => 'First Name',

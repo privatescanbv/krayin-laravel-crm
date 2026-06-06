@@ -27,6 +27,7 @@ use App\Services\FormService;
 use Carbon\Carbon;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -1148,7 +1149,7 @@ test('gvl pdf attachment filename includes slugified person name', function () {
         'gvl_form_status' => FormStatus::Completed->value,
     ]);
 
-    $mockResponse = Mockery::mock(\Illuminate\Http\Client\Response::class);
+    $mockResponse = Mockery::mock(Response::class);
     $mockResponse->shouldReceive('successful')->andReturn(true);
     $mockResponse->shouldReceive('body')->andReturn('%PDF-fake');
 

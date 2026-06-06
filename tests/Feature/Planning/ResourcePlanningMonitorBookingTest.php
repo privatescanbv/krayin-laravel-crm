@@ -84,6 +84,7 @@ test('monitor book replaces existing booking and keeps exactly one', function ()
     $resource = Resource::factory()->create([
         'resource_type_id' => $resourceType->id,
     ]);
+    attachPartnerProductForOrderItemAndResource($orderItem, $resource);
 
     $oldBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $orderItem->id,
@@ -126,6 +127,7 @@ test('monitor book rejects duplicate when replace_existing is false', function (
     $resource = Resource::factory()->create([
         'resource_type_id' => $resourceType->id,
     ]);
+    attachPartnerProductForOrderItemAndResource($orderItem, $resource);
 
     ResourceOrderItem::factory()->create([
         'orderitem_id' => $orderItem->id,
@@ -167,6 +169,7 @@ test('monitor book defaults to replace_existing true when not specified', functi
     $resource = Resource::factory()->create([
         'resource_type_id' => $resourceType->id,
     ]);
+    attachPartnerProductForOrderItemAndResource($orderItem, $resource);
 
     $oldBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $orderItem->id,

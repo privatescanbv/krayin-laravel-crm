@@ -173,6 +173,21 @@
                 <x-admin::form.control-group.error name="groups" />
             </x-admin::form.control-group>
 
+            @if($user !== null)
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.users.index.create.last-login-at')
+                    </x-admin::form.control-group.label>
+
+                    <input
+                        type="text"
+                        readonly
+                        class="flex w-full cursor-default rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        value="{{ $user->last_login_at?->timezone(config('app.timezone'))->format('d-m-Y H:i') ?? '—' }}"
+                    />
+                </x-admin::form.control-group>
+            @endif
+
             <!-- Status -->
             <input type="hidden" name="status" value="0" />
 

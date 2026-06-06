@@ -61,7 +61,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "prettus/l5-repository"
+            ]
         }
     },
     "autoload": {

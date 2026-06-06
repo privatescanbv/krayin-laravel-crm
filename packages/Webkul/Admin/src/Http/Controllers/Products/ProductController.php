@@ -13,6 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
+use Prettus\Repository\Contracts\CriteriaInterface;
+use Prettus\Repository\Contracts\RepositoryInterface;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\ProductResource;
@@ -148,6 +150,13 @@ class ProductController extends SimpleEntityController
      */
     public function search(Request $request): JsonResponse
     {
+        $this->repository->pushCriteria(new class implements CriteriaInterface {
+            public function apply($model, RepositoryInterface $repository)
+            {
+                return $model->where('active', true);
+            }
+        });
+
         // Use the search logic from HasEntitySearch trait
         $products = $this->performEntitySearch($request, $this->repository);
 

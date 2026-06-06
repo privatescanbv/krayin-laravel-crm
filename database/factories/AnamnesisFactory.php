@@ -10,7 +10,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Anamnesis>
+ * @extends Factory<Anamnesis>
  */
 class AnamnesisFactory extends Factory
 {

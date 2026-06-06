@@ -233,8 +233,9 @@
                             return;
                         }
 
+                        const nameWithBrackets = `${this.name}[]`;
                         Array.from(form.querySelectorAll('input[type="hidden"]')).forEach((input) => {
-                            if (input.name === this.name) {
+                            if (input.name === this.name || input.name === nameWithBrackets) {
                                 input.remove();
                             }
                         });

@@ -141,9 +141,10 @@ class AnamnesisController extends Controller
     public function attachGvlForm(Request $request, string $id): JsonResponse
     {
         $anamnesis = Anamnesis::with('person', 'lead')->findOrFail($id);
+        $formTypeOverride = $request->input('form_type');
 
         try {
-            return $this->attachGvlFormToAnamnesis($anamnesis);
+            return $this->attachGvlFormToAnamnesis($anamnesis, $formTypeOverride);
         } catch (Exception $e) {
             Log::error('AnamnesisController@attachGvlForm failed', [
                 'anamnesis_id' => $id,
@@ -164,10 +165,12 @@ class AnamnesisController extends Controller
         $data = $request->validate([
             'lead_id'   => 'required|integer|exists:leads,id',
             'person_id' => 'required|integer|exists:persons,id',
+            'form_type' => 'nullable|string|in:'.implode(',', FormType::values()),
         ]);
 
         $leadId = $data['lead_id'];
         $personId = $data['person_id'];
+        $formTypeOverride = $data['form_type'] ?? null;
 
         try {
             // Get or create anamnesis
@@ -200,7 +203,7 @@ class AnamnesisController extends Controller
                 ], 422);
             }
 
-            $response = $this->attachGvlFormToAnamnesis($anamnesis);
+            $response = $this->attachGvlFormToAnamnesis($anamnesis, $formTypeOverride);
 
             if ($response->getStatusCode() !== 200) {
                 return $response;
@@ -439,7 +442,7 @@ class AnamnesisController extends Controller
     /**
      * Create a form request for anamnesis and return the form link.
      */
-    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis): array
+    protected function createFormRequestForAnamnesis(Anamnesis $anamnesis, ?string $formTypeOverride = null): array
     {
         if (! $anamnesis->person) {
             throw new Exception('Anamnesis heeft geen gekoppelde persoon.');
@@ -474,9 +477,13 @@ class AnamnesisController extends Controller
         $lastNameWithPrefix = trim(($person->lastname_prefix ? $person->lastname_prefix.' ' : '').$lastName);
         $maidenNameWithPrefix = trim(($person->married_name_prefix ? $person->married_name_prefix.' ' : '').($person->married_name ?? ''));
 
-        // Determine form type from active order department, fallback to lead department
-        $department = $this->anamnesisOrderResolver->resolveFormDepartment($anamnesis);
-        $formType = $this->mapFormTypeFromDepartment($department);
+        // Use explicit override if provided, otherwise derive from department
+        if ($formTypeOverride && FormType::tryFrom($formTypeOverride)) {
+            $formType = $formTypeOverride;
+        } else {
+            $department = $this->anamnesisOrderResolver->resolveFormDepartment($anamnesis);
+            $formType = $this->mapFormTypeFromDepartment($department);
+        }
 
         $formData = [
             'user_crm_id'     => $person->id,
@@ -547,15 +554,16 @@ class AnamnesisController extends Controller
 
         $formLink = $result['json']['form_url'] ?? throw new Exception('Missing form_url in API response');
 
-        // Save the link to the anamnesis
+        // Save the link and form type to the anamnesis
         $anamnesis->update([
-            'gvl_form_id' => $this->formService->extractFormIdFromUrl($formLink),
+            'gvl_form_id'   => $this->formService->extractFormIdFromUrl($formLink),
+            'gvl_form_type' => $formType,
         ]);
 
         return [$result['json']['data']['id'],  $formLink];
     }
 
-    private function attachGvlFormToAnamnesis(Anamnesis $anamnesis): JsonResponse
+    private function attachGvlFormToAnamnesis(Anamnesis $anamnesis, ?string $formTypeOverride = null): JsonResponse
     {
         if (! $anamnesis->person) {
             return response()->json([
@@ -570,7 +578,7 @@ class AnamnesisController extends Controller
             ], 422);
         }
 
-        [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis);
+        [$formId, $formLink] = $this->createFormRequestForAnamnesis($anamnesis, $formTypeOverride);
 
         $anamnesis->refresh();
 

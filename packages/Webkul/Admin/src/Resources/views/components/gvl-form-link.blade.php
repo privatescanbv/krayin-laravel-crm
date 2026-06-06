@@ -1,6 +1,7 @@
 @props([
     'gvlFormLink' => null,
     'gvlFormStatus' => null,
+    'gvlFormType' => null,
     'attachUrl' => null,
     'detachUrl' => null,
     'entityId' => null,
@@ -8,6 +9,7 @@
     'personId' => null,
     'personHasPortalAccount' => false,
     'leadId' => null,
+    'defaultFormType' => 'privatescan',
 ])
 @php
     use App\Support\GvlFormLink;
@@ -49,18 +51,31 @@
                 Ontkoppel
             </button>
         @else
-            <button
-                type="button"
-                class="primary-button gvl-action"
-                title="Koppel GVL formulier"
-                data-action="attach"
-                data-url="{{ $attachUrl }}"
-                data-entity-type="{{ $entityType }}"
-                @if($personId) data-person-id="{{ $personId }}" @endif
-                @if($leadId) data-lead-id="{{ $leadId }}" @endif
-            >
-                Koppelen
-            </button>
+            <div class="flex items-center gap-2">
+                <select
+                    class="gvl-form-type-select rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    title="Formulier type"
+                >
+                    @foreach(\App\Enums\FormType::manualCases() as $type)
+                        <option
+                            value="{{ $type->value }}"
+                            @if($type->value === $defaultFormType) selected @endif
+                        >{{ $type->label() }}</option>
+                    @endforeach
+                </select>
+                <button
+                    type="button"
+                    class="primary-button gvl-action"
+                    title="Koppel GVL formulier"
+                    data-action="attach"
+                    data-url="{{ $attachUrl }}"
+                    data-entity-type="{{ $entityType }}"
+                    @if($personId) data-person-id="{{ $personId }}" @endif
+                    @if($leadId) data-lead-id="{{ $leadId }}" @endif
+                >
+                    Koppelen
+                </button>
+            </div>
         @endif
     </div>
     @if($gvlFormLink)
@@ -77,6 +92,11 @@
                 <span class="text-gray-400">|</span>
                 <span class="text-gray-500">Status: </span>
                 <span class="font-medium {{ $statusColor }}">{{ $statusText }}</span>
+                @if($gvlFormType)
+                    <span class="text-gray-400">|</span>
+                    <span class="text-gray-500">Type: </span>
+                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ $gvlFormType->label() }}</span>
+                @endif
             @endif
         </div>
     @endif
@@ -107,9 +127,21 @@
 
         try {
             const isAttach = action === 'attach';
-            const body = isAttach && btn.dataset.entityType === 'person' && btn.dataset.personId
-                ? JSON.stringify({ person_id: +btn.dataset.personId, lead_id: +btn.dataset.leadId })
-                : undefined;
+
+            // Read selected form type from the sibling select
+            const formTypeSelect = btn.closest('div')?.querySelector('.gvl-form-type-select');
+            const formType = formTypeSelect ? formTypeSelect.value : null;
+
+            let body = undefined;
+            if (isAttach) {
+                const payload = {};
+                if (formType) payload.form_type = formType;
+                if (btn.dataset.entityType === 'person' && btn.dataset.personId) {
+                    payload.person_id = +btn.dataset.personId;
+                    if (btn.dataset.leadId) payload.lead_id = +btn.dataset.leadId;
+                }
+                body = JSON.stringify(payload);
+            }
 
             const res = await fetch(url, {
                 method: isAttach ? 'POST' : 'DELETE',

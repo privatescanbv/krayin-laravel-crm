@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrderItemStatus;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -9,10 +10,12 @@ use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
+use App\Services\Mail\EmailTemplateRenderingService;
 use Carbon\Carbon;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
+use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
 
@@ -155,4 +158,101 @@ test('resolveEmailVariablesForOrder without person id uses order-wide firstExami
     expect($order->fresh()->firstExaminationCarbon()?->format('Y-m-d H:i'))->toBe('2026-10-05 08:15')
         ->and($vars['tijd_afspraak'])->toBe('08:15')
         ->and($vars['datum_afspraak'])->toBe('05 oktober 2026');
+});
+
+test('order items table excludes lost order lines', function () {
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'total_price'   => 150,
+    ]);
+
+    OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'name'        => 'Actieve MRI',
+        'total_price' => 100,
+    ]);
+
+    OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'name'        => 'Verwijderde CT',
+        'total_price' => 50,
+        'status'      => OrderItemStatus::LOST->value,
+    ]);
+
+    $vars = app(EmailTemplateRenderingService::class)
+        ->resolveVariablesFromEntities(['order' => $order->id]);
+
+    expect($vars['order_items_table'])
+        ->toContain('Actieve MRI')
+        ->not->toContain('Verwijderde CT');
+});
+
+test('order mail variables exclude lost lines from summary and appointments tables', function () {
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $clinic = Clinic::factory()->create(['name' => 'Scan Kliniek']);
+    $resource = Resource::factory()->create(['clinic_id' => $clinic->id]);
+
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+
+    $activeItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'person_id'   => $person->id,
+        'name'        => 'Actieve MRI',
+        'description' => 'Actieve MRI onderzoek',
+        'product_id'  => Product::factory()->create()->id,
+    ]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $activeItem->id,
+        'resource_id'  => $resource->id,
+        'from'         => Carbon::parse('2026-09-01 10:00:00'),
+        'to'           => Carbon::parse('2026-09-01 11:00:00'),
+    ]);
+
+    $lostItem = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'person_id'   => $person->id,
+        'name'        => 'Verwijderde CT',
+        'description' => 'Verwijderde CT onderzoek',
+        'product_id'  => Product::factory()->create()->id,
+    ]);
+    ResourceOrderItem::factory()->create([
+        'orderitem_id' => $lostItem->id,
+        'resource_id'  => $resource->id,
+        'from'         => Carbon::parse('2026-09-01 14:00:00'),
+        'to'           => Carbon::parse('2026-09-01 15:00:00'),
+    ]);
+    $lostItem->update(['status' => OrderItemStatus::LOST->value]);
+
+    $vars = app(EmailTemplateRenderingService::class)
+        ->resolveVariablesFromEntities(['order' => $order->id]);
+
+    expect($vars['order_summary_table'])
+        ->toContain('Actieve MRI onderzoek')
+        ->not->toContain('Verwijderde CT onderzoek')
+        ->and($vars['appointments_by_person'])
+        ->not->toContain('Verwijderde CT')
+        ->and($vars['afspraken_tabel'])
+        ->not->toContain('Verwijderde CT');
+});
+
+test('displayableOrderItems excludes lost lines when orderItems are eager loaded', function () {
+    $order = Order::factory()->create();
+
+    OrderItem::factory()->create(['order_id' => $order->id, 'name' => 'Actief']);
+    OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'name'     => 'Verloren',
+        'status'   => OrderItemStatus::LOST->value,
+    ]);
+
+    $order->load('orderItems');
+
+    expect($order->displayableOrderItems()->pluck('name')->all())->toBe(['Actief']);
 });

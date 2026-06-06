@@ -141,7 +141,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span>Afdeling:</span>
-                    <span>{{ $lead->department()?->name ?? '—' }}</span>
+                    <span>{{ $lead->department?->name ?? '—' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>

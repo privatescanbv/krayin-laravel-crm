@@ -184,6 +184,32 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    /**
+     * Order items that are not marked LOST (removed/cancelled lines).
+     */
+    public function activeOrderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class)->notLost();
+    }
+
+    /**
+     * Order items for display in UI and emails (excludes LOST). Uses eager-loaded orderItems when present.
+     *
+     * @return Collection<int, OrderItem>
+     */
+    public function displayableOrderItems(?int $personId = null): Collection
+    {
+        $items = $this->relationLoaded('orderItems')
+            ? $this->orderItems->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)
+            : $this->activeOrderItems()->get();
+
+        if ($personId !== null) {
+            $items = $items->where('person_id', $personId);
+        }
+
+        return $items->values();
+    }
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
@@ -394,9 +420,7 @@ class Order extends Model
      */
     public function recalculateTotalPrice(): void
     {
-        $this->total_price = $this->orderItems()
-            ->where('status', '!=', OrderItemStatus::LOST->value)
-            ->sum('total_price');
+        $this->total_price = $this->orderItems()->notLost()->sum('total_price');
         $this->saveQuietly();
     }
 

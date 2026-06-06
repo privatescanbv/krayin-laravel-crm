@@ -228,10 +228,14 @@ class OrderItem extends Model
             ->groupBy('order_items.id', 'order_items.status', 'order_items.product_id');
     }
 
+    public function scopeNotLost(Builder $query): Builder
+    {
+        return $query->where('status', '!=', OrderItemStatus::LOST->value);
+    }
+
     public function scopeForOrderAndNotLost(Builder $query, string $orderId): Builder
     {
-        return $query->where('order_id', $orderId)
-            ->whereNotIn('status', [OrderItemStatus::LOST->value]);
+        return $query->where('order_id', $orderId)->notLost();
     }
 
     public function getProductName(): string

@@ -1113,6 +1113,7 @@ return [
                 'datagrid' => [
                     'active'        => 'Actief',
                     'created-at'    => 'Aangemaakt op',
+                    'last-login-at' => 'Laatst ingelogd',
                     'delete'        => 'Verwijderen',
                     'edit'          => 'Bewerken',
                     'email'         => 'E-mail',
@@ -1126,6 +1127,7 @@ return [
 
                 'create' => [
                     'confirm-password' => 'Bevestig wachtwoord',
+                    'last-login-at'    => 'Laatst ingelogd',
                     'email'            => 'E-mail',
                     'first-name'       => 'Voornaam',
                     'general'          => 'Algemeen',

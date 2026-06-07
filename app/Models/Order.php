@@ -106,6 +106,18 @@ class Order extends Model
     }
 
     /**
+     * Order-pipeline "Bevestigd" stage for the lead's department (Privatescan vs Hernia).
+     */
+    public static function orderSendByDepartmentStageId(?Department $department): int
+    {
+        if ($department !== null && $department->name === Departments::HERNIA->value) {
+            return PipelineStage::ORDER_BEVESTIGD_HERNIA->id();
+        }
+
+        return PipelineStage::ORDER_BEVESTIGD->id();
+    }
+
+    /**
      * Order-pipeline "Verloren" stage for the lead's department (Privatescan vs Hernia).
      */
     public static function lostOrderStageId(?Department $department): int

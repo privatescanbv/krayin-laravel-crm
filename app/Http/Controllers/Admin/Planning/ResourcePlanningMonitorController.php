@@ -893,6 +893,9 @@ class ResourcePlanningMonitorController extends Controller
                 ?? ($r->clinicDepartment?->clinic_id
                     ? PartnerProductBookingValidator::activeProductIdsForClinic($r->clinicDepartment->clinic_id)
                     : []),
+            // Product IDs from partner products directly linked to this resource.
+            'active_product_ids'     => $partnerProducts->where('active', true)->pluck('product_id')->unique()->values()->all(),
+            'restricted_product_ids' => $partnerProducts->pluck('product_id')->unique()->values()->all(),
         ];
     }
 }

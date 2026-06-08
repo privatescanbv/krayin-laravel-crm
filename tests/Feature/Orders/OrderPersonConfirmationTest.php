@@ -258,8 +258,11 @@ it('allows marking a person as sent even when already sent', function () {
     $this->actingAs($user, 'user');
 
     $person = Person::factory()->create();
+    // Second person keeps allPersonsConfirmed() = false so we don't trigger
+    // a pipeline_stage_id update that requires a seeded DB stage.
+    $person2 = Person::factory()->create();
     $salesLead = SalesLead::factory()->create();
-    $salesLead->persons()->attach($person->id);
+    $salesLead->persons()->attach([$person->id, $person2->id]);
 
     $order = Order::factory()->create([
         'sales_lead_id' => $salesLead->id,
@@ -268,8 +271,8 @@ it('allows marking a person as sent even when already sent', function () {
 
     // No letter content so isLetterSaved() = false (no PDF generation attempted)
     OrderPersonConfirmation::create([
-        'order_id'     => $order->id,
-        'person_id'    => $person->id,
+        'order_id'      => $order->id,
+        'person_id'     => $person->id,
         'email_sent_at' => now(),
     ]);
 

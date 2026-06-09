@@ -567,6 +567,24 @@
                     return labels[status] || status;
                 },
 
+                getActionIconClass(action) {
+                    if (action.type === 'mail') {
+                        return 'icon-mail';
+                    }
+
+                    if (action.type === 'belstatus') {
+                        const icons = {
+                            not_reachable: 'icon-error',
+                            voicemail_left: 'icon-message',
+                            spoken: 'icon-call',
+                        };
+
+                        return icons[action.call_status] || 'icon-call';
+                    }
+
+                    return 'icon-note';
+                },
+
                 // truncateHtml(html, maxLength = 150) {
                 //     if (!html) return '';
                 //

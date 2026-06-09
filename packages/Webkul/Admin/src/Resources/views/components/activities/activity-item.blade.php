@@ -297,9 +297,9 @@
                     <div v-for="(a, i) in activity.actions" :key="i"
                          class="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                         <span class="shrink-0 mt-px text-sm"
-                              :class="a.type === 'belstatus' ? 'icon-phone' : a.type === 'mail' ? 'icon-mail' : 'icon-note'"></span>
+                              :class="getActionIconClass(a)"></span>
                         <span class="truncate min-w-0">
-                            @{{ a.date }} ·
+                            @{{ $admin.formatDate(a.date_full, 'd MMM HH:mm', timezone) }} ·
                             <strong class="font-semibold text-gray-600 dark:text-gray-300">@{{ a.creator }}</strong>:
                             @{{ a.label }}
                         </span>

@@ -18,8 +18,8 @@ enum ActivityActionType: string
     public function icon(): string
     {
         return match ($this) {
-            self::Notitie   => 'icon-comment',
-            self::Belstatus => 'icon-phone',
+            self::Notitie   => 'icon-note',
+            self::Belstatus => 'icon-call',
         };
     }
 }

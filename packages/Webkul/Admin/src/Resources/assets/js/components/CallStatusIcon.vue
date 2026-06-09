@@ -5,7 +5,7 @@ import { PhoneIcon, PhoneXMarkIcon, InboxIcon } from '@heroicons/vue/24/solid'
 const props = defineProps({
   status: {
     type: String,
-    required: true, // 'spoken' | 'unreachable' | 'voicemail'
+    required: true, // 'spoken' | 'not_reachable' | 'voicemail_left'
   },
   size: {
     type: String,
@@ -26,14 +26,14 @@ const colorMap = {
 }
 
 const resolvedStatus = computed(() => (props.status in iconMap ? props.status : 'spoken'))
+const resolvedColor = computed(() => colorMap[resolvedStatus.value] ?? 'text-gray-400')
 </script>
 
 <template>
   <component
     :is="iconMap[resolvedStatus]"
-    :class="[size, colorMap[resolvedStatus]]"
+    :class="[size, resolvedColor]"
   />
 
 </template>
-
 

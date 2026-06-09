@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use App\Enums\CallStatus;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ActivityResource extends JsonResource
@@ -73,7 +74,7 @@ class ActivityResource extends JsonResource
 
                 $summary = ['not_reachable' => 0, 'voicemail_left' => 0, 'spoken' => 0];
                 foreach ($belstatusItems as $action) {
-                    $key = is_string($action->call_status) ? $action->call_status : ($action->call_status?->value ?? null);
+                    $key = CallStatus::valueOf($action->call_status);
                     if ($key && isset($summary[$key])) {
                         $summary[$key]++;
                     }
@@ -82,7 +83,7 @@ class ActivityResource extends JsonResource
                 $data['call_status_summary'] = $summary;
                 $data['call_statuses'] = $belstatusItems->sortBy('created_at')->values()->map(fn ($a) => [
                     'id'           => $a->id,
-                    'status'       => is_string($a->call_status) ? $a->call_status : ($a->call_status?->value ?? null),
+                    'status'       => CallStatus::valueOf($a->call_status),
                     'omschrijving' => $a->body,
                     'created_at'   => $a->created_at,
                     'creator'      => $a->creator ? ['name' => $a->creator->name] : null,
@@ -90,24 +91,21 @@ class ActivityResource extends JsonResource
             }
 
             // Unified actions list for timeline display in person/lead view
-            $callStatusLabels = [
-                'not_reachable' => 'Niet bereikt',
-                'voicemail_left' => 'Voicemail',
-                'spoken' => 'Gesproken',
-            ];
-            $actionItems = $allActions->map(function ($a) use ($callStatusLabels) {
-                $callStatusKey = is_string($a->call_status) ? $a->call_status : ($a->call_status?->value ?? '');
-                $statusLabel   = $callStatusLabels[$callStatusKey] ?? $callStatusKey;
+            $actionItems = $allActions->map(function ($a) {
+                $callStatusKey = CallStatus::valueOf($a->call_status) ?? '';
+                $statusLabel   = CallStatus::labelFor($callStatusKey);
                 $body          = trim($a->body ?? '');
+                $typeValue     = $a->type?->value ?? $a->type;
 
                 return [
-                    'type'      => $a->type?->value ?? $a->type,
-                    'label'     => $a->type?->value === 'belstatus'
+                    'type'        => $typeValue,
+                    'call_status' => $callStatusKey ?: null,
+                    'label'       => $typeValue === 'belstatus'
                         ? ($statusLabel . ($body !== '' ? ' — ' . mb_strimwidth($body, 0, 60, '…') : ''))
                         : mb_strimwidth($body, 0, 80, '…'),
-                    'creator'   => $a->creator?->name ?? '',
-                    'date'      => $a->created_at->locale('nl')->isoFormat('D MMM'),
-                    'date_full' => $a->created_at->toIso8601String(),
+                    'creator'     => $a->creator?->name ?? '',
+                    'date'        => $a->created_at->locale('nl')->isoFormat('D MMM HH:mm'),
+                    'date_full'   => $a->created_at->toIso8601String(),
                 ];
             });
 
@@ -118,14 +116,16 @@ class ActivityResource extends JsonResource
                     'type'      => 'mail',
                     'label'     => $e->subject ?? '(geen onderwerp)',
                     'creator'   => $from,
-                    'date'      => $e->created_at->locale('nl')->isoFormat('D MMM'),
+                    'date'      => $e->created_at->locale('nl')->isoFormat('D MMM HH:mm'),
                     'date_full' => $e->created_at->toIso8601String(),
                 ];
             });
 
-            $data['actions'] = $actionItems->merge($emailItems)
+            $data['actions'] = $actionItems->toBase()
+                ->merge(collect($emailItems))
                 ->sortByDesc('date_full')
-                ->values();
+                ->values()
+                ->all();
         }
 
         return $data;

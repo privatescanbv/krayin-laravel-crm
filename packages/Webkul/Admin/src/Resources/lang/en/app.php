@@ -131,10 +131,11 @@ return [
                 ],
 
                 'note' => [
-                    'btn'      => 'Note',
-                    'title'    => 'Add Note',
-                    'comment'  => 'Comment',
-                    'save-btn' => 'Save Note',
+                    'btn'         => 'Note',
+                    'title'       => 'Add Note',
+                    'title-field' => 'Title',
+                    'comment'     => 'Comment',
+                    'save-btn'    => 'Save Note',
                 ],
 
                 'activity' => [

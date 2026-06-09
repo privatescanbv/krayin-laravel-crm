@@ -74,6 +74,15 @@
                                 ::value="entity.id"
                             />
 
+                            <!-- Title -->
+                            <x-adminc::components.field
+                                type="text"
+                                name="title"
+                                :label="trans('admin::app.components.activities.actions.note.title-field')"
+                                :placeholder="trans('admin::app.components.activities.actions.note.title-field')"
+                                rules="required"
+                            />
+
                             <!-- Comment -->
                             <x-adminc::components.field
                                 type="textarea"

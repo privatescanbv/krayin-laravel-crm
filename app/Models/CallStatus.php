@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\CallStatus as CallStatusEnum;
+use App\Casts\NullableCallStatusCast;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +27,7 @@ class CallStatus extends Model
     ];
 
     protected $casts = [
-        'status' => CallStatusEnum::class,
+        'status' => NullableCallStatusCast::class,
     ];
 
     public function activity(): BelongsTo

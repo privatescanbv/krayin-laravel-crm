@@ -52,8 +52,8 @@ $totalCount = ($taskComments ?? collect())->count();
             @php $last = $i === $totalCount - 1; @endphp
             <div class="flex gap-3 pb-5" data-comment-id="{{ $comment->id }}">
                 <div class="flex flex-col items-center">
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                        <span class="icon-comment text-base"></span>
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+                        <span class="icon-note text-base"></span>
                     </div>
                     @if(!$last)<div class="w-px flex-1 bg-gray-200 dark:bg-gray-700 mt-1.5 mb-[-8px]"></div>@endif
                 </div>
@@ -166,8 +166,8 @@ $totalCount = ($taskComments ?? collect())->count();
         div.className = 'flex gap-3 pb-5';
         div.innerHTML = `
             <div class="flex flex-col items-center">
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
-                    <span class="icon-comment text-base"></span>
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                    <span class="icon-note text-base"></span>
                 </div>
                 <div class="w-px flex-1 bg-gray-200 mt-1.5 mb-[-8px]"></div>
             </div>

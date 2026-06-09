@@ -7,9 +7,9 @@ $defaultTab = $isCall ? 'belstatus' : 'notitie';
 $currentUserId = auth()->guard('user')->id();
 
 $statusConfig = [
-    CallStatus::SPOKEN->value           => ['label' => CallStatus::SPOKEN->label(),           'color' => '#1f8a5b', 'bg' => '#dcf3e6', 'border' => '#a3d9b8'],
-    CallStatus::NOT_REACHABLE->value    => ['label' => CallStatus::NOT_REACHABLE->label(),    'color' => '#e5484d', 'bg' => '#fce4e4', 'border' => '#f4a9aa'],
-    CallStatus::VOICEMAIL_LEFT->value   => ['label' => CallStatus::VOICEMAIL_LEFT->label(),   'color' => '#3b7dd8', 'bg' => '#e2edfb', 'border' => '#93baf0'],
+    CallStatus::SPOKEN->value           => ['label' => CallStatus::SPOKEN->label(),           'color' => '#1f8a5b', 'bg' => '#dcf3e6', 'border' => '#a3d9b8', 'icon' => CallStatus::SPOKEN->icon()],
+    CallStatus::NOT_REACHABLE->value    => ['label' => CallStatus::NOT_REACHABLE->label(),    'color' => '#e5484d', 'bg' => '#fce4e4', 'border' => '#f4a9aa', 'icon' => CallStatus::NOT_REACHABLE->icon()],
+    CallStatus::VOICEMAIL_LEFT->value   => ['label' => CallStatus::VOICEMAIL_LEFT->label(),   'color' => '#3b7dd8', 'bg' => '#e2edfb', 'border' => '#93baf0', 'icon' => CallStatus::VOICEMAIL_LEFT->icon()],
 ];
 
 // Build timeline: actions + emails, sorted descending
@@ -51,8 +51,8 @@ $totalCount    = $timelineItems->count();
     {{-- ── Type selector ───────────────────────────────────────── --}}
     <div class="flex items-center gap-1 px-5 pt-4 pb-0" id="action-tabs">
         @foreach([
-            ['key' => 'belstatus', 'label' => 'Belstatus',   'icon' => 'icon-phone'],
-            ['key' => 'notitie',   'label' => 'Notitie',     'icon' => 'icon-comment'],
+            ['key' => 'belstatus', 'label' => 'Belstatus',   'icon' => 'icon-call'],
+            ['key' => 'notitie',   'label' => 'Notitie',     'icon' => 'icon-note'],
             ['key' => 'mail',      'label' => 'Mail',        'icon' => 'icon-mail'],
         ] as $tab)
             <button
@@ -183,12 +183,21 @@ $totalCount    = $timelineItems->count();
             @php $last = $i === $totalCount - 1; @endphp
 
             @if($item['kind'] === 'belstatus')
-                @php $cfg = $statusConfig[$item['call_status']?->value] ?? ['label' => $item['call_status']?->label() ?? '?', 'color' => '#555', 'bg' => '#eee', 'border' => '#ccc']; @endphp
+                @php
+                    $callStatusKey = CallStatus::valueOf($item['call_status']);
+                    $cfg = $statusConfig[$callStatusKey] ?? [
+                        'label' => CallStatus::labelFor($callStatusKey),
+                        'color' => '#555',
+                        'bg' => '#eee',
+                        'border' => '#ccc',
+                        'icon' => CallStatus::iconFor($callStatusKey),
+                    ];
+                @endphp
                 <div class="act-item flex gap-3 pb-5" data-kind="belstatus">
                     <div class="flex flex-col items-center">
                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm"
                              style="background: {{ $cfg['bg'] }}; color: {{ $cfg['color'] }};">
-                            <span class="icon-phone text-base"></span>
+                            <span class="{{ $cfg['icon'] }} text-base"></span>
                         </div>
                         @if(!$last)<div class="w-px flex-1 bg-gray-200 dark:bg-gray-700 mt-1.5 mb-[-8px]"></div>@endif
                     </div>
@@ -219,14 +228,17 @@ $totalCount    = $timelineItems->count();
             @elseif($item['kind'] === 'notitie')
                 <div class="act-item flex gap-3 pb-5" data-kind="notitie">
                     <div class="flex flex-col items-center">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                            <span class="icon-comment text-base"></span>
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+                            <span class="icon-note text-base"></span>
                         </div>
                         @if(!$last)<div class="w-px flex-1 bg-gray-200 dark:bg-gray-700 mt-1.5 mb-[-8px]"></div>@endif
                     </div>
                     <div class="flex-1 min-w-0 pt-1">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
-                            <span class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{ $item['by'] }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{ $item['by'] }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wide rounded px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">notitie</span>
+                            </div>
                             <div class="flex items-center gap-2 shrink-0">
                                 <span class="text-xs text-gray-400 dark:text-gray-500">{{ $item['ts_fmt'] }}</span>
                                 @if($item['can_delete'])
@@ -470,12 +482,12 @@ $totalCount    = $timelineItems->count();
             <span class="icon-delete text-sm"></span></button>`;
 
         if (type === 'belstatus') {
-            const cfg = statusConfig[item.call_status] || { label: item.call_status, color: '#555', bg: '#eee' };
+            const cfg = statusConfig[item.call_status] || { label: item.call_status, color: '#555', bg: '#eee', icon: 'icon-call' };
             div.innerHTML = `
                 <div class="flex flex-col items-center">
                     <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm"
                          style="background:${cfg.bg};color:${cfg.color};">
-                        <span class="icon-phone text-base"></span>
+                        <span class="${cfg.icon} text-base"></span>
                     </div>
                     <div class="w-px flex-1 bg-gray-200 mt-1.5 mb-[-8px]"></div>
                 </div>
@@ -495,14 +507,17 @@ $totalCount    = $timelineItems->count();
         } else {
             div.innerHTML = `
                 <div class="flex flex-col items-center">
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
-                        <span class="icon-comment text-base"></span>
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                        <span class="icon-note text-base"></span>
                     </div>
                     <div class="w-px flex-1 bg-gray-200 mt-1.5 mb-[-8px]"></div>
                 </div>
                 <div class="flex-1 min-w-0 pt-1">
                     <div class="flex items-center justify-between gap-2 flex-wrap">
-                        <span class="font-semibold text-sm text-gray-900">${myName}</span>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-semibold text-sm text-gray-900">${myName}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide rounded px-1.5 py-0.5 bg-amber-50 text-amber-600">notitie</span>
+                        </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="text-xs text-gray-400">${createdAt}</span>
                             ${deleteBtn}

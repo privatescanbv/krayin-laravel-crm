@@ -118,7 +118,8 @@
                         <x-admin::form.control-group.error control-name="type"/>
                     </x-admin::form.control-group>
 
-                    <!-- Deadline -->
+                    <!-- Deadline (hidden for NOTE type) -->
+                    @if($activity->type !== ActivityType::NOTE)
                     <x-admin::form.control-group>
                         @php
                             $scheduleToValue   = old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i');
@@ -133,6 +134,7 @@
                             class="w-full"
                         />
                     </x-admin::form.control-group>
+                    @endif
 
                     <!-- Description -->
                     @php

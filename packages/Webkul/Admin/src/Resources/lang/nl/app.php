@@ -128,10 +128,11 @@ return [
                     'save-btn'      => 'Bestand opslaan',
                 ],
                 'note' => [
-                    'btn'      => 'Notitie',
-                    'title'    => 'Notitie toevoegen',
-                    'comment'  => 'Opmerking',
-                    'save-btn' => 'Notitie opslaan',
+                    'btn'         => 'Notitie',
+                    'title'       => 'Notitie toevoegen',
+                    'title-field' => 'Titel',
+                    'comment'     => 'Opmerking',
+                    'save-btn'    => 'Notitie opslaan',
                 ],
                 'activity' => [
                     'btn'           => 'Activiteit',

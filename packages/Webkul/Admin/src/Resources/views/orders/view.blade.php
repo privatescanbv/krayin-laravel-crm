@@ -81,7 +81,11 @@
 
                 <div class="flex justify-between">
                     <span>Toegewezen aan:</span>
-                    <span>{{ $order->user?->name }}</span>
+                    <span>{{ $order->user?->name ?: '—' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Afdeling:</span>
+                    <span>{{ $order->getPipelineDepartment()->name }}</span>
                 </div>
                 {{--                <div class="flex justify-between">--}}
                 {{--                    <span>Kliniek Begeleidster:</span>--}}

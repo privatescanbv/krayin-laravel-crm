@@ -7,7 +7,6 @@ use App\Enums\ActivityType;
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
 use App\Enums\Currency;
-use App\Enums\FormStatus;
 use App\Enums\LostReason;
 use App\Enums\NotificationReferenceType;
 use App\Enums\OrderItemStatus;
@@ -21,7 +20,6 @@ use App\Http\Requests\Admin\OrderPaymentRequest;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
 use App\Models\Anamnesis;
-use App\Models\AnamnesisGvlForm;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderCheck;
@@ -32,6 +30,7 @@ use App\Repositories\OrderRepository;
 use App\Repositories\SalesLeadRepository;
 use App\Services\Afb\AfbDispatchService;
 use App\Services\Afb\AfbDocumentGenerator;
+use App\Services\Anamnesis\AnamnesisGvlFormResolver;
 use App\Services\FormService;
 use App\Services\Mail\CrmMailService;
 use App\Services\OrderCheckService;
@@ -93,6 +92,7 @@ class OrderController extends SimpleEntityController
         private AfbDispatchService $afbDispatchService,
         private readonly AfbDocumentGenerator $afbDocumentGenerator,
         private readonly AttachmentRepository $attachmentRepository,
+        private readonly AnamnesisGvlFormResolver $anamnesisGvlFormResolver,
     ) {
         parent::__construct($orderRepository);
 
@@ -809,16 +809,16 @@ class OrderController extends SimpleEntityController
         }
 
         if ($person) {
-            $hasCompletedGvlForm = AnamnesisGvlForm::whereHas(
-                'anamnesis',
-                fn ($q) => $q->where('person_id', $person->id)
-            )
-                ->where('gvl_form_status', FormStatus::Completed)
-                ->exists();
+            $anamnesisRecords = $this->anamnesisGvlFormResolver->loadForOrder($order);
+            $anamnesis = $this->anamnesisGvlFormResolver->resolveForPerson($anamnesisRecords, $order->id, $person->id);
+            $completedForms = $this->anamnesisGvlFormResolver->completedFormsForAnamnesis($anamnesis);
+            $formCount = $completedForms->count();
 
-            if ($hasCompletedGvlForm) {
+            foreach ($completedForms as $index => $gvlForm) {
                 $attachmentPreviews[] = [
-                    'name' => sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
+                    'name' => $formCount > 1
+                        ? sprintf('GVL - %s (%d van %d).pdf', $person->name ?? 'Patiënt', $index + 1, $formCount)
+                        : sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
                     'type' => 'gvl',
                 ];
             }
@@ -894,7 +894,7 @@ class OrderController extends SimpleEntityController
                 ]);
             }
 
-            $this->afbDispatchService->attachGvlPdfsToEmail($email, $generatedDocs);
+            $this->afbDispatchService->attachGvlPdfsToEmail($email, $generatedDocs, $order);
 
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $uploadedFile) {
@@ -975,13 +975,9 @@ class OrderController extends SimpleEntityController
         }
 
         if ($type === 'gvl' && $personId) {
-            $gvlFormRecord = AnamnesisGvlForm::whereHas(
-                'anamnesis',
-                fn ($q) => $q->where('person_id', $personId)
-            )
-                ->whereNotNull('gvl_form_id')
-                ->latest()
-                ->first();
+            $anamnesisRecords = $this->anamnesisGvlFormResolver->loadForOrder($order);
+            $anamnesis = $this->anamnesisGvlFormResolver->resolveForPerson($anamnesisRecords, $order->id, $personId);
+            $gvlFormRecord = $this->anamnesisGvlFormResolver->completedFormsForAnamnesis($anamnesis)->first();
 
             if (! $gvlFormRecord) {
                 abort(404, 'Geen GVL formulier gevonden.');

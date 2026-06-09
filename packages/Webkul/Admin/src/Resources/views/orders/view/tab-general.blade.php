@@ -1,4 +1,4 @@
-@php use App\Enums\Departments; use App\Enums\PipelineStage; use App\Services\Afb\AfbDispatchService; @endphp
+@php use App\Enums\PipelineStage; use App\Services\Afb\AfbDispatchService; @endphp
 @props([
     'order',
     'afbNeedsManualBanner' => false,
@@ -280,13 +280,6 @@
                 @endif
             </div>
             @endif
-
-            <div class="flex flex-col">
-                <span class="text-gray-500 dark:text-gray-400">Afdeling</span>
-                <span class="font-medium text-gray-800 dark:text-white">
-                    {{ $order->isHerniapoli() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value }}
-                </span>
-            </div>
         </div>
     </div>
 

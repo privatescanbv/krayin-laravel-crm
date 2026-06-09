@@ -894,6 +894,8 @@ class ResourcePlanningMonitorController extends Controller
                     ? PartnerProductBookingValidator::activeProductIdsForClinic($r->clinicDepartment->clinic_id)
                     : []),
             // Product IDs from partner products directly linked to this resource.
+            // active_product_ids: only where the partner product is active.
+            // restricted_product_ids: all linked partner products (active or inactive).
             'active_product_ids'     => $partnerProducts->where('active', true)->pluck('product_id')->unique()->values()->all(),
             'restricted_product_ids' => $partnerProducts->pluck('product_id')->unique()->values()->all(),
         ];

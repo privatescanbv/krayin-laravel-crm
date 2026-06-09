@@ -395,7 +395,7 @@ test('clinic guide get defaults to today when no date parameter', function () {
     $response->assertJsonPath('count', 1);
 });
 
-test('clinic guide shows gvl_form_link when form status is completed', function () {
+test('clinic guide shows gvl_forms when form status is completed', function () {
     $person = Person::factory()->create();
     $salesLead = SalesLead::factory()->create();
     $salesLead->attachPersons([$person->id]);
@@ -421,10 +421,12 @@ test('clinic guide shows gvl_form_link when form status is completed', function 
     $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
 
     $response->assertOk();
-    expect($response->json('orders.0.gvl_form_link'))->not->toBeNull();
+    expect($response->json('orders.0.gvl_forms'))->toHaveCount(1);
+    expect($response->json('orders.0.gvl_forms.0.link'))->not->toBeNull();
+    expect($response->json('orders.0.gvl_forms.0.status'))->toBe('completed');
 });
 
-test('clinic guide hides gvl_form_link when form status is not completed', function () {
+test('clinic guide returns empty gvl_forms when form status is not completed', function () {
     $person = Person::factory()->create();
     $salesLead = SalesLead::factory()->create();
     $salesLead->attachPersons([$person->id]);
@@ -437,12 +439,12 @@ test('clinic guide hides gvl_form_link when form status is not completed', funct
     ]);
     createClinicLinkedOrderItem($order->id, $person->id);
 
-    $anamnesis2 = Anamnesis::query()
+    $anamnesis = Anamnesis::query()
         ->where('sales_id', $salesLead->id)
         ->where('person_id', $person->id)
         ->firstOrFail();
     AnamnesisGvlForm::create([
-        'anamnesis_id'    => $anamnesis2->id,
+        'anamnesis_id'    => $anamnesis->id,
         'gvl_form_id'     => '100',
         'gvl_form_status' => FormStatus::Step1_completed,
     ]);
@@ -450,5 +452,49 @@ test('clinic guide hides gvl_form_link when form status is not completed', funct
     $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
 
     $response->assertOk();
-    expect($response->json('orders.0.gvl_form_link'))->toBeNull();
+    expect($response->json('orders.0.gvl_forms'))->toBe([]);
+});
+
+test('clinic guide resolves order-level anamnesis over sales-level for gvl_forms', function () {
+    $person = Person::factory()->create();
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->attachPersons([$person->id]);
+
+    $targetDate = '2026-08-01';
+    $order = Order::factory()->create([
+        'sales_lead_id'        => $salesLead->id,
+        'pipeline_stage_id'    => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
+        'first_examination_at' => Carbon::parse($targetDate)->setHour(10),
+    ]);
+    createClinicLinkedOrderItem($order->id, $person->id);
+
+    // Sales-level anamnesis auto-created by attachPersons — add a completed form to it
+    $salesAnamnesis = Anamnesis::query()
+        ->where('sales_id', $salesLead->id)
+        ->where('person_id', $person->id)
+        ->firstOrFail();
+    AnamnesisGvlForm::create([
+        'anamnesis_id'    => $salesAnamnesis->id,
+        'gvl_form_id'     => '201',
+        'gvl_form_status' => FormStatus::Completed,
+    ]);
+
+    // Order-level anamnesis with its own completed form
+    $orderAnamnesis = Anamnesis::factory()->create([
+        'order_id'  => $order->id,
+        'lead_id'   => null,
+        'person_id' => $person->id,
+    ]);
+    AnamnesisGvlForm::create([
+        'anamnesis_id'    => $orderAnamnesis->id,
+        'gvl_form_id'     => '200',
+        'gvl_form_status' => FormStatus::Completed,
+    ]);
+
+    $response = $this->getJson(route('admin.clinic-guide.get', ['date' => $targetDate]));
+
+    $response->assertOk();
+    // Only the order-level anamnesis is resolved, so only 1 form (not 2 from both levels)
+    expect($response->json('orders.0.gvl_forms'))->toHaveCount(1);
+    expect($response->json('orders.0.gvl_forms.0.status'))->toBe('completed');
 });

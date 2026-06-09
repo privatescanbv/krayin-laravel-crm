@@ -4,17 +4,16 @@ namespace App\Services\Afb;
 
 use App\Enums\AfbDispatchStatus;
 use App\Enums\AfbDispatchType;
-use App\Enums\FormStatus;
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Jobs\SendAfbDispatchJob;
 use App\Models\AfbDispatch;
 use App\Models\AfbPersonDocument;
-use App\Models\AnamnesisGvlForm;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ResourceOrderItem;
+use App\Services\Anamnesis\AnamnesisGvlFormResolver;
 use App\Services\FormService;
 use App\Services\Mail\CrmMailService;
 use Carbon\Carbon;
@@ -34,6 +33,7 @@ class AfbDispatchService
         private readonly AfbDocumentGenerator $afbDocumentGenerator,
         private readonly CrmMailService $crmMailService,
         private readonly FormService $formService,
+        private readonly AnamnesisGvlFormResolver $resolver,
     ) {}
 
     /**
@@ -540,65 +540,70 @@ class AfbDispatchService
             ->exists();
     }
 
-    public function attachGvlPdfsToEmail(Email $email, array $generatedDocuments): void
+    public function attachGvlPdfsToEmail(Email $email, array $generatedDocuments, ?Order $order = null): void
     {
-        $personNames = collect($generatedDocuments)
-            ->whereNotNull('person_id')
-            ->mapWithKeys(fn ($doc) => [(int) $doc['person_id'] => $doc['patient_name'] ?? '']);
+        $personDocs = collect($generatedDocuments)->whereNotNull('person_id');
 
-        foreach ($personNames->keys() as $personId) {
-            $gvlFormRecord = AnamnesisGvlForm::whereHas(
-                'anamnesis',
-                fn ($q) => $q->where('person_id', $personId)
-            )
-                ->where('gvl_form_status', FormStatus::Completed)
-                ->whereNotNull('gvl_form_id')
-                ->latest()
-                ->first();
+        // Group by order so we can call loadForOrder once per order
+        $byOrderId = $personDocs->groupBy(fn ($doc) => (string) (($doc['order'] ?? $order)?->id));
 
-            if (! $gvlFormRecord) {
+        foreach ($byOrderId as $docs) {
+            $orderObject = $docs->first()['order'] ?? $order;
+
+            if ($orderObject === null) {
                 continue;
             }
 
-            $formId = $gvlFormRecord->gvl_form_id;
+            $anamnesisRecords = $this->resolver->loadForOrder($orderObject);
+            $personNames = $docs->mapWithKeys(fn ($doc) => [(int) $doc['person_id'] => $doc['patient_name'] ?? '']);
 
-            try {
+            foreach ($personNames->keys() as $personId) {
+                $anamnesis = $this->resolver->resolveForPerson($anamnesisRecords, (int) $orderObject->id, $personId);
+                $completedForms = $this->resolver->completedFormsForAnamnesis($anamnesis);
 
-                $response = $this->formService->downloadForm($formId);
+                foreach ($completedForms as $gvlFormRecord) {
+                    $formId = $gvlFormRecord->gvl_form_id;
 
-                if (! $response->successful()) {
-                    Log::error('GVL PDF download mislukt', [
-                        'person_id' => $personId,
-                        'form_id'   => $formId,
-                        'status'    => $response->status(),
-                    ]);
+                    try {
+                        $response = $this->formService->downloadForm($formId);
 
-                    continue;
+                        if (! $response->successful()) {
+                            Log::error('GVL PDF download mislukt', [
+                                'person_id' => $personId,
+                                'form_id'   => $formId,
+                                'status'    => $response->status(),
+                            ]);
+
+                            continue;
+                        }
+
+                        $pdfContent = $response->body();
+                        $suffix = $completedForms->count() > 1 ? "-{$formId}" : '';
+                        $fileName = sprintf(
+                            'gvl-%d-%s%s-%s.pdf',
+                            $personId,
+                            Str::slug($personNames->get($personId) ?? ''),
+                            $suffix,
+                            now()->format('Ymd')
+                        );
+                        $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
+
+                        Storage::put($filePath, $pdfContent);
+
+                        $email->attachments()->create([
+                            'name'         => $fileName,
+                            'path'         => $filePath,
+                            'size'         => strlen($pdfContent),
+                            'content_type' => 'application/pdf',
+                        ]);
+                    } catch (Throwable $e) {
+                        Log::error('GVL PDF bijlage mislukt', [
+                            'person_id'     => $personId,
+                            'form_id'       => $formId,
+                            'error_message' => $e->getMessage(),
+                        ]);
+                    }
                 }
-
-                $pdfContent = $response->body();
-                $fileName = sprintf(
-                    'gvl-%d-%s-%s.pdf',
-                    $personId,
-                    Str::slug($personNames->get($personId) ?? ''),
-                    now()->format('Ymd')
-                );
-                $filePath = sprintf('afb/gvl/%d/%s', $personId, $fileName);
-
-                Storage::put($filePath, $pdfContent);
-
-                $email->attachments()->create([
-                    'name'         => $fileName,
-                    'path'         => $filePath,
-                    'size'         => strlen($pdfContent),
-                    'content_type' => 'application/pdf',
-                ]);
-            } catch (Throwable $e) {
-                Log::error('GVL PDF bijlage mislukt', [
-                    'person_id'     => $personId,
-                    'form_id'       => $formId,
-                    'error_message' => $e->getMessage(),
-                ]);
             }
         }
     }

@@ -208,11 +208,19 @@
                                     <i class="icon-activity text-gray-400"></i>
                                     <span class="text-gray-400">AFB formulier (nog niet verzonden)</span>
                                 </div>
-                                <div v-if="item.gvl_form_link" class="flex items-center gap-1.5 text-sm">
-                                    <i class="icon-activity"></i>
-                                    <a :href="item.gvl_form_link" target="_blank" class="hover:text-indigo-600">
-                                        GVL Formulier
-                                    </a>
+                                <template v-if="item.gvl_forms && item.gvl_forms.length">
+                                    <div v-for="(form, idx) in item.gvl_forms" :key="idx" class="flex items-center gap-1.5 text-sm">
+                                        <i class="icon-activity"></i>
+                                        <a v-if="form.link" :href="form.link" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            GVL Formulier<template v-if="item.gvl_forms.length > 1"> #@{{ idx + 1 }}</template>
+                                        </a>
+                                        <span v-else class="text-gray-500">GVL Formulier<template v-if="item.gvl_forms.length > 1"> #@{{ idx + 1 }}</template></span>
+                                        <span class="text-xs text-gray-400">(@{{ gvlStatusLabel(form.status) }})</span>
+                                    </div>
+                                </template>
+                                <div v-else class="flex items-center gap-1.5 text-sm">
+                                    <i class="icon-activity text-gray-400"></i>
+                                    <span class="text-gray-400">GVL Formulier (nog niet aangemaakt)</span>
                                 </div>
                             </div>
 
@@ -326,6 +334,11 @@
                         this.$nextTick(() => {
                             this.$refs.activityModal.openModal();
                         });
+                    },
+
+                    gvlStatusLabel(status) {
+                        const map = { new: 'Nieuw', step1: 'Stap 1', step2: 'Stap 2', step3: 'Stap 3', completed: 'Voltooid' };
+                        return map[status] ?? status;
                     },
 
                     stageBadgeClass(stage) {

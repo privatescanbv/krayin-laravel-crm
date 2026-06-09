@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AfbDispatchStatus;
-use App\Enums\FormStatus;
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Http\Controllers\Controller;
 use App\Models\AfbPersonDocument;
 use App\Models\Order;
+use App\Services\Anamnesis\AnamnesisGvlFormResolver;
 use App\Support\GvlFormLink;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +19,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClinicGuideController extends Controller
 {
+    public function __construct(
+        private readonly AnamnesisGvlFormResolver $resolver,
+    ) {}
+
     public function index()
     {
         return view('adminc::clinic_guide.index');
@@ -102,7 +106,7 @@ class ClinicGuideController extends Controller
             ] : null;
 
             $orderUrl = route('admin.orders.view', $order->id);
-            $anamnesisRecords = $salesLead ? $salesLead->anamnesis : collect();
+            $anamnesisRecords = $this->resolver->loadForOrder($order);
 
             $afbByPerson = $order->latestSuccessfulAfbDocuments()->groupBy('person_id');
 
@@ -125,17 +129,16 @@ class ClinicGuideController extends Controller
 
             return $itemsForDay
                 ->groupBy('person_id')
-                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $anamnesisRecords, $afbByPerson, $selectedDate) {
+                ->map(function ($items, $personId) use ($orderData, $salesLeadData, $orderUrl, $order, $anamnesisRecords, $afbByPerson, $selectedDate) {
                     $person = $items->first()->person;
-                    $anamnesis = $anamnesisRecords->firstWhere('person_id', (int) $personId);
-                    $completedGvlForm = $anamnesis?->gvlForms
-                        ->filter(fn ($f) => $f->gvl_form_status === FormStatus::Completed)
-                        ->sortByDesc('id')
-                        ->first();
 
-                    $adminGvlLink = $completedGvlForm
-                        ? GvlFormLink::adminOpenUrlForPerson($completedGvlForm->gvl_form_link, $person)
-                        : null;
+                    $anamnesis = $this->resolver->resolveForPerson($anamnesisRecords, $order->id, (int) $personId);
+                    $gvlForms = $this->resolver->completedFormsForAnamnesis($anamnesis)
+                        ->map(fn ($f) => [
+                            'link'   => GvlFormLink::adminOpenUrlForPerson($f->gvl_form_link, $person),
+                            'status' => $f->gvl_form_status->value,
+                        ])
+                        ->all();
 
                     $afbDocuments = ($afbByPerson->get((int) $personId) ?? collect())
                         ->map(fn ($doc) => [
@@ -160,7 +163,7 @@ class ClinicGuideController extends Controller
                             'phones'        => $person->phones ?? [],
                             'emails'        => $person->emails ?? [],
                         ] : null,
-                        'gvl_form_link'  => $adminGvlLink,
+                        'gvl_forms'      => $gvlForms,
                         'afb_documents'  => $afbDocuments,
                         'order_items'    => $items->map(fn ($item) => [
                             'product_name' => $item->product?->name,

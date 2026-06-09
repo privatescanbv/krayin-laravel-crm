@@ -22,7 +22,7 @@ class PatientNawController extends Controller
      *
      * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
      *
-     * @response 200 scenario="Success" {"salutation":"Dhr.","first_name":"Jan","lastname_prefix":"van","last_name":"Berg","married_name_prefix":null,"married_name":null,"initials":"J.","date_of_birth":"1985-03-15","gender":"Man","phones":[{"value":"+31612345678","label":"eigen","is_default":true}],"emails":[{"value":"jan@example.com","label":"eigen","is_default":true}],"address":{"street":"Hoofdstraat","house_number":"1","house_number_suffix":null,"postal_code":"1234AB","city":"Amsterdam","state":null,"country":"Nederland"}}
+     * @response 200 scenario="Success" {"name":"Jan van Berg","salutation":"Dhr.","first_name":"Jan","lastname_prefix":"van","last_name":"Berg","married_name_prefix":null,"married_name":null,"initials":"J.","date_of_birth":"1985-03-15","gender":"Man","phones":[{"value":"+31612345678","label":"eigen","is_default":true}],"emails":[{"value":"jan@example.com","label":"eigen","is_default":true}],"address":{"street":"Hoofdstraat","house_number":"1","house_number_suffix":null,"postal_code":"1234AB","city":"Amsterdam","state":null,"country":"Nederland"}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function show(string $keycloakUserId): JsonResponse
@@ -69,7 +69,7 @@ class PatientNawController extends Controller
      * @bodyParam address.state string State / province. Example: Noord-Holland
      * @bodyParam address.country string Country. Example: Nederland
      *
-     * @response 200 scenario="Success" {"salutation":"Dhr.","first_name":"Jan","lastname_prefix":"van","last_name":"Berg","married_name_prefix":null,"married_name":null,"initials":"J.","date_of_birth":"1985-03-15","gender":"Man","phones":[{"value":"+31612345678","label":"eigen","is_default":true}],"emails":[{"value":"jan@example.com","label":"eigen","is_default":true}],"address":{"street":"Hoofdstraat","house_number":"1","house_number_suffix":null,"postal_code":"1234AB","city":"Amsterdam","state":null,"country":"Nederland"}}
+     * @response 200 scenario="Success" {"name":"Jan van Berg","salutation":"Dhr.","first_name":"Jan","lastname_prefix":"van","last_name":"Berg","married_name_prefix":null,"married_name":null,"initials":"J.","date_of_birth":"1985-03-15","gender":"Man","phones":[{"value":"+31612345678","label":"eigen","is_default":true}],"emails":[{"value":"jan@example.com","label":"eigen","is_default":true}],"address":{"street":"Hoofdstraat","house_number":"1","house_number_suffix":null,"postal_code":"1234AB","city":"Amsterdam","state":null,"country":"Nederland"}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      * @response 422 scenario="Validation error" {"message":"The given data was invalid."}
      */
@@ -128,6 +128,7 @@ class PatientNawController extends Controller
         $address = $person->address;
 
         return [
+            'name'                => $person->name,
             'salutation'          => $person->salutation?->value,
             'first_name'          => $person->first_name,
             'lastname_prefix'     => $person->lastname_prefix,

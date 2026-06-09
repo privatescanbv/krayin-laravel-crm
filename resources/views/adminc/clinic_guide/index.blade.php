@@ -212,9 +212,9 @@
                                     <div v-for="(form, idx) in item.gvl_forms" :key="idx" class="flex items-center gap-1.5 text-sm">
                                         <i class="icon-activity"></i>
                                         <a v-if="form.link" :href="form.link" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                            GVL Formulier<template v-if="item.gvl_forms.length > 1"> #@{{ idx + 1 }}</template>
+                                            @{{ form.label }} Formulier<template v-if="item.gvl_forms.length > 1"> #@{{ idx + 1 }}</template>
                                         </a>
-                                        <span v-else class="text-gray-500">GVL Formulier<template v-if="item.gvl_forms.length > 1"> #@{{ idx + 1 }}</template></span>
+                                        <span v-else class="text-gray-500">@{{ form.label }} Formulier<template v-if="item.gvl_forms.length > 1"> #@{{ idx + 1 }}</template></span>
                                         <span class="text-xs text-gray-400">(@{{ gvlStatusLabel(form.status) }})</span>
                                     </div>
                                 </template>

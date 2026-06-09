@@ -578,9 +578,11 @@ class AfbDispatchService
                         }
 
                         $pdfContent = $response->body();
+                        $formLabel = strtolower($gvlFormRecord->gvl_form_type?->label() ?? 'gvl');
                         $suffix = $completedForms->count() > 1 ? "-{$formId}" : '';
                         $fileName = sprintf(
-                            'gvl-%d-%s%s-%s.pdf',
+                            '%s-%d-%s%s-%s.pdf',
+                            $formLabel,
                             $personId,
                             Str::slug($personNames->get($personId) ?? ''),
                             $suffix,

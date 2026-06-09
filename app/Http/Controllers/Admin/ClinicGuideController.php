@@ -135,6 +135,7 @@ class ClinicGuideController extends Controller
                     $anamnesis = $this->resolver->resolveForPerson($anamnesisRecords, $order->id, (int) $personId);
                     $gvlForms = $this->resolver->completedFormsForAnamnesis($anamnesis)
                         ->map(fn ($f) => [
+                            'label'  => $f->gvl_form_type?->label() ?? 'GVL',
                             'link'   => GvlFormLink::adminOpenUrlForPerson($f->gvl_form_link, $person),
                             'status' => $f->gvl_form_status->value,
                         ])

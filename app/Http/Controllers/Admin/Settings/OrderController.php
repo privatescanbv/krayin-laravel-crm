@@ -815,10 +815,11 @@ class OrderController extends SimpleEntityController
             $formCount = $completedForms->count();
 
             foreach ($completedForms as $index => $gvlForm) {
+                $label = $gvlForm->gvl_form_type?->label() ?? 'GVL';
                 $attachmentPreviews[] = [
                     'name' => $formCount > 1
-                        ? sprintf('GVL - %s (%d van %d).pdf', $person->name ?? 'Patiënt', $index + 1, $formCount)
-                        : sprintf('GVL - %s.pdf', $person->name ?? 'Patiënt'),
+                        ? sprintf('%s - %s (%d van %d).pdf', $label, $person->name ?? 'Patiënt', $index + 1, $formCount)
+                        : sprintf('%s - %s.pdf', $label, $person->name ?? 'Patiënt'),
                     'type' => 'gvl',
                 ];
             }

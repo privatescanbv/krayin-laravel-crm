@@ -23,7 +23,7 @@ class ActivityStatusService
             return ActivityStatus::ACTIVE;
         }
 
-        if ($to->lt($now)) {
+        if ($to->lt(now())) {
             return ActivityStatus::EXPIRED;
         }
 

@@ -429,6 +429,11 @@
                         @endif
                         if (openCount > 0) {
                             const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, entityIdForConfirm, openCount, entityType);
+                            if (!message) {
+                                await performUpdate();
+                                return;
+                            }
+
                             this.$emitter.emit('open-confirm-modal', {
                                 message,
                                 agree: () => {

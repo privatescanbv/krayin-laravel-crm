@@ -51,8 +51,17 @@ trait ConcatsEmailActivities
     /**
      * Convenience: concatenate "email activities" for an entity type into an existing activities collection.
      */
-    protected function concatEmailActivitiesFor(string $entityType, int $entityId, Collection $activities, AttachmentRepository $attachmentRepository): Collection
-    {
+    protected function concatEmailActivitiesFor(
+        string $entityType,
+        int $entityId,
+        Collection $activities,
+        AttachmentRepository $attachmentRepository,
+        ?int $isDoneFilter = null
+    ): Collection {
+        if ($isDoneFilter === 0) {
+            return $activities;
+        }
+
         $emails = $this->getEmailsForEntityThread($entityType, $entityId);
 
         return $this->concatEmails($activities, $emails, $attachmentRepository);

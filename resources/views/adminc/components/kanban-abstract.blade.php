@@ -1174,6 +1174,11 @@
                                     : (this.entityType === 'order' ? 'order' : 'lead');
                                 const message = await window.buildOpenActivitiesConfirmMessage(this
                                     .$axios, lead.id, openCount, activityType);
+                                if (!message) {
+                                    await this.updateLeadStage(lead.id, stage.id);
+                                    return;
+                                }
+
                                 this.$emitter.emit('open-confirm-modal', {
                                     message,
                                     agree: () => {

@@ -12,6 +12,13 @@
             const suffixMap = { sale: ' op deze sales', order: ' op deze order' };
 
             let titlesList = '';
+            let confirmableOpenCount = Number(openCount || 0);
+
+            const isEmailActivity = (activity) => {
+                return [activity?.type, activity?.activity_type, activity?.type_label]
+                    .some(value => ['email', 'e-mail', 'e_mail'].includes(String(value || '').trim().toLowerCase()));
+            };
+
             try {
                 const config = endpointMap[type];
                 if (!config) throw new Error('Unknown entity type for fetching activities');
@@ -19,23 +26,33 @@
                 const endpoint = config.tmpl.replace('/0/', `/${entityId}/`);
                 const res = await axiosInstance.get(endpoint, { params: config.params });
                 const activities = Array.isArray(res?.data?.data) ? res.data.data : [];
+                const confirmableActivities = activities.filter(activity => !isEmailActivity(activity));
 
-                const titles = activities
+                confirmableOpenCount = confirmableActivities.length;
+                if (confirmableOpenCount <= 0) {
+                    return null;
+                }
+
+                const titles = confirmableActivities
                     .map(a => (a.title || '').trim())
                     .filter(t => t.length > 0)
                     .slice(0, 10);
                 if (titles.length > 0) {
                     titlesList = '\n\nActies:\n- ' + titles.join('\n- ');
-                    if (activities.length > titles.length) {
-                        titlesList += `\n- (+${activities.length - titles.length} meer)`;
+                    if (confirmableActivities.length > titles.length) {
+                        titlesList += `\n- (+${confirmableActivities.length - titles.length} meer)`;
                     }
                 }
             } catch (e) {
                 // Ignore fetch errors; present basic message without titles
             }
 
+            if (confirmableOpenCount <= 0) {
+                return null;
+            }
+
             const suffix = suffixMap[type] ?? ' op deze lead';
-            return `Er staan nog ${openCount} open activiteit(en)${suffix}. Wil je deze afronden en de status wijzigen?${titlesList}`;
+            return `Er staan nog ${confirmableOpenCount} open activiteit(en)${suffix}. Wil je deze afronden en de status wijzigen?${titlesList}`;
         }
     </script>
 @endPushOnce

@@ -487,7 +487,7 @@ class OrderController extends SimpleEntityController
         $activities = $query->with('portalPersons')->get();
 
         return ActivityResource::collection(
-            $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository)
+            $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository, $isDoneFilter)
         );
     }
 

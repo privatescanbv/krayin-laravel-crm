@@ -483,7 +483,7 @@ class SalesLeadController extends Controller
         $all = $salesActivities->merge($orderActivities)->unique('id')->values();
 
         return ActivityResource::collection(
-            $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository)
+            $this->concatEmailActivitiesFor('sales', (int) $id, $all, $this->attachmentRepository, $isDoneFilter)
         );
     }
 

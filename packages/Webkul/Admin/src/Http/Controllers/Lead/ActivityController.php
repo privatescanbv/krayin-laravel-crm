@@ -123,7 +123,7 @@ class ActivityController extends Controller
         }
 
         return ActivityResource::collection(
-            $this->concatEmailActivitiesFor('lead', (int) $leadId, $query->get(), $this->attachmentRepository)
+            $this->concatEmailActivitiesFor('lead', (int) $leadId, $query->get(), $this->attachmentRepository, $isDoneFilter)
         );
     }
 

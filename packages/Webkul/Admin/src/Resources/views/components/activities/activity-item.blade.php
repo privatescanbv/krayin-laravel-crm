@@ -39,9 +39,9 @@
     <!-- Activity Details -->
     <div class="flex w-full items-start gap-3 rounded-xl border p-3 transition-all"
         :class="{
-            'border-l-4 border-l-red-500 bg-red-50/30 border-red-200 dark:bg-red-950/20 dark:border-red-900': !activity.is_done && isPastDay(activity.schedule_to || activity.schedule_from),
+            'border-l-4 border-l-red-500 bg-red-50/30 border-red-200 dark:bg-red-950/20 dark:border-red-900': !activity.is_done && isPastDay(activity.schedule_to),
             'border-l-4 border-l-green-500 bg-green-50/20 border-gray-200 dark:bg-green-950/10 dark:border-gray-800': activity.is_done,
-            'border-l-4 border-l-gray-300 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800': !activity.is_done && !isPastDay(activity.schedule_to || activity.schedule_from)
+            'border-l-4 border-l-gray-300 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800': !activity.is_done && !isPastDay(activity.schedule_to)
         }">
 
         <!-- Check / Reopen button -->
@@ -95,8 +95,8 @@
                 <template v-if="activity.type !== 'system'">
                     <a class="min-w-0 font-medium hover:underline dark:text-white"
                         :class="{
-                            'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_from) && !isPastDay(activity.schedule_to || activity.schedule_from),
-                            'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to || activity.schedule_from)
+                            'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_to) && !isPastDay(activity.schedule_to),
+                            'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to)
                         }"
                         :href="(activity.type === 'email'
                             ? {!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || 'inbox').replace('__ID__', String(activity.id))
@@ -159,20 +159,17 @@
 
                     <div class="ml-auto flex shrink-0 items-center gap-2">
                         <!-- Deadline pill -->
-                        <template v-if="!activity.is_done && (activity.schedule_from || activity.schedule_to)">
+                        <template v-if="!activity.is_done && activity.schedule_to">
                             <span
                                 class="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap"
-                                :class="isPastDay(activity.schedule_to || activity.schedule_from)
+                                :class="isPastDay(activity.schedule_to)
                                     ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
                                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'"
                             >
-                                <span v-if="isPastDay(activity.schedule_to || activity.schedule_from)" class="icon-clock text-sm"></span>
+                                <span v-if="isPastDay(activity.schedule_to)" class="icon-clock text-sm"></span>
                                 <span v-else class="icon-calendar text-sm"></span>
-                                <span v-if="activity.schedule_to">
+                                <span>
                                     @{{ $admin.formatDate(activity.schedule_to, 'd MMM yyyy', timezone) }}
-                                </span>
-                                <span v-else>
-                                    @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy', timezone) }}
                                 </span>
                             </span>
                         </template>

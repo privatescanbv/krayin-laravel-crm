@@ -56,21 +56,11 @@ class CallStatusController extends Controller
         if (!empty($validated['reschedule_days'])) {
 
                $days = (int) $validated['reschedule_days'];
-               // Update schedule_from to today plus the specified days
-               $originalFrom = $activity->schedule_from;
-               $originalTo = $activity->schedule_to;
-
-               if ($originalFrom) {
-                   $diff = $originalTo && $originalFrom ? (int) round($originalTo->diffInDays($originalFrom)) : 0;
-                   $activity->schedule_from = now()->addDays($days);
-                   if ($originalTo) {
-                       $activity->schedule_to = $activity->schedule_from->copy()->addDays($diff);
-                   }
-               }
+               $activity->schedule_to = now()->addDays($days);
                 $activity->save();
 
                 // Recompute status after reschedule
-                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+                $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
                 if ($computed->value !== ($activity->status?->value ?? null)) {
                     $activity->status = $computed;
                     $activity->save();

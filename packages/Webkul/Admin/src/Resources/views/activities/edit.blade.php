@@ -118,32 +118,20 @@
                         <x-admin::form.control-group.error control-name="type"/>
                     </x-admin::form.control-group>
 
-                    <!-- Schedule Date From/To -->
+                    <!-- Deadline -->
                     <x-admin::form.control-group>
                         @php
-                            $scheduleFromValue = old('schedule_from') ?? optional($activity->schedule_from)->format('Y-m-d\TH:i');
                             $scheduleToValue   = old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i');
                         @endphp
-                        <div class="flex gap-2 max-sm:flex-wrap">
-                            <x-adminc::components.field
-                                type="datetime"
-                                name="schedule_from"
-                                id="schedule_from"
-                                :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
-                                rules="required"
-                                :value="$scheduleFromValue"
-                                class="w-full"
-                            />
-                            <x-adminc::components.field
-                                type="datetime"
-                                name="schedule_to"
-                                id="schedule_to"
-                                :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
-                                rules="required"
-                                :value="$scheduleToValue"
-                                class="w-full"
-                            />
-                        </div>
+                        <x-adminc::components.field
+                            type="datetime"
+                            name="schedule_to"
+                            id="schedule_to"
+                            :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                            rules="required"
+                            :value="$scheduleToValue"
+                            class="w-full"
+                        />
                     </x-admin::form.control-group>
 
                     <!-- Description -->
@@ -244,10 +232,6 @@
 
                 <!-- Footer timestamps -->
                 <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
-                    <div class="flex justify-between">
-                        <span>Begindatum:</span>
-                        <span>{{ $activity->schedule_from ? \Carbon\Carbon::parse($activity->schedule_from)->format('d-m-Y') : '-' }}</span>
-                    </div>
                     <div class="flex justify-between">
                         <span>Bijgewerkt op:</span>
                         <span>{{ $activity->updated_at->format('d-m-Y') }}</span>

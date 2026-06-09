@@ -16,7 +16,7 @@ class SyncActivityStatuses extends Command
     {
         Activity::query()->chunkById(500, function ($activities) {
             foreach ($activities as $activity) {
-                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+                $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
                 if ($computed->value !== ($activity->status?->value ?? null)) {
                     $activity->status = $computed;
                     $activity->save();

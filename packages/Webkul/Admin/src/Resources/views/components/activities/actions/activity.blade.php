@@ -141,28 +141,15 @@
                                     @endforeach
                                 </x-adminc::components.field>
 
-                                <!-- Schedule Date -->
-                                <div class="flex gap-4">
-                                    <!-- Started From -->
-                                    <x-adminc::components.field
-                                        type="datetime"
-                                        name="schedule_from"
-                                        :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
-                                        rules="required"
-                                        :value="now()->format('Y-m-d\TH:i')"
-                                        class="w-full"
-                                    />
-
-                                    <!-- Started To -->
-                                    <x-adminc::components.field
-                                        type="datetime"
-                                        name="schedule_to"
-                                        :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
-                                        rules="required"
-                                        :value="now()->addWeeks(2)->format('Y-m-d\TH:i')"
-                                        class="w-full"
-                                    />
-                                </div>
+                                <!-- Deadline -->
+                                <x-adminc::components.field
+                                    type="datetime"
+                                    name="schedule_to"
+                                    :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                                    rules="required"
+                                    :value="now()->addWeeks(2)->format('Y-m-d\TH:i')"
+                                    class="w-full"
+                                />
                                 {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
                                 </x-slot>
 
@@ -290,11 +277,7 @@
                         url = `/admin/sales-leads/${this.entity.id}/activities`;
                     }
 
-                    // Format dates to Y-m-d H:i:s format
-                    if (params.schedule_from) {
-                        const fromDate = new Date(params.schedule_from);
-                        params.schedule_from = this.formatDateTime(fromDate);
-                    }
+                    // Format deadline to Y-m-d H:i:s format
                     if (params.schedule_to) {
                         const toDate = new Date(params.schedule_to);
                         params.schedule_to = this.formatDateTime(toDate);

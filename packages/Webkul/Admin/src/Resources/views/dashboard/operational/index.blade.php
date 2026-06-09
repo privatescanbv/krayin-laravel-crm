@@ -191,11 +191,6 @@
                                                 <template v-else-if="column.index === 'assigned_user_id'">
                                                     <div v-html="record.assigned_user_id"></div>
                                                 </template>
-                                                <template v-else-if="column.index === 'schedule_from'">
-                                                    <p class="text-sm text-gray-700 dark:text-gray-300">
-                                                        @{{ record.schedule_from }}
-                                                    </p>
-                                                </template>
                                                 <template v-else>
                                                     <div
                                                         class="text-sm"

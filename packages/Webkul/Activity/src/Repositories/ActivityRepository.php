@@ -93,7 +93,7 @@ class ActivityRepository extends Repository
             'activities.id',
             'activities.created_at',
             'activities.title',
-            'activities.schedule_from as start',
+            'activities.schedule_to as start',
             'activities.schedule_to as end',
             DB::raw(DatabaseHelper::concatUserName('users.', 'user_name')),
         )
@@ -101,7 +101,7 @@ class ActivityRepository extends Repository
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             ->whereIn('type', ['call', 'meeting', 'task', 'lunch'])
-            ->whereBetween('activities.schedule_from', $dateRange)
+            ->whereBetween('activities.schedule_to', $dateRange)
             ->where(function ($query) {
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
                     $query->whereIn('activities.user_id', $userIds)

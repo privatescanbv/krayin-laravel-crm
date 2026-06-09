@@ -400,13 +400,13 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * Scope activity time filtering based on schedule_from.
+     * Scope activity time filtering based on the managed deadline.
      */
     public function scopeScheduleTimeFilter(Builder $query, ?AppointmentTimeFilter $filter, Carbon $now): Builder
     {
         return $query
-            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('schedule_from', '>=', $now))
-            ->when($filter === AppointmentTimeFilter::PAST,   fn (Builder $q) => $q->where('schedule_from', '<', $now));
+            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('schedule_to', '>=', $now))
+            ->when($filter === AppointmentTimeFilter::PAST,   fn (Builder $q) => $q->where('schedule_to', '<', $now));
     }
 
     /**
@@ -415,7 +415,6 @@ class Activity extends Model implements ActivityContract
     public function reOpen():Activity {
         $this->is_done = false;
         $this->status = ActivityStatus::ACTIVE;
-        $this->schedule_from = Carbon::today();
         $this->schedule_to = Carbon::today()->addWeek();
         return $this;
     }

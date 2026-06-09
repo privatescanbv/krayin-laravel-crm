@@ -322,7 +322,7 @@ class ActivityImporter
                     if ($activity->is_done) {
                         $activity->status = ActivityStatus::DONE;
                     } else {
-                        $activity->status = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, ActivityStatus::ACTIVE);
+                        $activity->status = ActivityStatusService::computeStatus(null, $activity->schedule_to, ActivityStatus::ACTIVE);
                     }
                     $activity->saveQuietly();
 

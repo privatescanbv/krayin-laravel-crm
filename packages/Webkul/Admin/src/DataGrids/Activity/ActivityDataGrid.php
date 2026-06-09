@@ -157,7 +157,6 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('is_done', 'activities.is_done');
         $this->addFilter('created_by', DB::raw(DatabaseHelper::concatUserName('users.')));
         $this->addFilter('assigned_user_id', 'users.id');
-        $this->addFilter('schedule_from', 'activities.schedule_from');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('lead_pipeline_stage_id', 'leads.lead_pipeline_stage_id');
         $this->addFilter('lead_pipeline_id', 'leads.lead_pipeline_id');
@@ -335,30 +334,6 @@ class ActivityDataGrid extends DataGrid
         // Removed comment column as requested
 
         // Status column removed from UI (kept in DB/entity)
-
-        // Removed 'Oppakken vanaf' column as requested
-
-        // Begin date column (replaces created_at / "Aangemaakt op")
-        $this->addColumn([
-            'index'      => 'schedule_from',
-            'label'      => 'Begindatum',
-            'type'       => 'datetime',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => false,
-            'closure'    => function ($row) {
-                if (empty($row->schedule_from)) {
-                    return 'N/A';
-                }
-
-                $timestamp = strtotime($row->schedule_from);
-                if ($timestamp === false) {
-                    return 'N/A';
-                }
-
-                return date('d-m-Y H:i', $timestamp);
-            },
-        ]);
 
         $this->addColumn([
             'index'      => 'schedule_to',

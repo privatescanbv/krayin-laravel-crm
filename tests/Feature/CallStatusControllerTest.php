@@ -50,7 +50,7 @@ test('spoken does not reschedule activity', function () {
 
     $response->assertOk();
     $activity->refresh();
-    $this->assertTrue($activity->schedule_from->isToday());
+    $this->assertTrue($activity->schedule_to->isTomorrow());
 });
 
 test('not spoken defaults to 7 days when empty', function () {
@@ -92,7 +92,8 @@ test('not spoken defaults to 7 days when empty', function () {
 
     $response->assertOk();
     $activity->refresh();
-    $this->assertTrue($activity->schedule_from->isSameDay(now()->addDays(7)));
+    $this->assertTrue($activity->schedule_to->isSameDay(now()->addDays(7)));
+    $this->assertTrue($activity->schedule_from->isToday());
 });
 
 test('call status with send_email returns email data', function () {

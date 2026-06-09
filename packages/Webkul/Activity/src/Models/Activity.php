@@ -7,7 +7,7 @@ use App\Enums\ActivityType;
 use App\Enums\AppointmentTimeFilter;
 use App\Enums\EntityType;
 use App\Enums\PatientMessageSenderType;
-use App\Models\CallStatus;
+use App\Models\ActivityAction;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\PatientMessage;
@@ -234,19 +234,11 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * Call statuses linked to this activity.
+     * All actions (notitie + belstatus) linked to this activity.
      */
-    public function callStatuses()
+    public function actions()
     {
-        return $this->hasMany(CallStatus::class, 'activity_id');
-    }
-
-    /**
-     * Text comments linked to this activity (used by Task type).
-     */
-    public function comments()
-    {
-        return $this->hasMany(\App\Models\ActivityComment::class, 'activity_id');
+        return $this->hasMany(ActivityAction::class, 'activity_id');
     }
 
     public function emails()
@@ -400,13 +392,13 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * Scope activity time filtering based on schedule_from.
+     * Scope activity time filtering based on the managed deadline.
      */
     public function scopeScheduleTimeFilter(Builder $query, ?AppointmentTimeFilter $filter, Carbon $now): Builder
     {
         return $query
-            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('schedule_from', '>=', $now))
-            ->when($filter === AppointmentTimeFilter::PAST,   fn (Builder $q) => $q->where('schedule_from', '<', $now));
+            ->when($filter === AppointmentTimeFilter::FUTURE, fn (Builder $q) => $q->where('schedule_to', '>=', $now))
+            ->when($filter === AppointmentTimeFilter::PAST,   fn (Builder $q) => $q->where('schedule_to', '<', $now));
     }
 
     /**
@@ -415,7 +407,6 @@ class Activity extends Model implements ActivityContract
     public function reOpen():Activity {
         $this->is_done = false;
         $this->status = ActivityStatus::ACTIVE;
-        $this->schedule_from = Carbon::today();
         $this->schedule_to = Carbon::today()->addWeek();
         return $this;
     }

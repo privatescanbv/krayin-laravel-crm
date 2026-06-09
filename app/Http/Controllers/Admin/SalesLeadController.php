@@ -494,7 +494,6 @@ class SalesLeadController extends Controller
             'title'         => 'required|string',
             'description'   => 'nullable|string',
             'user_id'       => 'nullable|exists:users,id',
-            'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to'   => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
         ]);
 
@@ -504,7 +503,6 @@ class SalesLeadController extends Controller
             'comment'          => request('description'),
             'user_id'          => request('user_id') ?? auth()->id(),
             'sales_lead_id'    => $id,
-            'schedule_from'    => request('schedule_from'),
             'schedule_to'      => request('schedule_to'),
             'is_done'          => 0,
         ]);

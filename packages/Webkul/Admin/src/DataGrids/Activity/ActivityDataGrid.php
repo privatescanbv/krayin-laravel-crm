@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Activity;
 
+use App\Enums\ActivityActionType;
 use App\Enums\CallStatus;
 use App\Enums\Departments;
 use App\Enums\EntityType;
@@ -157,7 +158,6 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('is_done', 'activities.is_done');
         $this->addFilter('created_by', DB::raw(DatabaseHelper::concatUserName('users.')));
         $this->addFilter('assigned_user_id', 'users.id');
-        $this->addFilter('schedule_from', 'activities.schedule_from');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('lead_pipeline_stage_id', 'leads.lead_pipeline_stage_id');
         $this->addFilter('lead_pipeline_id', 'leads.lead_pipeline_id');
@@ -336,30 +336,6 @@ class ActivityDataGrid extends DataGrid
 
         // Status column removed from UI (kept in DB/entity)
 
-        // Removed 'Oppakken vanaf' column as requested
-
-        // Begin date column (replaces created_at / "Aangemaakt op")
-        $this->addColumn([
-            'index'      => 'schedule_from',
-            'label'      => 'Begindatum',
-            'type'       => 'datetime',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => false,
-            'closure'    => function ($row) {
-                if (empty($row->schedule_from)) {
-                    return 'N/A';
-                }
-
-                $timestamp = strtotime($row->schedule_from);
-                if ($timestamp === false) {
-                    return 'N/A';
-                }
-
-                return date('d-m-Y H:i', $timestamp);
-            },
-        ]);
-
         $this->addColumn([
             'index'      => 'schedule_to',
             'label'      => 'Deadline',
@@ -470,11 +446,11 @@ class ActivityDataGrid extends DataGrid
             "' · '",
             $userName,
             "': '",
-            $this->callStatusCaseSql(),
-            $this->optionalDescriptionSuffixSql('cs.omschrijving'),
+            $this->callStatusCaseSql('cs.call_status'),
+            $this->optionalDescriptionSuffixSql('cs.body'),
         ], '', false, false);
 
-        return $this->latestActivitySubquery('call_statuses cs', 'cu', $select, 'last_call_summary');
+        return $this->latestActivitySubquery('activity_actions cs', 'cu', $select, 'last_call_summary', "cs.type = '".ActivityActionType::Belstatus->value."'");
     }
 
     private function lastTaskSummarySql(): string
@@ -485,10 +461,10 @@ class ActivityDataGrid extends DataGrid
             "' · '",
             $userName,
             "': '",
-            'ac.comment',
+            'ac.body',
         ], '', false, false);
 
-        return $this->latestActivitySubquery('activity_comments ac', 'tu', $select, 'last_task_summary');
+        return $this->latestActivitySubquery('activity_actions ac', 'tu', $select, 'last_task_summary', "ac.type = '".ActivityActionType::Notitie->value."'");
     }
 
     private function callStatusCaseSql(string $column = 'cs.status'): string
@@ -515,15 +491,16 @@ class ActivityDataGrid extends DataGrid
             : "DATE_FORMAT({$tableAlias}.created_at, '%e %b')";
     }
 
-    private function latestActivitySubquery(string $from, string $userAlias, string $select, string $resultAlias): string
+    private function latestActivitySubquery(string $from, string $userAlias, string $select, string $resultAlias, ?string $extraCondition = null): string
     {
         [, $alias] = explode(' ', $from, 2);
+        $extra = $extraCondition ? " AND {$extraCondition}" : '';
 
         return "(
             SELECT {$select}
             FROM {$from}
             LEFT JOIN users {$userAlias} ON {$userAlias}.id = {$alias}.created_by
-            WHERE {$alias}.activity_id = activities.id
+            WHERE {$alias}.activity_id = activities.id{$extra}
             ORDER BY {$alias}.created_at DESC
             LIMIT 1
         ) as {$resultAlias}";

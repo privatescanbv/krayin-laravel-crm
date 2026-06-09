@@ -347,8 +347,8 @@
                 countActionNeeded() {
                     return this.activities.filter(activity =>
                         !activity.is_done &&
-                        activity.schedule_from &&
-                        this.isStartedOrToday(activity.schedule_from)
+                        activity.schedule_to &&
+                        this.isDueTodayOrPastDay(activity.schedule_to)
                     ).length;
                 },
 
@@ -368,15 +368,15 @@
                     if (this.selectedType === 'action_needed') {
                         let filtered = this.activities.filter(activity =>
                             !activity.is_done &&
-                            activity.schedule_from &&
-                            this.isStartedOrToday(activity.schedule_from)
+                            activity.schedule_to &&
+                            this.isDueTodayOrPastDay(activity.schedule_to)
                         );
                         if (this.activityTypeFilter !== 'all') {
                             filtered = filtered.filter(activity => activity.type === this.activityTypeFilter);
                         }
                         return filtered.sort((a, b) => {
-                            const aTime = a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
-                            const bTime = b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
+                            const aTime = a.schedule_to ? new Date(a.schedule_to).getTime() : Infinity;
+                            const bTime = b.schedule_to ? new Date(b.schedule_to).getTime() : Infinity;
                             return aTime - bTime;
                         });
                     }
@@ -441,8 +441,8 @@
                     if (!a.is_done && b.is_done) return -1;
                     if (a.is_done && !b.is_done) return 1;
                     if (!a.is_done && !b.is_done) {
-                        const aDeadline = a.schedule_to || a.schedule_from;
-                        const bDeadline = b.schedule_to || b.schedule_from;
+                        const aDeadline = a.schedule_to;
+                        const bDeadline = b.schedule_to;
                         if (aDeadline && bDeadline) return new Date(aDeadline) - new Date(bDeadline);
                         if (aDeadline) return -1;
                         if (bDeadline) return 1;
@@ -638,7 +638,7 @@
                     return new Date(dateStr).getTime() < Date.now();
                 },
 
-                isStartedOrToday(dateStr) {
+                isDueTodayOrPastDay(dateStr) {
                     if (!dateStr) return false;
                     const d = new Date(dateStr);
                     const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());

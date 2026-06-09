@@ -8,7 +8,7 @@ use App\Enums\ActivityType;
 use App\Enums\EntityType;
 use App\Enums\WebhookType;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
-use App\Models\CallStatus;
+use App\Models\ActivityAction;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
@@ -92,7 +92,7 @@ class ActivityController extends Controller
         $activities = $this->activityRepository
             ->where('lead_id', $leadId)
             ->where('is_done', 0)
-            ->orderBy('schedule_from', 'asc')
+            ->orderBy('schedule_to', 'asc')
             ->get();
 
         return response()->json([
@@ -158,8 +158,7 @@ class ActivityController extends Controller
             'type'          => 'required',
             'group_id'      => 'nullable|exists:groups,id',
             'comment'       => 'required_if:type,note',
-            'schedule_from' => 'required_unless:type,note,file',
-            'schedule_to'   => 'required_unless:type,note,file',
+            'schedule_to'   => 'required_unless:type,note,file|date',
             'file'          => 'required_if:type,file',
         ]);
 
@@ -167,6 +166,7 @@ class ActivityController extends Controller
 
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
+        unset($data['schedule_from']);
         logger()->info('Activity store data', $data);
 
         // If lead_id is set, ensure we do not also bind a person via pivot
@@ -254,17 +254,12 @@ class ActivityController extends Controller
         $user = auth()->guard('user')->user();
         $canTakeover = $user->hasPermission('activities.takeover');
 
-        $callStatuses = CallStatus::where('activity_id', $activity->id)
+        $actions = ActivityAction::where('activity_id', $activity->id)
             ->with('creator')
             ->orderByDesc('created_at')
             ->get();
 
-        $taskComments = \App\Models\ActivityComment::where('activity_id', $activity->id)
-            ->with('creator')
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityType', 'canTakeover', 'callStatuses', 'taskComments'));
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityType', 'canTakeover', 'actions'));
     }
 
     /**
@@ -316,12 +311,22 @@ class ActivityController extends Controller
         }
 
         $this->validate(request(), [
-            'group_id' => 'required|exists:groups,id',
+            'group_id'    => 'required|exists:groups,id',
+            'schedule_to' => 'nullable|date',
         ]);
 
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();
+        unset($data['schedule_from']);
+
+        // Non-admins cannot change the description of CALL or TASK activities.
+        $restrictedTypes = [ActivityType::CALL->value, ActivityType::TASK->value];
+        if (in_array($activity->type?->value, $restrictedTypes, true)
+            && ! auth()->guard('user')->user()?->isGlobalAdmin()
+        ) {
+            $data['comment'] = $activity->comment;
+        }
 
         Activity::normalizeForeignKeys($data);
 
@@ -379,7 +384,7 @@ class ActivityController extends Controller
                     $activity->is_done = 0;
                     $didChange = true;
                 }
-                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+                $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
                 if ($computed->value !== $requestedStatus) {
                     // Reject with computed suggestion
                     if (($activity->status?->value ?? null) !== $computed->value) {
@@ -410,7 +415,7 @@ class ActivityController extends Controller
             }
         } else {
             // No explicit flags, keep consistent automatically (respect IN_PROGRESS sticky and DONE sticky via service)
-            $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+            $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
             if (($activity->status?->value ?? null) !== $computed->value) {
                 $activity->status = $computed;
                 $didChange = true;
@@ -537,7 +542,7 @@ class ActivityController extends Controller
         Event::dispatch('activity.update.before', $id);
 
         $activity->is_done = 0;
-        $activity->status  = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, null);
+        $activity->status  = ActivityStatusService::computeStatus(null, $activity->schedule_to, null);
         $activity->save();
 
         Event::dispatch('activity.update.after', $activity);
@@ -785,7 +790,7 @@ class ActivityController extends Controller
             }
         } else {
             // Un-done: compute status based on dates
-            $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, ActivityStatus::ACTIVE);
+            $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, ActivityStatus::ACTIVE);
             if (($activity->status?->value ?? null) !== $computed->value) {
                 $activity->status = $computed;
 

@@ -118,43 +118,50 @@
                         <x-admin::form.control-group.error control-name="type"/>
                     </x-admin::form.control-group>
 
-                    <!-- Schedule Date From/To -->
+                    <!-- Deadline -->
                     <x-admin::form.control-group>
                         @php
-                            $scheduleFromValue = old('schedule_from') ?? optional($activity->schedule_from)->format('Y-m-d\TH:i');
                             $scheduleToValue   = old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i');
                         @endphp
-                        <div class="flex gap-2 max-sm:flex-wrap">
-                            <x-adminc::components.field
-                                type="datetime"
-                                name="schedule_from"
-                                id="schedule_from"
-                                :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
-                                rules="required"
-                                :value="$scheduleFromValue"
-                                class="w-full"
-                            />
-                            <x-adminc::components.field
-                                type="datetime"
-                                name="schedule_to"
-                                id="schedule_to"
-                                :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
-                                rules="required"
-                                :value="$scheduleToValue"
-                                class="w-full"
-                            />
-                        </div>
+                        <x-adminc::components.field
+                            type="datetime"
+                            name="schedule_to"
+                            id="schedule_to"
+                            :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                            rules="required"
+                            :value="$scheduleToValue"
+                            class="w-full"
+                        />
                     </x-admin::form.control-group>
 
                     <!-- Description -->
-                    <x-adminc::components.field
-                        type="textarea"
-                        name="comment"
-                        id="comment"
-                        :label="trans('admin::app.components.activities.actions.activity.description')"
-                        value="{{ old('comment') ?? $activity->comment }}"
-                        :placeholder="trans('admin::app.components.activities.actions.activity.description')"
-                    />
+                    @php
+                        $commentRestrictedTypes = [ActivityType::CALL, ActivityType::TASK];
+                        $isCommentReadOnly = in_array($activity->type, $commentRestrictedTypes)
+                            && ! auth()->guard('user')->user()?->isGlobalAdmin();
+                    @endphp
+                    @if($isCommentReadOnly)
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                {{ trans('admin::app.components.activities.actions.activity.description') }}
+                            </x-admin::form.control-group.label>
+                            <textarea
+                                class="w-full rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                rows="3"
+                                disabled
+                            >{{ $activity->comment }}</textarea>
+                            <input type="hidden" name="comment" value="{{ $activity->comment }}">
+                        </x-admin::form.control-group>
+                    @else
+                        <x-adminc::components.field
+                            type="textarea"
+                            name="comment"
+                            id="comment"
+                            :label="trans('admin::app.components.activities.actions.activity.description')"
+                            value="{{ old('comment') ?? $activity->comment }}"
+                            :placeholder="trans('admin::app.components.activities.actions.activity.description')"
+                        />
+                    @endif
 
                     <!-- Toegewezen aan -->
                     <x-admin::form.control-group>
@@ -245,10 +252,6 @@
                 <!-- Footer timestamps -->
                 <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                     <div class="flex justify-between">
-                        <span>Begindatum:</span>
-                        <span>{{ $activity->schedule_from ? \Carbon\Carbon::parse($activity->schedule_from)->format('d-m-Y') : '-' }}</span>
-                    </div>
-                    <div class="flex justify-between">
                         <span>Bijgewerkt op:</span>
                         <span>{{ $activity->updated_at->format('d-m-Y') }}</span>
                     </div>
@@ -261,10 +264,8 @@
 
             <!-- Center Panel (type-specific content) -->
             <div class="flex flex-1 flex-col gap-4">
-                @if($activity->type == ActivityType::CALL)
-                    @include('admin::activities.partials.call')
-                @elseif($activity->type == ActivityType::TASK)
-                    @include('admin::activities.partials.task-comments')
+                @if(in_array($activity->type, [ActivityType::CALL, ActivityType::TASK]))
+                    @include('admin::activities.partials.actions')
                 @elseif($activity->type == ActivityType::PATIENT_MESSAGE)
                     @include('admin::activities.partials.patient-message')
                 @elseif($activity->type == ActivityType::FILE)
@@ -301,7 +302,7 @@
         $mailEntityControlName = $relatedEntityType?->getForeignKey() ?? 'lead_id';
     @endphp
     @if($mailEntity)
-        <!-- Mail dialog (listens for open-email-dialog from call-status form) -->
+        <!-- Mail dialog (listens for open-email-dialog event from actions panel) -->
         <x-admin::activities.actions.mail
             :entity="$mailEntity"
             entity-control-name="{{ $mailEntityControlName }}"

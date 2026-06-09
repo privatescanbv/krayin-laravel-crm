@@ -853,7 +853,7 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity2->type)->toBe(ActivityType::CALL)
         ->and($activity2->comment)->toBe('Follow-up gesprek')
         ->and($activity2->is_done)->toBe(false) // 'planned' status should map to not done
-        ->and($activity2->status)->toBe(ActivityStatusService::computeStatus($activity2->schedule_from, $activity2->schedule_to, ActivityStatus::ACTIVE))
+        ->and($activity2->status)->toBe(ActivityStatusService::computeStatus(null, $activity2->schedule_to, ActivityStatus::ACTIVE))
         ->and($activity2->additional['direction'])->toBe('outbound')
         ->and($activity2->additional['status'])->toBe('planned')
         ->and($activity2->additional['belgroep'])->toBe('follow-up');

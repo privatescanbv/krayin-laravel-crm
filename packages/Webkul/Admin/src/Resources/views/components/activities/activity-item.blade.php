@@ -39,9 +39,9 @@
     <!-- Activity Details -->
     <div class="flex w-full items-start gap-3 rounded-xl border p-3 transition-all"
         :class="{
-            'border-l-4 border-l-red-500 bg-red-50/30 border-red-200 dark:bg-red-950/20 dark:border-red-900': !activity.is_done && isPastDay(activity.schedule_to || activity.schedule_from),
+            'border-l-4 border-l-red-500 bg-red-50/30 border-red-200 dark:bg-red-950/20 dark:border-red-900': !activity.is_done && isPastDay(activity.schedule_to),
             'border-l-4 border-l-green-500 bg-green-50/20 border-gray-200 dark:bg-green-950/10 dark:border-gray-800': activity.is_done,
-            'border-l-4 border-l-gray-300 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800': !activity.is_done && !isPastDay(activity.schedule_to || activity.schedule_from)
+            'border-l-4 border-l-gray-300 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800': !activity.is_done && !isPastDay(activity.schedule_to)
         }">
 
         <!-- Check / Reopen button -->
@@ -95,8 +95,8 @@
                 <template v-if="activity.type !== 'system'">
                     <a class="min-w-0 font-medium hover:underline dark:text-white"
                         :class="{
-                            'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_from) && !isPastDay(activity.schedule_to || activity.schedule_from),
-                            'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to || activity.schedule_from)
+                            'text-orange-600 dark:text-orange-400': !activity.is_done && isToday(activity.schedule_to) && !isPastDay(activity.schedule_to),
+                            'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to)
                         }"
                         :href="(activity.type === 'email'
                             ? {!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || 'inbox').replace('__ID__', String(activity.id))
@@ -159,20 +159,17 @@
 
                     <div class="ml-auto flex shrink-0 items-center gap-2">
                         <!-- Deadline pill -->
-                        <template v-if="!activity.is_done && (activity.schedule_from || activity.schedule_to)">
+                        <template v-if="!activity.is_done && activity.schedule_to">
                             <span
                                 class="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap"
-                                :class="isPastDay(activity.schedule_to || activity.schedule_from)
+                                :class="isPastDay(activity.schedule_to)
                                     ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
                                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'"
                             >
-                                <span v-if="isPastDay(activity.schedule_to || activity.schedule_from)" class="icon-clock text-sm"></span>
+                                <span v-if="isPastDay(activity.schedule_to)" class="icon-clock text-sm"></span>
                                 <span v-else class="icon-calendar text-sm"></span>
-                                <span v-if="activity.schedule_to">
+                                <span>
                                     @{{ $admin.formatDate(activity.schedule_to, 'd MMM yyyy', timezone) }}
-                                </span>
-                                <span v-else>
-                                    @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy', timezone) }}
                                 </span>
                             </span>
                         </template>
@@ -291,58 +288,21 @@
                 <span v-if="activity.type === 'email'">
                     @{{ truncateHtmlASSummary(activity.comment, 350) }}
                 </span>
-                <span v-else v-safe-html="activity.comment"></span>
+{{--                <span v-else v-safe-html="activity.comment"></span>--}}
             </p>
 
-            <!-- Task comments -->
-            <template v-if="activity.type === 'task' && activity.task_comments?.length">
+            <!-- Actions timeline (task + call) -->
+            <template v-if="['task', 'call'].includes(activity.type) && activity.actions?.length">
                 <div class="flex flex-col gap-0.5">
-                    <div v-for="(c, i) in activity.task_comments" :key="i"
+                    <div v-for="(a, i) in activity.actions" :key="i"
                          class="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-                        <span class="icon-user text-sm shrink-0 mt-px"></span>
+                        <span class="shrink-0 mt-px text-sm"
+                              :class="a.type === 'belstatus' ? 'icon-phone' : a.type === 'mail' ? 'icon-mail' : 'icon-note'"></span>
                         <span class="truncate min-w-0">
-                            @{{ c.date }} ·
-                            <strong class="font-semibold text-gray-600 dark:text-gray-300">@{{ c.name }}</strong>:
-                            @{{ c.text }}
+                            @{{ a.date }} ·
+                            <strong class="font-semibold text-gray-600 dark:text-gray-300">@{{ a.creator }}</strong>:
+                            @{{ a.label }}
                         </span>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Call status summary/details -->
-            <template v-if="activity.type === 'call' && activity.call_statuses?.length">
-                <div class="mt-1 text-sm">
-                    <div v-if="activity.call_statuses?.length" class="mb-1">
-                        <span class="flex items-center gap-1 font-medium">Laatste: <call-status-icon
-                                :status="activity.call_statuses[activity.call_statuses.length - 1].status"
-                                size="w-4 h-4"></call-status-icon> @{{ getCallStatusLabel(activity.call_statuses[activity.call_statuses.length - 1].status) }} <span
-                                class="text-gray-500">(@{{ $admin.formatDate(activity.call_statuses[activity.call_statuses.length - 1].created_at, 'd MMM yyyy, hh:mm', timezone) }})</span></span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="rounded bg-neutral-bg px-2 py-0.5 dark:bg-gray-800">Niet bereikt:
-                            @{{ activity.call_status_summary.not_reachable }}</span>
-                        <span class="rounded bg-neutral-bg px-2 py-0.5 dark:bg-gray-800">Voicemail:
-                            @{{ activity.call_status_summary.voicemail_left }}</span>
-                        <span class="rounded bg-neutral-bg px-2 py-0.5 dark:bg-gray-800">Gesproken:
-                            @{{ activity.call_status_summary.spoken }}</span>
-                        <button type="button" class="text-activity-note-text hover:underline"
-                            @click="activity.__showCallDetails = !activity.__showCallDetails">@{{ activity.__showCallDetails ? 'Verberg' : 'Details' }}</button>
-                    </div>
-                    <div v-if="activity.__showCallDetails && activity.call_statuses?.length"
-                        class="mt-2 rounded border p-2 dark:border-gray-800">
-                        <div v-for="cs in activity.call_statuses" :key="cs.id || cs.created_at"
-                            class="border-b py-1 text-xs last:border-b-0 dark:border-gray-800">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <call-status-icon :status="cs.status" size="w-4 h-4"></call-status-icon>
-                                    <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
-                                </div>
-                                <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, hh:mm', timezone) }}</span>
-                            </div>
-                            <div v-if="cs.omschrijving" class="text-gray-600 dark:text-gray-300">@{{ cs.omschrijving }}
-                            </div>
-                            <div v-if="cs.creator" class="text-gray-500">door @{{ cs.creator.name }}</div>
-                        </div>
                     </div>
                 </div>
             </template>

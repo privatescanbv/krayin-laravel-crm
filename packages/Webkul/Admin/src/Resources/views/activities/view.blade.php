@@ -113,16 +113,6 @@
 
                     <div class="mb-3">
                         <div
-                            class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.schedule_from')
-                            :
-                        </div>
-                        <div class="text-sm text-gray-900 dark:text-gray-100">
-                            {{ $activity->schedule_from }}
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div
                             class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.schedule_to')
                             :
                         </div>
@@ -181,13 +171,9 @@
                 </div>
             @endif
 
-            <!-- Footer with begin date and modification date -->
+            <!-- Footer with modification date -->
             <div
                 class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
-                <div class="flex justify-between">
-                    <span>Begindatum:</span>
-                    <span>{{ $activity->schedule_from ? \Carbon\Carbon::parse($activity->schedule_from)->format('d-m-Y') : '-' }}</span>
-                </div>
                 <div class="flex justify-between">
                     <span>Bijgewerkt op:</span>
                     <span>{{ $activity->updated_at->format('d-m-Y') }}</span>

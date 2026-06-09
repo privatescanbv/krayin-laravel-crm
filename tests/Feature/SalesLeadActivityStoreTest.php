@@ -37,7 +37,6 @@ test('creating activity on sales lead stores sales_lead_id and appears as planne
         'type'          => 'task',
         'title'         => 'My Planned Task',
         'description'   => 'Test',
-        'schedule_from' => $now->format('Y-m-d H:i:s'),
         'schedule_to'   => $now->copy()->addHour()->format('Y-m-d H:i:s'),
     ];
 
@@ -49,6 +48,7 @@ test('creating activity on sales lead stores sales_lead_id and appears as planne
         'title'         => 'My Planned Task',
         'sales_lead_id' => $salesLead->id,
         'is_done'       => 0,
+        'schedule_from' => null,
     ]);
 
     // Fetch activities endpoint and ensure the item is returned

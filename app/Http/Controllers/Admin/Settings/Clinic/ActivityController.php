@@ -40,7 +40,6 @@ class ActivityController extends Controller
             'comment'       => 'required_if:type,note',
             'description'   => 'nullable|string',
             'user_id'       => 'nullable|exists:users,id',
-            'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to'   => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file'          => 'required_if:type,file',
         ]);
@@ -51,6 +50,7 @@ class ActivityController extends Controller
         $request->request->remove('person_id');
 
         $data = $request->all();
+        unset($data['schedule_from']);
         Activity::normalizeForeignKeys($data);
 
         // Check clinic exists

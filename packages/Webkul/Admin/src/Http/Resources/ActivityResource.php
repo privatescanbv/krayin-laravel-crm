@@ -55,42 +55,77 @@ class ActivityResource extends JsonResource
             'updated_at'         => $this->updated_at,
         ];
 
-        // Append last comment for task activities
         $typeValue = $this->type?->value ?? $this->type;
-        if ($typeValue === 'task' && $this->resource instanceof \Webkul\Activity\Models\Activity) {
-            $data['task_comments'] = $this->resource->comments()->with('creator')->latest()->get()->map(fn ($c) => [
-                'date' => $c->created_at->locale('nl')->isoFormat('D MMM'),
-                'name' => $c->creator?->name ?? '',
-                'text' => $c->comment,
-            ])->values();
-        }
 
-        if ($typeValue === 'call') {
-            $items = $this->whenLoaded('callStatuses') ? $this->callStatuses : $this->callStatuses()->with('creator')->get();
+        if (in_array($typeValue, ['task', 'call'], true) && $this->resource instanceof \Webkul\Activity\Models\Activity) {
+            $allActions = $this->resource->actions()->with('creator')->latest()->get();
 
-            $summary = [
-                'not_reachable'  => 0,
-                'voicemail_left' => 0,
-                'spoken'         => 0,
-            ];
-
-            foreach ($items as $cs) {
-                $key = is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null);
-                if ($key && isset($summary[$key])) {
-                    $summary[$key]++;
-                }
+            if ($typeValue === 'task') {
+                $data['task_comments'] = $allActions->where('type.value', 'notitie')->values()->map(fn ($a) => [
+                    'date' => $a->created_at->locale('nl')->isoFormat('D MMM'),
+                    'name' => $a->creator?->name ?? '',
+                    'text' => $a->body,
+                ])->values();
             }
 
-            $data['call_status_summary'] = $summary;
-            $data['call_statuses'] = $items->sortBy('created_at')->values()->map(function ($cs) {
+            if ($typeValue === 'call') {
+                $belstatusItems = $allActions->where('type.value', 'belstatus')->values();
+
+                $summary = ['not_reachable' => 0, 'voicemail_left' => 0, 'spoken' => 0];
+                foreach ($belstatusItems as $action) {
+                    $key = is_string($action->call_status) ? $action->call_status : ($action->call_status?->value ?? null);
+                    if ($key && isset($summary[$key])) {
+                        $summary[$key]++;
+                    }
+                }
+
+                $data['call_status_summary'] = $summary;
+                $data['call_statuses'] = $belstatusItems->sortBy('created_at')->values()->map(fn ($a) => [
+                    'id'           => $a->id,
+                    'status'       => is_string($a->call_status) ? $a->call_status : ($a->call_status?->value ?? null),
+                    'omschrijving' => $a->body,
+                    'created_at'   => $a->created_at,
+                    'creator'      => $a->creator ? ['name' => $a->creator->name] : null,
+                ]);
+            }
+
+            // Unified actions list for timeline display in person/lead view
+            $callStatusLabels = [
+                'not_reachable' => 'Niet bereikt',
+                'voicemail_left' => 'Voicemail',
+                'spoken' => 'Gesproken',
+            ];
+            $actionItems = $allActions->map(function ($a) use ($callStatusLabels) {
+                $callStatusKey = is_string($a->call_status) ? $a->call_status : ($a->call_status?->value ?? '');
+                $statusLabel   = $callStatusLabels[$callStatusKey] ?? $callStatusKey;
+                $body          = trim($a->body ?? '');
+
                 return [
-                    'id'           => $cs->id,
-                    'status'       => is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null),
-                    'omschrijving' => $cs->omschrijving,
-                    'created_at'   => $cs->created_at,
-                    'creator'      => $cs->creator ? ['name' => $cs->creator->name] : null,
+                    'type'      => $a->type?->value ?? $a->type,
+                    'label'     => $a->type?->value === 'belstatus'
+                        ? ($statusLabel . ($body !== '' ? ' — ' . mb_strimwidth($body, 0, 60, '…') : ''))
+                        : mb_strimwidth($body, 0, 80, '…'),
+                    'creator'   => $a->creator?->name ?? '',
+                    'date'      => $a->created_at->locale('nl')->isoFormat('D MMM'),
+                    'date_full' => $a->created_at->toIso8601String(),
                 ];
             });
+
+            $emailItems = $this->resource->emails()->latest()->get()->map(function ($e) {
+                $from = is_array($e->from) ? ($e->from['name'] ?? $e->from['email'] ?? '') : ($e->from ?? '');
+
+                return [
+                    'type'      => 'mail',
+                    'label'     => $e->subject ?? '(geen onderwerp)',
+                    'creator'   => $from,
+                    'date'      => $e->created_at->locale('nl')->isoFormat('D MMM'),
+                    'date_full' => $e->created_at->toIso8601String(),
+                ];
+            });
+
+            $data['actions'] = $actionItems->merge($emailItems)
+                ->sortByDesc('date_full')
+                ->values();
         }
 
         return $data;

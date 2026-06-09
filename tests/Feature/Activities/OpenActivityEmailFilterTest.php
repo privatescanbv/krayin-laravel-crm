@@ -11,7 +11,8 @@ use Webkul\Lead\Models\Lead;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->actingAs(makeUser(), 'user');
+    $this->user = makeUser();
+    $this->actingAs($this->user, 'user');
 });
 
 test('lead open activities endpoint excludes email activity items', function () {
@@ -22,7 +23,7 @@ test('lead open activities endpoint excludes email activity items', function () 
         'title'         => 'Lead open task',
         'lead_id'       => $lead->id,
         'is_done'       => 0,
-        'user_id'       => auth()->id(),
+        'user_id'       => $this->user->id,
         'schedule_from' => now(),
         'schedule_to'   => now()->addHour(),
     ]);
@@ -56,7 +57,7 @@ test('sales lead open activities endpoint excludes email activity items', functi
         'title'         => 'Sales open task',
         'sales_lead_id' => $salesLead->id,
         'is_done'       => 0,
-        'user_id'       => auth()->id(),
+        'user_id'       => $this->user->id,
         'schedule_from' => now(),
         'schedule_to'   => now()->addHour(),
     ]);
@@ -70,7 +71,9 @@ test('sales lead open activities endpoint excludes email activity items', functi
         'source'        => 'system',
     ]);
 
-    $response = $this->getJson(route('admin.sales-leads.activities.index', $salesLead->id).'?is_done=0&hierarchy=false');
+    $response = $this->getJson(
+        route('admin.sales-leads.activities.index', $salesLead->id).'?is_done=0&hierarchy=false'
+    );
 
     $response->assertOk();
 
@@ -90,7 +93,7 @@ test('order open activities endpoint excludes email activity items', function ()
         'title'         => 'Order open task',
         'order_id'      => $order->id,
         'is_done'       => 0,
-        'user_id'       => auth()->id(),
+        'user_id'       => $this->user->id,
         'schedule_from' => now(),
         'schedule_to'   => now()->addHour(),
     ]);

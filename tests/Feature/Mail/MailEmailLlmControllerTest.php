@@ -5,7 +5,9 @@ use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\Role;
@@ -167,4 +169,83 @@ test('manual llm extraction returns metadata when no match found', function () {
     $response->assertOk()
         ->assertJsonPath('result.status', 'no_match')
         ->assertJsonPath('result.senders.0.email', 'unknown@example.com');
+});
+
+test('apply suggestion moves email from inbox to Verwerkt folder', function () {
+    $inboxFolder = Folder::create([
+        'name'         => EmailFolderEnum::INBOX->value,
+        'parent_id'    => null,
+        'order'        => 1,
+        'is_deletable' => false,
+    ]);
+
+    $verwerktFolder = Folder::create([
+        'name'         => EmailFolderEnum::PROCESSED->value,
+        'parent_id'    => null,
+        'order'        => 3,
+        'is_deletable' => false,
+    ]);
+
+    $person = Person::factory()->create();
+
+    $email = Email::create([
+        'subject'   => 'Order bevestiging',
+        'from'      => ['name' => 'Patient', 'email' => 'patient@example.com'],
+        'reply'     => 'Body',
+        'folder_id' => $inboxFolder->id,
+    ]);
+
+    $response = $this->actingAs(test()->admin, 'user')
+        ->postJson(route('admin.mail.apply_suggestion', $email->id), [
+            'links' => ['person_id' => $person->id],
+        ]);
+
+    $response->assertOk()
+        ->assertJsonPath('message', 'E-mail gekoppeld.');
+
+    expect($email->fresh()->folder_id)->toBe($verwerktFolder->id)
+        ->and($email->fresh()->person_id)->toBe($person->id);
+});
+
+test('apply suggestion with order link moves email from inbox to Verwerkt folder', function () {
+    $inboxFolder = Folder::create([
+        'name'         => EmailFolderEnum::INBOX->value,
+        'parent_id'    => null,
+        'order'        => 1,
+        'is_deletable' => false,
+    ]);
+
+    $verwerktFolder = Folder::create([
+        'name'         => EmailFolderEnum::PROCESSED->value,
+        'parent_id'    => null,
+        'order'        => 3,
+        'is_deletable' => false,
+    ]);
+
+    $pipeline = Pipeline::first() ?? Pipeline::create([
+        'name'        => 'Default Pipeline',
+        'is_default'  => 1,
+        'rotten_days' => 30,
+    ]);
+    $activeStage = Stage::factory()->create(['lead_pipeline_id' => $pipeline->id]);
+
+    $order = Order::factory()->create(['pipeline_stage_id' => $activeStage->id]);
+
+    $email = Email::create([
+        'subject'   => 'Order bevestiging',
+        'from'      => ['name' => 'Patient', 'email' => 'patient@example.com'],
+        'reply'     => 'Body',
+        'folder_id' => $inboxFolder->id,
+    ]);
+
+    $response = $this->actingAs(test()->admin, 'user')
+        ->postJson(route('admin.mail.apply_suggestion', $email->id), [
+            'links' => ['order_id' => $order->id],
+        ]);
+
+    $response->assertOk()
+        ->assertJsonPath('message', 'E-mail gekoppeld.');
+
+    expect($email->fresh()->folder_id)->toBe($verwerktFolder->id)
+        ->and($email->fresh()->order_id)->toBe($order->id);
 });

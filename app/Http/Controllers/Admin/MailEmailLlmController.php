@@ -58,6 +58,8 @@ class MailEmailLlmController extends Controller
 
         $this->emailRepository->update($validated['links'], $email->id);
 
+        $this->emailRepository->moveToProcessedIfInbox($email->id);
+
         $email = $this->emailRepository
             ->with(['person', 'lead', 'salesLead', 'clinic', 'order'])
             ->findOrFail($id);

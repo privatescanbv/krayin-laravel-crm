@@ -236,8 +236,8 @@
                     {!! view_render_event('admin.activities.edit.form_controls.after') !!}
                 </div>
 
-<!-- Additional data -->
-                @if (is_array($activity->additional) && !empty($activity->additional))
+<!-- Additional data (hidden for SYSTEM activities — handled by the center panel) -->
+                @if (is_array($activity->additional) && !empty($activity->additional) && $activity->type !== \App\Enums\ActivityType::SYSTEM)
                     <div class="p-4 border-t border-gray-200 dark:border-gray-800">
                         <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Extra gegevens</div>
                         <dl class="grid grid-cols-2 gap-x-4 gap-y-2">

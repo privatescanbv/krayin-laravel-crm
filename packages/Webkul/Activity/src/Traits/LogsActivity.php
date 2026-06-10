@@ -89,7 +89,7 @@ trait LogsActivity
                 continue;
             }
 
-            $attributeCode = $model->attribute?->name ?: $attributeCode;
+            $attributeCode = $model->attribute?->name ?: static::resolveColumnLabel($attributeCode);
 
             // Check if this is a Lead model and use the new direct relationship
             $activityData = [
@@ -156,6 +156,30 @@ trait LogsActivity
         } elseif (method_exists($entity, 'activities')) {
             $entity->activities()->attach($activity->id);
         }
+    }
+
+    /**
+     * Map known database column names to human-readable Dutch labels for system activity titles.
+     * Models may define a static $activityColumnLabels array to provide additional mappings.
+     */
+    protected static function resolveColumnLabel(string $code): string
+    {
+        $defaults = [
+            'group_id'               => 'Gebruikersgroep',
+            'user_id'                => 'Toegewezen aan',
+            'department_id'          => 'Afdeling',
+            'lead_pipeline_stage_id' => 'Pipeline fase',
+            'lead_pipeline_id'       => 'Pipeline',
+            'lead_source_id'         => 'Bron',
+            'lead_type_id'           => 'Type',
+            'lead_channel_id'        => 'Kanaal',
+            'organization_id'        => 'Organisatie',
+        ];
+
+        $extra = property_exists(static::class, 'activityColumnLabels') ? (static::$activityColumnLabels ?? []) : [];
+        $map   = array_merge($defaults, $extra);
+
+        return $map[$code] ?? $code;
     }
 
     /**

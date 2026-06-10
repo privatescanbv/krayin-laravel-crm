@@ -258,7 +258,16 @@ class AttributeValueRepository extends Repository
                 break;
 
             default:
-                $label = $value;
+                if (is_array($value)) {
+                    $first = reset($value);
+                    if (is_array($first) && array_key_exists('value', $first)) {
+                        $label = implode(', ', array_column($value, 'value'));
+                    } else {
+                        $label = null;
+                    }
+                } else {
+                    $label = $value;
+                }
 
                 break;
         }

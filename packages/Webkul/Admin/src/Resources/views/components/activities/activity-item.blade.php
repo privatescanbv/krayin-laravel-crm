@@ -106,10 +106,9 @@
                 </template>
 
                 <template v-else>
-                    <a class="min-w-0 font-medium hover:underline dark:text-white"
-                        :href="{!! $activityViewPatternJs !!}.replace('__ID__', String(activity.id))">
+                    <span class="min-w-0 font-medium dark:text-white">
                         @{{ activity.title || 'geen' }}
-                    </a>
+                    </span>
 
                     <template v-if="activity.additional">
                         <p class="flex items-center gap-1">

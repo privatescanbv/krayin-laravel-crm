@@ -46,6 +46,11 @@ class Handler extends AppExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        // Skip logging for routine HTTP 404s (favicon, missing assets, etc.)
+        if ($exception instanceof HttpException && $exception->getStatusCode() === 404) {
+            return $this->renderCustomResponse($exception);
+        }
+
         // Log all exceptions in admin context with additional details
         Log::error('Admin exception occurred', [
             'exception' => get_class($exception),

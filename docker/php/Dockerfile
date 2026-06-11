@@ -61,12 +61,9 @@ RUN docker-php-ext-install calendar
 
 # Install Composer and PHP dependencies (ensure vendor/autoload.php exists)
 ENV COMPOSER_ALLOW_SUPERUSER=1
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN git config --global --add safe.directory /usr/share/nginx/html
-RUN set -eux; \
-    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
-    php composer-setup.php --install-dir=/usr/local/bin --filename=composer; \
-    php -r "unlink('composer-setup.php');"; \
-    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 
 RUN mkdir -p /usr/local/etc/php-fpm.d \

@@ -113,7 +113,7 @@
                         @{{ activity.title || 'geen' }}
                     </span>
 
-                    <template v-if="activity.additional">
+                    <template v-if="activity.additional?.old || activity.additional?.new">
                         <p class="flex items-center gap-1">
                             <span class="break-words">
                                 @{{ truncate(activity.additional?.old?.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')", 60) }}

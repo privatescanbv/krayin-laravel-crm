@@ -2,6 +2,8 @@
 
 namespace Webkul\Activity\Traits;
 
+use App\Models\Department;
+use Exception;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Contracts\AttributeValue;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
@@ -22,12 +24,8 @@ trait LogsActivity
 
             if (! $model instanceof AttributeValue) {
                 $activityData = [
-                    'type'    => 'system',
                     'title'   => trans('admin::app.activities.created'),
-                    'is_done' => 1,
-                    'user_id' => auth()->check()
-                        ? auth()->id()
-                        : null,
+                    'user_id' => auth()->check() ? auth()->id() : null,
                 ];
 
                 // Add lead_id and optionally set group_id if this is a Lead model
@@ -36,13 +34,13 @@ trait LogsActivity
 
                     // Try to get group_id from lead's department (optional for system activities)
                     try {
-                        $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
-                    } catch (\Exception $e) {
+                        $activityData['group_id'] = Department::getGroupIdForLead($model);
+                    } catch (Exception $e) {
                         // System activities don't require group_id, so ignore error
                     }
                 }
 
-                $activity = app(ActivityRepository::class)->create($activityData);
+                $activity = app(ActivityRepository::class)->createSystem($activityData);
 
                 static::linkActivityToEntity($activity, $model);
 
@@ -93,10 +91,8 @@ trait LogsActivity
 
             // Check if this is a Lead model and use the new direct relationship
             $activityData = [
-                'type'       => 'system',
                 'title'      => trans('admin::app.activities.updated', ['attribute' => $attributeCode]),
-                'is_done'    => 1,
-                'additional' => json_encode([
+                'additional' => [
                     'attribute' => $attributeCode,
                     'new'       => [
                         'value' => $attributeData['new'],
@@ -106,7 +102,7 @@ trait LogsActivity
                         'value' => $attributeData['old'],
                         'label' => static::getAttributeLabel($attributeData['old'], $model->attribute),
                     ],
-                ]),
+                ],
                 'user_id'    => auth()->id(),
             ];
 
@@ -116,7 +112,7 @@ trait LogsActivity
 
                 // Try to get group_id from lead's department (optional for system activities)
                 try {
-                    $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
+                    $activityData['group_id'] = Department::getGroupIdForLead($model);
                 } catch (\Exception $e) {
                     // System activities don't require group_id, so ignore error
                 }
@@ -125,13 +121,13 @@ trait LogsActivity
 
                 // Try to get group_id from lead's department (optional for system activities)
                 try {
-                    $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model->entity);
+                    $activityData['group_id'] = Department::getGroupIdForLead($model->entity);
                 } catch (\Exception $e) {
                     // System activities don't require group_id, so ignore error
                 }
             }
 
-            $activity = app(ActivityRepository::class)->create($activityData);
+            $activity = app(ActivityRepository::class)->createSystem($activityData);
 
             if ($model instanceof AttributeValue) {
                 static::linkActivityToEntity($activity, $model->entity);

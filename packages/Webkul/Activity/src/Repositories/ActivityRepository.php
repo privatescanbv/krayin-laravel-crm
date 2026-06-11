@@ -48,6 +48,20 @@ class ActivityRepository extends Repository
     }
 
     /**
+     * Create a system log activity (type=SYSTEM, is_done=1).
+     * Caller provides title, additional, user_id and any FK fields (lead_id, order_id, …).
+     *
+     * @return \Webkul\Activity\Contracts\Activity
+     */
+    public function createSystem(array $data)
+    {
+        return $this->create(array_merge($data, [
+            'type'    => ActivityType::SYSTEM,
+            'is_done' => 1,
+        ]));
+    }
+
+    /**
      * Create pipeline.
      *
      * @return \Webkul\Activity\Contracts\Activity

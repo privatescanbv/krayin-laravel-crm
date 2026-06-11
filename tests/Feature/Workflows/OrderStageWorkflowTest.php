@@ -41,7 +41,8 @@ test('updating an order stage to one with a workflow automatically creates an ac
 
     $order->update(['pipeline_stage_id' => PipelineStage::ORDER_RAPPORTEN_ONTVANGEN->id()]);
 
-    expect(Activity::where('order_id', $order->id)->count())->toBe(2);
+    // workflow activity + "Status gewijzigd" system log from OrderObserver::logFieldChanges
+    expect(Activity::where('order_id', $order->id)->count())->toBe(3);
 });
 
 test('order workflow create_activity with user_id assigns that user to the created activity', function () {

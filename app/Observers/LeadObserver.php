@@ -216,21 +216,13 @@ class LeadObserver
 
                 $fieldLabel = $fieldLabels[$field];
 
-                $activity = $this->activityRepository->create([
-                    'type'       => 'system',
+                $activity = $this->activityRepository->createSystem([
                     'title'      => "$fieldLabel gewijzigd",
-                    'is_done'    => 1,
-                    'additional' => json_encode([
+                    'additional' => [
                         'attribute' => $fieldLabel,
-                        'new'       => [
-                            'value' => $newValue ?: '-',
-                            'label' => $newValue ?: '-',
-                        ],
-                        'old' => [
-                            'value' => $oldValue ?: '-',
-                            'label' => $oldValue ?: '-',
-                        ],
-                    ]),
+                        'new'       => ['value' => $newValue ?: '-', 'label' => $newValue ?: '-'],
+                        'old'       => ['value' => $oldValue ?: '-', 'label' => $oldValue ?: '-'],
+                    ],
                     'user_id' => auth()->id() ?? 1,
                     'lead_id' => $lead->id,
                 ]);

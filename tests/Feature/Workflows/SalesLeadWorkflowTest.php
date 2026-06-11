@@ -44,7 +44,8 @@ test('updating a sales lead stage to one with a workflow automatically creates a
     // SALES_ORDER_PREVENTIE_HERNIA has a seeded workflow activity; SALES_IN_BEHANDELING intentionally has none
     $salesLead->update(['pipeline_stage_id' => PipelineStage::SALES_ORDER_PREVENTIE_HERNIA->id()]);
 
-    expect(Activity::where('sales_lead_id', $salesLead->id)->count())->toBe(1);
+    // workflow activity + "Status gewijzigd" system log from SalesLeadObserver::logFieldChanges
+    expect(Activity::where('sales_lead_id', $salesLead->id)->count())->toBe(2);
 });
 
 test('setting a lead to won stage creates a sales lead with a workflow activity', function () {

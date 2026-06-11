@@ -4,17 +4,22 @@ namespace App\Observers;
 
 use App\Enums\OrderItemStatus;
 use App\Enums\PurchasePriceType;
+use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\ResourceOrderItem;
 use App\Services\Afb\AfbDispatchService;
 use App\Services\OrderStatusService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Repositories\ActivityRepository;
 
 class ResourceOrderItemObserver
 {
     public function __construct(
         private readonly OrderStatusService $orderStatusService,
-        private readonly AfbDispatchService $afbDispatchService
+        private readonly AfbDispatchService $afbDispatchService,
+        private readonly ActivityRepository $activityRepository,
     ) {}
 
     /**
@@ -25,7 +30,17 @@ class ResourceOrderItemObserver
         $this->updateOrderItemStatus($resourceOrderItem);
         $this->capturePartnerProductPrice($resourceOrderItem);
 
-        $order = $resourceOrderItem->orderItem?->order;
+        $this->logActivity($resourceOrderItem, 'created');
+    }
+
+    /**
+     * Handle the ResourceOrderItem "updated" event.
+     */
+    public function updated(ResourceOrderItem $resourceOrderItem): void
+    {
+        if ($resourceOrderItem->wasChanged(['from', 'to'])) {
+            $this->logActivity($resourceOrderItem, 'updated');
+        }
     }
 
     /**
@@ -34,6 +49,47 @@ class ResourceOrderItemObserver
     public function deleted(ResourceOrderItem $resourceOrderItem): void
     {
         $this->updateOrderItemStatus($resourceOrderItem);
+
+        $this->logActivity($resourceOrderItem, 'deleted');
+    }
+
+    private function logActivity(ResourceOrderItem $resourceOrderItem, string $event): void
+    {
+        $orderItem = $resourceOrderItem->orderItem ?? OrderItem::find($resourceOrderItem->orderitem_id);
+
+        if (! $orderItem?->order_id) {
+            return;
+        }
+
+        $itemLabel = $orderItem->name ?: $orderItem->product?->name ?: "#{$orderItem->id}";
+        $itemRef = "{$itemLabel} (order item #{$orderItem->id})";
+
+        $fmt = fn ($dt) => $dt ? Carbon::parse($dt)->format('d-m-Y H:i') : null;
+
+        $newFrom = $fmt($resourceOrderItem->from);
+        $newTo = $fmt($resourceOrderItem->to);
+        $oldFrom = $event === 'updated' ? $fmt($resourceOrderItem->getOriginal('from')) : null;
+        $oldTo = $event === 'updated' ? $fmt($resourceOrderItem->getOriginal('to')) : null;
+
+        $newLabel = implode(' – ', array_filter([$newFrom, $newTo])) ?: '-';
+        $oldLabel = implode(' – ', array_filter([$oldFrom, $oldTo])) ?: '-';
+
+        $title = match ($event) {
+            'created' => "Ingepland: {$itemRef}",
+            'deleted' => "Geplanning verwijderd: {$itemRef}",
+            'updated' => "Ingepland gewijzigd: {$itemRef}",
+        };
+
+        $this->activityRepository->createSystem([
+            'title'      => $title,
+            'additional' => [
+                'attribute' => $itemRef,
+                'new'       => ['value' => $newFrom, 'label' => $newLabel],
+                'old'       => ['value' => $oldFrom, 'label' => $oldLabel],
+            ],
+            'user_id'  => auth()->id() ?? 1,
+            'order_id' => $orderItem->order_id,
+        ]);
     }
 
     private function capturePartnerProductPrice(ResourceOrderItem $resourceOrderItem): void

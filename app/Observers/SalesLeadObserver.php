@@ -4,12 +4,17 @@ namespace App\Observers;
 
 use App\Actions\Sales\SalesToLostAction;
 use App\Enums\Departments;
+use App\Enums\LostReason;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
+use App\Models\Department;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Event;
+use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Stage;
+use Webkul\User\Models\User;
 
 /**
  * Observer for SalesLead model to handle pipeline stage changes and webhooks.
@@ -24,6 +29,7 @@ class SalesLeadObserver
     public function __construct(
         protected WebhookService $webhookService,
         private readonly SalesToLostAction $salesToLostAction,
+        private readonly ActivityRepository $activityRepository,
     ) {}
 
     public function saving(SalesLead $salesLead): void
@@ -86,6 +92,79 @@ class SalesLeadObserver
             && (array_key_exists('pipeline_stage_id', $changes) || array_key_exists('lost_reason', $changes))) {
             $this->salesToLostAction->execute($salesLead);
         }
+
+        $this->logFieldChanges($salesLead);
+    }
+
+    private function logFieldChanges(SalesLead $salesLead): void
+    {
+        $fields = [
+            'name'              => 'Naam',
+            'description'       => 'Omschrijving',
+            'pipeline_stage_id' => 'Status',
+            'user_id'           => 'Toegewezen aan',
+            'department_id'     => 'Afdeling',
+            'lost_reason'       => 'Reden verlies',
+            'contact_person_id' => 'Contactpersoon',
+        ];
+
+        foreach ($fields as $field => $label) {
+            if (! $salesLead->wasChanged($field)) {
+                continue;
+            }
+
+            $oldRaw = $salesLead->getOriginal($field);
+            $newRaw = $salesLead->getAttribute($field);
+
+            [$oldLabel, $newLabel] = $this->resolveFieldLabels($field, $oldRaw, $newRaw);
+
+            if (empty($oldLabel) && empty($newLabel)) {
+                continue;
+            }
+
+            $this->activityRepository->createSystem([
+                'title'         => "{$label} gewijzigd",
+                'additional'    => [
+                    'attribute' => $label,
+                    'new'       => ['value' => $newRaw, 'label' => $newLabel ?: '-'],
+                    'old'       => ['value' => $oldRaw, 'label' => $oldLabel ?: '-'],
+                ],
+                'user_id'       => auth()->id() ?? 1,
+                'sales_lead_id' => $salesLead->id,
+            ]);
+        }
+    }
+
+    /**
+     * @return array{string|null, string|null}
+     */
+    private function resolveFieldLabels(string $field, mixed $oldRaw, mixed $newRaw): array
+    {
+        return match ($field) {
+            'pipeline_stage_id' => [
+                Stage::find($oldRaw)?->name,
+                Stage::find($newRaw)?->name,
+            ],
+            'user_id' => [
+                User::find($oldRaw)?->name,
+                User::find($newRaw)?->name,
+            ],
+            'department_id' => [
+                Department::find($oldRaw)?->name,
+                Department::find($newRaw)?->name,
+            ],
+            'contact_person_id' => [
+                Person::find($oldRaw)?->name,
+                Person::find($newRaw)?->name,
+            ],
+            'lost_reason' => [
+                $oldRaw !== null ? (LostReason::tryFrom((string) $oldRaw)?->label() ?? (string) $oldRaw) : null,
+                $newRaw instanceof LostReason
+                    ? $newRaw->label()
+                    : ($newRaw !== null ? (LostReason::tryFrom((string) $newRaw)?->label() ?? (string) $newRaw) : null),
+            ],
+            default => [(string) ($oldRaw ?? ''), (string) ($newRaw ?? '')],
+        };
     }
 
     private function sendWebhook(SalesLead $salesLead, string $caller): void

@@ -255,22 +255,14 @@ class PersonObserver
                     $newValue = $newValue ?: '-';
                 }
 
-                $this->activityRepository->create([
-                    'type'       => 'system',
+                $this->activityRepository->createSystem([
                     'title'      => "$fieldLabel gewijzigd",
-                    'is_done'    => 1,
                     'person_id'  => $person->id,
-                    'additional' => json_encode([
+                    'additional' => [
                         'attribute' => $fieldLabel,
-                        'new'       => [
-                            'value' => $newValue,
-                            'label' => $newValue,
-                        ],
-                        'old' => [
-                            'value' => $oldValue,
-                            'label' => $oldValue,
-                        ],
-                    ]),
+                        'new'       => ['value' => $newValue, 'label' => $newValue],
+                        'old'       => ['value' => $oldValue, 'label' => $oldValue],
+                    ],
                     'user_id' => auth()->id() ?? 1,
                 ]);
             }

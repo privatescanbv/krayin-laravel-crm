@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\LostReason;
 use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Enums\ResourceType as ResourceTypeEnum;
@@ -13,6 +14,8 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Webkul\Contact\Models\Organization;
+use Webkul\Lead\Models\Stage;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
@@ -173,6 +176,198 @@ test('updating to a won stage dispatches order.update_stage.after event', functi
     $order->save();
 
     Event::assertDispatched('order.update_stage.after');
+});
+
+// ---------------------------------------------------------------------------
+// logFieldChanges audit trail
+// ---------------------------------------------------------------------------
+
+test('updating title creates a system activity log', function () {
+    $order = Order::factory()->create(['title' => 'Oud titel']);
+
+    $order->update(['title' => 'Nieuw titel']);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Titel gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['old']['label'])->toBe('Oud titel')
+        ->and($additional['new']['label'])->toBe('Nieuw titel');
+});
+
+test('updating pipeline_stage_id logs stage names as labels', function () {
+    $stageA = Stage::where('code', PipelineStage::ORDER_CONFIRM->value)->firstOrFail();
+    $stageB = Stage::where('code', PipelineStage::ORDER_INGEPLAND->value)->firstOrFail();
+
+    $order = Order::factory()->create(['pipeline_stage_id' => $stageA->id]);
+
+    $order->update(['pipeline_stage_id' => $stageB->id]);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Status gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['old']['label'])->toBe($stageA->name)
+        ->and($additional['new']['label'])->toBe($stageB->name);
+});
+
+test('updating user_id logs user names as labels', function () {
+    $userA = makeUser();
+    $userB = makeUser();
+
+    $order = Order::factory()->create(['user_id' => $userA->id]);
+
+    $order->update(['user_id' => $userB->id]);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Toegewezen aan gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['old']['label'])->toBe($userA->name)
+        ->and($additional['new']['label'])->toBe($userB->name);
+});
+
+test('updating total_price logs formatted euro amounts', function () {
+    $order = Order::factory()->create(['total_price' => 100.00]);
+
+    $order->update(['total_price' => 250.50]);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Totaalprijs gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['old']['label'])->toBe('€ 100.00')
+        ->and($additional['new']['label'])->toBe('€ 250.50');
+});
+
+test('updating first_examination_at logs formatted dates', function () {
+    $order = Order::factory()->create(['first_examination_at' => '2026-03-01']);
+
+    $order->update(['first_examination_at' => '2026-06-15']);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Eerste onderzoeksdatum gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['old']['label'])->toBe('01-03-2026')
+        ->and($additional['new']['label'])->toBe('15-06-2026');
+});
+
+test('updating lost_reason logs enum labels', function () {
+    $order = Order::factory()->create(['lost_reason' => null]);
+
+    $order->update(['lost_reason' => LostReason::Price]);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Reden verlies gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['new']['label'])->toBe(LostReason::Price->label());
+});
+
+test('updating is_business logs ja nee labels', function () {
+    $order = Order::factory()->create(['is_business' => false]);
+
+    $order->update(['is_business' => true]);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Zakelijk gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['old']['label'])->toBe('Nee')
+        ->and($additional['new']['label'])->toBe('Ja');
+});
+
+test('updating organization_id logs organization name', function () {
+    $org = Organization::factory()->create(['name' => 'Test Organisatie BV']);
+    $order = Order::factory()->create(['organization_id' => null]);
+
+    $order->update(['organization_id' => $org->id]);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'Organisatie gewijzigd')
+        ->first();
+
+    expect($activity)->not->toBeNull();
+
+    $additional = json_decode($activity->additional, true);
+    expect($additional['new']['label'])->toBe('Test Organisatie BV');
+});
+
+test('unchanged fields do not create activity log entries', function () {
+    $order = Order::factory()->create(['title' => 'Zelfde titel']);
+
+    $countBefore = DB::table('activities')->where('order_id', $order->id)->where('type', 'system')->count();
+
+    $order->update(['title' => 'Zelfde titel']);
+
+    $countAfter = DB::table('activities')->where('order_id', $order->id)->where('type', 'system')->count();
+
+    expect($countAfter)->toBe($countBefore);
+});
+
+test('saveQuietly does not create activity log entries', function () {
+    $order = Order::factory()->create(['title' => 'Origineel']);
+
+    $countBefore = DB::table('activities')->where('order_id', $order->id)->where('type', 'system')->count();
+
+    $order->title = 'Stille update';
+    $order->saveQuietly();
+
+    $countAfter = DB::table('activities')->where('order_id', $order->id)->where('type', 'system')->count();
+
+    expect($countAfter)->toBe($countBefore);
+});
+
+test('skipped fields (order_number, invoice_number) do not create activity entries', function () {
+    $order = Order::factory()->create(['invoice_number' => null]);
+
+    $order->update(['invoice_number' => 'INV-2026-001']);
+
+    $activity = DB::table('activities')
+        ->where('order_id', $order->id)
+        ->where('type', 'system')
+        ->where('title', 'LIKE', '%invoice%')
+        ->first();
+
+    expect($activity)->toBeNull();
 });
 
 test('touching order does not downgrade from order akkoord when plannable items are WON', function () {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\ActivityStatus;
+use App\Enums\ActivityType;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
@@ -450,6 +451,33 @@ class SalesLeadController extends Controller
     public function activities($id)
     {
         $salesLead = SalesLead::findOrFail($id);
+
+        if (request('tab') === ActivityType::SYSTEM->value) {
+            $orderIds = $salesLead->orders()->pluck('orders.id');
+
+            $query = Activity::where(function ($q) use ($id, $orderIds) {
+                $q->where('sales_lead_id', $id);
+                if ($orderIds->isNotEmpty()) {
+                    $q->orWhereIn('order_id', $orderIds);
+                }
+            });
+
+            $orderTitles = $orderIds->isNotEmpty()
+                ? Order::whereIn('id', $orderIds)->pluck('title', 'id')
+                : collect();
+
+            return $this->paginateSystemActivities($query, function ($items) use ($orderTitles) {
+                $items->each(function ($a) use ($orderTitles) {
+                    if ($a->order_id && $orderTitles->has($a->order_id)) {
+                        $a->entity_source = [
+                            'type'  => 'order',
+                            'label' => 'Order: '.$orderTitles[$a->order_id],
+                            'url'   => route('admin.orders.view', $a->order_id),
+                        ];
+                    }
+                });
+            });
+        }
 
         $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
         $withHierarchy = request()->has('hierarchy') ? filter_var(request('hierarchy'), FILTER_VALIDATE_BOOLEAN) : true;

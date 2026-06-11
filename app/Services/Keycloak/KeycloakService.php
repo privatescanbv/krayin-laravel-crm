@@ -380,7 +380,11 @@ class KeycloakService
                 'value'     => $password,
                 'temporary' => $temporary,
             ]);
-        Log::info('Setting temporary password to Keycloak, response', ['response_status'=>$response->status()]);
+        if ($temporary) {
+            Log::info('Setting temporary password to Keycloak, response', ['response_status' => $response->status()]);
+        } else {
+            Log::info('Setting password to Keycloak, response', ['response_status' => $response->status()]);
+        }
 
         return $response?->successful() ?? false;
     }

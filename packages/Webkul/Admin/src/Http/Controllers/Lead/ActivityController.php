@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Lead;
 
 use App\Actions\Activities\CreateActivityForLeadAction;
 use App\Actions\Activities\DuplicateException;
+use App\Enums\ActivityType;
 use App\Models\Department;
 use Exception;
 use Illuminate\Http\Request;
@@ -115,6 +116,10 @@ class ActivityController extends Controller
      */
     public function index(string $leadId)
     {
+        if (request('tab') === ActivityType::SYSTEM->value) {
+            return $this->paginateSystemActivities(Activity::where('lead_id', $leadId));
+        }
+
         $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
 
         $query = Activity::where('lead_id', $leadId);

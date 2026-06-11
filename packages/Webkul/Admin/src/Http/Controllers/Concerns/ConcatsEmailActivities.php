@@ -2,9 +2,13 @@
 
 namespace Webkul\Admin\Http\Controllers\Concerns;
 
+use App\Enums\ActivityType;
 use App\Models\Order;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Collection;
 use Webkul\Activity\Models\Activity;
+use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Attachment;
 use Webkul\Email\Models\Email;
@@ -14,6 +18,31 @@ use Webkul\User\Models\User;
 
 trait ConcatsEmailActivities
 {
+    /**
+     * Paginate system-type activities for a pre-scoped query.
+     *
+     * Reads ?page and ?per_page from the request, applies type=system filter and
+     * ordering, then returns an ActivityResource collection wrapping a paginator.
+     * Pass an optional $decorate callback to enrich the loaded items (e.g. set
+     * entity_source on each activity) before serialisation.
+     */
+    protected function paginateSystemActivities(Builder $query, ?callable $decorate = null): AnonymousResourceCollection
+    {
+        $page    = max(1, (int) request('page', 1));
+        $perPage = min(100, (int) request('per_page', 20));
+
+        $paginated = $query
+            ->where('type', ActivityType::SYSTEM)
+            ->orderByDesc('created_at')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        if ($decorate !== null) {
+            $decorate($paginated->getCollection());
+        }
+
+        return ActivityResource::collection($paginated);
+    }
+
     /**
      * Fetch latest-per-thread emails for a supported entity type.
      */

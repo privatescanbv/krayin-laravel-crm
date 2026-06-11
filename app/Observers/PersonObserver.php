@@ -140,7 +140,7 @@ class PersonObserver
         $result = $this->personKeycloakService->update($person, $changedFields);
 
         if (! $result['success']) {
-            Log::warning('Failed to update portal account for person', [
+            Log::error('Failed to update portal account for person', [
                 'person_id' => $person->id,
                 'fields'    => $changedFields,
                 'message'   => $result['message'] ?? null,

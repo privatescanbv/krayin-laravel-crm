@@ -16,6 +16,16 @@
         <span>Stel een nieuw wachtwoord in voor uw patiëntportaal.@if ($email)<br>{{ $email }}@endif</span>
     </div>
 
+    <div class="password-requirements" aria-label="Wachtwoordeisen">
+        <p class="password-requirements__title">Je wachtwoord moet bevatten:</p>
+        <ul>
+            <li>Minimaal 8 tekens</li>
+            <li>Minimaal 1 hoofdletter (A-Z)</li>
+            <li>Minimaal 1 cijfer (0-9)</li>
+            <li>Minimaal 1 speciaal teken (! @ # $ % & *)</li>
+        </ul>
+    </div>
+
     @if (session('success'))
         <div class="alert-success" aria-live="polite">{{ session('success') }}</div>
     @endif

@@ -196,6 +196,35 @@
 
                             {!! view_render_event('admin.components.activities.content.activity.list.after') !!}
                         </div>
+
+                        <!-- Logboek pagination -->
+                        <div
+                            v-if="selectedType === 'system' && systemPagination.lastPage > 1"
+                            class="flex items-center justify-between border-t px-4 py-3 dark:border-gray-800"
+                        >
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                @{{ (systemPagination.currentPage - 1) * systemPagination.perPage + 1 }}–@{{ Math.min(systemPagination.currentPage * systemPagination.perPage, systemPagination.total) }}
+                                van @{{ systemPagination.total }}
+                            </span>
+
+                            <div class="flex items-center gap-1">
+                                <button
+                                    class="rounded px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-800"
+                                    :disabled="systemPagination.currentPage <= 1"
+                                    @click="systemPagination.currentPage--; get()"
+                                >‹ Vorige</button>
+
+                                <span class="px-2 text-sm text-gray-600 dark:text-gray-300">
+                                    @{{ systemPagination.currentPage }} / @{{ systemPagination.lastPage }}
+                                </span>
+
+                                <button
+                                    class="rounded px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-800"
+                                    :disabled="systemPagination.currentPage >= systemPagination.lastPage"
+                                    @click="systemPagination.currentPage++; get()"
+                                >Volgende ›</button>
+                            </div>
+                        </div>
                     </template>
 
                     <template v-else>
@@ -282,6 +311,8 @@
                     isUpdating: {},
 
                     activities: [],
+
+                    systemPagination: { currentPage: 1, lastPage: 1, total: 0, perPage: 20 },
 
                     selectedType: this.activeType,
 
@@ -419,8 +450,12 @@
             },
 
             watch: {
-                selectedType() {
+                selectedType(newType, oldType) {
                     this.activityTypeFilter = 'all';
+                    if (newType === 'system' || oldType === 'system') {
+                        this.systemPagination.currentPage = 1;
+                        this.get();
+                    }
                 },
             },
 
@@ -452,9 +487,24 @@
 
                 get() {
                     this.isLoading = true;
-                    this.$axios.get(this.endpoint)
+
+                    const params = {};
+                    if (this.selectedType === 'system') {
+                        params.tab      = 'system';
+                        params.page     = this.systemPagination.currentPage;
+                        params.per_page = this.systemPagination.perPage;
+                    }
+
+                    this.$axios.get(this.endpoint, { params })
                         .then(response => {
                             this.activities = response.data.data;
+
+                            if (this.selectedType === 'system' && response.data.meta) {
+                                this.systemPagination.lastPage    = response.data.meta.last_page;
+                                this.systemPagination.total       = response.data.meta.total;
+                                this.systemPagination.currentPage = response.data.meta.current_page;
+                            }
+
                             this.isLoading = false;
                         })
                         .catch(error => {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Settings\Clinic;
 
+use App\Enums\ActivityType;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\Request;
@@ -91,6 +92,10 @@ class ActivityController extends Controller
      */
     public function index($id)
     {
+        if (request('tab') === ActivityType::SYSTEM->value) {
+            return $this->paginateSystemActivities(Activity::where('clinic_id', $id));
+        }
+
         $activities = $this->activityRepository
             ->where('clinic_id', $id)
             ->get();

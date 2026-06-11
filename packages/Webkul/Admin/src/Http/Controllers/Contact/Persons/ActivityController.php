@@ -39,6 +39,37 @@ class ActivityController extends Controller
      */
     public function index($id)
     {
+        if (request('tab') === ActivityType::SYSTEM->value) {
+            $leadIds      = DB::table('lead_persons')->where('person_id', $id)->pluck('lead_id');
+            $salesLeadIds = DB::table('saleslead_persons')->where('person_id', $id)->pluck('saleslead_id');
+            $orderIds     = $salesLeadIds->isNotEmpty()
+                ? Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id')
+                : collect();
+
+            $leadNames   = $leadIds->isNotEmpty()      ? Lead::whereIn('id', $leadIds)->get(['id', 'first_name', 'last_name', 'lastname_prefix'])->pluck('name', 'id') : collect();
+            $salesNames  = $salesLeadIds->isNotEmpty() ? SalesLead::whereIn('id', $salesLeadIds)->pluck('name', 'id') : collect();
+            $orderTitles = $orderIds->isNotEmpty()     ? Order::whereIn('id', $orderIds)->pluck('title', 'id') : collect();
+
+            $query = Activity::where(function ($q) use ($id, $leadIds, $salesLeadIds, $orderIds) {
+                $q->where('person_id', $id);
+                if ($leadIds->isNotEmpty())      $q->orWhereIn('lead_id', $leadIds);
+                if ($salesLeadIds->isNotEmpty()) $q->orWhereIn('sales_lead_id', $salesLeadIds);
+                if ($orderIds->isNotEmpty())     $q->orWhereIn('order_id', $orderIds);
+            });
+
+            return $this->paginateSystemActivities($query, function ($items) use ($leadNames, $salesNames, $orderTitles) {
+                $items->each(function ($a) use ($leadNames, $salesNames, $orderTitles) {
+                    if ($a->lead_id && $leadNames->has($a->lead_id)) {
+                        $a->entity_source = ['type' => 'lead',  'label' => 'Lead: '.$leadNames[$a->lead_id],          'url' => route('admin.leads.view', $a->lead_id)];
+                    } elseif ($a->sales_lead_id && $salesNames->has($a->sales_lead_id)) {
+                        $a->entity_source = ['type' => 'sales', 'label' => 'Sales: '.$salesNames[$a->sales_lead_id],  'url' => route('admin.sales-leads.view', $a->sales_lead_id)];
+                    } elseif ($a->order_id && $orderTitles->has($a->order_id)) {
+                        $a->entity_source = ['type' => 'order', 'label' => 'Order: '.$orderTitles[$a->order_id],      'url' => route('admin.orders.view', $a->order_id)];
+                    }
+                });
+            });
+        }
+
         $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
 
         // 1. Eigen person-activiteiten — geen label

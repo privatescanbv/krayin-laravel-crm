@@ -476,6 +476,10 @@ class OrderController extends SimpleEntityController
     {
         $order = $this->orderRepository->with(['salesLead'])->findOrFail($id);
 
+        if (request('tab') === ActivityType::SYSTEM->value) {
+            return $this->paginateSystemActivities(Activity::where('order_id', $order->id));
+        }
+
         $isDoneFilter = request()->has('is_done') ? (int) request('is_done') : null;
 
         $query = Activity::query()->where('order_id', $order->id);

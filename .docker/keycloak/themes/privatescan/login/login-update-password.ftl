@@ -9,7 +9,17 @@
 
             <div class="form_h">
                 <h1>Nieuw wachtwoord instellen</h1>
-                <span>Kies een nieuw wachtwoord voor je account</span>
+                <span>Kies een sterk wachtwoord voor je account.</span>
+            </div>
+
+            <div class="password-requirements" aria-label="Wachtwoordeisen">
+                <p class="password-requirements__title">Je wachtwoord moet bevatten:</p>
+                <ul>
+                    <li>Minimaal 8 tekens</li>
+                    <li>Minimaal 1 hoofdletter (A-Z)</li>
+                    <li>Minimaal 1 cijfer (0-9)</li>
+                    <li>Minimaal 1 speciaal teken (! @ # $ % & *)</li>
+                </ul>
             </div>
 
             <form id="kc-passwd-update-form"
@@ -17,13 +27,13 @@
                   method="post"
                   class="log_form">
 
-                <!-- Nieuw wachtwoord -->
                 <label class="pword">
-                    <span>${msg("passwordNew")}</span>
+                    <span>Wachtwoord</span>
                     <input type="password"
                            id="password-new"
                            name="password-new"
                            class="input_box"
+                           placeholder="Voer je nieuwe wachtwoord in"
                            autocomplete="new-password"
                            autofocus
                            aria-invalid="<#if messagesPerField.existsError('password')>true</#if>" />
@@ -35,13 +45,13 @@
                     </#if>
                 </label>
 
-                <!-- Bevestig wachtwoord -->
                 <label class="pword">
-                    <span>${msg("passwordConfirm")}</span>
+                    <span>Bevestigen</span>
                     <input type="password"
                            id="password-confirm"
                            name="password-confirm"
                            class="input_box"
+                           placeholder="Herhaal je wachtwoord"
                            autocomplete="new-password"
                            aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>" />
 

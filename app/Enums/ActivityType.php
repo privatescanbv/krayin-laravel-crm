@@ -26,6 +26,7 @@ enum ActivityType: string
             self::cases(),
             fn (self $stage) => ! in_array($stage, [
                 self::NOTE,
+                self::SYSTEM,
             ], true)
         ));
     }

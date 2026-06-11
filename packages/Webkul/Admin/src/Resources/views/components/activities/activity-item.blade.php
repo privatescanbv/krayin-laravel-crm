@@ -68,6 +68,9 @@
                 </span>
             </button>
         </template>
+        <template v-else>
+            <div class="mt-2 h-7 w-7 shrink-0"></div>
+        </template>
 
         <!-- Activity Icon -->
         <div class="relative mt-2 flex h-9 min-h-9 w-9 min-w-9 items-center justify-center rounded-full text-xl"

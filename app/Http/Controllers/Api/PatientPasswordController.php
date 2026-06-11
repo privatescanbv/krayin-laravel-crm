@@ -73,4 +73,54 @@ class PatientPasswordController extends Controller
 
         return response()->noContent();
     }
+
+    /**
+     * Reset the password for a patient without requiring the current password.
+     *
+     * Intended for the forgot-password flow where the patient portal has already
+     * verified the reset token. Must be called service-to-service (X-API-KEY).
+     *
+     * @group Patient Password
+     *
+     * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+     *
+     * @bodyParam password string required The new password (min 8 characters). Example: NieuwWachtwoord1!
+     * @bodyParam password_confirmation string required Confirmation of the new password. Example: NieuwWachtwoord1!
+     *
+     * @response 204 scenario="Success"
+     * @response 403 scenario="Bearer token used (must be API key)" {"message":"Forbidden"}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
+     */
+    public function reset(Request $request, string $keycloakUserId): Response
+    {
+        // Only allow service-to-service callers (X-API-KEY). A patient Bearer token
+        // should use the regular update() endpoint which also verifies current_password.
+        $authHeader = (string) $request->header('Authorization', '');
+        if ($authHeader !== '' && str_starts_with($authHeader, 'Bearer ')) {
+            abort(403);
+        }
+
+        [$person] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
+
+        if (is_null($person)) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'password'              => ['required', 'string', Password::defaults(), 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
+        ]);
+
+        $person->password = $validated['password'];
+        $person->save();
+
+        $linkedUser = User::where('keycloak_user_id', $keycloakUserId)->first();
+
+        if ($linkedUser) {
+            $linkedUser->password = $validated['password'];
+            $linkedUser->save();
+        }
+
+        return response()->noContent();
+    }
 }

@@ -239,6 +239,35 @@ services:
     depends_on:
       - loki
 
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    restart: unless-stopped
+    environment:
+      JAVA_TIMEZONE: Europe/Amsterdam
+
+      # Metabase metadata DB
+      MB_DB_TYPE: ${DB_CONNECTION}
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: ${DB_PORT}
+      MB_DB_USER: metabase
+      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+      MB_DB_HOST: ${DB_HOST}
+
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.metabase.rule=Host("reports.local.privatescan.nl")
+      - traefik.http.routers.metabase.entrypoints=https
+      - traefik.http.routers.metabase.tls=true
+      - traefik.http.services.metabase.loadbalancer.server.port=3000
+      - traefik.docker.network=public
+      - logging=promtail
+    depends_on:
+      - mysql_crm
+    networks:
+      - public
+      - backend
+
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
     container_name: keycloak

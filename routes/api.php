@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PatientAppointmentController;
 use App\Http\Controllers\Api\PatientCounterController;
 use App\Http\Controllers\Api\PatientDocumentController;
 use App\Http\Controllers\Api\PatientFileUploadController;
+use App\Http\Controllers\Api\PatientForgotPasswordController;
 use App\Http\Controllers\Api\PatientNawController;
 use App\Http\Controllers\Api\PatientNotificationController;
 use App\Http\Controllers\Api\PatientPasswordController;
@@ -84,6 +85,10 @@ $registerAuthenticatedApiRoutes = function () {
     Route::get('keycloak/persons/{keycloakUserId}', [KeycloakUserController::class, 'findPersonByKeycloakId'])
         ->name('api.keycloak.persons.findByKeycloakId');
 
+    // Patient unauthenticated-flow routes (API-key only; no patient token available yet)
+    Route::post('patient/forgot-password', [PatientForgotPasswordController::class, 'store'])
+        ->name('api.patient.forgot-password');
+
     // Patient routes (Keycloak Bearer token must match {id}; API key callers are service-to-service)
     Route::prefix('patient/{id}')
         ->middleware('patient.self:id')
@@ -123,6 +128,8 @@ $registerAuthenticatedApiRoutes = function () {
             // Patient password
             Route::put('password', [PatientPasswordController::class, 'update'])
                 ->name('api.patient.password.update');
+            Route::post('password/reset', [PatientPasswordController::class, 'reset'])
+                ->name('api.patient.password.reset');
 
             // Patient preferences
             Route::get('preferences', [PatientPreferenceController::class, 'index'])

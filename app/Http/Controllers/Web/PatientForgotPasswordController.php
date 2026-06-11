@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Enums\EmailTemplateCode;
+use App\Actions\Patient\SendForgotPasswordMailAction;
 use App\Http\Controllers\Controller;
-use App\Services\Mail\CrmMailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\View\View;
 use Webkul\Contact\Models\Person;
 
 /**
@@ -31,12 +28,14 @@ use Webkul\Contact\Models\Person;
 class PatientForgotPasswordController extends Controller
 {
     public function __construct(
-        private readonly CrmMailService $crmMailService,
+        private readonly SendForgotPasswordMailAction $sendForgotPasswordMail,
     ) {}
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('auth.patient-forgot-password');
+        return redirect()->away(
+            rtrim((string) config('services.portal.patient.web_url'), '/').'/forgot-password'
+        );
     }
 
     public function store(Request $request): RedirectResponse
@@ -45,48 +44,19 @@ class PatientForgotPasswordController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $email = $validated['email'];
-        $person = $this->findPersonByEmail($email);
-
-        if ($person && ! empty($person->keycloak_user_id)) {
-            $resetUrl = URL::temporarySignedRoute(
-                'patient.reset-password',
-                now()->addHour(),
-                ['email' => $email],
-            );
-
-            $sent = $this->crmMailService->sendToPersonTemplate(
-                person: $person,
-                templateIdentifier: EmailTemplateCode::PATIENT_FORGOT_PASSWORD,
-                variables: [
-                    'person'    => $person,
-                    'reset_url' => $resetUrl,
-                ],
-                isNotify: false,
-            );
-
-            Log::info('Patient forgot-password mail dispatched', [
-                'person_id' => $person->id,
-                'sent'      => $sent,
-            ]);
-        } else {
-            Log::info('Patient forgot-password requested for unknown / unlinked email', [
-                'email'             => $email,
-                'person_found'      => (bool) $person,
-                'has_keycloak_link' => $person ? ! empty($person->keycloak_user_id) : false,
-            ]);
-        }
+        $this->sendForgotPasswordMail->execute($validated['email']);
 
         return redirect()
             ->route('patient.forgot-password.create')
             ->with('success', 'Als dit e-mailadres bij ons bekend is, hebt u een e-mail ontvangen met instructies om uw wachtwoord te resetten.');
     }
 
-    public function showResetForm(Request $request): View
+    public function showResetForm(Request $request): RedirectResponse
     {
-        return view('auth.patient-reset-password', [
-            'email' => (string) $request->query('email', ''),
-        ]);
+        $portalBase = rtrim((string) config('services.portal.patient.web_url'), '/');
+        $query = $request->getQueryString();
+
+        return redirect()->away($portalBase.'/reset-password'.($query ? '?'.$query : ''));
     }
 
     public function reset(Request $request): RedirectResponse

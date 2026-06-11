@@ -11,19 +11,22 @@ use Illuminate\Validation\Rules\Password;
 use Webkul\Contact\Models\Person;
 
 /**
- * Patient forgot-password flow.
+ * Patient forgot-password flow (web entry points).
  *
- * The Keycloak login page (login.ftl) links to this controller's "request" form. The CRM
- * is the source of truth for sending the reset mail (DB-backed template + Microsoft Graph
- * mailer) and for updating the patient's password in Keycloak via the Admin API.
+ * The reset flow is owned by the patient portal; the CRM handles mail dispatch and
+ * the final password write to Keycloak. Web routes here are thin redirect shims so
+ * that old Keycloak login.ftl links still work without a Keycloak reconfiguration.
  *
  * Flow:
- *  1. Patient submits email on /patient/forgot-password
- *  2. We resolve the Person (silently no-op if not found, to avoid email enumeration)
- *  3. We send a temporarySignedRoute reset link via {@see CrmMailService::sendToPersonTemplate()}
- *  4. Patient clicks the link → /patient/reset-password (signed middleware verifies HMAC)
- *  5. Patient submits new password → we store it on the Person model; the PersonObserver
- *     propagates the change to Keycloak via {@see PersonKeycloakService::update()}.
+ *  1. GET  /patient/forgot-password        → redirect to portal /forgot-password
+ *  2. Portal form submits to CRM API       → POST /api/patient/forgot-password
+ *  3. CRM calls portal API for signed URL, sends mail via {@see SendForgotPasswordMailAction}
+ *  4. Patient clicks portal link           → portal verifies its own token, shows reset form
+ *  5. Portal submits to CRM API            → POST /api/patient/{id}/password/reset
+ *  6. CRM resets password on Person model; PersonObserver propagates to Keycloak.
+ *
+ * The web store() and reset() methods below remain registered (signed middleware still
+ * guards reset()) to handle any in-flight links from before the portal migration.
  */
 class PatientForgotPasswordController extends Controller
 {

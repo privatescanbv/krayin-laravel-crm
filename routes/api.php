@@ -87,6 +87,7 @@ $registerAuthenticatedApiRoutes = function () {
 
     // Patient unauthenticated-flow routes (API-key only; no patient token available yet)
     Route::post('patient/forgot-password', [PatientForgotPasswordController::class, 'store'])
+        ->middleware('throttle:patient-forgot-password')
         ->name('api.patient.forgot-password');
 
     // Patient routes (Keycloak Bearer token must match {id}; API key callers are service-to-service)

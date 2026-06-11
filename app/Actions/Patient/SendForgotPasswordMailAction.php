@@ -4,6 +4,7 @@ namespace App\Actions\Patient;
 
 use App\Enums\EmailTemplateCode;
 use App\Services\Mail\CrmMailService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
@@ -40,6 +41,11 @@ class SendForgotPasswordMailAction
         if ($resetUrl === null) {
             return;
         }
+
+        // Authorise exactly one password/reset call for this keycloak ID.
+        // PatientPasswordController::reset() consumes this token via Cache::pull,
+        // so it cannot be replayed even if the portal calls back multiple times.
+        Cache::put('patient_reset_pending:'.$person->keycloak_user_id, true, now()->addHours(2));
 
         $sent = $this->crmMailService->sendToPersonTemplate(
             person: $person,

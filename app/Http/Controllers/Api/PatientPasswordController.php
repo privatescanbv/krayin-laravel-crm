@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Webkul\User\Models\User;
@@ -97,6 +98,13 @@ class PatientPasswordController extends Controller
         // should use the regular update() endpoint which also verifies current_password.
         $authHeader = (string) $request->header('Authorization', '');
         if ($authHeader !== '' && str_starts_with($authHeader, 'Bearer ')) {
+            abort(403);
+        }
+
+        // Verify that a forgot-password flow was actually initiated for this keycloak ID.
+        // SendForgotPasswordMailAction stores this token after the portal confirms a reset
+        // URL was generated. Cache::pull atomically reads and deletes, making it one-time use.
+        if (! Cache::pull('patient_reset_pending:'.$keycloakUserId)) {
             abort(403);
         }
 

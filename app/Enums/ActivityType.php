@@ -43,6 +43,11 @@ enum ActivityType: string
         };
     }
 
+    public function hasDeadline(): bool
+    {
+        return ! in_array($this, [self::NOTE, self::FILE, self::SYSTEM, self::PATIENT_MESSAGE], true);
+    }
+
     /**
      * Check if this activity type is selectable by users
      */

@@ -264,7 +264,7 @@ class OrderMailService
         $html = '';
         foreach ($items->groupBy('person_id') as $personItems) {
             $person = $personItems->first()->person;
-            $html .= '<div style="margin-bottom:24px;">'
+            $html .= '<div style="margin-bottom:8px;">'
                 .$this->renderPersonHeader($person)
                 .$this->renderPersonItemsTable($personItems->values())
                 .'</div>';
@@ -487,7 +487,7 @@ class OrderMailService
             $label .= '. '.$person->date_of_birth->format('d-m-Y');
         }
 
-        return '<p>'.$label.'</p>';
+        return '<p style="margin:0 0 2px 0;">'.$label.'</p>';
     }
 
     private function renderPersonItemsTable(Collection $items): string
@@ -504,26 +504,26 @@ class OrderMailService
             }
 
             $rows .= '<tr>'
-                .'<td style="padding:8px; border-bottom:1px solid #e5e7eb;line-height: 1.1;">'.$productName.'</td>'
-                .'<td style="padding:8px; text-align:center; border-bottom:1px solid #e5e7eb;vertical-align: top;line-height: 1.1;">'.$quantity.'</td>'
-                .'<td style="padding:8px; text-align:right; border-bottom:1px solid #e5e7eb;vertical-align: top;line-height: 1.1;">'.$price.'</td>'
+                .'<td style="padding:3px 8px; border-bottom:1px solid #e5e7eb;line-height:1.2;">'.$productName.'</td>'
+                .'<td style="padding:3px 8px; text-align:center; border-bottom:1px solid #e5e7eb;vertical-align:top;line-height:1.2;">'.$quantity.'</td>'
+                .'<td style="padding:3px 8px; text-align:right; border-bottom:1px solid #e5e7eb;vertical-align:top;line-height:1.2;">'.$price.'</td>'
                 .'</tr>';
         }
 
         $totalPrice = $this->formatCurrency($items->sum('total_price'));
 
         $rows .= '<tr>'
-            .'<td colspan="2" style="padding:8px; text-align:right;">Totaal</td>'
-            .'<td style="padding:8px; text-align:right;">'.$totalPrice.'</td>'
+            .'<td colspan="2" style="padding:4px 8px; text-align:right;">Totaal</td>'
+            .'<td style="padding:4px 8px; text-align:right;">'.$totalPrice.'</td>'
             .'</tr>';
 
         return <<<HTML
 <table style="width:100%; border-collapse:collapse; margin:0;">
     <thead>
         <tr>
-            <th style="text-align:left; padding:8px; border-bottom:2px solid #e5e7eb;">Product</th>
-            <th style="text-align:center; padding:8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:40px;">Aantal</th>
-            <th style="text-align:right; padding:8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:140px;">Prijs</th>
+            <th style="text-align:left; padding:3px 8px; border-bottom:2px solid #e5e7eb;">Product</th>
+            <th style="text-align:center; padding:3px 8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:40px;">Aantal</th>
+            <th style="text-align:right; padding:3px 8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:140px;">Prijs</th>
         </tr>
     </thead>
     <tbody>

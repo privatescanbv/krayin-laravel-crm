@@ -19,6 +19,8 @@ class ActivityAction extends Model
 
     protected $table = 'activity_actions';
 
+    protected $touches = ['activity'];
+
     protected $fillable = [
         'activity_id',
         'type',

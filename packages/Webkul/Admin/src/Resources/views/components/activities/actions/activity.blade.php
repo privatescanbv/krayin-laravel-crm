@@ -230,7 +230,7 @@
                 },
 
                 supportsDefaultGroup() {
-                    return ['lead_id', 'order_id', 'workflow_lead_id'].includes(this.entityControlName);
+                    return ['lead_id', 'order_id', 'workflow_lead_id', 'sales_lead_id'].includes(this.entityControlName);
                 },
 
                 defaultGroupEntityType() {
@@ -238,6 +238,7 @@
                         lead_id: 'lead',
                         order_id: 'order',
                         workflow_lead_id: 'sales_lead',
+                        sales_lead_id: 'sales_lead',
                     };
 
                     return map[this.entityControlName] ?? null;

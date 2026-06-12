@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -38,6 +39,7 @@ beforeEach(function () {
 it('resets the password successfully when password_confirmation matches', function () {
     $keycloakUserId = (string) Str::uuid();
     Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+    Cache::put('patient_reset_pending:'.$keycloakUserId, true, now()->addHours(2));
 
     $response = $this
         ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
@@ -52,6 +54,7 @@ it('resets the password successfully when password_confirmation matches', functi
 it('returns 422 when password_confirmation is missing', function () {
     $keycloakUserId = (string) Str::uuid();
     Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+    Cache::put('patient_reset_pending:'.$keycloakUserId, true, now()->addHours(2));
 
     $response = $this
         ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
@@ -67,6 +70,7 @@ it('returns 422 when password_confirmation is missing', function () {
 it('returns 422 when password and password_confirmation do not match', function () {
     $keycloakUserId = (string) Str::uuid();
     Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+    Cache::put('patient_reset_pending:'.$keycloakUserId, true, now()->addHours(2));
 
     $response = $this
         ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
@@ -80,9 +84,12 @@ it('returns 422 when password and password_confirmation do not match', function 
 });
 
 it('returns 404 for an unknown keycloak user id', function () {
+    $unknownId = (string) Str::uuid();
+    Cache::put('patient_reset_pending:'.$unknownId, true, now()->addHours(2));
+
     $response = $this
         ->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
-        ->postJson('/api/patient/'.Str::uuid().'/password/reset', [
+        ->postJson('/api/patient/'.$unknownId.'/password/reset', [
             'password'              => 'NieuwWachtwoord1!',
             'password_confirmation' => 'NieuwWachtwoord1!',
         ]);

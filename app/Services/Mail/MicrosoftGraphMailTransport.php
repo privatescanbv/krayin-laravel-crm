@@ -3,6 +3,7 @@
 namespace App\Services\Mail;
 
 use App\Exceptions\Mail\EmailSendingBlockedException;
+use DOMDocument;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -158,7 +159,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 logger()->info('Mail payload ', ['payload'=>$payload]);
             }
 
-            // Add attachments if any
+            // Add file attachments if any
             $attachments = $email->getAttachments();
             if (! empty($attachments)) {
                 $payload['message']['attachments'] = [];
@@ -171,6 +172,12 @@ class MicrosoftGraphMailTransport implements TransportInterface
                     ];
                 }
             }
+
+            // Convert data-URI images in the HTML body to CID inline attachments.
+            // Gmail and most email clients strip data: URIs from <img src="..."> for
+            // security reasons, so inline images must be sent as attachments with
+            // isInline: true and referenced via cid: in the HTML.
+            $this->processInlineImages($payload);
 
             // Send via Graph API
             $accessToken = $this->tokenService->getAccessToken();
@@ -321,6 +328,81 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
             throw new EmailSendingBlockedException($message);
         }
+    }
+
+    /**
+     * Scan the HTML body for <img src="data:..."> tags and convert each one to a
+     * CID inline attachment, replacing the src with "cid:{id}".
+     *
+     * Email clients (Gmail, Outlook) strip data: URIs from img tags for security.
+     * The Graph API supports inline attachments via isInline + contentId.
+     */
+    private function processInlineImages(array &$payload): void
+    {
+        $html = $payload['message']['body']['content'] ?? '';
+
+        if (empty($html)) {
+            return;
+        }
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        libxml_use_internal_errors(true);
+        // Wrap in <div> so that multiple sibling root elements are preserved correctly.
+        // LIBXML_HTML_NOIMPLIED without a single root drops all but the first sibling.
+        $dom->loadHTML(
+            mb_convert_encoding('<div>'.$html.'</div>', 'HTML-ENTITIES', 'UTF-8'),
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+        libxml_clear_errors();
+
+        $counter = 0;
+        $inlineAttachments = [];
+
+        foreach ($dom->getElementsByTagName('img') as $img) {
+            $src = $img->getAttribute('src');
+
+            if (! str_starts_with($src, 'data:')) {
+                continue;
+            }
+
+            if (! preg_match('/^data:([^;]+);base64,(.+)$/s', $src, $m)) {
+                continue;
+            }
+
+            $counter++;
+            $cid = 'img-'.$counter;
+            $mime = $m[1];
+            $ext = explode('/', $mime)[1] ?? 'png';
+
+            $img->setAttribute('src', "cid:{$cid}");
+
+            $inlineAttachments[] = [
+                '@odata.type'  => '#microsoft.graph.fileAttachment',
+                'name'         => "image{$counter}.{$ext}",
+                'contentType'  => $mime,
+                'contentBytes' => $m[2], // already base64-encoded
+                'isInline'     => true,
+                'contentId'    => $cid,
+            ];
+        }
+
+        if (empty($inlineAttachments)) {
+            return;
+        }
+
+        // Extract innerHTML from the wrapper div (strips the <div> we added above).
+        $wrapper = $dom->firstChild;
+        $output = '';
+        foreach ($wrapper->childNodes as $node) {
+            $output .= $dom->saveHTML($node);
+        }
+        $payload['message']['body']['content'] = $output;
+
+        if (! isset($payload['message']['attachments'])) {
+            $payload['message']['attachments'] = [];
+        }
+
+        array_push($payload['message']['attachments'], ...$inlineAttachments);
     }
 
     /**

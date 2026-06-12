@@ -19,6 +19,7 @@ trait PDFHandler
             $fileName = Str::random(32);
         }
 
+        $html = $this->addPdfStyleOverrides($html);
         $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
 
         if (in_array($direction = app()->getLocale(), ['ar', 'he'])) {
@@ -49,6 +50,7 @@ trait PDFHandler
      */
     protected function pdfBinaryFromHtml(string $html): string
     {
+        $html = $this->addPdfStyleOverrides($html);
         $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
 
         if (in_array($direction = app()->getLocale(), ['ar', 'he'])) {
@@ -70,8 +72,15 @@ trait PDFHandler
 
         return PDF::loadHTML($this->adjustArabicAndPersianContent($html))
             ->setPaper('A4', 'portrait')
-            ->set_option('defaultFont', 'Courier')
+            ->set_option('defaultFont', 'Arial')
             ->output();
+    }
+
+    private function addPdfStyleOverrides(string $html): string
+    {
+        $style = '<style>.email-container { font-family: Arial, sans-serif !important; font-size: 10pt !important; }</style>';
+
+        return $style.$html;
     }
 
     /**

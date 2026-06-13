@@ -81,6 +81,7 @@
                         <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-activity-note-bg border-activity-note-border" v-show="canAddNew">
                             <div class="text-center">
                                 <div class="text-sm text-blue-700 mb-2">Geen resultaten voor "{{ search }}"</div>
+                                <button type="button" @click="emitCreateNew" class="mt-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">+ Nieuwe aanmaken</button>
                             </div>
                         </div>
                     </div>

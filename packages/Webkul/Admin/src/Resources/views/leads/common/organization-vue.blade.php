@@ -12,8 +12,9 @@
     <div class="flex flex-col gap-4">
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="grid grid-cols-1 gap-4">
-                <!-- Organization Selector (generic entity selector) -->
-                <div class="mb-4">
+
+                {{-- Organisation lookup: hidden while create form is open or a new org is confirmed --}}
+                <div v-if="!showOrgForm && !orgConfirmed" class="mb-4">
                     <v-entity-selector
                         name="organization_id"
                         label="Organisatie"
@@ -22,208 +23,139 @@
                         search-route="{{ route('admin.contacts.organizations.search') }}"
                         :items="selectedOrganization ? [selectedOrganization] : []"
                         :can-add-new="true"
-                        @create-new="showOrganizationForm = true"
-                        @select="selectOrganization"
+                        @create-new="onCreateNew"
+                        @select="onOrgSelected"
                         @remove="selectedOrganization = null"
                     />
                     <x-admin::form.control-group.error control-name="organization_id" />
                 </div>
 
-                <!-- Add New Organization Button -->
-                <div class="mb-4">
-                    <button
-                        type="button"
-                        id="add-organization-btn"
-                        class="flex items-center px-4 py-2 text-activity-note-text text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        @click="showOrganizationForm = !showOrganizationForm"
-                    >
-                        <i class="icon-plus text-xs mr-1"></i>Nieuwe organisatie toevoegen
-                    </button>
-                </div>
-
-                <!-- New Organization Form -->
-                <div v-if="showOrganizationForm" id="new-organization-form" class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
-                    <div class="grid grid-cols-1 gap-4">
-                        <!-- Organization Name -->
-                        <x-adminc::components.field
-                            type="text"
-                            name="new_organization_name"
-                            id="new_organization_name"
-                            rules="required"
-                            :label="trans('admin::app.contacts.organizations.create.name')"
-                            :placeholder="trans('admin::app.contacts.organizations.create.name')"
-                        />
-
-                        <!-- Address Component -->
-                        <div class="mt-2">
-                            <x-adminc::components.address id="new_org_address" name-prefix="new_organization_address" hide-title="true" />
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="flex justify-end gap-2">
-                            <button
-                                type="button"
-                                class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                @click="cancelOrganizationForm"
-                            >
-                                Annuleren
-                            </button>
-
-                            <button
-                                type="button"
-                                id="save-organization-btn"
-                                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                                @click="saveNewOrganization"
-                            >
-                                Organisatie opslaan
-                            </button>
-                        </div>
+                {{-- New org confirmed summary --}}
+                <div v-if="!showOrgForm && orgConfirmed"
+                     class="flex items-center justify-between p-3 border rounded bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700 mb-4">
+                    <span class="text-sm text-green-800 dark:text-green-300">
+                        Nieuwe organisatie <strong>@{{ newOrgName }}</strong> wordt aangemaakt bij opslaan.
+                    </span>
+                    <div class="flex gap-2 ml-3 shrink-0">
+                        <button type="button" @click="editOrgForm"
+                                class="text-xs text-blue-600 hover:underline dark:text-blue-400">Wijzigen</button>
+                        <button type="button" @click="cancelOrgForm"
+                                class="text-xs text-red-600 hover:underline dark:text-red-400">Annuleren</button>
                     </div>
                 </div>
+
+                {{-- Hidden inputs: new org fields submitted with main form --}}
+                <template v-if="orgConfirmed">
+                    <input type="hidden" name="new_organization_name" :value="newOrgName.trim()">
+                    <input type="hidden" name="new_organization_address[postal_code]" :value="newOrgPostal.trim()">
+                    <input type="hidden" name="new_organization_address[house_number]" :value="newOrgHouseNumber.trim()">
+                    <input type="hidden" name="new_organization_address[house_number_suffix]" :value="newOrgSuffix.trim()">
+                    <input type="hidden" name="new_organization_address[street]" :value="newOrgStreet.trim()">
+                    <input type="hidden" name="new_organization_address[city]" :value="newOrgCity.trim()">
+                    <input type="hidden" name="new_organization_address[country]" :value="newOrgCountry || 'Nederland'">
+                </template>
+
+                {{-- Inline new organisation form (shared partial) --}}
+                @include('adminc.organizations.inline-create-form')
+
             </div>
         </div>
-
-        <!-- Hidden field no longer needed; v-entity-selector handles hidden input for organization_id -->
     </div>
 </script>
 
 <script type="module">
-const ORGANIZATION_STORE_URL = '{{ route("admin.contacts.organizations.store") }}';
-
-// Register the organization component with the main app
 app.component('v-organization', {
     template: '#v-organization-template',
     data() {
         return {
             selectedOrganization: @json(($selectedOrganization ?? null) ? ['id' => ($selectedOrganization['id'] ?? $selectedOrganization->id ?? null), 'name' => ($selectedOrganization['name'] ?? $selectedOrganization->name ?? '')] : null),
-            showOrganizationForm: false
-        }
+            showOrgForm: false,
+            orgConfirmed: false,
+            newOrgName: '',
+            newOrgPostal: '',
+            newOrgHouseNumber: '',
+            newOrgSuffix: '',
+            newOrgStreet: '',
+            newOrgCity: '',
+            newOrgCountry: 'Nederland',
+            isLookingUpAddress: false,
+        };
     },
 
     methods: {
-        selectOrganization(org) {
+        onOrgSelected(org) {
             this.selectedOrganization = org;
-            console.log('Organization selected:', org);
+            this.cancelOrgForm();
         },
 
-        cancelOrganizationForm() {
-            this.showOrganizationForm = false;
-            this.clearOrganizationForm();
+        onCreateNew({ query }) {
+            this.selectedOrganization = null;
+            this.orgConfirmed = false;
+            this.newOrgName = query || '';
+            this.showOrgForm = true;
         },
 
-        clearOrganizationForm() {
-            const nameField = document.getElementById('new_organization_name');
-            const postcodeField = document.getElementById('new_org_address_postal_code');
-            const houseNumberField = document.getElementById('new_org_address_house_number');
-            const streetField = document.getElementById('new_org_address_street');
-            const suffixField = document.getElementById('new_org_address_house_number_suffix');
-            const cityField = document.getElementById('new_org_address_city');
-            const stateField = document.getElementById('new_org_address_state');
-            const countryField = document.getElementById('new_org_address_country');
-
-            if (nameField) nameField.value = '';
-            if (postcodeField) postcodeField.value = '';
-            if (houseNumberField) houseNumberField.value = '';
-            if (streetField) streetField.value = '';
-            if (suffixField) suffixField.value = '';
-            if (cityField) cityField.value = '';
-            if (stateField) stateField.value = '';
-            if (countryField) countryField.value = 'Nederland';
+        cancelOrgForm() {
+            this.showOrgForm = false;
+            this.orgConfirmed = false;
+            this.newOrgName = '';
+            this.newOrgPostal = '';
+            this.newOrgHouseNumber = '';
+            this.newOrgSuffix = '';
+            this.newOrgStreet = '';
+            this.newOrgCity = '';
+            this.newOrgCountry = 'Nederland';
         },
 
-        async saveNewOrganization() {
-            const nameField = document.getElementById('new_organization_name');
-            const postalCodeField = document.getElementById('new_org_address_postal_code');
-            const houseNumberField = document.getElementById('new_org_address_house_number');
-            const streetField = document.getElementById('new_org_address_street');
-            const cityField = document.getElementById('new_org_address_city');
-            const stateField = document.getElementById('new_org_address_state');
-            const countryField = document.getElementById('new_org_address_country');
+        editOrgForm() {
+            this.orgConfirmed = false;
+            this.showOrgForm = true;
+        },
 
-            if (!nameField || !nameField.value.trim()) {
+        confirmOrgForm() {
+            if (!this.newOrgName.trim()) {
                 alert('Vul een organisatienaam in.');
                 return;
             }
-
-            if (!postalCodeField || !postalCodeField.value.trim()) {
+            if (!this.newOrgPostal.trim()) {
                 alert('Vul een postcode in.');
                 return;
             }
-
-            if (!houseNumberField || !houseNumberField.value.trim()) {
+            if (!this.newOrgHouseNumber.trim()) {
                 alert('Vul een huisnummer in.');
                 return;
             }
+            this.orgConfirmed = true;
+            this.showOrgForm = false;
+        },
 
-            const saveBtn = document.getElementById('save-organization-btn');
-            const originalText = saveBtn.innerHTML;
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = 'Opslaan...';
-
-            try {
-                const formData = new FormData();
-                formData.append('name', nameField.value.trim());
-                formData.append('address[postal_code]', postalCodeField.value.trim());
-                formData.append('address[house_number]', houseNumberField.value.trim());
-                formData.append('address[street]', streetField ? streetField.value.trim() : '');
-                formData.append('address[house_number_suffix]', document.getElementById('new_org_address_house_number_suffix') ? document.getElementById('new_org_address_house_number_suffix').value.trim() : '');
-                formData.append('address[city]', cityField ? cityField.value.trim() : '');
-                formData.append('address[state]', stateField ? stateField.value.trim() : '');
-                formData.append('address[country]', countryField ? countryField.value.trim() : 'Nederland');
-
-                // Get CSRF token safely
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-                                 document.querySelector('input[name="_token"]')?.value ||
-                                 '';
-
-                if (csrfToken) {
-                    formData.append('_token', csrfToken);
-                }
-
-                const response = await fetch(ORGANIZATION_STORE_URL, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.data) {
-                    // Select the new organization
-                    this.selectedOrganization = {
-                        id: result.data.id,
-                        name: result.data.name
-                    };
-
-                    // Show success message
-                    if (window.$emitter) {
-                        window.$emitter.emit('add-flash', {
-                            type: 'success',
-                            message: 'Organisatie succesvol aangemaakt en geselecteerd!'
-                        });
-                    }
-
-                    // Hide the form and clear it
-                    this.showOrganizationForm = false;
-                    this.clearOrganizationForm();
-                } else {
-                    throw new Error(result.message || 'Er is een fout opgetreden bij het aanmaken van de organisatie.');
-                }
-            } catch (error) {
-                alert('Fout bij opslaan: ' + error.message);
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalText;
+        async lookupAddress() {
+            if (!this.newOrgPostal.trim() || !this.newOrgHouseNumber.trim()) {
+                alert('Vul eerst postcode en huisnummer in.');
+                return;
             }
-        }
+            this.isLookingUpAddress = true;
+            try {
+                const url = '/admin/address/lookup?postcode=' + encodeURIComponent(this.newOrgPostal.trim())
+                    + '&huisnummer=' + encodeURIComponent(this.newOrgHouseNumber.trim());
+                const response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.newOrgStreet  = data.street  || '';
+                    this.newOrgCity    = data.city    || '';
+                    this.newOrgCountry = data.country || 'Nederland';
+                } else {
+                    alert(data.message || 'Adres niet gevonden.');
+                }
+            } catch (e) {
+                alert('Fout bij opzoeken adres: ' + e.message);
+            } finally {
+                this.isLookingUpAddress = false;
+            }
+        },
     },
-
-    mounted() {
-        // mounted
-    }
 });
 </script>
 @endPushOnce

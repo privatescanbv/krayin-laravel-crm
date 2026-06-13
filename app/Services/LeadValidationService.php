@@ -61,6 +61,16 @@ class LeadValidationService
 
                 // Lead organization (standalone for billing)
                 'organization_id' => 'nullable|numeric|exists:organizations,id',
+
+                // Inline organisation create (UI-only; persisted via createInlineOrganization)
+                'new_organization_name' => 'nullable|string|max:255',
+                'new_organization_address' => 'nullable|array',
+                'new_organization_address.postal_code' => 'nullable|string|max:20',
+                'new_organization_address.house_number' => 'nullable|string|max:20',
+                'new_organization_address.house_number_suffix' => 'nullable|string|max:20',
+                'new_organization_address.street' => 'nullable|string|max:255',
+                'new_organization_address.city' => 'nullable|string|max:255',
+                'new_organization_address.country' => 'nullable|string|max:100',
             ]
         );
         if ($create) {

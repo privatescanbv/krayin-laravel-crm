@@ -40,9 +40,11 @@ use App\Services\OrderStatusTransitionValidator;
 use App\Services\PipelineCookieService;
 use App\Services\StageTransitionAttributes;
 use App\Services\Storage\DocumentStorage;
+use App\Traits\CreatesInlineOrganization;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -79,6 +81,7 @@ use Webkul\Product\Models\Product;
 class OrderController extends SimpleEntityController
 {
     use ConcatsEmailActivities, HasAdvancedSearch, PDFHandler;
+    use CreatesInlineOrganization;
 
     public function __construct(
         protected OrderRepository $orderRepository,
@@ -332,6 +335,11 @@ class OrderController extends SimpleEntityController
     {
         $this->validateStore($request);
 
+        $inlineOrgError = $this->mergeInlineOrganizationFromRequest($request);
+        if ($inlineOrgError !== null) {
+            return $inlineOrgError;
+        }
+
         Event::dispatch("{$this->entityName}.create.before");
 
         $payload = $this->transformPayload($request->all());
@@ -503,6 +511,11 @@ class OrderController extends SimpleEntityController
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
         $this->validateUpdate($request, $id);
+
+        $inlineOrgError = $this->mergeInlineOrganizationFromRequest($request);
+        if ($inlineOrgError !== null) {
+            return $inlineOrgError;
+        }
 
         logger()->info('OrderController@update request', [
             'order_id' => $id,
@@ -2027,7 +2040,18 @@ class OrderController extends SimpleEntityController
             'combine_order'                   => ['nullable', 'boolean'],
             'invoice_number'                  => ['nullable', 'string', 'max:255'],
             'is_business'                     => ['nullable', 'boolean'],
-            'organization_id'                 => [Rule::requiredIf(fn () => $request->boolean('is_business')), 'nullable', 'integer', 'exists:organizations,id'],
+            'organization_id'                 => [
+                Rule::requiredIf(fn () => $request->boolean('is_business') && ! $request->filled('new_org.name')),
+                'nullable', 'integer', 'exists:organizations,id',
+            ],
+            'new_org'                         => ['nullable', 'array'],
+            'new_org.name'                    => ['nullable', 'string', 'max:255'],
+            'new_org.postal_code'             => ['nullable', 'string', 'max:20'],
+            'new_org.house_number'            => ['nullable', 'string', 'max:20'],
+            'new_org.house_number_suffix'     => ['nullable', 'string', 'max:20'],
+            'new_org.street'                  => ['nullable', 'string', 'max:255'],
+            'new_org.city'                    => ['nullable', 'string', 'max:255'],
+            'new_org.country'                 => ['nullable', 'string', 'max:100'],
             'first_examination_date'          => ['nullable', 'date'],
             'first_examination_time'          => ['nullable', 'string', 'max:5'],
             'first_examination_date_override' => ['nullable', 'boolean'],
@@ -2165,6 +2189,36 @@ class OrderController extends SimpleEntityController
         ];
     }
 
+    private function mergeInlineOrganizationFromRequest(Request $request): RedirectResponse|JsonResponse|null
+    {
+        if (! $request->boolean('is_business') || ! $request->filled('new_org.name')) {
+            return null;
+        }
+
+        try {
+            $newOrg = $request->input('new_org', []);
+            $org = $this->createInlineOrganization($newOrg['name'], $newOrg);
+            $request->merge(['organization_id' => $org->id]);
+        } catch (InvalidArgumentException $e) {
+            return $this->respondInlineOrganizationValidationError($request, $e);
+        }
+
+        return null;
+    }
+
+    private function respondInlineOrganizationValidationError(Request $request, InvalidArgumentException $exception): RedirectResponse|JsonResponse
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            throw ValidationException::withMessages([
+                'new_org' => $exception->getMessage(),
+            ]);
+        }
+
+        return redirect()->back()->withInput()->withErrors([
+            'new_org' => $exception->getMessage(),
+        ]);
+    }
+
     private function syncToMailDisk(string $path): void
     {
         if (Storage::exists($path)) {
@@ -2182,7 +2236,8 @@ class OrderController extends SimpleEntityController
 
     private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
     {
-        $html = mb_convert_encoding($confirmation->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
+        $html = $this->addPdfStyleOverrides($confirmation->confirmation_letter_content);
+        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
         $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
             ->setPaper('A4')
             ->output();

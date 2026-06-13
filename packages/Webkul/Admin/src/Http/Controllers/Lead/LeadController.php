@@ -9,6 +9,7 @@ use App\Enums\PipelineType;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Services\StageTransitionAttributes;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
+use App\Traits\CreatesInlineOrganization;
 use BackedEnum;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use App\Models\Anamnesis;
@@ -60,6 +61,7 @@ use App\Services\UserDefaultValueService;
 class LeadController extends Controller
 {
     use NormalizesContactFields, HasAdvancedSearch, HandlesReturnUrl;
+    use CreatesInlineOrganization;
 
     /**
      * Const variable for supported types.
@@ -459,6 +461,15 @@ class LeadController extends Controller
             $this->validateLeadRequest($request, true);
 
             return DB::transaction(function () use ($request) {
+                // Create organisation inline when the create-form was used instead of the lookup
+                if ($request->filled('new_organization_name')) {
+                    $org = $this->createInlineOrganization(
+                        $request->input('new_organization_name'),
+                        (array) $request->input('new_organization_address', [])
+                    );
+                    $request->merge(['organization_id' => $org->id]);
+                }
+
                 /**
                  * Create flow helper: optionally create a new person from the entered lead data
                  * and link it to the lead on first save.
@@ -746,58 +757,69 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
-        $this->normalizeContactFields($request);
-
         try {
+            $this->normalizeContactFields($request);
             $this->validateLeadRequest($request, false);
-            Event::dispatch('lead.update.before', $id);
 
-            $data = $this->prepareLeadDataForUpsert($request, false);
-
-            // Requirement: on update, department determines the correct pipeline (and a compatible stage).
-            if (array_key_exists('department_id', $data) && $data['department_id'] !== null && $data['department_id'] !== '') {
-                $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: true);
-            } elseif (array_key_exists('lead_pipeline_stage_id', $data)) {
-                // Backwards compatible: when stage is provided, infer pipeline from that stage.
-                $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: false);
-            }
-
-            $lead = $this->leadRepository->update($data, $id);
-            /** @var \Webkul\Lead\Models\Lead $lead */
-
-            // Validate and persist address if provided on lead update
-            try {
-                if (isset($data['address']) && is_array($data['address'])) {
-                    $this->addressRepository->upsertForEntity($lead, $data['address']);
+            return DB::transaction(function () use ($request, $id) {
+                // Create organisation inline when the create-form was used instead of the lookup
+                if ($request->filled('new_organization_name')) {
+                    $org = $this->createInlineOrganization(
+                        $request->input('new_organization_name'),
+                        (array) $request->input('new_organization_address', [])
+                    );
+                    $request->merge(['organization_id' => $org->id]);
                 }
-            } catch (Exception $e) {
-                throw new InvalidArgumentException($e->getMessage());
-            }
 
-            Event::dispatch('lead.update.after', $lead);
+                Event::dispatch('lead.update.before', $id);
 
-            // Check if we should redirect to sync page
-            $shouldSync = $this->shouldRedirectToSync($lead);
-            if ($shouldSync) {
-                $person = $lead->persons()->first();
+                $data = $this->prepareLeadDataForUpsert($request, false);
+
+                // Requirement: on update, department determines the correct pipeline (and a compatible stage).
+                if (array_key_exists('department_id', $data) && $data['department_id'] !== null && $data['department_id'] !== '') {
+                    $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: true);
+                } elseif (array_key_exists('lead_pipeline_stage_id', $data)) {
+                    // Backwards compatible: when stage is provided, infer pipeline from that stage.
+                    $this->applyPipelineAndStageSelection($data, departmentDeterminesPipeline: false);
+                }
+
+                $lead = $this->leadRepository->update($data, $id);
+                /** @var \Webkul\Lead\Models\Lead $lead */
+
+                // Validate and persist address if provided on lead update
+                try {
+                    if (isset($data['address']) && is_array($data['address'])) {
+                        $this->addressRepository->upsertForEntity($lead, $data['address']);
+                    }
+                } catch (Exception $e) {
+                    throw new InvalidArgumentException($e->getMessage());
+                }
+
+                Event::dispatch('lead.update.after', $lead);
+
+                // Check if we should redirect to sync page
+                $shouldSync = $this->shouldRedirectToSync($lead);
+                if ($shouldSync) {
+                    $person = $lead->persons()->first();
+
+                    return $this->respondSuccess(
+                        message: trans('admin::app.leads.update-success'),
+                        redirectRoute: 'admin.leads.sync-lead-to-person',
+                        redirectParams: ['leadId' => $lead->id, 'personId' => $person->id],
+                    );
+                }
+
+                // If user clicked "Toepassen": stay on edit page; otherwise go to lead view page.
+                $redirectRoute = request()->input('submit_action') === 'apply'
+                    ? 'admin.leads.edit'
+                    : 'admin.leads.view';
 
                 return $this->respondSuccess(
                     message: trans('admin::app.leads.update-success'),
-                    redirectRoute: 'admin.leads.sync-lead-to-person',
-                    redirectParams: ['leadId' => $lead->id, 'personId' => $person->id],
+                    redirectRoute: $redirectRoute,
+                    redirectParams: [$lead->id],
                 );
-            }
-
-            // If user clicked "Toepassen": stay on edit page; otherwise go to lead view page.
-            $redirectRoute = request()->input('submit_action') === 'apply'
-                ? 'admin.leads.edit'
-                : 'admin.leads.view';
-
-            return $this->respondSuccess(
-                message: trans('admin::app.leads.update-success'),
-                redirectRoute: $redirectRoute,
-                redirectParams: [$lead->id],
-            );
+            });
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(
@@ -1622,6 +1644,9 @@ class LeadController extends Controller
         // UI-only create flag; never persist on lead.
         unset($data['create_person_from_lead']);
 
+        // UI-only inline organisation fields; organization_id is set before upsert.
+        unset($data['new_organization_name'], $data['new_organization_address']);
+
         // Handle contact_person_id - if empty but display has value, use display value
         if (isset($data['contact_person_id_display']) && $data['contact_person_id_display'] !== '') {
             $data['contact_person_id'] = $data['contact_person_id_display'];
@@ -1833,4 +1858,5 @@ class LeadController extends Controller
             'searchJoin'   => $searchJoin,
         ]));
     }
+
 }

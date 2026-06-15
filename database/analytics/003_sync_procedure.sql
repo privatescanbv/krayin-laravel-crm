@@ -8,7 +8,7 @@ DROP PROCEDURE IF EXISTS analytics.sync_all;
 
 DELIMITER $$
 
-CREATE PROCEDURE analytics.sync_all()
+CREATE DEFINER='privatescan-analytics'@'%' PROCEDURE analytics.sync_all()
 BEGIN
     DECLARE v_watermark TIMESTAMP;
     DECLARE v_nu        TIMESTAMP DEFAULT NOW();

@@ -14,11 +14,11 @@
 --      GRANT EVENT ON analytics.* TO 'jouw_user'@'%';
 -- =========================================================
 
-SET GLOBAL event_scheduler = ON;
+-- event_scheduler=ON staat in docker-compose (mysqld --event-scheduler=ON)
 
 DROP EVENT IF EXISTS analytics.evt_sync_analytics;
 
-CREATE EVENT analytics.evt_sync_analytics
+CREATE DEFINER='privatescan-analytics'@'%' EVENT analytics.evt_sync_analytics
     ON SCHEDULE EVERY 1 HOUR
     STARTS CURRENT_TIMESTAMP
     COMMENT 'Synchroniseert CRM-data (privatescan) naar analytics schema'

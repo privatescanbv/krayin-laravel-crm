@@ -68,6 +68,21 @@ return [
             ]) : [],
         ],
 
+        'analytics' => [
+            'driver'         => 'mysql',
+            'host'           => env('DB_HOST', '127.0.0.1'),
+            'port'           => env('DB_PORT', '3306'),
+            'database'       => 'analytics',
+            'username'       => env('DB_ANALYTICS_USERNAME', env('DB_USERNAME')),
+            'password'       => env('DB_ANALYTICS_PASSWORD', env('DB_PASSWORD')),
+            'charset'        => 'utf8mb4',
+            'collation'      => 'utf8mb4_unicode_ci',
+            'prefix'         => '',
+            'prefix_indexes' => true,
+            'strict'         => false,
+            'engine'         => null,
+        ],
+
         'pgsql' => [
             'driver'         => 'pgsql',
             'url'            => env('DATABASE_URL'),

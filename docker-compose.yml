@@ -107,6 +107,7 @@ services:
   mysql_crm:
     image: 'mysql/mysql-server:8.0'
     container_name: mysql_crm
+    command: mysqld --event-scheduler=ON
     ports:
       - '3306:3306'
     environment:

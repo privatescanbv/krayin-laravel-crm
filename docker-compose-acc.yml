@@ -296,9 +296,10 @@ services:
     image: metabase/metabase:latest
     container_name: metabase
     restart: unless-stopped
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       JAVA_TIMEZONE: Europe/Amsterdam
-
       # Metabase metadata DB
       MB_DB_TYPE: ${DB_CONNECTION}
       MB_DB_DBNAME: metabase
@@ -306,17 +307,20 @@ services:
       MB_DB_USER: metabase
       MB_DB_PASS: ${METABASE_DB_PASSWORD}
       MB_DB_HOST: ${DB_HOST}
-
     labels:
       - traefik.enable=true
-      - traefik.http.routers.metabase.rule=Host("reports.${PRIVATESCAN_BASE_DOMAIN}")
-      - traefik.http.routers.metabase.entrypoints=https
-      - traefik.http.routers.metabase.tls=true
-      - traefik.http.services.metabase.loadbalancer.server.port=3000
+      - traefik.http.routers.reports.rule=Host("reports.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.reports.entrypoints=https
+      - traefik.http.routers.reports.tls=true
+      - traefik.http.routers.reports.tls.certresolver=myresolver
+      - traefik.http.routers.reports.service=reports-svc
+      - traefik.http.routers.reports.middlewares=reports-forward-headers@docker
+      - traefik.http.services.reports-svc.loadbalancer.server.port=3000
+      - traefik.http.middlewares.reports-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.reports-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.reports-forward-headers.headers.customrequestheaders.X-Forwarded-Host=reports.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
-    depends_on:
-      - mysql_crm
     networks:
       - public
       - backend

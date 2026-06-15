@@ -9,10 +9,6 @@ use Throwable;
 
 class AnalyticsSetupCommand extends Command
 {
-    protected $signature = 'analytics:setup {--force : Herlaad procedure en views ook als schema al bestaat}';
-
-    protected $description = 'Initialiseert het analytics-schema (idempotent). Slaat initiële sync over als schema al bestaat, tenzij --force.';
-
     /** Scripts die altijd opnieuw worden uitgevoerd (procedure + views zijn idempotent via DROP/CREATE OR REPLACE). */
     private const ALWAYS_RUN = [
         '003_sync_procedure.sql',
@@ -26,6 +22,10 @@ class AnalyticsSetupCommand extends Command
         '002_dim_date.sql',
         '006_initieel.sql',
     ];
+
+    protected $signature = 'analytics:setup {--force : Herlaad procedure en views ook als schema al bestaat}';
+
+    protected $description = 'Initialiseert het analytics-schema (idempotent). Slaat initiële sync over als schema al bestaat, tenzij --force.';
 
     public function handle(): int
     {
@@ -46,6 +46,7 @@ class AnalyticsSetupCommand extends Command
 
             if (! file_exists($path)) {
                 $this->warn("Bestand niet gevonden, overgeslagen: {$filename}");
+
                 continue;
             }
 
@@ -68,12 +69,10 @@ class AnalyticsSetupCommand extends Command
     private function analyticsSchemaExists(): bool
     {
         try {
-            $result = DB::connection('analytics')->select(
-                "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'analytics'"
-            );
+            DB::connection('analytics')->select('SELECT 1 FROM analytics.sync_watermark LIMIT 1');
 
-            return ! empty($result);
-        } catch (\Throwable) {
+            return true;
+        } catch (Throwable) {
             return false;
         }
     }
@@ -81,6 +80,10 @@ class AnalyticsSetupCommand extends Command
     private function runSqlFile(string $path): void
     {
         $sql = file_get_contents($path);
+
+        // Vervang de hardcoded bronschema-naam door de geconfigureerde DB_DATABASE
+        $crmDatabase = config('database.connections.mysql.database');
+        $sql = str_replace('privatescan.', $crmDatabase.'.', $sql);
 
         // DELIMITER $$ blokken (stored procedures) worden als één geheel
         // doorgegeven via een multi-statement PDO-aanroep.
@@ -123,6 +126,7 @@ class AnalyticsSetupCommand extends Command
             // Detecteer DELIMITER-omschakeling
             if (preg_match('/^DELIMITER\s+(\S+)/i', $trimmed, $m)) {
                 $delimiter = $m[1];
+
                 continue;
             }
 

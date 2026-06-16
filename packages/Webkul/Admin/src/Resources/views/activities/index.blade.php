@@ -164,7 +164,7 @@
 
                                         <!-- Created At Column -->
                                         <template v-else-if="column.index === 'created_at'">
-                                            <p class="text-gray-600 dark:text-gray-300 text-sm">@{{ record.created_at }}</p>
+                                            <div v-html="record.created_at" class="text-sm"></div>
                                         </template>
 
                                         <!-- Days Until Deadline Column -->

@@ -154,7 +154,9 @@ class OrderObserver
                 $newRaw !== null ? Carbon::parse($newRaw)->format('d-m-Y') : null,
             ],
             'lost_reason' => [
-                $oldRaw !== null ? (LostReason::tryFrom((string) $oldRaw)?->label() ?? (string) $oldRaw) : null,
+                $oldRaw instanceof LostReason
+                    ? $oldRaw->label()
+                    : ($oldRaw !== null ? (LostReason::tryFrom((string) $oldRaw)?->label() ?? (string) $oldRaw) : null),
                 $newRaw instanceof LostReason
                     ? $newRaw->label()
                     : ($newRaw !== null ? (LostReason::tryFrom((string) $newRaw)?->label() ?? (string) $newRaw) : null),

@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Order;
 use App\Services\Storage\DocumentStorage;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Throwable;
@@ -69,10 +68,7 @@ class RepairMissingConfirmationPdfs extends Command
                 return $this->row($file, $orderId, 'dry-run');
             }
 
-            $html = mb_convert_encoding($order->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
-            $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
-                ->setPaper('A4')
-                ->output();
+            $pdfContent = $this->pdfBinaryFromHtml($order->confirmation_letter_content);
 
             $documentStorage->put($file->path, $pdfContent);
 

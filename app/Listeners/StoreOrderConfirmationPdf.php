@@ -8,7 +8,6 @@ use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
 use App\Models\Order;
 use App\Services\Storage\DocumentStorage;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Activity\Models\Activity;
@@ -54,10 +53,7 @@ class StoreOrderConfirmationPdf
 
     private function storeConfirmationPdfActivity(Order $order, ?int $userId): Activity
     {
-        $html = mb_convert_encoding($order->confirmation_letter_content, 'HTML-ENTITIES', 'UTF-8');
-        $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
-            ->setPaper('A4')
-            ->output();
+        $pdfContent = $this->pdfBinaryFromHtml($order->confirmation_letter_content);
 
         $activity = $this->activityRepository->create([
             'type'              => ActivityType::FILE,

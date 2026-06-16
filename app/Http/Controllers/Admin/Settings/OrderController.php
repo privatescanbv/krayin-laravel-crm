@@ -44,7 +44,6 @@ use App\Traits\CreatesInlineOrganization;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
-use InvalidArgumentException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -61,6 +60,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use Prettus\Repository\Criteria\RequestCriteria;
 use RuntimeException;
 use Throwable;
@@ -2236,11 +2236,9 @@ class OrderController extends SimpleEntityController
 
     private function storePersonConfirmationPdf(Order $order, Person $person, OrderPersonConfirmation $confirmation, ?int $userId): void
     {
-        $html = $this->addPdfStyleOverrides($confirmation->confirmation_letter_content);
-        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
-        $pdfContent = Pdf::loadHTML($this->adjustArabicAndPersianContent($html))
-            ->setPaper('A4')
-            ->output();
+        // Use the same HTML → PDF pipeline as the preview endpoints (PDFHandler::pdfBinaryFromHtml)
+        // so that font, sizing and layout are identical between preview and stored attachments.
+        $pdfContent = $this->pdfBinaryFromHtml($confirmation->confirmation_letter_content);
 
         $activityRepository = app(ActivityRepository::class);
         $documentStorage = app(DocumentStorage::class);

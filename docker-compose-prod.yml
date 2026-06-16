@@ -68,7 +68,7 @@ services:
       - traefik.docker.network=public
       - logging=promtail
     volumes:
-#      - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
+ #     - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
       - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app'
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost/up" ]
@@ -293,7 +293,7 @@ services:
       - loki
 
   metabase:
-    image: metabase/metabase:latest
+    image: metabase/metabase:v0.62.x
     container_name: metabase
     restart: unless-stopped
     extra_hosts:
@@ -326,7 +326,7 @@ services:
       - backend
 
   keycloak:
-    image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:latest
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:prod
     container_name: keycloak
     restart: unless-stopped
     env_file:
@@ -363,11 +363,11 @@ services:
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
-#    healthcheck:
-#      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 5
+  #    healthcheck:
+  #      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+  #      interval: 30s
+  #      timeout: 10s
+  #      retries: 5
 
   keycloak-db:
     image: postgres:15-alpine

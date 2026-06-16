@@ -81,9 +81,11 @@ class AnalyticsSetupCommand extends Command
     {
         $sql = file_get_contents($path);
 
-        // Vervang de hardcoded bronschema-naam door de geconfigureerde DB_DATABASE
+        // Vervang de hardcoded bronschema-naam door de geconfigureerde DB_DATABASE.
+        // Backtick-quote de naam zodat hyphens (bijv. privatescan-crm) geldig zijn in MySQL.
         $crmDatabase = config('database.connections.mysql.database');
-        $sql = str_replace('privatescan.', $crmDatabase.'.', $sql);
+        $quotedDatabase = '`'.str_replace('`', '``', $crmDatabase).'`';
+        $sql = str_replace('privatescan.', $quotedDatabase.'.', $sql);
 
         // DELIMITER $$ blokken (stored procedures) worden als één geheel
         // doorgegeven via een multi-statement PDO-aanroep.

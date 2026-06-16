@@ -48,8 +48,8 @@ services:
       - traefik.http.routers.crm.tls=true
       - traefik.http.routers.crm.tls.certresolver=myresolver
       - traefik.http.routers.crm.service=crm-svc
-      # IP whitelist middleware
-      - traefik.http.middlewares.crm-whitelist.ipwhitelist.sourcerange=213.10.238.248/32,161.35.19.28/32,62.165.71.152/32,92.64.110.49/32,161.35.19.28/32,84.241.218.147/32,85.144.50.212/32
+      # IP whitelist middleware — beheer de lijst via ADMIN_WHITELIST in .env
+      - traefik.http.middlewares.crm-whitelist.ipwhitelist.sourcerange=${ADMIN_WHITELIST}
       - traefik.http.routers.crm.middlewares=crm-whitelist@docker
       # === APIDOCS ROUTER (afgeschermd) ===
       - traefik.http.routers.crm-apidocs.rule=PathPrefix("/admin/apidocs")
@@ -291,6 +291,39 @@ services:
       - logging=promtail
     depends_on:
       - loki
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    restart: unless-stopped
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      JAVA_TIMEZONE: Europe/Amsterdam
+      # Metabase metadata DB
+      MB_DB_TYPE: ${DB_CONNECTION}
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: ${DB_PORT}
+      MB_DB_USER: metabase
+      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+      MB_DB_HOST: ${DB_HOST}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.reports.rule=Host("reports.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.reports.entrypoints=https
+      - traefik.http.routers.reports.tls=true
+      - traefik.http.routers.reports.tls.certresolver=myresolver
+      - traefik.http.routers.reports.service=reports-svc
+      - traefik.http.routers.reports.middlewares=crm-whitelist@docker,reports-forward-headers@docker
+      - traefik.http.services.reports-svc.loadbalancer.server.port=3000
+      - traefik.http.middlewares.reports-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.reports-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.reports-forward-headers.headers.customrequestheaders.X-Forwarded-Host=reports.${PRIVATESCAN_BASE_DOMAIN}
+      - traefik.docker.network=public
+      - logging=promtail
+    networks:
+      - public
+      - backend
 
   keycloak:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/keycloak:latest

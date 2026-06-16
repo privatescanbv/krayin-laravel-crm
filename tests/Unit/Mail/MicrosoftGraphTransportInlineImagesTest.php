@@ -193,3 +193,21 @@ test('mixed html: skips external urls and only converts data-uri images', functi
 
     // Only one inline attachment (the data-uri image)
 });
+
+test('preserves html body when content includes a full html document with doctype', function () {
+    $b64 = base64_encode('inline-image');
+    $payload = htmlPayload(
+        '<!DOCTYPE html><html><head><meta charset="utf-8"></head>'.
+        '<body><p>Reply text</p><img src="data:image/png;base64,'.$b64.'"></body></html>'
+    );
+
+    invokeProcessInlineImages(inlineImagesTransport(), $payload);
+
+    $html = $payload['message']['body']['content'];
+
+    expect($html)->not->toBe('')
+        ->toContain('Reply text')
+        ->toContain('cid:img-1')
+        ->not->toContain('data:image/png')
+        ->and($payload['message']['attachments'])->toHaveCount(1);
+});

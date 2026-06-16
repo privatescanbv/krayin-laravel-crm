@@ -30,6 +30,8 @@ use Symfony\Component\Mime\RawMessage;
  */
 class MicrosoftGraphMailTransport implements TransportInterface
 {
+    private const MAIL_BODY_WRAPPER_ID = 'graph-mail-body-wrapper';
+
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';
 
     protected string $mailbox;
@@ -347,10 +349,17 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
         $dom = new DOMDocument('1.0', 'UTF-8');
         libxml_use_internal_errors(true);
-        // Wrap in <div> so that multiple sibling root elements are preserved correctly.
-        // LIBXML_HTML_NOIMPLIED without a single root drops all but the first sibling.
+        // Wrap in a named <div> so that multiple sibling root elements are preserved
+        // correctly. LIBXML_HTML_NOIMPLIED without a single root drops all but the
+        // first sibling. Use an id to locate the wrapper after parsing: when the HTML
+        // contains a DOCTYPE/full document, libxml hoists <html> to firstChild and
+        // firstChild-based extraction would return an empty body.
         $dom->loadHTML(
-            mb_convert_encoding('<div>'.$html.'</div>', 'HTML-ENTITIES', 'UTF-8'),
+            mb_convert_encoding(
+                '<div id="'.self::MAIL_BODY_WRAPPER_ID.'">'.$html.'</div>',
+                'HTML-ENTITIES',
+                'UTF-8'
+            ),
             LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
         );
         libxml_clear_errors();
@@ -391,12 +400,18 @@ class MicrosoftGraphMailTransport implements TransportInterface
         }
 
         // Extract innerHTML from the wrapper div (strips the <div> we added above).
-        $wrapper = $dom->firstChild;
+        $wrapper = $dom->getElementById(self::MAIL_BODY_WRAPPER_ID) ?? $dom->firstChild;
         $output = '';
-        foreach ($wrapper->childNodes as $node) {
-            $output .= $dom->saveHTML($node);
+
+        if ($wrapper !== null) {
+            foreach ($wrapper->childNodes as $node) {
+                $output .= $dom->saveHTML($node);
+            }
         }
-        $payload['message']['body']['content'] = $output;
+
+        if ($output !== '') {
+            $payload['message']['body']['content'] = $output;
+        }
 
         if (! isset($payload['message']['attachments'])) {
             $payload['message']['attachments'] = [];

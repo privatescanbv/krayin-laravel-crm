@@ -367,6 +367,26 @@ class ActivityDataGrid extends DataGrid
             },
         ]);
 
+        $this->addColumn([
+            'index'      => 'created_at',
+            'label'      => 'Aangemaakt',
+            'type'       => 'datetime',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => false,
+            'closure'    => function ($row) {
+                if (empty($row->created_at)) {
+                    return '';
+                }
+                $timestamp = strtotime($row->created_at);
+                if ($timestamp === false) {
+                    return '';
+                }
+
+                return "<span class='text-xs text-gray-400 dark:text-gray-500'>".date('d-m-Y', $timestamp).'</span>';
+            },
+        ]);
+
         // Hidden technical column remains for filtering
         $this->addColumn([
             'index'      => 'is_done',

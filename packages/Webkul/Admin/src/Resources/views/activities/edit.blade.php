@@ -254,6 +254,10 @@
                 <!-- Footer timestamps -->
                 <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                     <div class="flex justify-between">
+                        <span>Aangemaakt op:</span>
+                        <span>{{ $activity->created_at->format('d-m-Y') }}</span>
+                    </div>
+                    <div class="flex justify-between">
                         <span>Bijgewerkt op:</span>
                         <span>{{ $activity->updated_at->format('d-m-Y') }}</span>
                     </div>

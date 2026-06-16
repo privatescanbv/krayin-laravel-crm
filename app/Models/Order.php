@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Organization;
@@ -496,8 +497,9 @@ class Order extends Model
      */
     public function recalculateTotalPrice(): void
     {
-        $this->total_price = $this->orderItems()->notLost()->sum('total_price');
-        $this->saveQuietly();
+        $newTotal = $this->orderItems()->notLost()->sum('total_price');
+        $this->total_price = $newTotal;
+        DB::table('orders')->where('id', $this->id)->update(['total_price' => $newTotal]);
     }
 
     /**

@@ -79,6 +79,7 @@ class OrderObserver
             OrderItem::where('order_id', $order->id)
                 ->update(['status' => OrderItemStatus::LOST->value]);
             DB::table('resource_orderitem')->whereIn('orderitem_id', $orderItemIds)->delete();
+            $order->recalculateTotalPrice();
         }
 
         $this->logFieldChanges($order);

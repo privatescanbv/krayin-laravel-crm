@@ -78,7 +78,13 @@ trait PDFHandler
 
     private function addPdfStyleOverrides(string $html): string
     {
-        $style = '<style>.email-container { font-family: Arial, sans-serif !important; font-size: 9pt !important; }</style>';
+        $style = '<style>
+                .email-container {
+                    font-family: Arial, sans-serif !important;
+                    font-size: 9pt !important;
+                    line-height: 1.2 !important;
+                }
+                </style>';
 
         return $style.$html;
     }

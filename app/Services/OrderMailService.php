@@ -495,7 +495,6 @@ class OrderMailService
         $rows = '';
         foreach ($items as $item) {
             $productName = nl2br(e($item->getProductDescription() ?? 'Onbekend product'));
-            $quantity = (int) ($item->quantity ?? 0);
             if ($item->total_price == 0) {
                 // wish of privatescan, empty vs price 0.0
                 $price = '';
@@ -505,7 +504,6 @@ class OrderMailService
 
             $rows .= '<tr>'
                 .'<td style="padding:3px 8px; border-bottom:1px solid #e5e7eb;line-height:1.2;">'.$productName.'</td>'
-                .'<td style="padding:3px 8px; text-align:center; border-bottom:1px solid #e5e7eb;vertical-align:top;line-height:1.2;">'.$quantity.'</td>'
                 .'<td style="padding:3px 8px; text-align:right; border-bottom:1px solid #e5e7eb;vertical-align:top;line-height:1.2;">'.$price.'</td>'
                 .'</tr>';
         }
@@ -513,7 +511,7 @@ class OrderMailService
         $totalPrice = $this->formatCurrency($items->sum('total_price'));
 
         $rows .= '<tr>'
-            .'<td colspan="2" style="padding:4px 8px; text-align:right;">Totaal</td>'
+            .'<td style="padding:4px 8px; text-align:left;font-weight: bold;">Totaal</td>'
             .'<td style="padding:4px 8px; text-align:right;">'.$totalPrice.'</td>'
             .'</tr>';
 
@@ -522,8 +520,7 @@ class OrderMailService
     <thead>
         <tr>
             <th style="text-align:left; padding:3px 8px; border-bottom:2px solid #e5e7eb;">Product</th>
-            <th style="text-align:center; padding:3px 8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:40px;">Aantal</th>
-            <th style="text-align:right; padding:3px 8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:140px;">Prijs</th>
+            <th style="text-align:right; padding:3px 8px; border-bottom:2px solid #e5e7eb;white-space:nowrap;width:100px;">Prijs</th>
         </tr>
     </thead>
     <tbody>

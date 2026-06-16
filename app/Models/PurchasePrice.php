@@ -23,10 +23,12 @@ class PurchasePrice extends Model
         'purchase_price_clinic',
         'purchase_price_radiology',
         'purchase_price',
+        'force_received',
     ];
 
     protected $casts = [
         'type'                      => PurchasePriceType::class,
+        'force_received'            => 'boolean',
         'purchase_price_misc'       => 'decimal:2',
         'purchase_price_doctor'     => 'decimal:2',
         'purchase_price_cardiology' => 'decimal:2',

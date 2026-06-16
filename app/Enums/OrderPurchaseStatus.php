@@ -16,8 +16,12 @@ enum OrderPurchaseStatus: string
     /**
      * Status per order-item (beide 0 → HIDDEN zodat het item overgeslagen wordt).
      */
-    public static function forItem(float $purchaseTotal, float $invoiceTotal): self
+    public static function forItem(float $purchaseTotal, float $invoiceTotal, bool $forced = false): self
     {
+        if ($forced) {
+            return self::FULLY_RECEIVED;
+        }
+
         $p = round($purchaseTotal, 2);
         $i = round($invoiceTotal, 2);
 

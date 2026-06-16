@@ -41,7 +41,8 @@
 
         $purchaseTotal = $asAmount($item->resolvedPurchasePrice()->purchase_price);
         $invoiceTotal  = $asAmount($item->invoicePurchasePrice?->purchase_price);
-        $status = OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal);
+        $forced = (bool) ($item->invoicePurchasePrice?->force_received ?? false);
+        $status = OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal, $forced);
 
         if ($status === OrderPurchaseStatus::HIDDEN) {
             continue;
@@ -65,6 +66,7 @@
             'invoiceTotal'  => $invoiceTotal,
             'diff'          => $diff,
             'status'        => $status,
+            'forced'        => $forced,
         ];
     }
 
@@ -79,14 +81,14 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Afletteren</h3>
         </div>
         <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Overzicht van inkoop vs invoice (daadwerkelijk betaald) per order item.
+            Overzicht van inkoop vs factuur (daadwerkelijk betaald) per order item.
         </div>
     </div>
 
     {{-- Inline edit form (hidden by default) --}}
     <div id="afletteren-form-{{ $order->id }}" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
         <h4 id="afletteren-form-title-{{ $order->id }}" class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-            Invoice prijs bewerken
+            Factuur prijs bewerken
         </h4>
 
         <div id="afletteren-form-error-{{ $order->id }}" class="hidden mb-3 rounded bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-300"></div>
@@ -128,7 +130,7 @@
 
     @if (count($rows) === 0)
         <div class="rounded-lg border bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            Geen items met inkoop- of invoicebedrag (beide 0 wordt niet getoond).
+            Geen items met inkoop- of factuurbedrag (beide 0 wordt niet getoond).
         </div>
     @else
         <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
@@ -138,12 +140,12 @@
             </div>
 
             <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Invoice totaal</div>
+                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Factuur totaal</div>
                 <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ $formatEur($summary['invoice_total']) }}</div>
             </div>
 
             <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Verschil (invoice - inkoop)</div>
+                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Verschil (factuur - inkoop)</div>
                 <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ $formatEur($summary['diff_total']) }}</div>
             </div>
 
@@ -179,7 +181,7 @@
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Product</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Persoon</th>
                             <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Inkoop</th>
-                            <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Invoice</th>
+                            <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Factuur</th>
                             <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Verschil</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Status</th>
                             <th class="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Details</th>
@@ -195,6 +197,7 @@
                                 $invoiceTotal = $row['invoiceTotal'];
                                 $diff = $row['diff'];
                                 $status = $row['status'];
+                                $forced = $row['forced'];
 
                                 $detailsRows = [];
                                 foreach ($priceFields as $field => $label) {
@@ -269,20 +272,34 @@
                                     @endif
                                 </td>
                                 <td class="px-2 py-3">
-                                    <button
-                                        type="button"
-                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 icon-edit"
-                                        title="Invoice prijs bewerken"
-                                        data-role="afletteren-edit"
-                                        data-item-id="{{ $item->id }}"
-                                        data-misc="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_misc) }}"
-                                        data-doctor="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_doctor) }}"
-                                        data-cardiology="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_cardiology) }}"
-                                        data-clinic="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_clinic) }}"
-                                        data-radiology="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_radiology) }}"
-                                    >
-                                        <span class="sr-only">Bewerken</span>
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 icon-edit"
+                                            title="Factuur prijs bewerken"
+                                            data-role="afletteren-edit"
+                                            data-item-id="{{ $item->id }}"
+                                            data-misc="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_misc) }}"
+                                            data-doctor="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_doctor) }}"
+                                            data-cardiology="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_cardiology) }}"
+                                            data-clinic="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_clinic) }}"
+                                            data-radiology="{{ $asAmount($item->invoicePurchasePrice?->purchase_price_radiology) }}"
+                                        >
+                                            <span class="sr-only">Bewerken</span>
+                                        </button>
+                                        @if ($status !== OrderPurchaseStatus::FULLY_RECEIVED || $forced)
+                                            <button
+                                                type="button"
+                                                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 {{ $forced ? 'icon-success text-green-600' : 'icon-tick text-gray-400' }}"
+                                                title="{{ $forced ? 'Verwijder force' : 'Forceer geheel ontvangen' }}"
+                                                data-role="afletteren-force"
+                                                data-item-id="{{ $item->id }}"
+                                                data-forced="{{ $forced ? '1' : '0' }}"
+                                            >
+                                                <span class="sr-only">{{ $forced ? 'Verwijder force' : 'Forceer' }}</span>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -349,6 +366,30 @@
         container.querySelectorAll('[data-role="afletteren-edit"]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 openForm(btn);
+            });
+        });
+
+        container.querySelectorAll('[data-role="afletteren-force"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var itemId = btn.getAttribute('data-item-id');
+                var currentForced = btn.getAttribute('data-forced') === '1';
+
+                fetch('/admin/order-items/' + itemId + '/force-received', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf(),
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ force: !currentForced }),
+                }).then(function (response) {
+                    if (!response.ok) throw new Error('Fout: ' + response.status);
+                    return response.json();
+                }).then(function () {
+                    window.location.reload();
+                }).catch(function (err) {
+                    alert(err.message || 'Netwerkfout. Probeer opnieuw.');
+                });
             });
         });
 

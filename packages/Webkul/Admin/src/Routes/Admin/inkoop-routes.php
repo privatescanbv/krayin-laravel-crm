@@ -31,6 +31,8 @@ Route::prefix('inkoop')->group(function () {
         ->name('admin.inkoop.save-product-crm-ids');
     Route::put('{invoice}/items/{item}/reset-crm-id', [InkoopStep2Controller::class, 'resetCrmId'])
         ->name('admin.inkoop.reset-crm-id');
+    Route::put('{invoice}/force-received-bulk', [InkoopStep2Controller::class, 'bulkForceReceived'])
+        ->name('admin.inkoop.force-received-bulk');
 
     Route::get('{invoice}/step3', [InkoopStep3Controller::class, 'handleStep'])
         ->name('admin.inkoop.step3');

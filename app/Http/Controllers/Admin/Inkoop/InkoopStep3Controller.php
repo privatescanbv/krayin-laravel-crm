@@ -28,11 +28,14 @@ class InkoopStep3Controller extends Controller
 
         $crmOrderItemsByPerson = $persons
             ->filter(fn (InkoopPerson $person) => ! empty($person->crm_id))
-            ->mapWithKeys(function (InkoopPerson $person) {
+            ->mapWithKeys(function (InkoopPerson $person) use ($invoice) {
                 return [
                     $person->id => OrderItem::query()
-                        ->with(['product', 'person'])
+                        ->with(['product', 'person', 'order'])
                         ->where('person_id', $person->crm_id)
+                        ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
+                            $q->where('clinic_id', $invoice->clinic_id);
+                        })
                         ->get(),
                 ];
             });

@@ -9,6 +9,7 @@ use App\Models\Inkoop\InkoopInvoiceItemCrmProduct;
 use App\Models\Inkoop\InkoopPerson;
 use App\Models\OrderItem;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
@@ -51,14 +52,19 @@ class InkoopStep2Controller extends Controller
     {
         $personsWithCRMRelation = InkoopPerson::where('invoice_id', $invoice->id)
             ->whereNotNull('crm_id')
+            ->orderBy('lastname')
+            ->orderBy('firstname')
             ->with(['invoiceItems' => function ($query) use ($invoice) {
-                $query->where('inkoop_invoice_id', $invoice->id)->with('crmProducts');
+                $query->where('inkoop_invoice_id', $invoice->id)
+                    ->orderBy('date')
+                    ->orderBy('id')
+                    ->with('crmProducts');
             }])
             ->get();
 
         $allPersonsByInvoiceCount = InkoopPerson::where('invoice_id', $invoice->id)->count();
         $percentageResolvedInvoiceItems = $invoice->calculateResolvedInvoiceItemsPercentage();
-        $orderItemsByPerson = $this->findOrderItemsByPerson($personsWithCRMRelation);
+        $orderItemsByPerson = $this->findOrderItemsByPerson($personsWithCRMRelation, $invoice);
         $orderProductsByPerson = $this->formatOrderItemsByPerson($orderItemsByPerson);
         $filteredProductsByInvoiceItemId = $this->suggestOrderItemsByInvoiceItem($personsWithCRMRelation, $orderItemsByPerson);
 
@@ -133,8 +139,29 @@ class InkoopStep2Controller extends Controller
             return redirect()->back()->with('error', 'Er is een technische fout opgetreden. Neem contact op met de beheerder.');
         }
 
+        $forcedCount = 0;
+        foreach (array_filter((array) $request->input('force_item_ids', [])) as $itemId) {
+            $orderItemIds = InkoopInvoiceItemCrmProduct::where('inkoop_invoice_item_id', $itemId)
+                ->pluck('crm_id');
+            foreach ($orderItemIds as $orderItemId) {
+                $orderItem = OrderItem::find($orderItemId);
+                if ($orderItem) {
+                    $orderItem->invoicePurchasePrice()->updateOrCreate(
+                        ['type' => PurchasePriceType::INVOICE],
+                        ['force_received' => true]
+                    );
+                    $forcedCount++;
+                }
+            }
+        }
+
+        $message = "Producten zijn succesvol gekoppeld. ({$linkedProductsCount} product(en) gekoppeld)";
+        if ($forcedCount > 0) {
+            $message .= " {$forcedCount} order regel(s) geforceerd als geheel ontvangen.";
+        }
+
         return redirect()->route('admin.inkoop.step2', ['invoice' => $invoice->id])
-            ->with('success', "Producten zijn succesvol gekoppeld. ({$linkedProductsCount} product(en) gekoppeld)");
+            ->with('success', $message);
     }
 
     public function resetCrmId(Request $request, InkoopInvoice $invoice, $item)
@@ -145,17 +172,41 @@ class InkoopStep2Controller extends Controller
         return redirect()->back()->with('success', 'CRM koppelingen zijn gereset.');
     }
 
-    private function findOrderItemsByPerson(Collection $persons): Collection
+    public function bulkForceReceived(Request $request, InkoopInvoice $invoice): RedirectResponse
+    {
+        $itemIds = array_filter((array) $request->input('force_item_ids', []));
+
+        $orderItemIds = InkoopInvoiceItemCrmProduct::whereIn('inkoop_invoice_item_id', $itemIds)
+            ->pluck('crm_id');
+
+        foreach ($orderItemIds as $orderItemId) {
+            $orderItem = OrderItem::find($orderItemId);
+            if ($orderItem) {
+                $orderItem->invoicePurchasePrice()->updateOrCreate(
+                    ['type' => PurchasePriceType::INVOICE],
+                    ['force_received' => true]
+                );
+            }
+        }
+
+        return redirect()->back()->with('success', count($orderItemIds).' order regel(s) geforceerd als geheel ontvangen.');
+    }
+
+    private function findOrderItemsByPerson(Collection $persons, InkoopInvoice $invoice): Collection
     {
         $allOrderItems = OrderItem::query()
             ->with([
                 'product',
                 'person',
+                'purchasePrice',
                 'order.orderItems.invoicePurchasePrice',
                 'order.orderItems.purchasePrice',
                 'invoicePurchasePrice',
             ])
             ->whereIn('person_id', $persons->pluck('crm_id'))
+            ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
+                $q->where('clinic_id', $invoice->clinic_id);
+            })
             ->orderByDesc('id')
             ->get()
             ->groupBy('person_id');

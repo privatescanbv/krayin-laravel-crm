@@ -48,14 +48,27 @@
                             <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $person->invoiceItems->count() }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex flex-col gap-1 text-gray-600 dark:text-gray-400">
-                                    @forelse (($crmOrderItemsByPerson[$person->id] ?? collect()) as $orderItem)
-                                        <div>
-                                            {{ $orderItem->product->name ?? $orderItem->name ?? 'Onbekend product' }}
-                                            <span class="text-gray-400">€ {{ number_format((float) $orderItem->total_price, 2, ',', '.') }}</span>
-                                        </div>
-                                    @empty
-                                        <span>-</span>
-                                    @endforelse
+                                    @if (empty($person->crm_id))
+                                        <span class="text-xs text-orange-500 dark:text-orange-400">
+                                            Niet gekoppeld aan CRM — ga terug naar stap 1
+                                        </span>
+                                    @else
+                                        @forelse ($crmOrderItemsByPerson[$person->id] ?? collect() as $orderItem)
+                                            <div class="flex items-center gap-1 text-sm">
+                                                @if ($orderItem->order)
+                                                    <a href="{{ route('admin.orders.view', $orderItem->order->id) }}"
+                                                       target="_blank"
+                                                       class="text-xs text-blue-600 hover:underline dark:text-blue-400 shrink-0">
+                                                        #{{ $orderItem->order->order_number }}
+                                                    </a>
+                                                    <span class="text-gray-300 dark:text-gray-600">—</span>
+                                                @endif
+                                                <span>{{ $orderItem->product->name ?? $orderItem->name ?? 'Onbekend product' }}</span>
+                                            </div>
+                                        @empty
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">Geen orderregels voor deze kliniek</span>
+                                        @endforelse
+                                    @endif
                                 </div>
                             </td>
                         </tr>

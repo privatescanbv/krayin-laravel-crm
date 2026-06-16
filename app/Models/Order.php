@@ -538,7 +538,15 @@ class Order extends Model
         $invoiceTotal = round(
             (float) $this->orderItems
                 ->reject(fn ($item) => $item->status === OrderItemStatus::LOST)
-                ->sum(fn ($item) => (float) ($item->invoicePurchasePrice?->purchase_price ?? 0)),
+                ->sum(function ($item) {
+                    // Forced items tellen mee als volledig betaald zodat het aggregaat klopt
+                    // zonder de opgeslagen factuurprijs te wijzigen.
+                    if ($item->invoicePurchasePrice?->force_received) {
+                        return (float) ($item->resolvedPurchasePrice()->purchase_price ?? 0);
+                    }
+
+                    return (float) ($item->invoicePurchasePrice?->purchase_price ?? 0);
+                }),
             2
         );
 

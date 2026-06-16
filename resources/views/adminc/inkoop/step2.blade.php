@@ -9,6 +9,9 @@
                 <div class="flex flex-col gap-2">
                     <div class="text-xl font-bold dark:text-gray-300">Factuurregels koppelen</div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ $percentageResolvedInvoiceItems }}% regels gekoppeld</div>
+                    <div class="text-xs text-blue-600 dark:text-blue-400">
+                        Gefilterd op kliniek: <strong>{{ $invoice->clinic?->name ?? 'Onbekend' }}</strong>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
@@ -43,6 +46,7 @@
                                     <th class="w-[8%] px-4 py-3">Prijs</th>
                                     <th class="px-4 py-3">CRM product</th>
                                     <th class="w-[10%] px-4 py-3">Orders</th>
+                                    <th class="w-[5%] px-4 py-3" title="Vink aan om te forceren als geheel ontvangen">Forceer GB</th>
                                     <th class="w-[7%] px-4 py-3"></th>
                                 </tr>
                             </thead>
@@ -60,10 +64,14 @@
                                             <select multiple name="crm_ids[{{ $person->id }}][{{ $item->id }}][]" class="min-h-[92px] w-full rounded-md border px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
                                                 @foreach (($orderItemsByPerson[$person->id] ?? collect()) as $orderItem)
                                                     @php
-                                                        $orderNumber = $orderItem->order?->order_number ?? '?';
+                                                        $orderNumber  = $orderItem->order?->order_number ?? '?';
                                                         $invoiceTotal = (float) ($orderItem->invoicePurchasePrice?->purchase_price ?? 0);
-                                                        $statusLabel = $invoiceTotal > 0 ? 'Afgeletterd' : 'Niet afgeletterd';
-                                                        $label = '€ ' . number_format((float) $orderItem->total_price, 2, ',', '.')
+                                                        $statusLabel  = $invoiceTotal > 0 ? 'Afgeletterd' : 'Niet afgeletterd';
+                                                        $inkoopprijs  = $orderItem->purchasePrice?->purchase_price;
+                                                        $priceLabel   = $inkoopprijs !== null
+                                                            ? '€ ' . number_format((float) $inkoopprijs, 2, ',', '.')
+                                                            : 'Geen IP';
+                                                        $label = $priceLabel
                                                             . ' - ' . $orderItem->getProductName()
                                                             . ' - ' . ($orderItem->person->name ?? '-')
                                                             . ' - #' . $orderNumber
@@ -92,9 +100,23 @@
                                                 @endforeach
                                             </div>
                                         </td>
+                                        <td class="px-4 py-3">
+                                            <input
+                                                type="checkbox"
+                                                name="force_item_ids[]"
+                                                value="{{ $item->id }}"
+                                                class="h-4 w-4 rounded border-gray-300 text-blue-600 dark:border-gray-600 dark:bg-gray-900"
+                                            />
+                                        </td>
                                         <td class="px-4 py-3 text-right">
                                             @if ($item->crmProducts->isNotEmpty())
-                                                <button formaction="{{ route('admin.inkoop.reset-crm-id', [$invoice->id, $item->id]) }}" formmethod="POST" name="_method" value="PUT" class="secondary-button">Reset</button>
+                                                <button
+                                                    type="button"
+                                                    class="secondary-button"
+                                                    data-reset-url="{{ route('admin.inkoop.reset-crm-id', [$invoice->id, $item->id]) }}"
+                                                    data-csrf="{{ csrf_token() }}"
+                                                    onclick="inkoopStep2Reset(this)"
+                                                >Reset</button>
                                             @endif
                                         </td>
                                     </tr>
@@ -107,3 +129,24 @@
         </div>
     </x-admin::form>
 </x-admin::layouts>
+
+<script>
+window.inkoopStep2Reset = function (btn) {
+    if (!confirm('Weet je zeker dat je de CRM koppeling wilt resetten?')) return;
+
+    fetch(btn.dataset.resetUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': btn.dataset.csrf,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ _method: 'PUT' }),
+    }).then(function (r) {
+        if (!r.ok) throw new Error('Fout: ' + r.status);
+        window.location.reload();
+    }).catch(function (err) {
+        alert(err.message || 'Netwerkfout. Probeer opnieuw.');
+    });
+};
+</script>

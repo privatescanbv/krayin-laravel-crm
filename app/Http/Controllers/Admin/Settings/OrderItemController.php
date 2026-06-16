@@ -109,6 +109,19 @@ class OrderItemController extends SimpleEntityController
         return response()->json(['message' => 'Invoice prijs opgeslagen.']);
     }
 
+    public function forceReceived(Request $request, int $id): JsonResponse
+    {
+        $item = OrderItem::findOrFail($id);
+        $force = $request->boolean('force', true);
+
+        $item->invoicePurchasePrice()->updateOrCreate(
+            ['type' => PurchasePriceType::INVOICE],
+            ['force_received' => $force]
+        );
+
+        return response()->json(['message' => $force ? 'Geforceerd als geheel ontvangen.' : 'Force verwijderd.']);
+    }
+
     protected function validateStore(Request $request): void
     {
         $suffixes = PurchasePrice::priceSuffixes();

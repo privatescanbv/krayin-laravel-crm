@@ -261,13 +261,26 @@ class OrderMailService
             return '<p>Er zijn nog geen orderregels toegevoegd.</p>';
         }
 
+        $grouped = $items->groupBy('person_id');
+        $multiplePersons = $grouped->count() > 1;
+
         $html = '';
-        foreach ($items->groupBy('person_id') as $personItems) {
+        foreach ($grouped as $personItems) {
             $person = $personItems->first()->person;
             $html .= '<div style="margin-bottom:8px;">'
                 .$this->renderPersonHeader($person)
-                .$this->renderPersonItemsTable($personItems->values())
+                .$this->renderPersonItemsTable($personItems->values(), showTotal: ! $multiplePersons)
                 .'</div>';
+        }
+
+        if ($multiplePersons) {
+            $orderTotal = $this->formatCurrency($items->sum('total_price'));
+            $html .= '<table style="width:100%; border-collapse:collapse; margin:4px 0 0 0;">'
+                .'<tbody><tr>'
+                .'<td style="padding:4px 8px; text-align:left; font-weight:bold;">Totaal</td>'
+                .'<td style="padding:4px 8px; text-align:right; width:100px; font-weight:bold;">'.$orderTotal.'</td>'
+                .'</tr></tbody>'
+                .'</table>';
         }
 
         return $html;
@@ -490,7 +503,7 @@ class OrderMailService
         return '<p style="margin:0 0 2px 0;">'.$label.'</p>';
     }
 
-    private function renderPersonItemsTable(Collection $items): string
+    private function renderPersonItemsTable(Collection $items, bool $showTotal = true): string
     {
         $rows = '';
         foreach ($items as $item) {
@@ -508,12 +521,13 @@ class OrderMailService
                 .'</tr>';
         }
 
-        $totalPrice = $this->formatCurrency($items->sum('total_price'));
-
-        $rows .= '<tr>'
-            .'<td style="padding:4px 8px; text-align:left;font-weight: bold;">Totaal</td>'
-            .'<td style="padding:4px 8px; text-align:right;">'.$totalPrice.'</td>'
-            .'</tr>';
+        if ($showTotal) {
+            $totalPrice = $this->formatCurrency($items->sum('total_price'));
+            $rows .= '<tr>'
+                .'<td style="padding:4px 8px; text-align:left;font-weight: bold;">Totaal</td>'
+                .'<td style="padding:4px 8px; text-align:right;">'.$totalPrice.'</td>'
+                .'</tr>';
+        }
 
         return <<<HTML
 <table style="width:100%; border-collapse:collapse; margin:0;">

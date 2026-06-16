@@ -99,7 +99,7 @@ class Order extends Model
      */
     public static function firstOrderStageId(?Department $department): int
     {
-        if ($department->name === Departments::HERNIA->value) {
+        if ($department !== null && $department->name === Departments::HERNIA->value) {
             return PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value === 7
                 ? PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id()
                 : PipelineStage::ORDER_CONFIRM->id();

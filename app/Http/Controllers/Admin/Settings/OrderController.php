@@ -342,7 +342,7 @@ class OrderController extends SimpleEntityController
         $department = null;
         if (! empty($payload['sales_lead_id'])) {
             $sl = SalesLead::with('lead.department')->find($payload['sales_lead_id']);
-            $department = $sl?->lead?->department;
+            $department = $sl?->department;
 
             if (empty($payload['user_id'])) {
                 $payload['user_id'] = $sl?->user_id;
@@ -2048,6 +2048,13 @@ class OrderController extends SimpleEntityController
         ], [
             'items.*.person_id.required_with' => 'Elk orderitem met een product moet een persoon hebben.',
         ]);
+
+        $salesLeadId = $request->input('sales_lead_id');
+        if ($salesLeadId && ! SalesLead::where('id', $salesLeadId)->whereNotNull('lead_id')->exists()) {
+            throw ValidationException::withMessages([
+                'sales_lead_id' => 'De geselecteerde saleslead heeft geen gekoppeld lead.',
+            ]);
+        }
     }
 
     protected function validateUpdate(Request $request, int $id): void

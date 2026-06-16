@@ -136,8 +136,8 @@ test('total_price becomes 0 when order pipeline stage is set to verloren', funct
 
     // Check DB total directly (bypasses model cast)
     $dbTotal = DB::table('orders')->where('id', $order->id)->value('total_price');
-    expect((float)$dbTotal)->toBe(0.0)
-        ->and((float)$order->fresh()->total_price)->toBe(0.0);
+    expect((float) $dbTotal)->toBe(0.0)
+        ->and((float) $order->fresh()->total_price)->toBe(0.0);
 
 });
 

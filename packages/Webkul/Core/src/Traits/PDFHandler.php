@@ -2,6 +2,7 @@
 
 namespace Webkul\Core\Traits;
 
+use ArPHP\I18N\Arabic;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 use Mpdf\Mpdf;
@@ -79,7 +80,9 @@ trait PDFHandler
     private function addPdfStyleOverrides(string $html): string
     {
         $style = '<style>
-                .email-container {
+                .email-container,
+                .email-container td,
+                .email-container th {
                     font-family: Arial, sans-serif !important;
                     font-size: 9pt !important;
                     line-height: 1.2 !important;
@@ -96,7 +99,7 @@ trait PDFHandler
      */
     protected function adjustArabicAndPersianContent(string $html)
     {
-        $arabic = new \ArPHP\I18N\Arabic;
+        $arabic = new Arabic;
 
         $p = $arabic->arIdentify($html);
 

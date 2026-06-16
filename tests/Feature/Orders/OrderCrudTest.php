@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -591,4 +592,32 @@ test('order create form leaves initial org empty when lead and persons have no o
 
     $response->assertOk();
     $response->assertSee(":initial-org='null'", false);
+});
+
+test('order view page renders without errors after creation', function () {
+    $lead = Lead::factory()->create();
+    $salesLead = SalesLead::factory()->create(['lead_id' => $lead->id]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'ViewRenderTest Order',
+        'sales_lead_id' => $salesLead->id,
+    ]);
+    $response->assertOk();
+
+    $order = Order::where('title', 'ViewRenderTest Order')->firstOrFail();
+    $this->get(route('admin.orders.view', $order->id))->assertOk();
+});
+
+test('store rejects a sales_lead without a linked lead', function () {
+    $salesLead = SalesLead::factory()->create();
+    // Force lead_id to null to simulate orphaned SalesLead (lead_id is nullable in migration)
+    DB::table('salesleads')->where('id', $salesLead->id)->update(['lead_id' => null]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'Should Fail',
+        'sales_lead_id' => $salesLead->id,
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['sales_lead_id']);
 });

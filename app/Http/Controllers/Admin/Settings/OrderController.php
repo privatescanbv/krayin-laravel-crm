@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
+use App\Actions\Activities\CreatePatientMessageFromActivityAction;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\ActivityType;
 use App\Enums\AfbDispatchStatus;
@@ -1159,45 +1160,77 @@ class OrderController extends SimpleEntityController
     }
 
     /**
-     * Upload a report file: create a file Activity linked to order + clinic, and mark selected checks as done.
+     * Upload report file(s): create a file Activity per file linked to order + clinic, and mark selected checks as done.
      */
     public function storeReport(Request $request, int $orderId): JsonResponse
     {
         $request->validate([
-            'file'        => 'required|file|max:20480',
-            'clinic_id'   => 'required|integer|exists:clinics,id',
-            'check_ids'   => 'required|array|min:1',
-            'check_ids.*' => 'integer|exists:order_checks,id',
-            'title'       => 'nullable|string|max:255',
-            'comment'     => 'nullable|string',
+            'files'            => 'required|array|min:1',
+            'files.*'          => 'file|max:20480',
+            'clinic_id'        => 'required|integer|exists:clinics,id',
+            'check_ids'        => 'required|array|min:1',
+            'check_ids.*'      => 'integer|exists:order_checks,id',
+            'title'            => 'nullable|string|max:255',
+            'comment'          => 'nullable|string',
+            'publish_to_portal' => 'nullable|boolean',
+            'person_ids'       => 'nullable|array',
+            'person_ids.*'     => 'integer|exists:persons,id',
         ]);
 
         $order = $this->orderRepository->findOrFail($orderId);
 
         $activityRepository = app(ActivityRepository::class);
 
-        $file = $request->file('file');
-        $title = $request->input('title') ?: $file->getClientOriginalName();
+        $publishToPortal = filter_var($request->input('publish_to_portal', false), FILTER_VALIDATE_BOOLEAN);
+        $personIds = array_filter(array_map('intval', (array) $request->input('person_ids', [])));
 
-        $activity = $activityRepository->create([
-            'type'      => ActivityType::FILE,
-            'title'     => $title,
-            'comment'   => $request->input('comment'),
-            'is_done'   => true,
-            'user_id'   => auth()->id(),
-            'order_id'  => $order->id,
-            'clinic_id' => $request->input('clinic_id'),
-            'file'      => $file,
-        ]);
+        $files = $request->file('files');
+        $baseTitle = $request->input('title', '');
+        $lastActivity = null;
+
+        foreach ($files as $file) {
+            $title = count($files) > 1
+                ? ($baseTitle ? "{$baseTitle} – {$file->getClientOriginalName()}" : $file->getClientOriginalName())
+                : ($baseTitle ?: $file->getClientOriginalName());
+
+            $activity = $activityRepository->create([
+                'type'      => ActivityType::FILE,
+                'title'     => $title,
+                'comment'   => $request->input('comment'),
+                'is_done'   => true,
+                'user_id'   => auth()->id(),
+                'order_id'  => $order->id,
+                'clinic_id' => $request->input('clinic_id'),
+                'file'      => $file,
+            ]);
+
+            if ($publishToPortal) {
+                $resolvedPersonIds = ! empty($personIds)
+                    ? $personIds
+                    : $activity->getPatientsFromActivity()->pluck('id')->all();
+
+                if (! empty($resolvedPersonIds)) {
+                    $activity->syncPortalPersons($resolvedPersonIds);
+                    CreatePatientMessageFromActivityAction::notifyPortalPersons($activity);
+                }
+            }
+
+            $lastActivity = $activity;
+        }
 
         $checkIds = $request->input('check_ids', []);
         OrderCheck::where('order_id', $orderId)
             ->whereIn('id', $checkIds)
             ->update(['done' => true]);
 
+        $count = count($files);
+        $message = $count > 1
+            ? "{$count} rapportages succesvol geüpload en checks afgevinkt."
+            : 'Rapportage succesvol geüpload en checks afgevinkt.';
+
         return response()->json([
-            'data'    => new ActivityResource($activity),
-            'message' => 'Rapportage succesvol geüpload en checks afgevinkt.',
+            'data'    => new ActivityResource($lastActivity),
+            'message' => $message,
         ]);
     }
 

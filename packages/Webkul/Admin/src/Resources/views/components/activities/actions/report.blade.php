@@ -110,14 +110,15 @@
                                 </div>
                             </div>
 
-                            <!-- File input -->
+                            <!-- File input (multiple) -->
                             <x-adminc::components.field
                                 type="file"
                                 id="report_file"
-                                name="file"
-                                label="Bestand"
+                                name="files"
+                                label="Bestand(en)"
                                 rules="required"
                                 class="!mb-0"
+                                multiple
                             />
 
                             <!-- Comment -->
@@ -126,6 +127,44 @@
                                 name="comment"
                                 label="Opmerking (optioneel)"
                             />
+
+                            <!-- Publiceren in patiëntportaal -->
+                            <div class="mt-4">
+                                <label class="flex cursor-pointer items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        v-model="publishToPortal"
+                                        @change="onPublishChange"
+                                        class="h-4 w-4 shrink-0 rounded border-gray-300"
+                                    />
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Publiceren in patiëntportaal
+                                    </span>
+                                </label>
+
+                                <div v-if="publishToPortal" class="mt-3">
+                                    <div v-if="loadingPersons" class="text-sm text-gray-500">
+                                        Personen laden...
+                                    </div>
+                                    <div v-else-if="persons.length > 1">
+                                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Deel met persoon
+                                        </label>
+                                        <select
+                                            v-model="selectedPersonId"
+                                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        >
+                                            <option value="" disabled>Selecteer een persoon</option>
+                                            <option v-for="person in persons" :key="person.id" :value="person.id">
+                                                @{{ person.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div v-else-if="!loadingPersons && persons.length === 1" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        Wordt gedeeld met: <span class="font-medium">@{{ persons[0].name }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </x-slot>
 
                         <x-slot:footer>
@@ -162,6 +201,10 @@
                     checks: [],
                     selectedClinicId: '',
                     selectedCheckIds: [],
+                    publishToPortal: false,
+                    persons: [],
+                    selectedPersonId: '',
+                    loadingPersons: false,
                 };
             },
 
@@ -171,8 +214,36 @@
                     this.selectedCheckIds = [];
                     this.clinics = [];
                     this.checks = [];
+                    this.publishToPortal = false;
+                    this.persons = [];
+                    this.selectedPersonId = '';
                     this.$refs.reportUploadModal.open();
                     this.fetchData();
+                },
+
+                onPublishChange() {
+                    this.persons = [];
+                    this.selectedPersonId = '';
+
+                    if (!this.publishToPortal) {
+                        return;
+                    }
+
+                    this.loadingPersons = true;
+
+                    this.$axios.get("{{ route('admin.activities.persons-for-entity') }}", {
+                        params: { entity_type: 'order', entity_id: this.entity.id }
+                    }).then(response => {
+                        this.persons = response.data.data ?? [];
+
+                        if (this.persons.length === 1) {
+                            this.selectedPersonId = this.persons[0].id;
+                        }
+                    }).catch(() => {
+                        this.persons = [];
+                    }).finally(() => {
+                        this.loadingPersons = false;
+                    });
                 },
 
                 fetchData() {
@@ -211,7 +282,7 @@
                         if (value === null || value === undefined) return;
                         if (key === 'clinic_id') return;
                         if (value instanceof FileList) {
-                            Array.from(value).forEach(f => formData.append(key, f));
+                            Array.from(value).forEach(f => formData.append('files[]', f));
                         } else if (value instanceof File || value instanceof Blob) {
                             formData.append(key, value);
                         } else {
@@ -224,6 +295,12 @@
                     this.selectedCheckIds.forEach(id => {
                         formData.append('check_ids[]', String(id));
                     });
+
+                    formData.set('publish_to_portal', this.publishToPortal ? '1' : '0');
+
+                    if (this.publishToPortal && this.selectedPersonId) {
+                        formData.append('person_ids[]', String(this.selectedPersonId));
+                    }
 
                     const url = '{{ route("admin.orders.report-upload.store", ":id") }}'.replace(':id', this.entity.id);
 

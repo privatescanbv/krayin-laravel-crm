@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin\Inkoop;
 
+use App\Enums\OrderItemStatus;
+use App\Enums\OrderPurchaseStatus;
 use App\Enums\PurchasePriceType;
 use App\Models\Inkoop\InkoopInvoice;
 use App\Models\Inkoop\InkoopInvoiceItem;
@@ -52,15 +54,15 @@ class InkoopStep2Controller extends Controller
     {
         $personsWithCRMRelation = InkoopPerson::where('invoice_id', $invoice->id)
             ->whereNotNull('crm_id')
-            ->orderBy('lastname')
-            ->orderBy('firstname')
             ->with(['invoiceItems' => function ($query) use ($invoice) {
                 $query->where('inkoop_invoice_id', $invoice->id)
                     ->orderBy('date')
                     ->orderBy('id')
                     ->with('crmProducts');
             }])
-            ->get();
+            ->get()
+            ->sortBy(fn ($person) => $person->invoiceItems->min('date'))
+            ->values();
 
         $allPersonsByInvoiceCount = InkoopPerson::where('invoice_id', $invoice->id)->count();
         $percentageResolvedInvoiceItems = $invoice->calculateResolvedInvoiceItemsPercentage();
@@ -197,6 +199,7 @@ class InkoopStep2Controller extends Controller
         $allOrderItems = OrderItem::query()
             ->with([
                 'product',
+                'product.partnerProducts.purchasePrice',
                 'person',
                 'purchasePrice',
                 'order.orderItems.invoicePurchasePrice',
@@ -204,11 +207,19 @@ class InkoopStep2Controller extends Controller
                 'invoicePurchasePrice',
             ])
             ->whereIn('person_id', $persons->pluck('crm_id'))
+            ->where('status', '!=', OrderItemStatus::LOST->value)
             ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
                 $q->where('clinic_id', $invoice->clinic_id);
             })
             ->orderByDesc('id')
             ->get()
+            ->filter(function (OrderItem $item) {
+                $purchaseTotal = (float) $item->resolvedPurchasePrice()->purchase_price;
+                $invoiceTotal  = (float) ($item->invoicePurchasePrice?->purchase_price ?? 0);
+                $forced        = (bool) ($item->invoicePurchasePrice?->force_received ?? false);
+
+                return OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal, $forced) !== OrderPurchaseStatus::FULLY_RECEIVED;
+            })
             ->groupBy('person_id');
 
         return $persons->mapWithKeys(

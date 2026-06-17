@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin\Inkoop;
 
 use App\Enums\Inkoop\InkoopInvoiceStatus;
+use App\Enums\OrderItemStatus;
+use App\Enums\OrderPurchaseStatus;
 use App\Models\Inkoop\InkoopInvoice;
 use App\Models\Inkoop\InkoopInvoiceItem;
 use App\Models\Inkoop\InkoopPerson;
+use App\Models\Order;
 use App\Models\OrderItem;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,9 +19,11 @@ class InkoopStep3Controller extends Controller
 {
     public function handleStep(Request $request, InkoopInvoice $invoice)
     {
+        $invoice->loadMissing('clinic');
+
         $persons = InkoopPerson::where('invoice_id', $invoice->id)
             ->with(['invoiceItems' => function ($query) use ($invoice) {
-                $query->where('inkoop_invoice_id', $invoice->id);
+                $query->where('inkoop_invoice_id', $invoice->id)->with('crmProducts');
             }])
             ->get();
 
@@ -31,8 +36,9 @@ class InkoopStep3Controller extends Controller
             ->mapWithKeys(function (InkoopPerson $person) use ($invoice) {
                 return [
                     $person->id => OrderItem::query()
-                        ->with(['product', 'person', 'order'])
+                        ->with(['product', 'product.partnerProducts.purchasePrice', 'person', 'order', 'purchasePrice', 'invoicePurchasePrice'])
                         ->where('person_id', $person->crm_id)
+                        ->where('status', '!=', OrderItemStatus::LOST->value)
                         ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
                             $q->where('clinic_id', $invoice->clinic_id);
                         })
@@ -40,7 +46,52 @@ class InkoopStep3Controller extends Controller
                 ];
             });
 
-        $allPersonsCount = $persons->count();
+        $invoiceDataByOrderItemId = $persons->flatMap(fn ($person) => $person->invoiceItems)
+            ->reduce(function (array $carry, $invoiceItem) {
+                foreach ($invoiceItem->crmProducts as $crmProduct) {
+                    $carry[(int) $crmProduct->crm_id] = [
+                        'date'  => $invoiceItem->date,
+                        'price' => $crmProduct->purchase_price,
+                    ];
+                }
+
+                return $carry;
+            }, []);
+
+        $allOrderItems = $crmOrderItemsByPerson->flatMap(fn ($items) => $items);
+
+        $orderItemPurchaseStatuses = $allOrderItems
+            ->mapWithKeys(function (OrderItem $orderItem) {
+                $purchaseTotal = (float) $orderItem->resolvedPurchasePrice()->purchase_price;
+                $invoiceTotal = (float) ($orderItem->invoicePurchasePrice?->purchase_price ?? 0);
+                $forced = (bool) ($orderItem->invoicePurchasePrice?->force_received ?? false);
+
+                return [$orderItem->id => OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal, $forced)];
+            })
+            ->all();
+
+        $orderIds = $allOrderItems
+            ->pluck('order_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $ordersById = Order::query()
+            ->with([
+                'orderItems.purchasePrice',
+                'orderItems.invoicePurchasePrice',
+                'orderItems.product.partnerProducts.purchasePrice',
+                'orderItems.resourceOrderItems',
+            ])
+            ->whereIn('id', $orderIds)
+            ->get()
+            ->keyBy('id');
+
+        $orderPurchaseStatuses = $ordersById
+            ->map(fn (Order $order) => $order->purchaseStatus())
+            ->all();
+
+$allPersonsCount = $persons->count();
         $linkedPersonsCount = $persons->whereNotNull('crm_id')->count();
         $percentageResolvedPersons = $allPersonsCount > 0 ? (int) ceil(($linkedPersonsCount / $allPersonsCount) * 100) : 0;
 
@@ -51,6 +102,9 @@ class InkoopStep3Controller extends Controller
             'percentageResolvedPersons'      => $percentageResolvedPersons,
             'percentageResolvedInvoiceItems' => $invoice->calculateResolvedInvoiceItemsPercentage(),
             'crmOrderItemsByPerson'          => $crmOrderItemsByPerson,
+            'orderItemPurchaseStatuses'      => $orderItemPurchaseStatuses,
+            'invoiceDataByOrderItemId'       => $invoiceDataByOrderItemId,
+            'orderPurchaseStatuses'          => $orderPurchaseStatuses,
         ]);
     }
 

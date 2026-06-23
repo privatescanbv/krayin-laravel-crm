@@ -78,7 +78,7 @@
 
         @if($isReadOnly)
             <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-                Deze activiteit is afgerond en daarom alleen-lezen. Heropen de activiteit om gegevens of acties te wijzigen.
+                Deze activiteit is afgerond en daarom alleen-lezen. Heropen de activiteit om acties toe te voegen of gegevens te wijzigen.
             </div>
         @endif
 

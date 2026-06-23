@@ -79,10 +79,12 @@
                                 $orderPurchaseStatus = $orderPurchaseStatuses[$orderItem->order_id] ?? null;
                                 $orderItemStatus = $orderItem->status;
                                 $invoiceData = $invoiceDataByOrderItemId[$orderItem->id] ?? null;
-                                $invoiceDate  = $invoiceData ? $invoiceData['date']  : $person->invoiceItems->first()?->date;
-                                $invoicePrice = $invoiceData ? $invoiceData['price'] : $person->invoiceItems->first()?->price;
+                                $isMatched    = $invoiceData !== null;
+                                $invoiceDate  = $invoiceData ? $invoiceData['date']  : null;
+                                $invoicePrice = $invoiceData ? $invoiceData['price'] : null;
+                                $crmPurchasePrice = $orderItem->purchasePrice?->purchase_price;
                             @endphp
-                            <tr>
+                            <tr class="{{ !$isMatched ? 'bg-orange-50 dark:bg-orange-900/10' : '' }}">
                                 <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">
                                     @if ($loop->first){{ trim($person->firstname . ' ' . $person->lastname) }}@endif
                                 </td>
@@ -90,7 +92,7 @@
                                     @if ($loop->first){{ $person->invoiceItems->count() }}@endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2 text-sm">
+                                    <div class="flex flex-wrap items-center gap-2 text-sm">
                                         @if ($orderItem->order)
                                             <a href="{{ route('admin.orders.view', $orderItem->order->id) }}#afletteren"
                                                target="_blank"
@@ -100,6 +102,18 @@
                                             <span class="text-gray-300 dark:text-gray-600">—</span>
                                         @endif
                                         <span class="text-gray-700 dark:text-gray-300">{{ $orderItem->product->name ?? $orderItem->name ?? 'Onbekend product' }}</span>
+                                        @if ($crmPurchasePrice !== null)
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">€&nbsp;{{ number_format((float) $crmPurchasePrice, 2, ',', '.') }}</span>
+                                        @endif
+                                        @if ($isMatched)
+                                            <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                Gekoppeld
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                                                Niet gekoppeld
+                                            </span>
+                                        @endif
                                         @if ($orderItemPurchaseStatus && $orderItemPurchaseStatus !== OrderPurchaseStatus::HIDDEN)
                                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $orderItemPurchaseStatus->badgeClass() }}">
                                                 {{ $orderItemPurchaseStatus->label() }}

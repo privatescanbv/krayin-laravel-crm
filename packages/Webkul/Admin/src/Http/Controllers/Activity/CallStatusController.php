@@ -4,12 +4,12 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\CallStatus as CallStatusEnum;
 use App\Models\CallStatus;
+use App\Services\ActivityStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
-use App\Services\ActivityStatusService;
 
 class CallStatusController extends Controller
 {
@@ -30,6 +30,12 @@ class CallStatusController extends Controller
 
     public function store(Request $request, int $activityId): JsonResponse
     {
+        $activity = $this->activityRepository->findOrFail($activityId);
+
+        if ($activity->is_done) {
+            return $this->completedActivityResponse();
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', array_map(fn($c) => $c->value, CallStatusEnum::cases())),
             'omschrijving' => 'nullable|string',
@@ -51,7 +57,6 @@ class CallStatusController extends Controller
             'status' => $validated['status'],
             'omschrijving' => $validated['omschrijving'] ?? null,
         ]);
-        $activity = $this->activityRepository->findOrFail($activityId);
         // Reschedule activity if requested
         if (!empty($validated['reschedule_days'])) {
 
@@ -89,6 +94,12 @@ class CallStatusController extends Controller
 
     public function destroy(int $activityId, int $callStatusId): JsonResponse
     {
+        $activity = $this->activityRepository->findOrFail($activityId);
+
+        if ($activity->is_done) {
+            return $this->completedActivityResponse();
+        }
+
         $callStatus = CallStatus::where('activity_id', $activityId)->findOrFail($callStatusId);
 
         if ($callStatus->created_by !== auth()->guard('user')->id()) {
@@ -128,6 +139,13 @@ class CallStatusController extends Controller
         }
 
         return null;
+    }
+
+    private function completedActivityResponse(): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Deze activiteit is afgerond. Heropen de activiteit om acties te wijzigen.',
+        ], 422);
     }
 }
 

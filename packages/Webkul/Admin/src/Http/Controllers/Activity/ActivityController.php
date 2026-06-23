@@ -271,6 +271,10 @@ class ActivityController extends Controller
         // Get the current activity to check permissions
         $activity = $this->activityRepository->findOrFail($id);
 
+        if ($activity->is_done) {
+            return $this->completedActivityResponse();
+        }
+
         // Check if user_id is being changed and if user has permission
         if (request()->has('user_id') && request('user_id') != $activity->user_id) {
             $currentUser = auth()->guard('user')->user();
@@ -812,6 +816,12 @@ class ActivityController extends Controller
     {
         $activity = $this->activityRepository->findOrFail($id);
 
+        if ($activity->is_done) {
+            return response()->json([
+                'message' => 'Deze activiteit is afgerond. Heropen de activiteit om deze te wijzigen.',
+            ], 422);
+        }
+
         $allowed = ['person_id', 'lead_id', 'sales_lead_id', 'order_id', 'clinic_id'];
 
         $data = array_intersect_key(request()->all(), array_flip($allowed));
@@ -824,5 +834,18 @@ class ActivityController extends Controller
             'data'    => new ActivityResource($activity->refresh()),
             'message' => 'Koppeling bijgewerkt.',
         ]);
+    }
+
+    private function completedActivityResponse(): RedirectResponse|JsonResponse
+    {
+        $message = 'Deze activiteit is afgerond. Heropen de activiteit om deze te wijzigen.';
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['message' => $message], 422);
+        }
+
+        session()->flash('error', $message);
+
+        return redirect()->back();
     }
 }

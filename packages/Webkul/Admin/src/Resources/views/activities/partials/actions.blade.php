@@ -5,6 +5,7 @@ use App\Enums\CallStatus;
 $isCall = $activity->type === ActivityType::CALL;
 $defaultTab = $isCall ? 'belstatus' : 'notitie';
 $currentUserId = auth()->guard('user')->id();
+$isActivityDone = (bool) $activity->is_done;
 
 $statusConfig = [
     CallStatus::SPOKEN->value           => ['label' => CallStatus::SPOKEN->label(),           'color' => '#1f8a5b', 'bg' => '#dcf3e6', 'border' => '#a3d9b8', 'icon' => CallStatus::SPOKEN->icon()],
@@ -24,7 +25,7 @@ foreach (($actions ?? collect()) as $action) {
         'body'        => $action->body,
         'call_status' => $action->call_status,
         'by'          => $action->creator?->name ?? '-',
-        'can_delete'  => $action->created_by === $currentUserId,
+        'can_delete'  => ! $isActivityDone && $action->created_by === $currentUserId,
     ]);
 }
 
@@ -46,6 +47,11 @@ $totalCount    = $timelineItems->count();
 {{-- ═══════════════════════════════════════════════════════════
      KAART 1: Actie toevoegen
      ═══════════════════════════════════════════════════════════ --}}
+@if($isActivityDone)
+    <div class="box-shadow rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        Deze activiteit is afgerond. Heropen de activiteit om acties toe te voegen.
+    </div>
+@else
 <div class="box-shadow rounded-lg border bg-white dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
 
     {{-- ── Type selector ───────────────────────────────────────── --}}
@@ -150,6 +156,7 @@ $totalCount    = $timelineItems->count();
         </button>
     </div>
 </div>
+@endif
 
 {{-- ═══════════════════════════════════════════════════════════
      KAART 2: Geschiedenis

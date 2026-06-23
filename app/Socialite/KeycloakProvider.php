@@ -162,7 +162,7 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
             $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null;
             $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
-            Log::error('Keycloak userinfo call failed', [
+            $context = [
                 'error'          => $e->getMessage(),
                 'userinfo_url'   => $userinfoUrl,
                 'status_code'    => $statusCode,
@@ -170,7 +170,13 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
                 'possible_cause' => $statusCode === 401
                     ? 'Token validation failed - token expired or invalid'
                     : ($statusCode === 404 ? 'Userinfo endpoint not found' : 'Unknown error'),
-            ]);
+            ];
+
+            if ($statusCode === 401) {
+                Log::warning('Keycloak userinfo call failed - token expired', $context);
+            } else {
+                Log::error('Keycloak userinfo call failed', $context);
+            }
 
             throw $e;
         } catch (Exception $e) {

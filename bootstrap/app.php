@@ -21,6 +21,7 @@ use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Log;
 use Sentry\Laravel\Integration;
+use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /** @var Application $app */
@@ -122,6 +123,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
                         'trace'        => $e->getTraceAsString(),
                         'url'          => optional($request)->fullUrl(),
                         'method'       => optional($request)->method(),
+                    ]);
+                } elseif ($e instanceof ClientException && $e->getResponse()?->getStatusCode() === 401) {
+                    Log::warning('Exception reported - token expired (401)', [
+                        'exception' => get_class($e),
+                        'message'   => $e->getMessage(),
+                        'url'       => optional($request)->fullUrl(),
                     ]);
                 } else {
                     Log::error('Exception reported', [

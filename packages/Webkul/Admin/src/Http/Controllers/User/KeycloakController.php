@@ -208,7 +208,7 @@ class KeycloakController extends Controller
             $isUserinfoCall = str_contains($requestUrl, 'userinfo');
             $isTokenCall = str_contains($requestUrl, '/token');
 
-            Log::error('Keycloak authentication failed', [
+            Log::warning('Keycloak authentication failed - token expired', [
                 'error' => $e->getMessage(),
                 'status_code' => $statusCode,
                 'request_url' => $requestUrl,

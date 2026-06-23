@@ -107,34 +107,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  suitecrm:
-    image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.1
-    container_name: suitecrm
-    restart: unless-stopped
-    ports:
-      - "81:80"
-    environment:
-      SITE_URL: 'https://suitecrm.${PRIVATESCAN_BASE_DOMAIN}'
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=public
-      - traefik.http.routers.suitecrm.rule=Host("suitecrm.${PRIVATESCAN_BASE_DOMAIN}")
-      - traefik.http.routers.suitecrm.entrypoints=https
-      - traefik.http.routers.suitecrm.tls=true
-      - traefik.http.routers.suitecrm.tls.certresolver=myresolver
-      - traefik.http.routers.suitecrm.service=suitecrm-svc
-      - traefik.http.services.suitecrm-svc.loadbalancer.server.port=80
-      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Host=suitecrm.${PRIVATESCAN_BASE_DOMAIN}
-      - traefik.http.routers.suitecrm.middlewares=suitecrm-forward@docker
-      - logging=promtail
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - backend
-      - public
-
   forms:
     image: ghcr.io/privatescanbv/privateforms/forms:latest
     container_name: forms

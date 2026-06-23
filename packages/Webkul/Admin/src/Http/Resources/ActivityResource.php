@@ -52,6 +52,7 @@ class ActivityResource extends JsonResource
                 ? $this->resource->portalPersons->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values()
                 : [],
             'entity_source'      => data_get($this->resource, 'entity_source', null),
+            'completed_at'       => data_get($this->resource, 'completed_at', null),
             'created_at'         => $this->created_at,
             'updated_at'         => $this->updated_at,
         ];
@@ -101,8 +102,8 @@ class ActivityResource extends JsonResource
                     'type'        => $typeValue,
                     'call_status' => $callStatusKey ?: null,
                     'label'       => $typeValue === 'belstatus'
-                        ? ($statusLabel . ($body !== '' ? ' — ' . mb_strimwidth($body, 0, 60, '…') : ''))
-                        : mb_strimwidth($body, 0, 80, '…'),
+                        ? ($statusLabel . ($body !== '' ? ' — ' . $body : ''))
+                        : $body,
                     'creator'     => $a->creator?->name ?? '',
                     'date'        => $a->created_at->locale('nl')->isoFormat('D MMM HH:mm'),
                     'date_full'   => $a->created_at->toIso8601String(),

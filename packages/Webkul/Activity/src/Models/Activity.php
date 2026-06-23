@@ -51,6 +51,7 @@ class Activity extends Model implements ActivityContract
     protected $casts = [
         'schedule_from' => 'datetime',
         'schedule_to'   => 'datetime',
+        'completed_at'  => 'datetime',
         'assigned_at'   => 'datetime',
         'additional'    => 'array',
         'is_done'              => 'boolean',
@@ -71,6 +72,7 @@ class Activity extends Model implements ActivityContract
         'additional',
         'schedule_from',
         'schedule_to',
+        'completed_at',
         'is_done',
         'status',
         'user_id',

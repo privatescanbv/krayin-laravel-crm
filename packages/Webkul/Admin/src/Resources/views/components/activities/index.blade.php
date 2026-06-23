@@ -482,7 +482,17 @@
                         if (aDeadline) return -1;
                         if (bDeadline) return 1;
                     }
-                    return new Date(b.created_at) - new Date(a.created_at);
+                    return this.sortDateFor(b) - this.sortDateFor(a);
+                },
+
+                sortDateFor(activity) {
+                    const value = activity.completed_at || activity.updated_at || activity.created_at;
+
+                    if (!value) return 0;
+
+                    const time = new Date(value).getTime();
+
+                    return Number.isNaN(time) ? 0 : time;
                 },
 
                 get() {
@@ -521,7 +531,7 @@
                                 .then((response) => {
                                     this.isUpdating[activity.id] = false;
 
-                                    activity.is_done = 1;
+                                    Object.assign(activity, response.data.data);
 
                                     this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                                 })
@@ -543,7 +553,7 @@
                                 .then((response) => {
                                     this.isUpdating[activity.id] = false;
 
-                                    activity.is_done = 0;
+                                    Object.assign(activity, response.data.data);
 
                                     this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                                 })
@@ -649,7 +659,7 @@
                 //     return textContent.substring(0, maxLength) + '...';
                 // },
 
-                truncateHtmlASSummary(html, maxLength = 150) {
+                activitySummaryText(html) {
                     if (!html) return '';
 
                     const tempDiv = document.createElement('div');
@@ -659,11 +669,7 @@
 
                     const textContent = (tempDiv.textContent || tempDiv.innerText || '').replace(/\s+/g, ' ').trim();
 
-                    if (textContent.length <= maxLength) {
-                        return textContent;
-                    }
-
-                    return textContent.substring(0, maxLength) + '...';
+                    return textContent;
                 },
 
                 truncate(value, maxLength = 60) {

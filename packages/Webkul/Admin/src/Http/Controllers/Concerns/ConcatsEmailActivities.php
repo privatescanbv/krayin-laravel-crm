@@ -187,7 +187,7 @@ trait ConcatsEmailActivities
             ];
         });
 
-        return $activities->concat($mapped)->sortByDesc('id')->sortByDesc('created_at');
+        return $this->sortActivitiesForOverview($activities->concat($mapped));
     }
 
     private function toArray($value): ?array
@@ -195,5 +195,59 @@ trait ConcatsEmailActivities
         return is_array($value)
             ? $value
             : json_decode($value, true);
+    }
+
+    private function sortActivitiesForOverview(Collection $activities): Collection
+    {
+        return $activities
+            ->sort(function ($a, $b) {
+                $aDone = (bool) data_get($a, 'is_done', false);
+                $bDone = (bool) data_get($b, 'is_done', false);
+
+                if ($aDone !== $bDone) {
+                    return $aDone ? 1 : -1;
+                }
+
+                if (! $aDone) {
+                    $aSchedule = $this->timestampFor(data_get($a, 'schedule_to'));
+                    $bSchedule = $this->timestampFor(data_get($b, 'schedule_to'));
+
+                    if ($aSchedule !== $bSchedule) {
+                        return ($aSchedule ?? PHP_INT_MAX) <=> ($bSchedule ?? PHP_INT_MAX);
+                    }
+                }
+
+                $aDate = $this->overviewSortTimestamp($a);
+                $bDate = $this->overviewSortTimestamp($b);
+
+                if ($aDate !== $bDate) {
+                    return ($bDate ?? 0) <=> ($aDate ?? 0);
+                }
+
+                return ((int) data_get($b, 'id', 0)) <=> ((int) data_get($a, 'id', 0));
+            })
+            ->values();
+    }
+
+    private function overviewSortTimestamp(object $activity): ?int
+    {
+        return $this->timestampFor(data_get($activity, 'completed_at'))
+            ?? $this->timestampFor(data_get($activity, 'updated_at'))
+            ?? $this->timestampFor(data_get($activity, 'created_at'));
+    }
+
+    private function timestampFor($value): ?int
+    {
+        if (! $value) {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->getTimestamp();
+        }
+
+        $timestamp = strtotime((string) $value);
+
+        return $timestamp === false ? null : $timestamp;
     }
 }

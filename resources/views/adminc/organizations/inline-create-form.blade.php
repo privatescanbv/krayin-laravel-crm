@@ -1,3 +1,4 @@
+@php use App\Support\AddressSupport; @endphp
 {{--
     Shared inline "Nieuwe organisatie aanmaken" form.
     Used by order-org-section and leads/common/organization-vue.
@@ -5,7 +6,8 @@
                        newOrgStreet, newOrgCity, newOrgCountry, isLookingUpAddress, showOrgForm, orgConfirmed.
     Requires Vue methods: cancelOrgForm(), confirmOrgForm(), editOrgForm(), lookupAddress().
 --}}
-<div v-if="showOrgForm" class="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
+<div v-if="showOrgForm"
+     class="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
     <p class="text-sm font-semibold text-gray-800 dark:text-white mb-3">Nieuwe organisatie aanmaken</p>
     <div class="grid grid-cols-1 gap-3">
 
@@ -13,20 +15,21 @@
         <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Naam <span class="text-red-500">*</span></label>
             <input type="text" v-model="newOrgName" placeholder="Organisatienaam"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
         </div>
 
         {{-- Postcode + Huisnummer + Lookup --}}
         <div class="flex flex-wrap gap-3 items-end">
             <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Postcode <span class="text-red-500">*</span></label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Postcode</label>
                 <input type="text" v-model="newOrgPostal" placeholder="1234 AB"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
             </div>
             <div class="flex flex-col gap-1 flex-1 min-w-[100px]">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Huisnummer <span class="text-red-500">*</span></label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Huisnummer <span
+                        class="text-red-500">*</span></label>
                 <input type="text" v-model="newOrgHouseNumber" placeholder="123"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
             </div>
             <div class="flex-shrink-0">
                 <button type="button" @click="lookupAddress" :disabled="isLookingUpAddress"
@@ -37,17 +40,21 @@
             </div>
         </div>
 
+        <p v-if="newOrgHouseNumber.trim() && !newOrgPostal.trim()" class="text-xs text-amber-700 dark:text-amber-400">
+            {{ AddressSupport::MISSING_POSTCODE_WARNING }}
+        </p>
+
         {{-- Toevoeging + Straat --}}
         <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Toevoeging</label>
                 <input type="text" v-model="newOrgSuffix" placeholder="A"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
             </div>
             <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Straat</label>
                 <input type="text" v-model="newOrgStreet" placeholder="Straatnaam"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
             </div>
         </div>
 
@@ -56,12 +63,12 @@
             <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Stad</label>
                 <input type="text" v-model="newOrgCity" placeholder="Amsterdam"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
             </div>
             <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Land</label>
                 <input type="text" v-model="newOrgCountry" placeholder="Nederland"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
             </div>
         </div>
 

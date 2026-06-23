@@ -122,6 +122,34 @@ test('test_address_is_updated_when_updating_lead', function () {
     $this->assertEquals('Nieuwe Straat 789 B, 9012 EF Den Haag, Zuid-Holland, Nederland', $updatedLead->address->full_address);
 });
 
+test('test_address_without_postal_code_is_saved_when_creating_lead', function () {
+    $leadRepository = app(LeadRepository::class);
+
+    $lead = $leadRepository->create([
+        'emails'        => [['value' => 'nopostcode@example.com', 'label' => 'Work']],
+        'phones'        => [['value' => '111111112', 'label' => 'Mobile']],
+        'entity_type'   => 'leads',
+        'department_id' => 1,
+        'address'       => [
+            'street'       => 'Buitenweg',
+            'house_number' => '12',
+            'city'         => 'Utrecht',
+            'country'      => 'Nederland',
+        ],
+    ]);
+
+    $this->assertNotNull($lead->address_id);
+    $this->assertDatabaseHas('addresses', [
+        'id'          => $lead->address_id,
+        'street'      => 'Buitenweg',
+        'house_number'=> '12',
+        'postal_code' => null,
+        'city'        => 'Utrecht',
+        'country'     => 'Nederland',
+    ]);
+    $this->assertEquals('Buitenweg 12, Utrecht, Nederland', $lead->address->full_address);
+});
+
 test('test_lead_factory_with_address', function () {
 
     // Act

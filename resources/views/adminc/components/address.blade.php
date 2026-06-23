@@ -1,3 +1,4 @@
+@php use App\Support\AddressSupport; @endphp
 {!! view_render_event('admin.address.before') !!}
 
 @props([
@@ -31,46 +32,48 @@
     $resolvedErrorNamePrefix = $errorNamePrefix ?: $resolvedNamePrefix;
 
     $resolvedAddress = $address ?? $entity?->address;
+    $showMissingPostcodeWarning = $resolvedAddress && AddressSupport::isMissingPostcode($resolvedAddress);
 @endphp
 
 <div class="flex flex-col gap-4">
     @if (!isset($hideTitle) || !$hideTitle)
-    <div class="flex items-center justify-between gap-2">
-        <p class="text-base font-semibold dark:text-white">
-            Adresgegevens
-        </p>
-        @if ((!isset($readonly) || !$readonly) && $resolvedAddress !== null)
-        <button
-            type="button"
-            id="{{ $addressId }}-clear-btn"
-            onclick="clearAddressFields('{{ $addressId }}')"
-            class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-        >
-            <span class="icon-delete text-sm"></span>
-            Adres wissen
-        </button>
-        @endif
-    </div>
+        <div class="flex items-center justify-between gap-2">
+            <p class="text-base font-semibold dark:text-white">
+                Adresgegevens
+            </p>
+            @if ((!isset($readonly) || !$readonly) && $resolvedAddress !== null)
+                <button
+                    type="button"
+                    id="{{ $addressId }}-clear-btn"
+                    onclick="clearAddressFields('{{ $addressId }}')"
+                    class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                >
+                    <span class="icon-delete text-sm"></span>
+                    Adres wissen
+                </button>
+            @endif
+        </div>
     @elseif ((!isset($readonly) || !$readonly) && $resolvedAddress !== null)
-    {{-- Title hidden but clear button still needed (e.g. clinic form with its own section header) --}}
-    <div class="flex justify-end">
-        <button
-            type="button"
-            id="{{ $addressId }}-clear-btn"
-            onclick="clearAddressFields('{{ $addressId }}')"
-            class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-        >
-            <span class="icon-delete text-sm"></span>
-            Adres wissen
-        </button>
-    </div>
+        {{-- Title hidden but clear button still needed (e.g. clinic form with its own section header) --}}
+        <div class="flex justify-end">
+            <button
+                type="button"
+                id="{{ $addressId }}-clear-btn"
+                onclick="clearAddressFields('{{ $addressId }}')"
+                class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+            >
+                <span class="icon-delete text-sm"></span>
+                Adres wissen
+            </button>
+        </div>
     @endif
 
     @if (isset($readonly) && $readonly)
         <div class="mb-4 p-3 bg-status-on_hold-bg border border-status-on_hold-border rounded-lg">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                 </svg>
                 <span class="text-sm text-status-on_hold-text font-medium">
                     Adresgegevens zijn alleen-lezen omdat er contactpersonen gekoppeld zijn aan deze lead.
@@ -98,128 +101,143 @@
         </button>
     </div>
 
+    <div
+        id="{{ $addressId }}-missing-postcode-warning"
+        @if (! $showMissingPostcodeWarning) style="display:none;" @endif
+        class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20"
+    >
+        <svg class="w-5 h-5 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+        <span class="text-sm text-amber-800 dark:text-amber-300">
+            {{ AddressSupport::MISSING_POSTCODE_WARNING }}
+        </span>
+    </div>
+
     {{-- Hidden flag: JS sets this to "1" when the user clicks "Wis adres". The backend uses it to delete the address. --}}
     <input type="hidden" name="{{ $resolvedNamePrefix }}[_clear]" value="0" id="{{ $addressId }}_clear_flag">
 
     {{-- Wrapper div: visually hidden when user clears the address (Vue controls the inputs so we use the flag above instead) --}}
     <div id="{{ $addressId }}-fields-wrapper" class="flex flex-col gap-4">
 
-    <!-- Address Lookup Panel -->
-    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
-        <div class="flex flex-wrap md:flex-nowrap gap-3">
-            <!-- Postal Code -->
-            <div class="flex-1 min-w-[150px]">
-                <x-adminc::components.field
-                    type="text"
-                    name="{{ $resolvedNamePrefix }}[postal_code]"
-                    error-name="{{ $resolvedErrorNamePrefix }}.postal_code"
-                    label="Postcode"
-                    value="{{ old($resolvedErrorNamePrefix.'.postal_code', $resolvedAddress?->postal_code ?? '') }}"
-                    placeholder="1234 AB"
-                    id="{{ $addressId }}_postal_code"
-                    :readonly="isset($readonly) && $readonly"
-                />
-            </div>
-
-            <!-- House Number -->
-            <div class="flex-1 min-w-[150px]">
-                <x-adminc::components.field
-                    type="text"
-                    name="{{ $resolvedNamePrefix }}[house_number]"
-                    error-name="{{ $resolvedErrorNamePrefix }}.house_number"
-                    label="Huisnummer"
-                    value="{{ old($resolvedErrorNamePrefix.'.house_number', $resolvedAddress?->house_number ?? '') }}"
-                    placeholder="123"
-                    id="{{ $addressId }}_house_number"
-                    :readonly="isset($readonly) && $readonly"
-                />
-            </div>
-
-            <!-- Lookup button -->
-            @if (!isset($readonly) || !$readonly)
-            <div class="flex-shrink-0 flex flex-col justify-end">
-                <div class="mb-4 flex items-end h-full">
-                    <button
-                        type="button"
-                        id="{{ $addressId }}-lookup-btn"
-                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]"
-                    >
-                        Adres opzoeken
-                    </button>
+        <!-- Address Lookup Panel -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
+            <div class="flex flex-wrap md:flex-nowrap gap-3">
+                <!-- Postal Code -->
+                <div class="flex-1 min-w-[150px]">
+                    <x-adminc::components.field
+                        type="text"
+                        name="{{ $resolvedNamePrefix }}[postal_code]"
+                        error-name="{{ $resolvedErrorNamePrefix }}.postal_code"
+                        label="Postcode"
+                        value="{{ old($resolvedErrorNamePrefix.'.postal_code', $resolvedAddress?->postal_code ?? '') }}"
+                        placeholder="1234 AB"
+                        id="{{ $addressId }}_postal_code"
+                        :readonly="isset($readonly) && $readonly"
+                    />
                 </div>
+
+                <!-- House Number -->
+                <div class="flex-1 min-w-[150px]">
+                    <x-adminc::components.field
+                        type="text"
+                        name="{{ $resolvedNamePrefix }}[house_number]"
+                        error-name="{{ $resolvedErrorNamePrefix }}.house_number"
+                        label="Huisnummer"
+                        value="{{ old($resolvedErrorNamePrefix.'.house_number', $resolvedAddress?->house_number ?? '') }}"
+                        placeholder="123"
+                        id="{{ $addressId }}_house_number"
+                        :readonly="isset($readonly) && $readonly"
+                    />
+                </div>
+
+                <!-- Lookup button -->
+                @if (!isset($readonly) || !$readonly)
+                    <div class="flex-shrink-0 flex flex-col justify-end">
+                        <div class="mb-4 flex items-end h-full">
+                            <button
+                                type="button"
+                                id="{{ $addressId }}-lookup-btn"
+                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]"
+                            >
+                                Adres opzoeken
+                            </button>
+                        </div>
+                    </div>
+                @endif
             </div>
-            @endif
         </div>
-    </div>
 
 
-    <!-- Address Details -->
-    <div class="grid grid-cols-2 gap-4">
-        <!-- Street -->
-        <x-adminc::components.field
-            type="text"
-            name="{{ $resolvedNamePrefix }}[street]"
-            error-name="{{ $resolvedErrorNamePrefix }}.street"
-            label="Straat"
-            value="{{ old($resolvedErrorNamePrefix.'.street', $resolvedAddress?->street ?? '') }}"
-            placeholder="Straatnaam"
-            id="{{ $addressId }}_street"
-            :readonly="isset($readonly) && $readonly"
-        />
+        <!-- Address Details -->
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Street -->
+            <x-adminc::components.field
+                type="text"
+                name="{{ $resolvedNamePrefix }}[street]"
+                error-name="{{ $resolvedErrorNamePrefix }}.street"
+                label="Straat"
+                value="{{ old($resolvedErrorNamePrefix.'.street', $resolvedAddress?->street ?? '') }}"
+                placeholder="Straatnaam"
+                id="{{ $addressId }}_street"
+                :readonly="isset($readonly) && $readonly"
+            />
 
-        <!-- House Number Suffix -->
-        <x-adminc::components.field
-            type="text"
-            name="{{ $resolvedNamePrefix }}[house_number_suffix]"
-            error-name="{{ $resolvedErrorNamePrefix }}.house_number_suffix"
-            label="Toevoeging"
-            value="{{ old($resolvedErrorNamePrefix.'.house_number_suffix', $resolvedAddress?->house_number_suffix ?? '') }}"
-            placeholder="A, 1e verdieping, etc."
-            id="{{ $addressId }}_house_number_suffix"
-            :readonly="isset($readonly) && $readonly"
-        />
+            <!-- House Number Suffix -->
+            <x-adminc::components.field
+                type="text"
+                name="{{ $resolvedNamePrefix }}[house_number_suffix]"
+                error-name="{{ $resolvedErrorNamePrefix }}.house_number_suffix"
+                label="Toevoeging"
+                value="{{ old($resolvedErrorNamePrefix.'.house_number_suffix', $resolvedAddress?->house_number_suffix ?? '') }}"
+                placeholder="A, 1e verdieping, etc."
+                id="{{ $addressId }}_house_number_suffix"
+                :readonly="isset($readonly) && $readonly"
+            />
 
-        <!-- City -->
-        <x-adminc::components.field
-            type="text"
-            name="{{ $resolvedNamePrefix }}[city]"
-            error-name="{{ $resolvedErrorNamePrefix }}.city"
-            label="Stad"
-            value="{{ old($resolvedErrorNamePrefix.'.city', $resolvedAddress?->city ?? '') }}"
-            placeholder="Amsterdam"
-            id="{{ $addressId }}_city"
-            :readonly="isset($readonly) && $readonly"
-        />
+            <!-- City -->
+            <x-adminc::components.field
+                type="text"
+                name="{{ $resolvedNamePrefix }}[city]"
+                error-name="{{ $resolvedErrorNamePrefix }}.city"
+                label="Stad"
+                value="{{ old($resolvedErrorNamePrefix.'.city', $resolvedAddress?->city ?? '') }}"
+                placeholder="Amsterdam"
+                id="{{ $addressId }}_city"
+                :readonly="isset($readonly) && $readonly"
+            />
 
-        <!-- State -->
-        <x-adminc::components.field
-            type="text"
-            name="{{ $resolvedNamePrefix }}[state]"
-            error-name="{{ $resolvedErrorNamePrefix }}.state"
-            label="Provincie"
-            value="{{ old($resolvedErrorNamePrefix.'.state', $resolvedAddress?->state ?? '') }}"
-            placeholder="Noord-Holland"
-            id="{{ $addressId }}_state"
-            :readonly="isset($readonly) && $readonly"
-        />
+            <!-- State -->
+            <x-adminc::components.field
+                type="text"
+                name="{{ $resolvedNamePrefix }}[state]"
+                error-name="{{ $resolvedErrorNamePrefix }}.state"
+                label="Provincie"
+                value="{{ old($resolvedErrorNamePrefix.'.state', $resolvedAddress?->state ?? '') }}"
+                placeholder="Noord-Holland"
+                id="{{ $addressId }}_state"
+                :readonly="isset($readonly) && $readonly"
+            />
 
-        <!-- Country -->
-        <x-adminc::components.field
-            class="col-span-2"
-            type="text"
-            name="{{ $resolvedNamePrefix }}[country]"
-            error-name="{{ $resolvedErrorNamePrefix }}.country"
-            label="Land"
-            value="{{ old($resolvedErrorNamePrefix.'.country', $resolvedAddress?->country ?? '') }}"
-            placeholder="Nederland"
-            id="{{ $addressId }}_country"
-            :readonly="isset($readonly) && $readonly"
-        />
-    </div>
+            <!-- Country -->
+            <x-adminc::components.field
+                class="col-span-2"
+                type="text"
+                name="{{ $resolvedNamePrefix }}[country]"
+                error-name="{{ $resolvedErrorNamePrefix }}.country"
+                label="Land"
+                value="{{ old($resolvedErrorNamePrefix.'.country', $resolvedAddress?->country ?? '') }}"
+                placeholder="Nederland"
+                id="{{ $addressId }}_country"
+                :readonly="isset($readonly) && $readonly"
+            />
+        </div>
 
-    <v-address-preview
-        :address='@json($resolvedAddress ?? new stdClass())'
-    ></v-address-preview>
+        <v-address-preview
+            :address='@json($resolvedAddress ?? new stdClass())'
+        ></v-address-preview>
 
     </div>{{-- end #{{ $addressId }}-fields-wrapper --}}
 </div>
@@ -259,6 +277,10 @@
 
                     if (this.address.postal_code && this.address.city) {
                         parts.push(this.address.postal_code + ' ' + this.address.city);
+                    } else if (this.address.city) {
+                        parts.push(this.address.city);
+                    } else if (this.address.postal_code) {
+                        parts.push(this.address.postal_code);
                     }
 
                     if (this.address.state) {
@@ -278,6 +300,54 @@
     <script>
         // Global config store (multiple address components per page)
         window.addressComponents = window.addressComponents || {};
+
+        function updateMissingPostcodeWarning(addressId) {
+            const warning = document.getElementById(addressId + '-missing-postcode-warning');
+            if (!warning) {
+                return;
+            }
+
+            const fieldIds = [
+                addressId + '_postal_code',
+                addressId + '_house_number',
+                addressId + '_street',
+                addressId + '_city',
+                addressId + '_country',
+            ];
+
+            const values = fieldIds.map((id) => {
+                const el = document.getElementById(id);
+                return el ? el.value.trim() : '';
+            });
+
+            const [postalCode, houseNumber, street, city, country] = values;
+            const hasAddressData = [houseNumber, street, city, country].some((value) => value !== '');
+            const showWarning = hasAddressData && postalCode === '';
+
+            warning.style.display = showWarning ? '' : 'none';
+        }
+
+        function initializeMissingPostcodeWarning(addressId) {
+            const fieldIds = [
+                addressId + '_postal_code',
+                addressId + '_house_number',
+                addressId + '_street',
+                addressId + '_city',
+                addressId + '_country',
+            ];
+
+            fieldIds.forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el || el.hasAttribute('data-postcode-warning-bound')) {
+                    return;
+                }
+
+                el.setAttribute('data-postcode-warning-bound', '1');
+                el.addEventListener('input', () => updateMissingPostcodeWarning(addressId));
+            });
+
+            updateMissingPostcodeWarning(addressId);
+        }
 
         function clearAddressFields(addressId) {
             // Set the hidden flag — the backend will use this to delete the address.
@@ -320,7 +390,7 @@
 
             if (button && !button.hasAttribute('data-lookup-initialized')) {
                 button.setAttribute('data-lookup-initialized', 'true');
-                button.addEventListener('click', function(e) {
+                button.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -378,21 +448,21 @@
                                 if (street) {
                                     street.value = data.street || '';
                                     // Trigger input event to notify any listeners
-                                    street.dispatchEvent(new Event('input', { bubbles: true }));
+                                    street.dispatchEvent(new Event('input', {bubbles: true}));
                                 }
                                 if (city) {
                                     city.value = data.city || '';
                                     // Trigger input event to notify any listeners
-                                    city.dispatchEvent(new Event('input', { bubbles: true }));
+                                    city.dispatchEvent(new Event('input', {bubbles: true}));
                                 }
                                 if (state) {
                                     state.value = data.state || '';
                                     // Trigger input event to notify any listeners
-                                    state.dispatchEvent(new Event('input', { bubbles: true }));
+                                    state.dispatchEvent(new Event('input', {bubbles: true}));
                                 }
                                 if (country) {
                                     country.value = data.country || 'Nederland';
-                                    country.dispatchEvent(new Event('input', { bubbles: true }));
+                                    country.dispatchEvent(new Event('input', {bubbles: true}));
                                 }
                             } else {
                                 alert(data.message || 'Adres niet gevonden.');
@@ -421,22 +491,31 @@
                 const buttonId = button.id;
                 const addressId = buttonId.replace('-lookup-btn', '');
                 initializeAddressLookupButton(addressId);
+                initializeMissingPostcodeWarning(addressId);
+            });
+        }
+
+        function initializeAllMissingPostcodeWarnings() {
+            document.querySelectorAll('[id$="-missing-postcode-warning"]').forEach(function (warning) {
+                const addressId = warning.id.replace('-missing-postcode-warning', '');
+                initializeMissingPostcodeWarning(addressId);
             });
         }
 
         // Initialize on DOM ready
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Wait a bit for all elements to be loaded
-            setTimeout(function() {
+            setTimeout(function () {
                 initializeAllAddressLookupButtons();
+                initializeAllMissingPostcodeWarnings();
             }, 100);
         });
 
         // Also initialize when the organization form is shown
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target && e.target.id === 'add-organization-btn') {
                 // Wait a bit for the form to be shown
-                setTimeout(function() {
+                setTimeout(function () {
                     // Ensure the address component config exists
                     if (!window.addressComponents['new_org_address']) {
                         window.addressComponents['new_org_address'] = {
@@ -455,8 +534,9 @@
         });
 
         // Fallback: try to initialize all address buttons periodically
-        setInterval(function() {
+        setInterval(function () {
             initializeAllAddressLookupButtons();
+            initializeAllMissingPostcodeWarnings();
         }, 1000);
     </script>
 @endPushOnce

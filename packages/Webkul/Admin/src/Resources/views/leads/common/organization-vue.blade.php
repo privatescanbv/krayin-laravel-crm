@@ -117,10 +117,6 @@ app.component('v-organization', {
                 alert('Vul een organisatienaam in.');
                 return;
             }
-            if (!this.newOrgPostal.trim()) {
-                alert('Vul een postcode in.');
-                return;
-            }
             if (!this.newOrgHouseNumber.trim()) {
                 alert('Vul een huisnummer in.');
                 return;

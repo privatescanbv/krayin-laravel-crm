@@ -526,6 +526,46 @@ test('address variables resolve to particulier contactpersoon address', function
     expect($decoded)->toMatch('/Dorpsstraat 10 A.*?1234 AB Amsterdam.*?Nederland/s');
 });
 
+test('address variables render partial address when postal code is missing', function () {
+    $address = Address::factory()->create([
+        'street'       => 'Buitenweg',
+        'house_number' => '5',
+        'postal_code'  => null,
+        'city'         => 'Utrecht',
+        'country'      => 'Nederland',
+    ]);
+
+    $person = Person::factory()->create(['address_id' => $address->id]);
+    $salesLead = SalesLead::factory()->create(['contact_person_id' => $person->id]);
+    $order = Order::factory()->create([
+        'sales_lead_id' => $salesLead->id,
+        'is_business'   => false,
+    ]);
+
+    $template = EmailTemplate::factory()->create([
+        'name'     => 'adres-zonder-postcode',
+        'code'     => 'adres-zonder-postcode',
+        'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
+        'language' => EmailTemplateLanguage::NEDERLANDS->value,
+        'subject'  => 'Test',
+        'content'  => '{{ address_line1 }} | {{ address_line2 }} | {{ address_full }}',
+    ]);
+
+    $response = $this->postJson(route('admin.mail.template_content_body'), [
+        'email_template_identifier' => 'adres-zonder-postcode',
+        'entities'                  => ['order' => $order->id],
+    ]);
+
+    $response->assertStatus(200);
+    $content = $response->json('data.content');
+
+    expect($content)
+        ->toContain('Buitenweg 5')
+        ->toContain('Utrecht')
+        ->not->toContain('Geen adres bekend')
+        ->not->toContain('{{ address_full }}');
+});
+
 test('address variables resolve to specific person address when person entity passed with order', function () {
     $address = Address::factory()->create([
         'street'       => 'Kerkstraat',
@@ -711,7 +751,7 @@ test('address variables are empty strings when no address is set', function () {
         'type'     => EmailTemplateType::ORDER_APPOINTMENT_CONFIRMATION->value,
         'language' => EmailTemplateLanguage::NEDERLANDS->value,
         'subject'  => 'Test',
-        'content'  => 'Adres: [{{ address_line1 }}] Stad: [{{ address_city }}]',
+        'content'  => 'Adres: [{{ address_line1 }}] Stad: [{{ address_city }}] Volledig: {{ address_full }}',
     ]);
 
     $response = $this->postJson(route('admin.mail.template_content_body'), [
@@ -725,6 +765,7 @@ test('address variables are empty strings when no address is set', function () {
     expect($content)
         ->toContain('Adres: []')
         ->toContain('Stad: []')
+        ->toContain('Geen adres bekend')
         ->not->toContain('{{ address_line1 }}')
         ->not->toContain('{{ address_city }}');
 });

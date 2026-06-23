@@ -81,10 +81,9 @@ class AddressRepository extends Repository
             return $existing->fresh();
         }
 
-        // For new addresses, require minimum fields for a valid payload
+        // For new addresses, require at least house number (DB NOT NULL column).
         $houseNumber = isset($addressData['house_number']) ? trim((string) $addressData['house_number']) : '';
-        $postalCode = isset($addressData['postal_code']) ? trim((string) $addressData['postal_code']) : '';
-        if ($houseNumber === '' || $postalCode === '') {
+        if ($houseNumber === '') {
             return null;
         }
 

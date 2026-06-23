@@ -79,7 +79,22 @@ test('absent address block passes validation (address is optional)', function ()
 // Failure path: partial address triggers required_with
 // ---------------------------------------------------------------------------
 
-test('only postal_code filled makes house_number, street, city, country required', function () {
+test('complete address without postal code passes validation', function () {
+    $data = [
+        'address' => [
+            'house_number' => '10',
+            'street'       => 'Teststraat',
+            'city'         => 'Amsterdam',
+            'country'      => 'Nederland',
+        ],
+    ];
+
+    $validator = Validator::make($data, ContactValidationRules::strictAddressRules());
+
+    expect($validator->passes())->toBeTrue();
+});
+
+test('only postal_code filled passes validation because postcode is optional', function () {
     $data = [
         'address' => [
             'postal_code' => '1234AB',
@@ -88,16 +103,25 @@ test('only postal_code filled makes house_number, street, city, country required
 
     $validator = Validator::make($data, ContactValidationRules::strictAddressRules());
 
+    expect($validator->passes())->toBeTrue();
+});
+
+test('only house_number filled makes street, city, country required', function () {
+    $data = [
+        'address' => [
+            'house_number' => '10',
+        ],
+    ];
+
+    $validator = Validator::make($data, ContactValidationRules::strictAddressRules());
+
     expect($validator->fails())->toBeTrue();
 
     $errors = $validator->errors();
-    expect($errors->has('address.house_number'))->toBeTrue();
     expect($errors->has('address.street'))->toBeTrue();
     expect($errors->has('address.city'))->toBeTrue();
     expect($errors->has('address.country'))->toBeTrue();
-    // Optional fields must NOT appear in errors
-    expect($errors->has('address.state'))->toBeFalse();
-    expect($errors->has('address.house_number_suffix'))->toBeFalse();
+    expect($errors->has('address.postal_code'))->toBeFalse();
 });
 
 test('missing city and country fails when other required fields are filled', function () {
@@ -147,8 +171,7 @@ test('missing only country fails when other required fields are filled', functio
 test('required_with error messages are in Dutch', function () {
     $data = [
         'address' => [
-            'postal_code' => '1234AB',
-            // all others missing → each should produce its custom Dutch message
+            'house_number' => '10',
         ],
     ];
 
@@ -156,7 +179,6 @@ test('required_with error messages are in Dutch', function () {
 
     $errors = $validator->errors();
 
-    expect($errors->first('address.house_number'))->toBe('Huisnummer is verplicht als je een adres invult.');
     expect($errors->first('address.street'))->toBe('Straat is verplicht als je een adres invult.');
     expect($errors->first('address.city'))->toBe('Stad is verplicht als je een adres invult.');
     expect($errors->first('address.country'))->toBe('Land is verplicht als je een adres invult.');

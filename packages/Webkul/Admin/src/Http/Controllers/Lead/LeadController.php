@@ -594,7 +594,7 @@ class LeadController extends Controller
 
     /**
      * Address rules match the edit-flow "Contact aanmaken" action:
-     * only include address when at least house_number + postal_code are present.
+     * only include address when at least house_number is present.
      */
     private function buildPersonAddressPayloadFromLeadRequest(LeadForm $request): ?array
     {
@@ -615,8 +615,8 @@ class LeadController extends Controller
             'country' => $toString($address['country'] ?? ''),
         ];
 
-        // Address creation requires at least house number and postal code.
-        if ($payload['house_number'] === '' || $payload['postal_code'] === '') {
+        // Address creation requires at least house number.
+        if ($payload['house_number'] === '') {
             return null;
         }
 

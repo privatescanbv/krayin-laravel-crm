@@ -658,8 +658,8 @@
                           country: toString(source.country)
                       };
 
-                      // Address creation requires at least house number and postal code
-                      if (!payload.house_number || !payload.postal_code) {
+                      // Address creation requires at least house number.
+                      if (!payload.house_number) {
                           return null;
                       }
 

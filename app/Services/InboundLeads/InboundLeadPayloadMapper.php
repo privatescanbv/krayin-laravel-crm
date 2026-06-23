@@ -115,16 +115,20 @@ class InboundLeadPayloadMapper
         $houseNumber = $this->nullIfEmpty($payload['primary_huisnr_c'] ?? null);
         $postalCode = $this->nullIfEmpty($payload['primary_address_postalcode'] ?? null);
 
-        // AddressRepository will ignore partial addresses; only pass when meaningful.
-        if ($houseNumber === null || $postalCode === null) {
+        if ($houseNumber === null) {
             return [];
         }
 
-        return [
+        $address = [
             'house_number'        => $houseNumber,
             'house_number_suffix' => $this->nullIfEmpty($payload['primary_huisnr_toevoeging_c'] ?? null),
-            'postal_code'         => $postalCode,
         ];
+
+        if ($postalCode !== null) {
+            $address['postal_code'] = $postalCode;
+        }
+
+        return $address;
     }
 
     private function buildPrivatescanDescription(array $payload): ?string

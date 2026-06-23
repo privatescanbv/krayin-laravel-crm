@@ -286,11 +286,12 @@
             {!! view_render_event('admin.components.activities.content.activity.item.description.before') !!}
 
             <!-- Activity Description -->
-            <p class="dark:text-white" v-if="activity.comment">
-                <span v-if="activity.type === 'email'">
-                    @{{ truncateHtmlASSummary(activity.comment, 350) }}
-                </span>
-{{--                <span v-else v-safe-html="activity.comment"></span>--}}
+            <p
+                class="truncate text-sm leading-5 text-gray-600 dark:text-gray-300"
+                v-if="activity.comment"
+                :title="activitySummaryText(activity.comment)"
+            >
+                @{{ activitySummaryText(activity.comment) }}
             </p>
 
             <!-- Actions timeline (task + call) -->
@@ -300,7 +301,7 @@
                          class="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                         <span class="shrink-0 mt-px text-sm"
                               :class="getActionIconClass(a)"></span>
-                        <span class="truncate min-w-0">
+                        <span class="min-w-0 truncate" :title="a.label">
                             @{{ $admin.formatDate(a.date_full, 'd MMM HH:mm', timezone) }} ·
                             <strong class="font-semibold text-gray-600 dark:text-gray-300">@{{ a.creator }}</strong>:
                             @{{ a.label }}

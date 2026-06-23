@@ -18,7 +18,11 @@ class ActivityActionController extends Controller
 
     public function store(Request $request, int $activityId): JsonResponse
     {
-        $this->activityRepository->findOrFail($activityId);
+        $activity = $this->activityRepository->findOrFail($activityId);
+
+        if ($activity->is_done) {
+            return $this->completedActivityResponse();
+        }
 
         $validated = $request->validate([
             'type'            => 'required|in:notitie,belstatus',
@@ -52,7 +56,6 @@ class ActivityActionController extends Controller
 
         // Apply reschedule when belstatus
         if ($rescheduleDays !== null) {
-            $activity = $this->activityRepository->findOrFail($activityId);
             $originalFrom = $activity->schedule_from;
             $originalTo   = $activity->schedule_to;
 
@@ -98,6 +101,12 @@ class ActivityActionController extends Controller
 
     public function destroy(int $activityId, int $actionId): JsonResponse
     {
+        $activity = $this->activityRepository->findOrFail($activityId);
+
+        if ($activity->is_done) {
+            return $this->completedActivityResponse();
+        }
+
         $action = ActivityAction::where('activity_id', $activityId)->findOrFail($actionId);
 
         if ($action->created_by !== auth()->guard('user')->id()) {
@@ -126,5 +135,12 @@ class ActivityActionController extends Controller
         }
 
         return $activity->lead?->findDefaultEmail();
+    }
+
+    private function completedActivityResponse(): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Deze activiteit is afgerond. Heropen de activiteit om acties te wijzigen.',
+        ], 422);
     }
 }

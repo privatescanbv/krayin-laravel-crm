@@ -8,6 +8,7 @@ use App\Enums\PipelineStage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\OrderNumberGenerator;
+use App\Services\OrderRefundService;
 use App\Services\OrderStatusService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class OrderObserver
         private readonly OrderStatusService $orderStatusService,
         private readonly OrderNumberGenerator $orderNumberGenerator,
         private readonly ActivityRepository $activityRepository,
+        private readonly OrderRefundService $orderRefundService,
     ) {}
 
     public function creating(Order $order): void
@@ -80,6 +82,7 @@ class OrderObserver
                 ->update(['status' => OrderItemStatus::LOST->value]);
             DB::table('resource_orderitem')->whereIn('orderitem_id', $orderItemIds)->delete();
             $order->recalculateTotalPrice();
+            $this->orderRefundService->createRefundIfSurplus($order, auth()->id());
         }
 
         $this->logFieldChanges($order);

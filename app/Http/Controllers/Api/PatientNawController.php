@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Address;
 use App\Services\ContactValidationRules;
 use App\Services\Keycloak\KeycloakService;
+use App\Support\AddressSupport;
 use App\Support\EmailNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -149,6 +150,7 @@ class PatientNawController extends Controller
                 'state'               => $address->state,
                 'country'             => $address->country,
             ] : null,
+            'address_warnings'    => AddressSupport::warnings($address),
         ];
     }
 }

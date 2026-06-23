@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\ActivityActionType;
 use App\Enums\ActivityType;
+use App\Models\ActivityAction;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
@@ -115,6 +117,57 @@ test('saleslead child order activity has entity_source with type order and url',
     expect($item['entity_source']['type'])->toBe('order')
         ->and($item['entity_source']['label'])->toStartWith('Order:')
         ->and($item['entity_source']['url'])->toContain((string) $order->id);
+});
+
+test('saleslead completed activities are ordered by completed date', function () {
+    $salesLead = SalesLead::factory()->create();
+
+    makeActivity([
+        'sales_lead_id' => $salesLead->id,
+        'title'         => 'Older completed activity',
+        'is_done'       => 1,
+        'completed_at'  => now()->subDays(3),
+    ]);
+
+    makeActivity([
+        'sales_lead_id' => $salesLead->id,
+        'title'         => 'Newest completed activity',
+        'is_done'       => 1,
+        'completed_at'  => now()->subHour(),
+    ]);
+
+    $response = $this->getJson(route('admin.sales-leads.activities.index', $salesLead->id));
+    $response->assertOk();
+
+    expect(collect($response->json('data'))->pluck('title')->take(2)->all())
+        ->toBe([
+            'Newest completed activity',
+            'Older completed activity',
+        ]);
+});
+
+test('activity resource keeps full action labels for browser truncation', function () {
+    $salesLead = SalesLead::factory()->create();
+    $activity = makeActivity([
+        'sales_lead_id' => $salesLead->id,
+        'type'          => ActivityType::TASK->value,
+        'title'         => 'Task with long action',
+    ]);
+
+    $body = 'Wij gaan de operatie inplannen voor 9 juli en publiceren daarna alle praktische informatie voor de patient.';
+    ActivityAction::create([
+        'activity_id' => $activity->id,
+        'type'        => ActivityActionType::Notitie->value,
+        'body'        => $body,
+        'created_by'  => getDefaultAdmin()->id,
+    ]);
+
+    $response = $this->getJson(route('admin.sales-leads.activities.index', $salesLead->id));
+    $response->assertOk();
+
+    $item = collect($response->json('data'))->firstWhere('title', 'Task with long action');
+
+    expect($item['actions'][0]['label'])->toBe($body);
 });
 
 // ── Lead ───────────────────────────────────────────────────────────────────

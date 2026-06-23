@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
 use App\Services\OrderCheckService;
+use App\Services\OrderRefundService;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Contact\Models\Person;
@@ -15,6 +16,7 @@ class OrderItemObserver
     public function __construct(
         protected OrderCheckService $orderCheckService,
         private readonly ActivityRepository $activityRepository,
+        private readonly OrderRefundService $orderRefundService,
     ) {}
 
     /**
@@ -47,6 +49,12 @@ class OrderItemObserver
 
         if ($orderItem->wasChanged('status') || $orderItem->wasChanged('total_price')) {
             $orderItem->order?->recalculateTotalPrice();
+        }
+
+        if ($orderItem->wasChanged('status') && $orderItem->status === OrderItemStatus::LOST) {
+            if ($order = $orderItem->order) {
+                $this->orderRefundService->createRefundIfSurplus($order, auth()->id());
+            }
         }
 
         // After updating an order item, check if we need to update the parent order status

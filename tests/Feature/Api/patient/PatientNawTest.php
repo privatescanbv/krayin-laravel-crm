@@ -403,7 +403,7 @@ it('returns 422 when creating address without house_number', function () {
     $response->assertJsonValidationErrors(['address.house_number']);
 });
 
-it('returns 422 when creating address without postal_code', function () {
+it('allows creating address without postal_code', function () {
     $keycloakUserId = (string) Str::uuid();
     Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
 
@@ -414,11 +414,14 @@ it('returns 422 when creating address without postal_code', function () {
                 'street'       => 'Kerkstraat',
                 'house_number' => '5',
                 'city'         => 'Utrecht',
+                'country'      => 'Nederland',
             ],
         ]);
 
-    $response->assertUnprocessable();
-    $response->assertJsonValidationErrors(['address.postal_code']);
+    $response->assertOk();
+    $response->assertJsonPath('address.city', 'Utrecht');
+    $response->assertJsonPath('address.postal_code', null);
+    $response->assertJsonPath('address_warnings', ['missing_postcode']);
 });
 
 it('allows updating existing address without house_number', function () {

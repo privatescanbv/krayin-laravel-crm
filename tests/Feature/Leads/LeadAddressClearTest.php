@@ -142,6 +142,32 @@ test('clearing all address fields with _clear=0 (form default) deletes the addre
     $this->assertDatabaseMissing('addresses', ['id' => $originalAddressId]);
 });
 
+test('clearing postal_code on existing address stores null', function () {
+    $address = Address::factory()->create([
+        'street'       => 'Teststraat',
+        'house_number' => '10',
+        'postal_code'  => '1234AB',
+        'city'         => 'Amsterdam',
+        'country'      => 'Nederland',
+    ]);
+    $lead = Lead::factory()->create(['address_id' => $address->id]);
+
+    $this->addressRepository->upsertForEntity($lead, [
+        'street'       => 'Teststraat',
+        'house_number' => '10',
+        'postal_code'  => '',
+        'city'         => 'Amsterdam',
+        'country'      => 'Nederland',
+    ]);
+
+    $this->assertDatabaseHas('addresses', [
+        'id'          => $address->id,
+        'house_number'=> '10',
+        'postal_code' => null,
+        'city'        => 'Amsterdam',
+    ]);
+});
+
 test('_clear flag 1 when lead has no address does nothing and returns null', function () {
     $lead = Lead::factory()->create(['address_id' => null]);
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Support\AddressSupport;
 use App\Validators\ContactArrayValidator;
 use App\Validators\DateValidator;
 use Illuminate\Validation\Rule;
@@ -111,18 +112,12 @@ class ContactValidationRules
      */
     public static function strictAddressRules(string $prefix = 'address'): array
     {
-        $required = [
-            "{$prefix}.postal_code",
-            "{$prefix}.house_number",
-            "{$prefix}.street",
-            "{$prefix}.city",
-            "{$prefix}.country",
-        ];
+        $required = AddressSupport::strictRequiredFieldKeys($prefix);
 
         $others = fn (string $field) => implode(',', array_filter($required, fn ($f) => $f !== $field));
 
         return [
-            "{$prefix}.postal_code"         => ['required_with:'.$others("{$prefix}.postal_code"), 'nullable', 'string', 'max:20'],
+            "{$prefix}.postal_code"         => 'nullable|string|max:20',
             "{$prefix}.house_number"        => ['required_with:'.$others("{$prefix}.house_number"), 'nullable', 'string', 'max:20'],
             "{$prefix}.house_number_suffix" => 'nullable|string|max:20',
             "{$prefix}.street"              => ['required_with:'.$others("{$prefix}.street"), 'nullable', 'string', 'max:255'],
@@ -144,9 +139,6 @@ class ContactValidationRules
             'address.house_number' => $isNewAddress
                 ? ['required_with:address', 'string', 'max:50']
                 : ['nullable', 'string', 'max:50'],
-            'address.postal_code'  => $isNewAddress
-                ? ['required_with:address', 'string', 'max:20']
-                : ['nullable', 'string', 'max:20'],
         ]);
     }
 

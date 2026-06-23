@@ -1,4 +1,4 @@
-@php use App\Enums\PipelineStage; use App\Services\Afb\AfbDispatchService; @endphp
+@php use App\Enums\PaymentType;use App\Enums\PipelineStage; use App\Services\Afb\AfbDispatchService; @endphp
 @props([
     'order',
     'afbNeedsManualBanner' => false,
@@ -18,7 +18,8 @@
                     <p class="text-amber-900/90 dark:text-amber-100/90">
                         Het eerste onderzoek
                         @if ($order->firstExaminationCarbon())
-                            ({{ $order->firstExaminationCarbon()?->timezone(config('app.timezone'))->format('d-m-Y H:i') }})
+                            ({{ $order->firstExaminationCarbon()?->timezone(config('app.timezone'))->format('d-m-Y H:i') }}
+                            )
                         @endif
                         staat gepland, maar de batch-deadline (de dag vóór het onderzoek om
                         {{ AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR }}:00) is verstreken.
@@ -39,10 +40,10 @@
                 </div>
                 <div class="flex flex-col gap-2 shrink-0">
                     <v-order-afb-send-button send-url="{{ $afbSendUrl }}"></v-order-afb-send-button>
-{{--                    <a href="{{ route('admin.orders.afb_send', $order->id) }}"--}}
-{{--                       class="secondary-button text-center text-xs whitespace-nowrap">--}}
-{{--                        Email samenstellen--}}
-{{--                    </a>--}}
+                    {{--                    <a href="{{ route('admin.orders.afb_send', $order->id) }}"--}}
+                    {{--                       class="secondary-button text-center text-xs whitespace-nowrap">--}}
+                    {{--                        Email samenstellen--}}
+                    {{--                    </a>--}}
                 </div>
             </div>
         </div>
@@ -76,7 +77,8 @@
                             @if ($confirmProgress['confirmed'] >= $confirmProgress['total'])
                                 <span class="mr-1 text-green-600">&#10003;</span>Afspraak bevestigd
                             @else
-                                Afspraak bevestigen ({{ $confirmProgress['confirmed'] }}/{{ $confirmProgress['total'] }})
+                                Afspraak bevestigen ({{ $confirmProgress['confirmed'] }}/{{ $confirmProgress['total'] }}
+                                )
                             @endif
                         @else
                             Afspraak bevestigen
@@ -151,8 +153,9 @@
             @if ($checksTotal > 0)
                 {{-- Progress bar --}}
                 <div class="mb-3 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div class="h-2 rounded-full transition-all duration-300 {{ $checksAllDone ? 'bg-green-500' : 'bg-brandColor' }}"
-                         style="width: {{ $checksPct }}%"></div>
+                    <div
+                        class="h-2 rounded-full transition-all duration-300 {{ $checksAllDone ? 'bg-green-500' : 'bg-brandColor' }}"
+                        style="width: {{ $checksPct }}%"></div>
                 </div>
 
                 {{-- Open check items only --}}
@@ -211,13 +214,22 @@
                     @endif
                 </span>
             </div>
-            <div class="flex flex-col">
+            <div class="flex flex-col gap-1">
                 <span class="text-gray-500 dark:text-gray-400">Betaling klant</span>
-                @php $paymentStatus = $order->paymentStatus(); @endphp
+                @php
+                    $paymentStatus  = $order->paymentStatus();
+                    $pendingRefund  = $order->payments->where('type', PaymentType::REFUND)->whereNull('paid_at')->sum('amount');
+                @endphp
                 <span
                     class="inline-flex w-fit items-center px-2 py-0.5 text-xs font-medium rounded-full {{ $paymentStatus->badgeClass() }}">
                     {{ $paymentStatus->label() }}
                 </span>
+                @if($pendingRefund > 0)
+                    <span
+                        class="inline-flex w-fit items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                        <span>&#8593;</span> Terugbetalen &euro;&nbsp;{{ number_format($pendingRefund, 2, ',', '.') }}
+                    </span>
+                @endif
             </div>
             {{-- Inkoopprijs links, Inkoop status rechts --}}
             <div class="flex flex-col">
@@ -238,11 +250,11 @@
                 <span class="text-gray-500 dark:text-gray-400">Eerste onderzoek</span>
                 <span class="font-medium text-gray-800 dark:text-white">
                     {{ $order->firstExaminationCarbon()?->format('d-m-Y H:i') ?? '-' }}
-{{--                    @if ($order->hasFirstExaminationOverride())--}}
-{{--                        <span class="text-xs text-gray-400 dark:text-gray-500">--}}
-{{--                            Berekend: {{ $order->earliestScheduledResourceSlotStart()?->format('d-m-Y H:i') }}--}}
-{{--                        </span>--}}
-{{--                    @endif--}}
+                    {{--                    @if ($order->hasFirstExaminationOverride())--}}
+                    {{--                        <span class="text-xs text-gray-400 dark:text-gray-500">--}}
+                    {{--                            Berekend: {{ $order->earliestScheduledResourceSlotStart()?->format('d-m-Y H:i') }}--}}
+                    {{--                        </span>--}}
+                    {{--                    @endif--}}
                 </span>
             </div>
 
@@ -268,17 +280,17 @@
             </div>
 
             @if($order->is_business)
-            <div class="flex flex-col col-span-2">
-                <span class="text-gray-500 dark:text-gray-400">Organisatie</span>
-                @if($order->organization)
-                    <a href="{{ route('admin.contacts.organizations.view', $order->organization->id) }}"
-                       class="font-medium text-brandColor hover:underline">
-                        {{ $order->organization->name }}
-                    </a>
-                @else
-                    <span class="font-medium text-red-600 dark:text-red-400">Niet ingesteld</span>
-                @endif
-            </div>
+                <div class="flex flex-col col-span-2">
+                    <span class="text-gray-500 dark:text-gray-400">Organisatie</span>
+                    @if($order->organization)
+                        <a href="{{ route('admin.contacts.organizations.view', $order->organization->id) }}"
+                           class="font-medium text-brandColor hover:underline">
+                            {{ $order->organization->name }}
+                        </a>
+                    @else
+                        <span class="font-medium text-red-600 dark:text-red-400">Niet ingesteld</span>
+                    @endif
+                </div>
             @endif
         </div>
     </div>
@@ -308,7 +320,8 @@
         @endphp
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
             @if ($isHerniapoli)
-                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                <span
+                    class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                     Niet van toepassing — Herniapoli orders ontvangen geen AFB
                 </span>
             @elseif ($afbNeedsManualSending)

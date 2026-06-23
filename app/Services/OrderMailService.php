@@ -7,6 +7,7 @@ use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Repositories\OrderRepository;
+use App\Support\AddressSupport;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
@@ -191,37 +192,7 @@ class OrderMailService
 
     protected function buildAddressVariables(?Address $address): array
     {
-        if (! $address) {
-            return array_fill_keys([
-                'address_street', 'address_house_number', 'address_house_number_suffix',
-                'address_postal_code', 'address_city', 'address_state', 'address_country',
-                'address_line1', 'address_line2', 'address_full',
-            ], '');
-        }
-
-        $suffix = $address->house_number_suffix ? ' '.$address->house_number_suffix : '';
-        $line1 = trim(($address->street ?? '').' '.($address->house_number ?? '').$suffix);
-        $postalFormatted = $this->formatPostalCodeForDisplay($address->postal_code ?? '');
-        $line2 = trim($postalFormatted.' '.($address->city ?? ''));
-        $line3 = trim((string) ($address->country ?? ''));
-        $fullLines = array_values(array_filter([$line1, $line2, $line3], fn (string $s): bool => $s !== ''));
-        $addressFull = implode('', array_map(
-            static fn (string $s): string => '<span style="display:block;">'.e($s).'</span>',
-            $fullLines,
-        ));
-
-        return [
-            'address_street'              => $address->street ?? '',
-            'address_house_number'        => $address->house_number ?? '',
-            'address_house_number_suffix' => $address->house_number_suffix ?? '',
-            'address_postal_code'         => $postalFormatted,
-            'address_city'                => $address->city ?? '',
-            'address_state'               => $address->state ?? '',
-            'address_country'             => $address->country ?? '',
-            'address_line1'               => $line1,
-            'address_line2'               => $line2,
-            'address_full'                => $addressFull,
-        ];
+        return AddressSupport::buildEmailVariables($address);
     }
 
     /**
@@ -542,14 +513,5 @@ class OrderMailService
     </tbody>
 </table>
 HTML;
-    }
-
-    private function formatPostalCodeForDisplay(string $postalCode): string
-    {
-        if (preg_match('/^([0-9]{4})([A-Z]{2})$/', $postalCode, $m)) {
-            return $m[1].' '.$m[2];
-        }
-
-        return $postalCode;
     }
 }

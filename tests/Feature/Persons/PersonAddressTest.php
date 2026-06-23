@@ -125,6 +125,34 @@ test('test_address_is_updated_when_updating_person', function () {
     $this->assertEquals('Nieuwe Straat 789 B, 9012 EF Den Haag, Zuid-Holland, Nederland', $updatedPerson->address->full_address);
 });
 
+test('test_address_without_postal_code_is_saved_when_creating_person', function () {
+    $personRepository = app(PersonRepository::class);
+
+    $person = $personRepository->create([
+        'first_name'  => 'No Postcode',
+        'emails'      => [['value' => 'nopostcode@example.com', 'label' => 'Work']],
+        'phones'      => [['value' => '111111113', 'label' => 'Mobile']],
+        'entity_type' => 'persons',
+        'address'     => [
+            'street'       => 'Buitenweg',
+            'house_number' => '12',
+            'city'         => 'Utrecht',
+            'country'      => 'Nederland',
+        ],
+    ]);
+
+    $this->assertNotNull($person->address_id);
+    $this->assertDatabaseHas('addresses', [
+        'id'          => $person->address_id,
+        'street'      => 'Buitenweg',
+        'house_number'=> '12',
+        'postal_code' => null,
+        'city'        => 'Utrecht',
+        'country'     => 'Nederland',
+    ]);
+    $this->assertEquals('Buitenweg 12, Utrecht, Nederland', $person->address->full_address);
+});
+
 test('test_person_factory_with_address', function () {
 
     // Act

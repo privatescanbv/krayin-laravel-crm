@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AddressSupport;
 use App\Support\PostcodeNormalizer;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +22,7 @@ class Address extends BaseModel
     public static $rules = [
         'street'              => 'nullable|string|max:255',
         'house_number'        => 'required|string|max:50',
-        'postal_code'         => 'required|string|max:20',
+        'postal_code'         => 'nullable|string|max:20',
         'house_number_suffix' => 'nullable|string|max:10',
         'state'               => 'nullable|string|max:255',
         'city'                => 'nullable|string|max:255',
@@ -62,7 +63,8 @@ class Address extends BaseModel
 
             // Normalize postal code globally (trim, uppercase, remove internal spaces)
             if (isset($address->postal_code)) {
-                $address->postal_code = PostcodeNormalizer::normalize($address->postal_code);
+                $normalized = PostcodeNormalizer::normalize($address->postal_code);
+                $address->postal_code = $normalized === '' ? null : $normalized;
             }
         });
     }
@@ -82,13 +84,12 @@ class Address extends BaseModel
             $parts[] = $this->street.' '.$houseNumber;
         }
 
-        if ($this->postal_code && $this->city) {
-            $displayPostal = $this->formatPostalCodeForDisplay($this->postal_code);
-            $cityPart = $displayPostal.' '.$this->city;
+        $line2 = AddressSupport::formatLine2($this);
+        if ($line2 !== '') {
             if ($this->state) {
-                $cityPart .= ', '.$this->state;
+                $line2 .= ', '.$this->state;
             }
-            $parts[] = $cityPart;
+            $parts[] = $line2;
         }
 
         if ($this->country) {
@@ -104,54 +105,11 @@ class Address extends BaseModel
      */
     public function formatAddress(): string
     {
-        $addressParts = [];
-
-        if ($this->street && $this->house_number) {
-            $houseNumber = $this->house_number;
-            if ($this->house_number_suffix) {
-                $houseNumber .= ' '.$this->house_number_suffix;
-            }
-            $addressParts[] = $this->street.' '.$houseNumber;
-        }
-
-        if ($this->postal_code && $this->city) {
-            $postalCode = $this->formatPostalCodeForDisplay($this->postal_code);
-            $addressParts[] = $postalCode.' '.$this->city;
-        }
-
-        return implode(', ', $addressParts);
+        return AddressSupport::formatFull($this, includeCountry: false);
     }
 
     public function getMultilineAddressAttribute(): string
     {
-        $lines = [];
-
-        if ($this->street && $this->house_number) {
-            $houseNumber = $this->house_number;
-            if ($this->house_number_suffix) {
-                $houseNumber .= ' '.$this->house_number_suffix;
-            }
-            $lines[] = $this->street.' '.$houseNumber;
-        }
-
-        if ($this->postal_code && $this->city) {
-            $postalCode = $this->formatPostalCodeForDisplay($this->postal_code);
-            $lines[] = $postalCode.' '.$this->city;
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Format stored postal codes for display. Keeps global support; only adds a space
-     * for Dutch-style codes like 1234AB -> 1234 AB. Otherwise leaves as-is.
-     */
-    private function formatPostalCodeForDisplay(string $postalCode): string
-    {
-        if (preg_match('/^([0-9]{4})([A-Z]{2})$/u', $postalCode, $m)) {
-            return $m[1].' '.$m[2];
-        }
-
-        return $postalCode;
+        return AddressSupport::formatMultiline($this);
     }
 }

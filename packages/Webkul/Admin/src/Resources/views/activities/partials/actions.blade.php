@@ -5,6 +5,7 @@ use App\Enums\CallStatus;
 $isCall = $activity->type === ActivityType::CALL;
 $defaultTab = $isCall ? 'belstatus' : 'notitie';
 $currentUserId = auth()->guard('user')->id();
+$isActivityDone = (bool) $activity->is_done;
 
 $statusConfig = [
     CallStatus::SPOKEN->value           => ['label' => CallStatus::SPOKEN->label(),           'color' => '#1f8a5b', 'bg' => '#dcf3e6', 'border' => '#a3d9b8', 'icon' => CallStatus::SPOKEN->icon()],
@@ -24,7 +25,7 @@ foreach (($actions ?? collect()) as $action) {
         'body'        => $action->body,
         'call_status' => $action->call_status,
         'by'          => $action->creator?->name ?? '-',
-        'can_delete'  => $action->created_by === $currentUserId,
+        'can_delete'  => ! $isActivityDone && $action->created_by === $currentUserId,
     ]);
 }
 
@@ -46,6 +47,7 @@ $totalCount    = $timelineItems->count();
 {{-- ═══════════════════════════════════════════════════════════
      KAART 1: Actie toevoegen
      ═══════════════════════════════════════════════════════════ --}}
+@if(!$isActivityDone)
 <div class="box-shadow rounded-lg border bg-white dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
 
     {{-- ── Type selector ───────────────────────────────────────── --}}
@@ -150,6 +152,7 @@ $totalCount    = $timelineItems->count();
         </button>
     </div>
 </div>
+@endif
 
 {{-- ═══════════════════════════════════════════════════════════
      KAART 2: Geschiedenis
@@ -477,9 +480,9 @@ $totalCount    = $timelineItems->count();
         div.className     = 'act-item flex gap-3 pb-5';
         div.dataset.kind  = type;
 
-        const deleteBtn = `<button type="button" onclick="window.__actDelete(${item.id}, this)"
+        const deleteBtn = @if(!$isActivityDone) `<button type="button" onclick="window.__actDelete(${item.id}, this)"
             class="p-1 text-gray-300 hover:text-red-500 transition-colors" title="Verwijderen">
-            <span class="icon-delete text-sm"></span></button>`;
+            <span class="icon-delete text-sm"></span></button>` @else '' @endif;
 
         if (type === 'belstatus') {
             const cfg = statusConfig[item.call_status] || { label: item.call_status, color: '#555', bg: '#eee', icon: 'icon-call' };

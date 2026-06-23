@@ -32,6 +32,16 @@ class ActivityObserver
     }
 
     /**
+     * Prepare Activity changes before they are persisted.
+     */
+    public function updating(Activity $activity): void
+    {
+        if ($activity->isDirty('is_done')) {
+            $activity->completed_at = $activity->is_done ? now() : null;
+        }
+    }
+
+    /**
      * Handle the Activity "updated" event.
      */
     public function updated(Activity $activity): void

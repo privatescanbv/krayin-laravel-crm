@@ -1,4 +1,9 @@
-@php use App\Enums\ActivityType; use App\Enums\LostReason; @endphp
+@php
+    use App\Enums\ActivityType;
+    use App\Enums\LostReason;
+
+    $isReadOnly = (bool) $activity->is_done;
+@endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $activity->title ?: __('admin::app.activities.edit.title') }}
@@ -61,13 +66,21 @@
                     Annuleren
                 </button>
 
-                <button type="submit" class="primary-button">
-                    @lang('admin::app.activities.edit.save-btn')
-                </button>
+                @if(! $isReadOnly)
+                    <button type="submit" class="primary-button" data-activity-save-button>
+                        @lang('admin::app.activities.edit.save-btn')
+                    </button>
+                @endif
 
                 {!! view_render_event('admin.activities.edit.save_button.after') !!}
             </div>
         </div>
+
+        @if($isReadOnly)
+            <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                Deze activiteit is afgerond en daarom alleen-lezen. Heropen de activiteit om gegevens of acties te wijzigen.
+            </div>
+        @endif
 
         <!-- Three Column Layout -->
         <div class="relative flex gap-4 max-lg:flex-wrap mt-4">
@@ -76,7 +89,7 @@
             <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
 
                 <!-- Koppeling -->
-                @if(bouncer()->hasPermission('activities.edit'))
+                @if(bouncer()->hasPermission('activities.edit') && ! $isReadOnly)
                     @include('admin::activities.partials.link-panel')
                     <div class="p-4 border-b border-gray-200 dark:border-gray-800">
                         <v-activity-link-panel></v-activity-link-panel>
@@ -89,151 +102,153 @@
 
                 <!-- Form Fields -->
                 <div class="p-4 flex flex-col gap-0">
-                    {!! view_render_event('admin.activities.edit.form_controls.before') !!}
+                    <fieldset class="contents" @if($isReadOnly) disabled @endif>
+                        {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
-                    <!-- Title -->
-                    <x-adminc::components.field
-                        type="text"
-                        name="title"
-                        id="title"
-                        :label="trans('admin::app.activities.edit.title')"
-                        value="{{ old('title') ?? $activity->title }}"
-                        rules="required"
-                        :placeholder="trans('admin::app.activities.edit.title')"
-                    />
-
-                    <!-- Type (read-only) -->
-                    <x-admin::form.control-group>
-                        @php
-                            $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
-                            $currentTypeLabel = $activity->type->label();
-                        @endphp
-                        <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
-                            <span>{{ $currentTypeLabel }}</span>
-                        </div>
-                        <input type="hidden" name="type" value="{{ $currentTypeValue }}"/>
-                        <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.activities.edit.type')
-                        </x-admin::form.control-group.label>
-                        <x-admin::form.control-group.error control-name="type"/>
-                    </x-admin::form.control-group>
-
-                    <!-- Deadline -->
-                    @if($activity->type->hasDeadline())
-                    <x-admin::form.control-group>
-                        @php
-                            $scheduleToValue   = old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i');
-                        @endphp
+                        <!-- Title -->
                         <x-adminc::components.field
-                            type="datetime"
-                            name="schedule_to"
-                            id="schedule_to"
-                            :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                            type="text"
+                            name="title"
+                            id="title"
+                            :label="trans('admin::app.activities.edit.title')"
+                            value="{{ old('title') ?? $activity->title }}"
                             rules="required"
-                            :value="$scheduleToValue"
-                            class="w-full"
+                            :placeholder="trans('admin::app.activities.edit.title')"
                         />
-                    </x-admin::form.control-group>
-                    @endif
 
-                    <!-- Description -->
-                    @php
-                        $commentRestrictedTypes = [ActivityType::CALL, ActivityType::TASK];
-                        $isCommentReadOnly = in_array($activity->type, $commentRestrictedTypes)
-                            && ! auth()->guard('user')->user()?->isGlobalAdmin();
-                    @endphp
-                    @if($isCommentReadOnly)
+                        <!-- Type (read-only) -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                {{ trans('admin::app.components.activities.actions.activity.description') }}
+                            @php
+                                $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
+                                $currentTypeLabel = $activity->type->label();
+                            @endphp
+                            <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                                <span>{{ $currentTypeLabel }}</span>
+                            </div>
+                            <input type="hidden" name="type" value="{{ $currentTypeValue }}"/>
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.activities.edit.type')
                             </x-admin::form.control-group.label>
-                            <textarea
-                                class="w-full rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-                                rows="3"
-                                disabled
-                            >{{ $activity->comment }}</textarea>
-                            <input type="hidden" name="comment" value="{{ $activity->comment }}">
+                            <x-admin::form.control-group.error control-name="type"/>
                         </x-admin::form.control-group>
-                    @else
-                        <x-adminc::components.field
-                            type="textarea"
-                            name="comment"
-                            id="comment"
-                            :label="trans('admin::app.components.activities.actions.activity.description')"
-                            value="{{ old('comment') ?? $activity->comment }}"
-                            :placeholder="trans('admin::app.components.activities.actions.activity.description')"
-                        />
-                    @endif
 
-                    <!-- Toegewezen aan -->
-                    <x-admin::form.control-group>
-                        <div class="flex items-center gap-2">
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="user_id"
-                                id="user_id_select"
-                                :value="old('user_id', $activity->user_id)"
-                                class="flex-1"
-                                :disabled="$activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover"
-                            >
-                                <option value="">{{ __('admin::app.activities.select-user') }}</option>
-                                @foreach (app(Webkul\User\Repositories\UserRepository::class)->allActiveUsers() as $user)
-                                    <option value="{{ $user->id }}" {{ $activity->user_id == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
+                        <!-- Deadline -->
+                        @if($activity->type->hasDeadline())
+                        <x-admin::form.control-group>
+                            @php
+                                $scheduleToValue   = old('schedule_to') ?? optional($activity->schedule_to)->format('Y-m-d\TH:i');
+                            @endphp
+                            <x-adminc::components.field
+                                type="datetime"
+                                name="schedule_to"
+                                id="schedule_to"
+                                :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
+                                rules="required"
+                                :value="$scheduleToValue"
+                                class="w-full"
+                            />
+                        </x-admin::form.control-group>
+                        @endif
 
-                            @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover)
-                                <input type="hidden" name="user_id" id="user_id_hidden" value="{{ $activity->user_id }}" />
-                            @endif
+                        <!-- Description -->
+                        @php
+                            $commentRestrictedTypes = [ActivityType::CALL, ActivityType::TASK];
+                            $isCommentReadOnly = in_array($activity->type, $commentRestrictedTypes)
+                                && ! auth()->guard('user')->user()?->isGlobalAdmin();
+                        @endphp
+                        @if($isCommentReadOnly)
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    {{ trans('admin::app.components.activities.actions.activity.description') }}
+                                </x-admin::form.control-group.label>
+                                <textarea
+                                    class="w-full rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                    rows="3"
+                                    disabled
+                                >{{ $activity->comment }}</textarea>
+                                <input type="hidden" name="comment" value="{{ $activity->comment }}">
+                            </x-admin::form.control-group>
+                        @else
+                            <x-adminc::components.field
+                                type="textarea"
+                                name="comment"
+                                id="comment"
+                                :label="trans('admin::app.components.activities.actions.activity.description')"
+                                value="{{ old('comment') ?? $activity->comment }}"
+                                :placeholder="trans('admin::app.components.activities.actions.activity.description')"
+                            />
+                        @endif
 
-                            @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
-                                <button
-                                    type="button"
-                                    class="secondary-button bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
-                                    onclick="takeoverActivity({{ $activity->id }})"
-                                    title="Overnemen van {{ $activity->user ? $activity->user->name : 'onbekend' }}"
+                        <!-- Toegewezen aan -->
+                        <x-admin::form.control-group>
+                            <div class="flex items-center gap-2">
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="user_id"
+                                    id="user_id_select"
+                                    :value="old('user_id', $activity->user_id)"
+                                    class="flex-1"
+                                    :disabled="$isReadOnly || ($activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover)"
                                 >
-                                    Overnemen
-                                </button>
-                            @endif
-                        </div>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.assign-to')
-                        </x-admin::form.control-group.label>
-                        <x-admin::form.control-group.error control-name="user_id"/>
-                    </x-admin::form.control-group>
+                                    <option value="">{{ __('admin::app.activities.select-user') }}</option>
+                                    @foreach (app(Webkul\User\Repositories\UserRepository::class)->allActiveUsers() as $user)
+                                        <option value="{{ $user->id }}" {{ $activity->user_id == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
 
-                    <!-- Group -->
-                    <x-adminc::components.field
-                        type="select"
-                        name="group_id"
-                        :label="__('admin::app.activities.group')"
-                        :value="old('group_id', $activity->group_id)"
-                        rules="required"
-                    >
-                        <option value="">{{ __('admin::app.activities.select-group') }}</option>
-                        @foreach ($groups as $group)
-                            <option value="{{ $group->id }}" {{ $activity->group_id == $group->id ? 'selected' : '' }}>
-                                {{ $group->name }}
-                            </option>
-                        @endforeach
-                    </x-adminc::components.field>
+                                @if(! $isReadOnly && $activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover)
+                                    <input type="hidden" name="user_id" id="user_id_hidden" value="{{ $activity->user_id }}" />
+                                @endif
 
-                    <!-- Portal publishing (only for FILE/PATIENT_MESSAGE) -->
-                    @if(in_array($activity->type, [ActivityType::FILE, ActivityType::PATIENT_MESSAGE]))
-                        <input type="hidden" name="publish_to_portal" value="0" />
+                                @if(! $isReadOnly && $activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
+                                    <button
+                                        type="button"
+                                        class="secondary-button bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
+                                        onclick="takeoverActivity({{ $activity->id }})"
+                                        title="Overnemen van {{ $activity->user ? $activity->user->name : 'onbekend' }}"
+                                    >
+                                        Overnemen
+                                    </button>
+                                @endif
+                            </div>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.activities.assign-to')
+                            </x-admin::form.control-group.label>
+                            <x-admin::form.control-group.error control-name="user_id"/>
+                        </x-admin::form.control-group>
+
+                        <!-- Group -->
                         <x-adminc::components.field
-                            type="checkbox"
-                            name="publish_to_portal"
-                            label="Publiceren in patiëntportaal"
-                            value="1"
-                            :checked="old('publish_to_portal', $activity->portalPersons->isNotEmpty())"
-                        />
-                    @endif
+                            type="select"
+                            name="group_id"
+                            :label="__('admin::app.activities.group')"
+                            :value="old('group_id', $activity->group_id)"
+                            rules="required"
+                        >
+                            <option value="">{{ __('admin::app.activities.select-group') }}</option>
+                            @foreach ($groups as $group)
+                                <option value="{{ $group->id }}" {{ $activity->group_id == $group->id ? 'selected' : '' }}>
+                                    {{ $group->name }}
+                                </option>
+                            @endforeach
+                        </x-adminc::components.field>
 
-                    {!! view_render_event('admin.activities.edit.form_controls.after') !!}
+                        <!-- Portal publishing (only for FILE/PATIENT_MESSAGE) -->
+                        @if(in_array($activity->type, [ActivityType::FILE, ActivityType::PATIENT_MESSAGE]))
+                            <input type="hidden" name="publish_to_portal" value="0" />
+                            <x-adminc::components.field
+                                type="checkbox"
+                                name="publish_to_portal"
+                                label="Publiceren in patiëntportaal"
+                                value="1"
+                                :checked="old('publish_to_portal', $activity->portalPersons->isNotEmpty())"
+                            />
+                        @endif
+
+                        {!! view_render_event('admin.activities.edit.form_controls.after') !!}
+                    </fieldset>
                 </div>
 
 <!-- Additional data (hidden for SYSTEM activities — handled by the center panel) -->
@@ -307,7 +322,7 @@
         $mailEntity = $relatedEntity ?? $activity->lead ?? null;
         $mailEntityControlName = $relatedEntityType?->getForeignKey() ?? 'lead_id';
     @endphp
-    @if($mailEntity)
+    @if($mailEntity && ! $isReadOnly)
         <!-- Mail dialog (listens for open-email-dialog event from actions panel) -->
         <x-admin::activities.actions.mail
             :entity="$mailEntity"

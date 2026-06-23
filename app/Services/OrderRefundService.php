@@ -57,7 +57,7 @@ class OrderRefundService
             'is_done'     => false,
             'user_id'     => $userId,
             'order_id'    => $order->id,
-            'schedule_to' => now()->addWeek(),
+            'schedule_to' => now(),
         ]);
 
         return $refund;

@@ -1,64 +1,55 @@
-# Privatescan CRM — Release 2026-06-23
+# Release Notes – Privatescan CRM | 23 juni 2026
 
 ---
 
-## E-mail onderwerpregel
-
-**Nieuwste updates Privatescan CRM — release 23 juni 2026**
+**Onderwerpregel voor e-mail:**
+`Update Privatescan CRM – release 23 juni 2026: verbeterde activiteiten, rapportage-upload en factuurverwerking`
 
 ---
-
-## Intro
 
 Beste gebruiker,
 
-Hierbij de laatste verbeteringen en bugfixes van de Privatescan CRM. In deze release zijn met name het werken met activiteiten en het inkoopproces verder verbeterd. Hieronder vind je een overzicht van de belangrijkste wijzigingen.
+We hebben vandaag een nieuwe versie van het Privatescan CRM uitgerold met een aantal verbeteringen en bugfixes die het dagelijks werken makkelijker en betrouwbaarder maken. Hieronder vind je een overzicht van de belangrijkste wijzigingen.
 
 ---
 
-## Wat is er nieuw?
+## Wat is er verbeterd?
 
-- **Afgeronde activiteiten zijn nu alleen-lezen**
-  Zodra een activiteit is afgemarkeerd als voltooid, kan de inhoud niet meer worden aangepast. Hiermee blijven afgeronde gegevens betrouwbaar en ongewijzigd.
+### Activiteiten
 
-- **Verbeterd activiteitenoverzicht**
-  Activiteiten worden nu beter gegroepeerd en gesorteerd weergegeven, waardoor het overzicht overzichtelijker en sneller te lezen is.
+- **Afgesloten activiteiten zijn nu alleen-lezen.** Wanneer een activiteit als gereed is gemarkeerd, kan deze niet meer per ongeluk worden gewijzigd.
+- **Verbeterd overzicht van activiteiten.** Het activiteitenoverzicht toont voortaan meer details en is beter gesorteerd, zodat je sneller de juiste informatie vindt.
+- **Feedback op activiteiten verwerkt.** Meerdere kleine verbeteringen en meldingen in het activiteitenscherm zijn opgelost.
 
-- **Rapportage uploaden: meer mogelijkheden**
-  Bij het uploaden van een rapportage kun je nu een persoon selecteren, meerdere bestanden tegelijk uploaden en de rapportage direct via het portaal publiceren.
+### Rapportage-upload
 
-- **Verbeterde stap 3 in het inkoopproces**
-  De derde stap bij het verwerken van een inkoopfactuur is herzien voor een soepelere afhandeling en duidelijkere weergave.
+- **Persoonsselectie bij rapportage-upload.** Je kunt nu bij het uploaden van een rapportage direct een persoon koppelen via een handige zoekfunctie.
+- **Meerdere bestanden tegelijk uploaden.** De rapportage-upload ondersteunt nu meerdere bestanden in één handeling.
+- **Publiceren via portaal.** Rapportages kunnen nu direct vanuit de upload worden gepubliceerd naar het klantportaal.
 
-- **Automatische terugbetaling bij verloren orderregel**
-  Wanneer een orderregel op "verloren" wordt gezet, wordt de klant voortaan automatisch terugbetaald. Dit scheelt een handmatige stap en vermindert de kans op fouten.
+### Factuurverwerking
 
-- **Postcode is nu optioneel**
-  Het invullen van een postcode bij een adres is niet langer verplicht, zodat ook adressen zonder postcode correct opgeslagen kunnen worden.
+- **Verbeterde verwerking van inkoopfacturen.** De stap-voor-stap flow bij het uploaden en verwerken van kliniekfacturen is verbeterd, met name stap 3.
+- **Terugbetaling bij verloren orderregel.** Wanneer een orderregel op "verloren" wordt gezet, wordt het terugbetalingsproces voor de klant automatisch in gang gezet.
 
----
+### Overig
 
-## Bugfixes
-
-- Acties uitvoeren op een reeds afgeronde activiteit was in bepaalde gevallen nog mogelijk; dit is nu correct geblokkeerd.
-- Fout- en bevestigingsmeldingen bij het uploaden van een rapportage zijn verbeterd.
+- **Postcode is niet langer verplicht.** Bij het aanmaken van contacten of leads is de postcode nu een optioneel veld.
 
 ---
 
 ## Aandachtspunten
 
-- Er zijn **databasemigraties** toegevoegd. Voer na de deploy `php artisan migrate` uit.
-- De wijziging rondom automatisch terugbetalen is nieuw gedrag — controleer bij twijfel de betalingsstatus van recent verloren orderregels.
+- De terugbetalingsfunctionaliteit bij verloren orderregels is nieuw. Test dit goed bij de eerstvolgende bestelling waarbij een orderregel op verloren wordt gezet.
+- Rapportage-uploads met meerdere bestanden zijn uitgebreid – controleer of de bestaande workflows nog correct werken.
 
 ---
 
-## Afsluiting
-
-We hopen dat deze verbeteringen het dagelijkse werk in de CRM soepeler maken. Heb je vragen of problemen na de update, neem dan contact op met het ontwikkelteam.
+Met deze update maken we het CRM betrouwbaarder en efficiënter voor het team. Heb je vragen of loop je ergens tegenaan? Laat het ons weten.
 
 Met vriendelijke groet,
-MB Software / Privatescan CRM-team
+Het Privatescan development-team
 
 ---
 
-*Release tag: `release-2026-06-23` | Productiecommit: `6f5b0084a` | Branch: `main`*
+_Release: `release-2026-06-23` | Branch: `main` | Commit: `6f5b0084a`_

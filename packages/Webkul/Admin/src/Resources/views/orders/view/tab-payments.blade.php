@@ -11,9 +11,10 @@
     $defaultCurrencyCode = Currency::default()->value;
     $today = now()->format('Y-m-d');
 
-    $totalToPay = (float) ($order->total_price ?? 0);
-    $totalPaid = $order->netPaidAmount();
-    $openAmount = round($totalToPay - $totalPaid, 2);
+    $totalToPay    = (float) ($order->total_price ?? 0);
+    $totalPaid     = $order->netPaidAmount();
+    $openAmount    = round($totalToPay - $totalPaid, 2);
+    $pendingRefund = $order->payments->where('type', \App\Enums\PaymentType::REFUND)->whereNull('paid_at')->sum('amount');
 @endphp
 
 <div class="flex w-full flex-col gap-4 rounded-lg">
@@ -25,7 +26,7 @@
     </div>
 
     @php $paymentStatus = $order->paymentStatus(); @endphp
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 {{ $pendingRefund > 0 ? 'md:grid-cols-5' : 'md:grid-cols-4' }}">
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaal te betalen</div>
             <div class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
@@ -60,6 +61,18 @@
                 </span>
             </div>
         </div>
+
+        @if($pendingRefund > 0)
+        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+            <div class="text-xs font-medium text-amber-700 dark:text-amber-400">Terug te betalen aan klant</div>
+            <div class="mt-1 text-lg font-semibold text-amber-700 dark:text-amber-400">
+                {{ Currency::formatMoney($defaultCurrencyCode, $pendingRefund) }}
+            </div>
+            <div class="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                Betaal de klant terug en vul daarna de datum in via <strong>Betaling bewerken</strong>.
+            </div>
+        </div>
+        @endif
     </div>
 
     <div id="order-payments-{{ $order->id }}" class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -215,12 +228,16 @@
                                 $displayAmount = Currency::formatMoney($currencyCode, (float) $payment->amount);
                             @endphp
 
-                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                            @php $isPendingRefund = $typeValue === 'refund' && !$payment->paid_at; @endphp
+                            <tr class="border-b border-gray-100 dark:border-gray-800 {{ $isPendingRefund ? 'bg-amber-50 dark:bg-amber-900/10' : '' }}">
                                 <td class="px-2 py-2 font-medium text-gray-900 dark:text-white">
                                     {{ $displayAmount }}
                                 </td>
                                 <td class="px-2 py-2 text-gray-700 dark:text-gray-300">
                                     {{ $typeLabel }}
+                                    @if($isPendingRefund)
+                                        <span class="ml-1 text-xs font-medium text-amber-600 dark:text-amber-400">(klant nog terugbetalen)</span>
+                                    @endif
                                 </td>
                                 <td class="px-2 py-2 text-gray-700 dark:text-gray-300">
                                     {{ $methodLabel }}

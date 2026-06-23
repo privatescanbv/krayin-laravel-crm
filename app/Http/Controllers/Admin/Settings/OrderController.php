@@ -36,6 +36,7 @@ use App\Services\FormService;
 use App\Services\Mail\CrmMailService;
 use App\Services\OrderCheckService;
 use App\Services\OrderMailService;
+use App\Services\OrderRefundService;
 use App\Services\OrderStatusService;
 use App\Services\OrderStatusTransitionValidator;
 use App\Services\PipelineCookieService;
@@ -97,6 +98,7 @@ class OrderController extends SimpleEntityController
         private readonly AfbDocumentGenerator $afbDocumentGenerator,
         private readonly AttachmentRepository $attachmentRepository,
         private readonly AnamnesisGvlFormResolver $anamnesisGvlFormResolver,
+        private readonly OrderRefundService $orderRefundService,
     ) {
         parent::__construct($orderRepository);
 
@@ -533,6 +535,10 @@ class OrderController extends SimpleEntityController
 
         $order = $this->orderRepository->update($payload, $id);
 
+        // Snapshot uitstaande terugbetalingen vóór verwerking, zodat we na afloop kunnen detecteren
+        // of er automatisch een nieuwe terugbetaling is aangemaakt (door observer of service).
+        $pendingRefundBefore = (float) $order->payments()->where('type', PaymentType::REFUND->value)->whereNull('paid_at')->sum('amount');
+
         // Preserve existing order items: update by ID, create new ones, mark removed as LOST
         if ($request->has('items') || $request->has('removed_order_item_ids')) {
             $currentItems = $order->orderItems()->get()->keyBy('id');
@@ -625,6 +631,16 @@ class OrderController extends SimpleEntityController
             $order->recalculateTotalPrice();
         }
 
+        // Ook aanroepen buiten het items-blok: dekt situaties waarbij de observer niet firedde
+        // (bijv. bulk-updates via OrderObserver). Idempotent: als surplus al 0 is, gebeurt niets.
+        $this->orderRefundService->createRefundIfSurplus($order, auth()->id());
+
+        // Bepaal of er tijdens dit request een nieuwe terugbetaling is aangemaakt.
+        $pendingRefundAfter = (float) $order->payments()->where('type', PaymentType::REFUND->value)->whereNull('paid_at')->sum('amount');
+        $autoRefundAmount = round($pendingRefundAfter - $pendingRefundBefore, 2) > 0.01
+            ? round($pendingRefundAfter - $pendingRefundBefore, 2)
+            : null;
+
         Event::dispatch("{$this->entityName}.update.after", $order);
 
         // Recalculate and update order status based on order items
@@ -647,8 +663,10 @@ class OrderController extends SimpleEntityController
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
-                'data'    => $order,
-                'message' => $this->getUpdateSuccessMessage(),
+                'data'           => $order,
+                'message'        => $this->getUpdateSuccessMessage(),
+                'refund_created' => $autoRefundAmount !== null,
+                'refund_amount'  => $autoRefundAmount,
             ]);
         }
 
@@ -671,7 +689,12 @@ class OrderController extends SimpleEntityController
             } catch (Throwable $e) {
             }
 
-            return redirect()->to($redirectTo)->with('success', $this->getUpdateSuccessMessage());
+            $redirect = redirect()->to($redirectTo)->with('success', $this->getUpdateSuccessMessage());
+            if ($autoRefundAmount !== null) {
+                $redirect = $redirect->with('info', 'Let op: een terugbetaling van € '.number_format($autoRefundAmount, 2, ',', '.').' is automatisch aangemaakt.');
+            }
+
+            return $redirect;
         }
 
         try {
@@ -682,7 +705,12 @@ class OrderController extends SimpleEntityController
         } catch (Throwable $e) {
         }
 
-        return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
+        $redirect = redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
+        if ($autoRefundAmount !== null) {
+            $redirect = $redirect->with('info', 'Let op: een terugbetaling van € '.number_format($autoRefundAmount, 2, ',', '.').' is automatisch aangemaakt.');
+        }
+
+        return $redirect;
     }
 
     public function deleteAfbPersonDocument(int $orderId, int $personDocumentId): JsonResponse

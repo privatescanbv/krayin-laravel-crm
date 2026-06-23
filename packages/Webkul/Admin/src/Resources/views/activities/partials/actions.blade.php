@@ -484,9 +484,9 @@ $totalCount    = $timelineItems->count();
         div.className     = 'act-item flex gap-3 pb-5';
         div.dataset.kind  = type;
 
-        const deleteBtn = `<button type="button" onclick="window.__actDelete(${item.id}, this)"
+        const deleteBtn = @if(!$isActivityDone) `<button type="button" onclick="window.__actDelete(${item.id}, this)"
             class="p-1 text-gray-300 hover:text-red-500 transition-colors" title="Verwijderen">
-            <span class="icon-delete text-sm"></span></button>`;
+            <span class="icon-delete text-sm"></span></button>` @else '' @endif;
 
         if (type === 'belstatus') {
             const cfg = statusConfig[item.call_status] || { label: item.call_status, color: '#555', bg: '#eee', icon: 'icon-call' };

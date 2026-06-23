@@ -283,6 +283,8 @@
 
                         if (value instanceof FileList) {
                             Array.from(value).forEach(f => formData.append('files[]', f));
+                        } else if (Array.isArray(value) && value[0] instanceof File) {
+                            value.forEach(f => formData.append('files[]', f));
                         } else if (value instanceof File || value instanceof Blob) {
                             formData.append('files[]', value);
                         } else {

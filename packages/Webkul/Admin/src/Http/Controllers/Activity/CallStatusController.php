@@ -37,10 +37,10 @@ class CallStatusController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:' . implode(',', array_map(fn($c) => $c->value, CallStatusEnum::cases())),
-            'omschrijving' => 'nullable|string',
+            'status'          => 'required|in:' . implode(',', array_map(fn ($c) => $c->value, CallStatusEnum::cases())),
+            'omschrijving'    => 'nullable|string',
             'reschedule_days' => 'nullable|integer|min:1|max:20',
-            'send_email' => 'nullable|boolean',
+            'send_email'      => 'nullable|boolean',
         ]);
 
         // Backend defaults: spoken => no move; others => 7 days if empty
@@ -58,35 +58,34 @@ class CallStatusController extends Controller
             'omschrijving' => $validated['omschrijving'] ?? null,
         ]);
         // Reschedule activity if requested
-        if (!empty($validated['reschedule_days'])) {
+        if (! empty($validated['reschedule_days'])) {
+            $days = (int) $validated['reschedule_days'];
+            $activity->schedule_to = now()->addDays($days);
+            $activity->save();
 
-               $days = (int) $validated['reschedule_days'];
-               $activity->schedule_to = now()->addDays($days);
+            // Recompute status after reschedule
+            $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
+            if ($computed->value !== ($activity->status?->value ?? null)) {
+                $activity->status = $computed;
                 $activity->save();
-
-                // Recompute status after reschedule
-                $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
-                if ($computed->value !== ($activity->status?->value ?? null)) {
-                    $activity->status = $computed;
-                    $activity->save();
-                }
+            }
         }
         $this->activityRepository->unassign($activity);
 
         $response = [
-            'message' => 'Call status toegevoegd' . (!empty($validated['reschedule_days']) ? ' en taak verplaatst' : ''),
-            'data' => $callStatus,
+            'message' => 'Call status toegevoegd' . (! empty($validated['reschedule_days']) ? ' en taak verplaatst' : ''),
+            'data'    => $callStatus,
         ];
 
         // If email should be sent, return additional data for frontend to handle
-        if (!empty($validated['send_email'])) {
+        if (! empty($validated['send_email'])) {
             // Fetch activity; rely on lazy-loading with null checks in helper to avoid BelongsToMany on missing lead
             $activity = Activity::findOrFail($activityId);
             $defaultEmail = $this->getDefaultEmailForActivity($activity);
 
-            $response['send_email'] = true;
+            $response['send_email']   = true;
             $response['default_email'] = $defaultEmail;
-            $response['activity_id'] = $activityId;
+            $response['activity_id']   = $activityId;
         }
 
         return response()->json($response);

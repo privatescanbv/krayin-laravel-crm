@@ -91,7 +91,7 @@ class InkoopStep3Controller extends Controller
             ->map(fn (Order $order) => $order->purchaseStatus())
             ->all();
 
-$allPersonsCount = $persons->count();
+        $allPersonsCount = $persons->count();
         $linkedPersonsCount = $persons->whereNotNull('crm_id')->count();
         $percentageResolvedPersons = $allPersonsCount > 0 ? (int) ceil(($linkedPersonsCount / $allPersonsCount) * 100) : 0;
 

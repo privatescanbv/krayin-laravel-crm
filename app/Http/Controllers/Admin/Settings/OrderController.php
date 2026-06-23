@@ -1165,16 +1165,16 @@ class OrderController extends SimpleEntityController
     public function storeReport(Request $request, int $orderId): JsonResponse
     {
         $request->validate([
-            'files'            => 'required|array|min:1',
-            'files.*'          => 'file|max:20480',
-            'clinic_id'        => 'required|integer|exists:clinics,id',
-            'check_ids'        => 'required|array|min:1',
-            'check_ids.*'      => 'integer|exists:order_checks,id',
-            'title'            => 'nullable|string|max:255',
-            'comment'          => 'nullable|string',
+            'files'             => 'required|array|min:1',
+            'files.*'           => 'file|max:20480',
+            'clinic_id'         => 'required|integer|exists:clinics,id',
+            'check_ids'         => 'required|array|min:1',
+            'check_ids.*'       => 'integer|exists:order_checks,id',
+            'title'             => 'nullable|string|max:255',
+            'comment'           => 'nullable|string',
             'publish_to_portal' => 'nullable|boolean',
-            'person_ids'       => 'nullable|array',
-            'person_ids.*'     => 'integer|exists:persons,id',
+            'person_ids'        => 'nullable|array',
+            'person_ids.*'      => 'integer|exists:persons,id',
         ]);
 
         $order = $this->orderRepository->findOrFail($orderId);

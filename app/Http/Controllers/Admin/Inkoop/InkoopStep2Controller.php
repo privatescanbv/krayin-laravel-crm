@@ -215,8 +215,8 @@ class InkoopStep2Controller extends Controller
             ->get()
             ->filter(function (OrderItem $item) {
                 $purchaseTotal = (float) $item->resolvedPurchasePrice()->purchase_price;
-                $invoiceTotal  = (float) ($item->invoicePurchasePrice?->purchase_price ?? 0);
-                $forced        = (bool) ($item->invoicePurchasePrice?->force_received ?? false);
+                $invoiceTotal = (float) ($item->invoicePurchasePrice?->purchase_price ?? 0);
+                $forced = (bool) ($item->invoicePurchasePrice?->force_received ?? false);
 
                 return OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal, $forced) !== OrderPurchaseStatus::FULLY_RECEIVED;
             })

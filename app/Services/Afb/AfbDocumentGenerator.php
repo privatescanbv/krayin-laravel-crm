@@ -340,18 +340,9 @@ class AfbDocumentGenerator
             return null;
         }
 
-        $leadId = $order->salesLead?->lead_id;
-
         return Anamnesis::query()
             ->where('person_id', $person->id)
-            ->where(function ($query) use ($order, $leadId) {
-                $query->where('sales_id', $order->sales_lead_id);
-
-                if ($leadId) {
-                    $query->orWhere('lead_id', $leadId);
-                }
-            })
-            ->latest('updated_at')
+            ->forOrder($order)
             ->first();
     }
 

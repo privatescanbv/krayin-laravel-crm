@@ -1137,6 +1137,47 @@ test('send afb endpoint returns already sent message when all departments dispat
     Bus::assertNotDispatched(SendAfbDispatchJob::class);
 });
 
+test('order-specific anamnesis overrides sales-level anamnesis on afb (MBS-268)', function () {
+    $context = createOrderForClinic(Carbon::parse('2026-03-31 09:30:00'));
+    $order = $context['order'];
+    $person = $context['person'];
+
+    // Verify sales-level anamnesis is present (created by createOrderForClinic)
+    $salesAnamnesis = Anamnesis::where('sales_id', $order->salesLead->id)
+        ->where('person_id', $person->id)
+        ->first();
+    expect($salesAnamnesis)->not->toBeNull();
+    expect($salesAnamnesis->metals_notes)->toBe('Schroef in knie');
+
+    // Create order-specific anamnesis with different values
+    Anamnesis::create([
+        'id'             => (string) Str::uuid(),
+        'order_id'       => $order->id,
+        'person_id'      => $person->id,
+        'claustrophobia' => false,
+        'metals'         => true,
+        'metals_notes'   => 'Titanium pen in heup',
+        'heart_surgery'  => false,
+        'implant'        => false,
+        'allergies'      => false,
+        'glaucoma'       => false,
+        'diabetes'       => false,
+        'comment_clinic' => 'Orderspecifieke opmerking voor kliniek',
+        'remarks'        => 'Orderspecifieke opmerking',
+    ]);
+
+    $generator = app(AfbDocumentGenerator::class);
+    $html = $generator->renderHtmlForOrderAndDepartment($order->fresh(), $context['department'])['html'];
+
+    // Order-level values must appear
+    expect($html)
+        ->toContain('Titanium pen in heup')
+        ->toContain('Orderspecifieke opmerking voor kliniek')
+        // Sales-level value must NOT appear
+        ->not->toContain('Schroef in knie')
+        ->not->toContain('Nekpijn links, voorzichtig positioneren.');
+});
+
 test('gvl pdf attachment filename includes slugified person name', function () {
     Mail::fake();
 

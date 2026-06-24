@@ -340,6 +340,17 @@ class AfbDocumentGenerator
             return null;
         }
 
+        // Inheritance: order-level overrides sales-level overrides lead-level.
+        $orderAnamnesis = Anamnesis::query()
+            ->where('person_id', $person->id)
+            ->where('order_id', $order->id)
+            ->latest('updated_at')
+            ->first();
+
+        if ($orderAnamnesis) {
+            return $orderAnamnesis;
+        }
+
         $leadId = $order->salesLead?->lead_id;
 
         return Anamnesis::query()

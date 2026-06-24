@@ -53,10 +53,15 @@ class KeycloakService
      */
     public function getAdminToken(): ?string
     {
-        $tokenUrl = $this->resolveKeycloakUrl('/realms/master/protocol/openid-connect/token');
-
         $adminUsername = config('services.keycloak.admin_username', 'admin');
         $adminPassword = config('services.keycloak.admin_password');
+
+        if (empty($adminPassword)) {
+            Log::error('Missing configuration for keycloak.admin_password');
+            return null;
+        }
+
+        $tokenUrl = $this->resolveKeycloakUrl('/realms/master/protocol/openid-connect/token');
 
         try {
             $response = Http::asForm()->post($tokenUrl, [
@@ -98,7 +103,7 @@ class KeycloakService
 
             return null;
         } catch (Exception $e) {
-            Log::error('Keycloak admin authentication error', [
+            Log::warning('Keycloak admin authentication error', [
                 'error'          => $e->getMessage(),
                 'token_url'      => $tokenUrl,
                 'error_class'    => get_class($e),

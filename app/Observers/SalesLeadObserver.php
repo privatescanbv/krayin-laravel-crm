@@ -10,6 +10,7 @@ use App\Enums\WebhookType;
 use App\Models\Department;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
+use BackedEnum;
 use Illuminate\Support\Facades\Event;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Contact\Models\Person;
@@ -126,8 +127,8 @@ class SalesLeadObserver
                 'title'         => "{$label} gewijzigd",
                 'additional'    => [
                     'attribute' => $label,
-                    'new'       => ['value' => $newRaw, 'label' => $newLabel ?: '-'],
-                    'old'       => ['value' => $oldRaw, 'label' => $oldLabel ?: '-'],
+                    'new'       => ['value' => $newRaw instanceof BackedEnum ? $newRaw->value : $newRaw, 'label' => $newLabel ?: '-'],
+                    'old'       => ['value' => $oldRaw instanceof BackedEnum ? $oldRaw->value : $oldRaw, 'label' => $oldLabel ?: '-'],
                 ],
                 'user_id'       => auth()->id() ?? 1,
                 'sales_lead_id' => $salesLead->id,
@@ -158,7 +159,9 @@ class SalesLeadObserver
                 Person::find($newRaw)?->name,
             ],
             'lost_reason' => [
-                $oldRaw !== null ? (LostReason::tryFrom((string) $oldRaw)?->label() ?? (string) $oldRaw) : null,
+                $oldRaw instanceof LostReason
+                    ? $oldRaw->label()
+                    : ($oldRaw !== null ? (LostReason::tryFrom((string) $oldRaw)?->label() ?? (string) $oldRaw) : null),
                 $newRaw instanceof LostReason
                     ? $newRaw->label()
                     : ($newRaw !== null ? (LostReason::tryFrom((string) $newRaw)?->label() ?? (string) $newRaw) : null),

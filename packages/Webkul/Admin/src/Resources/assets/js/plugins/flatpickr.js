@@ -28,6 +28,8 @@ export default {
 
         setLocaleFromLang();
 
+        Flatpickr.l10ns.default.firstDayOfWeek = 1;
+
         const changeTheme = (theme) => {
             document.getElementById('flatpickr')?.remove();
 

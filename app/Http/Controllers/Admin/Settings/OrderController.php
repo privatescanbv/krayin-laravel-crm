@@ -356,7 +356,8 @@ class OrderController extends SimpleEntityController
             $department = $sl?->department;
 
             if (empty($payload['user_id'])) {
-                $payload['user_id'] = $sl?->user_id;
+                $slUserId = $sl?->user_id;
+                $payload['user_id'] = ($slUserId && $slUserId > 0) ? (int) $slUserId : null;
             }
         }
         $payload['pipeline_stage_id'] = Order::firstOrderStageId($department);
@@ -2187,12 +2188,10 @@ class OrderController extends SimpleEntityController
             }
         }
 
-        // Optional user select submits ""; MySQL FK rejects that — must be NULL when cleared.
+        // Optional user select submits "" or "0"; MySQL FK rejects both — must be NULL when cleared.
         if (array_key_exists('user_id', $payload)) {
-            $userId = $payload['user_id'];
-            $payload['user_id'] = ($userId === '' || $userId === null)
-                ? null
-                : (int) $userId;
+            $userId = (int) $payload['user_id'];
+            $payload['user_id'] = $userId > 0 ? $userId : null;
         }
 
         if (array_key_exists('clinic_coordinator_user_id', $payload)) {

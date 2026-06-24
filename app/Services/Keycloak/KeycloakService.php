@@ -58,6 +58,7 @@ class KeycloakService
 
         if (empty($adminPassword)) {
             Log::error('Missing configuration for keycloak.admin_password');
+
             return null;
         }
 

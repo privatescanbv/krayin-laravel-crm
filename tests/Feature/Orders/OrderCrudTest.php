@@ -608,6 +608,46 @@ test('order view page renders without errors after creation', function () {
     $this->get(route('admin.orders.view', $order->id))->assertOk();
 });
 
+test('store does not fail when sales lead has user_id 0 stored in database', function () {
+    // Regression: SalesLead with user_id=0 caused FK violation on orders.user_id
+    $salesLead = SalesLead::factory()->create();
+    DB::table('salesleads')->where('id', $salesLead->id)->update(['user_id' => 0]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'FK Bug Regression',
+        'sales_lead_id' => $salesLead->id,
+    ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('orders', ['title' => 'FK Bug Regression', 'user_id' => null]);
+});
+
+test('store inherits user_id from sales lead when form does not provide one', function () {
+    $assignee = makeUser();
+    $salesLead = SalesLead::factory()->create(['user_id' => $assignee->id]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'Inherited User Order',
+        'sales_lead_id' => $salesLead->id,
+    ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('orders', ['title' => 'Inherited User Order', 'user_id' => $assignee->id]);
+});
+
+test('store with empty string user_id creates order with null user_id', function () {
+    $salesLead = SalesLead::factory()->create(['user_id' => null]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'Empty User Order',
+        'sales_lead_id' => $salesLead->id,
+        'user_id'       => '',
+    ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('orders', ['title' => 'Empty User Order', 'user_id' => null]);
+});
+
 test('store rejects a sales_lead without a linked lead', function () {
     $salesLead = SalesLead::factory()->create();
     // Force lead_id to null to simulate orphaned SalesLead (lead_id is nullable in migration)

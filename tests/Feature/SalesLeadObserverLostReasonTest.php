@@ -30,7 +30,7 @@ test('lost_reason: enum → null logs old label and does not throw', function ()
     $salesLead = SalesLead::factory()->create(['lost_reason' => LostReason::DoesNotPay]);
 
     // Updating to null; getOriginal('lost_reason') returns the LostReason enum instance
-    expect(fn () => $salesLead->update(['lost_reason' => null]))->not->toThrow(\Throwable::class);
+    expect(fn () => $salesLead->update(['lost_reason' => null]))->not->toThrow(Throwable::class);
 
     $activity = lostReasonActivity($salesLead);
     expect($activity)->not->toBeNull();

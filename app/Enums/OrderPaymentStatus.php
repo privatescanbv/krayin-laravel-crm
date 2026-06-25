@@ -8,6 +8,7 @@ enum OrderPaymentStatus: string
     case NOT_PAID = 'niet_betaald';
     case PARTIALLY_PAID = 'gedeeltelijk_betaald';
     case FULLY_PAID = 'volledig_betaald';
+    case CREDIT = 'credit';
 
     public static function forOrder(float $total, float $paid): self
     {
@@ -16,6 +17,9 @@ enum OrderPaymentStatus: string
         }
         if ($paid <= 0) {
             return self::NOT_PAID;
+        }
+        if ($paid > $total) {
+            return self::CREDIT;
         }
         if ($paid >= $total) {
             return self::FULLY_PAID;
@@ -31,6 +35,7 @@ enum OrderPaymentStatus: string
             self::NOT_PAID       => 'Niet betaald',
             self::PARTIALLY_PAID => 'Gedeeltelijk betaald',
             self::FULLY_PAID     => 'Volledig betaald',
+            self::CREDIT         => 'Credit',
         };
     }
 
@@ -41,6 +46,7 @@ enum OrderPaymentStatus: string
             self::PARTIALLY_PAID => 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
             self::NOT_PAID       => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
             self::NOT_APPLICABLE => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+            self::CREDIT         => 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
         };
     }
 }

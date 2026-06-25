@@ -95,6 +95,26 @@ $totalCount    = $timelineItems->count();
             class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:border-gray-400 resize-none"
         ></textarea>
 
+        @if($isCall)
+            <div id="act-reschedule-wrap" class="mt-3">
+                <label for="act-reschedule-days" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Taak verplaatsen
+                </label>
+                <select
+                    id="act-reschedule-days"
+                    class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:border-gray-400"
+                >
+                    <option value="">Geen verplaatsing</option>
+                    @for($i = 1; $i <= 20; $i++)
+                        <option value="{{ $i }}">{{ $i }} {{ $i === 1 ? 'dag' : 'dagen' }}</option>
+                    @endfor
+                </select>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Verplaats de deadline met het geselecteerde aantal dagen
+                </p>
+            </div>
+        @endif
+
         <div class="flex items-center justify-between mt-3 gap-3 flex-wrap">
             <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none shrink-0">
                 <input type="checkbox" id="act-send-email" class="w-4 h-4 shrink-0 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
@@ -300,6 +320,8 @@ $totalCount    = $timelineItems->count();
     // ── Tab switching ────────────────────────────────────────────
     const defaultTab = '{{ $defaultTab }}';
     const statusConfig = @json($statusConfig);
+    const spokenStatus = '{{ CallStatus::SPOKEN->value }}';
+    const isCallActivity = @json($isCall);
     let selectedStatus = '{{ array_key_first($statusConfig) }}';
 
     window.__actTab = function (key) {
@@ -335,6 +357,7 @@ $totalCount    = $timelineItems->count();
     document.addEventListener('DOMContentLoaded', function () {
         const defaultChip = document.querySelector('[data-status="' + selectedStatus + '"]');
         if (defaultChip) __actApplyChip(defaultChip, true);
+        __actApplyRescheduleDefaults();
     });
 
     window.__actChip = function (btn) {
@@ -342,7 +365,29 @@ $totalCount    = $timelineItems->count();
         document.querySelectorAll('.act-chip').forEach(function (c) {
             __actApplyChip(c, c === btn);
         });
+        __actApplyRescheduleDefaults();
     };
+
+    function __actApplyRescheduleDefaults() {
+        if (!isCallActivity) return;
+
+        const wrap = document.getElementById('act-reschedule-wrap');
+        const select = document.getElementById('act-reschedule-days');
+        if (!wrap || !select) return;
+
+        if (selectedStatus === spokenStatus) {
+            select.value = '';
+            select.disabled = true;
+            wrap.classList.add('opacity-60');
+            return;
+        }
+
+        select.disabled = false;
+        wrap.classList.remove('opacity-60');
+        if (!select.value) {
+            select.value = '7';
+        }
+    }
 
     window.__actApplyChip = function (btn, active) {
         const cfg = statusConfig[btn.dataset.status];
@@ -391,6 +436,21 @@ $totalCount    = $timelineItems->count();
             payload.call_status  = selectedStatus;
             payload.body         = (document.getElementById('act-bel-body')?.value || '').trim() || null;
             payload.send_email   = document.getElementById('act-send-email')?.checked || false;
+
+            if (isCallActivity) {
+                const rescheduleEl = document.getElementById('act-reschedule-days');
+                let rescheduleDays = rescheduleEl?.value || '';
+
+                if (selectedStatus === spokenStatus) {
+                    rescheduleDays = '';
+                } else if (!rescheduleDays) {
+                    rescheduleDays = '7';
+                }
+
+                if (rescheduleDays) {
+                    payload.reschedule_days = parseInt(rescheduleDays, 10);
+                }
+            }
         } else {
             const body = (document.getElementById('act-notitie-body')?.value || '').trim();
             if (!body) { alert('Typ een notitie'); return; }
@@ -418,17 +478,20 @@ $totalCount    = $timelineItems->count();
             if (type === 'belstatus') {
                 document.getElementById('act-bel-body').value = '';
                 document.getElementById('act-send-email').checked = false;
+                __actApplyRescheduleDefaults();
             } else {
                 document.getElementById('act-notitie-body').value = '';
             }
 
-            __actPrepend(data.data, type);
-
             if (data.send_email) {
+                __actPrepend(data.data, type);
                 window.dispatchEvent(new CustomEvent('open-email-dialog', {
                     detail: { defaultEmail: data.default_email || null, activityId: data.activity_id }
                 }));
+            } else if (type === 'belstatus' && data.data?.reschedule_days) {
+                window.location.reload();
             } else {
+                __actPrepend(data.data, type);
                 if (window.app?._context?.app?.config?.globalProperties?.$emitter) {
                     window.app._context.app.config.globalProperties.$emitter.emit('add-flash', {
                         type: 'success', message: data.message || 'Opgeslagen'

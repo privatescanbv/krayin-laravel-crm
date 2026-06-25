@@ -54,7 +54,7 @@
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaal nog open</div>
             <div class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-500">
-                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => round((float) ($o->total_price ?? 0) - $o->netPaidAmount(), 2))) }}
+                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => round((float) ($o->total_price ?? 0) - $o->netReceivedAmount(), 2))) }}
             </div>
         </div>
 
@@ -74,7 +74,7 @@
         @if ($orders->isEmpty())
             <div class="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
                 <div class="mb-2 text-4xl">✓</div>
-                Alle orders zijn volledig betaald.
+                Geen openstaande of credit-orders gevonden.
             </div>
         @else
             <div class="overflow-x-auto">
@@ -123,9 +123,10 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @foreach ($orders as $index => $order)
                             @php
-                                $totalPrice = round((float) ($order->total_price ?? 0), 2);
-                                $netPaid    = $order->netPaidAmount();
-                                $openAmount = round($totalPrice - $netPaid, 2);
+                                $totalPrice    = round((float) ($order->total_price ?? 0), 2);
+                                $netReceived   = $order->netReceivedAmount();
+                                $openAmount    = round($totalPrice - $netReceived, 2);
+                                $isCredit      = $openAmount < 0;
                             @endphp
 
                             <tr class="hover:bg-blue-50/40 dark:hover:bg-gray-800/50 transition-colors">
@@ -152,12 +153,17 @@
 
                                 {{-- Reeds betaald --}}
                                 <td class="px-3 py-2 text-right text-gray-700 dark:text-gray-300 whitespace-nowrap tabular-nums">
-                                    {{ Currency::formatMoney($defaultCurrencyCode, $netPaid) }}
+                                    {{ Currency::formatMoney($defaultCurrencyCode, $netReceived) }}
                                 </td>
 
                                 {{-- Nog open --}}
-                                <td class="px-3 py-2 text-right font-semibold text-amber-600 dark:text-amber-500 whitespace-nowrap tabular-nums">
-                                    {{ Currency::formatMoney($defaultCurrencyCode, $openAmount) }}
+                                <td class="px-3 py-2 text-right font-semibold whitespace-nowrap tabular-nums
+                                    {{ $isCredit ? 'text-purple-600 dark:text-purple-400' : 'text-amber-600 dark:text-amber-500' }}">
+                                    @if ($isCredit)
+                                        Credit {{ Currency::formatMoney($defaultCurrencyCode, abs($openAmount)) }}
+                                    @else
+                                        {{ Currency::formatMoney($defaultCurrencyCode, $openAmount) }}
+                                    @endif
                                 </td>
 
                                 {{-- Onderzoeksdatum --}}

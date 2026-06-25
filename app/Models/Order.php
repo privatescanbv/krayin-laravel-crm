@@ -479,13 +479,30 @@ class Order extends Model
     }
 
     /**
-     * Netto betaald bedrag: aanbetalingen + kliniekbetalingen minus terugbetalingen.
+     * Netto betaald bedrag: aanbetalingen minus ALLE terugbetalingen (ook openstaande).
+     * Wordt gebruikt door OrderRefundService om surplus/dubbelingen te berekenen.
      */
     public function netPaidAmount(): float
     {
         return round(
             (float) $this->payments->sum(fn ($p) => $p->type === PaymentType::REFUND
                 ? -(float) $p->amount
+                : (float) $p->amount
+            ),
+            2
+        );
+    }
+
+    /**
+     * Netto ontvangen bedrag: aanbetalingen minus alleen UITBETAALDE terugbetalingen.
+     * Openstaande terugbetalingen (paid_at = null) worden niet afgetrokken — het geld
+     * is dan nog bij PrivateScan → betaalstatus is "Credit" totdat de refund is uitbetaald.
+     */
+    public function netReceivedAmount(): float
+    {
+        return round(
+            (float) $this->payments->sum(fn ($p) => $p->type === PaymentType::REFUND
+                ? ($p->paid_at !== null ? -(float) $p->amount : 0.0)
                 : (float) $p->amount
             ),
             2
@@ -503,13 +520,14 @@ class Order extends Model
     }
 
     /**
-     * Betaalstatus klant: vergelijk netto betaald bedrag met total_price.
+     * Betaalstatus klant: vergelijk netto ontvangen bedrag met total_price.
+     * Openstaande terugbetalingen tellen niet als "terugbetaald" totdat ze uitbetaald zijn.
      */
     public function paymentStatus(): OrderPaymentStatus
     {
         return OrderPaymentStatus::forOrder(
             round((float) $this->total_price, 2),
-            $this->netPaidAmount(),
+            $this->netReceivedAmount(),
         );
     }
 

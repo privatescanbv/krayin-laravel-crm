@@ -30,6 +30,7 @@ class OrderItem extends Model
 
     protected $fillable = [
         'order_id',
+        'external_id',
         'product_id',
         'resource_type_id',
         'name',

@@ -392,13 +392,14 @@ test('Sugar order import creates partner-product order checks from reporting', f
     expect(runOrderImport())->toBe(0);
 
     $order = Order::where('external_id', 'order-import-checks-001')->first();
-    expect($order)->not->toBeNull();
-    expect(
-        $order->orderChecks()
-            ->where('name', 'Partner product rapportage: Radiologie MRI')
-            ->where('removable', false)
-            ->exists()
-    )->toBeTrue();
+    expect($order)->not->toBeNull()
+        ->and($order->orderItems->first()->external_id)->toBe('row-import-checks')
+        ->and(
+            $order->orderChecks()
+                ->where('name', 'Partner product rapportage: Radiologie MRI')
+                ->where('removable', false)
+                ->exists()
+        )->toBeTrue();
 });
 
 test('Fam prefixed Sugar account name is particulier not zakelijk', function () {
@@ -438,9 +439,8 @@ test('two zakelijk orders with same Sugar account reuse one CRM organization', f
     linkOrderToSugarLead('order-biz-shared-b', 'sugar-lead-shared-b');
     linkOrderToAccount('order-biz-shared-b', 'acc-shared');
 
-    expect(runOrderImport())->toBe(0);
-
-    expect(Organization::where('name', 'Shared BV')->count())->toBe(1);
+    expect(runOrderImport())->toBe(0)
+        ->and(Organization::where('name', 'Shared BV')->count())->toBe(1);
 
     $orderA = Order::where('external_id', 'order-biz-shared-a')->first();
     $orderB = Order::where('external_id', 'order-biz-shared-b')->first();
@@ -635,18 +635,17 @@ test('imports won order and creates saleslead and orderitem linked to person', f
     $salesLead = $order->salesLead;
     expect($salesLead)->not->toBeNull()
         ->and($salesLead->pipeline_stage_id)->toBe(PipelineStage::SALES_MET_SUCCES_AFGEROND->id())
-        ->and($salesLead->lead_id)->toBe($lead->id);
+        ->and($salesLead->lead_id)->toBe($lead->id)
+        ->and($salesLead->persons->contains($person))->toBeTrue()
+        ->and(Anamnesis::query()
+            ->where('sales_id', $salesLead->id)
+            ->where('person_id', $person->id)
+            ->exists())->toBeTrue()
+        ->and($order->orderItems)->toHaveCount(1);
 
     // Person attached to SalesLead
-    expect($salesLead->persons->contains($person))->toBeTrue();
-
-    expect(Anamnesis::query()
-        ->where('sales_id', $salesLead->id)
-        ->where('person_id', $person->id)
-        ->exists())->toBeTrue();
 
     // OrderItem created with correct status
-    expect($order->orderItems)->toHaveCount(1);
     $item = $order->orderItems->first();
     expect($item->status)->toBe(OrderItemStatus::WON)
         ->and($item->person_id)->toBe($person->id)

@@ -957,6 +957,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                         $orderItem = OrderItem::create([
                             'order_id'        => $order->id,
+                            'external_id'     => $row->id ?? null,
                             'person_id'       => $person?->id,
                             'product_id'      => $product->id,
                             'name'            => $row->name ?? null,

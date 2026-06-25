@@ -256,6 +256,14 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
             ->filter(fn (OrderItem $item) => ! in_array($item->id, $usedOrderItemIds, true))
             ->filter(fn (OrderItem $item) => (int) $item->product_id === (int) $product->id);
 
+        // Exact match via Sugar row external_id — most reliable, no ambiguity.
+        if (! empty($sugarRow->id)) {
+            $byExternalId = $candidates->first(fn (OrderItem $item) => $item->external_id === $sugarRow->id);
+            if ($byExternalId !== null) {
+                return $byExternalId;
+            }
+        }
+
         if ($candidates->isEmpty()) {
             return null;
         }
@@ -280,7 +288,10 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
         }
 
         if ($exact->count() > 1) {
-            Log::warning('RepairSugarOrderPurchasePrices: meerdere orderregels matchen op product+naam+prijs (ook na person_id tiebreak)', [
+            // Multiple identical items remain after person tiebreak. When this Sugar row is one of
+            // several identical rows, the next iteration will claim the remaining item via
+            // $usedOrderItemIds — no action needed. Log at debug level only.
+            Log::debug('RepairSugarOrderPurchasePrices: meerdere orderregels matchen op product+naam+prijs (ook na person_id tiebreak)', [
                 'order_number'   => $orderNumber,
                 'sugar_row_id'   => $sugarRow->id ?? null,
                 'person_id'      => $personId,

@@ -11,6 +11,7 @@ use App\Enums\Currency;
 use App\Enums\LostReason;
 use App\Enums\NotificationReferenceType;
 use App\Enums\OrderItemStatus;
+use App\Enums\OrderPaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\PipelineDefaultKeys;
@@ -1781,7 +1782,7 @@ class OrderController extends SimpleEntityController
             ->get()
             ->filter(fn (Order $o) => $o->firstExaminationCarbon() !== null)
             ->sortBy(fn (Order $o) => $o->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
-            ->filter(fn (Order $o) => $o->netPaidAmount() < round((float) ($o->total_price ?? 0), 2))
+            ->filter(fn (Order $o) => ! in_array($o->paymentStatus(), [OrderPaymentStatus::FULLY_PAID, OrderPaymentStatus::NOT_APPLICABLE], true))
             ->values();
 
         return view('adminc.orders.payment-overview', [

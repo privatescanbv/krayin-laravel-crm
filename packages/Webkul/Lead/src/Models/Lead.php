@@ -563,16 +563,22 @@ class Lead extends Model implements LeadContract
 
     /**
      * Resolve the emails to use when composing a mail for this lead.
-     * Prefers the contact person's emails; falls back to the lead's own emails.
+     *
+     * Priority:
+     * - Contact person emails when a contact person is set
+     * - Otherwise linked person with highest match score
+     * - Otherwise the lead's own emails
      *
      * @return array<int, mixed>
      */
     public function resolveDefaultEmails(): array
     {
-        $personEmails = $this->contactPerson?->emails ?? [];
+        $this->loadMissing('contactPerson');
 
-        if (! empty($personEmails)) {
-            return $personEmails;
+        $person = $this->getContactPersonOrFirstPerson();
+
+        if ($person && ! empty($person->emails)) {
+            return $person->emails;
         }
 
         return $this->emails ?? [];

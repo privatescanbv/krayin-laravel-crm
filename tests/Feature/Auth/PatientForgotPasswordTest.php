@@ -12,6 +12,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Config::set('services.keycloak.client_id', 'crm-app');
+    Config::set('services.keycloak.admin_password', 'test-admin-password');
     Config::set('services.portal.patient.web_url', 'https://patient-portal.test');
 
     Http::fake(function (HttpRequest $request) {

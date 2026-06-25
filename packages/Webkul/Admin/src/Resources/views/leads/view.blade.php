@@ -84,8 +84,7 @@
                         {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}
 
                         @if (bouncer()->hasPermission('mail.create'))
-                            <!-- Mail Activity Action -->
-                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id"/>
+                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id" :emails="$lead->resolveDefaultEmails()"/>
                         @endif
 
                         @if (bouncer()->hasPermission('activities.create'))

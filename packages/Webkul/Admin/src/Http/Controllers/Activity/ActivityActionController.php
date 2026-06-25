@@ -5,7 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 use App\Enums\ActivityActionType;
 use App\Enums\CallStatus as CallStatusEnum;
 use App\Models\ActivityAction;
-use App\Services\ActivityStatusService;
+use App\Services\Activities\ActivityRescheduleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Webkul\Activity\Models\Activity;
@@ -14,7 +14,10 @@ use Webkul\Admin\Http\Controllers\Controller;
 
 class ActivityActionController extends Controller
 {
-    public function __construct(private readonly ActivityRepository $activityRepository) {}
+    public function __construct(
+        private readonly ActivityRepository $activityRepository,
+        private readonly ActivityRescheduleService $activityRescheduleService,
+    ) {}
 
     public function store(Request $request, int $activityId): JsonResponse
     {
@@ -54,31 +57,8 @@ class ActivityActionController extends Controller
 
         $action->load('creator');
 
-        // Apply reschedule when belstatus
         if ($rescheduleDays !== null) {
-            $originalFrom = $activity->schedule_from;
-            $originalTo   = $activity->schedule_to;
-
-            if ($originalFrom) {
-                $diff = ($originalTo && $originalFrom)
-                    ? (int) round($originalTo->diffInDays($originalFrom))
-                    : 0;
-
-                $activity->schedule_from = now()->addDays($rescheduleDays);
-
-                if ($originalTo) {
-                    $activity->schedule_to = $activity->schedule_from->copy()->addDays($diff);
-                }
-
-                $activity->save();
-
-                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
-                if ($computed->value !== ($activity->status?->value ?? null)) {
-                    $activity->status = $computed;
-                    $activity->save();
-                }
-            }
-
+            $this->activityRescheduleService->reschedule($activity, $rescheduleDays);
             $this->activityRepository->unassign($activity);
         }
 

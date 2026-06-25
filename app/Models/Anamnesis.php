@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\FormStatus;
 use App\Enums\FormType;
 use App\Traits\HasAuditTrail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +21,8 @@ use Webkul\Lead\Models\Lead;
 
 /**
  * @mixin IdeHelperAnamnesis
+ *
+ * @method static Builder forOrder(Order $order)
  */
 class Anamnesis extends Model
 {
@@ -51,6 +54,7 @@ class Anamnesis extends Model
         'glaucoma_notes',
         'claustrophobia',
         'dormicum',
+        'dormicum_notes',
         'heart_surgery',
         'heart_surgery_notes',
         'implant',
@@ -136,6 +140,7 @@ class Anamnesis extends Model
             'glaucoma_notes'             => 'admin::app.anamnesis.fields.glaucoma_notes',
             'claustrophobia'             => 'admin::app.anamnesis.fields.claustrophobia',
             'dormicum'                   => 'admin::app.anamnesis.fields.dormicum',
+            'dormicum_notes'             => 'admin::app.anamnesis.fields.dormicum_notes',
             'heart_surgery'              => 'admin::app.anamnesis.fields.heart_surgery',
             'heart_surgery_notes'        => 'admin::app.anamnesis.fields.heart_surgery_notes',
             'implant'                    => 'admin::app.anamnesis.fields.implant',
@@ -191,6 +196,23 @@ class Anamnesis extends Model
                 'order_id' => ['nullable', 'integer', "exists:{$orderTable},id"],
             ])->validate();
         });
+    }
+
+    /**
+     * Filter by the full inheritance chain for an order (order → sales → lead),
+     * ordered so order-level records sort first, then sales, then lead.
+     */
+    public function scopeForOrder(Builder $query, Order $order): void
+    {
+        $leadId = $order->salesLead?->lead_id;
+
+        $query->where(function (Builder $q) use ($order, $leadId) {
+            $q->where('order_id', $order->id)
+                ->orWhere('sales_id', $order->sales_lead_id)
+                ->when($leadId, fn (Builder $q) => $q->orWhere('lead_id', $leadId));
+        })
+            ->orderByRaw('CASE WHEN order_id IS NOT NULL THEN 0 WHEN sales_id IS NOT NULL THEN 1 ELSE 2 END')
+            ->latest('updated_at');
     }
 
     // Relaties

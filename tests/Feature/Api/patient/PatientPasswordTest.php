@@ -14,6 +14,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Config::set('api.keys', ['valid-api-key-123']);
     Config::set('services.keycloak.client_id', 'crm-app');
+    Config::set('services.keycloak.admin_password', 'test-admin-password');
 
     // Prevent real Keycloak HTTP calls; allow assertions in specific tests.
     Http::fake(function (HttpRequest $request) {
@@ -81,6 +82,7 @@ it('syncs the password change to keycloak', function () {
         'keycloak_user_id' => $keycloakUserId,
         'is_active'        => true,
         'password'         => 'OudWachtwoord1!',
+        'emails'           => [['value' => 'patient@example.com', 'label' => 'home', 'is_default' => true]],
     ]);
 
     $response = $this

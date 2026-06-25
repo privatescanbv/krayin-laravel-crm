@@ -43,56 +43,109 @@
             </div>
         </div>
 
+        <div class="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm dark:border-orange-800 dark:bg-orange-900/20">
+            <div class="flex items-start gap-2">
+                <span class="icon-warning mt-0.5 shrink-0 text-base text-orange-600 dark:text-orange-400"></span>
+                <div>
+                    <div class="font-semibold text-orange-800 dark:text-orange-200">Onderstaande factuurregels zijn niet automatisch gekoppeld aan het CRM.</div>
+                    <div class="mt-1 text-orange-700 dark:text-orange-300">Controleer de gegevens en verwerk deze regels handmatig in het CRM vóór je de factuur markeert als verwerkt.</div>
+                </div>
+            </div>
+        </div>
+
         <div class="overflow-hidden rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <table class="w-full text-left text-sm">
-                <thead
-                    class="border-b bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
-                <tr>
-                    <th class="px-4 py-3">Patient</th>
-                    <th class="px-4 py-3">Regels</th>
-                    <th class="px-4 py-3">CRM orderregels</th>
-                    <th class="px-4 py-3">Datum factuur</th>
-                    <th class="px-4 py-3">Prijs factuur</th>
-                    <th class="px-4 py-3">Order Status</th>
-                    <th class="px-4 py-3">Order afletter status</th>
-                </tr>
+                <thead class="border-b bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
+                    <tr>
+                        <th class="px-4 py-3">Patient</th>
+                        <th class="px-4 py-3">Ongematchte factuurregel(s)</th>
+                        <th class="px-4 py-3">Datum</th>
+                        <th class="px-4 py-3">Prijs</th>
+                        <th class="px-4 py-3">CRM orderregel</th>
+                        <th class="px-4 py-3">Order status</th>
+                        <th class="px-4 py-3">Afletter status</th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y dark:divide-gray-800">
                 @foreach ($persons as $person)
-                    @php $personOrderItems = $crmOrderItemsByPerson[$person->id] ?? collect(); @endphp
-                    @if (empty($person->crm_id) || $personOrderItems->isEmpty())
+                    @php
+                        $personOrderItems    = $crmOrderItemsByPerson[$person->id] ?? collect();
+                        $unmatchedOrderItems = $personOrderItems->filter(fn ($oi) => !isset($invoiceDataByOrderItemId[$oi->id]));
+                        $matchedCount        = $personOrderItems->count() - $unmatchedOrderItems->count();
+                        $totalCount          = $personOrderItems->count();
+                        $unmatchedInvItems   = $person->invoiceItems->filter(fn ($ii) => $ii->crmProducts->isEmpty());
+                    @endphp
+
+                    {{-- Persoon niet gekoppeld aan CRM --}}
+                    @if (empty($person->crm_id))
                         <tr>
-                            <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ trim($person->firstname . ' ' . $person->lastname) }}</td>
-                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $person->invoiceItems->count() }}</td>
-                            <td class="px-4 py-3" colspan="5">
-                                @if (empty($person->crm_id))
-                                    <span class="text-xs text-orange-500 dark:text-orange-400">Niet gekoppeld aan CRM — ga terug naar stap 1</span>
-                                @else
-                                    <span class="text-xs text-gray-400 dark:text-gray-500">Geen orderregels voor deze kliniek</span>
-                                @endif
+                            <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">
+                                {{ trim($person->firstname . ' ' . $person->lastname) }}
+                            </td>
+                            <td class="px-4 py-3" colspan="6">
+                                <span class="text-xs text-orange-500 dark:text-orange-400">Niet gekoppeld aan CRM — ga terug naar stap 1</span>
                             </td>
                         </tr>
+
+                    {{-- Geen ongematchte orderregels: sla deze persoon over --}}
+                    @elseif ($unmatchedOrderItems->isEmpty() && $unmatchedInvItems->isEmpty())
+                        {{-- Alles gekoppeld, niets te tonen --}}
+
                     @else
-                        @foreach ($personOrderItems as $orderItem)
+                        @foreach ($unmatchedOrderItems as $orderItem)
                             @php
                                 $orderItemPurchaseStatus = $orderItemPurchaseStatuses[$orderItem->id] ?? null;
-                                $orderPurchaseStatus = $orderPurchaseStatuses[$orderItem->order_id] ?? null;
-                                $orderItemStatus = $orderItem->status;
-                                $invoiceData = $invoiceDataByOrderItemId[$orderItem->id] ?? null;
-                                $isMatched    = $invoiceData !== null;
-                                $invoiceDate  = $invoiceData ? $invoiceData['date']  : null;
-                                $invoicePrice = $invoiceData ? $invoiceData['price'] : null;
-                                $crmPurchasePrice = $orderItem->purchasePrice?->purchase_price;
+                                $orderPurchaseStatus     = $orderPurchaseStatuses[$orderItem->order_id] ?? null;
+                                $orderItemStatus         = $orderItem->status;
+                                $crmPurchasePrice        = $orderItem->purchasePrice?->purchase_price;
+
+                                $invItemsToShow = $unmatchedInvItems;
                             @endphp
-                            <tr class="{{ !$isMatched ? 'bg-orange-50 dark:bg-orange-900/10' : '' }}">
-                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">
-                                    @if ($loop->first){{ trim($person->firstname . ' ' . $person->lastname) }}@endif
+                            <tr class="bg-orange-50 dark:bg-orange-900/10">
+                                {{-- Patient + hoeveel er al gekoppeld zijn --}}
+                                <td class="px-4 py-3 align-top font-medium text-gray-800 dark:text-gray-200">
+                                    @if ($loop->first)
+                                        <div>{{ trim($person->firstname . ' ' . $person->lastname) }}</div>
+                                        @if ($totalCount > 0)
+                                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                {{ $matchedCount }}/{{ $totalCount }} orderregel(s) gekoppeld
+                                            </div>
+                                        @endif
+                                    @endif
                                 </td>
-                                <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
-                                    @if ($loop->first){{ $person->invoiceItems->count() }}@endif
+
+                                {{-- Ongematchte factuurregels van deze persoon als context --}}
+                                <td class="px-4 py-3 align-top">
+                                    @if ($loop->first)
+                                        @forelse ($invItemsToShow as $invItem)
+                                            <div class="text-sm text-gray-700 dark:text-gray-300">{{ $invItem->name ?? $invItem->description ?? '—' }}</div>
+                                        @empty
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">Geen open factuurregels</span>
+                                        @endforelse
+                                    @endif
                                 </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex flex-wrap items-center gap-2 text-sm">
+
+                                {{-- Datum van eerste ongematchte factuurregel --}}
+                                <td class="px-4 py-3 align-top text-sm text-gray-600 dark:text-gray-400">
+                                    @if ($loop->first)
+                                        @foreach ($invItemsToShow as $invItem)
+                                            <div>{{ $invItem->date?->format('d-m-Y') ?? '—' }}</div>
+                                        @endforeach
+                                    @endif
+                                </td>
+
+                                {{-- Prijs van ongematchte factuurregels --}}
+                                <td class="px-4 py-3 align-top text-sm text-gray-600 dark:text-gray-400">
+                                    @if ($loop->first)
+                                        @foreach ($invItemsToShow as $invItem)
+                                            <div>€&nbsp;{{ number_format((float) $invItem->price, 2, ',', '.') }}</div>
+                                        @endforeach
+                                    @endif
+                                </td>
+
+                                {{-- CRM orderregel: ordernummer + product + inkoopprijs --}}
+                                <td class="px-4 py-3 align-top">
+                                    <div class="flex flex-wrap items-center gap-1.5 text-sm">
                                         @if ($orderItem->order)
                                             <a href="{{ route('admin.orders.view', $orderItem->order->id) }}#afletteren"
                                                target="_blank"
@@ -105,15 +158,6 @@
                                         @if ($crmPurchasePrice !== null)
                                             <span class="text-xs text-gray-500 dark:text-gray-400">€&nbsp;{{ number_format((float) $crmPurchasePrice, 2, ',', '.') }}</span>
                                         @endif
-                                        @if ($isMatched)
-                                            <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                                Gekoppeld
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-                                                Niet gekoppeld
-                                            </span>
-                                        @endif
                                         @if ($orderItemPurchaseStatus && $orderItemPurchaseStatus !== OrderPurchaseStatus::HIDDEN)
                                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $orderItemPurchaseStatus->badgeClass() }}">
                                                 {{ $orderItemPurchaseStatus->label() }}
@@ -121,13 +165,9 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $invoiceDate?->format('d-m-Y') ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $invoicePrice !== null ? '€ ' . number_format((float) $invoicePrice, 2, ',', '.') : '—' }}
-                                </td>
-                                <td class="px-4 py-3">
+
+                                {{-- Order item status --}}
+                                <td class="px-4 py-3 align-top">
                                     @if ($orderItemStatus)
                                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $orderItemStatus->badgeClass() }}">
                                             {{ $orderItemStatus->label() }}
@@ -136,7 +176,9 @@
                                         <span class="text-xs text-gray-400">—</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3">
+
+                                {{-- Afletter status --}}
+                                <td class="px-4 py-3 align-top">
                                     @if ($orderPurchaseStatus && $orderPurchaseStatus !== OrderPurchaseStatus::HIDDEN)
                                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $orderPurchaseStatus->badgeClass() }}">
                                             {{ $orderPurchaseStatus->label() }}
@@ -147,6 +189,51 @@
                                 </td>
                             </tr>
                         @endforeach
+
+                        {{-- Ongematchte factuurregels zonder CRM koppeling: toon alle factuurgegevens voor handmatige verwerking --}}
+                        @if ($unmatchedInvItems->isNotEmpty() && $unmatchedOrderItems->isEmpty())
+                            @foreach ($unmatchedInvItems as $invItem)
+                                <tr class="bg-orange-50 dark:bg-orange-900/10">
+                                    <td class="px-4 py-3 align-top font-medium text-gray-800 dark:text-gray-200">
+                                        @if ($loop->first)
+                                            <div>{{ trim($person->firstname . ' ' . $person->lastname) }}</div>
+                                            @if ($totalCount > 0)
+                                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $matchedCount }}/{{ $totalCount }} orderregel(s) gekoppeld
+                                                </div>
+                                            @endif
+                                        @endif
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top text-sm text-gray-700 dark:text-gray-300">
+                                        <div>{{ $invItem->name ?? $invItem->description ?? '—' }}</div>
+                                        @if ($invItem->description && $invItem->name && $invItem->description !== $invItem->name)
+                                            <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $invItem->description }}</div>
+                                        @endif
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top text-sm text-gray-600 dark:text-gray-400">
+                                        {{ $invItem->date?->format('d-m-Y') ?? '—' }}
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top text-sm text-gray-600 dark:text-gray-400">
+                                        @if ($invItem->quantity && $invItem->unit_price)
+                                            <div>{{ rtrim(rtrim(number_format((float) $invItem->quantity, 2, ',', '.'), '0'), ',') }} × €&nbsp;{{ number_format((float) $invItem->unit_price, 2, ',', '.') }}</div>
+                                        @endif
+                                        <div class="font-medium text-gray-800 dark:text-gray-200">
+                                            €&nbsp;{{ number_format((float) ($invItem->total_price ?? $invItem->price ?? 0), 2, ',', '.') }}
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top" colspan="3">
+                                        <span class="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                                            <span class="icon-warning text-sm"></span>
+                                            Geen CRM-match — handmatig verwerken
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
                     @endif
                 @endforeach
                 </tbody>

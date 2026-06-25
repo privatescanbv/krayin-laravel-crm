@@ -868,10 +868,10 @@
 
                     tryExtract(this.entity);
 
-                    // Some entities may have nested person
+                    // Some entities may have nested person; prefer contactPerson (single) over person (collection)
                     if (this.entity && this.entity.contactPerson) {
-                        tryExtract(this.entity.person);
-                    } else if (this.entity && this.entity.person) {
+                        tryExtract(this.entity.contactPerson);
+                    } else if (this.entity && this.entity.person && !Array.isArray(this.entity.person)) {
                         tryExtract(this.entity.person);
                     }
 

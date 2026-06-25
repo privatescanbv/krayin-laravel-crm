@@ -224,7 +224,7 @@ class AfbDocumentGenerator
                 'order_number'    => $order->order_number ?: (string) $order->id,
             ],
             'patient' => [
-                'salutation'  => $person?->salutation?->label() ?: '-',
+                'salutation'  => $person?->salutation?->labelDe() ?: '-',
                 'first_name'  => $person?->first_name ?: '-',
                 'last_name'   => $person?->full_last_name ?: '-',
                 'address'     => $this->formatAddressLine($address?->street, $address?->house_number, $address?->house_number_suffix),
@@ -237,6 +237,7 @@ class AfbDocumentGenerator
                 'height'              => $anamnesis?->height,
                 'weight'              => $anamnesis?->weight,
                 'claustrophobia'      => $this->formatBoolean($anamnesis?->claustrophobia),
+                'dormicum_notes'      => $this->emptyToNull($anamnesis?->dormicum_notes),
                 'diabetes'            => $this->formatBoolean($anamnesis?->diabetes),
                 'diabetes_notes'      => $this->emptyToNull($anamnesis?->diabetes_notes),
                 'metals'              => $this->formatBoolean($anamnesis?->metals),
@@ -340,18 +341,9 @@ class AfbDocumentGenerator
             return null;
         }
 
-        $leadId = $order->salesLead?->lead_id;
-
         return Anamnesis::query()
             ->where('person_id', $person->id)
-            ->where(function ($query) use ($order, $leadId) {
-                $query->where('sales_id', $order->sales_lead_id);
-
-                if ($leadId) {
-                    $query->orWhere('lead_id', $leadId);
-                }
-            })
-            ->latest('updated_at')
+            ->forOrder($order)
             ->first();
     }
 

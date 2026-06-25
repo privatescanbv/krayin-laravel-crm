@@ -90,7 +90,6 @@
                     'hereditary_vascular' => 'Hart-/vaatziekten',
                     'hereditary_tumors' => 'Kanker familie',
                     'allergies' => 'Allergieën',
-                    'back_problems' => 'Kan stil liggen',
                     'heart_problems' => 'Hartproblemen',
                     'smoking' => 'Rookt',
                     'diabetes' => 'Diabetes',
@@ -99,6 +98,11 @@
                 ])->filter(function($label, $field) use ($anamnesis) {
                     return $anamnesis->{$field} == 1;
                 });
+
+                // Inverted field: back_problems is notable when Nee (false)
+                if ($anamnesis->back_problems === false) {
+                    $conditions['back_problems'] = 'Kan niet stil liggen';
+                }
             @endphp
 
             <div>

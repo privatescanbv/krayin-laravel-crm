@@ -229,6 +229,306 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
+     * Batch-fetch all order rows for the given SugarCRM order UUIDs.
+     * Returns a Collection keyed by the SugarCRM order UUID, each value being
+     * a Collection of row objects (one row per contact, due to the LEFT JOIN).
+     */
+    protected function fetchOrderRows(string $connection, array $orderIds): Collection
+    {
+        if (empty($orderIds)) {
+            return collect();
+        }
+
+        $baseSelect = [
+            'rel.pcrm_salesb9a7esorder_ida as order_id',
+            'sor.id',
+            'sor.name',
+            'sor.sales_price',
+            'sor.sales_stage',
+            'sor.resource_type',
+            'row_cstm.aos_products_id_c',
+            'sor.datum_onderzoek',
+            'sor.duration',
+            'sor.pcrm_partnerresources_id_c',
+            'pt.name as product_template_name',
+            'rc.pcrm_sales4bd9ontacts_ida as contact_id',
+            // Authoritative purchase price fields on the main row table (no _c suffix)
+            'sor.purchase_price as sor_purchase_price',
+            'sor.purchase_clinic as sor_purchase_clinic',
+            'sor.purchase_doctor as sor_purchase_doctor',
+        ];
+
+        $sql = DB::connection($connection)
+            ->table('pcrm_salesoalesorderrow_c as rel')
+            ->join('pcrm_salesorderrow as sor', 'sor.id', '=', 'rel.pcrm_sales509drderrow_idb')
+            ->leftJoin('pcrm_salesorderrow_cstm as row_cstm', 'row_cstm.id_c', '=', 'sor.id')
+            ->leftJoin('pcrm_salesorow_contacts_c as rc', function ($join) {
+                $join->on('rc.pcrm_sales80b3rderrow_idb', '=', 'sor.id')
+                    ->where('rc.deleted', '=', 0);
+            })
+            ->leftJoin('aos_products as pt', function ($join) {
+                $join->on('pt.id', '=', 'row_cstm.aos_products_id_c')
+                    ->where('pt.deleted', '=', 0);
+            })
+            ->select(array_merge($baseSelect, $this->sugarOrderRowCstmSelectFragments($connection)))
+            ->where('sor.deleted', 0)
+            ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds);
+
+        $this->infoVV($sql->toRawSql());
+        $rows = $sql->get()->unique('id');
+
+        return $rows->groupBy('order_id');
+    }
+
+    /**
+     * Custom fields on pcrm_salesorderrow_cstm differ per Sugar instance; only select columns that exist.
+     *
+     * @return list<string>
+     */
+    protected function sugarOrderRowCstmSelectFragments(string $connection): array
+    {
+        $byLowerName = $this->sugarOrderRowCstmColumnByLowerName($connection);
+        $candidates = [
+            // cstm purchase components (clinic/total live on main row table; rd not in mapping)
+            'purchase_other_c',
+            'purchase_cardio_c',
+            'purchase_radio_c',
+            // aflettering invoice amounts (rd not in mapping)
+            'inv_purchase_other_c',
+            'inv_purchase_cardio_c',
+            'inv_purchase_clinic_c',
+            'inv_purchase_radio_c',
+            'inv_purchase_doctor_c',
+            'inv_purchase_total_c',
+            // aflettering statuses
+            'ink_other_status_c',
+            'ink_cardio_status_c',
+            'ink_clinic_status_c',
+            'ink_radio_status_c',
+            'ink_doctor_status_c',
+            'ink_total_status_c',
+            'afb_description_c',
+        ];
+
+        $fragments = [];
+        foreach ($candidates as $column) {
+            $dbColumn = $byLowerName[strtolower($column)] ?? null;
+            if ($dbColumn !== null) {
+                $fragments[] = "row_cstm.{$dbColumn} as {$column}";
+            }
+        }
+
+        return $fragments;
+    }
+
+    /**
+     * Lowercase name => actual column name on the database (for correct quoting / casing).
+     *
+     * @return array<string, string>
+     */
+    protected function sugarOrderRowCstmColumnByLowerName(string $connection): array
+    {
+        static $cache = [];
+
+        if (array_key_exists($connection, $cache)) {
+            return $cache[$connection];
+        }
+
+        try {
+            $names = Schema::connection($connection)->getColumnListing('pcrm_salesorderrow_cstm');
+            $map = [];
+            foreach ($names as $name) {
+                $map[strtolower($name)] = $name;
+            }
+            $cache[$connection] = $map;
+        } catch (Exception $e) {
+            Log::warning('ImportOrdersFromSugarCRM: could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
+                'connection' => $connection,
+                'error'      => $e->getMessage(),
+            ]);
+            $this->warn('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped.');
+            $cache[$connection] = [];
+        }
+
+        return $cache[$connection];
+    }
+
+    /**
+     * MAIN purchase row: authoritative source is the pcrm_salesorderrow main table
+     * (purchase_price total, purchase_clinic, purchase_doctor). Supplementary cstm fields
+     * (purchase_other_c, purchase_cardio_c, purchase_radio_c) cover the remaining components.
+     *
+     * Note: purchase_clinic_c and purchase_total_c do NOT exist in the Sugar schema —
+     * clinic and total live only on the main row table without the _c suffix.
+     * purchase_rd is not part of our CRM mapping and is intentionally excluded.
+     *
+     * @return array<string, float>
+     */
+    protected function orderItemMainPurchasePayloadFromSugarRow(object $row): array
+    {
+        return $this->buildPurchasePayloadFromSugarAmounts(
+            $this->sugarMoneyAmount(data_get($row, 'purchase_other_c')),
+            $this->sugarMoneyAmount(data_get($row, 'purchase_cardio_c')),
+            $this->sugarMoneyAmount(data_get($row, 'sor_purchase_clinic')),
+            $this->sugarMoneyAmount(data_get($row, 'purchase_radio_c')),
+            $this->sugarMoneyAmount(data_get($row, 'sor_purchase_price')),
+            $this->sugarMoneyAmount(data_get($row, 'sor_purchase_doctor')),
+        );
+    }
+
+    /**
+     * Load CRM products keyed by exact {@see Product::name} for all non-empty Sugar row labels.
+     *
+     * @return Collection<string, Product>
+     */
+    protected function productsByNameForSugarRows(Collection $orderRows): Collection
+    {
+        // Collect both the (possibly overridden) row name and the original product template name.
+        $names = $orderRows->flatMap(fn ($row) => [
+            trim((string) ($row->name ?? '')),
+            trim((string) ($row->product_template_name ?? '')),
+        ])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($names === []) {
+            return collect();
+        }
+
+        // Build the initial collection keyed by exact product name.
+        $byName = Product::query()
+            ->whereIn('name', $names)
+            ->get()
+            ->keyBy(fn (Product $p) => $p->name);
+
+        // For any row name that did not yield an exact match, try to load CRM products
+        // whose normalized name matches (e.g. "TB1 Royal+ Bodyscan" → "TB1 Royal Bodyscan").
+        $unmatchedNames = collect($names)->reject(fn ($n) => $byName->has($n));
+
+        if ($unmatchedNames->isNotEmpty()) {
+            $normalizedToRaw = $unmatchedNames->mapWithKeys(
+                fn ($n) => [$this->normalizeProductName($n) => $n]
+            );
+
+            // Load all products and check normalized names; only do this when there are unmatched rows.
+            Product::all()->each(function (Product $p) use ($byName, $normalizedToRaw) {
+                $normalizedProductName = $this->normalizeProductName($p->name);
+                if ($normalizedToRaw->has($normalizedProductName) && ! $byName->has($p->name)) {
+                    $byName->put($p->name, $p);
+                }
+            });
+        }
+
+        return $byName;
+    }
+
+    /**
+     * Active partner products keyed by normalized {@see PartnerProduct::name} (CRM catalog {@see Product::name} may differ).
+     *
+     * @return Collection<string, Product>
+     */
+    protected function partnerProductsByNormalizedName(): Collection
+    {
+        return PartnerProduct::query()
+            ->where('active', true)
+            ->whereNotNull('name')
+            ->where('name', '!=', '')
+            ->with('product')
+            ->get()
+            ->filter(fn (PartnerProduct $pp) => $pp->product !== null)
+            ->mapWithKeys(fn (PartnerProduct $pp) => [
+                $this->normalizeProductName($pp->name) => $pp->product,
+            ]);
+    }
+
+    /**
+     * Resolve CRM product: Sugar product template UUID → {@see Product::external_id}, else exact row name → {@see Product::name}.
+     *
+     * @param  Collection<string, Product>  $productsByExternalId
+     * @param  Collection<string, Product>  $productsByName
+     * @param  Collection<string, Product>  $productsByNormalizedName
+     * @param  Collection<string, Product>  $partnerProductsByNormalizedName
+     */
+    protected function resolveProductForSugarRow(
+        object $row,
+        Collection $productsByExternalId,
+        Collection $productsByName,
+        Collection $productsByNormalizedName,
+        Collection $partnerProductsByNormalizedName,
+    ): ?Product {
+        // 1. Match by Sugar product template UUID → Product.external_id (most reliable)
+        if (! empty($row->aos_products_id_c)) {
+            $byId = $productsByExternalId->get($row->aos_products_id_c);
+            if ($byId !== null) {
+                return $byId;
+            }
+        }
+
+        // 2. Match by the row name (may be overridden in Sugar by the user)
+        $label = trim((string) ($row->name ?? ''));
+        if ($label !== '') {
+            $byName = $productsByName->get($label);
+            if ($byName !== null) {
+                return $byName;
+            }
+        }
+
+        // 3. Fall back to the original product template name from Sugar (handles overridden row names
+        //    when aos_products_id_c is set but external_id lookup fails)
+        $templateName = trim((string) ($row->product_template_name ?? ''));
+        if ($templateName !== '') {
+            $byTemplateName = $productsByName->get($templateName);
+            if ($byTemplateName !== null) {
+                return $byTemplateName;
+            }
+        }
+
+        // 4. Normalized name match: strip '+' and collapse whitespace (handles "Royal+ Bodyscan" → "Royal Bodyscan")
+        if ($label !== '') {
+            $byNormalized = $productsByNormalizedName->get($this->normalizeProductName($label));
+            if ($byNormalized !== null) {
+                return $byNormalized;
+            }
+        }
+        if ($templateName !== '') {
+            $byTplNorm = $productsByNormalizedName->get($this->normalizeProductName($templateName));
+            if ($byTplNorm !== null) {
+                return $byTplNorm;
+            }
+        }
+
+        // 5. Match Sugar line / template text against partner-facing product names (e.g. "TB1 Royal+ Bodyscan" → partner "TB1 Royal Bodyscan")
+        if ($partnerProductsByNormalizedName->isNotEmpty()) {
+            foreach ([$label, $templateName] as $try) {
+                if ($try === '') {
+                    continue;
+                }
+                $resolved = $partnerProductsByNormalizedName->get($this->normalizeProductName($try));
+                if ($resolved !== null) {
+                    return $resolved;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize a product name for fuzzy matching:
+     * strips '+' characters and collapses whitespace to handle Sugar overrides
+     * like "TB1 Royal+ Bodyscan" matching CRM product "TB1 Royal Bodyscan".
+     */
+    protected function normalizeProductName(string $name): string
+    {
+        $normalized = str_replace('+', ' ', $name);
+        $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
+
+        return strtolower(trim($normalized));
+    }
+
+    /**
      * Import any linked Sugar leads (and their persons) that are not yet in the CRM.
      * Mirrors the --import-persons pattern in ImportLeadsFromSugarCRM.
      */
@@ -376,7 +676,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         );
         $partnerProductsByNormalizedName = $this->partnerProductsByNormalizedName();
 
-        $headers = ['Order#', 'Naam', 'CRM product', 'Prijs', 'Status', 'Afl.other', 'Afl.cardio', 'Afl.clinic', 'Afl.radio', 'Afl.totaal'];
+        $headers = ['Order#', 'Naam', 'CRM product', 'Prijs', 'Status', 'Ink.totaal', 'Afl.other', 'Afl.cardio', 'Afl.clinic', 'Afl.radio', 'Afl.rd', 'Afl.doctor', 'Afl.totaal'];
         $tableRows = [];
         $noMatchCount = 0;
 
@@ -399,6 +699,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 }
 
                 $status = $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '', $hasScheduledExamination);
+                $mainPayload = $this->orderItemMainPurchasePayloadFromSugarRow($row);
 
                 $tableRows[] = [
                     $orderNum,
@@ -406,10 +707,13 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $product ? $product->name : '✗ geen match',
                     number_format((float) ($row->sales_price ?? 0), 2),
                     $status->value,
+                    number_format((float) ($mainPayload['purchase_price'] ?? 0), 2),
                     $this->dryRunAflettereCell($row, 'other'),
                     $this->dryRunAflettereCell($row, 'cardio'),
                     $this->dryRunAflettereCell($row, 'clinic'),
                     $this->dryRunAflettereCell($row, 'radio'),
+                    $this->dryRunAflettereCell($row, 'rd'),
+                    $this->dryRunAflettereCell($row, 'doctor'),
                     $this->dryRunAflettererTotaalCell($row),
                 ];
             }
@@ -689,7 +993,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         $mainPurchasePayload = $this->orderItemMainPurchasePayloadFromSugarRow($row);
                         $orderItem->invoicePurchasePrice()->updateOrCreate(
                             ['type' => PurchasePriceType::INVOICE],
-                            array_merge(['type' => PurchasePriceType::INVOICE], $invoicePurchasePayload)
+                            array_merge(['type' => PurchasePriceType::INVOICE, 'force_received' => true], $invoicePurchasePayload)
                         );
                         $orderItem->purchasePrice()->updateOrCreate(
                             ['type' => PurchasePriceType::MAIN],
@@ -756,124 +1060,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $this->warn("  - ID={$err['id']} (order_num={$err['order_num']}): {$err['message']}");
             }
         }
-    }
-
-    /**
-     * Batch-fetch all order rows for the given SugarCRM order UUIDs.
-     * Returns a Collection keyed by the SugarCRM order UUID, each value being
-     * a Collection of row objects (one row per contact, due to the LEFT JOIN).
-     */
-    private function fetchOrderRows(string $connection, array $orderIds): Collection
-    {
-        if (empty($orderIds)) {
-            return collect();
-        }
-
-        $baseSelect = [
-            'rel.pcrm_salesb9a7esorder_ida as order_id',
-            'sor.id',
-            'sor.name',
-            'sor.sales_price',
-            'sor.sales_stage',
-            'sor.resource_type',
-            'row_cstm.aos_products_id_c',
-            'sor.datum_onderzoek',
-            'sor.duration',
-            'sor.pcrm_partnerresources_id_c',
-            'pt.name as product_template_name',
-            'rc.pcrm_sales4bd9ontacts_ida as contact_id',
-        ];
-
-        $sql = DB::connection($connection)
-            ->table('pcrm_salesoalesorderrow_c as rel')
-            ->join('pcrm_salesorderrow as sor', 'sor.id', '=', 'rel.pcrm_sales509drderrow_idb')
-            ->leftJoin('pcrm_salesorderrow_cstm as row_cstm', 'row_cstm.id_c', '=', 'sor.id')
-            ->leftJoin('pcrm_salesorow_contacts_c as rc', function ($join) {
-                $join->on('rc.pcrm_sales80b3rderrow_idb', '=', 'sor.id')
-                    ->where('rc.deleted', '=', 0);
-            })
-            ->leftJoin('aos_products as pt', function ($join) {
-                $join->on('pt.id', '=', 'row_cstm.aos_products_id_c')
-                    ->where('pt.deleted', '=', 0);
-            })
-            ->select(array_merge($baseSelect, $this->sugarOrderRowCstmSelectFragments($connection)))
-            ->where('sor.deleted', 0)
-            ->whereIn('rel.pcrm_salesb9a7esorder_ida', $orderIds);
-
-        $this->infoVV($sql->toRawSql());
-        $rows = $sql->get()->unique('id');
-
-        return $rows->groupBy('order_id');
-    }
-
-    /**
-     * Custom fields on pcrm_salesorderrow_cstm differ per Sugar instance; only select columns that exist.
-     *
-     * @return list<string>
-     */
-    private function sugarOrderRowCstmSelectFragments(string $connection): array
-    {
-        $byLowerName = $this->sugarOrderRowCstmColumnByLowerName($connection);
-        $candidates = [
-            'purchase_other_c',
-            'purchase_cardio_c',
-            'purchase_clinic_c',
-            'purchase_radio_c',
-            'purchase_total_c',
-            'inv_purchase_other_c',
-            'inv_purchase_cardio_c',
-            'inv_purchase_clinic_c',
-            'inv_purchase_radio_c',
-            'inv_purchase_total_c',
-            'ink_other_status_c',
-            'ink_cardio_status_c',
-            'ink_clinic_status_c',
-            'ink_radio_status_c',
-            'ink_total_status_c',
-            'afb_description_c',
-        ];
-
-        $fragments = [];
-        foreach ($candidates as $column) {
-            $dbColumn = $byLowerName[strtolower($column)] ?? null;
-            if ($dbColumn !== null) {
-                $fragments[] = "row_cstm.{$dbColumn} as {$column}";
-            }
-        }
-
-        return $fragments;
-    }
-
-    /**
-     * Lowercase name => actual column name on the database (for correct quoting / casing).
-     *
-     * @return array<string, string>
-     */
-    private function sugarOrderRowCstmColumnByLowerName(string $connection): array
-    {
-        static $cache = [];
-
-        if (array_key_exists($connection, $cache)) {
-            return $cache[$connection];
-        }
-
-        try {
-            $names = Schema::connection($connection)->getColumnListing('pcrm_salesorderrow_cstm');
-            $map = [];
-            foreach ($names as $name) {
-                $map[strtolower($name)] = $name;
-            }
-            $cache[$connection] = $map;
-        } catch (Exception $e) {
-            Log::warning('ImportOrdersFromSugarCRM: could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped', [
-                'connection' => $connection,
-                'error'      => $e->getMessage(),
-            ]);
-            $this->warn('Could not introspect pcrm_salesorderrow_cstm; order row custom fields will be skipped.');
-            $cache[$connection] = [];
-        }
-
-        return $cache[$connection];
     }
 
     /**
@@ -974,22 +1160,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * MAIN purchase row: expected amounts from SuiteCRM (purchase_*), not invoice-allocated inv_*.
-     *
-     * @return array<string, float>
-     */
-    private function orderItemMainPurchasePayloadFromSugarRow(object $row): array
-    {
-        return $this->buildPurchasePayloadFromSugarAmounts(
-            $this->sugarMoneyAmount(data_get($row, 'purchase_other_c')),
-            $this->sugarMoneyAmount(data_get($row, 'purchase_cardio_c')),
-            $this->sugarMoneyAmount(data_get($row, 'purchase_clinic_c')),
-            $this->sugarMoneyAmount(data_get($row, 'purchase_radio_c')),
-            $this->sugarMoneyAmount(data_get($row, 'purchase_total_c')),
-        );
-    }
-
-    /**
      * INVOICE purchase row: amounts from invoice matching (inv_purchase_*).
      * A component is ignored when the matching ink_*_status_c blocks invoice amounts
      * (e.g. geen, open, teontvangen — SuiteCRM / invoice-app export semantics).
@@ -1004,6 +1174,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_clinic_c'), data_get($row, 'ink_clinic_status_c')),
             $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_radio_c'), data_get($row, 'ink_radio_status_c')),
             $this->sugarInvoiceAggregatedTotalAmount($row),
+            $this->sugarInvoiceComponentAmount(data_get($row, 'inv_purchase_doctor_c'), data_get($row, 'ink_doctor_status_c')),
         );
     }
 
@@ -1026,7 +1197,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             }
         }
 
-        $statusFields = ['ink_other_status_c', 'ink_cardio_status_c', 'ink_clinic_status_c', 'ink_radio_status_c'];
+        $statusFields = ['ink_other_status_c', 'ink_cardio_status_c', 'ink_clinic_status_c', 'ink_radio_status_c', 'ink_doctor_status_c'];
         $nonEmptyStatuses = [];
         foreach ($statusFields as $field) {
             if (! property_exists($row, $field)) {
@@ -1074,6 +1245,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         ?float $clinic,
         ?float $radio,
         ?float $totalFromSugar,
+        ?float $doctor = null,
     ): array {
         $empty = [
             'purchase_price_misc'       => 0.0,
@@ -1084,14 +1256,14 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'purchase_price'            => 0.0,
         ];
 
-        $hasComponent = $miscRaw !== null || $cardio !== null || $clinic !== null || $radio !== null;
+        $hasComponent = $miscRaw !== null || $cardio !== null || $clinic !== null || $radio !== null || $doctor !== null;
         $hasTotal = $totalFromSugar !== null;
 
         if (! $hasComponent && ! $hasTotal) {
             return $empty;
         }
 
-        $sumSugarComponents = ($miscRaw ?? 0.0) + ($cardio ?? 0.0) + ($clinic ?? 0.0) + ($radio ?? 0.0);
+        $sumSugarComponents = ($miscRaw ?? 0.0) + ($cardio ?? 0.0) + ($clinic ?? 0.0) + ($radio ?? 0.0) + ($doctor ?? 0.0);
         $total = $totalFromSugar !== null ? $totalFromSugar : round($sumSugarComponents, 2);
 
         $remainder = round($total - $sumSugarComponents, 2);
@@ -1099,7 +1271,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         return [
             'purchase_price_misc'       => $misc,
-            'purchase_price_doctor'     => 0.0,
+            'purchase_price_doctor'     => $doctor ?? 0.0,
             'purchase_price_cardiology' => $cardio ?? 0.0,
             'purchase_price_clinic'     => $clinic ?? 0.0,
             'purchase_price_radiology'  => $radio ?? 0.0,
@@ -1225,158 +1397,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                 $expectedOutstanding
             ));
         }
-    }
-
-    /**
-     * Load CRM products keyed by exact {@see Product::name} for all non-empty Sugar row labels.
-     *
-     * @return Collection<string, Product>
-     */
-    private function productsByNameForSugarRows(Collection $orderRows): Collection
-    {
-        // Collect both the (possibly overridden) row name and the original product template name.
-        $names = $orderRows->flatMap(fn ($row) => [
-            trim((string) ($row->name ?? '')),
-            trim((string) ($row->product_template_name ?? '')),
-        ])
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        if ($names === []) {
-            return collect();
-        }
-
-        // Build the initial collection keyed by exact product name.
-        $byName = Product::query()
-            ->whereIn('name', $names)
-            ->get()
-            ->keyBy(fn (Product $p) => $p->name);
-
-        // For any row name that did not yield an exact match, try to load CRM products
-        // whose normalized name matches (e.g. "TB1 Royal+ Bodyscan" → "TB1 Royal Bodyscan").
-        $unmatchedNames = collect($names)->reject(fn ($n) => $byName->has($n));
-
-        if ($unmatchedNames->isNotEmpty()) {
-            $normalizedToRaw = $unmatchedNames->mapWithKeys(
-                fn ($n) => [$this->normalizeProductName($n) => $n]
-            );
-
-            // Load all products and check normalized names; only do this when there are unmatched rows.
-            Product::all()->each(function (Product $p) use ($byName, $normalizedToRaw) {
-                $normalizedProductName = $this->normalizeProductName($p->name);
-                if ($normalizedToRaw->has($normalizedProductName) && ! $byName->has($p->name)) {
-                    $byName->put($p->name, $p);
-                }
-            });
-        }
-
-        return $byName;
-    }
-
-    /**
-     * Active partner products keyed by normalized {@see PartnerProduct::name} (CRM catalog {@see Product::name} may differ).
-     *
-     * @return Collection<string, Product>
-     */
-    private function partnerProductsByNormalizedName(): Collection
-    {
-        return PartnerProduct::query()
-            ->where('active', true)
-            ->whereNotNull('name')
-            ->where('name', '!=', '')
-            ->with('product')
-            ->get()
-            ->filter(fn (PartnerProduct $pp) => $pp->product !== null)
-            ->mapWithKeys(fn (PartnerProduct $pp) => [
-                $this->normalizeProductName($pp->name) => $pp->product,
-            ]);
-    }
-
-    /**
-     * Resolve CRM product: Sugar product template UUID → {@see Product::external_id}, else exact row name → {@see Product::name}.
-     *
-     * @param  Collection<string, Product>  $productsByExternalId
-     * @param  Collection<string, Product>  $productsByName
-     * @param  Collection<string, Product>  $productsByNormalizedName
-     * @param  Collection<string, Product>  $partnerProductsByNormalizedName
-     */
-    private function resolveProductForSugarRow(
-        object $row,
-        Collection $productsByExternalId,
-        Collection $productsByName,
-        Collection $productsByNormalizedName,
-        Collection $partnerProductsByNormalizedName,
-    ): ?Product {
-        // 1. Match by Sugar product template UUID → Product.external_id (most reliable)
-        if (! empty($row->aos_products_id_c)) {
-            $byId = $productsByExternalId->get($row->aos_products_id_c);
-            if ($byId !== null) {
-                return $byId;
-            }
-        }
-
-        // 2. Match by the row name (may be overridden in Sugar by the user)
-        $label = trim((string) ($row->name ?? ''));
-        if ($label !== '') {
-            $byName = $productsByName->get($label);
-            if ($byName !== null) {
-                return $byName;
-            }
-        }
-
-        // 3. Fall back to the original product template name from Sugar (handles overridden row names
-        //    when aos_products_id_c is set but external_id lookup fails)
-        $templateName = trim((string) ($row->product_template_name ?? ''));
-        if ($templateName !== '') {
-            $byTemplateName = $productsByName->get($templateName);
-            if ($byTemplateName !== null) {
-                return $byTemplateName;
-            }
-        }
-
-        // 4. Normalized name match: strip '+' and collapse whitespace (handles "Royal+ Bodyscan" → "Royal Bodyscan")
-        if ($label !== '') {
-            $byNormalized = $productsByNormalizedName->get($this->normalizeProductName($label));
-            if ($byNormalized !== null) {
-                return $byNormalized;
-            }
-        }
-        if ($templateName !== '') {
-            $byTplNorm = $productsByNormalizedName->get($this->normalizeProductName($templateName));
-            if ($byTplNorm !== null) {
-                return $byTplNorm;
-            }
-        }
-
-        // 5. Match Sugar line / template text against partner-facing product names (e.g. "TB1 Royal+ Bodyscan" → partner "TB1 Royal Bodyscan")
-        if ($partnerProductsByNormalizedName->isNotEmpty()) {
-            foreach ([$label, $templateName] as $try) {
-                if ($try === '') {
-                    continue;
-                }
-                $resolved = $partnerProductsByNormalizedName->get($this->normalizeProductName($try));
-                if ($resolved !== null) {
-                    return $resolved;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Normalize a product name for fuzzy matching:
-     * strips '+' characters and collapses whitespace to handle Sugar overrides
-     * like "TB1 Royal+ Bodyscan" matching CRM product "TB1 Royal Bodyscan".
-     */
-    private function normalizeProductName(string $name): string
-    {
-        $normalized = str_replace('+', ' ', $name);
-        $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
-
-        return strtolower(trim($normalized));
     }
 
     /**

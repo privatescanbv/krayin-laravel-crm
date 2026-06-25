@@ -117,6 +117,7 @@ class ActivityQueueRegistry
             ],
 
             // Upload bestanden door klanten – monitor file uploads from portal.
+            // Exclude clinic uploads (inkoop facturen) which have a clinic_id set.
             'uploads' => [
                 'key'   => 'uploads',
                 'label' => 'Upload bestanden door patiënten',
@@ -127,7 +128,9 @@ class ActivityQueueRegistry
                 'apply' => static function (Builder $query): void {
                     $query
                         ->where('activities.type', ActivityType::FILE->value)
-                        ->where('activities.is_done', false);
+                        ->where('activities.is_done', false)
+                        ->whereNotNull('activities.person_id')
+                        ->whereNull('activities.clinic_id');
                 },
             ],
 

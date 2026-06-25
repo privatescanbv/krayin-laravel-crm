@@ -2733,6 +2733,7 @@ return [
             'glaucoma_notes'             => 'Toelichting glaucoom',
             'claustrophobia'             => 'Bent u claustrofobisch?',
             'dormicum'                   => 'Wenst u een rustgevend middel?',
+            'dormicum_notes'             => 'Toelichting rustgevend middel',
             'heart_surgery'              => 'Heeft u ooit een hartkatheterisatie gehad?',
             'heart_surgery_notes'        => 'Toelichting hart operatie',
             'implant'                    => 'Draagt u een implantaat?',

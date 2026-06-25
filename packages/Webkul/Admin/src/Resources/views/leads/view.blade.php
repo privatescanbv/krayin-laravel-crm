@@ -84,13 +84,7 @@
                         {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}
 
                         @if (bouncer()->hasPermission('mail.create'))
-                            <!-- Mail Activity Action: use contact person's emails when available, fall back to lead's own emails -->
-                            @php
-                                $mailEmails = !empty($lead->contactPerson?->emails)
-                                    ? $lead->contactPerson->emails
-                                    : ($lead->emails ?? []);
-                            @endphp
-                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id" :emails="$mailEmails"/>
+                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id" :emails="$lead->resolveDefaultEmails()"/>
                         @endif
 
                         @if (bouncer()->hasPermission('activities.create'))

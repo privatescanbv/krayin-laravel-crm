@@ -562,6 +562,23 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Resolve the emails to use when composing a mail for this lead.
+     * Prefers the contact person's emails; falls back to the lead's own emails.
+     *
+     * @return array<int, mixed>
+     */
+    public function resolveDefaultEmails(): array
+    {
+        $personEmails = $this->contactPerson?->emails ?? [];
+
+        if (! empty($personEmails)) {
+            return $personEmails;
+        }
+
+        return $this->emails ?? [];
+    }
+
+    /**
      * Get all persons (contact person and linked persons) as a single collection.
      * Duplicates are removed based on person ID.
      */

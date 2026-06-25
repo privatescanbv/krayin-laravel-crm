@@ -96,14 +96,26 @@ test('planning overschrijft een bestaande purchase price op het order item met d
 
     $partnerProduct = PartnerProduct::factory()->create(['product_id' => $product->id]);
     $partnerProduct->clinics()->sync([$clinic->id]);
-    $partnerProduct->purchasePrice()->update(['purchase_price' => 999.00]);
+    $partnerProduct->purchasePrice->update([
+        'purchase_price_misc'       => 999.00,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => 999.00,
+    ]);
 
     $orderItem = OrderItem::factory()->create(['product_id' => $product->id]);
 
     // Bestaande (handmatige) inkoopprijs — wordt overschreven
     $orderItem->purchasePrice()->create([
-        'type'           => PurchasePriceType::MAIN,
-        'purchase_price' => 42.00,
+        'type'                      => PurchasePriceType::MAIN,
+        'purchase_price_misc'       => 42.00,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => 42.00,
     ]);
 
     ResourceOrderItem::create([

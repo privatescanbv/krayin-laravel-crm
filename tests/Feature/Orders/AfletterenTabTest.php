@@ -18,8 +18,9 @@ test('afletteren tab does not show order items with status LOST', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create(['name' => 'TestProductVerloren_'.uniqid()]);
 
-    $pp = PartnerProduct::factory()->create(['product_id' => $product->id]);
-    $pp->purchasePrice->update(['purchase_price_clinic' => 99.00, 'purchase_price' => 99.00]);
+    PartnerProduct::factory()
+        ->withMainPurchasePrice(['clinic' => 99, 'total' => 99])
+        ->create(['product_id' => $product->id]);
 
     OrderItem::factory()->create([
         'order_id'   => $order->id,
@@ -42,8 +43,9 @@ test('afletteren tab shows order items that are not LOST when they have purchase
     $order = Order::factory()->create();
     $product = Product::factory()->create(['name' => 'TestProductWon_'.uniqid()]);
 
-    $pp = PartnerProduct::factory()->create(['product_id' => $product->id]);
-    $pp->purchasePrice->update(['purchase_price_clinic' => 99.00, 'purchase_price' => 99.00]);
+    PartnerProduct::factory()
+        ->withMainPurchasePrice(['clinic' => 99, 'total' => 99])
+        ->create(['product_id' => $product->id]);
 
     OrderItem::factory()->create([
         'order_id'   => $order->id,

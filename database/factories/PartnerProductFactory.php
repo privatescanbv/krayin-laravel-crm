@@ -40,35 +40,72 @@ class PartnerProductFactory extends Factory
             }
             $partnerProduct->clinics()->sync([$clinicId]);
 
-            $misc = $this->faker->randomFloat(2, 0, 100);
-            $doctor = $this->faker->randomFloat(2, 0, 200);
-            $cardio = $this->faker->randomFloat(2, 0, 150);
-            $clinic = $this->faker->randomFloat(2, 0, 100);
-            $radio = $this->faker->randomFloat(2, 0, 120);
-            $partnerProduct->purchasePrice()->create([
-                'type'                       => PurchasePriceType::MAIN,
-                'purchase_price_misc'        => $misc,
-                'purchase_price_doctor'      => $doctor,
-                'purchase_price_cardiology'  => $cardio,
-                'purchase_price_clinic'      => $clinic,
-                'purchase_price_radiology'   => $radio,
-                'purchase_price'             => $misc + $doctor + $cardio + $clinic + $radio,
-            ]);
-
-            $rMisc = $this->faker->randomFloat(2, 0, 50);
-            $rDoctor = $this->faker->randomFloat(2, 0, 100);
-            $rCardio = $this->faker->randomFloat(2, 0, 75);
-            $rClinic = $this->faker->randomFloat(2, 0, 50);
-            $rRadio = $this->faker->randomFloat(2, 0, 60);
-            $partnerProduct->relatedPurchasePrice()->create([
-                'type'                       => PurchasePriceType::RELATED,
-                'purchase_price_misc'        => $rMisc,
-                'purchase_price_doctor'      => $rDoctor,
-                'purchase_price_cardiology'  => $rCardio,
-                'purchase_price_clinic'      => $rClinic,
-                'purchase_price_radiology'   => $rRadio,
-                'purchase_price'             => $rMisc + $rDoctor + $rCardio + $rClinic + $rRadio,
-            ]);
+            $this->createDefaultPurchasePrices($partnerProduct);
         });
+    }
+
+    /**
+     * Override MAIN purchase price with a consistent component breakdown (runs after default factory prices).
+     *
+     * @param  array{misc?: float, doctor?: float, cardiology?: float, clinic?: float, radiology?: float, total?: float}  $components
+     */
+    public function withMainPurchasePrice(array $components): static
+    {
+        return $this->afterCreating(function (PartnerProduct $partnerProduct) use ($components) {
+            $misc = (float) ($components['misc'] ?? 0);
+            $doctor = (float) ($components['doctor'] ?? 0);
+            $cardio = (float) ($components['cardiology'] ?? 0);
+            $clinic = (float) ($components['clinic'] ?? 0);
+            $radio = (float) ($components['radiology'] ?? 0);
+            $total = array_key_exists('total', $components)
+                ? (float) $components['total']
+                : round($misc + $doctor + $cardio + $clinic + $radio, 2);
+
+            $partnerProduct->purchasePrice()->updateOrCreate(
+                ['type' => PurchasePriceType::MAIN],
+                [
+                    'type'                      => PurchasePriceType::MAIN,
+                    'purchase_price_misc'       => $misc,
+                    'purchase_price_doctor'     => $doctor,
+                    'purchase_price_cardiology' => $cardio,
+                    'purchase_price_clinic'     => $clinic,
+                    'purchase_price_radiology'  => $radio,
+                    'purchase_price'            => $total,
+                ],
+            );
+        });
+    }
+
+    private function createDefaultPurchasePrices(PartnerProduct $partnerProduct): void
+    {
+        $misc = $this->faker->randomFloat(2, 0, 100);
+        $doctor = $this->faker->randomFloat(2, 0, 200);
+        $cardio = $this->faker->randomFloat(2, 0, 150);
+        $clinic = $this->faker->randomFloat(2, 0, 100);
+        $radio = $this->faker->randomFloat(2, 0, 120);
+        $partnerProduct->purchasePrice()->create([
+            'type'                       => PurchasePriceType::MAIN,
+            'purchase_price_misc'        => $misc,
+            'purchase_price_doctor'      => $doctor,
+            'purchase_price_cardiology'  => $cardio,
+            'purchase_price_clinic'      => $clinic,
+            'purchase_price_radiology'   => $radio,
+            'purchase_price'             => $misc + $doctor + $cardio + $clinic + $radio,
+        ]);
+
+        $rMisc = $this->faker->randomFloat(2, 0, 50);
+        $rDoctor = $this->faker->randomFloat(2, 0, 100);
+        $rCardio = $this->faker->randomFloat(2, 0, 75);
+        $rClinic = $this->faker->randomFloat(2, 0, 50);
+        $rRadio = $this->faker->randomFloat(2, 0, 60);
+        $partnerProduct->relatedPurchasePrice()->create([
+            'type'                       => PurchasePriceType::RELATED,
+            'purchase_price_misc'        => $rMisc,
+            'purchase_price_doctor'      => $rDoctor,
+            'purchase_price_cardiology'  => $rCardio,
+            'purchase_price_clinic'      => $rClinic,
+            'purchase_price_radiology'   => $rRadio,
+            'purchase_price'             => $rMisc + $rDoctor + $rCardio + $rClinic + $rRadio,
+        ]);
     }
 }

@@ -43,6 +43,16 @@
             </div>
         </div>
 
+        <div class="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm dark:border-orange-800 dark:bg-orange-900/20">
+            <div class="flex items-start gap-2">
+                <span class="icon-warning mt-0.5 shrink-0 text-base text-orange-600 dark:text-orange-400"></span>
+                <div>
+                    <div class="font-semibold text-orange-800 dark:text-orange-200">Onderstaande factuurregels zijn niet automatisch gekoppeld aan het CRM.</div>
+                    <div class="mt-1 text-orange-700 dark:text-orange-300">Controleer de gegevens en verwerk deze regels handmatig in het CRM vóór je de factuur markeert als verwerkt.</div>
+                </div>
+            </div>
+        </div>
+
         <div class="overflow-hidden rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
             <table class="w-full text-left text-sm">
                 <thead class="border-b bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
@@ -89,7 +99,6 @@
                                 $orderItemStatus         = $orderItem->status;
                                 $crmPurchasePrice        = $orderItem->purchasePrice?->purchase_price;
 
-                                {{-- Toon per rij de beschikbare (ongematchte) factuurregels van deze persoon --}}
                                 $invItemsToShow = $unmatchedInvItems;
                             @endphp
                             <tr class="bg-orange-50 dark:bg-orange-900/10">
@@ -181,21 +190,49 @@
                             </tr>
                         @endforeach
 
-                        {{-- Ongematchte factuurregels zonder CRM koppeling (omgekeerde richting) --}}
+                        {{-- Ongematchte factuurregels zonder CRM koppeling: toon alle factuurgegevens voor handmatige verwerking --}}
                         @if ($unmatchedInvItems->isNotEmpty() && $unmatchedOrderItems->isEmpty())
-                            <tr class="bg-orange-50 dark:bg-orange-900/10">
-                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">
-                                    {{ trim($person->firstname . ' ' . $person->lastname) }}
-                                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        {{ $matchedCount }}/{{ $totalCount }} orderregel(s) gekoppeld
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3" colspan="6">
-                                    <span class="text-xs text-orange-500 dark:text-orange-400">
-                                        {{ $unmatchedInvItems->count() }} factuurregel(s) niet gekoppeld aan CRM — ga terug naar stap 2
-                                    </span>
-                                </td>
-                            </tr>
+                            @foreach ($unmatchedInvItems as $invItem)
+                                <tr class="bg-orange-50 dark:bg-orange-900/10">
+                                    <td class="px-4 py-3 align-top font-medium text-gray-800 dark:text-gray-200">
+                                        @if ($loop->first)
+                                            <div>{{ trim($person->firstname . ' ' . $person->lastname) }}</div>
+                                            @if ($totalCount > 0)
+                                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $matchedCount }}/{{ $totalCount }} orderregel(s) gekoppeld
+                                                </div>
+                                            @endif
+                                        @endif
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top text-sm text-gray-700 dark:text-gray-300">
+                                        <div>{{ $invItem->name ?? $invItem->description ?? '—' }}</div>
+                                        @if ($invItem->description && $invItem->name && $invItem->description !== $invItem->name)
+                                            <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $invItem->description }}</div>
+                                        @endif
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top text-sm text-gray-600 dark:text-gray-400">
+                                        {{ $invItem->date?->format('d-m-Y') ?? '—' }}
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top text-sm text-gray-600 dark:text-gray-400">
+                                        @if ($invItem->quantity && $invItem->unit_price)
+                                            <div>{{ rtrim(rtrim(number_format((float) $invItem->quantity, 2, ',', '.'), '0'), ',') }} × €&nbsp;{{ number_format((float) $invItem->unit_price, 2, ',', '.') }}</div>
+                                        @endif
+                                        <div class="font-medium text-gray-800 dark:text-gray-200">
+                                            €&nbsp;{{ number_format((float) ($invItem->total_price ?? $invItem->price ?? 0), 2, ',', '.') }}
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-3 align-top" colspan="3">
+                                        <span class="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                                            <span class="icon-warning text-sm"></span>
+                                            Geen CRM-match — handmatig verwerken
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
                         @endif
                     @endif
                 @endforeach

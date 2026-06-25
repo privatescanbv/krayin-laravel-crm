@@ -5,6 +5,7 @@ use App\Models\Clinic;
 use App\Services\ActivityQueueRepository;
 use Database\Seeders\TestSeeder;
 use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Person;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -25,13 +26,15 @@ it('excludes clinic uploads (rekening/inkoop factuur) from the uploads queue', f
     ]);
 
     $clinic = Clinic::factory()->create();
+    $person = Person::factory()->create();
 
-    // Patient upload – no clinic_id, should appear in queue
+    // Patient upload – has person_id, no clinic_id, should appear in queue
     $patientUpload = Activity::create([
-        'type'    => ActivityType::FILE->value,
-        'title'   => 'Patient upload',
-        'is_done' => false,
-        'user_id' => $admin->id,
+        'type'      => ActivityType::FILE->value,
+        'title'     => 'Patient upload',
+        'is_done'   => false,
+        'user_id'   => $admin->id,
+        'person_id' => $person->id,
     ]);
 
     // Clinic invoice upload – has clinic_id, should NOT appear in queue

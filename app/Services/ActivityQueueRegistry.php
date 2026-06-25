@@ -129,6 +129,7 @@ class ActivityQueueRegistry
                     $query
                         ->where('activities.type', ActivityType::FILE->value)
                         ->where('activities.is_done', false)
+                        ->whereNotNull('activities.person_id')
                         ->whereNull('activities.clinic_id');
                 },
             ],

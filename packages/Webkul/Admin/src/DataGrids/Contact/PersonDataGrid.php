@@ -94,6 +94,7 @@ class PersonDataGrid extends DataGrid
         )"));
         $this->addFilter('organization', 'organizations.name');
         $this->addFilter('is_active', 'persons.is_active');
+        $this->addFilter('date_of_birth', 'persons.date_of_birth');
 
         return $queryBuilder;
     }
@@ -175,21 +176,22 @@ class PersonDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'date_of_birth',
-            'label'      => 'Leeftijd',
-            'type'       => 'string',
-            'sortable'   => true,
-            'filterable' => false,
-            'searchable' => false,
-            'closure'    => function ($row) {
-                if (!$row->date_of_birth) {
+            'index'           => 'date_of_birth',
+            'label'           => 'Geboortedatum',
+            'type'            => 'date',
+            'sortable'        => true,
+            'filterable'      => true,
+            'filterable_type' => 'date_range',
+            'searchable'      => false,
+            'closure'         => function ($row) {
+                if (! $row->date_of_birth) {
                     return '-';
                 }
 
                 $birthDate = Carbon::parse($row->date_of_birth);
                 $age = $birthDate->age;
 
-                return $age . ' jaar';
+                return $row->date_of_birth . ' (' . $age . ' jaar)';
             },
         ]);
 

@@ -4,6 +4,7 @@
     'value' => 0,
     'rules' => '',
     'commentField' => null,
+    'commentOnNo' => false,
 ])
 
 @php
@@ -24,7 +25,8 @@
                 class="form-radio"
                 {{ (int) $value === 1 ? 'checked' : '' }}
                 @if ($commentField)
-                    onchange="toggleCommentField('{{ $commentField }}', true)"
+                    onchange="toggleCommentField('{{ $commentField }}', {{ $commentOnNo ? 'false' : 'true' }})"
+                    @if ($commentOnNo) data-comment-inverted="1" @endif
                 @endif
             >
             Ja
@@ -38,7 +40,8 @@
                 class="form-radio"
                 {{ (int) $value === 0 ? 'checked' : '' }}
                 @if ($commentField)
-                    onchange="toggleCommentField('{{ $commentField }}', false)"
+                    onchange="toggleCommentField('{{ $commentField }}', {{ $commentOnNo ? 'true' : 'false' }})"
+                    @if ($commentOnNo) data-comment-inverted="1" @endif
                 @endif
             >
             Nee

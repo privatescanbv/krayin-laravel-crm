@@ -126,7 +126,7 @@
             <tr>
                 <td class="label">Platzangst</td>
                 <td>{{ $afb['medical']['claustrophobia'] ?? '-' }}</td>
-                <td colspan="2">&nbsp;</td>
+                <td colspan="2">{{ $afb['medical']['dormicum_notes'] ?? '-' }}</td>
             </tr>
             <tr>
                 <td class="label">Diabetes</td>

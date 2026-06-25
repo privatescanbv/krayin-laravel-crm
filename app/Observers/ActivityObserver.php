@@ -39,6 +39,14 @@ class ActivityObserver
         if ($activity->isDirty('is_done')) {
             $activity->completed_at = $activity->is_done ? now() : null;
         }
+
+        if ($activity->isDirty(['schedule_from', 'schedule_to'])
+            && $activity->schedule_from
+            && $activity->schedule_to
+            && $activity->schedule_from->gt($activity->schedule_to)
+        ) {
+            $activity->schedule_from = $activity->schedule_to->copy();
+        }
     }
 
     /**

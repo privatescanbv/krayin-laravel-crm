@@ -4,7 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\CallStatus as CallStatusEnum;
 use App\Models\CallStatus;
-use App\Services\ActivityStatusService;
+use App\Services\Activities\ActivityRescheduleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Webkul\Activity\Models\Activity;
@@ -14,9 +14,10 @@ use Webkul\Admin\Http\Controllers\Controller;
 class CallStatusController extends Controller
 {
 
-    public function __construct(private readonly ActivityRepository $activityRepository)
-    {
-    }
+    public function __construct(
+        private readonly ActivityRepository $activityRepository,
+        private readonly ActivityRescheduleService $activityRescheduleService,
+    ) {}
 
     public function index(int $activityId): JsonResponse
     {
@@ -57,18 +58,8 @@ class CallStatusController extends Controller
             'status' => $validated['status'],
             'omschrijving' => $validated['omschrijving'] ?? null,
         ]);
-        // Reschedule activity if requested
         if (! empty($validated['reschedule_days'])) {
-            $days = (int) $validated['reschedule_days'];
-            $activity->schedule_to = now()->addDays($days);
-            $activity->save();
-
-            // Recompute status after reschedule
-            $computed = ActivityStatusService::computeStatus(null, $activity->schedule_to, $activity->status);
-            if ($computed->value !== ($activity->status?->value ?? null)) {
-                $activity->status = $computed;
-                $activity->save();
-            }
+            $this->activityRescheduleService->reschedule($activity, (int) $validated['reschedule_days']);
         }
         $this->activityRepository->unassign($activity);
 

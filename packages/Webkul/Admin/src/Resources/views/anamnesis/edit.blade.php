@@ -253,7 +253,18 @@
                                     label="{{ __('admin::app.anamnesis.fields.dormicum') }}"
                                     :value="$anamnesis->dormicum"
                                     rules="required"
+                                    comment-field="dormicum"
                                 />
+
+                                <div id="dormicum_comment" class="mt-2" style="display: {{ $anamnesis->dormicum === true ? 'block' : 'none' }}">
+                                    <x-adminc::components.field
+                                        type="text"
+                                        name="dormicum_notes"
+                                        label="{{ __('admin::app.anamnesis.fields.dormicum_notes') }}"
+                                        :value="$anamnesis->dormicum_notes"
+                                        placeholder="Welk rustgevend middel?"
+                                    />
+                                </div>
                             </div>
 
                             <!-- Hart operatie -->
@@ -345,12 +356,13 @@
                                 <x-adminc::components.yes-no
                                     name="back_problems"
                                     label="{{ __('admin::app.anamnesis.fields.back_problems') }}"
-                                    :value="$anamnesis->back_problems"
+                                    :value="$anamnesis->back_problems ?? true"
                                     rules="required"
                                     comment-field="back_problems"
+                                    comment-on-no="true"
                                 />
 
-                                <div id="back_problems_comment" class="mt-2" style="display: {{ $anamnesis->back_problems == 1 ? 'block' : 'none' }}">
+                                <div id="back_problems_comment" class="mt-2" style="display: {{ $anamnesis->back_problems === false ? 'block' : 'none' }}">
                                     <x-adminc::components.field
                                         type="text"
                                         name="back_problems_notes"
@@ -666,10 +678,8 @@
 
         // Initialize comment fields visibility on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Get all radio buttons with value="1" (Ja options)
-            const yesRadios = document.querySelectorAll('input[type="radio"][value="1"]');
-
-            yesRadios.forEach(function(radio) {
+            // Normal fields: show notes on Ja (skip inverted fields — their initial state is server-rendered)
+            document.querySelectorAll('input[type="radio"][value="1"]:not([data-comment-inverted])').forEach(function(radio) {
                 if (radio.checked) {
                     toggleCommentField(radio.name, true);
                 }

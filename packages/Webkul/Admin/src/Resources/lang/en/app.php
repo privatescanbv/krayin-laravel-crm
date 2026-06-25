@@ -2737,6 +2737,7 @@ return [
             'glaucoma_notes'             => 'Glaucoma details',
             'claustrophobia'             => 'Are you claustrophobic?',
             'dormicum'                   => 'Would you like a sedative?',
+            'dormicum_notes'             => 'Sedative notes',
             'heart_surgery'              => 'Have you ever had a cardiac catheterization?',
             'heart_surgery_notes'        => 'Heart procedure details',
             'implant'                    => 'Do you have an implant?',

@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Activities\CreateActivityForOrderAction;
+use App\Enums\Departments;
 use App\Enums\PipelineStage;
 use App\Models\Department;
 use App\Models\Order;
@@ -18,8 +19,8 @@ test('task is assigned to privatescan group when order is in privatescan pipelin
     // Scenario: lead was originally from Herniapoli but converted to Privatescan.
     // The SalesLead.department_id may still hold the Hernia ID, but the order's
     // pipeline stage belongs to the Privatescan order pipeline.
-    $herniaDepartment = Department::where('name', 'hernia')->firstOrFail();
-    $privateScanDepartment = Department::where('name', 'privatescan')->firstOrFail();
+    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
+    $privateScanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
 
     $privateScanGroup = Group::where('department_id', $privateScanDepartment->id)->firstOrFail();
 
@@ -50,7 +51,7 @@ test('task is assigned to privatescan group when order is in privatescan pipelin
 });
 
 test('task is assigned to hernia group when order is in hernia pipeline', function () {
-    $herniaDepartment = Department::where('name', 'hernia')->firstOrFail();
+    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
     $herniaGroup = Group::where('department_id', $herniaDepartment->id)->firstOrFail();
 
     $lead = Lead::factory()->create(['department_id' => $herniaDepartment->id]);

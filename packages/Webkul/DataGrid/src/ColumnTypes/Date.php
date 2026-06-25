@@ -29,7 +29,7 @@ class Date extends Column
      */
     public function setFilterableOptions(mixed $filterableOptions): void
     {
-        if (empty($filterableOptions)) {
+        if (empty($filterableOptions) && $this->getDateRangeQuickFilters()) {
             $filterableOptions = DateRangeOptionEnum::options();
         }
 

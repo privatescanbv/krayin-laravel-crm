@@ -315,6 +315,11 @@ return [
                     'true'  => 'Waar',
                 ],
 
+                'date-range' => [
+                    'from' => 'Van',
+                    'to'   => 'Tot',
+                ],
+
                 'date-options' => [
                     'last-month'        => 'Afgelopen maand',
                     'last-six-months'   => 'Afgelopen 6 maanden',

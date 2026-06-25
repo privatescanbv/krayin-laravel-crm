@@ -43,6 +43,11 @@ class Column
     protected array $filterableOptions = [];
 
     /**
+     * Whether date range filters should show quick-select presets.
+     */
+    protected bool $dateRangeQuickFilters = true;
+
+    /**
      * Column's allow multiple values.
      */
     protected bool $allowMultipleValues = true;
@@ -96,6 +101,8 @@ class Column
         $this->setFilterable($column['filterable'] ?? $this->filterable);
 
         $this->setFilterableType($column['filterable_type'] ?? $this->filterableType);
+
+        $this->setDateRangeQuickFilters($column['date_range_quick_filters'] ?? $this->dateRangeQuickFilters);
 
         $this->setFilterableOptions($column['filterable_options'] ?? $this->filterableOptions);
 
@@ -227,6 +234,22 @@ class Column
     }
 
     /**
+     * Set whether date range quick filters are enabled.
+     */
+    public function setDateRangeQuickFilters(bool $dateRangeQuickFilters): void
+    {
+        $this->dateRangeQuickFilters = $dateRangeQuickFilters;
+    }
+
+    /**
+     * Get whether date range quick filters are enabled.
+     */
+    public function getDateRangeQuickFilters(): bool
+    {
+        return $this->dateRangeQuickFilters;
+    }
+
+    /**
      * Set allow multiple values.
      */
     public function setAllowMultipleValues(bool $allowMultipleValues): void
@@ -334,9 +357,10 @@ class Column
             'type'                  => $this->type,
             'searchable'            => $this->searchable,
             'filterable'            => $this->filterable,
-            'filterable_type'       => $this->filterableType,
-            'filterable_options'    => $this->filterableOptions,
-            'allow_multiple_values' => $this->allowMultipleValues,
+            'filterable_type'          => $this->filterableType,
+            'filterable_options'       => $this->filterableOptions,
+            'date_range_quick_filters' => $this->dateRangeQuickFilters,
+            'allow_multiple_values'    => $this->allowMultipleValues,
             'sortable'              => $this->sortable,
             'visibility'            => $this->visibility,
         ];

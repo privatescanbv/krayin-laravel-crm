@@ -333,6 +333,11 @@ return [
                     'true'  => 'True',
                 ],
 
+                'date-range' => [
+                    'from' => 'From',
+                    'to'   => 'To',
+                ],
+
                 'date-options' => [
                     'last-month'        => 'Last Month',
                     'last-six-months'   => 'Last 6 Months',

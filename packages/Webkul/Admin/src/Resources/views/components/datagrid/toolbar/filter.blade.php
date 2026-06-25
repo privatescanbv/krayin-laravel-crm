@@ -241,17 +241,19 @@
                                                     </div>
 
                                                     <div class="mt-1.5 grid grid-cols-2 gap-1.5">
-                                                        <p
-                                                            class="cursor-pointer rounded-md border px-3 py-2 text-center text-sm font-medium leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
-                                                            v-for="option in column.filterable_options"
-                                                            v-text="option.label"
-                                                            @click="addFilter(
-                                                                $event,
-                                                                column,
-                                                                { quickFilter: { isActive: true, selectedFilter: option } }
-                                                            )"
-                                                        >
-                                                        </p>
+                                                        <template v-if="column.date_range_quick_filters !== false">
+                                                            <p
+                                                                class="cursor-pointer rounded-md border px-3 py-2 text-center text-sm font-medium leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
+                                                                v-for="option in column.filterable_options"
+                                                                v-text="option.label"
+                                                                @click="addFilter(
+                                                                    $event,
+                                                                    column,
+                                                                    { quickFilter: { isActive: true, selectedFilter: option } }
+                                                                )"
+                                                            >
+                                                            </p>
+                                                        </template>
 
                                                         <x-admin::flat-picker.date ::allow-input="false">
                                                             <input
@@ -259,7 +261,7 @@
                                                                 :name="`${column.index}[from]`"
                                                                 value=""
                                                                 class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 ltr:pr-8 rtl:pl-8"
-                                                                :placeholder="column.label"
+                                                                :placeholder="column.date_range_quick_filters === false ? '@lang('admin::app.components.datagrid.filters.date-range.from')' : column.label"
                                                                 :ref="`${column.index}[from]`"
                                                                 @change="addFilter(
                                                                     $event,
@@ -275,8 +277,8 @@
                                                                 :name="`${column.index}[to]`"
                                                                 value=""
                                                                 class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 ltr:pr-8 rtl:pl-8"
-                                                                :placeholder="column.label"
-                                                                :ref="`${column.index}[from]`"
+                                                                :placeholder="column.date_range_quick_filters === false ? '@lang('admin::app.components.datagrid.filters.date-range.to')' : column.label"
+                                                                :ref="`${column.index}[to]`"
                                                                 @change="addFilter(
                                                                     $event,
                                                                     column,
@@ -1025,7 +1027,9 @@
                  * @returns {object}
                  */
                 getAppliedColumns() {
-                    return this.applied.filters.columns.filter((column) => column.index !== 'all');
+                    return JSON.parse(JSON.stringify(
+                        this.applied.filters.columns.filter((column) => column.index !== 'all')
+                    ));
                 },
 
                 /**
@@ -1227,10 +1231,39 @@
 
                         this.applyColumnValues(column, $event.target.value, additional);
 
-                        if (column) {
+                        const isDateRangeInput = ['date', 'datetime'].includes(column?.type)
+                            && ['date_range', 'datetime_range'].includes(column?.filterable_type);
+
+                        if (column && ! isDateRangeInput) {
                             $event.target.value = '';
                         }
                     }
+                },
+
+                /**
+                 * Normalize a date range filter value to a [from, to] tuple.
+                 *
+                 * @param {any} value
+                 * @returns {Array}
+                 */
+                normalizeDateRangeValue(value) {
+                    if (typeof value === 'string') {
+                        return ['', ''];
+                    }
+
+                    if (! Array.isArray(value) || value.length === 0) {
+                        return ['', ''];
+                    }
+
+                    if (Array.isArray(value[0])) {
+                        return [value[0][0] ?? '', value[0][1] ?? ''];
+                    }
+
+                    if (value.length >= 2) {
+                        return [value[0] ?? '', value[1] ?? ''];
+                    }
+
+                    return ['', ''];
                 },
 
                 /**
@@ -1260,11 +1293,7 @@
 
                             if (appliedColumn) {
                                 if (range) {
-                                    let appliedRanges = ['', ''];
-
-                                    if (typeof appliedColumn.value !== 'string') {
-                                        appliedRanges = appliedColumn.value[0];
-                                    }
+                                    let appliedRanges = this.normalizeDateRangeValue(appliedColumn.value);
 
                                     if (range.name == 'from') {
                                         appliedRanges[0] = requestedValue;
@@ -1359,7 +1388,11 @@
                         return '';
                     }
 
-                    return appliedColumn.value[0].join(' to ');
+                    const range = Array.isArray(appliedColumn.value[0])
+                        ? appliedColumn.value[0]
+                        : this.normalizeDateRangeValue(appliedColumn.value);
+
+                    return range.filter(Boolean).join(' to ');
                 },
 
                 /**
@@ -1369,6 +1402,22 @@
                  * @returns {boolean}
                  */
                 hasAnyValue(column) {
+                    if (column.type === 'date' || column.type === 'datetime') {
+                        if (typeof column.value === 'string') {
+                            return column.value !== '';
+                        }
+
+                        if (! Array.isArray(column.value) || column.value.length === 0) {
+                            return false;
+                        }
+
+                        const range = Array.isArray(column.value[0])
+                            ? column.value[0]
+                            : this.normalizeDateRangeValue(column.value);
+
+                        return range.some(value => value !== undefined && value !== null && value !== '');
+                    }
+
                     if (column.allow_multiple_values) {
                         return column.value.length > 0;
                     }
@@ -1522,20 +1571,31 @@
                 removeAppliedColumnValue(columnIndex, appliedColumnValue) {
                     let appliedColumn = this.findAppliedColumn(columnIndex);
 
-                    if (appliedColumn?.type === 'date' || appliedColumn?.type === 'datetime') {
-                        appliedColumn.value = [];
+                    if (! appliedColumn) {
+                        return;
+                    }
+
+                    const availableColumn = this.available.columns.find(column => column.index === columnIndex);
+                    const isDateColumn = appliedColumn.type === 'date'
+                        || appliedColumn.type === 'datetime'
+                        || availableColumn?.type === 'date'
+                        || availableColumn?.type === 'datetime';
+
+                    if (isDateColumn) {
+                        this.filters.columns = this.filters.columns.filter(column => column.index !== columnIndex);
+                        this.isFilterDirty = true;
+
+                        return;
+                    } else if (appliedColumn.allow_multiple_values) {
+                        appliedColumn.value = appliedColumn.value.filter(value => value !== appliedColumnValue);
                     } else {
-                        if (appliedColumn.allow_multiple_values) {
-                            appliedColumn.value = appliedColumn?.value.filter(value => value !== appliedColumnValue);
-                        } else {
-                            appliedColumn.value = '';
-                        }
+                        appliedColumn.value = '';
                     }
 
                     /**
                      * Clean up is done here. If there are no applied values present, there is no point in including the applied column as well.
                      */
-                    if (! appliedColumn.value.length) {
+                    if (! this.hasAnyValue(appliedColumn)) {
                         this.filters.columns = this.filters.columns.filter(column => column.index !== columnIndex);
                     }
 

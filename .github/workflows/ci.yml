@@ -47,6 +47,8 @@ jobs:
           sed -i "s|^\(DB_DATABASE=\s*\).*$|\1krayin|" .env
           sed -i "s|^\(DB_USERNAME=\s*\).*$|\1root|" .env
           sed -i "s|^\(DB_PASSWORD=\s*\).*$|\1root|" .env
+          sed -i "s|^\(SENTRY_LARAVEL_DSN=\s*\).*$|\1|" .env
+          sed -i "s|^\(SENTRY_DSN=\s*\).*$|\1|" .env
 
       - name: Install Krayin (DB, config)
         run: |

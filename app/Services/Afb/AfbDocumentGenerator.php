@@ -224,7 +224,7 @@ class AfbDocumentGenerator
                 'order_number'    => $order->order_number ?: (string) $order->id,
             ],
             'patient' => [
-                'salutation'  => $person?->salutation?->label() ?: '-',
+                'salutation'  => $person?->salutation?->labelDe() ?: '-',
                 'first_name'  => $person?->first_name ?: '-',
                 'last_name'   => $person?->full_last_name ?: '-',
                 'address'     => $this->formatAddressLine($address?->street, $address?->house_number, $address?->house_number_suffix),

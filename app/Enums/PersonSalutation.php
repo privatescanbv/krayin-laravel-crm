@@ -14,4 +14,12 @@ enum PersonSalutation: string
             self::Mevr => __('Mevr.'),
         };
     }
+
+    public function labelDe(): string
+    {
+        return match ($this) {
+            self::Dhr  => 'Herr',
+            self::Mevr => 'Frau',
+        };
+    }
 }

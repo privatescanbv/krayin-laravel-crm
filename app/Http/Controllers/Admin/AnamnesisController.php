@@ -90,7 +90,7 @@ class AnamnesisController extends Controller
             'allergies'                 => 'required|in:0,1',
             'allergies_notes'           => 'required_if:allergies,1|nullable|string',
             'back_problems'             => 'required|in:0,1',
-            'back_problems_notes'       => 'required_if:back_problems,1|nullable|string',
+            'back_problems_notes'       => 'required_if:back_problems,0|nullable|string',
             'heart_problems'            => 'required|in:0,1',
             'heart_problems_notes'      => 'required_if:heart_problems,1|nullable|string',
             'smoking'                   => 'required|in:0,1',

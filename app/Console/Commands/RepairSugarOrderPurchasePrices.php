@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
 class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
@@ -51,10 +52,24 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
             return self::SUCCESS;
         }
 
+        // Skip orders without any CRM order items — nothing to repair.
+        $orders = $orders->filter(fn (Order $o) => $o->orderItems->isNotEmpty());
+        if ($orders->isEmpty()) {
+            $this->info('Geen orders met orderregels gevonden om te controleren.');
+
+            return self::SUCCESS;
+        }
+
         $this->info('Gevonden '.$orders->count().' order(s) om te controleren.');
 
         $sugarOrderIds = $orders->pluck('external_id')->filter()->values()->all();
         $rowsByOrder = $this->fetchOrderRows($connection, $sugarOrderIds);
+
+        // Pre-load persons for all contact_ids found in the Sugar rows.
+        $allContactIds = $rowsByOrder->flatten(1)->pluck('contact_id')->filter()->unique()->values()->all();
+        $personsByContactId = ! empty($allContactIds)
+            ? Person::whereIn('external_id', $allContactIds)->get()->keyBy('external_id')
+            : collect();
 
         $tableRows = [];
         $mismatches = [];
@@ -64,12 +79,10 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
         foreach ($orders as $order) {
             $orderRows = $rowsByOrder->get($order->external_id, collect());
             if ($orderRows->isEmpty()) {
-                $this->warn("Geen Sugar-regels gevonden voor order {$order->order_number} (external_id={$order->external_id}).");
+                $this->infoV("Geen Sugar-regels gevonden voor order {$order->order_number} (external_id={$order->external_id}), overgeslagen.");
 
                 continue;
             }
-
-            $order->loadMissing(['orderItems.purchasePrice', 'orderItems.product']);
 
             $productIds = $orderRows->pluck('aos_products_id_c')->filter()->unique()->values()->all();
             $productsByExternalId = ! empty($productIds)
@@ -99,7 +112,11 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
                     continue;
                 }
 
-                $orderItem = $this->matchOrderItemToSugarRow($order->orderItems, $sugarRow, $product, $usedOrderItemIds);
+                $person = ! empty($sugarRow->contact_id)
+                    ? ($personsByContactId->get($sugarRow->contact_id) ?? null)
+                    : null;
+
+                $orderItem = $this->matchOrderItemToSugarRow($order->orderItems, $sugarRow, $product, $usedOrderItemIds, $order->order_number, $person?->id);
                 if ($orderItem === null) {
                     $skippedNoMatch++;
 
@@ -206,6 +223,7 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
     private function loadCrmOrders(array $orderNums, int $limit): Collection
     {
         $query = Order::query()
+            ->with(['orderItems.purchasePrice', 'orderItems.product'])
             ->whereNotNull('external_id')
             ->where('external_id', '!=', '')
             ->orderByDesc('id');
@@ -228,6 +246,8 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
         object $sugarRow,
         Product $product,
         array $usedOrderItemIds,
+        ?string $orderNumber = null,
+        ?int $personId = null,
     ): ?OrderItem {
         $rowName = trim((string) ($sugarRow->name ?? ''));
         $salesPrice = round((float) ($sugarRow->sales_price ?? 0), 2);
@@ -240,20 +260,30 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
             return null;
         }
 
-        $exact = $candidates->filter(function (OrderItem $item) use ($rowName, $salesPrice) {
-            $nameMatches = $rowName === '' || trim((string) ($item->name ?? '')) === $rowName;
-            $priceMatches = abs(round((float) $item->total_price, 2) - $salesPrice) < 0.02;
+        $nameAndPriceMatch = fn (OrderItem $item) => (
+            ($rowName === '' || trim((string) ($item->name ?? '')) === $rowName)
+            && abs(round((float) $item->total_price, 2) - $salesPrice) < 0.02
+        );
 
-            return $nameMatches && $priceMatches;
-        });
+        $exact = $candidates->filter($nameAndPriceMatch);
 
         if ($exact->count() === 1) {
             return $exact->first();
         }
 
+        // Tiebreak with person_id when multiple items match on product+name+price.
+        if ($exact->count() > 1 && $personId !== null) {
+            $byPerson = $exact->filter(fn (OrderItem $item) => (int) $item->person_id === $personId);
+            if ($byPerson->count() === 1) {
+                return $byPerson->first();
+            }
+        }
+
         if ($exact->count() > 1) {
-            Log::warning('RepairSugarOrderPurchasePrices: meerdere orderregels matchen op product+naam+prijs', [
+            Log::warning('RepairSugarOrderPurchasePrices: meerdere orderregels matchen op product+naam+prijs (ook na person_id tiebreak)', [
+                'order_number'   => $orderNumber,
                 'sugar_row_id'   => $sugarRow->id ?? null,
+                'person_id'      => $personId,
                 'order_item_ids' => $exact->pluck('id')->all(),
             ]);
 

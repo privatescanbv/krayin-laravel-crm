@@ -93,9 +93,6 @@ RUN mkdir -p /docker/mysql/
 COPY --from=vite /build/.docker/mysql/ /docker/mysql/
 COPY --from=vite /build/docker-compose-prod.yml /docker/docker-compose.yml
 COPY --from=vite /build/docker-compose-acc.yml /docker/docker-compose-acc.yml
-# TODO security wise, red flag. Change this CI implmementation later to a vault.
-COPY --from=vite /build/.env.prod /docker/.env.prod
-COPY --from=vite /build/.env.keycloak.prod /docker/.env.keycloak.prod
 
 COPY --from=vite /build/.docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY --from=vite /build/.docker/json-logger.sh /usr/share/nginx/html/.docker/json-logger.sh

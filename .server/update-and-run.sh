@@ -46,8 +46,6 @@ else
   rm -rf ./ai-agents && mkdir -p ./ai-agents
   docker cp temp-crm:/usr/share/nginx/html/ai-agents ./
 fi
-#docker cp temp-crm:/docker/.env.prod ./.env
-docker cp temp-crm:/docker/.env.keycloak.prod ./.env.keycloak
 docker cp temp-crm:/docker/config ./docker/config
 # Ensure directories exist
 mkdir -p ./docker/loki ./docker/promtail

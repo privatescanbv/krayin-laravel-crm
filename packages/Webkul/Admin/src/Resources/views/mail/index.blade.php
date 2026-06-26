@@ -472,6 +472,33 @@
                                     v-model="draft.id"
                                 />
 
+                                <!-- From (sender mailbox) -->
+                                <x-admin::form.control-group v-if="mailboxes.length > 1">
+                                    <x-admin::form.control-group.label>
+                                        Van
+                                    </x-admin::form.control-group.label>
+                                    <select
+                                        name="from"
+                                        v-model="draft.from"
+                                        class="flex w-full rounded-md border px-3 py-2 text-sm leading-6 text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    >
+                                        <option
+                                            v-for="mb in mailboxes"
+                                            :key="mb.key"
+                                            :value="mb.address"
+                                        >
+                                            @{{ mb.display_name }} (@{{ mb.address }})
+                                        </option>
+                                    </select>
+                                </x-admin::form.control-group>
+
+                                <x-admin::form.control-group.control
+                                    v-else
+                                    type="hidden"
+                                    name="from"
+                                    v-model="draft.from"
+                                />
+
                                 <!-- To -->
                                 <x-admin::form.control-group>
                                     <div class="relative">
@@ -663,8 +690,11 @@
 
                         emailTemplates: [],
 
+                        mailboxes: @json(array_values(array_map(fn($k, $v) => ['key' => $k, 'address' => $v['address'], 'display_name' => $v['display_name']], array_keys(config('mail.mailboxes', [])), config('mail.mailboxes', [])))),
+
                         draft: {
                             id: null,
+                            from: '{{ config('mail.mailboxes.' . array_key_first(config('mail.mailboxes', [])) . '.address', config('mail.graph.mailbox')) }}',
                             reply_to: [],
                             cc: [],
                             bcc: [],
@@ -805,6 +835,7 @@
                     },
 
                     toggleModal() {
+                        this.draft.from = this.mailboxes.length ? this.mailboxes[0].address : '';
                         this.draft.reply_to = [];
                         this.draft.subject = '';
                         this.draft.reply = '';

@@ -15,6 +15,8 @@ Route::prefix('mail')->group(function () {
 
     Route::controller(EmailController::class)->group(function () {
         // Specific routes must come FIRST, before any catch-all routes
+        Route::get('mailboxes', 'getMailboxes')->name('admin.mail.mailboxes');
+
         Route::get('templates', 'get')->name('admin.mail.templates');
 
         Route::get('template-content', 'getTemplateContent')->name('admin.mail.template_content');

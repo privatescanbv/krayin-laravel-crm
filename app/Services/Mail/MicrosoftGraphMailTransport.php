@@ -44,6 +44,28 @@ class MicrosoftGraphMailTransport implements TransportInterface
     }
 
     /**
+     * Resolve the sending mailbox address from a candidate From address.
+     *
+     * If the $candidate matches one of the configured mailboxes, that mailbox
+     * address is used as the sending identity (and API endpoint user). Otherwise
+     * falls back to the default configured mailbox.
+     */
+    protected function resolveMailbox(string $candidate): string
+    {
+        $mailboxes = config('mail.mailboxes', []);
+
+        foreach ($mailboxes as $config) {
+            $address = $config['address'] ?? null;
+            if ($address && strtolower($address) === strtolower($candidate)) {
+                return $address;
+            }
+        }
+
+        // Fall back to the default mailbox
+        return config('mail.graph.mailbox');
+    }
+
+    /**
      * Check if an email address matches any of the allowed patterns
      */
     public static function matchesAnyPattern(string $emailAddress, array $patterns): bool
@@ -88,10 +110,14 @@ class MicrosoftGraphMailTransport implements TransportInterface
         try {
             $email = MessageConverter::toEmail($message);
 
-            // Get the sender information
-            // Always use the service account mailbox as from address to avoid SendAs permission issues
-            // Always use the authenticated user's name for the from name (not from database)
-            $fromAddress = $this->getDefaultFromAddress(); // Always use service account
+            // Get the sender information.
+            // Derive the From address from the message's From header when it matches a configured
+            // mailbox, so users can choose which mailbox to send from. Fall back to the default
+            // mailbox when the From address is not a known mailbox.
+            $messageFrom = $email->getFrom()[0] ?? null;
+            $fromAddress = $messageFrom
+                ? $this->resolveMailbox($messageFrom->getAddress())
+                : $this->getDefaultFromAddress();
             $fromName = $this->getDefaultFromName(); // Always use current user's name
 
             // Build recipients
@@ -181,9 +207,9 @@ class MicrosoftGraphMailTransport implements TransportInterface
             // isInline: true and referenced via cid: in the HTML.
             $this->processInlineImages($payload);
 
-            // Send via Graph API
+            // Send via Graph API using the resolved mailbox as the sending identity
             $accessToken = $this->tokenService->getAccessToken();
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/sendMail";
+            $url = "{$this->baseUrl}/users/{$fromAddress}/sendMail";
 
             logger()->info('Sending email via Microsoft Graph', [
                 'to'      => collect($toRecipients)->pluck('emailAddress.address')->toArray(),

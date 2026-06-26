@@ -486,6 +486,24 @@ class EmailController extends Controller
     // Removed: searchByEmail. Reuse existing search endpoints (leads/persons/sales-leads) from respective controllers.
 
     /**
+     * Get list of configured mailboxes available for sending.
+     */
+    public function getMailboxes(): JsonResponse
+    {
+        $mailboxes = config('mail.mailboxes', []);
+
+        $data = collect($mailboxes)->map(function ($config, $key) {
+            return [
+                'key'          => $key,
+                'address'      => $config['address'],
+                'display_name' => $config['display_name'],
+            ];
+        })->values()->toArray();
+
+        return response()->json(['data' => $data]);
+    }
+
+    /**
      * Get list of available email templates with filtering support.
      *
      * Query Parameters:

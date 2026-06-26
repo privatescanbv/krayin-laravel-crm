@@ -16,14 +16,14 @@ class SyncGraphEmails extends Command
      *
      * @var string
      */
-    protected $signature = 'emails:sync-graph';
+    protected $signature = 'emails:sync-graph {--mailbox= : Sync only the mailbox with this key (e.g. privatescan or herniapoli)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Sync emails from Microsoft Graph API';
+    protected $description = 'Sync emails from Microsoft Graph API (all configured mailboxes)';
 
     /**
      * Create a new command instance.
@@ -45,19 +45,44 @@ class SyncGraphEmails extends Command
      */
     public function handle(GraphMailService $graphService)
     {
-        $this->info('Starting Microsoft Graph email sync...');
+        $mailboxes = config('mail.mailboxes', []);
 
-        try {
-            $graphService->processMessagesFromAllFolders();
-
-            $this->info('Microsoft Graph email sync completed successfully.');
-
-            return Command::SUCCESS;
-
-        } catch (Exception $e) {
-            $this->error('Microsoft Graph email sync failed: '.$e->getMessage());
+        if (empty($mailboxes)) {
+            $this->error('No mailboxes configured in config/mail.php under mail.mailboxes');
 
             return Command::FAILURE;
         }
+
+        $filterKey = $this->option('mailbox');
+
+        $errors = 0;
+
+        foreach ($mailboxes as $key => $mailboxConfig) {
+            if ($filterKey && $filterKey !== $key) {
+                continue;
+            }
+
+            $address = $mailboxConfig['address'] ?? null;
+            $folderName = $mailboxConfig['folder_name'] ?? 'inbox';
+
+            if (empty($address)) {
+                $this->warn("Mailbox '{$key}' has no address configured, skipping.");
+                continue;
+            }
+
+            $this->info("Syncing mailbox [{$key}] {$address} ...");
+
+            try {
+                $graphService->configureMailbox($address, $key, $folderName);
+                $graphService->processMessagesFromAllFolders();
+
+                $this->info("  -> Done.");
+            } catch (Exception $e) {
+                $this->error("  -> Failed: {$e->getMessage()}");
+                $errors++;
+            }
+        }
+
+        return $errors > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 }

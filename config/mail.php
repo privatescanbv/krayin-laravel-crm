@@ -137,8 +137,37 @@ return [
         'client_id'     => env('GRAPH_CLIENT_ID'),
         'tenant_id'     => env('GRAPH_TENANT_ID'),
         'client_secret' => env('GRAPH_CLIENT_SECRET'),
-        'mailbox'       => env('GRAPH_MAILBOX', 'crm@privatescan.nl'),
+        'mailbox'       => env('GRAPH_MAILBOX', 'service@privatescan.nl'),
         'sender_domain' => env('GRAPH_SENDER_DOMAIN', 'crm.private-scan.nl'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multiple Mailbox Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure all mailboxes that should be synced and available for sending.
+    | Each entry has:
+    |   key          – unique identifier used as mailbox_key on Email records
+    |   address      – the actual mailbox address on Exchange Online
+    |   display_name – human-readable name shown in the UI
+    |   folder_name  – inbox folder name in the local folders table
+    |
+    | The first entry is the default mailbox used when no mailbox_key is set.
+    |
+    */
+
+    'mailboxes' => [
+        'privatescan' => [
+            'address'      => env('GRAPH_MAILBOX', 'service@privatescan.nl'),
+            'display_name' => 'PrivateScan',
+            'folder_name'  => 'inbox',
+        ],
+        'herniapoli' => [
+            'address'      => env('GRAPH_MAILBOX_HP', 'service@herniapoli.nl'),
+            'display_name' => 'HerniaPoli',
+            'folder_name'  => 'inbox_herniapoli',
+        ],
     ],
 
     /*

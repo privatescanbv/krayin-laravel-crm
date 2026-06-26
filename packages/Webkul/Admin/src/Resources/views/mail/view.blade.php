@@ -183,6 +183,27 @@
                                         value="1"
                                     />
 
+                                    <!-- From (sender mailbox) -->
+                                    <x-admin::form.control-group v-if="mailboxes.length > 1">
+                                        <x-admin::form.control-group.label>
+                                            Van
+                                        </x-admin::form.control-group.label>
+                                        <select
+                                            name="from"
+                                            v-model="selectedFrom"
+                                            class="flex w-full rounded-md border px-3 py-2 text-sm leading-6 text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                        >
+                                            <option
+                                                v-for="mb in mailboxes"
+                                                :key="mb.key"
+                                                :value="mb.address"
+                                            >
+                                                @{{ mb.display_name }} (@{{ mb.address }})
+                                            </option>
+                                        </select>
+                                    </x-admin::form.control-group>
+                                    <input v-else type="hidden" name="from" :value="selectedFrom" />
+
                                     <!-- To -->
                                     <x-admin::form.control-group>
                                         <div class="relative">
@@ -1139,6 +1160,10 @@
                         subject: '',
 
                         userSignature: {!! json_encode($userSig, JSON_HEX_TAG) !!},
+
+                        mailboxes: @json(array_values(array_map(fn($k, $v) => ['key' => $k, 'address' => $v['address'], 'display_name' => $v['display_name']], array_keys(config('mail.mailboxes', [])), config('mail.mailboxes', [])))),
+
+                        selectedFrom: '{{ config('mail.mailboxes.' . array_key_first(config('mail.mailboxes', [])) . '.address', config('mail.graph.mailbox')) }}',
                     };
                 },
 

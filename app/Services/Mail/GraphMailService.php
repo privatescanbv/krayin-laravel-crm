@@ -18,6 +18,8 @@ use Webkul\Email\Repositories\EmailRepository;
  * normalises them into the application's Email model, stores attachments, and
  * marks each message as read once processed.
  *
+ * Supports multiple mailboxes via {@see configureMailbox()}.
+ *
  * Bound to the {@see InboundEmailProcessor} contract when the
  * `mail-receiver.default` config value is `'microsoft-graph'`.
  *
@@ -30,6 +32,10 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected string $mailbox;
 
+    protected string $mailboxKey = 'privatescan';
+
+    protected string $inboxFolderName = 'inbox';
+
     public function __construct(
         EmailRepository $emailRepository,
         AttachmentRepository $attachmentRepository,
@@ -38,6 +44,20 @@ class GraphMailService extends AbstractEmailProcessor
     ) {
         parent::__construct($emailRepository, $attachmentRepository, $emailEntityLinker);
         $this->mailbox = config('mail.graph.mailbox');
+    }
+
+    /**
+     * Configure the service to operate on a specific mailbox.
+     *
+     * @param  string  $mailboxAddress  The Exchange mailbox address (e.g. service@herniapoli.nl)
+     * @param  string  $mailboxKey      Identifier stored on Email records (e.g. 'herniapoli')
+     * @param  string  $folderName      Inbox folder name in the local folders table
+     */
+    public function configureMailbox(string $mailboxAddress, string $mailboxKey, string $folderName): void
+    {
+        $this->mailbox = $mailboxAddress;
+        $this->mailboxKey = $mailboxKey;
+        $this->inboxFolderName = $folderName;
     }
 
     // Abstract method implementations
@@ -87,7 +107,7 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function getFolderName($message): string
     {
-        return SupportedFolderEnum::INBOX->value;
+        return $this->inboxFolderName;
     }
 
     protected function extractEmailData($message, string $folderName, ?Email $parentEmail): array
@@ -109,6 +129,7 @@ class GraphMailService extends AbstractEmailProcessor
             'reply'         => $body,
             'is_read'       => (int) ($message['isRead'] ?? false),
             'folder_id'     => $this->getFolderId($folderName),
+            'mailbox_key'   => $this->mailboxKey,
             'reply_to'      => $this->extractEmailAddresses($replyTo),
             'cc'            => $this->extractEmailAddresses($ccRecipients),
             'bcc'           => $this->extractEmailAddresses($bccRecipients),
@@ -196,7 +217,8 @@ class GraphMailService extends AbstractEmailProcessor
     protected function getSyncMetadata(): array
     {
         return [
-            'mailbox' => $this->mailbox,
+            'mailbox'     => $this->mailbox,
+            'mailbox_key' => $this->mailboxKey,
         ];
     }
 

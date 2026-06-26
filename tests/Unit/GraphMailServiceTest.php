@@ -34,11 +34,17 @@ class GraphMailServiceTest extends TestCase
     {
         parent::setUp();
 
-        config(['mail.graph.client_id' => 'test-client-id']);
-        config(['mail.graph.client_secret' => 'test-client-secret']);
-        config(['mail.graph.tenant_id' => 'test-tenant-id']);
-        config(['mail.graph.mailbox' => 'test@example.com']);
-        config(['mail.graph.sender_domain' => 'example.com']);
+        config(['mail.mailboxes' => [
+            'privatescan' => [
+                'address'     => 'test@example.com',
+                'folder_name' => 'Inbox Privatescan',
+                'graph'       => [
+                    'tenant_id'     => 'test-tenant-id',
+                    'client_id'     => 'test-client-id',
+                    'client_secret' => 'test-client-secret',
+                ],
+            ],
+        ]]);
 
         $this->emailRepository = $this->createMock(EmailRepository::class);
         $this->attachmentRepository = $this->createMock(AttachmentRepository::class);
@@ -50,6 +56,8 @@ class GraphMailServiceTest extends TestCase
             new EmailEntityLinker,
             $this->tokenService,
         );
+
+        $this->service->configureMailbox('test@example.com', 'privatescan');
     }
 
     public function test_implements_inbound_email_processor_contract()
@@ -72,7 +80,7 @@ class GraphMailServiceTest extends TestCase
             ], 200),
         ]);
 
-        $token = $this->tokenService->getAccessToken();
+        $token = $this->tokenService->getAccessToken('privatescan');
 
         $this->assertEquals('test-token', $token);
     }

@@ -6,7 +6,16 @@ use App\Services\Mail\MicrosoftGraphMailTransport;
 test('blocked recipients throw EmailSendingBlockedException', function () {
     config([
         'mail.send_only_accept' => '*@privatescan.nl',
-        'mail.graph.mailbox'    => 'crm@privatescan.nl',
+        'mail.mailboxes'        => [
+            'privatescan' => [
+                'address' => 'crm@privatescan.nl',
+                'graph'   => [
+                    'tenant_id'     => 'test-tenant',
+                    'client_id'     => 'test-client',
+                    'client_secret' => 'test-secret',
+                ],
+            ],
+        ],
     ]);
 
     $transport = app(MicrosoftGraphMailTransport::class);

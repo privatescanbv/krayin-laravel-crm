@@ -1,5 +1,7 @@
 <?php
 
+use Webkul\Email\Enums\EmailFolderEnum;
+
 return [
 
     /*
@@ -126,20 +128,49 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Microsoft Graph Configuration
+    | Multiple Mailbox Configuration
     |--------------------------------------------------------------------------
     |
-    | Configuration for Microsoft Graph API integration
+    | Configure all mailboxes that should be synced and available for sending.
+    | Each entry has:
+    |   key          – unique identifier used as mailbox_key on Email records
+    |   address      – the actual mailbox address on Exchange Online
+    |   display_name – human-readable name shown in the UI
+    |   folder_name       – inbox folder name in the local folders table
+    |   sent_folder_name  – sent folder name in the local folders table
+    |   graph             – Microsoft Graph credentials for this mailbox (tenant/client/secret)
+    |   send_as           – optional alias From addresses mapped to this mailbox (e.g. crm@privatescan.nl)
+    |
+    | The first entry is the default mailbox used when no mailbox_key is set.
     |
     */
-
-    'graph' => [
-        'client_id'     => env('GRAPH_CLIENT_ID'),
-        'tenant_id'     => env('GRAPH_TENANT_ID'),
-        'client_secret' => env('GRAPH_CLIENT_SECRET'),
-        'mailbox'       => env('GRAPH_MAILBOX', 'crm@privatescan.nl'),
-        'sender_domain' => env('GRAPH_SENDER_DOMAIN', 'crm.private-scan.nl'),
-    ],
+    'mailboxes' => array_filter([
+        'privatescan' => [
+            'address'          => env('GRAPH_MAILBOX', 'service@privatescan.nl'),
+            'display_name'     => 'PrivateScan',
+            'folder_name'      => EmailFolderEnum::INBOX->value,
+            'sent_folder_name' => EmailFolderEnum::SENT_PRIVATESCAN->value,
+            'send_as'          => array_values(array_filter([
+                env('GRAPH_SEND_AS', 'crm@privatescan.nl'),
+            ])),
+            'graph'            => [
+                'tenant_id'     => env('GRAPH_TENANT_ID'),
+                'client_id'     => env('GRAPH_CLIENT_ID'),
+                'client_secret' => env('GRAPH_CLIENT_SECRET'),
+            ],
+        ],
+        'herniapoli' => env('GRAPH_MAILBOX_HP') ? [
+            'address'          => env('GRAPH_MAILBOX_HP'),
+            'display_name'     => 'HerniaPoli',
+            'folder_name'      => EmailFolderEnum::INBOX_HERNIAPOLI->value,
+            'sent_folder_name' => EmailFolderEnum::SENT_HERNIAPOLI->value,
+            'graph'            => [
+                'tenant_id'     => env('GRAPH_HP_TENANT_ID'),
+                'client_id'     => env('GRAPH_HP_CLIENT_ID'),
+                'client_secret' => env('GRAPH_HP_CLIENT_SECRET'),
+            ],
+        ] : null,
+    ]),
 
     /*
     |--------------------------------------------------------------------------

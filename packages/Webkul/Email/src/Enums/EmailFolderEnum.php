@@ -4,13 +4,11 @@ namespace Webkul\Email\Enums;
 
 enum EmailFolderEnum: string
 {
-    case INBOX = 'Inbox';
-    case PRIVATESCAN_WEBFORM = 'Privatescan webforms';
-    case HERNIA_WEBFORM = 'Hernia Poli webforms';
-    case CLINICS = 'Klinieken';
-    case NEWSLETTER = 'Nieuwsbrief reacties';
+    case INBOX = 'Inbox Privatescan';
+    case INBOX_HERNIAPOLI = 'Inbox Herniapoli';
     case PROCESSED = 'Verwerkt';
-    case SENT = 'Sent';
+    case SENT_PRIVATESCAN = 'Sent Privatescan';
+    case SENT_HERNIAPOLI = 'Sent HerniaPoli';
     case DRAFT = 'Draft';
     case TRASH = 'Trash';
     case NO_FOLLOW_UP = 'Geen opvolging';
@@ -42,5 +40,29 @@ enum EmailFolderEnum: string
             }
         }
         return null;
+    }
+
+    public static function sentFolderNameForMailbox(?string $mailboxKey = null): string
+    {
+        $mailboxes = config('mail.mailboxes', []);
+
+        if ($mailboxKey && isset($mailboxes[$mailboxKey]['sent_folder_name'])) {
+            return $mailboxes[$mailboxKey]['sent_folder_name'];
+        }
+
+        if ($mailboxKey) {
+            return match ($mailboxKey) {
+                'herniapoli' => self::SENT_HERNIAPOLI->value,
+                default => self::SENT_PRIVATESCAN->value,
+            };
+        }
+
+        $defaultKey = array_key_first($mailboxes);
+
+        if ($defaultKey && isset($mailboxes[$defaultKey]['sent_folder_name'])) {
+            return $mailboxes[$defaultKey]['sent_folder_name'];
+        }
+
+        return self::SENT_PRIVATESCAN->value;
     }
 }

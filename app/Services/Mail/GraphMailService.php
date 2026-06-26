@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Webkul\Email\Enums\SupportedFolderEnum;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
@@ -17,6 +17,8 @@ use Webkul\Email\Repositories\EmailRepository;
  * Fetches unread messages from the configured mailbox via the Graph REST API,
  * normalises them into the application's Email model, stores attachments, and
  * marks each message as read once processed.
+ *
+ * Supports multiple mailboxes via {@see configureMailbox()}.
  *
  * Bound to the {@see InboundEmailProcessor} contract when the
  * `mail-receiver.default` config value is `'microsoft-graph'`.
@@ -30,6 +32,10 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected string $mailbox;
 
+    protected string $mailboxKey;
+
+    protected string $inboxFolderName;
+
     public function __construct(
         EmailRepository $emailRepository,
         AttachmentRepository $attachmentRepository,
@@ -37,18 +43,36 @@ class GraphMailService extends AbstractEmailProcessor
         private readonly MicrosoftGraphTokenService $tokenService,
     ) {
         parent::__construct($emailRepository, $attachmentRepository, $emailEntityLinker);
-        $this->mailbox = config('mail.graph.mailbox');
+
+        $this->mailboxKey = MailboxConfig::defaultKey() ?? 'privatescan';
+        $this->mailbox = MailboxConfig::address($this->mailboxKey) ?? '';
+        $this->inboxFolderName = MailboxConfig::get($this->mailboxKey)['folder_name']
+            ?? EmailFolderEnum::INBOX->value;
     }
 
-    // Abstract method implementations
+    /**
+     * Configure the service to operate on a specific mailbox.
+     *
+     * @param  string  $mailboxAddress  The Exchange mailbox address (e.g. service@herniapoli.nl)
+     * @param  string  $mailboxKey  Identifier stored on Email records (e.g. 'herniapoli')
+     * @param  string|null  $folderName  Inbox folder name in the local folders table
+     */
+    public function configureMailbox(string $mailboxAddress, string $mailboxKey, ?string $folderName = null): void
+    {
+        $this->mailbox = $mailboxAddress;
+        $this->mailboxKey = $mailboxKey;
+        $this->inboxFolderName = $folderName
+            ?? MailboxConfig::get($mailboxKey)['folder_name']
+            ?? EmailFolderEnum::INBOX->value;
+    }
 
     protected function fetchMessages(): array
     {
-        $accessToken = $this->tokenService->getAccessToken();
+        $accessToken = $this->tokenService->getAccessToken($this->mailboxKey);
 
         $url = "{$this->baseUrl}/users/{$this->mailbox}/mailFolders('Inbox')/messages";
 
-        if (config('mail.graph.mailbox.read_new_mail_filter') == 'multi_environments') {
+        if (config('mail.mailers.microsoft-graph.read_new_mail_filter') === 'multi_environments') {
             $since = now()->subDays(1)->toIso8601String();
             $filter = "receivedDateTime ge {$since}";
         } else {
@@ -87,7 +111,7 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function getFolderName($message): string
     {
-        return SupportedFolderEnum::INBOX->value;
+        return $this->inboxFolderName;
     }
 
     protected function extractEmailData($message, string $folderName, ?Email $parentEmail): array
@@ -109,6 +133,7 @@ class GraphMailService extends AbstractEmailProcessor
             'reply'         => $body,
             'is_read'       => (int) ($message['isRead'] ?? false),
             'folder_id'     => $this->getFolderId($folderName),
+            'mailbox_key'   => $this->mailboxKey,
             'reply_to'      => $this->extractEmailAddresses($replyTo),
             'cc'            => $this->extractEmailAddresses($ccRecipients),
             'bcc'           => $this->extractEmailAddresses($bccRecipients),
@@ -148,7 +173,7 @@ class GraphMailService extends AbstractEmailProcessor
     protected function processAttachments(Email $email, $message): void
     {
         try {
-            $accessToken = $this->tokenService->getAccessToken();
+            $accessToken = $this->tokenService->getAccessToken($this->mailboxKey);
             $messageId = $message['id'];
             $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
 
@@ -173,7 +198,7 @@ class GraphMailService extends AbstractEmailProcessor
         try {
             $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$message['id']}";
 
-            Http::withToken($this->tokenService->getAccessToken())
+            Http::withToken($this->tokenService->getAccessToken($this->mailboxKey))
                 ->patch($url, ['isRead' => true]);
         } catch (Exception $e) {
             Log::error('Failed to mark message as read', [
@@ -196,19 +221,11 @@ class GraphMailService extends AbstractEmailProcessor
     protected function getSyncMetadata(): array
     {
         return [
-            'mailbox' => $this->mailbox,
+            'mailbox'     => $this->mailbox,
+            'mailbox_key' => $this->mailboxKey,
         ];
     }
 
-    // Helpers specific to Microsoft Graph
-
-    /**
-     * Extract message body from Graph response.
-     *
-     * Note: we intentionally return the content regardless of contentType — the CRM stores HTML
-     * bodies as-is and plain text is stored without conversion. Keeping both branches explicit
-     * here makes future differentiation straightforward.
-     */
     protected function extractMessageBody(array $message): string
     {
         $body = $message['body'] ?? [];
@@ -220,9 +237,6 @@ class GraphMailService extends AbstractEmailProcessor
         return $body['content'] ?? '';
     }
 
-    /**
-     * Extract a plain list of email addresses from a Graph recipients array.
-     */
     protected function extractEmailAddresses(array $recipients): array
     {
         return collect($recipients)
@@ -232,9 +246,6 @@ class GraphMailService extends AbstractEmailProcessor
             ->toArray();
     }
 
-    /**
-     * Parse a Graph DateTime string into a Carbon instance in the application timezone.
-     */
     protected function parseDateTime(string $dateTime): Carbon
     {
         return Carbon::parse($dateTime)->setTimezone(config('app.timezone', 'UTC'));

@@ -1,5 +1,9 @@
 @php
-    use App\Enums\EmailTemplateType;
+    use App\Enums\EmailTemplateType;use App\Services\Mail\MailboxResolver;
+
+    $mailboxResolver = app(MailboxResolver::class);
+    $mailboxList = $mailboxResolver->getMailboxList();
+    $defaultMailboxAddress = $mailboxResolver->resolveAddressFromEntity($entity ?? null);
 @endphp
 
 @props([
@@ -19,9 +23,9 @@
 
     @if ($showButton)
         <button
-                type="button"
-                class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent  bg-activity-email-bg font-medium text-activity-email-text transition-all hover:border-activity-email-border"
-                @click="$refs.mailActionComponent.openModal('mail')"
+            type="button"
+            class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent  bg-activity-email-bg font-medium text-activity-email-text transition-all hover:border-activity-email-border"
+            @click="$refs.mailActionComponent.openModal('mail')"
         >
             <span class="icon-mail text-2xl dark:!text-activity-email-text"></span>
 
@@ -35,14 +39,16 @@
 
     <!-- Mail Activity Action Vue Component -->
     <v-mail-activity
-            ref="mailActionComponent"
-            :entity="{{ json_encode($entity) }}"
-            entity-control-name="{{ $entityControlName }}"
-            :activity-id="{{ $activityId ? (int) $activityId : 'null' }}"
-            :emails="{{ json_encode($emails) }}"
-            :default-template="'{{ $defaultTemplate ?? '' }}'"
-            @if($orderId) :order-id="{{ $orderId }}" @endif
-            @if ($storeUrl) :store-url="'{{ $storeUrl }}'" @endif
+        ref="mailActionComponent"
+        :entity="{{ json_encode($entity) }}"
+        entity-control-name="{{ $entityControlName }}"
+        :activity-id="{{ $activityId ? (int) $activityId : 'null' }}"
+        :emails="{{ json_encode($emails) }}"
+        :default-template="'{{ $defaultTemplate ?? '' }}'"
+        :mailboxes="{{ json_encode($mailboxList) }}"
+        default-from="{{ $defaultMailboxAddress }}"
+        @if($orderId) :order-id="{{ $orderId }}" @endif
+        @if ($storeUrl) :store-url="'{{ $storeUrl }}'" @endif
     ></v-mail-activity>
 
     {!! view_render_event('admin.components.activities.actions.mail.after') !!}
@@ -54,20 +60,20 @@
             {!! view_render_event('admin.components.activities.actions.mail.form_controls.before') !!}
 
             <x-admin::form
-                    v-slot="{ meta, errors }"
-                    enctype="multipart/form-data"
-                    as="div"
+                v-slot="{ meta, errors }"
+                enctype="multipart/form-data"
+                as="div"
             >
                 <form
-                        @submit.prevent="directSubmit"
-                        ref="mailActionForm"
+                    @submit.prevent="directSubmit"
+                    ref="mailActionForm"
                 >
                     {!! view_render_event('admin.components.activities.actions.mail.form_controls.modal.before') !!}
 
                     <x-admin::modal
-                            ref="mailActivityModal"
-                            position="center"
-                            @toggle="removeTinyMCE"
+                        ref="mailActivityModal"
+                        position="center"
+                        @toggle="removeTinyMCE"
                     >
                         <x-slot:header>
                             {!! view_render_event('admin.components.activities.actions.mail.form_controls.modal.header.before') !!}
@@ -78,10 +84,10 @@
                                 </h3>
 
                                 <button
-                                        type="button"
-                                        class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
-                                        @click="toggleFullscreen"
-                                        :title="isFullscreen ? 'Verkleinen' : 'Volledig scherm'"
+                                    type="button"
+                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-neutral-bg dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
+                                    @click="toggleFullscreen"
+                                    :title="isFullscreen ? 'Verkleinen' : 'Volledig scherm'"
                                 >
                                     <span v-if="isFullscreen" class="text-xl">⊟</span>
                                     <span v-else class="text-xl">⊞</span>
@@ -96,32 +102,49 @@
 
                                 <!-- Activity Type -->
                                 <x-admin::form.control-group.control
-                                        type="hidden"
-                                        name="type"
-                                        value="email"
+                                    type="hidden"
+                                    name="type"
+                                    value="email"
                                 />
 
                                 <!-- Id -->
                                 <x-admin::form.control-group.control
-                                        type="hidden"
-                                        ::name="entityControlName"
-                                        ::value="entity.id"
+                                    type="hidden"
+                                    ::name="entityControlName"
+                                    ::value="entity.id"
                                 />
 
                                 <!-- Activity Id (set when mail is sent from an activity context) -->
                                 <input v-if="resolvedActivityId" type="hidden" name="activity_id"
                                        :value="resolvedActivityId">
 
+                                <input type="hidden" name="mailbox_key" :value="resolvedMailboxKey"/>
+
+                                <!-- From (sender mailbox) -->
+                                <x-admin::form.control-group v-if="mailboxes.length > 1">
+                                    <x-admin::form.control-group.label>Van</x-admin::form.control-group.label>
+                                    <select
+                                        name="from"
+                                        v-model="selectedFrom"
+                                        class="flex w-full rounded-md border px-3 py-2 text-sm leading-6 text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    >
+                                        <option v-for="mb in mailboxes" :key="mb.key" :value="mb.address">
+                                            @{{ mb.display_name }} (@{{ mb.address }})
+                                        </option>
+                                    </select>
+                                </x-admin::form.control-group>
+                                <input v-else type="hidden" name="from" :value="selectedFrom"/>
+
                                 <!-- To -->
                                 <x-admin::form.control-group>
                                     <div class="relative">
                                         <x-admin::form.control-group.control
-                                                type="tags"
-                                                name="reply_to"
-                                                rules="required"
-                                                input-rules="email"
-                                                :label="trans('admin::app.components.activities.actions.mail.to')"
-                                                :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
+                                            type="tags"
+                                            name="reply_to"
+                                            rules="required"
+                                            input-rules="email"
+                                            :label="trans('admin::app.components.activities.actions.mail.to')"
+                                            :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
                                         />
 
                                         <div class="absolute top-[9px] flex items-center gap-2 ltr:right-2 rtl:left-2">
@@ -137,11 +160,12 @@
 
                                                     <x-slot:menu class="!p-0 !top-8 min-w-[220px]">
                                                         <x-admin::dropdown.menu.item
-                                                                class="flex items-center justify-between gap-2"
-                                                                v-for="mail in entityEmails"
-                                                                @click="setReplyTo(mail.value)"
+                                                            class="flex items-center justify-between gap-2"
+                                                            v-for="mail in entityEmails"
+                                                            @click="setReplyTo(mail.value)"
                                                         >
-                                                            <span class="truncate max-w-[160px]">@{{ mail.value }}</span>
+                                                            <span
+                                                                class="truncate max-w-[160px]">@{{ mail.value }}</span>
                                                             <span v-if="mail.is_default" class="text-xs text-gray-500">default</span>
                                                         </x-admin::dropdown.menu.item>
                                                         <x-admin::dropdown.menu.item @click="focusReplyToInput()">
@@ -152,15 +176,15 @@
                                             </template>
 
                                             <span
-                                                    class="cursor-pointer font-medium hover:underline dark:text-white"
-                                                    @click="showCC = ! showCC"
+                                                class="cursor-pointer font-medium hover:underline dark:text-white"
+                                                @click="showCC = ! showCC"
                                             >
                                             @lang('admin::app.components.activities.actions.mail.cc')
                                         </span>
 
                                             <span
-                                                    class="cursor-pointer font-medium hover:underline dark:text-white"
-                                                    @click="showBCC = ! showBCC"
+                                                class="cursor-pointer font-medium hover:underline dark:text-white"
+                                                @click="showBCC = ! showBCC"
                                             >
                                             @lang('admin::app.components.activities.actions.mail.bcc')
                                         </span>
@@ -178,11 +202,11 @@
                                     <!-- Cc -->
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.control
-                                                type="tags"
-                                                name="cc"
-                                                input-rules="email"
-                                                :label="trans('admin::app.components.activities.actions.mail.cc')"
-                                                :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
+                                            type="tags"
+                                            name="cc"
+                                            input-rules="email"
+                                            :label="trans('admin::app.components.activities.actions.mail.cc')"
+                                            :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
                                         />
                                         <x-admin::form.control-group.label>
                                             @lang('admin::app.components.activities.actions.mail.cc')
@@ -197,11 +221,11 @@
                                     <!-- Cc -->
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.control
-                                                type="tags"
-                                                name="bcc"
-                                                input-rules="email"
-                                                :label="trans('admin::app.components.activities.actions.mail.bcc')"
-                                                :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
+                                            type="tags"
+                                            name="bcc"
+                                            input-rules="email"
+                                            :label="trans('admin::app.components.activities.actions.mail.bcc')"
+                                            :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
                                         />
                                         <x-admin::form.control-group.label>
                                             @lang('admin::app.components.activities.actions.mail.bcc')
@@ -215,18 +239,18 @@
                                 <!-- Template Selector -->
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.control
-                                            type="select"
-                                            id="email_template"
-                                            name="email_template"
-                                            v-model="selectedTemplate"
-                                            @change="loadTemplate"
-                                            :label="trans('admin::app.components.activities.actions.mail.template')"
+                                        type="select"
+                                        id="email_template"
+                                        name="email_template"
+                                        v-model="selectedTemplate"
+                                        @change="loadTemplate"
+                                        :label="trans('admin::app.components.activities.actions.mail.template')"
                                     >
                                         <option value="">Geen template</option>
                                         <option
-                                                v-for="template in emailTemplates"
-                                                :key="template.code || template.name"
-                                                :value="template.code || template.name"
+                                            v-for="template in emailTemplates"
+                                            :key="template.code || template.name"
+                                            :value="template.code || template.name"
                                         >
                                             @{{ template.label }}
                                         </option>
@@ -237,23 +261,23 @@
 
                                 <!-- Subject -->
                                 <x-adminc::components.field
-                                        type="text"
-                                        id="subject"
-                                        name="subject"
-                                        :label="trans('admin::app.components.activities.actions.mail.subject')"
-                                        rules="required"
-                                        :placeholder="trans('admin::app.components.activities.actions.mail.subject')"
+                                    type="text"
+                                    id="subject"
+                                    name="subject"
+                                    :label="trans('admin::app.components.activities.actions.mail.subject')"
+                                    rules="required"
+                                    :placeholder="trans('admin::app.components.activities.actions.mail.subject')"
                                 />
 
                                 <!-- Content -->
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.control
-                                            type="textarea"
-                                            name="reply"
-                                            id="reply"
-                                            rules="required"
-                                            :tinymce="true"
-                                            :label="trans('admin::app.components.activities.actions.mail.message')"
+                                        type="textarea"
+                                        name="reply"
+                                        id="reply"
+                                        rules="required"
+                                        :tinymce="true"
+                                        :label="trans('admin::app.components.activities.actions.mail.message')"
                                     />
                                     <x-admin::form.control-group.error control-name="reply"/>
 
@@ -262,9 +286,9 @@
                                 <!-- Attachments -->
                                 <x-admin::form.control-group class="!mb-0">
                                     <x-admin::attachments
-                                            ref="attachmentsComponent"
-                                            allow-multiple="true"
-                                            hide-button="true"
+                                        ref="attachmentsComponent"
+                                        allow-multiple="true"
+                                        hide-button="true"
                                     />
                                 </x-admin::form.control-group>
 
@@ -276,15 +300,15 @@
 
                                     <div class="flex w-full items-center justify-between">
                                         <label
-                                                class="icon-attachment cursor-pointer p-1 text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
-                                                for="file-upload"
+                                            class="icon-attachment cursor-pointer p-1 text-2xl hover:rounded-md hover:bg-neutral-bg dark:hover:bg-gray-950"
+                                            for="file-upload"
                                         ></label>
 
                                         <button
-                                                type="button"
-                                                class="primary-button"
-                                                :disabled="isStoring"
-                                                @click="directSubmit"
+                                            type="button"
+                                            class="primary-button"
+                                            :disabled="isStoring"
+                                            @click="directSubmit"
                                         >
                                             @lang('admin::app.components.activities.actions.mail.send-btn')
                                         </button>
@@ -348,7 +372,19 @@
                     type: [Number, String],
                     required: false,
                     default: null
-                }
+                },
+
+                mailboxes: {
+                    type: Array,
+                    required: false,
+                    default: () => []
+                },
+
+                defaultFrom: {
+                    type: String,
+                    required: false,
+                    default: ''
+                },
             },
 
             data() {
@@ -360,6 +396,7 @@
                     isStoring: false,
                     isFullscreen: false,
                     resolvedActivityId: this.activityId || null,
+                    selectedFrom: this.defaultFrom || (this.mailboxes.length > 0 ? this.mailboxes[0].address : ''),
 
                     entityEmails: [],
 
@@ -385,6 +422,14 @@
                         PATIENT: @json(EmailTemplateType::PATIENT->value),
                     },
                 }
+            },
+
+            computed: {
+                resolvedMailboxKey() {
+                    const match = this.mailboxes.find((mb) => mb.address === this.selectedFrom);
+
+                    return match?.key ?? '';
+                },
             },
 
             created() {

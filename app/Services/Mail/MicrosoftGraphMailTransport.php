@@ -11,6 +11,7 @@ use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\MessageConverter;
 use Symfony\Component\Mime\RawMessage;
 
@@ -40,7 +41,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
     public function __construct(private readonly MicrosoftGraphTokenService $tokenService)
     {
-        $this->mailbox = config('mail.graph.mailbox');
+        $this->mailbox = MailboxConfig::address() ?? '';
     }
 
     /**
@@ -88,11 +89,22 @@ class MicrosoftGraphMailTransport implements TransportInterface
         try {
             $email = MessageConverter::toEmail($message);
 
-            // Get the sender information
-            // Always use the service account mailbox as from address to avoid SendAs permission issues
-            // Always use the authenticated user's name for the from name (not from database)
-            $fromAddress = $this->getDefaultFromAddress(); // Always use service account
-            $fromName = $this->getDefaultFromName(); // Always use current user's name
+            // Get the sender information.
+            // Derive the From address from the message's From header when it matches a configured
+            // mailbox, so users can choose which mailbox to send from. Fall back to the default
+            // mailbox when the From address is not a known mailbox.
+            $messageFrom = $email->getFrom()[0] ?? null;
+            $requestedFrom = $messageFrom
+                ? $messageFrom->getAddress()
+                : $this->getDefaultFromAddress();
+            $fromName = $this->getDefaultFromName();
+
+            $mailboxKey = $this->resolveMailboxKeyForSend($email, $requestedFrom);
+            $graphMailbox = MailboxConfig::address($mailboxKey);
+
+            if (empty($graphMailbox)) {
+                throw new Exception("No Graph mailbox configured for mailbox key [{$mailboxKey}].");
+            }
 
             // Build recipients
             $toRecipients = [];
@@ -146,7 +158,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
                     'bccRecipients' => $bccRecipients,
                     'from'          => [
                         'emailAddress' => [
-                            'address' => $fromAddress,
+                            'address' => $requestedFrom,
                             'name'    => $fromName,
                         ],
                     ],
@@ -181,14 +193,16 @@ class MicrosoftGraphMailTransport implements TransportInterface
             // isInline: true and referenced via cid: in the HTML.
             $this->processInlineImages($payload);
 
-            // Send via Graph API
-            $accessToken = $this->tokenService->getAccessToken();
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/sendMail";
+            // Send via Graph API – URL uses the Exchange mailbox; From header may be a send_as alias.
+            $accessToken = $this->tokenService->getAccessToken($mailboxKey);
+            $url = "{$this->baseUrl}/users/{$graphMailbox}/sendMail";
 
             logger()->info('Sending email via Microsoft Graph', [
-                'to'      => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
-                'from'    => $fromAddress,
-                'subject' => $email->getSubject(),
+                'to'           => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
+                'from'         => $requestedFrom,
+                'graph_mailbox'=> $graphMailbox,
+                'mailbox_key'  => $mailboxKey,
+                'subject'      => $email->getSubject(),
             ]);
             $response = Http::withToken($accessToken)
                 ->post($url, $payload);
@@ -197,8 +211,8 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 // If the token expired mid-flight, refresh and retry once.
                 if ($response->status() === 401 && str_contains($response->body(), 'InvalidAuthenticationToken')) {
                     Log::warning('Microsoft Graph token expired mid-flight, refreshing and retrying');
-                    $this->tokenService->clearToken();
-                    $accessToken = $this->tokenService->getAccessToken();
+                    $this->tokenService->clearToken($mailboxKey);
+                    $accessToken = $this->tokenService->getAccessToken($mailboxKey);
                     $response = Http::withToken($accessToken)->post($url, $payload);
                 }
 
@@ -214,7 +228,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
             }
             // Build default Envelope when not provided
             if ($envelope === null) {
-                $senderAddress = new Address($fromAddress, $fromName);
+                $senderAddress = new Address($requestedFrom, $fromName);
                 $allRecipients = array_merge($toRecipients, $ccRecipients, $bccRecipients);
                 $recipientAddresses = [];
                 foreach ($allRecipients as $recipient) {
@@ -247,14 +261,31 @@ class MicrosoftGraphMailTransport implements TransportInterface
     }
 
     /**
-     * Get the default from address
-     * Always use the service account mailbox to avoid SendAs permission issues
+     * Resolve which configured mailbox should send this message.
+     */
+    protected function resolveMailboxKeyForSend(Email $message, string $requestedFrom): string
+    {
+        $header = $message->getHeaders()->get(MailboxConfig::MAILBOX_KEY_HEADER);
+
+        if ($header !== null) {
+            $mailboxKey = trim($header->getBodyAsString());
+
+            if ($mailboxKey !== '' && MailboxConfig::get($mailboxKey) !== null) {
+                return $mailboxKey;
+            }
+        }
+
+        return MailboxConfig::resolveKeyByAddress($requestedFrom) ?? MailboxConfig::defaultKey() ?? '';
+    }
+
+    /**
+     * Get the default from address shown in the compose UI when none is selected.
      */
     protected function getDefaultFromAddress(): string
     {
         // Always use the configured mailbox to avoid SendAs permission issues
         // The from name will still be personalized based on the user
-        return config('mail.graph.mailbox', 'crm@privatescan.nl');
+        return MailboxConfig::address() ?? throw new Exception('No Mailbox address provided, at least 1 is required.');
     }
 
     /**

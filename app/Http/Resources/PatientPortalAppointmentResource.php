@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\Departments;
 use App\Models\Clinic;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -63,6 +64,7 @@ class PatientPortalAppointmentResource extends JsonResource
             'remote_url'      => null,
             'created_at'      => $order->created_at->toIso8601String(),
             'updated_at'      => $order->updated_at?->toIso8601String(),
+            'department'      => $order->isHerniapoli() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value,
         ];
     }
 
@@ -81,6 +83,7 @@ class PatientPortalAppointmentResource extends JsonResource
             'remote_url'      => null,
             'created_at'      => $activity->created_at->toIso8601String(),
             'updated_at'      => $activity->updated_at?->toIso8601String(),
+            'department'      => null,
         ];
     }
 }

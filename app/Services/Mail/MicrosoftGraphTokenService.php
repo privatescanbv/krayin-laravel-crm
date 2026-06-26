@@ -7,74 +7,114 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Obtains and in-memory caches a Microsoft Graph OAuth2 access token.
+ * Obtains and caches Microsoft Graph OAuth2 access tokens per configured mailbox.
  *
- * Uses the OAuth 2.0 client-credentials flow (application identity, no user context).
- * The token is cached for the lifetime of the current PHP process / request so that
- * multiple Graph API calls within the same job or request share a single token fetch.
- *
- * Required config keys (via `config/mail.php` → `mail.graph.*`):
- *  - `tenant_id`     — Azure AD tenant GUID
- *  - `client_id`     — registered application (client) ID
- *  - `client_secret` — application secret
- *
- * Used by {@see GraphMailService} (inbound sync) and {@see MicrosoftGraphMailTransport} (outbound send).
+ * Each mailbox may use its own Azure AD tenant and application credentials.
+ * Tokens are cached in-memory for the lifetime of the current PHP process.
  */
 class MicrosoftGraphTokenService
 {
-    private ?string $accessToken = null;
+    /** @var array<string, string> */
+    private array $accessTokens = [];
 
-    private ?int $expiresAt = null;
+    /** @var array<string, int> */
+    private array $expiresAt = [];
+
+    private static function shouldRetryWithAlternateSecret(string $errorBody): bool
+    {
+        return str_contains($errorBody, 'invalid_client')
+            || str_contains($errorBody, 'AADSTS7000215');
+    }
 
     /**
-     * Return a valid access token, requesting a new one if expired or not yet cached.
+     * Return a valid access token for the given mailbox key.
      *
      * @throws Exception when credentials are missing or the token request fails
      */
-    public function getAccessToken(): string
+    public function getAccessToken(?string $mailboxKey = null): string
     {
-        if ($this->accessToken !== null && $this->expiresAt !== null && time() < $this->expiresAt) {
-            return $this->accessToken;
+        $cacheKey = $this->cacheKey($mailboxKey);
+
+        if (
+            isset($this->accessTokens[$cacheKey], $this->expiresAt[$cacheKey])
+            && time() < $this->expiresAt[$cacheKey]
+        ) {
+            return $this->accessTokens[$cacheKey];
         }
 
-        $tenantId = config('mail.graph.tenant_id');
-        $clientId = config('mail.graph.client_id');
-        $clientSecret = config('mail.graph.client_secret');
+        $credentials = MailboxConfig::graphCredentials($mailboxKey);
+        $tenantId = $credentials['tenant_id'];
+        $clientId = $credentials['client_id'];
+        $clientSecrets = MailboxConfig::clientSecretsForMailbox($mailboxKey);
 
-        if (! $tenantId || ! $clientId || ! $clientSecret) {
-            throw new Exception('Microsoft Graph credentials not configured');
+        if (! $tenantId || ! $clientId || $clientSecrets === []) {
+            throw new Exception('Microsoft Graph credentials not configured for mailbox: '.($mailboxKey ?? 'default'));
         }
 
         try {
-            $response = Http::asForm()->post(
-                "https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token",
-                [
-                    'client_id'     => $clientId,
-                    'client_secret' => $clientSecret,
-                    'scope'         => 'https://graph.microsoft.com/.default',
-                    'grant_type'    => 'client_credentials',
-                ]
-            );
+            $lastErrorBody = null;
 
-            if (! $response->successful()) {
-                throw new Exception('Failed to get access token: '.$response->body());
+            foreach ($clientSecrets as $index => $clientSecret) {
+                $response = Http::asForm()->post(
+                    "https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token",
+                    [
+                        'client_id'     => $clientId,
+                        'client_secret' => $clientSecret,
+                        'scope'         => 'https://graph.microsoft.com/.default',
+                        'grant_type'    => 'client_credentials',
+                    ]
+                );
+
+                if ($response->successful()) {
+                    $this->accessTokens[$cacheKey] = $response->json('access_token');
+                    $expiresIn = (int) $response->json('expires_in', 3600);
+                    $this->expiresAt[$cacheKey] = time() + $expiresIn - 60;
+
+                    return $this->accessTokens[$cacheKey];
+                }
+
+                $lastErrorBody = $response->body();
+
+                $hasAlternateSecret = $index < count($clientSecrets) - 1;
+
+                if (! $hasAlternateSecret || ! self::shouldRetryWithAlternateSecret($lastErrorBody)) {
+                    break;
+                }
             }
 
-            $this->accessToken = $response->json('access_token');
-            $expiresIn = (int) $response->json('expires_in', 3600);
-            $this->expiresAt = time() + $expiresIn - 60; // 60s buffer before actual expiry
-
-            return $this->accessToken;
+            throw new Exception('Failed to get access token: '.($lastErrorBody ?? 'unknown error'));
         } catch (Exception $e) {
-            Log::error('Failed to get Microsoft Graph access token', ['error' => $e->getMessage()]);
+            Log::error('Failed to get Microsoft Graph access token', [
+                'mailbox_key' => $mailboxKey,
+                'error'       => $e->getMessage(),
+            ]);
 
             throw $e;
         }
     }
 
-    public function clearToken(): void
+    public function getAccessTokenForAddress(string $address): string
     {
-        $this->accessToken = null;
-        $this->expiresAt = null;
+        $mailboxKey = MailboxConfig::resolveKeyByAddress($address);
+
+        return $this->getAccessToken($mailboxKey);
+    }
+
+    public function clearToken(?string $mailboxKey = null): void
+    {
+        if ($mailboxKey === null) {
+            $this->accessTokens = [];
+            $this->expiresAt = [];
+
+            return;
+        }
+
+        $cacheKey = $this->cacheKey($mailboxKey);
+        unset($this->accessTokens[$cacheKey], $this->expiresAt[$cacheKey]);
+    }
+
+    private function cacheKey(?string $mailboxKey): string
+    {
+        return $mailboxKey ?? MailboxConfig::defaultKey() ?? '_default';
     }
 }

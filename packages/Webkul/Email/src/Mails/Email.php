@@ -4,6 +4,7 @@ namespace Webkul\Email\Mails;
 
 use App\Services\Mail\EmailTemplateRenderingService;
 use App\Services\Mail\HtmlImageInliner;
+use App\Services\Mail\MailboxConfig;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -84,6 +85,13 @@ class Email extends Mailable
 
         $this->withSymfonyMessage(function (MimeEmail $message) use ($bareId, $isReply, &$inReplyTo, &$references) {
             $message->getHeaders()->addIdHeader('Message-ID', $bareId($this->email->message_id));
+
+            if ($this->email->mailbox_key) {
+                $message->getHeaders()->addTextHeader(
+                    MailboxConfig::MAILBOX_KEY_HEADER,
+                    $this->email->mailbox_key
+                );
+            }
 
             if ($isReply) {
                 $inReplyTo = $bareId($this->email->parent->message_id);

@@ -8,10 +8,16 @@ use Symfony\Component\Mime\Email;
 
 beforeEach(function () {
     config([
-        'mail.graph.tenant_id'     => 'test-tenant',
-        'mail.graph.client_id'     => 'test-client',
-        'mail.graph.client_secret' => 'test-secret',
-        'mail.graph.mailbox'       => 'crm@example.com',
+        'mail.mailboxes' => [
+            'privatescan' => [
+                'address' => 'crm@example.com',
+                'graph'   => [
+                    'tenant_id'     => 'test-tenant',
+                    'client_id'     => 'test-client',
+                    'client_secret' => 'test-secret',
+                ],
+            ],
+        ],
         // Clear the allowlist and set env=production so validateRecipients() passes through.
         // Without this the real MAIL_SEND_ONLY_ACCEPT from the test env blocks patient@example.com.
         'mail.send_only_accept'    => null,

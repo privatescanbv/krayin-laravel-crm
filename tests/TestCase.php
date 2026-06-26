@@ -47,11 +47,7 @@ abstract class TestCase extends BaseTestCase
         config(['services.keycloak.admin_password' => null]);
 
         // Disable Microsoft Graph mail configuration to prevent any email sending
-        config(['mail.graph.client_id' => null]);
-        config(['mail.graph.client_secret' => null]);
-        config(['mail.graph.tenant_id' => null]);
-        config(['mail.graph.mailbox' => null]);
-        config(['mail.graph.sender_domain' => null]);
+        config(['mail.mailboxes' => []]);
 
         // Telescope: hard-disable during tests (avoids DB connection attempts to the default mysql telescope storage)
         config(['telescope.enabled' => false]);

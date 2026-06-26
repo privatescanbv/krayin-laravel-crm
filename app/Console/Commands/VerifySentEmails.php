@@ -2,16 +2,20 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Mail\MailboxConfig;
 use App\Services\Mail\MicrosoftGraphTokenService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 
 class VerifySentEmails extends Command
 {
-    protected $signature = 'emails:verify-sent {--days=2 : Aantal dagen terug om te controleren}';
+    protected $signature = 'emails:verify-sent
+                            {--days=2 : Aantal dagen terug om te controleren}
+                            {--mailbox= : Alleen controleren voor deze mailbox key}';
 
     protected $description = 'Controleer of uitgaande CRM emails aanwezig zijn in Microsoft Graph sentItems.';
 
@@ -24,12 +28,23 @@ class VerifySentEmails extends Command
     {
         $days = (int) $this->option('days');
         $from = now()->subDays($days)->startOfDay();
+        $filterKey = $this->option('mailbox');
 
-        $dbEmails = Email::whereHas('folder', fn ($q) => $q->where('name', 'Sent'))
-            ->where('created_at', '>=', $from)
-            ->get(['id', 'subject', 'message_id', 'reply_to', 'created_at']);
+        $sentFolderNames = [
+            EmailFolderEnum::SENT_PRIVATESCAN->value,
+            EmailFolderEnum::SENT_HERNIAPOLI->value,
+        ];
 
-        $graphIds = $this->fetchGraphSentIds($from);
+        $dbEmailsQuery = Email::whereHas('folder', fn ($q) => $q->whereIn('name', $sentFolderNames))
+            ->where('created_at', '>=', $from);
+
+        if ($filterKey) {
+            $dbEmailsQuery->where('mailbox_key', $filterKey);
+        }
+
+        $dbEmails = $dbEmailsQuery->get(['id', 'subject', 'message_id', 'reply_to', 'created_at', 'mailbox_key']);
+
+        $graphIds = $this->fetchGraphSentIds($from, $filterKey);
 
         $rows = [];
         $confirmed = 0;
@@ -50,6 +65,7 @@ class VerifySentEmails extends Command
 
             $rows[] = [
                 $email->id,
+                $email->mailbox_key ?? '-',
                 mb_strimwidth($email->subject ?? '', 0, 50, '…'),
                 $to,
                 $email->created_at?->format('Y-m-d H:i'),
@@ -57,7 +73,7 @@ class VerifySentEmails extends Command
             ];
         }
 
-        $this->table(['ID', 'Onderwerp', 'Aan', 'Verzonden', 'In Graph'], $rows);
+        $this->table(['ID', 'Mailbox', 'Onderwerp', 'Aan', 'Verzonden', 'In Graph'], $rows);
 
         $total = count($rows);
         $this->info("Totaal: {$total} | Bevestigd: {$confirmed} | Niet gevonden: {$notFound}");
@@ -76,40 +92,58 @@ class VerifySentEmails extends Command
         return Command::SUCCESS;
     }
 
-    private function fetchGraphSentIds(Carbon $from): array
+    private function fetchGraphSentIds(Carbon $from, ?string $filterKey = null): array
     {
-        $token = $this->tokenService->getAccessToken();
-        $mailbox = config('mail.graph.mailbox');
-        $url = "https://graph.microsoft.com/v1.0/users/{$mailbox}/mailFolders('SentItems')/messages";
-
-        $params = [
-            '$filter' => "sentDateTime ge {$from->toIso8601String()}",
-            '$select' => 'internetMessageId',
-            '$top'    => 500,
-        ];
-
         $ids = [];
 
-        do {
-            $response = Http::withToken($token)->get($url, $params);
-
-            if (! $response->successful()) {
-                $this->error('Graph API fout: '.$response->status().' '.$response->body());
-                break;
+        foreach (MailboxConfig::all() as $key => $mailboxConfig) {
+            if ($filterKey && $filterKey !== $key) {
+                continue;
             }
 
-            $data = $response->json();
+            $address = $mailboxConfig['address'] ?? null;
 
-            foreach ($data['value'] ?? [] as $message) {
-                $id = trim($message['internetMessageId'] ?? '', '<>');
-                if ($id !== '') {
-                    $ids[$id] = true;
+            if (empty($address)) {
+                continue;
+            }
+
+            try {
+                $token = $this->tokenService->getAccessToken($key);
+            } catch (\Exception $e) {
+                $this->error("Graph token ophalen mislukt voor [{$key}]: {$e->getMessage()}");
+
+                continue;
+            }
+
+            $url = "https://graph.microsoft.com/v1.0/users/{$address}/mailFolders('SentItems')/messages";
+
+            $params = [
+                '$filter' => "sentDateTime ge {$from->toIso8601String()}",
+                '$select' => 'internetMessageId',
+                '$top'    => 500,
+            ];
+
+            do {
+                $response = Http::withToken($token)->get($url, $params);
+
+                if (! $response->successful()) {
+                    $this->error("Graph API fout voor [{$key}]: ".$response->status().' '.$response->body());
+                    break;
                 }
-            }
 
-            $url = $data['@odata.nextLink'] ?? null;
-            $params = [];
-        } while ($url !== null);
+                $data = $response->json();
+
+                foreach ($data['value'] ?? [] as $message) {
+                    $id = trim($message['internetMessageId'] ?? '', '<>');
+                    if ($id !== '') {
+                        $ids[$id] = true;
+                    }
+                }
+
+                $url = $data['@odata.nextLink'] ?? null;
+                $params = [];
+            } while ($url !== null);
+        }
 
         return $ids;
     }

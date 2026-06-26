@@ -73,29 +73,29 @@ class CrmMailService
     /**
      * Send an already created email and optionally move it to a folder.
      */
-    public function sendEmail(EmailModel $email, EmailFolderEnum|string|null $folderAfterSend = EmailFolderEnum::SENT): void
+    public function sendEmail(EmailModel $email, EmailFolderEnum|string|null $folderAfterSend = null): void
     {
         Mail::send(new EmailMailable($email));
 
-        if ($folderAfterSend) {
-            $folderName = $folderAfterSend instanceof EmailFolderEnum
-                ? $folderAfterSend->getFolderName()
-                : $folderAfterSend;
+        $folderName = match (true) {
+            $folderAfterSend instanceof EmailFolderEnum => $folderAfterSend->getFolderName(),
+            is_string($folderAfterSend)                 => $folderAfterSend,
+            default                                     => EmailFolderEnum::sentFolderNameForMailbox($email->mailbox_key),
+        };
 
-            $folder = Folder::where('name', $folderName)->first();
+        $folder = Folder::where('name', $folderName)->first();
 
-            if ($folder) {
-                $this->emailRepository->update([
-                    'folder_id' => $folder->id,
-                ], $email->id);
-            }
+        if ($folder) {
+            $this->emailRepository->update([
+                'folder_id' => $folder->id,
+            ], $email->id);
         }
     }
 
     /**
      * Create + optionally send (used by Admin mail UI).
      */
-    public function createAndMaybeSend(array $data, bool $isDraft, EmailFolderEnum|string|null $folderAfterSend = EmailFolderEnum::SENT): EmailModel
+    public function createAndMaybeSend(array $data, bool $isDraft, EmailFolderEnum|string|null $folderAfterSend = null): EmailModel
     {
         $email = $this->createEmail($data);
 

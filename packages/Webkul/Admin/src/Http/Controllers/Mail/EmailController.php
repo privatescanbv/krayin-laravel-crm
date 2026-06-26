@@ -5,6 +5,8 @@ namespace Webkul\Admin\Http\Controllers\Mail;
 use App\Enums\EmailTemplateType;
 use App\Services\Mail\CrmMailService;
 use App\Services\Mail\EmailTemplateRenderingService;
+use App\Services\Mail\MailboxConfig;
+use App\Services\Mail\MailboxResolver;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +29,7 @@ use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
+use Webkul\Lead\Models\Lead;
 
 class EmailController extends Controller
 {
@@ -41,6 +44,7 @@ class EmailController extends Controller
         protected FolderRepository $folderRepository,
         private readonly EmailTemplateRenderingService $emailTemplateRenderingService,
         private readonly CrmMailService $crmMailService,
+        private readonly MailboxResolver $mailboxResolver,
     ) {}
 
     /**
@@ -56,23 +60,30 @@ class EmailController extends Controller
             abort(401, 'This action is unauthorized');
         }
 
+        $isAdmin = auth()->guard('user')->user()?->isGlobalAdmin() ?? false;
+        $hiddenFolders = $isAdmin ? [] : [EmailFolderEnum::PROCESSED->value];
+
         switch (request('route')) {
             default:
                 // Check if the route is a folder name
                 $folder = Folder::where('name', request('route'))->first();
                 if ($folder) {
+                    if (in_array($folder->name, $hiddenFolders, true)) {
+                        return redirect()->route('admin.mail.index', ['route' => 'inbox']);
+                    }
+
                     if (request()->ajax()) {
                         return datagrid(EmailDataGrid::class)->process();
                     }
 
                     // Get emails for this specific folder
                     $emails = $folder->emails()->orderBy('created_at', 'desc')->get();
-                    $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+                    $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders($hiddenFolders);
 
                     return view('admin::mail.index', compact('folder', 'hierarchicalFolders', 'emails'));
                 }
 
-                $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+                $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders($hiddenFolders);
 
                 return view('admin::mail.index', compact('hierarchicalFolders'));
         }
@@ -101,6 +112,7 @@ class EmailController extends Controller
                 'lead.tags',
                 'lead.source',
                 'lead.type',
+                'lead.department',
                 'person',
                 'salesLead',
                 'clinic',
@@ -144,8 +156,9 @@ class EmailController extends Controller
 
         // Get all request data including activity_id if provided
         $data = request()->all();
+        $data['mailbox_key'] = $this->resolveOutboundMailboxKey($data);
 
-        $email = $this->crmMailService->createAndMaybeSend($data, (bool) request('is_draft'), EmailFolderEnum::SENT);
+        $email = $this->crmMailService->createAndMaybeSend($data, (bool) request('is_draft'));
 
         Event::dispatch('email.create.after', $email);
 
@@ -164,7 +177,9 @@ class EmailController extends Controller
 
         session()->flash('success', trans('admin::app.mail.create-success'));
 
-        return redirect()->route('admin.mail.index', ['route' => 'sent']);
+        return redirect()->route('admin.mail.index', [
+            'route' => EmailFolderEnum::sentFolderNameForMailbox($email->mailbox_key),
+        ]);
     }
 
     /**
@@ -178,6 +193,7 @@ class EmailController extends Controller
         Event::dispatch('email.update.before', $id);
 
         $data = request()->all();
+        $data['mailbox_key'] = $this->resolveOutboundMailboxKey($data);
 
         if (! is_null(request('is_draft'))) {
             $folderName = request('is_draft') ? 'draft' : 'outbox';
@@ -197,7 +213,7 @@ class EmailController extends Controller
 
         if (! is_null(request('is_draft')) && ! request('is_draft')) {
             try {
-                $this->crmMailService->sendEmail($email, EmailFolderEnum::INBOX);
+                $this->crmMailService->sendEmail($email);
             } catch (Exception $e) {
                 Log::error('EmailController@update: Failed to send email', [
                     'email_id' => $email->id ?? null,
@@ -214,7 +230,9 @@ class EmailController extends Controller
             } else {
                 session()->flash('success', trans('admin::app.mail.create-success'));
 
-                return redirect()->route('admin.mail.index', ['route' => 'inbox']);
+                return redirect()->route('admin.mail.index', [
+                    'route' => EmailFolderEnum::sentFolderNameForMailbox($email->mailbox_key),
+                ]);
             }
         }
 
@@ -484,6 +502,24 @@ class EmailController extends Controller
      * Search entities (leads, sales_leads, persons) by email address.
      */
     // Removed: searchByEmail. Reuse existing search endpoints (leads/persons/sales-leads) from respective controllers.
+
+    /**
+     * Get list of configured mailboxes available for sending.
+     */
+    public function getMailboxes(): JsonResponse
+    {
+        $mailboxes = config('mail.mailboxes', []);
+
+        $data = collect($mailboxes)->map(function ($config, $key) {
+            return [
+                'key'          => $key,
+                'address'      => $config['address'],
+                'display_name' => $config['display_name'],
+            ];
+        })->values()->toArray();
+
+        return response()->json(['data' => $data]);
+    }
 
     /**
      * Get list of available email templates with filtering support.
@@ -791,5 +827,36 @@ class EmailController extends Controller
                 }
             });
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveOutboundMailboxKey(array $data): ?string
+    {
+        $mailboxes = config('mail.mailboxes', []);
+
+        if (! empty($data['mailbox_key']) && isset($mailboxes[$data['mailbox_key']])) {
+            return $data['mailbox_key'];
+        }
+
+        if (! empty($data['from'])) {
+            $key = MailboxConfig::resolveKeyByAddress($data['from']);
+
+            if ($key !== null) {
+                return $key;
+            }
+        }
+
+        if (! empty($data['lead_id'])) {
+            $lead = Lead::find($data['lead_id']);
+            $key = $this->mailboxResolver->resolveKeyFromEntity($lead);
+
+            if ($key !== null) {
+                return $key;
+            }
+        }
+
+        return MailboxConfig::defaultKey();
     }
 }

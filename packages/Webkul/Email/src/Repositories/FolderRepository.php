@@ -74,7 +74,7 @@ class FolderRepository extends Repository
      *
      * @return array
      */
-    public function getHierarchicalFolders()
+    public function getHierarchicalFolders(array $hiddenFolderNames = []): array
     {
         try {
             // Get all folders ordered by order, then by name
@@ -99,23 +99,26 @@ class FolderRepository extends Repository
             $result = [];
 
             foreach ($rootFolders as $folder) {
+                if (in_array($folder->name, $hiddenFolderNames, true)) {
+                    continue;
+                }
+
                 $children = $folderTree->get($folder->id, collect());
                 $folderCount = $unreadCounts[$folder->id] ?? 0;
 
                 $folderData = [
-                    'id' => $folder->id,
-                    'name' => $folder->name,
-                    'count' => $folderCount,
-                    'children' => []
+                    'id'       => $folder->id,
+                    'name'     => $folder->name,
+                    'count'    => $folderCount,
+                    'children' => [],
                 ];
 
-                // Add children
                 foreach ($children as $child) {
                     $childCount = $unreadCounts[$child->id] ?? 0;
 
                     $folderData['children'][] = [
-                        'id' => $child->id,
-                        'name' => $child->name,
+                        'id'    => $child->id,
+                        'name'  => $child->name,
                         'count' => $childCount,
                     ];
                 }

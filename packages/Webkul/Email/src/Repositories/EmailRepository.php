@@ -76,7 +76,7 @@ class EmailRepository extends Repository
             'from'          => $normalizedFrom,
             'user_type'     => 'admin',
             'is_read'       => $isDraft ? 0 : 1,
-            'folder_id'     => $this->getFolderId($isDraft),
+            'folder_id'     => $this->getFolderId($isDraft, $data['mailbox_key'] ?? null),
             'unique_id'     => $uniqueId,
             'message_id'    => $uniqueId,
             'reference_ids' => array_merge($referenceIds, [$uniqueId]),
@@ -168,10 +168,7 @@ class EmailRepository extends Repository
 
         $inboxFolderNames = [
             EmailFolderEnum::INBOX->getFolderName(),
-            EmailFolderEnum::PRIVATESCAN_WEBFORM->getFolderName(),
-            EmailFolderEnum::HERNIA_WEBFORM->getFolderName(),
-            EmailFolderEnum::CLINICS->getFolderName(),
-            EmailFolderEnum::NEWSLETTER->getFolderName(),
+            EmailFolderEnum::INBOX_HERNIAPOLI->getFolderName(),
         ];
 
         $currentFolder = Folder::find($email->folder_id);
@@ -218,10 +215,13 @@ class EmailRepository extends Repository
      *
      * @param  bool  $isDraft
      */
-    protected function getFolderId($isDraft = false): ?int
+    protected function getFolderId($isDraft = false, ?string $mailboxKey = null): ?int
     {
-        $folderEnum = $isDraft ? EmailFolderEnum::DRAFT : EmailFolderEnum::SENT;
-        $folder = Folder::where('name', $folderEnum->getFolderName())->first();
+        $folderName = $isDraft
+            ? EmailFolderEnum::DRAFT->getFolderName()
+            : EmailFolderEnum::sentFolderNameForMailbox($mailboxKey);
+
+        $folder = Folder::where('name', $folderName)->first();
 
         return $folder ? $folder->id : null;
     }

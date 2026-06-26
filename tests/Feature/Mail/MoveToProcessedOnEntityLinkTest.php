@@ -21,8 +21,7 @@ uses(RefreshDatabase::class);
  * Use case: when an email is linked to an entity (lead, person, etc.) via the update
  * endpoint, it should automatically be moved out of any inbox-type folder to "Verwerkt".
  *
- * Inbox-type folders: Inbox, Privatescan webforms, Hernia Poli webforms, Klinieken,
- * Nieuwsbrief reacties.
+ * Inbox-type folder: Inbox Privatescan.
  * Non-inbox folders (Sent, Verwerkt, Draft, Trash, Geen opvolging) are left untouched.
  */
 beforeEach(function () {
@@ -44,7 +43,7 @@ beforeEach(function () {
     ]);
 
     $this->sentFolder = Folder::create([
-        'name'         => EmailFolderEnum::SENT->value,
+        'name'         => EmailFolderEnum::SENT_PRIVATESCAN->value,
         'parent_id'    => null,
         'order'        => 5,
         'is_deletable' => false,
@@ -171,90 +170,6 @@ test('email in Inbox is moved to Verwerkt when linked to an activity', function 
 // ---------------------------------------------------------------------------
 // Inbox sub-folders → Verwerkt
 // ---------------------------------------------------------------------------
-
-test('email in Privatescan webforms sub-folder is moved to Verwerkt on entity link', function () {
-    $subFolder = Folder::create([
-        'name'      => EmailFolderEnum::PRIVATESCAN_WEBFORM->value,
-        'parent_id' => $this->inboxFolder->id,
-        'order'     => 1,
-    ]);
-
-    $email = Email::create([
-        'subject'   => 'Webform submission',
-        'from'      => ['patient@example.com'],
-        'reply'     => 'Body',
-        'folder_id' => $subFolder->id,
-    ]);
-
-    $this->put(route('admin.mail.update', $email->id), [
-        'lead_id' => $this->lead->id,
-    ]);
-
-    expect($email->refresh()->folder_id)->toBe($this->verwerktFolder->id);
-});
-
-test('email in Hernia Poli webforms sub-folder is moved to Verwerkt on entity link', function () {
-    $subFolder = Folder::create([
-        'name'      => EmailFolderEnum::HERNIA_WEBFORM->value,
-        'parent_id' => $this->inboxFolder->id,
-        'order'     => 2,
-    ]);
-
-    $email = Email::create([
-        'subject'   => 'Hernia form',
-        'from'      => ['patient@example.com'],
-        'reply'     => 'Body',
-        'folder_id' => $subFolder->id,
-    ]);
-
-    $this->put(route('admin.mail.update', $email->id), [
-        'lead_id' => $this->lead->id,
-    ]);
-
-    expect($email->refresh()->folder_id)->toBe($this->verwerktFolder->id);
-});
-
-test('email in Klinieken sub-folder is moved to Verwerkt on entity link', function () {
-    $subFolder = Folder::create([
-        'name'      => EmailFolderEnum::CLINICS->value,
-        'parent_id' => $this->inboxFolder->id,
-        'order'     => 3,
-    ]);
-
-    $email = Email::create([
-        'subject'   => 'Kliniek mail',
-        'from'      => ['clinic@example.com'],
-        'reply'     => 'Body',
-        'folder_id' => $subFolder->id,
-    ]);
-
-    $this->put(route('admin.mail.update', $email->id), [
-        'lead_id' => $this->lead->id,
-    ]);
-
-    expect($email->refresh()->folder_id)->toBe($this->verwerktFolder->id);
-});
-
-test('email in Nieuwsbrief reacties sub-folder is moved to Verwerkt on entity link', function () {
-    $subFolder = Folder::create([
-        'name'      => EmailFolderEnum::NEWSLETTER->value,
-        'parent_id' => $this->inboxFolder->id,
-        'order'     => 4,
-    ]);
-
-    $email = Email::create([
-        'subject'   => 'Newsletter reply',
-        'from'      => ['subscriber@example.com'],
-        'reply'     => 'Body',
-        'folder_id' => $subFolder->id,
-    ]);
-
-    $this->put(route('admin.mail.update', $email->id), [
-        'lead_id' => $this->lead->id,
-    ]);
-
-    expect($email->refresh()->folder_id)->toBe($this->verwerktFolder->id);
-});
 
 // ---------------------------------------------------------------------------
 // Non-inbox folders are NOT touched

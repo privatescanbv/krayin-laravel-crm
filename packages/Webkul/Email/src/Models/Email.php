@@ -66,6 +66,7 @@ class Email extends Model implements EmailContract
         'user_type',
         'is_read',
         'folder_id',
+        'mailbox_key',
         'from',
         'sender',
         'reply_to',

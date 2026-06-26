@@ -17,8 +17,15 @@ class FolderSeeder extends Seeder
     {
         $c = 0;
         // Create root folders
-        $inbox = Folder::create([
+        Folder::create([
             'name'         => EmailFolderEnum::INBOX->getFolderName(),
+            'parent_id'    => null,
+            'order'        => ++$c,
+            'is_deletable' => false,
+        ]);
+
+        Folder::create([
+            'name'         => EmailFolderEnum::INBOX_HERNIAPOLI->getFolderName(),
             'parent_id'    => null,
             'order'        => ++$c,
             'is_deletable' => false,
@@ -31,7 +38,7 @@ class FolderSeeder extends Seeder
             'is_deletable' => false,
         ]);
 
-        $imported = Folder::create([
+        Folder::create([
             'name'         => EmailFolderEnum::PROCESSED->getFolderName(),
             'parent_id'    => null,
             'order'        => ++$c,
@@ -47,7 +54,14 @@ class FolderSeeder extends Seeder
 
         // Create some subfolders for better organization
         Folder::create([
-            'name'         => EmailFolderEnum::SENT->getFolderName(),
+            'name'         => EmailFolderEnum::SENT_PRIVATESCAN->getFolderName(),
+            'parent_id'    => null,
+            'order'        => ++$c,
+            'is_deletable' => false,
+        ]);
+
+        Folder::create([
+            'name'         => EmailFolderEnum::SENT_HERNIAPOLI->getFolderName(),
             'parent_id'    => null,
             'order'        => ++$c,
             'is_deletable' => false,
@@ -57,35 +71,6 @@ class FolderSeeder extends Seeder
             'name'         => EmailFolderEnum::TRASH->getFolderName(),
             'parent_id'    => null,
             'order'        => ++$c,
-            'is_deletable' => false,
-        ]);
-
-        // Create subfolders under Inbox
-        Folder::create([
-            'name'         => EmailFolderEnum::PRIVATESCAN_WEBFORM->getFolderName(),
-            'parent_id'    => $inbox->id,
-            'order'        => 1,
-            'is_deletable' => false,
-        ]);
-
-        Folder::create([
-            'name'         => EmailFolderEnum::HERNIA_WEBFORM->getFolderName(),
-            'parent_id'    => $inbox->id,
-            'order'        => 2,
-            'is_deletable' => false,
-        ]);
-
-        Folder::create([
-            'name'         => EmailFolderEnum::CLINICS->getFolderName(),
-            'parent_id'    => $inbox->id,
-            'order'        => 3,
-            'is_deletable' => false,
-        ]);
-
-        Folder::create([
-            'name'         => EmailFolderEnum::NEWSLETTER->getFolderName(),
-            'parent_id'    => $inbox->id,
-            'order'        => 4,
             'is_deletable' => false,
         ]);
 

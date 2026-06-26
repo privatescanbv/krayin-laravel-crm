@@ -10,10 +10,16 @@ use App\Services\Mail\MicrosoftGraphTokenService;
 function inlineImagesTransport(): MicrosoftGraphMailTransport
 {
     config([
-        'mail.graph.mailbox'       => 'crm@example.com',
-        'mail.graph.tenant_id'     => 'test-tenant',
-        'mail.graph.client_id'     => 'test-client',
-        'mail.graph.client_secret' => 'test-secret',
+        'mail.mailboxes' => [
+            'privatescan' => [
+                'address' => 'crm@example.com',
+                'graph'   => [
+                    'tenant_id'     => 'test-tenant',
+                    'client_id'     => 'test-client',
+                    'client_secret' => 'test-secret',
+                ],
+            ],
+        ],
     ]);
 
     return new MicrosoftGraphMailTransport(new MicrosoftGraphTokenService);

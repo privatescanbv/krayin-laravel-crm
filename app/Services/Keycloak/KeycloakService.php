@@ -57,7 +57,7 @@ class KeycloakService
         $adminPassword = config('services.keycloak.admin_password');
 
         if (empty($adminPassword)) {
-            Log::error('Missing configuration for keycloak.admin_password');
+            Log::warning('Keycloak admin_password niet geconfigureerd, sla API-aanroep over.');
 
             return null;
         }

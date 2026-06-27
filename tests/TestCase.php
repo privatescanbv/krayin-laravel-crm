@@ -44,6 +44,7 @@ abstract class TestCase extends BaseTestCase
 
         // Disable Keycloak sync during tests to prevent test users from being synced
         config(['services.keycloak.client_id' => null]);
+        config(['services.keycloak.admin_password' => null]);
 
         // Disable Microsoft Graph mail configuration to prevent any email sending
         config(['mail.graph.client_id' => null]);

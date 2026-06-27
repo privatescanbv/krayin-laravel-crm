@@ -22,8 +22,8 @@ class KeycloakConfigServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Only run if Keycloak is configured
-        if (empty(config('services.keycloak.client_id'))) {
+        // Only run if Keycloak is fully configured (both client_id and admin credentials)
+        if (empty(config('services.keycloak.client_id')) || empty(config('services.keycloak.admin_password'))) {
             return;
         }
 

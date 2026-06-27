@@ -670,6 +670,17 @@
             {!! view_render_event('admin.mail.create.form.after') !!}
         </script>
 
+        @php
+            $mailboxList = array_values(array_map(
+                fn ($k, $v) => ['key' => $k, 'address' => $v['address'], 'display_name' => $v['display_name']],
+                array_keys(config('mail.mailboxes', [])),
+                config('mail.mailboxes', [])
+            ));
+            $defaultMailboxAddress = count($mailboxList) > 0
+                ? $mailboxList[0]['address']
+                : config('mail.graph.mailbox', '');
+        @endphp
+
         <script type="module">
             app.component('v-mail', {
                 template: '#v-mail-template',
@@ -690,11 +701,11 @@
 
                         emailTemplates: [],
 
-                        mailboxes: @json(array_values(array_map(fn($k, $v) => ['key' => $k, 'address' => $v['address'], 'display_name' => $v['display_name']], array_keys(config('mail.mailboxes', [])), config('mail.mailboxes', [])))),
+                        mailboxes: @json($mailboxList),
 
                         draft: {
                             id: null,
-                            from: '{{ config('mail.mailboxes.' . array_key_first(config('mail.mailboxes', [])) . '.address', config('mail.graph.mailbox')) }}',
+                            from: '{{ $defaultMailboxAddress }}',
                             reply_to: [],
                             cc: [],
                             bcc: [],

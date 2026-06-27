@@ -1142,7 +1142,17 @@
 
         <!-- Email Form Vue Component -->
         <script type="module">
-            @php $userSig = auth()->guard('user')->user()?->signature ?? ''; @endphp
+            @php
+                $userSig = auth()->guard('user')->user()?->signature ?? '';
+                $mailboxList = array_values(array_map(
+                    fn ($k, $v) => ['key' => $k, 'address' => $v['address'], 'display_name' => $v['display_name']],
+                    array_keys(config('mail.mailboxes', [])),
+                    config('mail.mailboxes', [])
+                ));
+                $defaultMailboxAddress = count($mailboxList) > 0
+                    ? $mailboxList[0]['address']
+                    : config('mail.graph.mailbox', '');
+            @endphp
 
             app.component('v-email-form', {
                 template: '#v-email-form-template',
@@ -1161,9 +1171,9 @@
 
                         userSignature: {!! json_encode($userSig, JSON_HEX_TAG) !!},
 
-                        mailboxes: @json(array_values(array_map(fn($k, $v) => ['key' => $k, 'address' => $v['address'], 'display_name' => $v['display_name']], array_keys(config('mail.mailboxes', [])), config('mail.mailboxes', [])))),
+                        mailboxes: @json($mailboxList),
 
-                        selectedFrom: '{{ config('mail.mailboxes.' . array_key_first(config('mail.mailboxes', [])) . '.address', config('mail.graph.mailbox')) }}',
+                        selectedFrom: '{{ $defaultMailboxAddress }}',
                     };
                 },
 

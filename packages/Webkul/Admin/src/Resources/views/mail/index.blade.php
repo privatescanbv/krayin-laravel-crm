@@ -137,6 +137,10 @@
         </div>
     </div>
 
+    @php
+        $mailDatagridSrc = route('admin.mail.index', ['route' => request('route')]);
+    @endphp
+
     @pushOnce('scripts')
         <script
             type="text/x-template"
@@ -147,7 +151,7 @@
             <!-- DataGrid -->
             <x-admin::datagrid
                 ref="datagrid"
-                :src="route('admin.mail.index', request('route'))"
+                src="{{ $mailDatagridSrc }}"
             >
                 <template #header="{
                     isLoading,
@@ -493,7 +497,7 @@
                                 </x-admin::form.control-group>
 
                                 <x-admin::form.control-group.control
-                                    v-else
+                                    v-if="mailboxes.length <= 1"
                                     type="hidden"
                                     name="from"
                                     v-model="draft.from"
@@ -698,6 +702,8 @@
 
                         mailboxes: @json($mailboxList),
 
+                        datagridSrc: @json($mailDatagridSrc),
+
                         draft: {
                             id: null,
                             from: '{{ $defaultMailboxAddress }}',
@@ -747,7 +753,7 @@
                     const hasUrlFilters = url.search.includes('filters%5B') || url.search.includes('filters[');
 
                     if (!hasUrlFilters) {
-                        const src = @json(route('admin.mail.index', request('route')));
+                        const src = this.datagridSrc;
 
                         try {
                             const stored = JSON.parse(localStorage.getItem('datagrids') || '[]');

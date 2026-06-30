@@ -299,7 +299,7 @@ $totalCount    = $timelineItems->count();
                             <div class="mt-1.5 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{{ $item['preview'] }}</div>
                         @endif
                         <div class="mt-1">
-                            <a href="{{ route('admin.mail.view', ['route' => 'inbox', 'id' => $item['id']]) }}"
+                            <a href="{{ route('admin.mail.view', ['route' => \Webkul\Email\Enums\EmailFolderEnum::INBOX->value, 'id' => $item['id']]) }}"
                                target="_blank"
                                class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
                                 Volledige e-mail openen <span class="icon-right-arrow text-xs"></span>

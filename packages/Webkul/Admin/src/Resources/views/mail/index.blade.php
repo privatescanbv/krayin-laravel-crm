@@ -34,7 +34,7 @@
                     </h3>
 
                     @php
-                        $currentRoute = request('route') ?? 'inbox';
+                        $currentRoute = request('route') ?? \Webkul\Email\Enums\EmailFolderEnum::INBOX->value;
                     @endphp
 
                         <!-- Hierarchical Folders -->

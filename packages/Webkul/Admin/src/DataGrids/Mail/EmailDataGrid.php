@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 use Webkul\Tag\Repositories\TagRepository;
 
@@ -405,7 +406,7 @@ class EmailDataGrid extends DataGrid
             $this->addMassAction([
                 'title'   => trans('admin::app.mail.index.datagrid.move-to-inbox'),
                 'method'  => 'POST',
-                'url'     => route('admin.mail.mass_update', ['folders' => ['inbox']]),
+                'url'     => route('admin.mail.mass_update', ['folders' => [EmailFolderEnum::INBOX->value]]),
                 'options' => [
                     [
                         'value' => 'trash',

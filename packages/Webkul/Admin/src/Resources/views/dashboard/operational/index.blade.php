@@ -261,7 +261,7 @@
                         <template v-if="activeQueue?.type === 'email'">
                             <p class="text-sm text-gray-600 dark:text-gray-400">
                                 @{{ activeQueue.open }} ongelezen
-                                <a href="/admin/mail/inbox" target="_blank" class="ml-1 text-brandColor underline">
+                                <a href="{{ route('admin.mail.index', ['route' => \Webkul\Email\Enums\EmailFolderEnum::INBOX->value]) }}" target="_blank" class="ml-1 text-brandColor underline">
                                     Bekijk in inbox
                                 </a>
                             </p>

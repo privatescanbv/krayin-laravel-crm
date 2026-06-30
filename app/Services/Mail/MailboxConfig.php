@@ -2,6 +2,8 @@
 
 namespace App\Services\Mail;
 
+use InvalidArgumentException;
+
 /**
  * Resolves configured CRM mailboxes and their Microsoft Graph credentials.
  *
@@ -61,62 +63,44 @@ class MailboxConfig
     }
 
     /**
-     * @return array{tenant_id: ?string, client_id: ?string, client_secret: ?string}
+     * @return array{mailbox_key: string, tenant_id: string, client_id: string, client_secret: string}
      */
     public static function graphCredentials(?string $mailboxKey = null): array
     {
         $mailboxKey ??= self::defaultKey();
+
+        if ($mailboxKey === null) {
+            throw new InvalidArgumentException('No mailbox key provided and no default mailbox configured.');
+        }
+
         $mailbox = self::get($mailboxKey);
-        $graph = is_array($mailbox['graph'] ?? null) ? $mailbox['graph'] : [];
+
+        if ($mailbox === null) {
+            throw new InvalidArgumentException("Unknown mailbox [{$mailboxKey}].");
+        }
+
+        $graph = $mailbox['graph'] ?? null;
+
+        if (! is_array($graph)) {
+            throw new InvalidArgumentException("Mailbox [{$mailboxKey}] has no graph configuration.");
+        }
+
+        $tenantId = $graph['tenant_id'] ?? null;
+        $clientId = $graph['client_id'] ?? null;
+        $clientSecret = $graph['client_secret'] ?? null;
+
+        if (! is_string($tenantId) || $tenantId === ''
+            || ! is_string($clientId) || $clientId === ''
+            || ! is_string($clientSecret) || $clientSecret === '') {
+            throw new InvalidArgumentException("Mailbox [{$mailboxKey}] has incomplete Microsoft Graph credentials.");
+        }
 
         return [
-            'tenant_id'     => $graph['tenant_id'] ?? null,
-            'client_id'     => $graph['client_id'] ?? null,
-            'client_secret' => $graph['client_secret'] ?? null,
+            'mailbox_key'   => $mailboxKey,
+            'tenant_id'     => $tenantId,
+            'client_id'     => $clientId,
+            'client_secret' => $clientSecret,
         ];
-    }
-
-    /**
-     * Client secrets to try for a mailbox, including alternates from other mailboxes
-     * that share the same Azure AD app registration (same tenant + client id).
-     *
-     * @return list<string>
-     */
-    public static function clientSecretsForMailbox(?string $mailboxKey = null): array
-    {
-        $credentials = self::graphCredentials($mailboxKey);
-        $tenantId = $credentials['tenant_id'];
-        $clientId = $credentials['client_id'];
-        $secrets = [];
-
-        if (! empty($credentials['client_secret'])) {
-            $secrets[] = $credentials['client_secret'];
-        }
-
-        if (! $tenantId || ! $clientId) {
-            return $secrets;
-        }
-
-        foreach (self::all() as $key => $mailbox) {
-            if ($key === $mailboxKey) {
-                continue;
-            }
-
-            $graph = is_array($mailbox['graph'] ?? null) ? $mailbox['graph'] : [];
-            $alternateSecret = $graph['client_secret'] ?? null;
-
-            if (
-                ($graph['tenant_id'] ?? null) === $tenantId
-                && ($graph['client_id'] ?? null) === $clientId
-                && is_string($alternateSecret)
-                && $alternateSecret !== ''
-                && ! in_array($alternateSecret, $secrets, true)
-            ) {
-                $secrets[] = $alternateSecret;
-            }
-        }
-
-        return $secrets;
     }
 
     /**

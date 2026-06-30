@@ -20,12 +20,6 @@ class MicrosoftGraphTokenService
     /** @var array<string, int> */
     private array $expiresAt = [];
 
-    private static function shouldRetryWithAlternateSecret(string $errorBody): bool
-    {
-        return str_contains($errorBody, 'invalid_client')
-            || str_contains($errorBody, 'AADSTS7000215');
-    }
-
     /**
      * Return a valid access token for the given mailbox key.
      *
@@ -33,7 +27,12 @@ class MicrosoftGraphTokenService
      */
     public function getAccessToken(?string $mailboxKey = null): string
     {
-        $cacheKey = $this->cacheKey($mailboxKey);
+        $credentials = MailboxConfig::graphCredentials($mailboxKey);
+        $mailboxKey = $credentials['mailbox_key'];
+        $tenantId = $credentials['tenant_id'];
+        $clientId = $credentials['client_id'];
+        $clientSecret = $credentials['client_secret'];
+        $cacheKey = $this->cacheKey($mailboxKey, $tenantId, $clientId, $clientSecret);
 
         if (
             isset($this->accessTokens[$cacheKey], $this->expiresAt[$cacheKey])
@@ -42,47 +41,26 @@ class MicrosoftGraphTokenService
             return $this->accessTokens[$cacheKey];
         }
 
-        $credentials = MailboxConfig::graphCredentials($mailboxKey);
-        $tenantId = $credentials['tenant_id'];
-        $clientId = $credentials['client_id'];
-        $clientSecrets = MailboxConfig::clientSecretsForMailbox($mailboxKey);
-
-        if (! $tenantId || ! $clientId || $clientSecrets === []) {
-            throw new Exception('Microsoft Graph credentials not configured for mailbox: '.($mailboxKey ?? 'default'));
-        }
-
         try {
-            $lastErrorBody = null;
+            $response = Http::asForm()->post(
+                "https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token",
+                [
+                    'client_id'     => $clientId,
+                    'client_secret' => $clientSecret,
+                    'scope'         => 'https://graph.microsoft.com/.default',
+                    'grant_type'    => 'client_credentials',
+                ]
+            );
 
-            foreach ($clientSecrets as $index => $clientSecret) {
-                $response = Http::asForm()->post(
-                    "https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token",
-                    [
-                        'client_id'     => $clientId,
-                        'client_secret' => $clientSecret,
-                        'scope'         => 'https://graph.microsoft.com/.default',
-                        'grant_type'    => 'client_credentials',
-                    ]
-                );
-
-                if ($response->successful()) {
-                    $this->accessTokens[$cacheKey] = $response->json('access_token');
-                    $expiresIn = (int) $response->json('expires_in', 3600);
-                    $this->expiresAt[$cacheKey] = time() + $expiresIn - 60;
-
-                    return $this->accessTokens[$cacheKey];
-                }
-
-                $lastErrorBody = $response->body();
-
-                $hasAlternateSecret = $index < count($clientSecrets) - 1;
-
-                if (! $hasAlternateSecret || ! self::shouldRetryWithAlternateSecret($lastErrorBody)) {
-                    break;
-                }
+            if (! $response->successful()) {
+                throw new Exception("Failed to get access token for mailbox [{$mailboxKey}]: ".$response->body());
             }
 
-            throw new Exception('Failed to get access token: '.($lastErrorBody ?? 'unknown error'));
+            $this->accessTokens[$cacheKey] = $response->json('access_token');
+            $expiresIn = (int) $response->json('expires_in', 3600);
+            $this->expiresAt[$cacheKey] = time() + $expiresIn - 60;
+
+            return $this->accessTokens[$cacheKey];
         } catch (Exception $e) {
             Log::error('Failed to get Microsoft Graph access token', [
                 'mailbox_key' => $mailboxKey,
@@ -97,6 +75,10 @@ class MicrosoftGraphTokenService
     {
         $mailboxKey = MailboxConfig::resolveKeyByAddress($address);
 
+        if ($mailboxKey === null) {
+            throw new Exception("No mailbox configured for address [{$address}]");
+        }
+
         return $this->getAccessToken($mailboxKey);
     }
 
@@ -109,12 +91,20 @@ class MicrosoftGraphTokenService
             return;
         }
 
-        $cacheKey = $this->cacheKey($mailboxKey);
-        unset($this->accessTokens[$cacheKey], $this->expiresAt[$cacheKey]);
+        foreach (array_keys($this->accessTokens) as $cacheKey) {
+            if (str_starts_with($cacheKey, $mailboxKey.':')) {
+                unset($this->accessTokens[$cacheKey], $this->expiresAt[$cacheKey]);
+            }
+        }
     }
 
-    private function cacheKey(?string $mailboxKey): string
+    private function cacheKey(string $mailboxKey, string $tenantId, string $clientId, string $clientSecret): string
     {
-        return $mailboxKey ?? MailboxConfig::defaultKey() ?? '_default';
+        return implode(':', [
+            $mailboxKey,
+            $tenantId,
+            $clientId,
+            hash('sha256', $clientSecret),
+        ]);
     }
 }

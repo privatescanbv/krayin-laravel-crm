@@ -102,7 +102,7 @@
                             'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to)
                         }"
                         :href="(activity.type === 'email'
-                            ? {!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || 'inbox').replace('__ID__', String(activity.id))
+                            ? {!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || {!! json_encode(\Webkul\Email\Enums\EmailFolderEnum::INBOX->value) !!}).replace('__ID__', String(activity.id))
                             : {!! $activityViewPatternJs !!}.replace('__ID__', String(activity.id)))">
                         @{{ activity.title || 'geen' }}
                     </a>

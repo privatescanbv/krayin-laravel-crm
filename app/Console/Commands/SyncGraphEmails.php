@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Mail\GraphMailService;
+use App\Services\Mail\MicrosoftGraphTokenService;
 use Exception;
 use Illuminate\Console\Command;
 use Webkul\Email\Enums\EmailFolderEnum;
@@ -38,7 +39,7 @@ class SyncGraphEmails extends Command
      *
      * @return int
      */
-    public function handle(GraphMailService $graphService)
+    public function handle(GraphMailService $graphService, MicrosoftGraphTokenService $tokenService)
     {
         $mailboxes = config('mail.mailboxes', []);
 
@@ -69,6 +70,7 @@ class SyncGraphEmails extends Command
             $this->info("Syncing mailbox [{$key}] {$address} ...");
 
             try {
+                $tokenService->clearToken($key);
                 $graphService->configureMailbox($address, $key, $folderName);
                 $graphService->processMessagesFromAllFolders();
 

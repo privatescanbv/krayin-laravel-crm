@@ -69,7 +69,13 @@ test('re-fetches token when it has expired', function () {
     $prop = $ref->getProperty('expiresAt');
     $prop->setAccessible(true);
     $expiresAt = $prop->getValue($service);
-    $expiresAt['privatescan'] = time() - 1;
+
+    foreach (array_keys($expiresAt) as $cacheKey) {
+        if (str_starts_with($cacheKey, 'privatescan:')) {
+            $expiresAt[$cacheKey] = time() - 1;
+        }
+    }
+
     $prop->setValue($service, $expiresAt);
 
     expect($service->getAccessToken('privatescan'))->toBe('new-token');
@@ -104,7 +110,8 @@ test('stores expires_in from token response with a 60 second buffer', function (
     $ref = new ReflectionClass($service);
     $expiresAt = $ref->getProperty('expiresAt');
     $expiresAt->setAccessible(true);
-    $value = $expiresAt->getValue($service)['privatescan'];
+    $values = $expiresAt->getValue($service);
+    $value = collect($values)->first(fn ($_, $key) => str_starts_with($key, 'privatescan:'));
 
     expect($value)->toBeGreaterThanOrEqual($before + 3540)
         ->and($value)->toBeLessThanOrEqual($after + 3540);
@@ -139,7 +146,27 @@ test('mailbox config resolves key by address', function () {
         ->and(MailboxConfig::graphCredentials('herniapoli')['tenant_id'])->toBe('hp-tenant');
 });
 
-test('falls back to alternate secret when mailboxes share the same azure app', function () {
+test('throws when graph credentials are incomplete', function () {
+    config([
+        'mail.mailboxes' => [
+            'privatescan' => [
+                'address' => 'service@privatescan.nl',
+                'graph'   => [
+                    'tenant_id'     => 'test-tenant',
+                    'client_id'     => 'test-client',
+                    'client_secret' => null,
+                ],
+            ],
+        ],
+    ]);
+
+    $service = new MicrosoftGraphTokenService;
+
+    expect(fn () => $service->getAccessToken('privatescan'))
+        ->toThrow(InvalidArgumentException::class, 'Mailbox [privatescan] has incomplete Microsoft Graph credentials.');
+});
+
+test('each mailbox uses only its own configured client secret', function () {
     config([
         'mail.mailboxes' => [
             'privatescan' => [
@@ -147,7 +174,7 @@ test('falls back to alternate secret when mailboxes share the same azure app', f
                 'graph'   => [
                     'tenant_id'     => 'shared-tenant',
                     'client_id'     => 'shared-client',
-                    'client_secret' => 'stale-secret',
+                    'client_secret' => 'ps-secret',
                 ],
             ],
             'herniapoli' => [
@@ -155,23 +182,26 @@ test('falls back to alternate secret when mailboxes share the same azure app', f
                 'graph'   => [
                     'tenant_id'     => 'shared-tenant',
                     'client_id'     => 'shared-client',
-                    'client_secret' => 'current-secret',
+                    'client_secret' => 'hp-secret',
                 ],
             ],
         ],
     ]);
 
-    Http::fake([
-        'login.microsoftonline.com/*' => Http::sequence()
-            ->push([
-                'error'             => 'invalid_client',
-                'error_description' => 'AADSTS7000215: Invalid client secret provided.',
-            ], 401)
-            ->push(['access_token' => 'shared-token', 'expires_in' => 3600]),
-    ]);
+    Http::fake(function ($request) {
+        $secret = $request->data()['client_secret'] ?? '';
+
+        return Http::response([
+            'access_token' => $secret === 'ps-secret' ? 'ps-token' : 'hp-token',
+            'expires_in'   => 3600,
+        ]);
+    });
 
     $service = new MicrosoftGraphTokenService;
 
-    expect($service->getAccessToken('privatescan'))->toBe('shared-token');
-    Http::assertSentCount(2);
+    expect($service->getAccessToken('privatescan'))->toBe('ps-token')
+        ->and($service->getAccessToken('herniapoli'))->toBe('hp-token');
+
+    Http::assertSent(fn ($request) => ($request->data()['client_secret'] ?? null) === 'ps-secret');
+    Http::assertSent(fn ($request) => ($request->data()['client_secret'] ?? null) === 'hp-secret');
 });

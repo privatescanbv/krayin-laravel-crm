@@ -53,7 +53,7 @@ class EmailController extends Controller
     public function index(): View|JsonResponse|RedirectResponse
     {
         if (! request('route')) {
-            return redirect()->route('admin.mail.index', ['route' => 'inbox']);
+            return redirect()->route('admin.mail.index', ['route' => EmailFolderEnum::INBOX->value]);
         }
 
         if (! bouncer()->hasPermission('mail')) {
@@ -69,7 +69,7 @@ class EmailController extends Controller
                 $folder = Folder::where('name', request('route'))->first();
                 if ($folder) {
                     if (in_array($folder->name, $hiddenFolders, true)) {
-                        return redirect()->route('admin.mail.index', ['route' => 'inbox']);
+                        return redirect()->route('admin.mail.index', ['route' => EmailFolderEnum::INBOX->value]);
                     }
 
                     if (request()->ajax()) {
@@ -333,7 +333,7 @@ class EmailController extends Controller
                 Event::dispatch('email.update.before', $email->id);
 
                 // Get the folder by name from the folders array
-                $folderName = request('folders')[0] ?? 'inbox';
+                $folderName = request('folders')[0] ?? EmailFolderEnum::INBOX->value;
                 $folder = Folder::where('name', $folderName)->first();
                 if ($folder) {
                     $this->emailRepository->update([
@@ -395,7 +395,7 @@ class EmailController extends Controller
                 return redirect()->back();
             }
 
-            return redirect()->route('admin.mail.index', ['route' => 'inbox']);
+            return redirect()->route('admin.mail.index', ['route' => EmailFolderEnum::INBOX->value]);
         } catch (Exception $exception) {
             if (request()->ajax()) {
                 return response()->json([

@@ -65,7 +65,7 @@ return [
         'key'        => 'mail',
         'name'       => 'admin::app.layouts.mail.title',
         'route'      => 'admin.mail.index',
-        'params'     => ['route' => 'inbox'],
+        'params'     => ['route' => 'Inbox Privatescan'],
         'sort'       => 7,
         'icon-class' => 'icon-mail',
     ],

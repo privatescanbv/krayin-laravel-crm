@@ -150,16 +150,13 @@ return [
             'display_name'     => 'PrivateScan',
             'folder_name'      => EmailFolderEnum::INBOX->value,
             'sent_folder_name' => EmailFolderEnum::SENT_PRIVATESCAN->value,
-            'send_as'          => array_values(array_filter([
-                env('GRAPH_SEND_AS', 'crm@privatescan.nl'),
-            ])),
             'graph'            => [
                 'tenant_id'     => env('GRAPH_TENANT_ID'),
                 'client_id'     => env('GRAPH_CLIENT_ID'),
                 'client_secret' => env('GRAPH_CLIENT_SECRET'),
             ],
         ],
-        'herniapoli' => env('GRAPH_MAILBOX_HP') ? [
+        'herniapoli' => (env('GRAPH_MAILBOX_HP') && env('GRAPH_HP_TENANT_ID') && env('GRAPH_HP_CLIENT_ID') && env('GRAPH_HP_CLIENT_SECRET')) ? [
             'address'          => env('GRAPH_MAILBOX_HP'),
             'display_name'     => 'HerniaPoli',
             'folder_name'      => EmailFolderEnum::INBOX_HERNIAPOLI->value,

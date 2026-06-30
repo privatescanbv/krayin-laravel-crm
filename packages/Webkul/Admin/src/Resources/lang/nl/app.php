@@ -317,7 +317,7 @@ return [
 
                 'date-range' => [
                     'from' => 'Van',
-                    'to'   => 'Tot',
+                    'to'   => 't/m',
                 ],
 
                 'date-options' => [

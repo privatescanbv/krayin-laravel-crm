@@ -1392,7 +1392,13 @@
                         ? appliedColumn.value[0]
                         : this.normalizeDateRangeValue(appliedColumn.value);
 
-                    return range.filter(Boolean).join(' to ');
+                    const fmtDate = (d) => {
+                        if (!d) return '';
+                        const p = d.split('-');
+                        return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
+                    };
+
+                    return range.filter(Boolean).map(fmtDate).join(' t/m ');
                 },
 
                 /**

@@ -77,6 +77,21 @@ class PersonDataGrid extends DataGrid
         // Remove this custom filter so the datagrid core won't try to apply it as an equality filter.
         unset($requestedFilters['trashed']);
 
+        // Auto-fill missing from/to for single-value date_of_birth filter.
+        // Dates arrive as [[from, to]] (numeric indices, not string keys).
+        $dobFilter = $requestedFilters['date_of_birth'] ?? null;
+        if (is_array($dobFilter) && isset($dobFilter[0]) && is_array($dobFilter[0])) {
+            $from = ($dobFilter[0][0] ?? null) ?: null;
+            $to   = ($dobFilter[0][1] ?? null) ?: null;
+            if ($from && ! $to) {
+                $dobFilter[0][1] = $from;
+                $requestedFilters['date_of_birth'] = $dobFilter;
+            } elseif ($to && ! $from) {
+                $dobFilter[0][0] = $to;
+                $requestedFilters['date_of_birth'] = $dobFilter;
+            }
+        }
+
         // Update request with cleaned filters (avoid validation errors when filters becomes empty).
         $originalFilters = request()->input('filters');
         if (! empty($requestedFilters)) {
@@ -192,7 +207,7 @@ class PersonDataGrid extends DataGrid
                 $birthDate = Carbon::parse($row->date_of_birth);
                 $age = $birthDate->age;
 
-                return $row->date_of_birth . ' (' . $age . ' jaar)';
+                return $birthDate->format('d-m-Y') . ' (' . $age . ' jaar)';
             },
         ]);
 

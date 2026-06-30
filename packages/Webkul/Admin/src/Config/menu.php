@@ -1,5 +1,7 @@
 <?php
 
+use Webkul\Email\Enums\EmailFolderEnum;
+
 return [
     /**
      * Operational dashboard (werkbakken).
@@ -65,7 +67,7 @@ return [
         'key'        => 'mail',
         'name'       => 'admin::app.layouts.mail.title',
         'route'      => 'admin.mail.index',
-        'params'     => ['route' => 'Inbox Privatescan'],
+        'params'     => ['route' => EmailFolderEnum::INBOX->value],
         'sort'       => 7,
         'icon-class' => 'icon-mail',
     ],

@@ -1,6 +1,7 @@
 @php
     use App\Enums\ActivityType;
     use App\Http\Controllers\Concerns\ReturnUrl;
+    use Webkul\Email\Enums\EmailFolderEnum;
 
     $canBeMarkedAsDoneTypes = array_map(
         fn (ActivityType $type) => $type->value,
@@ -29,6 +30,7 @@
             $currentReturnUrl
         )
     );
+    $defaultInboxFolderJs = $toJsString(EmailFolderEnum::INBOX->value);
 @endphp
 
 <div class="flex gap-2" v-for="activity in filteredActivities" :key="activity.id">
@@ -102,7 +104,7 @@
                             'text-status-expired-text dark:text-red-400': !activity.is_done && isPastDay(activity.schedule_to)
                         }"
                         :href="(activity.type === 'email'
-                            ? {!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || {!! json_encode(\Webkul\Email\Enums\EmailFolderEnum::INBOX->value) !!}).replace('__ID__', String(activity.id))
+                            ? {!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || {!! $defaultInboxFolderJs !!}).replace('__ID__', String(activity.id))
                             : {!! $activityViewPatternJs !!}.replace('__ID__', String(activity.id)))">
                         @{{ activity.title || 'geen' }}
                     </a>
@@ -235,9 +237,7 @@
                                 <template v-else>
                                     @if (bouncer()->hasPermission('mail.view'))
                                         <x-admin::dropdown.menu.item>
-                                            <a :href="'{{ route('admin.mail.view', ['route' => 'replaceFolder', 'id' => 'replaceMailId']) }}'
-                                            .replace('replaceFolder', activity.folder_name || 'inbox').replace('replaceMailId',
-                                                activity.id)"
+                                            <a :href="{!! $mailViewPatternJs !!}.replace('__FOLDER__', activity.folder_name || {!! $defaultInboxFolderJs !!}).replace('__ID__', String(activity.id))"
                                                 class="flex items-center gap-2" target="_blank">
                                                 <span class="icon-eye text-2xl"></span>
 

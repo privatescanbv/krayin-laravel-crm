@@ -29,6 +29,8 @@ use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
 use Webkul\EmailTemplate\Models\EmailTemplate;
+use App\Models\Order;
+use App\Models\SalesLead;
 use Webkul\Lead\Models\Lead;
 
 class EmailController extends Controller
@@ -149,7 +151,8 @@ class EmailController extends Controller
             'reply_to.*' => 'email',
             'reply'      => 'required',
             'subject'    => 'required',
-            'order_id'   => 'nullable|integer|exists:orders,id',
+            'order_id'      => 'nullable|integer|exists:orders,id',
+            'sales_lead_id' => 'nullable|integer|exists:salesleads,id',
         ]);
 
         Event::dispatch('email.create.before');
@@ -157,6 +160,12 @@ class EmailController extends Controller
         // Get all request data including activity_id if provided
         $data = request()->all();
         $data['mailbox_key'] = $this->resolveOutboundMailboxKey($data);
+
+        // Ensure the from address matches the resolved mailbox so Graph doesn't
+        // reject the send with ErrorSendAsDenied (from ≠ authenticated account).
+        if (empty($data['from']) && $data['mailbox_key'] !== null) {
+            $data['from'] = MailboxConfig::address($data['mailbox_key']);
+        }
 
         $email = $this->crmMailService->createAndMaybeSend($data, (bool) request('is_draft'));
 
@@ -194,6 +203,10 @@ class EmailController extends Controller
 
         $data = request()->all();
         $data['mailbox_key'] = $this->resolveOutboundMailboxKey($data);
+
+        if (empty($data['from']) && $data['mailbox_key'] !== null) {
+            $data['from'] = MailboxConfig::address($data['mailbox_key']);
+        }
 
         if (! is_null(request('is_draft'))) {
             $folderName = request('is_draft') ? 'draft' : 'outbox';
@@ -851,6 +864,24 @@ class EmailController extends Controller
         if (! empty($data['lead_id'])) {
             $lead = Lead::find($data['lead_id']);
             $key = $this->mailboxResolver->resolveKeyFromEntity($lead);
+
+            if ($key !== null) {
+                return $key;
+            }
+        }
+
+        if (! empty($data['order_id'])) {
+            $order = Order::find($data['order_id']);
+            $key = $this->mailboxResolver->resolveKeyFromEntity($order);
+
+            if ($key !== null) {
+                return $key;
+            }
+        }
+
+        if (! empty($data['sales_lead_id'])) {
+            $salesLead = SalesLead::find($data['sales_lead_id']);
+            $key = $this->mailboxResolver->resolveKeyFromEntity($salesLead);
 
             if ($key !== null) {
                 return $key;

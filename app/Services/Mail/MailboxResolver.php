@@ -5,6 +5,7 @@ namespace App\Services\Mail;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 
@@ -117,7 +118,7 @@ class MailboxResolver
                     return $key;
                 }
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Department resolution failed; caller falls back to default
         }
 

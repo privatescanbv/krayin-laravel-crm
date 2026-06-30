@@ -84,11 +84,9 @@ class MailboxConfig
         if (! is_array($graph)) {
             throw new InvalidArgumentException("Mailbox [{$mailboxKey}] has no graph configuration.");
         }
-
         $tenantId = $graph['tenant_id'] ?? null;
         $clientId = $graph['client_id'] ?? null;
         $clientSecret = $graph['client_secret'] ?? null;
-
         if (! is_string($tenantId) || $tenantId === ''
             || ! is_string($clientId) || $clientId === ''
             || ! is_string($clientSecret) || $clientSecret === '') {

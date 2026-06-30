@@ -4,6 +4,7 @@ use App\Enums\PipelineType;
 use App\Services\PipelineCookieService;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
+use Webkul\Email\Enums\EmailFolderEnum;
 
 // Dashboard
 Breadcrumbs::for('dashboard', function (BreadcrumbTrail $trail) {
@@ -54,7 +55,7 @@ Breadcrumbs::for('leads.sync_lead_to_person', function (BreadcrumbTrail $trail, 
 });
 // Mail
 Breadcrumbs::for('mail', function (BreadcrumbTrail $trail) {
-    $trail->push('E-mail', route('admin.mail.index', ['route' => 'inbox']));
+    $trail->push('E-mail', route('admin.mail.index', ['route' => EmailFolderEnum::INBOX->value]));
 });
 
 // Mail > [Compose | Inbox | Outbox | Draft | Sent | Trash]

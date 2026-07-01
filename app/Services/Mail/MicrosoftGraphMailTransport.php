@@ -106,6 +106,15 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 throw new Exception("No Graph mailbox configured for mailbox key [{$mailboxKey}].");
             }
 
+            // If $requestedFrom is not a configured mailbox address or send-as alias,
+            // fall back to the graph mailbox address as the From to avoid ErrorSendAsDenied.
+            // Graph requires that the From in the payload equals the sending account or
+            // a configured send-as alias — generic app addresses (e.g. config mail.from.address)
+            // that are not explicitly configured will fail.
+            if (MailboxConfig::resolveKeyByAddress($requestedFrom) === null) {
+                $requestedFrom = $graphMailbox;
+            }
+
             // Build recipients
             $toRecipients = [];
             foreach ($email->getTo() as $recipient) {

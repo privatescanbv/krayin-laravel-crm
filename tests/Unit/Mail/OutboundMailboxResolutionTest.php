@@ -63,3 +63,36 @@ test('sending with crm@ alias uses privatescan graph mailbox not herniapoli', fu
         return str_contains($request->url(), 'login.microsoftonline.com/ps-tenant/');
     });
 });
+
+test('generic app from address falls back to graph mailbox to avoid ErrorSendAsDenied', function () {
+    // Simulates AFB/system emails where no mailbox_key is set and the From is config('mail.from.address'),
+    // which is not a configured mailbox address or send-as alias. Without this fallback the transport
+    // would send From: noreply@example.com through service@privatescan.nl → ErrorSendAsDenied.
+    config(['mail.mailboxes.privatescan.send_as' => []]); // no send_as aliases
+
+    Http::fake([
+        'login.microsoftonline.com/ps-tenant/*' => Http::response(['access_token' => 'ps-token', 'expires_in' => 3600]),
+        'graph.microsoft.com/*'                 => Http::response('', 202),
+    ]);
+
+    $message = (new Email)
+        ->from('noreply@example.com') // generic app address, not a configured mailbox
+        ->to('patient@example.com')
+        ->subject('AFB Test')
+        ->html('<p>Test</p>');
+    // No X-Crm-Mailbox-Key header (AFB emails don't set one)
+
+    $transport = new MicrosoftGraphMailTransport(new MicrosoftGraphTokenService);
+    $transport->send($message);
+
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/users/service@privatescan.nl/sendMail')) {
+            return false;
+        }
+        // From in the payload must equal the graph mailbox, not the generic app address
+        $body = $request->data();
+        $fromAddress = $body['message']['from']['emailAddress']['address'] ?? null;
+
+        return $fromAddress === 'service@privatescan.nl';
+    });
+});

@@ -47,15 +47,17 @@ test('query includes required joins', function () {
 
     $sql = $queryBuilder->toRawSql();
 
-    // Check for required JOINs (using double quotes as in SQLite)
-    expect($sql)->toContain('left join "email_attachments"')
-        ->and($sql)->toContain('left join "email_tags"')
-        ->and($sql)->toContain('left join "tags"')
-        ->and($sql)->toContain('left join "leads"')
-        ->and($sql)->toContain('left join "persons"');
+    // Tags and attachments are now correlated subqueries (not JOINs) to avoid GROUP BY
+    expect($sql)->toContain('left join "leads"')
+        ->and($sql)->toContain('left join "persons"')
+        ->and($sql)->toContain('GROUP_CONCAT')
+        ->and($sql)->toContain('email_attachments')
+        ->and($sql)->not->toContain('left join "email_attachments"')
+        ->and($sql)->not->toContain('left join "email_tags"');
 });
 
-test('query uses json contains for folder filtering', function () {
+test('query filters by folder_id directly for index efficiency', function () {
+    Folder::firstOrCreate(['name' => 'inbox']);
     request()->merge(['route' => 'inbox']);
 
     $dataGrid = new EmailDataGrid;
@@ -63,11 +65,12 @@ test('query uses json contains for folder filtering', function () {
 
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('"folders"."name"');
-    expect($sql)->toContain('inbox');
+    // folder_id pre-fetched and used as WHERE emails.folder_id = ? (enables composite index)
+    expect($sql)->toContain('"emails"."folder_id"')
+        ->and($sql)->not->toContain('"folders"."name"');
 });
 
-test('query includes proper group by', function () {
+test('query has no group by clause', function () {
     request()->merge(['route' => 'inbox']);
 
     $dataGrid = new EmailDataGrid;
@@ -75,13 +78,15 @@ test('query includes proper group by', function () {
 
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('group by "emails"."id"');
+    // GROUP BY removed; aggregations use correlated subqueries so LIMIT applies early
+    expect($sql)->not->toContain('group by');
 });
 
 test('query handles different routes', function () {
     $routes = ['inbox', 'draft', 'sent', 'outbox', 'trash'];
 
     foreach ($routes as $route) {
+        Folder::firstOrCreate(['name' => $route]);
         request()->merge(['route' => $route]);
 
         $dataGrid = new EmailDataGrid;
@@ -89,9 +94,8 @@ test('query handles different routes', function () {
 
         $sql = $queryBuilder->toRawSql();
 
-        // Should contain the route in folders.name
-        expect($sql)->toContain('"folders"."name"')
-            ->and($sql)->toContain($route);
+        // Each route's folder_id is pre-fetched; query uses emails.folder_id directly
+        expect($sql)->toContain('"emails"."folder_id"');
     }
 });
 

@@ -411,6 +411,300 @@ class GraphMailServiceTest extends TestCase
         $method->invoke($this->service, $email, $message);
     }
 
+    // -------------------------------------------------------------------------
+    // Threading: reference_ids & In-Reply-To
+    // -------------------------------------------------------------------------
+
+    public function test_extract_email_data_stores_both_message_id_and_conversation_id_in_reference_ids()
+    {
+        $message = [
+            'id'                => 'graph-msg-1',
+            'internetMessageId' => '<msg1@mail.example.com>',
+            'conversationId'    => 'AAQkADYwConversation123',
+            'subject'           => 'Test',
+            'from'              => ['emailAddress' => ['address' => 'a@b.com', 'name' => 'A']],
+            'toRecipients'      => [],
+            'ccRecipients'      => [],
+            'bccRecipients'     => [],
+            'replyTo'           => [],
+            'isRead'            => false,
+            'hasAttachments'    => false,
+            'body'              => ['contentType' => 'text', 'content' => 'hello'],
+            'receivedDateTime'  => now()->toISOString(),
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('extractEmailData');
+        $method->setAccessible(true);
+
+        $data = $method->invoke($this->service, $message, 'Inbox Privatescan', null);
+
+        $this->assertContains('<msg1@mail.example.com>', $data['reference_ids']);
+        $this->assertContains('AAQkADYwConversation123', $data['reference_ids']);
+        $this->assertCount(2, $data['reference_ids']);
+    }
+
+    public function test_extract_email_data_reference_ids_without_conversation_id()
+    {
+        $message = [
+            'id'                => 'graph-msg-1',
+            'internetMessageId' => '<msg1@mail.example.com>',
+            'subject'           => 'Test',
+            'from'              => ['emailAddress' => ['address' => 'a@b.com', 'name' => 'A']],
+            'toRecipients'      => [],
+            'ccRecipients'      => [],
+            'bccRecipients'     => [],
+            'replyTo'           => [],
+            'isRead'            => false,
+            'hasAttachments'    => false,
+            'body'              => ['contentType' => 'text', 'content' => 'hello'],
+            'receivedDateTime'  => now()->toISOString(),
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('extractEmailData');
+        $method->setAccessible(true);
+
+        $data = $method->invoke($this->service, $message, 'Inbox Privatescan', null);
+
+        $this->assertSame(['<msg1@mail.example.com>'], $data['reference_ids']);
+    }
+
+    public function test_get_in_reply_to_id_returns_in_reply_to_header_value()
+    {
+        $message = [
+            'internetMessageHeaders' => [
+                ['name' => 'MIME-Version', 'value' => '1.0'],
+                ['name' => 'In-Reply-To', 'value' => '<original@mail.example.com>'],
+                ['name' => 'References', 'value' => '<original@mail.example.com>'],
+            ],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('getInReplyToId');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame('<original@mail.example.com>', $result);
+    }
+
+    public function test_get_in_reply_to_id_is_case_insensitive_on_header_name()
+    {
+        $message = [
+            'internetMessageHeaders' => [
+                ['name' => 'in-reply-to', 'value' => '<original@mail.example.com>'],
+            ],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('getInReplyToId');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame('<original@mail.example.com>', $result);
+    }
+
+    public function test_get_in_reply_to_id_returns_null_when_no_in_reply_to_header()
+    {
+        $message = [
+            'internetMessageHeaders' => [
+                ['name' => 'MIME-Version', 'value' => '1.0'],
+                ['name' => 'References', 'value' => '<original@mail.example.com>'],
+            ],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('getInReplyToId');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertNull($result);
+    }
+
+    public function test_get_in_reply_to_id_returns_null_when_no_headers()
+    {
+        $message = [];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('getInReplyToId');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertNull($result);
+    }
+
+    public function test_find_parent_email_finds_by_conversation_id()
+    {
+        $conversationId = 'AAQkADYwConversationXYZ';
+        $parentEmail = new Email;
+        $parentEmail->id = 10;
+        $parentEmail->reference_ids = ['<original@mail.example.com>', $conversationId];
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneWhere')
+            ->with([['reference_ids', 'like', '%'.$conversationId.'%']])
+            ->willReturn($parentEmail);
+
+        $message = [
+            'id'                => 'reply-graph-id',
+            'internetMessageId' => '<reply@mail.example.com>',
+            'conversationId'    => $conversationId,
+            'toRecipients'      => [],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('findParentEmail');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame($parentEmail, $result);
+    }
+
+    public function test_find_parent_email_falls_back_to_in_reply_to_when_no_conversation_id_match()
+    {
+        $parentMessageId = '<original@mail.example.com>';
+        $parentEmail = new Email;
+        $parentEmail->id = 10;
+        $parentEmail->message_id = $parentMessageId;
+        $parentEmail->reference_ids = [$parentMessageId];
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneWhere')
+            ->willReturn(null);
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneByField')
+            ->with('message_id', $parentMessageId)
+            ->willReturn($parentEmail);
+
+        $message = [
+            'id'                     => 'reply-graph-id',
+            'internetMessageId'      => '<reply@mail.example.com>',
+            'conversationId'         => 'AAQkConversation',
+            'internetMessageHeaders' => [
+                ['name' => 'In-Reply-To', 'value' => $parentMessageId],
+            ],
+            'toRecipients' => [],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('findParentEmail');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame($parentEmail, $result);
+    }
+
+    public function test_find_parent_email_returns_null_when_no_match()
+    {
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneWhere')
+            ->with([['reference_ids', 'like', '%AAQkConversation%']])
+            ->willReturn(null);
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneByField')
+            ->with('message_id', '<original@mail.example.com>')
+            ->willReturn(null);
+
+        $message = [
+            'id'                     => 'reply-graph-id',
+            'internetMessageId'      => '<reply@mail.example.com>',
+            'conversationId'         => 'AAQkConversation',
+            'internetMessageHeaders' => [
+                ['name' => 'In-Reply-To', 'value' => '<original@mail.example.com>'],
+            ],
+            'toRecipients' => [],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('findParentEmail');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertNull($result);
+    }
+
+    public function test_process_message_propagates_conversation_id_to_parent_reference_ids()
+    {
+        $conversationId = 'AAQkADYwConversation999';
+        $parentMessageId = '<original@mail.example.com>';
+        $replyMessageId = '<reply@mail.example.com>';
+
+        $parentEmail = new Email;
+        $parentEmail->id = 5;
+        $parentEmail->reference_ids = [$parentMessageId];
+
+        $createdEmail = new Email;
+        $createdEmail->id = 6;
+
+        // Called 3×: message_id dedup, unique_id dedup, then In-Reply-To lookup
+        $this->emailRepository
+            ->expects($this->exactly(3))
+            ->method('findOneByField')
+            ->willReturnMap([
+                ['message_id', $replyMessageId, null],
+                ['unique_id', $replyMessageId, null],
+                ['message_id', $parentMessageId, $parentEmail],
+            ]);
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneWhere')
+            ->with([['reference_ids', 'like', '%'.$conversationId.'%']])
+            ->willReturn(null);
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('update')
+            ->with(
+                $this->callback(function ($data) use ($conversationId, $replyMessageId) {
+                    return in_array($conversationId, $data['reference_ids'])
+                        && in_array($replyMessageId, $data['reference_ids']);
+                }),
+                5
+            )
+            ->willReturn($parentEmail);
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($createdEmail);
+
+        $message = [
+            'id'                     => 'graph-reply',
+            'internetMessageId'      => $replyMessageId,
+            'conversationId'         => $conversationId,
+            'internetMessageHeaders' => [
+                ['name' => 'In-Reply-To', 'value' => $parentMessageId],
+            ],
+            'from'             => ['emailAddress' => ['address' => 'a@b.com', 'name' => 'A']],
+            'subject'          => 'Re: Test',
+            'toRecipients'     => [],
+            'ccRecipients'     => [],
+            'bccRecipients'    => [],
+            'replyTo'          => [],
+            'isRead'           => false,
+            'hasAttachments'   => false,
+            'body'             => ['contentType' => 'text', 'content' => 'reply'],
+            'receivedDateTime' => now()->toISOString(),
+        ];
+
+        $this->service->processMessage($message);
+    }
+
     public function test_log_sync_complete_updates_email_log()
     {
         $emailLog = EmailLog::create([

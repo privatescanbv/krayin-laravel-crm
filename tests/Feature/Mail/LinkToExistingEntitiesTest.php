@@ -173,8 +173,8 @@ test('links active lead via person', function () {
 
     $result = callLink(['subject' => 'Test'], 'patient@example.com');
 
-    expect($result['person_id'])->toEqual($person->id)
-        ->and($result['lead_id'])->toEqual($lead->id);
+    expect($result['lead_id'])->toEqual($lead->id)
+        ->and($result)->not->toHaveKey('person_id');
 });
 
 test('skips won lead', function () {

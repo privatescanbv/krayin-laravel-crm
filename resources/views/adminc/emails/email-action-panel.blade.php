@@ -1,10 +1,16 @@
 @php
     use App\Services\Mail\EmailLlmLinkingService;
+    use Webkul\Email\Enums\EmailFolderEnum;
+    use Webkul\Email\Models\Folder;
     // Prepare email data with accessors for Vue component
     $emailData = $email->getAttributes();
     $emailData['sender_email'] = $email->sender_email;
     $emailData['has_relationships'] = $email->has_relationships;
     $emailData['llm_metadata'] = $email->llm_metadata;
+
+    $processedFolderName = EmailFolderEnum::PROCESSED->value;
+    $emailFolder = $email->folder_id ? Folder::find($email->folder_id) : null;
+    $emailData['is_processed'] = $emailFolder && $emailFolder->name === $processedFolderName;
     $defaultLlmPrompt = config('ai_prompts.email_sender_extraction');
 
     $linkingService = app(EmailLlmLinkingService::class);
@@ -148,6 +154,19 @@
         </div>
     </div>
 
+    <!-- Mark as Processed -->
+    <div v-if="!email.is_processed" class="border-t pt-4 dark:border-gray-700">
+        <button
+            type="button"
+            :disabled="markingProcessed"
+            @click="markProcessed"
+            class="flex w-full items-center justify-center gap-2 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50"
+        >
+            <span class="icon-done-all text-base"></span>
+            @{{ markingProcessed ? 'Bezig...' : 'Markeer als verwerkt' }}
+        </button>
+    </div>
+
     <!-- Create Contact Modal -->
     <v-create-contact ref="createContact"></v-create-contact>
 
@@ -186,6 +205,7 @@
 
                 senderSuggestionCount: null,
                 aiSuggestionCount: {{ count($initialSuggestions) }},
+                markingProcessed: false,
             };
         },
 
@@ -294,6 +314,21 @@
         },
 
         methods: {
+            markProcessed() {
+                this.markingProcessed = true;
+                this.$axios.post('{{ route('admin.mail.mark_processed', $email->id) }}')
+                    .then(response => {
+                        this.email.is_processed = true;
+                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        const returnUrl = new URLSearchParams(window.location.search).get('return_url');
+                        window.location.href = returnUrl || '{{ route('admin.mail.index', ['route' => request('route')]) }}';
+                    })
+                    .catch(() => {
+                        this.$emitter.emit('add-flash', { type: 'error', message: 'Verplaatsen mislukt.' });
+                    })
+                    .finally(() => { this.markingProcessed = false; });
+            },
+
             resetLink() {
                 this.$emitter.emit('open-confirm-modal', {
                     agree: () => {

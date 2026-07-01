@@ -116,11 +116,16 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         // Map folder to supported folder enum
         $folderName = $this->getFolderName($message);
 
-        // Update parent email if found
+        // Update parent email if found — also add conversationId so future replies find it via strategy 1
         if ($parentEmail) {
+            $conversationId = $this->getConversationId($message);
+            $additionalIds = array_values(array_filter([$messageId, $conversationId]));
             $this->emailRepository->update([
                 'folder_id'     => $this->getFolderId($folderName),
-                'reference_ids' => array_merge($parentEmail->reference_ids ?? [], [$messageId]),
+                'reference_ids' => array_values(array_unique(array_merge(
+                    $parentEmail->reference_ids ?? [],
+                    $additionalIds,
+                ))),
             ], $parentEmail->id);
         }
 
@@ -157,14 +162,17 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     }
 
     /**
-     * Find parent email for reply relationships
+     * Find parent email for reply relationships.
+     *
+     * Strategy order:
+     *   1. conversationId stored in reference_ids (works for emails stored after the conversationId fix)
+     *   2. In-Reply-To header value matched against message_id (works for all emails, including older ones)
+     *   3. To-recipient address fallback (legacy)
      */
     protected function findParentEmail($message): ?Email
     {
-        //        $messageId = $this->getMessageId($message);
         $conversationId = $this->getConversationId($message);
 
-        // Check by conversation ID first
         if ($conversationId) {
             $parentEmail = $this->emailRepository->findOneWhere([
                 ['reference_ids', 'like', '%'.$conversationId.'%'],
@@ -174,7 +182,14 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             }
         }
 
-        // Check by message ID in references
+        $inReplyToId = $this->getInReplyToId($message);
+        if ($inReplyToId) {
+            $parentEmail = $this->emailRepository->findOneByField('message_id', $inReplyToId);
+            if ($parentEmail) {
+                return $parentEmail;
+            }
+        }
+
         $toRecipients = $this->getToRecipients($message);
         foreach ($toRecipients as $recipient) {
             $emailAddress = $this->extractEmailFromRecipient($recipient);
@@ -183,6 +198,11 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             }
         }
 
+        return null;
+    }
+
+    protected function getInReplyToId($message): ?string
+    {
         return null;
     }
 

@@ -469,6 +469,18 @@ class EmailController extends Controller
     }
 
     /**
+     * Move email to the Verwerkt folder.
+     */
+    public function markProcessed(int $id): JsonResponse
+    {
+        $email = $this->emailRepository->findOrFail($id);
+
+        $this->emailRepository->moveToProcessedIfInbox($email->id);
+
+        return response()->json(['message' => 'E-mail gemarkeerd als verwerkt.']);
+    }
+
+    /**
      * Mass Delete the specified resources.
      */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse

@@ -39,6 +39,8 @@ Route::prefix('mail')->group(function () {
 
         Route::post('move/{id}', 'move')->name('admin.mail.move');
 
+        Route::post('mark-processed/{id}', 'markProcessed')->name('admin.mail.mark_processed');
+
         Route::post('inbound-parse', 'inboundParse')->name('admin.mail.inbound_parse')->withoutMiddleware('user');
 
         // Catch-all routes must come last

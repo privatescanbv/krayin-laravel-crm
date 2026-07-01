@@ -210,7 +210,7 @@ class Email extends Model implements EmailContract
      */
     public function emails()
     {
-        return $this->hasMany(EmailProxy::modelClass(), 'parent_id');
+        return $this->hasMany(EmailProxy::modelClass(), 'parent_id')->orderBy('created_at', 'desc');
     }
 
     /**

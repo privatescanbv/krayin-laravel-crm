@@ -82,7 +82,7 @@ class GraphMailService extends AbstractEmailProcessor
         $response = Http::withToken($accessToken)
             ->get($url, [
                 '$filter'  => $filter,
-                '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
+                '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo,internetMessageHeaders',
                 '$orderby' => 'receivedDateTime desc',
                 '$top'     => 50,
             ]);
@@ -107,6 +107,17 @@ class GraphMailService extends AbstractEmailProcessor
     protected function getConversationId($message): ?string
     {
         return $message['conversationId'] ?? null;
+    }
+
+    protected function getInReplyToId($message): ?string
+    {
+        foreach ($message['internetMessageHeaders'] ?? [] as $header) {
+            if (strtolower($header['name'] ?? '') === 'in-reply-to') {
+                return trim($header['value'] ?? '') ?: null;
+            }
+        }
+
+        return null;
     }
 
     protected function getFolderName($message): string
@@ -141,7 +152,10 @@ class GraphMailService extends AbstractEmailProcessor
             'user_type'     => 'person',
             'unique_id'     => $this->getMessageId($message),
             'message_id'    => $this->getMessageId($message),
-            'reference_ids' => [$this->getMessageId($message)],
+            'reference_ids' => array_values(array_filter(array_unique([
+                $this->getMessageId($message),
+                $message['conversationId'] ?? null,
+            ]))),
             'created_at'    => $this->parseDateTime($message['receivedDateTime'] ?? now()),
             'parent_id'     => $parentEmail?->id,
             'activity_id'   => $parentEmail?->activity_id,

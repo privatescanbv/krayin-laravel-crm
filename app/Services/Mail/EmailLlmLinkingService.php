@@ -275,6 +275,26 @@ class EmailLlmLinkingService
                 $suggestions,
                 $this->activeOrderSuggestionsForSalesLead($salesLeadId),
             );
+        } elseif (! empty($links['order_id'])) {
+            $order = Order::with('salesLead')->find($links['order_id']);
+            if ($order?->salesLead) {
+                $salesLeadId = $order->salesLead->id;
+                $suggestions[] = [
+                    'type'  => 'sales',
+                    'label' => 'Sales: '.($order->salesLead->name ?? '#'.$salesLeadId),
+                    'links' => ['sales_lead_id' => $salesLeadId],
+                ];
+                $suggestions = array_merge(
+                    $suggestions,
+                    $this->activeOrderSuggestionsForSalesLead($salesLeadId),
+                );
+            } else {
+                $suggestions[] = [
+                    'type'  => 'order',
+                    'label' => 'Order: '.($order?->title ?: $order?->order_number ?: '#'.$links['order_id']),
+                    'links' => ['order_id' => $links['order_id']],
+                ];
+            }
         } elseif (! empty($links['lead_id'])) {
             $lead = Lead::find($links['lead_id']);
             $entry = ['lead_id' => $links['lead_id']];

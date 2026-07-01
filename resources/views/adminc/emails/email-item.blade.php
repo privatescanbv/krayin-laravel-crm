@@ -136,10 +136,26 @@
                 {!! view_render_event('admin.mail.view.mail_body.before', ['email' => $email]) !!}
 
                 <!-- Mail Body -->
-                <div
-                    class="dark:text-gray-300"
-                    v-safe-html="email.reply"
-                ></div>
+                <div class="dark:text-gray-300">
+                    <div v-safe-html="splitContent.main"></div>
+
+                    <template v-if="splitContent.quoted">
+                        <button
+                            type="button"
+                            class="my-1 inline-flex cursor-pointer items-center rounded border border-gray-300 px-2 py-0.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                            @click="showQuoted = !showQuoted"
+                            :title="showQuoted ? 'Geciteerde tekst verbergen' : 'Geciteerde tekst tonen'"
+                        >
+                            &bull;&bull;&bull;
+                        </button>
+
+                        <div
+                            v-if="showQuoted"
+                            class="mt-2 border-l-2 border-gray-300 pl-3 text-gray-500 dark:border-gray-600 dark:text-gray-400"
+                            v-safe-html="splitContent.quoted"
+                        ></div>
+                    </template>
+                </div>
 
                 {!! view_render_event('admin.mail.view.mail_body.after', ['email' => $email]) !!}
 
@@ -263,6 +279,8 @@
 
             data() {
                 return {
+                    showQuoted: false,
+
                     routes: window.emailItemRoutes || {
                         attachmentDownload: '',
                         delete: '',
@@ -271,6 +289,47 @@
                         index: '',
                     },
                 };
+            },
+
+            computed: {
+                splitContent() {
+                    const html = this.email?.reply || '';
+                    if (!html) return { main: '', quoted: '' };
+
+                    try {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+
+                        const quoteEl = temp.querySelector(
+                            'blockquote, .gmail_quote, [class*="yahoo_quoted"], div[id*="divRplyFwdMsg"]'
+                        );
+
+                        if (!quoteEl) return { main: html, quoted: '' };
+
+                        const beforeRange = document.createRange();
+                        beforeRange.setStart(temp, 0);
+                        beforeRange.setEndBefore(quoteEl);
+                        const mainFrag = beforeRange.cloneContents();
+                        const mainEl = document.createElement('div');
+                        mainEl.appendChild(mainFrag);
+
+                        const afterRange = document.createRange();
+                        afterRange.setStartBefore(quoteEl);
+                        afterRange.setEnd(temp, temp.childNodes.length);
+                        const quotedFrag = afterRange.cloneContents();
+                        const quotedEl = document.createElement('div');
+                        quotedEl.appendChild(quotedFrag);
+
+                        const main = mainEl.innerHTML.trim();
+                        const quoted = quotedEl.innerHTML.trim();
+
+                        if (!main) return { main: html, quoted: '' };
+
+                        return { main, quoted };
+                    } catch (e) {
+                        return { main: html, quoted: '' };
+                    }
+                },
             },
 
             methods: {

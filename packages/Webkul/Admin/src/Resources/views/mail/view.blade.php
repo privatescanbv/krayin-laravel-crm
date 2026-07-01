@@ -93,11 +93,12 @@
                 <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
                     {!! view_render_event('admin.mail.view.email-item.before', ['email' => $email]) !!}
 
-                    <!-- Email Item Vue Component -->
+                    <!-- Replies: newest first (ordered desc by emails() relationship) -->
                     <v-email-item
+                        v-for='(email, index) in email.emails'
                         :email="email"
-                        :key="0"
-                        :index="0"
+                        :key="email.id"
+                        :index="index"
                         :action="action"
                         @on-discard="action = {}"
                         @on-email-action="emailAction($event)"
@@ -107,12 +108,11 @@
 
                     {!! view_render_event('admin.mail.view.email-item.before', ['email' => $email]) !!}
 
-                    <!-- Email Item Vue Component -->
+                    <!-- Root email: always at the bottom (oldest) -->
                     <v-email-item
-                        v-for='(email, index) in email.emails'
                         :email="email"
-                        :key="index + 1"
-                        :index="index + 1"
+                        :key="0"
+                        :index="email.emails ? email.emails.length : 0"
                         :action="action"
                         @on-discard="action = {}"
                         @on-email-action="emailAction($event)"
@@ -1095,11 +1095,11 @@
 
                 mounted() {
                     this.$emitter.on('on-email-save', (email) => {
-                        this.email.emails.push(email);
+                        this.email.emails.unshift(email);
 
                         this.action = {};
 
-                        setTimeout(() => this.scrollBottom(), 0);
+                        setTimeout(() => this.scrollTop(), 0);
                     });
                 },
 
@@ -1110,6 +1110,13 @@
                         if (! this.action.email) {
                             this.action.email = this.lastEmail();
                         }
+                    },
+
+                    scrollTop() {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth',
+                        });
                     },
 
                     scrollBottom() {
@@ -1133,7 +1140,7 @@
                             return this.email;
                         }
 
-                        return this.email.emails[this.email.emails.length - 1];
+                        return this.email.emails[0];
                     },
                 },
             });

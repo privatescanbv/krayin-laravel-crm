@@ -14,28 +14,29 @@ beforeEach(function () {
 });
 
 test('email datagrid query executes without errors', function () {
+    Folder::firstOrCreate(['name' => 'inbox']);
     request()->merge(['route' => 'inbox']);
 
     $dataGrid = new EmailDataGrid;
     $queryBuilder = $dataGrid->prepareQueryBuilder();
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('"folders"."name"')
-        ->and($sql)->toContain('inbox');
+    // Query now filters by emails.folder_id directly (pre-fetched) for index efficiency
+    expect($sql)->toContain('"emails"."folder_id"');
 });
 
 test('email datagrid handles different routes', function () {
     $routes = ['inbox', 'draft', 'sent', 'outbox', 'trash'];
 
     foreach ($routes as $route) {
+        Folder::firstOrCreate(['name' => $route]);
         request()->merge(['route' => $route]);
 
         $dataGrid = new EmailDataGrid;
         $queryBuilder = $dataGrid->prepareQueryBuilder();
         $sql = $queryBuilder->toRawSql();
 
-        expect($sql)->toContain('"folders"."name"')
-            ->and($sql)->toContain($route);
+        expect($sql)->toContain('"emails"."folder_id"');
     }
 });
 
@@ -69,16 +70,15 @@ test('email datagrid uses correct lead name concatenation', function () {
 });
 
 test('email datagrid includes required joins', function () {
+    Folder::firstOrCreate(['name' => 'inbox']);
     request()->merge(['route' => 'inbox']);
 
     $dataGrid = new EmailDataGrid;
     $queryBuilder = $dataGrid->prepareQueryBuilder();
     $sql = $queryBuilder->toRawSql();
 
+    // Tags and attachments are now subqueries (no JOIN), entity joins remain
     $requiredJoins = [
-        'left join "email_attachments"',
-        'left join "email_tags"',
-        'left join "tags"',
         'left join "leads"',
         'left join "persons"',
     ];
@@ -86,6 +86,10 @@ test('email datagrid includes required joins', function () {
     foreach ($requiredJoins as $join) {
         expect($sql)->toContain($join);
     }
+
+    // Aggregations use correlated subqueries instead of JOINs
+    expect($sql)->toContain('GROUP_CONCAT')
+        ->and($sql)->toContain('email_attachments');
 });
 
 test('email datagrid columns can be prepared', function () {

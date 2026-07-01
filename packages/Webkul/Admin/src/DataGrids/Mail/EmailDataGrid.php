@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Tag\Repositories\TagRepository;
 
 class EmailDataGrid extends DataGrid
@@ -31,6 +32,12 @@ class EmailDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
+        // Pre-fetch the folder ID so MySQL can use the (folder_id, created_at) index directly
+        // instead of joining on folders.name which bypasses the index.
+        $folderId = Folder::where('name', request('route'))->value('id');
+
+        $prefix = DB::getTablePrefix();
+
         $queryBuilder = DB::table('emails')
             ->select(
                 'emails.id',
@@ -58,27 +65,17 @@ class EmailDataGrid extends DataGrid
                 DB::raw('salesleads.name as sales_name'),
                 'emails.order_id',
                 DB::raw('orders.title as order_title'),
-                DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
-                DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
+                // Correlated subqueries replace GROUP BY + GROUP_CONCAT/COUNT(DISTINCT),
+                // allowing MySQL to apply LIMIT before materialising the full result set.
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT t.name) FROM {$prefix}email_tags et JOIN {$prefix}tags t ON t.id = et.tag_id WHERE et.email_id = {$prefix}emails.id) as tags"),
+                DB::raw("(SELECT COUNT(*) FROM {$prefix}email_attachments WHERE email_id = {$prefix}emails.id) as attachments"),
                 DB::raw(Email::entityTypeCaseSql('emails').' as entity_type'),
             )
-            ->leftJoin('email_attachments', 'emails.id', '=', 'email_attachments.email_id')
-            ->leftJoin('email_tags', 'emails.id', '=', 'email_tags.email_id')
-            ->leftJoin('tags', 'tags.id', '=', 'email_tags.tag_id')
             ->leftJoin('leads', 'emails.lead_id', '=', 'leads.id')
             ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
             ->leftJoin('orders', 'emails.order_id', '=', 'orders.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
-            ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
-            ->groupBy(
-                'emails.id',
-                'leads.first_name', 'leads.lastname_prefix', 'leads.last_name', 'leads.married_name_prefix', 'leads.married_name',
-                'persons.first_name', 'persons.lastname_prefix', 'persons.last_name', 'persons.married_name_prefix', 'persons.married_name',
-                'orders.title',
-                'emails.is_read',
-                'emails.created_at'
-            )
-            ->where('folders.name', request('route'));
+            ->where('emails.folder_id', $folderId);
 
         // Custom composite filter: show only unread and/or unlinked emails.
         // Applied manually because the datagrid engine can't handle this OR-condition.
@@ -87,7 +84,6 @@ class EmailDataGrid extends DataGrid
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');
-        $this->addFilter('tags', 'tags.name');
         $this->addFilter('created_at', 'emails.created_at');
 
         return $queryBuilder;
@@ -233,23 +229,15 @@ class EmailDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'tags',
-            'label'              => trans('admin::app.mail.index.datagrid.tags'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'sortable'           => true,
-            'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
-            'closure'            => function ($row) {
+            'index'      => 'tags',
+            'label'      => trans('admin::app.mail.index.datagrid.tags'),
+            'type'       => 'string',
+            'searchable' => false,
+            'sortable'   => false,
+            'filterable' => false,
+            'closure'    => function ($row) {
                 return $row->tags ?: '--';
             },
-            'filterable_options' => [
-                'repository' => TagRepository::class,
-                'column'     => [
-                    'label' => 'name',
-                    'value' => 'name',
-                ],
-            ],
         ]);
 
         // Place "Gerelateerd aan" (entity_type) before "type"

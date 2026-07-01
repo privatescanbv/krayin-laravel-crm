@@ -78,11 +78,9 @@ class EmailController extends Controller
                         return datagrid(EmailDataGrid::class)->process();
                     }
 
-                    // Get emails for this specific folder
-                    $emails = $folder->emails()->orderBy('created_at', 'desc')->get();
                     $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders($hiddenFolders);
 
-                    return view('admin::mail.index', compact('folder', 'hierarchicalFolders', 'emails'));
+                    return view('admin::mail.index', compact('folder', 'hierarchicalFolders'));
                 }
 
                 $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders($hiddenFolders);

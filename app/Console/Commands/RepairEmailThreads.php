@@ -9,6 +9,8 @@ use Webkul\Email\Models\Email;
 
 class RepairEmailThreads extends Command
 {
+    private const CHUNK_SIZE = 500;
+
     private const PARTICIPANT_HEURISTIC_LIMIT = 200;
 
     protected $signature = 'emails:repair-threads
@@ -19,74 +21,110 @@ class RepairEmailThreads extends Command
 
     public function handle(): int
     {
-        $threadEmails = $this->baseEmailQuery()
-            ->whereNull('parent_id')
-            ->whereNotNull('message_id')
-            ->orderBy('created_at')
-            ->orderBy('id')
-            ->get();
-
         $threadRows = [];
         $threadUpdatedCount = 0;
+        $threadTotal = $this->threadRepairQuery()->count();
 
-        foreach ($threadEmails as $email) {
-            $parent = $this->resolveParentEmail($email);
+        $this->components->info(sprintf(
+            'Phase 1/2: scanning %d email(s) for thread repairs%s',
+            $threadTotal,
+            $this->option('dry-run') ? ' (dry-run)' : ''
+        ));
 
-            if (! $parent) {
-                continue;
-            }
+        $threadBar = $this->output->createProgressBar($threadTotal);
+        $threadBar->setFormat(' %current%/%max% [%bar%] %percent:3s%%');
+        $threadBar->start();
 
-            $threadRoot = $parent->getThreadRoot();
+        $this->threadRepairQuery()
+            ->chunkById(self::CHUNK_SIZE, function (Collection $emails) use (&$threadRows, &$threadUpdatedCount, $threadBar) {
+                foreach ($emails as $email) {
+                    $parent = $this->resolveParentEmail($email);
 
-            if ($threadRoot->id === $email->id) {
-                continue;
-            }
+                    if (! $parent) {
+                        $threadBar->advance();
 
-            $threadRows[] = [
-                $email->id,
-                $threadRoot->id,
-                $this->normalizeSubject((string) $email->subject),
-                $this->detectRepairStrategy($email, $parent),
-            ];
+                        continue;
+                    }
 
-            if (! $this->option('dry-run')) {
-                $inheritSource = $parent;
+                    $threadRoot = $parent->getThreadRoot();
 
-                $email->forceFill([
-                    'parent_id'   => $threadRoot->id,
-                    'activity_id' => $email->activity_id ?? $threadRoot->activity_id ?? $inheritSource->activity_id,
-                    'lead_id'     => $email->lead_id ?? $threadRoot->lead_id ?? $inheritSource->lead_id,
-                    'person_id'   => $email->person_id ?? $threadRoot->person_id ?? $inheritSource->person_id,
-                ])->save();
-            }
+                    if ($threadRoot->id === $email->id) {
+                        $threadBar->advance();
 
-            $threadUpdatedCount++;
-        }
+                        continue;
+                    }
+
+                    $threadRows[] = [
+                        $email->id,
+                        $threadRoot->id,
+                        $this->normalizeSubject((string) $email->subject),
+                        $this->detectRepairStrategy($email, $parent),
+                    ];
+
+                    if (! $this->option('dry-run')) {
+                        $inheritSource = $parent;
+
+                        $email->forceFill([
+                            'parent_id'   => $threadRoot->id,
+                            'activity_id' => $email->activity_id ?? $threadRoot->activity_id ?? $inheritSource->activity_id,
+                            'lead_id'     => $email->lead_id ?? $threadRoot->lead_id ?? $inheritSource->lead_id,
+                            'person_id'   => $email->person_id ?? $threadRoot->person_id ?? $inheritSource->person_id,
+                        ])->save();
+                    }
+
+                    $threadUpdatedCount++;
+                    $threadBar->advance();
+                }
+            });
+
+        $threadBar->finish();
+        $this->newLine(2);
 
         $replyToRows = [];
         $replyToUpdatedCount = 0;
+        $replyToTotal = $this->replyToBackfillQuery()->count();
 
-        foreach ($this->emailsMissingReplyTo() as $email) {
-            $replyTo = $this->resolveReplyToBackfill($email);
+        $this->components->info(sprintf(
+            'Phase 2/2: scanning %d email(s) for reply_to backfill%s',
+            $replyToTotal,
+            $this->option('dry-run') ? ' (dry-run)' : ''
+        ));
 
-            if ($replyTo === []) {
-                continue;
-            }
+        $replyToBar = $this->output->createProgressBar($replyToTotal);
+        $replyToBar->setFormat(' %current%/%max% [%bar%] %percent:3s%%');
+        $replyToBar->start();
 
-            $replyToRows[] = [
-                $email->id,
-                implode(', ', $replyTo),
-                $this->detectReplyToStrategy($email, $replyTo),
-            ];
+        $this->replyToBackfillQuery()
+            ->with(['parent:id,mailbox_key'])
+            ->chunkById(self::CHUNK_SIZE, function (Collection $emails) use (&$replyToRows, &$replyToUpdatedCount, $replyToBar) {
+                foreach ($emails as $email) {
+                    $replyTo = $this->resolveReplyToBackfill($email);
 
-            if (! $this->option('dry-run')) {
-                $email->forceFill([
-                    'reply_to' => $replyTo,
-                ])->save();
-            }
+                    if ($replyTo === []) {
+                        $replyToBar->advance();
 
-            $replyToUpdatedCount++;
-        }
+                        continue;
+                    }
+
+                    $replyToRows[] = [
+                        $email->id,
+                        implode(', ', $replyTo),
+                        $this->detectReplyToStrategy($email, $replyTo),
+                    ];
+
+                    if (! $this->option('dry-run')) {
+                        $email->forceFill([
+                            'reply_to' => $replyTo,
+                        ])->save();
+                    }
+
+                    $replyToUpdatedCount++;
+                    $replyToBar->advance();
+                }
+            });
+
+        $replyToBar->finish();
+        $this->newLine(2);
 
         $this->table(['Email', 'Thread root', 'Subject', 'Strategy'], $threadRows);
         $this->table(['Email', 'Reply-To backfill', 'Strategy'], $replyToRows);
@@ -100,10 +138,7 @@ class RepairEmailThreads extends Command
         return Command::SUCCESS;
     }
 
-    /**
-     * @return Collection<int, Email>
-     */
-    private function emailsMissingReplyTo()
+    private function replyToBackfillQuery()
     {
         return $this->baseEmailQuery()
             ->whereNotNull('message_id')
@@ -113,13 +148,14 @@ class RepairEmailThreads extends Command
                     ->orWhere('reply_to', 'null')
                     ->orWhere('reply_to', '');
             })
-            ->with(['parent:id,mailbox_key'])
-            ->get()
-            ->filter(function (Email $email) {
-                $replyTo = $email->reply_to;
-
-                return ! is_array($replyTo) || $replyTo === [];
-            });
+            ->select([
+                'id',
+                'parent_id',
+                'message_id',
+                'reply_to',
+                'mailbox_key',
+            ])
+            ->orderBy('id');
     }
 
     private function resolveParentEmail(Email $email): ?Email
@@ -309,5 +345,26 @@ class RepairEmailThreads extends Command
             $this->option('id') !== [],
             fn ($query) => $query->whereIn('id', array_map('intval', (array) $this->option('id')))
         );
+    }
+
+    private function threadRepairQuery()
+    {
+        return $this->baseEmailQuery()
+            ->whereNull('parent_id')
+            ->whereNotNull('message_id')
+            ->select([
+                'id',
+                'subject',
+                'message_id',
+                'reference_ids',
+                'created_at',
+                'mailbox_key',
+                'from',
+                'reply_to',
+                'activity_id',
+                'lead_id',
+                'person_id',
+            ])
+            ->orderBy('id');
     }
 }

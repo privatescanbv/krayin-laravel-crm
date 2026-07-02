@@ -87,8 +87,8 @@ services:
     environment:
       PMA_HOST: host.docker.internal
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: '${DB_PASSWORD}'
+      PMA_USER: '${PHPMYADMIN_DB_USER}'
+      PMA_PASSWORD: '${PHPMYADMIN_DB_PASSWORD}'
       UPLOAD_LIMIT: 300M
     labels:
       - traefik.enable=true

@@ -384,9 +384,6 @@ $totalCount    = $timelineItems->count();
 
         select.disabled = false;
         wrap.classList.remove('opacity-60');
-        if (!select.value) {
-            select.value = '7';
-        }
     }
 
     window.__actApplyChip = function (btn, active) {
@@ -443,8 +440,6 @@ $totalCount    = $timelineItems->count();
 
                 if (selectedStatus === spokenStatus) {
                     rescheduleDays = '';
-                } else if (!rescheduleDays) {
-                    rescheduleDays = '7';
                 }
 
                 if (rescheduleDays) {

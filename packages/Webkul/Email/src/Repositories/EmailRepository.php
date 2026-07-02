@@ -201,6 +201,36 @@ class EmailRepository extends Repository
     }
 
     /**
+     * Move older thread emails out of inbox when a new message arrives, keeping only the latest visible.
+     */
+    public function archiveOlderInboxThreadEmailsExcept(Email $email): void
+    {
+        foreach ($email->getThreadEmailIds() as $threadEmailId) {
+            if ($threadEmailId === $email->id) {
+                continue;
+            }
+
+            $this->moveToProcessedIfInbox($threadEmailId);
+        }
+    }
+
+    /**
+     * Move every email in the thread to "Verwerkt" when it is still in an inbox-type folder.
+     */
+    public function moveThreadToProcessedIfInbox(int $emailId): void
+    {
+        $email = $this->find($emailId);
+
+        if (! $email) {
+            return;
+        }
+
+        foreach ($email->getThreadEmailIds() as $threadEmailId) {
+            $this->moveToProcessedIfInbox($threadEmailId);
+        }
+    }
+
+    /**
      * Sanitize emails.
      *
      * @return array

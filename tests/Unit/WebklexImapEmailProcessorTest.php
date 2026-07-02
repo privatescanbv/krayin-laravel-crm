@@ -47,6 +47,11 @@ class WebklexImapEmailProcessorTest extends TestCase
             }))
             ->andReturn(new Email(['id' => 123]));
 
+        // New email is archived out of inbox when older thread emails exist
+        $emailRepository->shouldReceive('archiveOlderInboxThreadEmailsExcept')
+            ->once()
+            ->with(m::type(Email::class));
+
         // No attachments expected
         $attachmentRepository->shouldReceive('uploadAttachments')->never();
 
@@ -84,11 +89,11 @@ class WebklexImapEmailProcessorTest extends TestCase
             ->atLeast()->once()
             ->andReturn($parentEmail);
 
-        // Update should be called to merge folder and references
+        // Update should be called to merge references onto the parent
         $emailRepository->shouldReceive('update')
             ->once()
             ->with(m::on(function ($data) {
-                return array_key_exists('folder_id', $data) && isset($data['reference_ids']);
+                return isset($data['reference_ids']);
             }), $parentEmail->id)
             ->andReturn($parentEmail);
 
@@ -104,6 +109,11 @@ class WebklexImapEmailProcessorTest extends TestCase
                     && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
             ->andReturn(new Email(['id' => 555]));
+
+        // New email is archived out of inbox when older thread emails exist
+        $emailRepository->shouldReceive('archiveOlderInboxThreadEmailsExcept')
+            ->once()
+            ->with(m::type(Email::class));
 
         $attachmentRepository->shouldReceive('uploadAttachments')->never();
 

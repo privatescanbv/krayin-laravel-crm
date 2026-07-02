@@ -107,11 +107,11 @@ class SendgridEmailProcessor implements InboundEmailProcessor
             ]);
         } else {
             $parentEmail = $this->emailRepository->update([
-                'folder_id'     => $this->getInboxFolderId(),
                 'reference_ids' => array_merge($email->reference_ids ?? [], [$headers['message_id']]),
             ], $email->id);
 
             $email = $this->emailRepository->create(array_merge($headers, [
+                'folder_id'     => $this->getInboxFolderId(),
                 'reply'         => $this->htmlFilter->process($reply, ''),
                 'parent_id'     => $parentEmail->id,
                 'activity_id'   => $parentEmail->activity_id, // Inherit activity_id from parent email
@@ -119,6 +119,8 @@ class SendgridEmailProcessor implements InboundEmailProcessor
                 'person_id'     => $parentEmail->person_id,   // Inherit person_id from parent email
                 'user_type'     => 'person',
             ]));
+
+            $this->emailRepository->archiveOlderInboxThreadEmailsExcept($email);
 
             $this->attachmentRepository->uploadAttachments($email, [
                 'source'      => 'email',

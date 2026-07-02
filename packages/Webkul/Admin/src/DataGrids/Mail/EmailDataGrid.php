@@ -34,7 +34,8 @@ class EmailDataGrid extends DataGrid
     {
         // Pre-fetch the folder ID so MySQL can use the (folder_id, created_at) index directly
         // instead of joining on folders.name which bypasses the index.
-        $folderId = Folder::where('name', request('route'))->value('id');
+        $folderName = request('route');
+        $folderId = Folder::where('name', $folderName)->value('id');
 
         $prefix = DB::getTablePrefix();
 
@@ -76,6 +77,10 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('orders', 'emails.order_id', '=', 'orders.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
             ->where('emails.folder_id', $folderId);
+
+        if ($folderId && in_array($folderName, Email::inboxFolderNames(), true)) {
+            Email::constrainToLatestPerThreadRootInFolder($queryBuilder, $folderId);
+        }
 
         // Custom composite filter: show only unread and/or unlinked emails.
         // Applied manually because the datagrid engine can't handle this OR-condition.

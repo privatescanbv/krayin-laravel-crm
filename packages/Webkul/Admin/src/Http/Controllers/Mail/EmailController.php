@@ -153,7 +153,7 @@ class EmailController extends Controller
 
             $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
 
-            return view('admin::mail.view', compact('email', 'hierarchicalFolders'));
+            return view('admin::mail.view', compact('email', 'selectedEmail', 'hierarchicalFolders'));
         } catch (Exception $e) {
             Log::error('EmailController@view: Error', [
                 'error' => $e->getMessage(),
@@ -500,13 +500,13 @@ class EmailController extends Controller
     }
 
     /**
-     * Move email to the Verwerkt folder.
+     * Move the full thread to the Verwerkt folder (each message still in an inbox).
      */
     public function markProcessed(int $id): JsonResponse
     {
         $email = $this->emailRepository->findOrFail($id);
 
-        $this->emailRepository->moveToProcessedIfInbox($email->id);
+        $this->emailRepository->moveThreadToProcessedIfInbox($email->id);
 
         return response()->json(['message' => 'E-mail gemarkeerd als verwerkt.']);
     }

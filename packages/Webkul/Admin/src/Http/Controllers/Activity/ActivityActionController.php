@@ -37,14 +37,11 @@ class ActivityActionController extends Controller
 
         $type = ActivityActionType::from($validated['type']);
 
-        // Reschedule defaults for belstatus
+        // Alleen verplaatsen wanneer de gebruiker expliciet een aantal dagen heeft gekozen
+        // ("Geen verplaatsing" mag de deadline nooit aanpassen, ongeacht de belstatus).
         $rescheduleDays = null;
-        if ($type === ActivityActionType::Belstatus) {
-            if ($validated['call_status'] === CallStatusEnum::SPOKEN->value) {
-                $rescheduleDays = $request->filled('reschedule_days') ? (int) $validated['reschedule_days'] : null;
-            } else {
-                $rescheduleDays = $request->filled('reschedule_days') ? (int) $validated['reschedule_days'] : 7;
-            }
+        if ($type === ActivityActionType::Belstatus && $request->filled('reschedule_days')) {
+            $rescheduleDays = (int) $validated['reschedule_days'];
         }
 
         $action = ActivityAction::create([

@@ -162,7 +162,6 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
 
         if ($email) {
             $parentEmail = $this->emailRepository->update([
-                'folder_id'     => $this->getFolderId($folderName),
                 'reference_ids' => array_merge($email->reference_ids ?? [], $references),
             ], $email->id);
         }
@@ -192,6 +191,8 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             'Processed email with Message-ID: ' . $messageId . ' and assigned ID: ' . $email->id
             . ($parentEmail ? ' (parent ID: ' . $parentEmail->id . ')' : '')
         );
+
+        $this->emailRepository->archiveOlderInboxThreadEmailsExcept($email);
 
         if ($message->hasAttachments()) {
             $this->attachmentRepository->uploadAttachments($email, [

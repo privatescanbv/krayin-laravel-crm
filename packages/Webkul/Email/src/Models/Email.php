@@ -14,10 +14,12 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Contracts\Email as EmailContract;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Tag\Models\TagProxy;
 
@@ -615,6 +617,55 @@ class Email extends Model implements EmailContract
                 })
                 ->groupByRaw('COALESCE(thread.parent_id, thread.id)');
         });
+    }
+
+    /**
+     * Restrict a query to the newest email per thread root within a folder (inbox collapse).
+     *
+     * @param  Builder|QueryBuilder  $query
+     */
+    public static function constrainToLatestPerThreadRootInFolder($query, int $folderId, string $idColumn = 'emails.id'): void
+    {
+        [$subquery, $bindings] = static::latestPerThreadRootInFolderSubquerySql($folderId);
+
+        $query->whereRaw("{$idColumn} IN ({$subquery})", $bindings);
+    }
+
+    /**
+     * @return array{0: string, 1: list<mixed>}
+     */
+    public static function latestPerThreadRootInFolderSubquerySql(int $folderId): array
+    {
+        $table = DB::getTablePrefix().(new static)->getTable();
+
+        return [
+            "SELECT MAX(e.id)
+            FROM {$table} e
+            INNER JOIN (
+                WITH RECURSIVE thread_roots AS (
+                    SELECT id, id AS root_id FROM {$table} WHERE parent_id IS NULL
+                    UNION ALL
+                    SELECT e2.id, tr.root_id
+                    FROM {$table} e2
+                    INNER JOIN thread_roots tr ON e2.parent_id = tr.id
+                )
+                SELECT id, root_id FROM thread_roots
+            ) tr ON e.id = tr.id
+            WHERE e.folder_id = ?
+            GROUP BY tr.root_id",
+            [$folderId],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function inboxFolderNames(): array
+    {
+        return [
+            EmailFolderEnum::INBOX->getFolderName(),
+            EmailFolderEnum::INBOX_HERNIAPOLI->getFolderName(),
+        ];
     }
 
     /**

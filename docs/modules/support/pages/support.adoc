@@ -59,6 +59,60 @@ De CRM-omgeving maakt gebruik van een centrale backupstrategie op VPS-niveau.
 
 Deze aanpak zorgt voor een eenduidige en beheersbare herstelprocedure, waarbij data en documenten altijd consistent vanuit één bron worden hersteld.
 
+==== Controleren of de nachtelijke back-up de database bevat
+
+Naast de VPS-brede back-up wordt de database ook apart als `.sql.gz`-dump weggeschreven, voordat deze wordt meegenomen in de Borg-back-up hieronder.
+
+Controleer op de server in `/opt/backup`:
+
+* de logs van het back-upproces op fouten;
+* of er `.sql.gz`-bestanden staan met een datum/timestamp van de afgelopen nacht.
+
+Ontbreken deze bestanden of hebben ze een oude datum, dan is de databasedump die nacht niet gemaakt — dit moet eerst opgelost worden voordat je een restore vanuit Borg probeert.
+
+==== De Borg-backup bekijken
+
+NOTE: Gebruikt Borg *1.2*. Documentatie: https://borgbackup.readthedocs.io/en/stable/index.html
+
+Vereiste: je moet zijn ingelogd als user *root*, omdat de SSH-login naar de back-upserver onder deze user is ingesteld.
+
+Lijst van gemaakte back-ups opvragen voor een omgeving, bijvoorbeeld `intern.privatescan.nl`:
+
+```bash
+borg list privatescan@10.0.0.1:~/intern.privatescan.nl/borg/
+```
+
+Voor een andere omgeving vervang je de hostnaam in het pad, bijvoorbeeld voor `data.privatescan.nl`:
+
+```bash
+borg list privatescan@10.0.0.1:~/data.privatescan.nl/borg/
+```
+
+Dit toont de beschikbare archieven (met datum/tijd in de naam) binnen de retentieperiode.
+
+==== Een back-up terugzetten
+
+1. Bepaal met `borg list` hierboven welk archief je nodig hebt.
+2. Extraheer het archief (of specifiek de databasebestanden eruit) naar een tijdelijke map:
++
+```bash
+mkdir -p /tmp/restore
+cd /tmp/restore
+borg extract privatescan@10.0.0.1:~/<omgeving>/borg/::<archiefnaam> opt/backup
+```
++
+Vervang `<omgeving>` (bijv. `intern.privatescan.nl`) en `<archiefnaam>` (uit de `borg list`-output).
+
+3. Pak het gewenste `.sql.gz`-bestand uit en zet de database terug:
++
+```bash
+gunzip -c /tmp/restore/opt/backup/<naam-database>.sql.gz | mysql -u <user> -p <database>
+```
+
+4. Controleer na het terugzetten of de applicatie correct werkt met de herstelde data.
+
+Neem bij twijfel of vragen contact op met Mark voordat je een productie-restore uitvoert.
+
 * **Monitoring & foutdetectie**
 Voor monitoring en foutanalyse zetten we Sentry in. Hiermee kunnen we technische issues vroegtijdig signaleren en gericht oplossen.
 

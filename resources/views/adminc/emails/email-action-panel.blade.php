@@ -2,15 +2,16 @@
     use App\Services\Mail\EmailLlmLinkingService;
     use Webkul\Email\Enums\EmailFolderEnum;
     use Webkul\Email\Models\Folder;
-    // Prepare email data with accessors for Vue component
+    // Prepare email data with accessors for Vue component (thread root — entity linking)
     $emailData = $email->getAttributes();
     $emailData['sender_email'] = $email->sender_email;
     $emailData['has_relationships'] = $email->has_relationships;
     $emailData['llm_metadata'] = $email->llm_metadata;
 
     $processedFolderName = EmailFolderEnum::PROCESSED->value;
-    $emailFolder = $email->folder_id ? Folder::find($email->folder_id) : null;
-    $emailData['is_processed'] = $emailFolder && $emailFolder->name === $processedFolderName;
+    $openedEmail = $selectedEmail ?? $email;
+    $openedEmailFolder = $openedEmail->folder_id ? Folder::find($openedEmail->folder_id) : null;
+    $openedEmailIsProcessed = $openedEmailFolder && $openedEmailFolder->name === $processedFolderName;
     $defaultLlmPrompt = config('ai_prompts.email_sender_extraction');
 
     $linkingService = app(EmailLlmLinkingService::class);
@@ -52,11 +53,11 @@
                     <a
                         v-if="link.url"
                         :href="link.url"
-                        class="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
+                        class="group flex items-center gap-3 flex-1"
                     >
                         <span class="icon-link text-gray-600 dark:text-gray-300"></span>
                         <div class="text-sm">
-                            <div class="font-medium text-gray-900 dark:text-gray-100">
+                            <div class="font-medium text-brandColor group-hover:underline">
                                 @{{ link.label }}
                             </div>
                             <div class="text-gray-500 dark:text-gray-400">
@@ -155,8 +156,8 @@
         </div>
     </div>
 
-    <!-- Mark as Processed -->
-    <div v-if="!email.is_processed" class="border-t pt-4 dark:border-gray-700">
+    <!-- Mark as Processed (based on the opened email in the URL, not only the thread root) -->
+    <div v-if="!openedEmailIsProcessed" class="border-t pt-4 dark:border-gray-700">
         <button
             type="button"
             :disabled="markingProcessed"
@@ -201,6 +202,8 @@
                 senderSuggestionCount: null,
                 aiSuggestionCount: {{ count($initialSuggestions) }},
                 markingProcessed: false,
+                openedEmailIsProcessed: @json($openedEmailIsProcessed),
+                markProcessedRoute: '{{ route('admin.mail.mark_processed', $openedEmail->id) }}',
             };
         },
 
@@ -311,9 +314,9 @@
         methods: {
             markProcessed() {
                 this.markingProcessed = true;
-                this.$axios.post('{{ route('admin.mail.mark_processed', $email->id) }}')
+                this.$axios.post(this.markProcessedRoute)
                     .then(response => {
-                        this.email.is_processed = true;
+                        this.openedEmailIsProcessed = true;
                         this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                         const returnUrl = new URLSearchParams(window.location.search).get('return_url');
                         window.location.href = returnUrl || '{{ route('admin.mail.index', ['route' => request('route')]) }}';

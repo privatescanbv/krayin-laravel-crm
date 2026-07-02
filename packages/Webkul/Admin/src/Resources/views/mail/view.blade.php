@@ -1,7 +1,7 @@
 @include('adminc.components.entity-selector')
 @include('adminc.components.contact-person-selector')
 @include('adminc.emails.email-item')
-@include('adminc.emails.email-action-panel', ['email' => $email])
+@include('adminc.emails.email-action-panel', ['email' => $email, 'selectedEmail' => $selectedEmail])
 
 <x-admin::layouts>
     <x-slot:title>

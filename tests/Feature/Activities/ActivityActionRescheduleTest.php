@@ -75,6 +75,74 @@ test('belstatus reschedule only moves deadline and keeps schedule_from before de
     Carbon::setTestNow();
 });
 
+test('belstatus with geen verplaatsing (no reschedule_days) does not change the deadline for non-spoken status', function () {
+    Carbon::setTestNow(Carbon::parse('2026-05-20 17:14:00'));
+
+    $user = createActivityActionTestUser();
+    $this->actingAs($user, 'user');
+
+    $originalFrom = Carbon::parse('2026-05-19 08:00:00');
+    $originalTo = Carbon::parse('2026-05-19 11:14:00');
+
+    $activity = Activity::create([
+        'title'         => 'Nieuwe lead, bellen',
+        'type'          => 'call',
+        'schedule_from' => $originalFrom,
+        'schedule_to'   => $originalTo,
+        'user_id'       => $user->id,
+    ]);
+
+    $response = $this->postJson(route('admin.activities.actions.store', $activity->id), [
+        'type'        => ActivityActionType::Belstatus->value,
+        'call_status' => CallStatusEnum::NOT_REACHABLE->value,
+        'body'        => 'Niet bereikt, geen verplaatsing gekozen',
+        // reschedule_days bewust weggelaten: gebruiker koos "Geen verplaatsing".
+    ]);
+
+    $response->assertOk();
+    $activity->refresh();
+
+    expect($activity->schedule_to->equalTo($originalTo))->toBeTrue()
+        ->and($activity->schedule_from->equalTo($originalFrom))->toBeTrue();
+
+    $action = $activity->actions()->latest('id')->first();
+    expect($action->reschedule_days)->toBeNull();
+
+    Carbon::setTestNow();
+});
+
+test('belstatus with geen verplaatsing (empty reschedule_days) does not change the deadline for non-spoken status', function () {
+    Carbon::setTestNow(Carbon::parse('2026-05-20 17:14:00'));
+
+    $user = createActivityActionTestUser();
+    $this->actingAs($user, 'user');
+
+    $originalFrom = Carbon::parse('2026-05-19 08:00:00');
+    $originalTo = Carbon::parse('2026-05-19 11:14:00');
+
+    $activity = Activity::create([
+        'title'         => 'Nieuwe lead, bellen',
+        'type'          => 'call',
+        'schedule_from' => $originalFrom,
+        'schedule_to'   => $originalTo,
+        'user_id'       => $user->id,
+    ]);
+
+    $response = $this->postJson(route('admin.activities.actions.store', $activity->id), [
+        'type'            => ActivityActionType::Belstatus->value,
+        'call_status'     => CallStatusEnum::VOICEMAIL_LEFT->value,
+        'reschedule_days' => '',
+    ]);
+
+    $response->assertOk();
+    $activity->refresh();
+
+    expect($activity->schedule_to->equalTo($originalTo))->toBeTrue()
+        ->and($activity->schedule_from->equalTo($originalFrom))->toBeTrue();
+
+    Carbon::setTestNow();
+});
+
 test('belstatus reschedule clamps legacy schedule_from when it would exceed new deadline', function () {
     Carbon::setTestNow(Carbon::parse('2026-05-20 17:14:00'));
 

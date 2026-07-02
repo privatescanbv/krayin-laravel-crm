@@ -120,6 +120,22 @@ class GraphMailService extends AbstractEmailProcessor
         return null;
     }
 
+    protected function getReferenceIds($message): array
+    {
+        foreach ($message['internetMessageHeaders'] ?? [] as $header) {
+            if (strtolower($header['name'] ?? '') !== 'references') {
+                continue;
+            }
+
+            return collect(preg_split('/\s+/', trim((string) ($header['value'] ?? ''))) ?: [])
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        return [];
+    }
+
     protected function getFolderName($message): string
     {
         return $this->inboxFolderName;
@@ -136,6 +152,11 @@ class GraphMailService extends AbstractEmailProcessor
         $body = $this->extractMessageBody($message);
         $fromEmail = $from['address'] ?? '';
         $fromName = $from['name'] ?? null;
+        $referenceIds = array_values(array_filter(array_unique([
+            $this->getMessageId($message),
+            $message['conversationId'] ?? null,
+            ...$this->getReferenceIds($message),
+        ])));
 
         return [
             'from'          => Email::normalizeFromField($fromEmail, $fromName),
@@ -145,17 +166,14 @@ class GraphMailService extends AbstractEmailProcessor
             'is_read'       => (int) ($message['isRead'] ?? false),
             'folder_id'     => $this->getFolderId($folderName),
             'mailbox_key'   => $this->mailboxKey,
-            'reply_to'      => $this->extractEmailAddresses($replyTo),
+            'reply_to'      => $this->extractEmailAddresses($toRecipients) ?: $this->extractEmailAddresses($replyTo),
             'cc'            => $this->extractEmailAddresses($ccRecipients),
             'bcc'           => $this->extractEmailAddresses($bccRecipients),
             'source'        => 'email',
             'user_type'     => 'person',
             'unique_id'     => $this->getMessageId($message),
             'message_id'    => $this->getMessageId($message),
-            'reference_ids' => array_values(array_filter(array_unique([
-                $this->getMessageId($message),
-                $message['conversationId'] ?? null,
-            ]))),
+            'reference_ids' => $referenceIds,
             'created_at'    => $this->parseDateTime($message['receivedDateTime'] ?? now()),
             'parent_id'     => $parentEmail?->id,
             'activity_id'   => $parentEmail?->activity_id,

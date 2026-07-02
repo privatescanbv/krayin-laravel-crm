@@ -15,6 +15,7 @@
             :multiple="false"
             :fetcher="fetchPersons"
             @update:items="onItemsUpdated"
+            @create-new="$emit('create-new', $event)"
         >
             <template #suggestion="{ item }">
                 <v-person-suggestion :person="item" />

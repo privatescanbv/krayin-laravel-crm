@@ -97,16 +97,22 @@ class EmailController extends Controller
     public function view()
     {
         try {
-            $email = $this->emailRepository
+            $selectedEmail = $this->emailRepository
                 ->with(['parent'])
                 ->findOrFail(request('id'));
 
-            $email = $email->getThreadRoot();
+            if (! $selectedEmail->is_read) {
+                $this->emailRepository->update([
+                    'is_read' => 1,
+                ], $selectedEmail->id);
+
+                $selectedEmail->is_read = 1;
+            }
+
+            $email = $selectedEmail->getThreadRoot();
 
             $email->load([
-                'emails',
                 'attachments',
-                'emails.attachments',
                 'tags',
                 'lead',
                 'lead.tags',
@@ -118,6 +124,26 @@ class EmailController extends Controller
                 'clinic',
                 'order',
             ]);
+
+            $threadEmails = $email->getThreadEmailsForDisplay();
+
+            if ($threadEmails->isNotEmpty()) {
+                $threadEmails->load([
+                    'attachments',
+                    'tags',
+                    'lead',
+                    'lead.tags',
+                    'lead.source',
+                    'lead.type',
+                    'lead.department',
+                    'person',
+                    'salesLead',
+                    'clinic',
+                    'order',
+                ]);
+            }
+
+            $email->setRelation('emails', $threadEmails);
 
             if (request('route') == 'draft') {
                 return response()->json([
@@ -200,13 +226,18 @@ class EmailController extends Controller
         Event::dispatch('email.update.before', $id);
 
         $data = request()->all();
-        $data['mailbox_key'] = $this->resolveOutboundMailboxKey($data);
 
-        if (empty($data['from']) && $data['mailbox_key'] !== null) {
-            $data['from'] = MailboxConfig::address($data['mailbox_key']);
-        }
-
+        // Only draft-save/send requests (they carry `is_draft`) are actually setting the
+        // outbound sender. Link/unlink-entity requests (e.g. linkContact, unlinkLead) also hit
+        // this action but never intend to touch `from` — resolving/injecting it for those
+        // overwrites the original sender with the CRM's own mailbox address.
         if (! is_null(request('is_draft'))) {
+            $data['mailbox_key'] = $this->resolveOutboundMailboxKey($data);
+
+            if (empty($data['from']) && $data['mailbox_key'] !== null) {
+                $data['from'] = MailboxConfig::address($data['mailbox_key']);
+            }
+
             $folderName = request('is_draft') ? 'draft' : 'outbox';
             $folder = Folder::where('name', $folderName)->first();
             if ($folder) {

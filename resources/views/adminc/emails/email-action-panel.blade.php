@@ -149,6 +149,7 @@
                 :order-search-route="'{{ route('admin.orders.search') }}'"
                 @link-entity="linkEntity"
                 @unlink-entity="unlinkEntity"
+                @create-lead="createLeadFromSearch"
                 :unlinking="unlinking"
             ></v-entity-linker>
         </div>
@@ -166,12 +167,6 @@
             @{{ markingProcessed ? 'Bezig...' : 'Markeer als verwerkt' }}
         </button>
     </div>
-
-    <!-- Create Contact Modal -->
-    <v-create-contact ref="createContact"></v-create-contact>
-
-    <!-- Create Lead Modal -->
-    <v-create-lead ref="createLead"></v-create-lead>
 
     {!! view_render_event('admin.mail.view.action_mail.after', ['email' => $email]) !!}
 </script>
@@ -576,14 +571,6 @@
                 });
             },
 
-            openContactModal() {
-                this.$refs.createContact.$refs.contactModal.open();
-            },
-
-            openLeadModal() {
-                this.$refs.createLead.$refs.leadModal.open();
-            },
-
             linkEntity(entity) {
                 if (entity.type === 'lead') {
                     this.linkLead(entity);
@@ -647,6 +634,17 @@
             },
 
             createLeadFromEmail() {
+                window.location.href = this.buildLeadCreateUrl(this.email?.name);
+            },
+
+            createLeadFromSearch({ query } = {}) {
+                window.location.href = this.buildLeadCreateUrl(query);
+            },
+
+            // Builds the leads/create URL, passing known details along as query params
+            // instead of opening a modal — the create page is the single source of truth
+            // for lead fields/validation.
+            buildLeadCreateUrl(nameGuess) {
                 const params = new URLSearchParams();
                 // After creating a lead, return to this mail view.
                 // Must be an absolute URL because HandlesReturnUrl validates with FILTER_VALIDATE_URL.
@@ -658,17 +656,15 @@
                     // Extract email from string (not JSON array)
                     params.append('email', this.senderEmail);
                 }
-                if (this.email?.name) {
-                    const parts = this.email.name.trim().split(/\s+/);
-                    if (parts.length >= 1) params.append('first_name', parts[0]);
-                    if (parts.length === 2) {
-                        params.append('last_name', parts[1]);
-                    } else if (parts.length >= 3) {
-                        params.append('lastname_prefix', parts.slice(1, -1).join(' '));
-                        params.append('last_name', parts[parts.length - 1]);
-                    }
+                const parts = (nameGuess || '').trim().split(/\s+/).filter(Boolean);
+                if (parts.length >= 1) params.append('first_name', parts[0]);
+                if (parts.length === 2) {
+                    params.append('last_name', parts[1]);
+                } else if (parts.length >= 3) {
+                    params.append('lastname_prefix', parts.slice(1, -1).join(' '));
+                    params.append('last_name', parts[parts.length - 1]);
                 }
-                window.location.href = '{{ route('admin.leads.create') }}?' + params.toString();
+                return '{{ route('admin.leads.create') }}?' + params.toString();
             },
         },
     });

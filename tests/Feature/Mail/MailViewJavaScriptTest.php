@@ -65,3 +65,23 @@ test('email model handles empty arrays gracefully', function () {
         ->and($email->from)->toHaveCount(0);
 
 });
+
+test('email model falls back to mailbox address for to display when reply_to is empty', function () {
+    config(['mail.mailboxes' => [
+        'privatescan' => [
+            'address' => 'crm@privatescan.nl',
+        ],
+    ]]);
+
+    $folder = Folder::create(['name' => 'inbox']);
+
+    $email = new Email([
+        'subject'     => 'Test Email',
+        'folder_id'   => $folder->id,
+        'mailbox_key' => 'privatescan',
+        'reply_to'    => [],
+        'from'        => ['email' => 'customer@example.com', 'name' => 'Customer'],
+    ]);
+
+    expect($email->to_display)->toBe(['crm@privatescan.nl']);
+});

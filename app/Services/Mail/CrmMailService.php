@@ -40,6 +40,7 @@ class CrmMailService
     public function __construct(
         private readonly EmailRepository $emailRepository,
         private readonly EmailTemplateRenderingService $templateRendering,
+        private readonly CrmReplyQuoteWrapper $replyQuoteWrapper,
     ) {}
 
     /**
@@ -67,6 +68,17 @@ class CrmMailService
      */
     public function createEmail(array $data): EmailModel
     {
+        if (! empty($data['parent_id']) && ! empty($data['reply'])) {
+            $parent = EmailModel::query()->find($data['parent_id']);
+
+            if ($parent) {
+                $data['reply'] = $this->replyQuoteWrapper->ensureReplyBodyWrapped(
+                    (string) $data['reply'],
+                    $parent,
+                );
+            }
+        }
+
         return $this->emailRepository->create($data);
     }
 

@@ -1,15 +1,3 @@
-@php
-    if (! $email->is_read) {
-        $email->is_read = true;
-        $email->save();
-    }
-
-    // Prepare email data with accessors for Vue component
-    $emailData = $email->getAttributes();
-    $emailData['sender_email'] = $email->sender_email;
-    $emailData['has_relationships'] = $email->has_relationships;
-@endphp
-
 @include('adminc.components.entity-selector')
 @include('adminc.components.contact-person-selector')
 @include('adminc.emails.email-item')
@@ -164,7 +152,7 @@
                                     <x-admin::form.control-group.control
                                         type="hidden"
                                         name="parent_id"
-                                        value="{{ request('id') }}"
+                                        value="{{ $email->id }}"
                                     />
                                     <input
                                         type="hidden"
@@ -841,243 +829,6 @@
             </div>
         </script>
 
-        <!-- Create Contact Template -->
-        <script
-            type="text/x-template"
-            id="v-create-contact-template"
-        >
-            {!! view_render_event('admin.mail.view.contact_form.before', ['email' => $email]) !!}
-
-            <Teleport to="body">
-                <x-admin::form
-                    v-slot="{ meta, errors, handleSubmit }"
-                    as="div"
-                >
-                    <form
-                        @submit="handleSubmit($event, create)"
-                        ref="contactForm"
-                    >
-                        <!-- Add Contact Modal -->
-                        <x-admin::modal
-                            ref="contactModal"
-                            @toggle="toggleModal"
-                        >
-                            <x-slot:header>
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xl font-semibold text-gray-800 dark:text-white">
-                                        @lang('admin::app.mail.view.create-new-contact')
-                                    </p>
-                                </div>
-                            </x-slot>
-
-                            <x-slot:content>
-                                <x-admin::attributes
-                                    :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                        'entity_type' => 'persons',
-                                    ])"
-                                />
-                            </x-slot>
-
-                            <x-slot:footer>
-                                <x-admin::button
-                                    class="primary-button"
-                                    :title="trans('admin::app.mail.view.save-contact')"
-                                    ::loading="isStoring"
-                                    ::disabled="isStoring"
-                                />
-                            </x-slot>
-                        </x-admin::modal>
-                    </form>
-                </x-admin::form>
-            </Teleport>
-
-            {!! view_render_event('admin.mail.view.contact_form.after', ['email' => $email]) !!}
-        </script>
-
-        <script
-            type="text/x-template"
-            id="v-create-lead-template"
-        >
-            {!! view_render_event('admin.mail.view.lead_form.before', ['email' => $email]) !!}
-
-            <Teleport to="body">
-                <x-admin::form
-                    v-slot="{ meta, errors, handleSubmit }"
-                    as="div"
-                >
-                    <form
-                        @submit="handleSubmit($event, create)"
-                        ref="leadForm"
-                    >
-                        <!-- Add Contact Modal -->
-                        <x-admin::modal
-                            ref="leadModal"
-                            @toggle="toggleModal"
-                            size="large"
-                        >
-                            <x-slot:header>
-                                <div class="flex items-center justify-between">
-                                    <p class="text-xl font-semibold text-gray-800 dark:text-white">
-                                        @lang('admin::app.mail.view.create-lead')
-                                    </p>
-                                </div>
-                            </x-slot>
-
-                            <x-slot:content>
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex gap-2 border-b border-gray-200 dark:border-gray-800">
-                                        <!-- Tabs -->
-                                        <template
-                                            v-for="type in types"
-                                            :key="type.name"
-                                        >
-                                            <span
-                                                :class="[
-                                                    'inline-block px-3 py-2.5 border-b-2 cursor-pointer text-sm font-medium ',
-                                                    selectedType == type.name
-                                                    ? 'text-brandColor border-brandColor dark:brandColor dark:brandColor'
-                                                    : 'text-gray-600 dark:text-gray-300  border-transparent hover:text-gray-800 hover:border-gray-400 dark:hover:border-gray-400  dark:hover:text-white'
-                                                ]"
-                                                @click="selectedType = type.name"
-                                            >
-                                                @{{ type.label }}
-                                            </span>
-                                        </template>
-                                    </div>
-
-                                    <!-- Container -->
-                                    <div>
-                                        <div v-show="selectedType == 'lead'">
-                                            <div class="w-full">
-                                                <div class="flex gap-4 max-sm:flex-wrap">
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['title']],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                        />
-                                                    </div>
-
-                                                    <div class="w-1/2">
-                                                        <!-- Lead value field has been removed -->
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex w-full gap-4 max-sm:flex-wrap">
-                                                    <!-- Description -->
-                                                    <x-admin::attributes
-                                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                            ['code', 'IN', ['description']],
-                                                            'entity_type' => 'leads',
-                                                            'quick_add'   => 1
-                                                        ])"
-                                                    />
-                                                </div>
-
-
-                                                <div class="flex gap-4 max-sm:flex-wrap">
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['lead_pipeline_id']],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                        />
-                                                    </div>
-
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['lead_pipeline_stage_id']],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex gap-4 max-sm:flex-wrap">
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['lead_type_id']],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                        />
-                                                    </div>
-
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['lead_source_id']],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex gap-4 max-sm:flex-wrap">
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['user_id']],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                        />
-                                                    </div>
-
-                                                    <div class="w-1/2">
-                                                        <x-admin::attributes
-                                                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', []],
-                                                                'entity_type' => 'leads',
-                                                                'quick_add'   => 1
-                                                            ])"
-                                                            :custom-validations="[
-
-                                                            ]"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div v-show="selectedType == 'person'">
-                                            @include('admin::leads.common.contact')
-                                        </div>
-
-                                        <div
-                                            class="overflow-y-auto"
-                                            v-show="selectedType == 'product'"
-                                        >
-                                            <!-- Products functionality removed -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </x-slot>
-
-                            <x-slot:footer>
-                                <x-admin::button
-                                    class="primary-button"
-                                    :title="trans('Save Lead')"
-                                    ::loading="isStoring"
-                                    ::disabled="isStoring"
-                                />
-                            </x-slot>
-                        </x-admin::modal>
-                    </form>
-                </x-admin::form>
-            </Teleport>
-
-            {!! view_render_event('admin.mail.view.lead_form.after', ['email' => $email]) !!}
-        </script>
-
 
         <!-- Email List Vue Component -->
         <script type="module">
@@ -1280,8 +1031,7 @@
                     'action.email.reply'(newVal) {
                         if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
                             this.$nextTick(() => {
-                                const original = newVal || '';
-                                this.setContentInTinyMCE(this.userSignature ? this.userSignature + original : original);
+                                this.setContentInTinyMCE(this.buildReplyEditorContent(this.action.email));
                             });
                         }
                     },
@@ -1294,8 +1044,7 @@
                     // For reply/reply-all, use the original email content
                     let contentToSet = '';
                     if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
-                        const original = this.action.email?.reply || '';
-                        contentToSet = this.userSignature ? this.userSignature + original : original;
+                        contentToSet = this.buildReplyEditorContent(this.action.email);
                     } else if (this.reply && this.reply.trim()) {
                         contentToSet = this.reply;
                     }
@@ -1325,6 +1074,56 @@
                         } else {
                             this.subject = currentSubject;
                         }
+                    },
+
+                    extractEmailAddress(value) {
+                        if (!value) {
+                            return null;
+                        }
+
+                        if (typeof value === 'string') {
+                            return value;
+                        }
+
+                        if (typeof value === 'object' && !Array.isArray(value)) {
+                            return value.email || value.value || null;
+                        }
+
+                        return value;
+                    },
+
+                    buildQuotedReplyContent(sourceEmail) {
+                        const quotedMainRaw = (sourceEmail?.quote_split?.main || sourceEmail?.reply || '').trim();
+                        const bodyMatch = quotedMainRaw.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+                        const quotedMain = (bodyMatch ? bodyMatch[1] : quotedMainRaw).trim();
+
+                        if (!quotedMain) {
+                            return '';
+                        }
+
+                        const name = sourceEmail?.name || sourceEmail?.from?.name || 'afzender';
+                        const fromEmail = this.extractEmailAddress(sourceEmail?.from) || sourceEmail?.sender_email || '';
+                        const createdAt = sourceEmail?.created_at ? new Date(sourceEmail.created_at) : null;
+                        const date = createdAt
+                            ? createdAt.toLocaleString('nl-NL', { dateStyle: 'medium', timeStyle: 'short' })
+                            : '';
+                        const attr = date
+                            ? `Op ${date} schreef ${name} &lt;${fromEmail}&gt;:`
+                            : `Van: ${name} &lt;${fromEmail}&gt;:`;
+
+                        return `<div class="gmail_quote gmail_quote_container"><div class="gmail_attr">${attr}</div><blockquote class="gmail_quote" type="cite">${quotedMain}</blockquote></div>`;
+                    },
+
+                    buildReplyEditorContent(sourceEmail) {
+                        const quoted = this.buildQuotedReplyContent(sourceEmail);
+                        const sig = this.userSignature || '';
+                        const spacer = '<p><br></p>';
+
+                        if (!quoted) {
+                            return sig;
+                        }
+
+                        return (sig ? sig + spacer : spacer) + quoted;
                     },
 
                     setContentInTinyMCE(html, retries = 25) {
@@ -1764,116 +1563,6 @@
                         this.showPopup = false;
 
                         this.$emit('open-lead-modal');
-                    },
-                },
-            });
-        </script>
-
-        <!-- Create Contact Modal Component -->
-        <script type="module">
-            app.component('v-create-contact', {
-                template: '#v-create-contact-template',
-
-                data() {
-                    return {
-                        isStoring: false,
-                    };
-                },
-
-                methods: {
-                    toggleModal({ isActive }) {
-                        if (! isActive) {
-                            this.$parent.$refs.emailLinkDrawer.toggle();
-                        }
-                    },
-
-                    create(params, { setErrors }) {
-                        this.isStoring = true;
-
-                        const formData = new FormData(this.$refs.contactForm);
-
-                        this.$axios.post('{{ route('admin.contacts.persons.store') }}', formData)
-                            .then(response => {
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-
-                                this.$refs.contactModal.close();
-                            })
-                            .catch(error => {
-                                if (error.response.status == 422) {
-                                    setErrors(error.response.data.errors);
-                                } else {
-                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                                }
-                            })
-                            .finally(() => {
-                                this.isStoring = false;
-
-                                this.$parent.$refs.emailLinkDrawer.open();
-                            });
-                    },
-                },
-            });
-        </script>
-
-        <!-- Create Lead Modal Component -->
-        <script type="module">
-            app.component('v-create-lead', {
-                template: '#v-create-lead-template',
-
-                data() {
-                    return {
-                        isStoring: false,
-
-
-                        selectedType: "lead",
-
-                        types: [
-                            {
-                                name: 'lead',
-                                label: "{{ trans('admin::app.mail.view.lead-details') }}",
-                            }, {
-                                name: 'person',
-                                label: "{{ trans('admin::app.mail.view.contact-person') }}",
-                            }, {
-                                name: 'product',
-                                label: "{{ trans('admin::app.mail.view.product') }}",
-                            },
-                        ],
-                    };
-                },
-
-                methods: {
-                    toggleModal({ isActive }) {
-                        if (! isActive) {
-                            this.$parent.$refs.emailLinkDrawer.toggle();
-                        }
-                    },
-
-                    create(params, { setErrors }) {
-                        this.isStoring = true;
-
-                        const formData = new FormData(this.$refs.leadForm);
-
-                        formData.append('lead_pipeline_stage_id', 1)
-
-                        this.$axios.post('{{ route('admin.leads.store') }}', formData)
-                            .then(response => {
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-
-                                this.$refs.leadModal.close();
-                            })
-                            .catch(error => {
-                                if (error.response.status == 422) {
-                                    setErrors(error.response.data.errors);
-                                } else {
-                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                                }
-                            })
-                            .finally(() => {
-                                this.isStoring = false;
-
-                                this.$parent.$refs.emailLinkDrawer.open();
-                            });
                     },
                 },
             });

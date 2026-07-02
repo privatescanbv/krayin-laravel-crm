@@ -102,6 +102,27 @@ class ImapEmailProcessor extends AbstractEmailProcessor
         return $attributes['in_reply_to']->first() ?? null;
     }
 
+    protected function getInReplyToId($message): ?string
+    {
+        $attributes = $message->getAttributes();
+
+        return $attributes['in_reply_to']->first() ?? null;
+    }
+
+    protected function getReferenceIds($message): array
+    {
+        $attributes = $message->getAttributes();
+
+        if (! isset($attributes['references'])) {
+            return [];
+        }
+
+        return collect($attributes['references']->all())
+            ->filter(fn ($reference) => is_string($reference) && $reference !== '')
+            ->values()
+            ->all();
+    }
+
     protected function getFolderName($message): string
     {
         $folderName = match ($message->getFolder()->name) {

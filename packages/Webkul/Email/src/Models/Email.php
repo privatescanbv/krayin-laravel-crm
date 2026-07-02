@@ -7,8 +7,10 @@ use App\Helpers\ValueNormalizer;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\Mail\MailboxConfig;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
@@ -52,7 +54,16 @@ class Email extends Model implements EmailContract
         'time_ago',
         'sender_email',
         'has_relationships',
+        'quote_split',
+        'to_display',
     ];
+
+    /**
+     * Per-instance memoized result of {@see getQuoteSplitAttribute()}.
+     *
+     * @var array{main: string, quoted: string}|null
+     */
+    private ?array $quoteSplitCache = null;
 
     /**
      * The attributes that are mass assignable.
@@ -330,6 +341,91 @@ class Email extends Model implements EmailContract
     }
 
     /**
+     * Normalize 'from' to always be {"name": "...", "email": "..."} (for Vue component compatibility).
+     *
+     * Some records were written via a code path that skipped {@see normalizeFromField} and stored
+     * 'from' as a bare/legacy value (e.g. a plain email string or a single-item array), which the
+     * mail view template renders as an empty "Van:" line because it reads from.name / from.email
+     * directly. This accessor normalizes any legacy shape on read so consumers can always rely on
+     * the standard structure, mirroring {@see getReplyToAttribute}.
+     */
+    public function getFromAttribute($value)
+    {
+        // Get the raw value from attributes (before cast)
+        $rawValue = $this->attributes['from'] ?? null;
+
+        // If explicitly null (not set), return null (for test compatibility)
+        if ($rawValue === null) {
+            return null;
+        }
+
+        // Unwind JSON string encoding (handles legacy/double-encoded values).
+        $decoded = $rawValue;
+        for ($i = 0; $i < 3 && is_string($decoded); $i++) {
+            $next = json_decode($decoded, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || $next === $decoded) {
+                break;
+            }
+
+            $decoded = $next;
+        }
+
+        // Plain (non-JSON) string - it's a bare email address.
+        if (is_string($decoded)) {
+            $decoded = trim($decoded);
+
+            return $decoded === '' ? [] : ['name' => '', 'email' => $decoded];
+        }
+
+        if (! is_array($decoded) || empty($decoded)) {
+            return [];
+        }
+
+        // Standard structure: {"name": "...", "email": "..."}
+        if (isset($decoded['email']) && is_string($decoded['email'])) {
+            return [
+                'name'  => is_string($decoded['name'] ?? null) ? $decoded['name'] : '',
+                'email' => trim($decoded['email']),
+            ];
+        }
+
+        // Legacy: {"value": "..."}
+        if (isset($decoded['value']) && is_string($decoded['value'])) {
+            return [
+                'name'  => is_string($decoded['name'] ?? null) ? $decoded['name'] : '',
+                'email' => trim($decoded['value']),
+            ];
+        }
+
+        // Legacy: list of entries, e.g. ["a@b.com"] or [{"email": "a@b.com"}]
+        if (array_is_list($decoded)) {
+            $first = $decoded[0] ?? null;
+
+            if (is_string($first)) {
+                return ['name' => '', 'email' => trim($first)];
+            }
+
+            if (is_array($first)) {
+                return [
+                    'name'  => is_string($first['name'] ?? null) ? $first['name'] : '',
+                    'email' => trim((string) ($first['email'] ?? $first['value'] ?? '')),
+                ];
+            }
+
+            return [];
+        }
+
+        // Legacy map-like format: {"email@example.com": "Name"}
+        $keys = array_keys($decoded);
+        if (is_string($keys[0]) && str_contains($keys[0], '@')) {
+            return ['name' => (string) $decoded[$keys[0]], 'email' => trim($keys[0])];
+        }
+
+        return [];
+    }
+
+    /**
      * Normalize reply_to to always be an array of email strings (for Vue component compatibility).
      * Handles legacy formats where reply_to might be an object with 'email' key.
      *
@@ -397,6 +493,33 @@ class Email extends Model implements EmailContract
     }
 
     /**
+     * Preferred "To" recipients for display in the mail UI.
+     *
+     * Inbound Microsoft Graph messages sometimes have an empty reply_to because
+     * the upstream payload used replyTo instead of toRecipients. Fall back to
+     * the configured mailbox address so the UI never shows an impossible empty
+     * "Aan" field on received mail.
+     *
+     * @return list<string>
+     */
+    public function getToDisplayAttribute(): array
+    {
+        $replyTo = $this->reply_to;
+
+        if (is_array($replyTo) && $replyTo !== []) {
+            return $replyTo;
+        }
+
+        $mailboxAddress = MailboxConfig::address($this->mailbox_key);
+
+        if (is_string($mailboxAddress) && $mailboxAddress !== '') {
+            return [$mailboxAddress];
+        }
+
+        return [];
+    }
+
+    /**
      * Whether this email is linked to any entity.
      */
     public function getHasRelationshipsAttribute(): bool
@@ -408,6 +531,25 @@ class Email extends Model implements EmailContract
         }
 
         return false;
+    }
+
+    /**
+     * Split `reply` into ['main' => ..., 'quoted' => ...] at the point quoted
+     * history content starts, so the frontend can render the history
+     * collapsed behind a toggle without doing DOM parsing client-side.
+     *
+     * @see \App\Services\Mail\EmailQuoteSplitter
+     *
+     * @return array{main: string, quoted: string}
+     */
+    public function getQuoteSplitAttribute(): array
+    {
+        if ($this->quoteSplitCache === null) {
+            $this->quoteSplitCache = app(\App\Services\Mail\EmailQuoteSplitter::class)
+                ->split((string) $this->reply);
+        }
+
+        return $this->quoteSplitCache;
     }
 
     /**
@@ -610,6 +752,25 @@ class Email extends Model implements EmailContract
         }
 
         return $ids;
+    }
+
+    public function getThreadEmailsForDisplay(): EloquentCollection
+    {
+        $root = $this->getThreadRoot();
+        $threadIds = array_values(array_filter(
+            $root->getThreadEmailIds(),
+            fn (int $emailId) => $emailId !== $root->id
+        ));
+
+        if ($threadIds === []) {
+            return new EloquentCollection;
+        }
+
+        return self::query()
+            ->whereIn('id', $threadIds)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
     }
 
     /**

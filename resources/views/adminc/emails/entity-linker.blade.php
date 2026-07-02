@@ -35,6 +35,7 @@
                         :multiple="false"
                         :items="leadItems"
                         @update:items="onLeadSelected"
+                        @create-new="$emit('create-lead', $event)"
                     />
                 </template>
 
@@ -57,7 +58,7 @@
                         placeholder="Zoek contact..."
                         :current-value="email?.person_id || null"
                         :current-label="email?.person?.name || ''"
-                        :can-add-new="true"
+                        :can-add-new="false"
                         @change="onPersonSelected"
                         @update:value="val => { /* handled by @change */ }"
                     />
@@ -101,7 +102,7 @@
                     salesLeadSearchRoute: String,
                     orderSearchRoute: String,
                 },
-                emits: ['link-entity', 'unlink-entity'],
+                emits: ['link-entity', 'unlink-entity', 'create-lead'],
                 data() {
                     return {
                         selectedEntityType: 'lead',

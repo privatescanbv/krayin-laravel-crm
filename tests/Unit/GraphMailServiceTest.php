@@ -196,6 +196,7 @@ class GraphMailServiceTest extends TestCase
                        is_array($data['from']) &&
                        $data['from']['email'] === 'sender@example.com' &&
                        $data['from']['name'] === 'Test Sender' &&
+                       $data['reply_to'] === ['recipient@example.com'] &&
                        $data['message_id'] === '<msg1@example.com>';
             }))
             ->willReturn(new Email);
@@ -418,18 +419,21 @@ class GraphMailServiceTest extends TestCase
     public function test_extract_email_data_stores_both_message_id_and_conversation_id_in_reference_ids()
     {
         $message = [
-            'id'                => 'graph-msg-1',
-            'internetMessageId' => '<msg1@mail.example.com>',
-            'conversationId'    => 'AAQkADYwConversation123',
-            'subject'           => 'Test',
-            'from'              => ['emailAddress' => ['address' => 'a@b.com', 'name' => 'A']],
-            'toRecipients'      => [],
-            'ccRecipients'      => [],
-            'bccRecipients'     => [],
-            'replyTo'           => [],
-            'isRead'            => false,
-            'hasAttachments'    => false,
-            'body'              => ['contentType' => 'text', 'content' => 'hello'],
+            'id'                     => 'graph-msg-1',
+            'internetMessageId'      => '<msg1@mail.example.com>',
+            'conversationId'         => 'AAQkADYwConversation123',
+            'subject'                => 'Test',
+            'from'                   => ['emailAddress' => ['address' => 'a@b.com', 'name' => 'A']],
+            'toRecipients'           => [],
+            'ccRecipients'           => [],
+            'bccRecipients'          => [],
+            'replyTo'                => [],
+            'isRead'                 => false,
+            'hasAttachments'         => false,
+            'body'                   => ['contentType' => 'text', 'content' => 'hello'],
+            'internetMessageHeaders' => [
+                ['name' => 'References', 'value' => '<root@mail.example.com> <previous@mail.example.com>'],
+            ],
             'receivedDateTime'  => now()->toISOString(),
         ];
 
@@ -441,7 +445,9 @@ class GraphMailServiceTest extends TestCase
 
         $this->assertContains('<msg1@mail.example.com>', $data['reference_ids']);
         $this->assertContains('AAQkADYwConversation123', $data['reference_ids']);
-        $this->assertCount(2, $data['reference_ids']);
+        $this->assertContains('<root@mail.example.com>', $data['reference_ids']);
+        $this->assertContains('<previous@mail.example.com>', $data['reference_ids']);
+        $this->assertCount(4, $data['reference_ids']);
     }
 
     public function test_extract_email_data_reference_ids_without_conversation_id()
@@ -487,6 +493,23 @@ class GraphMailServiceTest extends TestCase
         $result = $method->invoke($this->service, $message);
 
         $this->assertSame('<original@mail.example.com>', $result);
+    }
+
+    public function test_get_reference_ids_returns_split_reference_chain()
+    {
+        $message = [
+            'internetMessageHeaders' => [
+                ['name' => 'References', 'value' => '<root@mail.example.com> <previous@mail.example.com>'],
+            ],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('getReferenceIds');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame(['<root@mail.example.com>', '<previous@mail.example.com>'], $result);
     }
 
     public function test_get_in_reply_to_id_is_case_insensitive_on_header_name()
@@ -604,8 +627,12 @@ class GraphMailServiceTest extends TestCase
         $this->assertSame($parentEmail, $result);
     }
 
-    public function test_find_parent_email_returns_null_when_no_match()
+    public function test_find_parent_email_matches_normalized_in_reply_to_without_angle_brackets()
     {
+        $parentEmail = new Email;
+        $parentEmail->id = 10;
+        $parentEmail->message_id = '1782979563.9d38cc0403b9d1c0@privatescan.nl';
+
         $this->emailRepository
             ->expects($this->once())
             ->method('findOneWhere')
@@ -613,10 +640,91 @@ class GraphMailServiceTest extends TestCase
             ->willReturn(null);
 
         $this->emailRepository
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('findOneByField')
-            ->with('message_id', '<original@mail.example.com>')
+            ->willReturnMap([
+                ['message_id', '<1782979563.9d38cc0403b9d1c0@privatescan.nl>', null],
+                ['message_id', '1782979563.9d38cc0403b9d1c0@privatescan.nl', $parentEmail],
+            ]);
+
+        $message = [
+            'id'                     => 'reply-graph-id',
+            'internetMessageId'      => '<reply@mail.example.com>',
+            'conversationId'         => 'AAQkConversation',
+            'internetMessageHeaders' => [
+                ['name' => 'In-Reply-To', 'value' => '<1782979563.9d38cc0403b9d1c0@privatescan.nl>'],
+            ],
+            'toRecipients' => [],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('findParentEmail');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame($parentEmail, $result);
+    }
+
+    public function test_find_parent_email_falls_back_to_references_when_in_reply_to_missing()
+    {
+        $parentEmail = new Email;
+        $parentEmail->id = 10;
+        $parentEmail->message_id = '<original@mail.example.com>';
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneWhere')
+            ->with([['reference_ids', 'like', '%AAQkConversation%']])
             ->willReturn(null);
+
+        $this->emailRepository
+            ->expects($this->exactly(1))
+            ->method('findOneByField')
+            ->with('message_id', '<root@mail.example.com>')
+            ->willReturn($parentEmail);
+
+        $message = [
+            'id'                     => 'reply-graph-id',
+            'internetMessageId'      => '<reply@mail.example.com>',
+            'conversationId'         => 'AAQkConversation',
+            'internetMessageHeaders' => [
+                ['name' => 'References', 'value' => '<root@mail.example.com> <older@mail.example.com>'],
+            ],
+            'toRecipients' => [],
+        ];
+
+        $reflection = new ReflectionClass($this->service);
+        $method = $reflection->getMethod('findParentEmail');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, $message);
+
+        $this->assertSame($parentEmail, $result);
+    }
+
+    public function test_find_parent_email_returns_null_when_no_match()
+    {
+        $this->emailRepository
+            ->expects($this->exactly(4))
+            ->method('findOneByField')
+            ->willReturnMap([
+                ['message_id', '<original@mail.example.com>', null],
+                ['message_id', 'original@mail.example.com', null],
+                ['message_id', '<older@mail.example.com>', null],
+                ['message_id', 'older@mail.example.com', null],
+            ]);
+
+        $this->emailRepository
+            ->expects($this->exactly(2))
+            ->method('findOneWhere')
+            ->willReturnCallback(function ($query) {
+                if ($query === [['reference_ids', 'like', '%AAQkConversation%']]) {
+                    return null;
+                }
+
+                return null;
+            });
 
         $message = [
             'id'                     => 'reply-graph-id',
@@ -624,6 +732,7 @@ class GraphMailServiceTest extends TestCase
             'conversationId'         => 'AAQkConversation',
             'internetMessageHeaders' => [
                 ['name' => 'In-Reply-To', 'value' => '<original@mail.example.com>'],
+                ['name' => 'References', 'value' => '<older@mail.example.com>'],
             ],
             'toRecipients' => [],
         ];
@@ -689,6 +798,7 @@ class GraphMailServiceTest extends TestCase
             'conversationId'         => $conversationId,
             'internetMessageHeaders' => [
                 ['name' => 'In-Reply-To', 'value' => $parentMessageId],
+                ['name' => 'References', 'value' => '<root@mail.example.com> '.$parentMessageId],
             ],
             'from'             => ['emailAddress' => ['address' => 'a@b.com', 'name' => 'A']],
             'subject'          => 'Re: Test',

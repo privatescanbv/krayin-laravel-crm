@@ -2,6 +2,7 @@
 
 namespace Webkul\Email\Repositories;
 
+use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
@@ -118,6 +119,17 @@ class EmailRepository extends Repository
                 if (strpos($data['reply'], $user->signature) === false) {
                     $data['reply'] = $data['reply']."\n\n".$user->signature;
                 }
+            }
+        }
+
+        // Normalize a bare 'from' address (e.g. from MailboxConfig::address()) to the standard
+        // {"name": "...", "email": "..."} structure, same as create(). Without this, saving a
+        // plain string here gets JSON-encoded as a scalar and renders as an empty "Van:" in the UI.
+        if (array_key_exists('from', $data) && $data['from'] !== null && ! is_array($data['from'])) {
+            try {
+                $data['from'] = EmailModel::normalizeFromField($data['from'], config('mail.from.name', 'PrivateScan'));
+            } catch (Exception) {
+                // Leave as-is; the from accessor normalizes legacy shapes defensively on read.
             }
         }
 

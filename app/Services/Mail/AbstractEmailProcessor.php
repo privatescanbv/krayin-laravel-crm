@@ -167,6 +167,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      * Strategy order:
      *   1. conversationId stored in reference_ids (works for emails stored after the conversationId fix)
      *   2. In-Reply-To header value matched against message_id (works for all emails, including older ones)
+     *   3. References header values matched against message_id / reference_ids
      *   3. To-recipient address fallback (legacy)
      */
     protected function findParentEmail($message): ?Email
@@ -184,7 +185,23 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
         $inReplyToId = $this->getInReplyToId($message);
         if ($inReplyToId) {
-            $parentEmail = $this->emailRepository->findOneByField('message_id', $inReplyToId);
+            $parentEmail = $this->findEmailByMessageId($inReplyToId);
+            if ($parentEmail) {
+                return $parentEmail;
+            }
+        }
+
+        foreach ($this->getReferenceIds($message) as $referenceId) {
+            $parentEmail = $this->findEmailByMessageId($referenceId);
+
+            if ($parentEmail) {
+                return $parentEmail;
+            }
+
+            $parentEmail = $this->emailRepository->findOneWhere([
+                ['reference_ids', 'like', '%'.$referenceId.'%'],
+            ]);
+
             if ($parentEmail) {
                 return $parentEmail;
             }
@@ -203,6 +220,50 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
     protected function getInReplyToId($message): ?string
     {
+        return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function getReferenceIds($message): array
+    {
+        return [];
+    }
+
+    protected function normalizeMessageId(?string $messageId): ?string
+    {
+        if (! is_string($messageId)) {
+            return null;
+        }
+
+        $normalized = trim(trim($messageId), '<>');
+
+        return $normalized !== '' ? $normalized : null;
+    }
+
+    protected function findEmailByMessageId(?string $messageId): ?Email
+    {
+        $normalizedMessageId = $this->normalizeMessageId($messageId);
+
+        if (! $normalizedMessageId) {
+            return null;
+        }
+
+        $candidates = array_values(array_unique([
+            $messageId,
+            $normalizedMessageId,
+            '<'.$normalizedMessageId.'>',
+        ]));
+
+        foreach ($candidates as $candidate) {
+            $parentEmail = $this->emailRepository->findOneByField('message_id', $candidate);
+
+            if ($parentEmail) {
+                return $parentEmail;
+            }
+        }
+
         return null;
     }
 

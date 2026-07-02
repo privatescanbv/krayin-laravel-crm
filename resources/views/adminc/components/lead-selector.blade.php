@@ -15,6 +15,7 @@
             :multiple="false"
             :fetcher="fetchLeads"
             @update:items="onItemsUpdated"
+            @create-new="$emit('create-new', $event)"
         >
             <template #suggestion="{ item }">
                 <v-lead-suggestion :lead="item" />

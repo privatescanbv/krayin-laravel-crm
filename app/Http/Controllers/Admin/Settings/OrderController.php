@@ -1198,7 +1198,7 @@ class OrderController extends SimpleEntityController
             'files'             => 'required|array|min:1',
             'files.*'           => 'file|max:20480',
             'clinic_id'         => 'required|integer|exists:clinics,id',
-            'check_ids'         => 'required|array|min:1',
+            'check_ids'         => 'nullable|array',
             'check_ids.*'       => 'integer|exists:order_checks,id',
             'title'             => 'nullable|string|max:255',
             'comment'           => 'nullable|string',
@@ -1254,9 +1254,10 @@ class OrderController extends SimpleEntityController
             ->update(['done' => true]);
 
         $count = count($files);
+        $hasChecks = ! empty($checkIds);
         $message = $count > 1
-            ? "{$count} rapportages succesvol geüpload en checks afgevinkt."
-            : 'Rapportage succesvol geüpload en checks afgevinkt.';
+            ? ($hasChecks ? "{$count} rapportages succesvol geüpload en checks afgevinkt." : "{$count} rapportages succesvol geüpload.")
+            : ($hasChecks ? 'Rapportage succesvol geüpload en checks afgevinkt.' : 'Rapportage succesvol geüpload.');
 
         return response()->json([
             'data'    => new ActivityResource($lastActivity),

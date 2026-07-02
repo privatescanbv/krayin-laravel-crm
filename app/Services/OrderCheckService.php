@@ -34,13 +34,13 @@ class OrderCheckService
     }
 
     /**
-     * Update order checks based on partner product relations
+     * Update order checks based on partner product relations, scoped per person.
+     *
+     * Each (person, reporting type) combination gets its own check so that orders
+     * with multiple persons never skip checks because a same-named check already exists.
      */
     public function updatePartnerProductChecks(Order $order): void
     {
-        // Get all partner products for this order's products
-        $partnerProducts = $this->getPartnerProductsForOrder($order);
-
         // Get existing partner product checks
         $existingChecks = $order->orderChecks()
             ->where('removable', false)
@@ -48,13 +48,11 @@ class OrderCheckService
             ->get()
             ->keyBy('name');
 
-        // Get all reporting types from partner products
-        $reportingTypes = $this->getReportingTypesFromPartnerProducts($partnerProducts);
+        // Build the full set of check names that should exist
+        $requiredCheckNames = $this->buildRequiredCheckNames($order);
 
-        // Create checks for each reporting type
-        foreach ($reportingTypes as $reportingType) {
-            $checkName = "Partner product rapportage: {$reportingType}";
-
+        // Create missing checks
+        foreach ($requiredCheckNames as $checkName) {
             if (! $existingChecks->has($checkName)) {
                 OrderCheck::create([
                     'order_id'  => $order->id,
@@ -66,8 +64,7 @@ class OrderCheckService
         }
 
         // Remove checks for reporting types that are no longer relevant
-        $currentCheckNames = $reportingTypes->map(fn ($type) => "Partner product rapportage: {$type}");
-        $checksToRemove = $existingChecks->whereNotIn('name', $currentCheckNames);
+        $checksToRemove = $existingChecks->whereNotIn('name', $requiredCheckNames);
 
         foreach ($checksToRemove as $check) {
             $check->delete();
@@ -75,18 +72,40 @@ class OrderCheckService
     }
 
     /**
-     * Get all partner products for order items
+     * Build the set of check names required for this order.
+     *
+     * Groups order items by person so that two persons with the same product each
+     * get their own uniquely named check (suffix "— {person name}").
      */
-    private function getPartnerProductsForOrder(Order $order): Collection
+    private function buildRequiredCheckNames(Order $order): Collection
     {
-        $productIds = $order->orderItems()
+        $orderItems = $order->orderItems()
             ->whereNotNull('product_id')
-            ->pluck('product_id')
-            ->unique();
-
-        return PartnerProduct::whereIn('product_id', $productIds)
-            ->whereNull('deleted_at')
+            ->with('person')
             ->get();
+
+        $checkNames = collect();
+
+        foreach ($orderItems->groupBy('person_id') as $personId => $items) {
+            $person = $items->first()->person;
+            $productIds = $items->pluck('product_id')->unique();
+
+            $partnerProducts = PartnerProduct::whereIn('product_id', $productIds)
+                ->whereNull('deleted_at')
+                ->get();
+
+            $reportingTypes = $this->getReportingTypesFromPartnerProducts($partnerProducts);
+
+            foreach ($reportingTypes as $reportingType) {
+                $checkName = $person
+                    ? "Partner product rapportage: {$reportingType} — {$person->name}"
+                    : "Partner product rapportage: {$reportingType}";
+
+                $checkNames->push($checkName);
+            }
+        }
+
+        return $checkNames->unique()->values();
     }
 
     /**

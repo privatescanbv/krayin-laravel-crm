@@ -22,7 +22,8 @@ class DeletePortalAccountAction
     public function execute(
         Person $person,
         ?PortalRevocationReason $reason = null,
-        ?string $comment = null
+        ?string $comment = null,
+        bool $deactivatePerson = true
     ): array {
         if (! $this->isKeycloakConfigured()) {
             return [
@@ -37,12 +38,17 @@ class DeletePortalAccountAction
             return $result;
         }
 
-        Person::withoutEvents(function () use ($person) {
-            $person->forceFill([
-                'is_active'        => false,
+        Person::withoutEvents(function () use ($person, $deactivatePerson) {
+            $attributes = [
                 'keycloak_user_id' => null,
                 'password'         => null,
-            ])->save();
+            ];
+
+            if ($deactivatePerson) {
+                $attributes['is_active'] = false;
+            }
+
+            $person->forceFill($attributes)->save();
         });
 
         // Create audit trail activity

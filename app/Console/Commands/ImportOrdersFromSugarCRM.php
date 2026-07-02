@@ -45,8 +45,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             {--table=pcrm_salesorder : Source table name}
                             {--limit=-1 : Number of records to import}
                             {--order-ids=* : Specific order numbers to import, e.g. 202600625 (ignores limit)}
-                            {--date-from=2024-01-01 : Only import orders with date_entered on or after this date (Y-m-d)}
-                            {--date-to=2025-01-01 : Only import orders with date_entered before this date (Y-m-d)}
+                            {--date-from= : Only import orders with date_entered on or after this date (Y-m-d)}
+                            {--date-to= : Only import orders with date_entered before this date (Y-m-d)}
                             {--import-leads : Import missing linked leads (with persons) before importing orders}
                             {--dry-run : Show what would be imported without actually importing}
                             {--tasks-only : Only import tasks for all existing orders (skip order import)}
@@ -76,8 +76,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $limit = (int) $this->option('limit');
         $orderIds = $this->option('order-ids');
         $dryRun = $this->option('dry-run');
-        $dateFrom = $this->option('date-from').' 00:00:00';
-        $dateTo = $this->option('date-to').' 00:00:00';
+        $dateFrom = $this->option('date-from') ? $this->option('date-from').' 00:00:00' : null;
+        $dateTo = $this->option('date-to') ? $this->option('date-to').' 00:00:00' : null;
         if ($this->option('tasks-only')) {
             $this->importTasksForExistingOrders($connection);
 
@@ -92,7 +92,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         } else {
             $this->infoV("Limit: {$limit}");
         }
-        $this->infoV('Date range: '.$this->option('date-from').' to '.$this->option('date-to'));
+        $this->infoV('Date range: '.($this->option('date-from') ?: 'geen ondergrens').' to '.($this->option('date-to') ?: 'geen bovengrens'));
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {
@@ -164,9 +164,15 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     ])
                     ->where('so.deleted', 0)
                     ->whereNotNull('so.id')
-                    ->where('so.id', '!=', '')
-                    ->where('so.date_entered', '>=', $dateFrom)
-                    ->where('so.date_entered', '<', $dateTo);
+                    ->where('so.id', '!=', '');
+
+                if ($dateFrom) {
+                    $sql = $sql->where('so.date_entered', '>=', $dateFrom);
+                }
+
+                if ($dateTo) {
+                    $sql = $sql->where('so.date_entered', '<', $dateTo);
+                }
 
                 if (! empty($orderIds)) {
                     if (is_array($orderIds)) {
@@ -183,9 +189,17 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             ->join('pcrm_salesorder_cstm as cstm', 'cstm.id_c', '=', 'so.id')
                             ->where('so.deleted', 0)
                             ->whereNotNull('so.id')
-                            ->where('so.id', '!=', '')
-                            ->where('so.date_entered', '>=', $dateFrom)
-                            ->where('so.date_entered', '<', $dateTo)
+                            ->where('so.id', '!=', '');
+
+                        if ($dateFrom) {
+                            $orderIdCap = $orderIdCap->where('so.date_entered', '>=', $dateFrom);
+                        }
+
+                        if ($dateTo) {
+                            $orderIdCap = $orderIdCap->where('so.date_entered', '<', $dateTo);
+                        }
+
+                        $orderIdCap = $orderIdCap
                             ->orderBy('so.date_entered', 'desc')
                             ->limit($limit)
                             ->select('so.id');

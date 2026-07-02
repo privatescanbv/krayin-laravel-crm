@@ -92,3 +92,33 @@ test('deleting portal account with reason creates audit activity', function () {
         ->and($activity->additional['revocation_reason'])->toBe('op_verzoek_patient')
         ->and($activity->additional['revocation_reason_label'])->toBe('Op verzoek van patiënt');
 });
+
+test('deleting portal account with deactivatePerson false keeps person active', function () {
+    /** @var Person $person */
+    $person = Person::factory()->create([
+        'emails'           => [
+            ['value' => 'patient@example.com', 'label' => 'eigen', 'is_default' => true],
+        ],
+        'is_active'        => true,
+        'keycloak_user_id' => 'kc-user-1',
+        'password'         => 'SomeSecret123!',
+    ]);
+
+    $personKeycloakService = Mockery::mock(PersonKeycloakService::class);
+    $personKeycloakService->shouldReceive('delete')
+        ->once()
+        ->andReturn(['success' => true]);
+
+    $activityRepository = app(ActivityRepository::class);
+    $action = new DeletePortalAccountAction($personKeycloakService, $activityRepository);
+
+    $result = $action->execute($person, null, null, false);
+
+    expect($result['success'])->toBeTrue();
+
+    $freshPerson = $person->fresh();
+
+    expect($freshPerson->is_active)->toBeTrue()
+        ->and($freshPerson->keycloak_user_id)->toBeNull()
+        ->and($freshPerson->password)->toBeNull();
+});

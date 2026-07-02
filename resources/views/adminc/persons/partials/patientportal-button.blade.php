@@ -104,7 +104,7 @@
                             </select>
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group class="mb-4">
                             <x-admin::form.control-group.label>
                                 Toelichting
                             </x-admin::form.control-group.label>
@@ -117,6 +117,13 @@
                                 placeholder="Optionele toelichting..."
                             />
                         </x-admin::form.control-group>
+
+                        <x-adminc::components.field
+                            type="switch"
+                            name="deactivate_person"
+                            label="Patiënt deactiveren"
+                            v-model="deactivatePerson"
+                        />
                     </form>
                 </x-slot>
 
@@ -161,6 +168,7 @@
                         return {
                             revocationReason: '',
                             revocationComment: '',
+                            deactivatePerson: true,
                         };
                     },
 
@@ -168,6 +176,7 @@
                         openModal() {
                             this.revocationReason = '';
                             this.revocationComment = '';
+                            this.deactivatePerson = true;
                             this.$refs.portalRevokeModal.open();
                         },
 

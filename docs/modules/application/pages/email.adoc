@@ -257,7 +257,7 @@ Beschikbaar wanneer een User is meegegeven (bijv. wachtwoord reset, systeemnotif
 | Url naar patient portaal [welkomstmail]
 
 | `{{ loginUrlWithUsernameHint }}`
-| Url naar patient portaal met ingevulde emailadres (default van die patient) [welkomstmail]
+| One-time wachtwoord-instel-link vanuit het patiëntportaal (voor onboarding)
 
 | `{{ temporaryPassword }}`
 | Tijdelijk wachtwoord na aanmaken account voor deze patient [welkomstmail]

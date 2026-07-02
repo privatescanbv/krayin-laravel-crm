@@ -4,16 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\Keycloak\KeycloakService;
+use App\Services\PatientPortal\PatientPortalPasswordResetTokenVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Webkul\User\Models\User;
 
 class PatientPasswordController extends Controller
 {
-    public function __construct(private readonly KeycloakService $keycloakService) {}
+    public function __construct(
+        private readonly KeycloakService $keycloakService,
+        private readonly PatientPortalPasswordResetTokenVerifier $patientPortalPasswordResetTokenVerifier,
+    ) {}
 
     /**
      * Update the password for a patient.
@@ -101,10 +104,20 @@ class PatientPasswordController extends Controller
             abort(403);
         }
 
-        // Verify that a forgot-password flow was actually initiated for this keycloak ID.
-        // SendForgotPasswordMailAction stores this token after the portal confirms a reset
-        // URL was generated. Cache::pull atomically reads and deletes, making it one-time use.
-        if (! Cache::pull('patient_reset_pending:'.$keycloakUserId)) {
+        // Verify the portal reset token is still valid. The portal DB is the source of
+        // truth so this keeps working after CRM cache flushes or redeploys.
+        $validated = $request->validate([
+            'email'                 => ['required', 'email'],
+            'reset_token'           => ['required', 'string'],
+            'password'              => ['required', 'string', Password::defaults(), 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
+        ]);
+
+        if (! $this->patientPortalPasswordResetTokenVerifier->verify(
+            $validated['email'],
+            $validated['reset_token'],
+            $keycloakUserId,
+        )) {
             abort(403);
         }
 
@@ -113,11 +126,6 @@ class PatientPasswordController extends Controller
         if (is_null($person)) {
             abort(404);
         }
-
-        $validated = $request->validate([
-            'password'              => ['required', 'string', Password::defaults(), 'confirmed'],
-            'password_confirmation' => ['required', 'string'],
-        ]);
 
         $person->password = $validated['password'];
         $person->save();

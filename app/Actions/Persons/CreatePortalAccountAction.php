@@ -3,8 +3,9 @@
 namespace App\Actions\Persons;
 
 use App\Enums\EmailTemplateCode;
-use App\Enums\KeyCloakClient;
+use App\Exceptions\PatientPortal\PatientPortalPasswordSetupLinkException;
 use App\Services\Mail\CrmMailService;
+use App\Services\PatientPortal\PatientPortalPasswordSetupLinkService;
 use App\Services\PersonKeycloakService;
 use Exception;
 use Illuminate\Support\Facades\Config;
@@ -18,10 +19,12 @@ class CreatePortalAccountAction
     public function __construct(
         protected PersonKeycloakService $personKeycloakService,
         private readonly CrmMailService $crmMailService,
+        private readonly PatientPortalPasswordSetupLinkService $patientPortalPasswordSetupLinkService,
     ) {}
 
     /**
-     * Verstuurt bij succes (en sendAccountEmails true): eerst het DB-sjabloon {@see EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION}, daarna de Blade-welkomstmail met tijdelijk wachtwoord.
+     * Verstuurt bij succes (en sendAccountEmails true) de CRM onboardingmail
+     * met een one-time wachtwoord-instel-link vanuit het patient portaal.
      *
      * @param  bool  $sendAccountEmails  Zet op false bij aanroep vanuit synchronisatie/import: dan worden geen patiëntportaal-accountmails verstuurd (wel Keycloak-account aanmaken).
      * @return array{success: bool, message?: string}
@@ -65,6 +68,18 @@ class CreatePortalAccountAction
             try {
                 $generatedPassword = $result['generated_password'] ?? throw new Exception('Missing generated password with create portal account');
                 $this->sendWelcomeMail($person, $generatedPassword, $lead);
+            } catch (PatientPortalPasswordSetupLinkException $e) {
+                Log::error('Failed to obtain patient portal password-setup link for welcome mail', [
+                    'person_id'        => $person->id,
+                    'lead_id'          => $lead?->id,
+                    'keycloak_user_id' => $person->keycloak_user_id,
+                    'error'            => $e->getMessage(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Er is een technische fout opgetreden bij het aanmaken van het patiëntportaalaccount. Neem contact op met de beheerder.',
+                ];
             } catch (Throwable $e) {
                 Log::warning('Failed to send portal welcome mail', [
                     'person_id' => $person->id,
@@ -80,10 +95,6 @@ class CreatePortalAccountAction
         ]);
 
         $message = 'Patiëntportaal account aangemaakt.';
-
-        if (! empty($result['generated_password'])) {
-            $message .= ' Tijdelijk wachtwoord: '.$result['generated_password'];
-        }
 
         return [
             'success' => true,
@@ -104,29 +115,29 @@ class CreatePortalAccountAction
         $portalUrl = (string) config('services.portal.patient.web_url', '');
         $linkEmailToEntities = $lead !== null ? ['lead_id' => (string) $lead->id] : [];
 
-        try {
-            $emailPerson = $person->findDefaultEmailOrError();
-            $this->crmMailService->sendToPersonTemplate(
-                $person,
-                EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION,
-                [
-                    'lastname'                 => (string) ($person->last_name ?? ''),
-                    'portal_url'               => $portalUrl,
-                    'portal_link'              => $portalUrl,
-                    'person'                   => $person,
-                    'temporaryPassword'        => $temporaryPassword,
-                    'loginUrl'                 => config('services.portal.patient.web_url'),
-                    'loginUrlWithUsernameHint' => config('services.keycloak.base_url_external').'/realms/crm/protocol/openid-connect/auth?client_id='.KeyCloakClient::PATIENT->clientId().'&redirect_uri='.config('services.portal.patient.web_url').'%2Fcallback&response_type=code&scope=openid&login_hint='.$emailPerson,
-                ],
-                $linkEmailToEntities,
-                isNotify: true
-            );
+        $emailPerson = $person->findDefaultEmailOrError();
+        $passwordSetupUrl = $this->patientPortalPasswordSetupLinkService->fetchForPerson($person, $emailPerson);
 
-        } catch (Exception $e) {
-            Log::error('Failed to send portal welcome mail: person has no default email address', [
-                'person_id' => $person->id,
-                'error'     => $e->getMessage(),
-            ]);
-        }
+        $this->crmMailService->sendToPersonTemplate(
+            $person,
+            EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION,
+            [
+                'lastname'                 => (string) ($person->last_name ?? ''),
+                'portal_url'               => $portalUrl,
+                'portal_link'              => $portalUrl,
+                'person'                   => $person,
+                'temporaryPassword'        => $temporaryPassword,
+                'loginUrl'                 => config('services.portal.patient.web_url'),
+                'loginUrlWithUsernameHint' => $passwordSetupUrl,
+            ],
+            $linkEmailToEntities,
+            isNotify: true
+        );
+
+        Log::info('Portal welcome mail prepared with onboarding variables', [
+            'person_id'        => $person->id,
+            'lead_id'          => $lead?->id,
+            'keycloak_user_id' => $person->keycloak_user_id,
+        ]);
     }
 }

@@ -62,10 +62,11 @@ return [
 
     'portal' => [
         'patient' => [
-            'web_url'   => env('PATIENT_PORTAL_URL', 'https://patientdev.local.privatescan.nl'),
-            'api_url'   => env('PATIENT_PORTAL_API_URL', env('PATIENT_PORTAL_URL')),
-            'api_token' => env('FORMS_API_KEY'),
-            'secret'    => env(KeyCloakClient::PATIENT->envKeySecret()),
+            'web_url'                 => env('PATIENT_PORTAL_URL', 'https://patientdev.local.privatescan.nl'),
+            'api_url'                 => env('PATIENT_PORTAL_API_URL', env('PATIENT_PORTAL_URL')),
+            'api_token'               => env('FORMS_API_KEY'),
+            'password_setup_endpoint' => env('PATIENT_PORTAL_PASSWORD_SETUP_ENDPOINT', '/api/patient/password-reset-link'),
+            'secret'                  => env(KeyCloakClient::PATIENT->envKeySecret()),
             /** Minimum minutes between digest emails; also initial batch delay after first qualifying event. Job runs every 5 minutes, so if you put this value at 5. The max delay will be 10 min. */
             'notify_email_interval_minutes' => (int) env('PATIENT_PORTAL_NOTIFY_EMAIL_INTERVAL_MINUTES', 120),
         ],

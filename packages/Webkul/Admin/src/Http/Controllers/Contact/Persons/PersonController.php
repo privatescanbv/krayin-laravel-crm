@@ -84,8 +84,9 @@ class PersonController extends Controller
         $reasonValue = request()->input('revocation_reason');
         $reason = $reasonValue ? PortalRevocationReason::tryFrom($reasonValue) : null;
         $comment = request()->input('revocation_comment');
+        $deactivatePerson = request()->boolean('deactivate_person', true);
 
-        $result = $this->deletePortalAccountAction->execute($person, $reason, $comment);
+        $result = $this->deletePortalAccountAction->execute($person, $reason, $comment, $deactivatePerson);
 
         return $this->portalResponse($result, $person);
     }

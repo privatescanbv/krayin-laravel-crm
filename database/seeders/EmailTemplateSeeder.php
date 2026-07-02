@@ -156,7 +156,7 @@ HTML,
             ],
 
             // ── Patiëntportaal notificatie ────────────────────────────────────────
-            // Variables: lastname, portal_url, person.first_name
+            // Variables: lastname, portal_url, person.first_name, loginUrlWithUsernameHint
             [
                 'name'        => 'Patiëntportaal notificatie',
                 'code'        => EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION->value,

@@ -84,15 +84,12 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
                 continue;
             }
 
-            $productIds = $orderRows->pluck('aos_products_id_c')->filter()->unique()->values()->all();
-            $productsByExternalId = ! empty($productIds)
-                ? Product::whereIn('external_id', $productIds)->get()->keyBy('external_id')
-                : collect();
-
             $productsByName = $this->productsByNameForSugarRows($orderRows);
             $productsByNormalizedName = $productsByName->mapWithKeys(
                 fn (Product $p, string $name) => [$this->normalizeProductName($name) => $p]
             );
+            $partnerProductsByExternalId = $this->partnerProductsByExternalId();
+            $partnerProductsByName = $this->partnerProductsByName();
             $partnerProductsByNormalizedName = $this->partnerProductsByNormalizedName();
 
             $usedOrderItemIds = [];
@@ -100,9 +97,10 @@ class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
             foreach ($orderRows as $sugarRow) {
                 $product = $this->resolveProductForSugarRow(
                     $sugarRow,
-                    $productsByExternalId,
                     $productsByName,
                     $productsByNormalizedName,
+                    $partnerProductsByExternalId,
+                    $partnerProductsByName,
                     $partnerProductsByNormalizedName,
                 );
 

@@ -18,7 +18,7 @@ if [ "$choice" = "1" ]; then
 elif [ "$choice" = "2" ]; then
     echo "Importing multiple leads setup..."
 #    ./vendor/bin/sail artisan import:leads --import-persons --limit=2000 &&
-    ./vendor/bin/sail artisan import:orders --import-leads --order-ids=202500625,202500001
+    ./vendor/bin/sail artisan import:orders --import-leads --limit=500
 #    ./vendor/bin/sail artisan import:orders --import-leads --limit=2
 #    ./vendor/bin/sail artisan import:email-attachment-files
 

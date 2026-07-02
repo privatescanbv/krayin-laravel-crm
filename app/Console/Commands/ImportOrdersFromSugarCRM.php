@@ -271,6 +271,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             'sor.datum_onderzoek',
             'sor.duration',
             'sor.pcrm_partnerresources_id_c',
+            'sor.pcrm_partnerproducts_id_c',
             'pt.name as product_template_name',
             'rc.pcrm_sales4bd9ontacts_ida as contact_id',
             // Authoritative purchase price fields on the main row table (no _c suffix)
@@ -446,14 +447,48 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Active partner products keyed by normalized {@see PartnerProduct::name} (CRM catalog {@see Product::name} may differ).
+     * Partner products keyed by {@see PartnerProduct::external_id} (Sugar pcrm_partnerproducts_id_c).
+     * Includes inactive rows: Sugar historical orders may reference retired partner products.
+     *
+     * @return Collection<string, Product>
+     */
+    protected function partnerProductsByExternalId(): Collection
+    {
+        return PartnerProduct::query()
+            ->whereNotNull('external_id')
+            ->where('external_id', '!=', '')
+            ->with('product')
+            ->get()
+            ->filter(fn (PartnerProduct $pp) => $pp->product !== null)
+            ->mapWithKeys(fn (PartnerProduct $pp) => [$pp->external_id => $pp->product]);
+    }
+
+    /**
+     * Partner products keyed by exact {@see PartnerProduct::name}.
+     * Includes inactive rows for Sugar import fallbacks.
+     *
+     * @return Collection<string, Product>
+     */
+    protected function partnerProductsByName(): Collection
+    {
+        return PartnerProduct::query()
+            ->whereNotNull('name')
+            ->where('name', '!=', '')
+            ->with('product')
+            ->get()
+            ->filter(fn (PartnerProduct $pp) => $pp->product !== null)
+            ->mapWithKeys(fn (PartnerProduct $pp) => [$pp->name => $pp->product]);
+    }
+
+    /**
+     * Partner products keyed by normalized {@see PartnerProduct::name} (CRM catalog {@see Product::name} may differ).
+     * Includes inactive rows for Sugar import fallbacks.
      *
      * @return Collection<string, Product>
      */
     protected function partnerProductsByNormalizedName(): Collection
     {
         return PartnerProduct::query()
-            ->where('active', true)
             ->whereNotNull('name')
             ->where('name', '!=', '')
             ->with('product')
@@ -465,30 +500,47 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Resolve CRM product: Sugar product template UUID → {@see Product::external_id}, else exact row name → {@see Product::name}.
+     * Resolve CRM product for a Sugar order row.
      *
-     * @param  Collection<string, Product>  $productsByExternalId
+     * Priority: PartnerProduct.external_id (pcrm_partnerproducts_id_c) → PartnerProduct.name →
+     * Product.name (exact/normalized) and Sugar product template name fallback.
+     *
      * @param  Collection<string, Product>  $productsByName
      * @param  Collection<string, Product>  $productsByNormalizedName
+     * @param  Collection<string, Product>  $partnerProductsByExternalId
+     * @param  Collection<string, Product>  $partnerProductsByName
      * @param  Collection<string, Product>  $partnerProductsByNormalizedName
      */
     protected function resolveProductForSugarRow(
         object $row,
-        Collection $productsByExternalId,
         Collection $productsByName,
         Collection $productsByNormalizedName,
+        Collection $partnerProductsByExternalId,
+        Collection $partnerProductsByName,
         Collection $partnerProductsByNormalizedName,
     ): ?Product {
-        // 1. Match by Sugar product template UUID → Product.external_id (most reliable)
-        if (! empty($row->aos_products_id_c)) {
-            $byId = $productsByExternalId->get($row->aos_products_id_c);
-            if ($byId !== null) {
-                return $byId;
+        if (! empty($row->pcrm_partnerproducts_id_c)) {
+            $byPartnerProduct = $partnerProductsByExternalId->get($row->pcrm_partnerproducts_id_c);
+            if ($byPartnerProduct !== null) {
+                return $byPartnerProduct;
             }
         }
 
-        // 2. Match by the row name (may be overridden in Sugar by the user)
         $label = trim((string) ($row->name ?? ''));
+        $templateName = trim((string) ($row->product_template_name ?? ''));
+
+        if ($label !== '') {
+            $byPartnerName = $partnerProductsByName->get($label);
+            if ($byPartnerName !== null) {
+                return $byPartnerName;
+            }
+
+            $byPartnerNormalized = $partnerProductsByNormalizedName->get($this->normalizeProductName($label));
+            if ($byPartnerNormalized !== null) {
+                return $byPartnerNormalized;
+            }
+        }
+
         if ($label !== '') {
             $byName = $productsByName->get($label);
             if ($byName !== null) {
@@ -496,9 +548,6 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             }
         }
 
-        // 3. Fall back to the original product template name from Sugar (handles overridden row names
-        //    when aos_products_id_c is set but external_id lookup fails)
-        $templateName = trim((string) ($row->product_template_name ?? ''));
         if ($templateName !== '') {
             $byTemplateName = $productsByName->get($templateName);
             if ($byTemplateName !== null) {
@@ -506,30 +555,17 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             }
         }
 
-        // 4. Normalized name match: strip '+' and collapse whitespace (handles "Royal+ Bodyscan" → "Royal Bodyscan")
         if ($label !== '') {
             $byNormalized = $productsByNormalizedName->get($this->normalizeProductName($label));
             if ($byNormalized !== null) {
                 return $byNormalized;
             }
         }
+
         if ($templateName !== '') {
             $byTplNorm = $productsByNormalizedName->get($this->normalizeProductName($templateName));
             if ($byTplNorm !== null) {
                 return $byTplNorm;
-            }
-        }
-
-        // 5. Match Sugar line / template text against partner-facing product names (e.g. "TB1 Royal+ Bodyscan" → partner "TB1 Royal Bodyscan")
-        if ($partnerProductsByNormalizedName->isNotEmpty()) {
-            foreach ([$label, $templateName] as $try) {
-                if ($try === '') {
-                    continue;
-                }
-                $resolved = $partnerProductsByNormalizedName->get($this->normalizeProductName($try));
-                if ($resolved !== null) {
-                    return $resolved;
-                }
             }
         }
 
@@ -686,15 +722,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $this->info("\n=== ORDER ROWS PREVIEW ===");
 
         // Build product lookup collections once for all rows (same logic as importRecords)
-        $allProductIds = $allRows->pluck('aos_products_id_c')->filter()->unique()->values()->all();
-        $productsByExternalId = ! empty($allProductIds)
-            ? Product::whereIn('external_id', $allProductIds)->get()->keyBy('external_id')
-            : collect();
-
         $productsByName = $this->productsByNameForSugarRows($allRows);
         $productsByNormalizedName = $productsByName->mapWithKeys(
             fn (Product $p, string $name) => [$this->normalizeProductName($name) => $p]
         );
+        $partnerProductsByExternalId = $this->partnerProductsByExternalId();
+        $partnerProductsByName = $this->partnerProductsByName();
         $partnerProductsByNormalizedName = $this->partnerProductsByNormalizedName();
 
         $headers = ['Order#', 'Naam', 'CRM product', 'Prijs', 'Status', 'Ink.totaal', 'Afl.other', 'Afl.cardio', 'Afl.clinic', 'Afl.radio', 'Afl.rd', 'Afl.doctor', 'Afl.totaal'];
@@ -709,10 +742,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             foreach ($orderRows as $row) {
                 $product = $this->resolveProductForSugarRow(
                     $row,
-                    $productsByExternalId,
                     $productsByName,
                     $productsByNormalizedName,
-                    $partnerProductsByNormalizedName
+                    $partnerProductsByExternalId,
+                    $partnerProductsByName,
+                    $partnerProductsByNormalizedName,
                 );
 
                 if ($product === null) {
@@ -824,7 +858,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             ? Resource::whereIn('external_id', $allResourceExternalIds)->get()->keyBy('external_id')
             : collect();
 
-        // Partner labels often match Sugar line overrides better than catalog {@see Product::name}.
+        $partnerProductsByExternalId = $this->partnerProductsByExternalId();
+        $partnerProductsByName = $this->partnerProductsByName();
         $partnerProductsByNormalizedName = $this->partnerProductsByNormalizedName();
 
         foreach ($records as $record) {
@@ -841,17 +876,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                 $orderRows = $rowsByOrder->get($record->id, collect());
 
-                // Collect unique contact IDs and product template IDs from rows
+                // Collect unique contact IDs from rows
                 $contactIds = $orderRows->pluck('contact_id')->filter()->unique()->values()->all();
-                $productIds = $orderRows->pluck('aos_products_id_c')->filter()->unique()->values()->all();
 
                 // Look up existing persons and products
                 $personsByExternalId = ! empty($contactIds)
                     ? Person::whereIn('external_id', $contactIds)->get()->keyBy('external_id')
-                    : collect();
-
-                $productsByExternalId = ! empty($productIds)
-                    ? Product::whereIn('external_id', $productIds)->get()->keyBy('external_id')
                     : collect();
 
                 $productsByName = $this->productsByNameForSugarRows($orderRows);
@@ -886,9 +916,10 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $record,
                     $orderRows,
                     $personsByExternalId,
-                    $productsByExternalId,
                     $productsByName,
                     $productsByNormalizedName,
+                    $partnerProductsByExternalId,
+                    $partnerProductsByName,
                     $partnerProductsByNormalizedName,
                     $resourcesByExternalId,
                     $salesStage,
@@ -957,19 +988,20 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         $person = $row->contact_id ? ($personsByExternalId->get($row->contact_id) ?? null) : null;
                         $product = $this->resolveProductForSugarRow(
                             $row,
-                            $productsByExternalId,
                             $productsByName,
                             $productsByNormalizedName,
-                            $partnerProductsByNormalizedName
+                            $partnerProductsByExternalId,
+                            $partnerProductsByName,
+                            $partnerProductsByNormalizedName,
                         );
 
                         if ($product === null) {
                             $this->warn(sprintf(
-                                'Skipping Sugar order row (no CRM product): order=%s row=%s name="%s" template_id=%s template_name="%s"',
+                                'Skipping Sugar order row (no CRM product): order=%s row=%s name="%s" pcrm_partnerproducts_id_c=%s template_name="%s"',
                                 $record->id,
                                 $row->id ?? '',
                                 $row->name ?? '',
-                                $row->aos_products_id_c ?? '',
+                                $row->pcrm_partnerproducts_id_c ?? '',
                                 $row->product_template_name ?? ''
                             ));
 

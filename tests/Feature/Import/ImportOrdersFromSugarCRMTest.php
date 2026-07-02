@@ -98,6 +98,7 @@ beforeEach(function () {
         $table->dateTime('datum_onderzoek')->nullable();
         $table->integer('duration')->nullable();
         $table->string('pcrm_partnerresources_id_c')->nullable();
+        $table->string('pcrm_partnerproducts_id_c')->nullable();
         $table->integer('deleted')->default(0);
         // Authoritative purchase price fields on the main row table (no _c suffix)
         $table->decimal('purchase_price', 14, 6)->nullable();
@@ -757,14 +758,21 @@ test('order row without matching person still imports with person_id null', func
         ->and($order->orderItems->first()->person_id)->toBeNull();
 });
 
-test('order row with matching product sets product_id on orderitem', function () {
+test('order row with matching partner product external_id sets product_id on orderitem', function () {
     Lead::factory()->create(['external_id' => 'sugar-lead-product-001']);
 
-    $product = Product::factory()->create(['external_id' => 'product-template-001']);
+    $product = Product::factory()->create(['name' => 'TB1 via partner product']);
+    PartnerProduct::factory()->create([
+        'product_id'  => $product->id,
+        'external_id' => 'partner-product-001',
+        'name'        => 'TB1 Business Class',
+        'active'      => true,
+    ]);
 
     insertSugarOrder('order-product-001');
-    insertSugarRow('order-product-001', 'row-product-001');
-    insertSugarRowCstm('row-product-001', ['aos_products_id_c' => 'product-template-001']);
+    insertSugarRow('order-product-001', 'row-product-001', [
+        'pcrm_partnerproducts_id_c' => 'partner-product-001',
+    ]);
     linkOrderToSugarLead('order-product-001', 'sugar-lead-product-001');
 
     runOrderImport();
@@ -773,7 +781,129 @@ test('order row with matching product sets product_id on orderitem', function ()
     expect($order->orderItems->first()->product_id)->toBe($product->id);
 });
 
-test('order row resolves product by exact CRM name when template id has no match', function () {
+test('order row resolves product by partner product id even when row name was overridden in Sugar', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-tlif-001']);
+
+    $product = Product::factory()->create(['name' => 'TLIF 2 niveaus', 'description' => 'TLIF operatie 2 niveaus']);
+    PartnerProduct::factory()->create([
+        'product_id'  => $product->id,
+        'external_id' => '58ba6316-8656-22e6-6710-660e940eaf1b',
+        'name'        => "TLIF operatie 2 niveau's",
+        'active'      => true,
+    ]);
+
+    insertSugarOrder('order-tlif-001');
+    insertSugarRow('order-tlif-001', 'row-tlif-001', [
+        'name'                         => 'TLIF operatie 2 niveaus',
+        'pcrm_partnerresources_id_c'   => 'a50ad2bd-a65e-1a3c-580d-5eabf09f7d6a',
+        'pcrm_partnerproducts_id_c'    => '58ba6316-8656-22e6-6710-660e940eaf1b',
+    ]);
+    linkOrderToSugarLead('order-tlif-001', 'sugar-lead-tlif-001');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-tlif-001')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->product_id)->toBe($product->id)
+        ->and($order->orderItems->first()->name)->toBe('TLIF operatie 2 niveaus');
+});
+
+test('production order row 8d29c0d2 resolves via pcrm_partnerproducts_id_c on main salesorderrow table', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-tlif-row-8d29']);
+
+    $product = Product::factory()->create([
+        'external_id' => '1142',
+        'name'        => 'TLIF 1 niveau',
+        'description' => 'TLIF operatie 1 niveau',
+    ]);
+    PartnerProduct::factory()->create([
+        'product_id'  => $product->id,
+        'external_id' => '21afac51-aed3-9a5b-0582-660e94631acf',
+        'name'        => 'TLIF operatie 1 niveau',
+        'active'      => true,
+    ]);
+
+    insertSugarOrder('3e21df33-a18f-95ef-1e5d-69ae852c32b9', ['order_num' => 202600625]);
+    insertSugarRow('3e21df33-a18f-95ef-1e5d-69ae852c32b9', '8d29c0d2-e2bb-315c-e79b-69ae86621d69', [
+        'name'                       => 'TLIF operatie 2 niveaus',
+        'pcrm_partnerproducts_id_c'  => '21afac51-aed3-9a5b-0582-660e94631acf',
+        'pcrm_partnerresources_id_c' => 'a50ad2bd-a65e-1a3c-580d-5eabf09f7d6a',
+    ]);
+    linkOrderToSugarLead('3e21df33-a18f-95ef-1e5d-69ae852c32b9', 'sugar-lead-tlif-row-8d29');
+
+    runOrderImport(['--order-ids' => '202600625']);
+
+    $order = Order::where('external_id', '3e21df33-a18f-95ef-1e5d-69ae852c32b9')->first();
+    $item = $order?->orderItems->firstWhere('external_id', '8d29c0d2-e2bb-315c-e79b-69ae86621d69');
+
+    expect($order)->not->toBeNull()
+        ->and($item)->not->toBeNull()
+        ->and($item->product_id)->toBe($product->id)
+        ->and($item->name)->toBe('TLIF operatie 2 niveaus');
+});
+
+test('production order row resolves inactive partner product by pcrm_partnerproducts_id_c', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-vertaling-001']);
+
+    $product = Product::factory()->create([
+        'external_id' => '1163',
+        'name'        => 'Vertaalde samenvatting TBx',
+        'description' => 'Samenvattende Nederlandse vertaling van de rapportage',
+    ]);
+    PartnerProduct::factory()->create([
+        'product_id'  => $product->id,
+        'external_id' => 'b10ab0d1-c8fb-fc00-df2d-4e6a1ed87643',
+        'name'        => 'Vertaalde samenvatting TB1',
+        'active'      => false,
+    ]);
+
+    insertSugarOrder('cc2e1cfd-5b49-6424-af7d-63f3751144d0', ['order_num' => 202600900]);
+    insertSugarRow('cc2e1cfd-5b49-6424-af7d-63f3751144d0', '246735bf-2d52-186c-2851-6408682612b3', [
+        'name'                      => 'Vertaalde samenvatting TB1',
+        'pcrm_partnerproducts_id_c' => 'b10ab0d1-c8fb-fc00-df2d-4e6a1ed87643',
+    ]);
+    linkOrderToSugarLead('cc2e1cfd-5b49-6424-af7d-63f3751144d0', 'sugar-lead-vertaling-001');
+
+    runOrderImport(['--order-ids' => '202600900']);
+
+    $order = Order::where('external_id', 'cc2e1cfd-5b49-6424-af7d-63f3751144d0')->first();
+    $item = $order?->orderItems->firstWhere('external_id', '246735bf-2d52-186c-2851-6408682612b3');
+
+    expect($order)->not->toBeNull()
+        ->and($item)->not->toBeNull()
+        ->and($item->product_id)->toBe($product->id)
+        ->and($item->name)->toBe('Vertaalde samenvatting TB1');
+});
+
+test('order row resolves product by exact partner product name before catalog product name', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-pp-exact-001']);
+
+    $catalogProduct = Product::factory()->create(['name' => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio']);
+    $partnerProduct = Product::factory()->create(['name' => 'TB3 partner catalog label']);
+    PartnerProduct::factory()->create([
+        'product_id' => $partnerProduct->id,
+        'name'       => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio',
+        'active'     => true,
+    ]);
+
+    insertSugarOrder('order-pp-exact-001');
+    insertSugarRow('order-pp-exact-001', 'row-pp-exact-001', [
+        'name'        => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio',
+        'sales_price' => 1890,
+    ]);
+    linkOrderToSugarLead('order-pp-exact-001', 'sugar-lead-pp-exact-001');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-pp-exact-001')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->product_id)->toBe($partnerProduct->id)
+        ->and($order->orderItems->first()->product_id)->not->toBe($catalogProduct->id);
+});
+
+test('order row resolves product by exact CRM name when no partner product matches', function () {
     Lead::factory()->create(['external_id' => 'sugar-lead-by-name-001']);
 
     $product = Product::factory()->create(['name' => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio']);
@@ -783,7 +913,6 @@ test('order row resolves product by exact CRM name when template id has no match
         'name'        => 'TB3 Regular Bodyscan + Wervelkolom zonder cardio',
         'sales_price' => 1890,
     ]);
-    insertSugarRowCstm('row-by-name-001', ['aos_products_id_c' => 'no-such-template-in-crm']);
     linkOrderToSugarLead('order-by-name-001', 'sugar-lead-by-name-001');
 
     runOrderImport();
@@ -808,7 +937,6 @@ test('order row resolves product via partner product name when Sugar line differ
     insertSugarRow('order-pp-name-001', 'row-pp-001', [
         'name' => 'TB1 Royal+ Bodyscan',
     ]);
-    insertSugarRowCstm('row-pp-001', ['aos_products_id_c' => 'unknown-sugar-template-uuid']);
     linkOrderToSugarLead('order-pp-name-001', 'sugar-lead-pp-name-001');
 
     runOrderImport();

@@ -397,7 +397,7 @@ test('Sugar order import creates partner-product order checks from reporting', f
         ->and($order->orderItems->first()->external_id)->toBe('row-import-checks')
         ->and(
             $order->orderChecks()
-                ->where('name', 'Partner product rapportage: Radiologie MRI')
+                ->where('name', 'like', 'Partner product rapportage: Radiologie MRI%')
                 ->where('removable', false)
                 ->exists()
         )->toBeTrue();

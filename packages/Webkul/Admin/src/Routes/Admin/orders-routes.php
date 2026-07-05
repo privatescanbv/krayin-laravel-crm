@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
 use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
+use App\Http\Controllers\Admin\Settings\OrderAfbController;
+use App\Http\Controllers\Admin\Settings\OrderConfirmationController;
 use App\Http\Controllers\Admin\Settings\OrderController;
 use App\Http\Controllers\Admin\Settings\OrderItemController;
 use App\Http\Controllers\Admin\Settings\OrderPaymentController;
@@ -28,17 +30,42 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::delete('{orderId}/gvl-form', 'detachGvlForm')->name('admin.orders.gvl-form.detach');
     Route::get('{orderId}/gvl-form/status', 'getGvlFormStatus')->name('admin.orders.gvl-form.status');
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
-    Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
-    Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
-    Route::get('{orderId}/confirm', 'confirm')->name('admin.orders.confirm');
+
+    // Order checks routes
+    Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');
+    Route::put('{orderId}/checks/{checkId}', 'updateCheck')->name('admin.orders.checks.update');
+    Route::delete('{orderId}/checks/{checkId}', 'destroyCheck')->name('admin.orders.checks.destroy');
+
+    // Order report upload routes
+    Route::get('{orderId}/report-upload-data', 'reportUploadData')->name('admin.orders.report-upload-data');
+    Route::post('{orderId}/report-upload', 'storeReport')->name('admin.orders.report-upload.store');
+
+    // Order activities routes
+    Route::get('{id}/activities', 'activities')->name('admin.orders.activities.index');
+    Route::get('{id}/emails/detach', 'emailsDetach')->name('admin.orders.emails.detach');
+});
+
+/**
+ * AFB dispatch routes (automatic send, manual send screen and attachments).
+ */
+Route::controller(OrderAfbController::class)->prefix('orders')->group(function () {
     Route::post('{id}/send-afb', 'sendAfb')->name('admin.orders.send_afb');
-    Route::delete('{orderId}/afb/{personDocumentId}', [OrderController::class, 'deleteAfbPersonDocument'])->name('admin.orders.afb.delete');
+    Route::delete('{orderId}/afb/{personDocumentId}', 'deleteAfbPersonDocument')->name('admin.orders.afb.delete');
 
     // Manual AFB send screen
     Route::get('{orderId}/afb-send', 'afbSendPage')->name('admin.orders.afb_send');
     Route::get('{orderId}/afb-send/{departmentId}/prepare', 'afbSendPrepare')->name('admin.orders.afb_send.prepare');
     Route::post('{orderId}/afb-send/{departmentId}/send', 'afbSendManual')->name('admin.orders.afb_send.send');
     Route::get('{orderId}/afb-send/{departmentId}/attachment/{type}/{personId?}', 'afbSendAttachment')->name('admin.orders.afb_send.attachment');
+});
+
+/**
+ * Order confirmation routes (confirm page, confirmation letters and mark-as-sent flows).
+ */
+Route::controller(OrderConfirmationController::class)->prefix('orders')->group(function () {
+    Route::get('{orderId}/confirm', 'confirm')->name('admin.orders.confirm');
+    Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
+    Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
 
     // Order confirmation letter routes
     Route::get('confirmation/templates', 'getConfirmationTemplates')->name('admin.orders.confirmation.templates');
@@ -55,19 +82,6 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::post('{orderId}/confirmation/person/{personId}/preview-pdf', 'previewPersonConfirmationPdf')->name('admin.orders.confirmation.person.preview-pdf');
     Route::post('{orderId}/confirmation/person/{personId}/sent', 'markPersonAsSent')->name('admin.orders.confirmation.person.sent');
     Route::get('{orderId}/confirmation/person/{personId}/mail-preview', 'personMailPreview')->name('admin.orders.confirmation.person.mail-preview');
-
-    // Order checks routes
-    Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');
-    Route::put('{orderId}/checks/{checkId}', 'updateCheck')->name('admin.orders.checks.update');
-    Route::delete('{orderId}/checks/{checkId}', 'destroyCheck')->name('admin.orders.checks.destroy');
-
-    // Order report upload routes
-    Route::get('{orderId}/report-upload-data', 'reportUploadData')->name('admin.orders.report-upload-data');
-    Route::post('{orderId}/report-upload', 'storeReport')->name('admin.orders.report-upload.store');
-
-    // Order activities routes
-    Route::get('{id}/activities', 'activities')->name('admin.orders.activities.index');
-    Route::get('{id}/emails/detach', 'emailsDetach')->name('admin.orders.emails.detach');
 });
 
 /**

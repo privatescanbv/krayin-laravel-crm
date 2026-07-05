@@ -611,6 +611,25 @@ class AfbDispatchService
     }
 
     /**
+     * Ensure a generated AFB file is available on the default (mail) disk,
+     * copying it from the local disk when needed.
+     */
+    public function syncToMailDisk(string $path): void
+    {
+        if (Storage::exists($path)) {
+            return;
+        }
+
+        $localDisk = Storage::disk('local');
+
+        if (! $localDisk->exists($path)) {
+            throw new RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
+        }
+
+        Storage::put($path, $localDisk->get($path));
+    }
+
+    /**
      * The moment the daily batch (afb:send-daily) is scheduled to pick up this examination:
      * the day before the examination at {@see self::AFB_LATE_BOOKING_CUTOFF_HOUR}:00.
      */
@@ -698,20 +717,5 @@ class AfbDispatchService
         }
 
         return false;
-    }
-
-    private function syncToMailDisk(string $path): void
-    {
-        if (Storage::exists($path)) {
-            return;
-        }
-
-        $localDisk = Storage::disk('local');
-
-        if (! $localDisk->exists($path)) {
-            throw new RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
-        }
-
-        Storage::put($path, $localDisk->get($path));
     }
 }

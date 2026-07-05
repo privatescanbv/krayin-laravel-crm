@@ -479,6 +479,45 @@ class Order extends Model
     }
 
     /**
+     * AFB status per (clinic department, person) combination for display in order views.
+     * Requires 'orderItems.person', 'orderItems.resourceOrderItems.resource.clinicDepartment.clinic'
+     * and 'afbPersonDocuments.dispatch' to be eager-loaded.
+     *
+     * @return Collection<int, array{department: ClinicDepartment, person: ?Person, dispatch: ?AfbPersonDocument}>
+     */
+    public function afbStatusRows(): Collection
+    {
+        $latestAfbDocs = $this->latestSuccessfulAfbDocuments()
+            ->keyBy(fn ($doc) => ($doc->person_id ?? '').'_'.$doc->dispatch?->clinic_department_id);
+
+        return $this->orderItems
+            ->flatMap(function ($item) {
+                return $item->resourceOrderItems
+                    ->map(fn ($roi) => $roi->resource?->clinicDepartment)
+                    ->filter()
+                    ->map(fn ($dept) => [
+                        'department' => $dept,
+                        'person_id'  => $item->person_id !== null ? (int) $item->person_id : null,
+                    ]);
+            })
+            ->unique(fn ($row) => $row['department']->id.'|'.($row['person_id'] ?? ''))
+            ->sortBy(fn ($row) => $row['department']->name.'|'.($row['person_id'] ?? ''))
+            ->map(function ($row) use ($latestAfbDocs) {
+                $personId = $row['person_id'];
+                $docKey = ($personId ?? '').'_'.$row['department']->id;
+
+                return [
+                    'department' => $row['department'],
+                    'person'     => $personId !== null
+                        ? $this->orderItems->pluck('person')->filter()->firstWhere('id', $personId)
+                        : null,
+                    'dispatch'   => $latestAfbDocs->get($docKey),
+                ];
+            })
+            ->values();
+    }
+
+    /**
      * Netto betaald bedrag: aanbetalingen minus ALLE terugbetalingen (ook openstaande).
      * Wordt gebruikt door OrderRefundService om surplus/dubbelingen te berekenen.
      */

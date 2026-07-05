@@ -661,3 +661,105 @@ test('store rejects a sales_lead without a linked lead', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['sales_lead_id']);
 });
+
+test('store normalizes string item keys like item_1 from the frontend', function () {
+    $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 50]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'String Key Order',
+        'sales_lead_id' => $salesLead->id,
+        'items'         => [
+            'item_1' => [
+                'product_id'  => (string) $product->id,
+                'person_id'   => (string) $person->id,
+                'quantity'    => '2',
+                'total_price' => 100,
+            ],
+        ],
+    ]);
+
+    $response->assertOk();
+
+    $order = Order::where('title', 'String Key Order')->firstOrFail();
+    expect($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->product_id)->toBe($product->id)
+        ->and($order->orderItems->first()->quantity)->toBe(2);
+});
+
+test('update keeps existing items by numeric key and creates new ones for item_ keys', function () {
+    $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
+    $productA = Product::factory()->create(['price' => 10]);
+    $productB = Product::factory()->create(['price' => 20]);
+
+    $order = Order::factory()->create(['sales_lead_id' => $salesLead->id]);
+    $existingItem = $order->orderItems()->create([
+        'product_id'  => $productA->id,
+        'person_id'   => $person->id,
+        'quantity'    => 1,
+        'total_price' => 10,
+        'status'      => OrderItemStatus::NEW,
+    ]);
+
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), [
+        'title'         => $order->title,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
+        'items'         => [
+            (string) $existingItem->id => [
+                'product_id'  => $productA->id,
+                'person_id'   => $person->id,
+                'quantity'    => 5,
+                'total_price' => 50,
+            ],
+            'item_1' => [
+                'product_id'  => $productB->id,
+                'person_id'   => $person->id,
+                'quantity'    => 1,
+                'total_price' => 20,
+            ],
+        ],
+    ]);
+
+    $response->assertOk();
+
+    $order->refresh();
+    expect($order->orderItems)->toHaveCount(2)
+        ->and($existingItem->fresh()->quantity)->toBe(5);
+
+    $this->assertDatabaseHas('order_items', [
+        'order_id'   => $order->id,
+        'product_id' => $productB->id,
+    ]);
+});
+
+test('store skips item rows without product or person instead of failing validation', function () {
+    $salesLead = SalesLead::factory()->create();
+    $person = Person::factory()->create();
+    $product = Product::factory()->create(['price' => 50]);
+
+    $response = $this->postJson(route('admin.orders.store'), [
+        'title'         => 'Sparse Items Order',
+        'sales_lead_id' => $salesLead->id,
+        'items'         => [
+            'item_1' => [
+                'product_id' => '',
+                'person_id'  => '',
+                'quantity'   => '',
+            ],
+            'item_2' => [
+                'product_id'  => $product->id,
+                'person_id'   => $person->id,
+                'quantity'    => 1,
+                'total_price' => 50,
+            ],
+        ],
+    ]);
+
+    $response->assertOk();
+
+    $order = Order::where('title', 'Sparse Items Order')->firstOrFail();
+    expect($order->orderItems)->toHaveCount(1);
+});

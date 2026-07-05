@@ -205,6 +205,7 @@ class InkoopPdfParser
         ]);
 
         $lastFoundedName = null;
+        $lastBirthDate = null;
         $lastExamDate = null;
         $foundLastNameBySeparatorLineNumber = null;
         foreach ($lines as $lineNumber => $line) {

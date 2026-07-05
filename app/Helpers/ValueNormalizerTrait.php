@@ -3,7 +3,9 @@
 namespace App\Helpers;
 
 use BackedEnum;
+use Carbon\Carbon;
 use DateTimeInterface;
+use Exception;
 
 trait ValueNormalizerTrait
 {
@@ -176,5 +178,67 @@ trait ValueNormalizerTrait
         }
 
         return self::toString($value);
+    }
+
+    /**
+     * Extract values from array format (emails/phones).
+     */
+    private function extractArrayValues($array): array
+    {
+        $values = [];
+
+        foreach ($array as $item) {
+            if (is_array($item) && isset($item['value'])) {
+                $values[] = trim($item['value']);
+            } elseif (is_string($item)) {
+                $values[] = trim($item);
+            }
+        }
+
+        return array_filter($values);
+    }
+
+    /**
+     * Format date for comparison, handling invalid dates.
+     */
+    private function formatDateForComparison($date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            if ($date instanceof Carbon) {
+                // Check for invalid dates (like -0001-11-30 or 0000-00-00)
+                if ($date->year <= 0 || $date->year > 2100) {
+                    return null;
+                }
+
+                return $date->format('Y-m-d');
+            }
+
+            if (is_string($date)) {
+                // Skip obviously invalid dates
+                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || str_starts_with($date, '-0001')) {
+                    return null;
+                }
+
+                $carbonDate = Carbon::parse($date);
+                if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
+                    return null;
+                }
+
+                return $carbonDate->format('Y-m-d');
+            }
+        } catch (Exception $e) {
+            logger()->error('Error parsing date for comparison', [
+                'date'  => $date,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        return null;
     }
 }

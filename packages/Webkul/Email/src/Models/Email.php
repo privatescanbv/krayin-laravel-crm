@@ -12,6 +12,9 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -181,7 +184,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the parent email.
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(EmailProxy::modelClass(), 'parent_id');
     }
@@ -189,7 +192,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the lead.
      */
-    public function lead()
+    public function lead(): BelongsTo
     {
         return $this->belongsTo(LeadProxy::modelClass());
     }
@@ -197,7 +200,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the sales lead.
      */
-    public function salesLead()
+    public function salesLead(): BelongsTo
     {
         return $this->belongsTo(SalesLead::class, 'sales_lead_id');
     }
@@ -205,7 +208,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the order.
      */
-    public function order()
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
@@ -213,7 +216,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the clinic.
      */
-    public function clinic()
+    public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
     }
@@ -221,7 +224,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the emails.
      */
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(EmailProxy::modelClass(), 'parent_id')->orderBy('created_at', 'desc');
     }
@@ -229,7 +232,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the person that owns the thread.
      */
-    public function person()
+    public function person(): BelongsTo
     {
         return $this->belongsTo(PersonProxy::modelClass());
     }
@@ -237,7 +240,7 @@ class Email extends Model implements EmailContract
     /**
      * The tags that belong to the lead.
      */
-    public function tags()
+    public function tags(): BelongsToMany
     {
         return $this->belongsToMany(TagProxy::modelClass(), 'email_tags');
     }
@@ -245,7 +248,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the attachments.
      */
-    public function attachments()
+    public function attachments(): HasMany
     {
         return $this->hasMany(AttachmentProxy::modelClass(), 'email_id');
     }
@@ -253,7 +256,7 @@ class Email extends Model implements EmailContract
     /**
      * Get the folder that contains this email.
      */
-    public function folder()
+    public function folder(): BelongsTo
     {
         return $this->belongsTo(FolderProxy::modelClass());
     }

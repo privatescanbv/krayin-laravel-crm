@@ -22,7 +22,7 @@ class ShiftController extends Controller
         $resource = Resource::findOrFail($resourceId);
 
         if ($request->ajax() || $request->wantsJson()) {
-            return datagrid(ShiftDataGrid::class, ['resourceId' => $resource->id])->process();
+            return datagrid(ShiftDataGrid::class)->process();
         }
 
         return view('adminc.shifts.index', ['resource' => $resource]);

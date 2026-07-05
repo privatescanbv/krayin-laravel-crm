@@ -3,9 +3,10 @@
 namespace Webkul\Lead\Models;
 
 use App\Enums\PipelineType;
-use Illuminate\Database\Eloquent\Model;
-use Webkul\Lead\Contracts\Pipeline as PipelineContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Lead\Contracts\Pipeline as PipelineContract;
 
 class Pipeline extends Model implements PipelineContract
 {
@@ -46,7 +47,7 @@ class Pipeline extends Model implements PipelineContract
     /**
      * Get the leads.
      */
-    public function leads()
+    public function leads(): HasMany
     {
         return $this->hasMany(LeadProxy::modelClass(), 'lead_pipeline_id');
     }
@@ -54,7 +55,7 @@ class Pipeline extends Model implements PipelineContract
     /**
      * Get the stages that owns the pipeline.
      */
-    public function stages()
+    public function stages(): HasMany
     {
         return $this->hasMany(StageProxy::modelClass(), 'lead_pipeline_id')->orderBy('sort_order', 'ASC');
     }

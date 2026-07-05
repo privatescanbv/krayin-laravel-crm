@@ -57,6 +57,11 @@ jobs:
           php artisan migrate --force
           php artisan db:seed --force |& tee -a ci_error.txt
 
+      - name: Run static analysis (PHPStan)
+        run: |
+          set -o pipefail
+          vendor/bin/phpstan analyse --memory-limit=2G --no-progress |& tee -a ci_error.txt
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

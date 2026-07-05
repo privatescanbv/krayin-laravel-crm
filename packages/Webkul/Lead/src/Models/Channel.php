@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Lead\Contracts\Channel as ChannelContract;
 
 class Channel extends Model implements ChannelContract
@@ -21,7 +22,7 @@ class Channel extends Model implements ChannelContract
     /**
      * Get the leads.
      */
-    public function leads()
+    public function leads(): HasMany
     {
         return $this->hasMany(LeadProxy::modelClass());
     }

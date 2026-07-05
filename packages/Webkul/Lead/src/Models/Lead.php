@@ -22,6 +22,9 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -257,7 +260,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the user that owns the lead.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(UserProxy::modelClass());
     }
@@ -265,7 +268,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the user who created the lead.
      */
-    public function createdBy()
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(UserProxy::modelClass(), 'created_by');
     }
@@ -273,7 +276,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the user who last updated the lead.
      */
-    public function updatedBy()
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(UserProxy::modelClass(), 'updated_by');
     }
@@ -358,7 +361,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the type that owns the lead.
      */
-    public function type()
+    public function type(): BelongsTo
     {
         return $this->belongsTo(TypeProxy::modelClass(), 'lead_type_id');
     }
@@ -366,7 +369,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the source that owns the lead.
      */
-    public function source()
+    public function source(): BelongsTo
     {
         return $this->belongsTo(SourceProxy::modelClass(), 'lead_source_id');
     }
@@ -374,7 +377,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the pipeline that owns the lead.
      */
-    public function pipeline()
+    public function pipeline(): BelongsTo
     {
         return $this->belongsTo(PipelineProxy::modelClass(), 'lead_pipeline_id');
     }
@@ -382,7 +385,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the pipeline stage that owns the lead.
      */
-    public function stage()
+    public function stage(): BelongsTo
     {
         return $this->belongsTo(StageProxy::modelClass(), 'lead_pipeline_stage_id');
     }
@@ -390,7 +393,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the activities.
      */
-    public function activities()
+    public function activities(): HasMany
     {
         return $this->hasMany(ActivityProxy::modelClass());
     }
@@ -398,7 +401,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the emails.
      */
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(EmailProxy::modelClass());
     }
@@ -406,7 +409,7 @@ class Lead extends Model implements LeadContract
     /**
      * The tags that belong to the lead.
      */
-    public function tags()
+    public function tags(): BelongsToMany
     {
         return $this->belongsToMany(TagProxy::modelClass(), 'lead_tags')
             ->withPivot(['lead_id', 'tag_id']);
@@ -415,7 +418,7 @@ class Lead extends Model implements LeadContract
     /**
      * Persons related to this lead (many-to-many via lead_persons).
      */
-    public function persons()
+    public function persons(): BelongsToMany
     {
         return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id')
             ->using(LeadPerson::class)
@@ -434,7 +437,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the address that belongs to the lead.
      */
-    public function address()
+    public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
     }
@@ -442,7 +445,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the channel that owns the lead.
      */
-    public function channel()
+    public function channel(): BelongsTo
     {
         return $this->belongsTo(Channel::class, 'lead_channel_id');
     }
@@ -450,7 +453,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the department that owns the lead.
      */
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
@@ -458,7 +461,7 @@ class Lead extends Model implements LeadContract
     /**
      * Department chosen when the lead was marked won (Order pipeline target).
      */
-    public function orderDepartmentAfterWon()
+    public function orderDepartmentAfterWon(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'order_department_id_after_won');
     }
@@ -492,7 +495,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the organization that owns the lead.
      */
-    public function organization()
+    public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class, 'organization_id');
     }
@@ -505,7 +508,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the marketing data for this lead.
      */
-    public function marketingData()
+    public function marketingData(): HasMany
     {
         return $this->hasMany(LeadMarketingData::class);
     }
@@ -521,7 +524,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the contact person for this lead.
      */
-    public function contactPerson()
+    public function contactPerson(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'contact_person_id');
     }

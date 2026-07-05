@@ -4,6 +4,8 @@ namespace Webkul\Lead\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Lead\Contracts\Stage as StageContract;
 
 class Stage extends Model implements StageContract
@@ -45,7 +47,7 @@ class Stage extends Model implements StageContract
     /**
      * Get the pipeline that owns the pipeline stage.
      */
-    public function pipeline()
+    public function pipeline(): BelongsTo
     {
         return $this->belongsTo(PipelineProxy::modelClass(), 'lead_pipeline_id');
     }
@@ -53,7 +55,7 @@ class Stage extends Model implements StageContract
     /**
      * Get the leads.
      */
-    public function leads()
+    public function leads(): HasMany
     {
         return $this->hasMany(LeadProxy::modelClass(), 'lead_pipeline_stage_id');
     }

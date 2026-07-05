@@ -4,6 +4,7 @@ namespace Webkul\Activity\Models;
 
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Contracts\File as FileContract;
 
@@ -78,7 +79,7 @@ class File extends Model implements FileContract
     /**
      * Get the activity that owns the file.
      */
-    public function activity()
+    public function activity(): BelongsTo
     {
         return $this->belongsTo(ActivityProxy::modelClass());
     }

@@ -6,6 +6,7 @@ use App\Models\ResourceType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 abstract class BaseProduct extends Model
 {
@@ -32,7 +33,7 @@ abstract class BaseProduct extends Model
         'updated_by'       => 'integer',
     ];
 
-    public function resourceType()
+    public function resourceType(): BelongsTo
     {
         return $this->belongsTo(ResourceType::class);
     }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @mixin IdeHelperImportLog
@@ -27,7 +28,7 @@ class ImportLog extends Model
         'import_run_id'  => 'integer',
     ];
 
-    public function importRun()
+    public function importRun(): BelongsTo
     {
         return $this->belongsTo(ImportRun::class);
     }

@@ -3,6 +3,7 @@
 namespace Webkul\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Email\Contracts\Attachment as AttachmentContract;
 
@@ -39,7 +40,7 @@ class Attachment extends Model implements AttachmentContract
     /**
      * Get the email.
      */
-    public function email()
+    public function email(): BelongsTo
     {
         return $this->belongsTo(EmailProxy::modelClass());
     }

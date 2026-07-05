@@ -6,6 +6,7 @@ use App\Enums\NotificationReferenceType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Contact\Models\PersonProxy;
 
 /**
@@ -45,7 +46,7 @@ class PatientNotification extends Model
         'updated_by'                => 'integer',
     ];
 
-    public function patient()
+    public function patient(): BelongsTo
     {
         return $this->belongsTo(PersonProxy::modelClass(), 'patient_id');
     }

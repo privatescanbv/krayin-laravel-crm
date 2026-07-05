@@ -6,6 +6,8 @@ use App\Traits\HasAuditTrail;
 use App\Traits\HasDefaultContactInfo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Webkul\Activity\Models\Activity;
@@ -47,12 +49,12 @@ class Clinic extends Model
 
     protected $with = ['visitAddress'];
 
-    public function visitAddress()
+    public function visitAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'visit_address_id');
     }
 
-    public function postalAddress()
+    public function postalAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'postal_address_id');
     }
@@ -61,12 +63,12 @@ class Clinic extends Model
      * Backwards-compatible alias for the old single address relation.
      * Treats the visit address as the primary address.
      */
-    public function address()
+    public function address(): BelongsTo
     {
         return $this->visitAddress();
     }
 
-    public function partnerProducts()
+    public function partnerProducts(): BelongsToMany
     {
         return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product');
     }
@@ -79,12 +81,12 @@ class Clinic extends Model
         return $this->hasManyThrough(Resource::class, ClinicDepartment::class);
     }
 
-    public function activities()
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
     }
 
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(Email::class);
     }

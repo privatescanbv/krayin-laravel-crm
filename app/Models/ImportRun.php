@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @mixin IdeHelperImportRun
@@ -39,7 +40,7 @@ class ImportRun extends Model
         'updated_by'         => 'integer',
     ];
 
-    public function importLogs()
+    public function importLogs(): HasMany
     {
         return $this->hasMany(ImportLog::class);
     }

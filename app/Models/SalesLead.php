@@ -9,6 +9,9 @@ use BackedEnum;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -80,7 +83,7 @@ class SalesLead extends Model
     /**
      * Get the pipeline stage that owns the lead.
      */
-    public function stage()
+    public function stage(): BelongsTo
     {
         return $this->belongsTo(StageProxy::modelClass(), 'pipeline_stage_id');
     }
@@ -88,7 +91,7 @@ class SalesLead extends Model
     /**
      * Get the lead associated with the workflow.
      */
-    public function lead()
+    public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);
     }
@@ -119,7 +122,7 @@ class SalesLead extends Model
     /**
      * Get the user associated with the workflow.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -127,7 +130,7 @@ class SalesLead extends Model
     /**
      * Get the contact person for this sales lead.
      */
-    public function contactPerson()
+    public function contactPerson(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'contact_person_id');
     }
@@ -140,7 +143,7 @@ class SalesLead extends Model
     /**
      * Get the activities associated with the workflow lead.
      */
-    public function activities()
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class, 'sales_lead_id');
     }
@@ -148,7 +151,7 @@ class SalesLead extends Model
     /**
      * Get the emails associated with the sales lead.
      */
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(Email::class, 'sales_lead_id');
     }
@@ -264,7 +267,7 @@ class SalesLead extends Model
     /**
      * Persons related to this sales lead (many-to-many via saleslead_persons).
      */
-    public function persons()
+    public function persons(): BelongsToMany
     {
         return $this->belongsToMany(Person::class, 'saleslead_persons', 'saleslead_id', 'person_id');
     }
@@ -345,7 +348,7 @@ class SalesLead extends Model
     /**
      * Get the orders associated with this sales lead.
      */
-    public function orders()
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
@@ -353,7 +356,7 @@ class SalesLead extends Model
     /**
      * SalesLeads that this sales lead refers to (e.g. Preventie referrals from Herniapoli).
      */
-    public function outgoingRelations()
+    public function outgoingRelations(): HasMany
     {
         return $this->hasMany(SalesLeadRelation::class, 'source_saleslead_id');
     }
@@ -361,7 +364,7 @@ class SalesLead extends Model
     /**
      * SalesLeads that refer to this sales lead (reverse side of the relation).
      */
-    public function incomingRelations()
+    public function incomingRelations(): HasMany
     {
         return $this->hasMany(SalesLeadRelation::class, 'target_saleslead_id');
     }
@@ -369,7 +372,7 @@ class SalesLead extends Model
     /**
      * Preventie SalesLeads created from this Herniapoli sales lead.
      */
-    public function linkedPreventieSales()
+    public function linkedPreventieSales(): BelongsToMany
     {
         return $this->belongsToMany(
             SalesLead::class,
@@ -382,7 +385,7 @@ class SalesLead extends Model
     /**
      * Herniapoli SalesLeads that created this Preventie sales lead.
      */
-    public function linkedHerniaSales()
+    public function linkedHerniaSales(): BelongsToMany
     {
         return $this->belongsToMany(
             SalesLead::class,
@@ -409,7 +412,7 @@ class SalesLead extends Model
         }
     }
 
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
@@ -422,7 +425,7 @@ class SalesLead extends Model
     /**
      * Anamnesis records linked directly to this sales lead (via anamnesis.sales_id).
      */
-    public function anamnesisRecords()
+    public function anamnesisRecords(): HasMany
     {
         return $this->hasMany(Anamnesis::class, 'sales_id');
     }

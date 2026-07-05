@@ -3,6 +3,8 @@
 namespace Webkul\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Email\Contracts\Folder as FolderContract;
 
 class Folder extends Model implements FolderContract
@@ -47,7 +49,7 @@ class Folder extends Model implements FolderContract
     /**
      * Get the parent folder.
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(FolderProxy::modelClass(), 'parent_id');
     }
@@ -55,7 +57,7 @@ class Folder extends Model implements FolderContract
     /**
      * Get the child folders.
      */
-    public function children()
+    public function children(): HasMany
     {
         return $this->hasMany(FolderProxy::modelClass(), 'parent_id');
     }
@@ -63,7 +65,7 @@ class Folder extends Model implements FolderContract
     /**
      * Get the emails in this folder.
      */
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(EmailProxy::modelClass(), 'folder_id');
     }

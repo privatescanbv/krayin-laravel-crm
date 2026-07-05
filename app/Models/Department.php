@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\Group;
 
@@ -109,7 +110,7 @@ class Department extends Model
     /**
      * Get the groups that belong to this department.
      */
-    public function groups()
+    public function groups(): HasMany
     {
         return $this->hasMany(Group::class, 'department_id');
     }

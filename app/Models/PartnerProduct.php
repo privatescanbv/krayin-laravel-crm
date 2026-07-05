@@ -8,6 +8,8 @@ use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\Abstracts\BaseProduct;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -128,12 +130,12 @@ class PartnerProduct extends BaseProduct
             ->where('type', PurchasePriceType::RELATED);
     }
 
-    public function clinics()
+    public function clinics(): BelongsToMany
     {
         return $this->belongsToMany(Clinic::class, 'clinic_partner_product');
     }
 
-    public function relatedProducts()
+    public function relatedProducts(): BelongsToMany
     {
         return $this->belongsToMany(
             PartnerProduct::class,
@@ -143,12 +145,12 @@ class PartnerProduct extends BaseProduct
         )->whereNull('partner_products.deleted_at');
     }
 
-    public function resources()
+    public function resources(): BelongsToMany
     {
         return $this->belongsToMany(Resource::class, 'partner_product_resource');
     }
 
-    public function product()
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }

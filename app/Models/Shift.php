@@ -6,6 +6,7 @@ use App\Support\Period;
 use App\Traits\HasAuditTrail;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @mixin IdeHelperShift
@@ -38,7 +39,7 @@ class Shift extends BaseModel
         'updated_by'          => 'integer',
     ];
 
-    public function resource()
+    public function resource(): BelongsTo
     {
         return $this->belongsTo(Resource::class);
     }

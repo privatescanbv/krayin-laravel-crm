@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Webkul\User\Models\Role;
@@ -97,7 +98,7 @@ class User extends Authenticatable
     /**
      * Get the role that owns the user.
      */
-    public function role()
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
     }

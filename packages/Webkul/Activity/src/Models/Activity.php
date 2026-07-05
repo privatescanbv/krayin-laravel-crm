@@ -16,12 +16,14 @@ use App\Traits\HasAuditTrail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use Webkul\Contact\Models\Person;
-use Webkul\Email\Models\EmailProxy;
 use Webkul\Contact\Models\PersonProxy;
+use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\User\Models\GroupProxy;
 use Webkul\User\Models\UserProxy;
@@ -148,7 +150,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the user that owns the activity.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(UserProxy::modelClass());
     }
@@ -157,7 +159,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the file associated with the activity.
      */
-    public function files()
+    public function files(): HasMany
     {
         return $this->hasMany(FileProxy::modelClass(), 'activity_id');
     }
@@ -165,7 +167,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the lead that owns the activity.
      */
-    public function lead()
+    public function lead(): BelongsTo
     {
         return $this->belongsTo(LeadProxy::modelClass());
     }
@@ -176,7 +178,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the sales lead that owns the activity.
      */
-    public function salesLead()
+    public function salesLead(): BelongsTo
     {
         return $this->belongsTo(SalesLead::class, 'sales_lead_id');
     }
@@ -184,7 +186,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the clinic that owns the activity.
      */
-    public function clinic()
+    public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
     }
@@ -192,7 +194,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the order that owns the activity.
      */
-    public function order()
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
@@ -200,7 +202,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the patient messages associated with the activity.
      */
-    public function patientMessages()
+    public function patientMessages(): HasMany
     {
         return $this->hasMany(PatientMessage::class, 'activity_id');
     }
@@ -208,7 +210,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the primary person that owns the activity (direct FK).
      */
-    public function person()
+    public function person(): BelongsTo
     {
         return $this->belongsTo(PersonProxy::modelClass(), 'person_id');
     }
@@ -238,12 +240,12 @@ class Activity extends Model implements ActivityContract
     /**
      * All actions (notitie + belstatus) linked to this activity.
      */
-    public function actions()
+    public function actions(): HasMany
     {
         return $this->hasMany(ActivityAction::class, 'activity_id');
     }
 
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(EmailProxy::modelClass(), 'activity_id');
     }
@@ -251,7 +253,7 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the group that is assigned to this activity.
      */
-    public function group()
+    public function group(): BelongsTo
     {
         return $this->belongsTo(GroupProxy::modelClass(), 'group_id');
     }

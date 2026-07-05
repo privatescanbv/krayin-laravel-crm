@@ -3,9 +3,13 @@
 namespace App\Http\Resources;
 
 use App\Enums\PatientMessageSenderType;
+use App\Models\PatientMessage;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin PatientMessage
+ */
 class PatientMessageResource extends JsonResource
 {
     /**

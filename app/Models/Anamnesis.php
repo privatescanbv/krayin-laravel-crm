@@ -8,6 +8,7 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -216,22 +217,22 @@ class Anamnesis extends Model
     }
 
     // Relaties
-    public function lead()
+    public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class, 'lead_id');
     }
 
-    public function sales()
+    public function sales(): BelongsTo
     {
         return $this->belongsTo(SalesLead::class, 'sales_id');
     }
 
-    public function order()
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'order_id');
     }
 
-    public function person()
+    public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'person_id');
     }

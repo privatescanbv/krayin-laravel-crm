@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PatientMessageSenderType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\User\Models\UserProxy;
@@ -30,17 +31,17 @@ class PatientMessage extends Model
         'is_read'     => 'boolean',
     ];
 
-    public function person()
+    public function person(): BelongsTo
     {
         return $this->belongsTo(PersonProxy::modelClass());
     }
 
-    public function sender()
+    public function sender(): BelongsTo
     {
         return $this->belongsTo(UserProxy::modelClass(), 'sender_id');
     }
 
-    public function activity()
+    public function activity(): BelongsTo
     {
         return $this->belongsTo(Activity::class, 'activity_id');
     }

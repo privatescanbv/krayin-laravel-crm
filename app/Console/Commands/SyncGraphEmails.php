@@ -6,7 +6,12 @@ use App\Services\Mail\GraphMailService;
 use App\Services\Mail\MicrosoftGraphTokenService;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Sentry\State\Scope;
 use Webkul\Email\Enums\EmailFolderEnum;
+
+use function Sentry\captureException;
+use function Sentry\withScope;
 
 class SyncGraphEmails extends Command
 {
@@ -77,10 +82,33 @@ class SyncGraphEmails extends Command
                 $this->info('  -> Done.');
             } catch (Exception $e) {
                 $this->error("  -> Failed: {$e->getMessage()}");
+
+                Log::error('Graph mailbox sync failed', [
+                    'mailbox'   => $key,
+                    'address'   => $address,
+                    'exception' => $e,
+                ]);
+
+                // Report the underlying exception to Sentry with mailbox context so the
+                // actual cause is visible, instead of the generic scheduler
+                // "Scheduled command [...] failed with exit code [1]" wrapper.
+                withScope(function (Scope $scope) use ($e, $key, $address): void {
+                    $scope->setTag('mailbox', $key);
+                    $scope->setContext('mailbox', ['key' => $key, 'address' => $address]);
+                    captureException($e);
+                });
+
                 $errors++;
             }
         }
 
-        return $errors > 0 ? Command::FAILURE : Command::SUCCESS;
+        // A transient failure of a single mailbox runs every minute; the real
+        // exceptions are already reported to Sentry above with full context, so
+        // return SUCCESS to avoid the noisy scheduler-level "exit code 1" wrapper.
+        if ($errors > 0) {
+            $this->warn("{$errors} mailbox(es) failed to sync; see Sentry for details.");
+        }
+
+        return Command::SUCCESS;
     }
 }

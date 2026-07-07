@@ -265,6 +265,16 @@ class OrderItemController extends SimpleEntityController
     {
         $payload = parent::transformPayload($payload, $id);
 
+        // This app removes ConvertEmptyStringsToNull middleware, so an empty total_price
+        // arrives as '' and blows up the model's `decimal:2` cast (MathException).
+        // The column is NOT NULL (default 0), so normalize a blank value to 0, matching
+        // how the purchase-price fields are handled in validateStore().
+        if (array_key_exists('total_price', $payload)
+            && ($payload['total_price'] === '' || $payload['total_price'] === null)
+        ) {
+            $payload['total_price'] = 0;
+        }
+
         $productId = $payload['product_id'] ?? null;
 
         $selectedResourceTypeId = $payload['resource_type_id'] ?? null;

@@ -86,6 +86,29 @@ test('can update order_item', function () {
     ]);
 });
 
+test('can update order_item with empty total_price', function () {
+    $product = Product::factory()->create();
+    $item = OrderItem::factory()->create(['product_id' => $product->id, 'total_price' => 100]);
+
+    $payload = [
+        'order_id'    => $item->order_id,
+        'product_id'  => $item->product_id,
+        'person_id'   => test()->person->id,
+        'quantity'    => 3,
+        'total_price' => '',
+        '_method'     => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);
+    $response->assertOk()->assertJsonPath('data.quantity', 3);
+
+    $this->assertDatabaseHas('order_items', [
+        'id'          => $item->id,
+        'quantity'    => 3,
+        'total_price' => 0,
+    ]);
+});
+
 test('order_item resource_type_id is stored when different from product', function () {
     $rtA = ResourceType::factory()->create();
     $rtB = ResourceType::factory()->create();

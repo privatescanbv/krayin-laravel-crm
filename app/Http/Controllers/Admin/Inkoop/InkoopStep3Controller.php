@@ -23,9 +23,15 @@ class InkoopStep3Controller extends Controller
 
         $persons = InkoopPerson::where('invoice_id', $invoice->id)
             ->with(['invoiceItems' => function ($query) use ($invoice) {
-                $query->where('inkoop_invoice_id', $invoice->id)->with('crmProducts');
+                $query->where('inkoop_invoice_id', $invoice->id)
+                    ->orderBy('date')
+                    ->orderBy('id')
+                    ->with('crmProducts');
             }])
-            ->get();
+            ->get()
+            // Same person ordering as step 2: by earliest invoice item date.
+            ->sortBy(fn ($person) => $person->invoiceItems->min('date'))
+            ->values();
 
         $unprocessedItems = InkoopInvoiceItem::where('inkoop_invoice_id', $invoice->id)
             ->whereDoesntHave('crmProducts')
@@ -36,7 +42,7 @@ class InkoopStep3Controller extends Controller
             ->mapWithKeys(function (InkoopPerson $person) use ($invoice) {
                 return [
                     $person->id => OrderItem::query()
-                        ->with(['product', 'product.partnerProducts.purchasePrice', 'person', 'order', 'purchasePrice', 'invoicePurchasePrice'])
+                        ->with(['product', 'product.partnerProducts.purchasePrice', 'person', 'order', 'order.stage', 'purchasePrice', 'invoicePurchasePrice'])
                         ->where('person_id', $person->crm_id)
                         ->where('status', '!=', OrderItemStatus::LOST->value)
                         ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {

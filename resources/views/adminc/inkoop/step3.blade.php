@@ -28,7 +28,7 @@
                     class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $invoice->name ?? $invoice->filename }}</div>
             </div>
             <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="text-sm text-gray-500 dark:text-gray-400">Order status</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Factuur status</div>
                 <div
                     class="mt-1 font-medium text-gray-800 dark:text-gray-200">{{ $invoice->status?->label() ?? $invoice->status }}</div>
             </div>
@@ -63,6 +63,7 @@
                         <th class="px-4 py-3">Prijs</th>
                         <th class="px-4 py-3">CRM orderregel</th>
                         <th class="px-4 py-3">Order status</th>
+                        <th class="px-4 py-3">Orderregel status</th>
                         <th class="px-4 py-3">Afletter status</th>
                     </tr>
                 </thead>
@@ -82,7 +83,7 @@
                             <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">
                                 {{ trim($person->firstname . ' ' . $person->lastname) }}
                             </td>
-                            <td class="px-4 py-3" colspan="6">
+                            <td class="px-4 py-3" colspan="7">
                                 <span class="text-xs text-orange-500 dark:text-orange-400">Niet gekoppeld aan CRM — ga terug naar stap 1</span>
                             </td>
                         </tr>
@@ -166,7 +167,18 @@
                                     </div>
                                 </td>
 
-                                {{-- Order item status --}}
+                                {{-- Order status (pipeline stage van de order) --}}
+                                <td class="px-4 py-3 align-top">
+                                    @if ($orderItem->order?->stage)
+                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                            {{ $orderItem->order->stage->name }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-gray-400">—</span>
+                                    @endif
+                                </td>
+
+                                {{-- Orderregel status --}}
                                 <td class="px-4 py-3 align-top">
                                     @if ($orderItemStatus)
                                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $orderItemStatus->badgeClass() }}">
@@ -225,7 +237,7 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-3 align-top" colspan="3">
+                                    <td class="px-4 py-3 align-top" colspan="4">
                                         <span class="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
                                             <span class="icon-warning text-sm"></span>
                                             Geen CRM-match — handmatig verwerken

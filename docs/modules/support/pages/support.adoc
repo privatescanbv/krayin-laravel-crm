@@ -1,4 +1,4 @@
-=== Migratie plan
+=== Migratie plan (SugarCRM Suite naar huidige CRM)
 
 1. run reset_prod.sh (import van data, verwijderd alle bestaande)
 2. Zet de bestanden voor email bijlage klaar
@@ -35,91 +35,161 @@ Harm-Jan, CTO van CODE 14 in Rijssen.
 Backup-expert met kennis van de softwarearchitectuur. Zij zijn ervaren met een Laravel stack, die hier is opgezet.
 
 ==== Steentjes
-Speelt nog een tijdelijke rol in de hosting van de huidige SugarCRM Suite.
+Speelde nog een rol in de hosting van het oude crm, SugarCRM Suite.
 Contactgegevens zijn intern bekend. Alleen van toepassing zolang dit systeem nog operationeel is.
 
+=== Hosting en servers (IceHosting)
+
+De CRM-omgeving draait bij hostingpartij *IceHosting* (contactgegevens: zie het Calamiteitenplan hierboven). Bij IceHosting nemen we twee VPS'en af:
+
+|===
+| VPS | Adres | Rol
+
+| Server1 | `*.75` | Productieomgeving
+| Server2 | `*.76` | Acceptatie- en dataomgeving
+|===
+
+Deze twee VPS'en zijn dezelfde servers als in <<borg-repositories,Borg repositories>>.
+
+*Beheer via 'Mijn IceHosting'*
+
+De VPS'en worden beheerd via het klantportaal van IceHosting: link:https://www.icehosting.nl/bestel/[Mijn IceHosting]. Hier zijn onder meer de status van de VPS'en, de afgenomen resources, facturatie en een (her)start van een VPS te regelen.
+
+*Secrets en inloggegevens*
+
+Alle benodigde secrets en inloggegevens (o.a. Mijn IceHosting, SSH-toegang tot de VPS'en en de back-upserver) worden gedeeld via *Keeper*. Bewaar geen inloggegevens in deze documentatie of in de repository.
 
 === Afspraken
 
 * **Backups & herstelprocedures**
 
-De CRM-omgeving maakt gebruik van een centrale backupstrategie op VPS-niveau.
+De CRM-omgeving maakt gebruik van een centrale backupstrategie op applicatieniveau.
 
-* Backups worden uitgevoerd over de *gehele VPS* en omvatten:
-** databases
-** applicatiebestanden
-** gehoste documenten (zoals CRM-documenten en bijlagen)
+De backup bestaat uit:
 
-* Er wordt gebruikgemaakt van *incrementele backups*, waarbij alleen gewijzigde data sinds de vorige backup wordt opgeslagen.
-* Backups draaien op *dagelijkse basis*.
-* De *retentieperiode* bedraagt maximaal *7 dagen* (rolling window).
-* Herstel (restore) kan plaatsvinden op:
-** volledig VPS-niveau
-** of een specifieke momentopname binnen de beschikbare retentieperiode
+* een gecomprimeerde MySQL-dump (`.sql.gz`);
+* een Borg-back-up van:
+** de volledige applicatiemap: `/home/apps/storage/crm`
+** de databaseback-ups in `/opt/backup`
 
-Deze aanpak zorgt voor een eenduidige en beheersbare herstelprocedure, waarbij data en documenten altijd consistent vanuit één bron worden hersteld.
+De database wordt iedere nacht eerst als `.sql.gz`-bestand weggeschreven naar `/opt/backup`. Vervolgens worden zowel deze databaseback-ups als de applicatiebestanden opgenomen in dezelfde Borg-back-up. Hierdoor zijn database en bestanden afkomstig uit hetzelfde back-upmoment en kunnen ze consistent worden hersteld.
+
+* Backups worden dagelijks uitgevoerd.
+* Er wordt gebruikgemaakt van incrementele Borg-back-ups, waarbij alleen gewijzigde data sinds de vorige back-up wordt opgeslagen.
+* De retentieperiode bedraagt maximaal **7 dagen** (rolling window).
+* Herstel kan plaatsvinden van:
+** de volledige applicatie (`/home/apps/storage/crm`);
+** de database;
+** afzonderlijke bestanden of mappen;
+** een specifieke back-up (snapshot) binnen de retentieperiode.
+
+Deze aanpak zorgt ervoor dat applicatiebestanden, documenten en database altijd vanuit hetzelfde back-upmoment kunnen worden hersteld.
 
 ==== Controleren of de nachtelijke back-up de database bevat
 
-Naast de VPS-brede back-up wordt de database ook apart als `.sql.gz`-dump weggeschreven, voordat deze wordt meegenomen in de Borg-back-up hieronder.
+Controleer op de betreffende server in `/opt/backup`:
 
-Controleer op de server in `/opt/backup`:
+* de logbestanden van het back-upproces op fouten;
+* of er `.sql.gz`-bestanden aanwezig zijn met een datum/timestamp van de afgelopen nacht.
 
-* de logs van het back-upproces op fouten;
-* of er `.sql.gz`-bestanden staan met een datum/timestamp van de afgelopen nacht.
+Ontbreken deze bestanden of hebben zij een oude datum, dan is de databaseback-up niet aangemaakt. Los dit eerst op voordat een restore vanuit Borg wordt uitgevoerd.
 
-Ontbreken deze bestanden of hebben ze een oude datum, dan is de databasedump die nacht niet gemaakt — dit moet eerst opgelost worden voordat je een restore vanuit Borg probeert.
+Controleer vervolgens of ook de Borg-back-up van dezelfde nacht aanwezig is:
 
-==== De Borg-backup bekijken
-
-NOTE: Gebruikt Borg *1.2*. Documentatie: https://borgbackup.readthedocs.io/en/stable/index.html
-
-Vereiste: je moet zijn ingelogd als user *root*, omdat de SSH-login naar de back-upserver onder deze user is ingesteld.
-
-Lijst van gemaakte back-ups opvragen voor een omgeving, bijvoorbeeld `intern.privatescan.nl`:
-
-```bash
-borg list privatescan@10.0.0.1:~/intern.privatescan.nl/borg/
-```
-
-Voor een andere omgeving vervang je de hostnaam in het pad, bijvoorbeeld voor `data.privatescan.nl`:
-
-```bash
+[source,bash]
+----
 borg list privatescan@10.0.0.1:~/data.privatescan.nl/borg/
-```
+----
 
-Dit toont de beschikbare archieven (met datum/tijd in de naam) binnen de retentieperiode.
+[#borg-repositories]
+==== Borg repositories
+
+De back-upserver (`10.0.0.1`) bevat meerdere Borg-repositories.
+
+|===
+| Repository | Server | Omgeving
+
+| `privatescan@10.0.0.1:~/data.privatescan.nl/borg/`
+| Server1 (`*.75`)
+| Productie
+
+| `privatescan@10.0.0.1:~/intern.privatescan.nl/borg/`
+| Server2 (`*.76`)
+| Acceptatie en Data
+|===
+
+==== De Borg-back-up bekijken
+
+NOTE: De productieomgeving gebruikt **BorgBackup 1.2**.
+
+Documentatie:
+https://borgbackup.readthedocs.io/en/stable/index.html
+
+Vereiste: log in als gebruiker `root`, omdat de SSH-toegang naar de back-upserver onder deze gebruiker is geconfigureerd.
+
+Beschikbare back-ups opvragen van de productieomgeving:
+
+[source,bash]
+----
+borg list privatescan@10.0.0.1:~/data.privatescan.nl/borg/
+----
+
+Beschikbare back-ups opvragen van de acceptatie-/dataomgeving:
+
+[source,bash]
+----
+borg list privatescan@10.0.0.1:~/intern.privatescan.nl/borg/
+----
+
+De output toont alle beschikbare snapshots binnen de retentieperiode.
 
 ==== Een back-up terugzetten
 
-1. Bepaal met `borg list` hierboven welk archief je nodig hebt.
-2. Extraheer het archief (of specifiek de databasebestanden eruit) naar een tijdelijke map:
+. Bepaal met `borg list` welk archief moet worden hersteld.
+. Maak een tijdelijke restorelocatie aan:
 +
-```bash
+[source,bash]
+----
 mkdir -p /tmp/restore
 cd /tmp/restore
+----
+. Herstel de databaseback-ups uit het gewenste archief:
++
+[source,bash]
+----
 borg extract privatescan@10.0.0.1:~/<omgeving>/borg/::<archiefnaam> opt/backup
-```
+----
 +
-Vervang `<omgeving>` (bijv. `intern.privatescan.nl`) en `<archiefnaam>` (uit de `borg list`-output).
-
-3. Pak het gewenste `.sql.gz`-bestand uit en zet de database terug:
+Vervang:
 +
-```bash
-gunzip -c /tmp/restore/opt/backup/<naam-database>.sql.gz | mysql -u <user> -p <database>
-```
+* `<omgeving>` door bijvoorbeeld `data.privatescan.nl` of `intern.privatescan.nl`;
+* `<archiefnaam>` door de gewenste snapshot uit `borg list`.
 
-4. Controleer na het terugzetten of de applicatie correct werkt met de herstelde data.
+. Controleer of de gewenste databaseback-up aanwezig is:
++
+[source,bash]
+----
+ls -lh /tmp/restore/opt/backup
+----
 
-Neem bij twijfel of vragen contact op met Mark voordat je een productie-restore uitvoert.
+. Zet de database terug:
++
+[source,bash]
+----
+gunzip -c /tmp/restore/opt/backup/<database>.sql.gz | mysql -u <user> -p <database>
+----
+
+. Controleer na de restore of de applicatie correct functioneert.
+
+TIP: Wanneer ook applicatiebestanden moeten worden hersteld, extraheer dan de map `/home/apps/storage/crm` uit dezelfde Borg-snapshot. Hierdoor blijven database en bestanden synchroon.
 
 * **Monitoring & foutdetectie**
-Voor monitoring en foutanalyse zetten we Sentry in. Hiermee kunnen we technische issues vroegtijdig signaleren en gericht oplossen.
+
+Voor monitoring en foutanalyse wordt Sentry gebruikt. Hiermee kunnen technische problemen vroegtijdig worden gesignaleerd en opgelost.
 
 * **Versiebeheer & Continuous Integration**
-Git en CI zijn ondergebracht in GitHub. Dit biedt overzichtelijke versiecontrole, pull requests, en geautomatiseerde tests bij elke wijziging.
 
-
+Broncode, versiebeheer en Continuous Integration zijn ondergebracht in GitHub. Wijzigingen verlopen via pull requests en geautomatiseerde controles.
 === Tooling en kosten
 
 link:https://docs.google.com/spreadsheets/d/1vvzTMvJQpx4oGzq5g5MiCKBZr1UPCc2yuUc02yLJ6uw/edit?gid=1231716762#gid=1231716762[Kostenoverzicht]

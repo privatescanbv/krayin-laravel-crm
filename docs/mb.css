@@ -13,3 +13,64 @@ h4, h5, h6, #toctitle,
 .sidebarblock > .content > .title {
     color: #0064A7;
 }
+
+/* ---------------------------------------------------------------------------
+   Compacte weergave
+   Asciidoctor default gebruikt line-height 1.6 en ruime marges rond
+   opsommingen; dat neemt te veel verticale ruimte in. Onderstaande regels
+   verkleinen vooral de regelafstand en de ruimte tussen list-items.
+   --------------------------------------------------------------------------- */
+
+p,
+li,
+.ulist li,
+.olist li,
+dt,
+dd,
+td.content {
+    line-height: 1.35;
+}
+
+/* Minder ruimte onder los tekst en onder hele lijsten */
+p {
+    margin-bottom: 0.5em;
+}
+
+ul,
+ol,
+dl,
+.ulist,
+.olist,
+.dlist {
+    margin-bottom: 0.5em;
+}
+
+/* Ruimte tussen list-items minimaliseren */
+.ulist > ul > li,
+.olist > ol > li,
+.dlist > dl > dt,
+.dlist > dl > dd {
+    margin-top: 0.1em;
+    margin-bottom: 0.15em;
+}
+
+/* Paragrafen binnen een list-item niet extra laten uitademen */
+li p,
+ul dd,
+ol dd,
+.olist .olist,
+.ulist .olist,
+.olist .ulist,
+.ulist .ulist {
+    margin-top: 0;
+    margin-bottom: 0.15em;
+}
+
+/* Geneste opsommingen dicht op elkaar */
+ul li ul,
+ul li ol,
+ol li ol,
+ol li ul {
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+}

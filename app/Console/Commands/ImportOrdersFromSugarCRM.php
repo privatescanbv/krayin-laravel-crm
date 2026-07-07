@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Product\Models\Product;
 use Webkul\User\Models\User;
@@ -1659,11 +1660,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return;
         }
 
+        // Import tasks for every matching order regardless of pipeline stage: these are
+        // historical records and a completed (won/lost) order can still have relevant tasks.
         $ordersByExternalId = Order::whereIn('external_id', $sugarOrderIds)
-            ->where(function ($q) {
-                $q->whereNull('pipeline_stage_id')
-                    ->orWhereHas('stage', fn ($sq) => $sq->where('is_won', false)->where('is_lost', false));
-            })
             ->get()
             ->keyBy('external_id');
 
@@ -1687,6 +1686,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
+
+        $this->importOrderActivities($activityImporter, $sugarOrderIds, $parentType);
     }
 
     private function importTasksForExistingOrders(string $connection): void
@@ -1739,5 +1740,103 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
+
+        $this->importOrderActivities($activityImporter, $sugarOrderIds, $parentType);
+    }
+
+    /**
+     * Import emails, notes and calls that are linked directly to a Sugar order
+     * (parent_type = PCRM_SalesOrder). These are historical records, so — unlike
+     * task import — they are imported for every matching order regardless of the
+     * order's pipeline stage (won/lost included).
+     *
+     * @param  string[]  $sugarOrderIds  Sugar order UUIDs
+     */
+    private function importOrderActivities(
+        ActivityImporter $activityImporter,
+        array $sugarOrderIds,
+        string $parentType,
+    ): void {
+        $sugarOrderIds = array_values(array_filter($sugarOrderIds));
+        if (empty($sugarOrderIds)) {
+            return;
+        }
+
+        $ordersByExternalId = Order::whereIn('external_id', $sugarOrderIds)->get()->keyBy('external_id');
+        if ($ordersByExternalId->isEmpty()) {
+            return;
+        }
+
+        // Emails
+        try {
+            $emailActivities = $activityImporter->extractEmailActivitiesForOrders($sugarOrderIds, $parentType);
+            $ids = collect($emailActivities)->flatten(1)->pluck('id')->filter()->values()->all();
+            $existingEmails = ! empty($ids)
+                ? Email::whereIn('unique_id', $ids)->get()->keyBy('unique_id')
+                : collect();
+
+            $imported = 0;
+            $skipped = 0;
+            foreach ($sugarOrderIds as $sugarOrderId) {
+                $order = $ordersByExternalId->get($sugarOrderId);
+                if (! $order) {
+                    continue;
+                }
+                $stats = $activityImporter->importEmailsForOrder($order, $emailActivities, $existingEmails);
+                $imported += $stats['imported'];
+                $skipped += $stats['skipped'];
+            }
+            $this->info("Order emails: imported={$imported}, skipped={$skipped}");
+        } catch (Exception $e) {
+            $this->warn('Order email import skipped: '.$e->getMessage());
+        }
+
+        // Notes
+        try {
+            $noteActivities = $activityImporter->extractNoteActivitiesForOrders($sugarOrderIds, $parentType);
+            $ids = collect($noteActivities)->flatten(1)->pluck('id')->filter()->values()->all();
+            $existingNotes = ! empty($ids)
+                ? Activity::whereIn('external_id', $ids)->get()->keyBy('external_id')
+                : collect();
+
+            $imported = 0;
+            $skipped = 0;
+            foreach ($sugarOrderIds as $sugarOrderId) {
+                $order = $ordersByExternalId->get($sugarOrderId);
+                if (! $order) {
+                    continue;
+                }
+                $stats = $activityImporter->importNoteActivitiesForOrder($order, $noteActivities, $existingNotes);
+                $imported += $stats['imported'];
+                $skipped += $stats['skipped'];
+            }
+            $this->info("Order notes: imported={$imported}, skipped={$skipped}");
+        } catch (Exception $e) {
+            $this->warn('Order note import skipped: '.$e->getMessage());
+        }
+
+        // Calls
+        try {
+            $callActivities = $activityImporter->extractCallActivitiesForOrders($sugarOrderIds, $parentType);
+            $ids = collect($callActivities)->flatten(1)->pluck('id')->filter()->values()->all();
+            $existingCalls = ! empty($ids)
+                ? Activity::whereIn('external_id', $ids)->get()->keyBy('external_id')
+                : collect();
+
+            $imported = 0;
+            $skipped = 0;
+            foreach ($sugarOrderIds as $sugarOrderId) {
+                $order = $ordersByExternalId->get($sugarOrderId);
+                if (! $order) {
+                    continue;
+                }
+                $stats = $activityImporter->importCallActivitiesForOrder($order, $callActivities, $existingCalls);
+                $imported += $stats['imported'];
+                $skipped += $stats['skipped'];
+            }
+            $this->info("Order calls: imported={$imported}, skipped={$skipped}");
+        } catch (Exception $e) {
+            $this->warn('Order call import skipped: '.$e->getMessage());
+        }
     }
 }

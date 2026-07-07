@@ -110,12 +110,12 @@ De back-upserver (`10.0.0.1`) bevat meerdere Borg-repositories.
 | Repository | Server | Omgeving
 
 | `privatescan@10.0.0.1:~/data.privatescan.nl/borg/`
-| Server1 (`*.75`)
-| Productie
+| Data (`*.76`)
+| Acceptatie en Data
 
 | `privatescan@10.0.0.1:~/intern.privatescan.nl/borg/`
-| Server2 (`*.76`)
-| Acceptatie en Data
+| Intern (`*.75`)
+| Productie
 |===
 
 ==== De Borg-back-up bekijken

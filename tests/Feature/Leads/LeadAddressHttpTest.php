@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Lead\Models\Lead;

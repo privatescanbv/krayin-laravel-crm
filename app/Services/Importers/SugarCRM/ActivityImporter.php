@@ -13,6 +13,7 @@ use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
@@ -554,6 +555,402 @@ class ActivityImporter
     }
 
     /**
+     * Extract email activities linked directly to Sugar orders.
+     *
+     * Unlike {@see extractEmailActivities} (which links via emails_beans to Leads),
+     * order-linked emails use emails.parent_id + parent_type = 'PCRM_SalesOrder'.
+     *
+     * @param  string[]  $sugarOrderIds  Sugar order UUIDs (pcrm_salesorder.id)
+     * @return array [sugar_order_id => [email_data, ...]]
+     */
+    public function extractEmailActivitiesForOrders(array $sugarOrderIds, string $parentType = 'PCRM_SalesOrder'): array
+    {
+        if (empty($sugarOrderIds)) {
+            return [];
+        }
+
+        try {
+            $this->command->validateTableExists($this->connection, ['emails', 'emails_text']);
+
+            $emails = DB::connection($this->connection)
+                ->table('emails as e')
+                ->join('emails_text as et', 'e.id', '=', 'et.email_id')
+                ->select([
+                    'e.id',
+                    'e.name as subject',
+                    'e.date_entered',
+                    'e.date_modified',
+                    'e.assigned_user_id',
+                    'e.created_by',
+                    'e.deleted',
+                    'e.date_sent',
+                    'e.message_id',
+                    'e.type',
+                    'e.status',
+                    'e.flagged',
+                    'e.reply_to_status',
+                    'e.intent',
+                    'e.mailbox_id',
+                    'e.parent_type',
+                    'e.parent_id',
+                    'et.description',
+                    'et.description_html',
+                    'et.raw_source',
+                ])
+                ->whereIn('e.parent_id', $sugarOrderIds)
+                ->where('e.parent_type', '=', $parentType)
+                ->where('e.deleted', '=', 0)
+                ->orderBy('e.date_sent', 'asc')
+                ->get();
+
+            $this->command->infoV('Found '.$emails->count().' email activities for orders');
+
+            $result = [];
+            foreach ($emails as $email) {
+                $result[$email->parent_id][] = $email;
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            $this->command->error('Failed to extract email activities for orders: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * Import order-linked emails as Email records (with import tag), linked via order_id.
+     *
+     * @param  array  $emailActivities  Emails grouped by Sugar order UUID
+     * @param  Collection|null  $existingEmails  Pre-fetched Email records keyed by unique_id
+     * @return array{imported: int, skipped: int}
+     */
+    public function importEmailsForOrder(
+        Order $order,
+        array $emailActivities,
+        ?Collection $existingEmails = null,
+    ): array {
+        $imported = 0;
+        $skipped = 0;
+
+        $orderEmails = $emailActivities[$order->external_id] ?? [];
+        if (empty($orderEmails)) {
+            return ['imported' => $imported, 'skipped' => $skipped];
+        }
+
+        $importTag = Tag::firstOrCreate(['name' => 'import'], ['color' => '#6B7280', 'user_id' => 1]);
+        $folderId = $this->getImportedFolderId();
+
+        $this->command->infoV('Importing '.count($orderEmails)." email(s) for order external_id={$order->external_id}");
+
+        foreach ($orderEmails as $emailData) {
+            try {
+                $existing = $existingEmails !== null
+                    ? $existingEmails->get($emailData->id)
+                    : Email::where('unique_id', $emailData->id)->first();
+
+                if ($existing) {
+                    if ($existing->order_id !== $order->id) {
+                        $existing->update(['order_id' => $order->id]);
+                        $this->command->infoV("Re-linked email {$emailData->id} to order {$order->external_id}");
+                    }
+                    $skipped++;
+
+                    continue;
+                }
+
+                $emailRecord = [
+                    'subject'       => $emailData->subject ?? 'Email',
+                    'source'        => 'web',
+                    'name'          => $emailData->subject ?? 'Email',
+                    'user_type'     => 'person',
+                    'is_read'       => 1,
+                    'folder_id'     => $folderId,
+                    'from'          => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
+                    'sender'        => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
+                    'reply_to'      => [],
+                    'cc'            => [],
+                    'bcc'           => [],
+                    'reply'         => $this->formatEmailContent($emailData),
+                    'unique_id'     => $emailData->id,
+                    // Sugar allows a null message_id, but the emails column is NOT NULL; fall back
+                    // to the (unique) Sugar email id so the record can still be stored.
+                    'message_id'    => $emailData->message_id ?: $emailData->id,
+                    'parent_id'     => null,
+                    'order_id'      => $order->id,
+                    'sales_lead_id' => $order->sales_lead_id,
+                ];
+
+                $timestamps = [
+                    'created_at' => $this->parseSugarDate($emailData->date_entered),
+                    'updated_at' => $this->parseSugarDate($emailData->date_modified),
+                ];
+
+                $email = $this->createEntityWithTimestamps(Email::class, $emailRecord, $timestamps);
+                $email->tags()->attach($importTag->id);
+
+                $this->command->infoV("✓ Imported email: {$emailData->subject} for order {$order->external_id} (Email ID: {$email->id})");
+                $imported++;
+            } catch (Exception $e) {
+                $this->command->error("Failed to import order email {$emailData->id}: ".$e->getMessage());
+            }
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
+     * Extract note activities linked to Sugar orders (parent_type = 'PCRM_SalesOrder').
+     * Attachments (notes with a filename) are still imported as text notes; the file itself is ignored.
+     *
+     * @param  string[]  $sugarOrderIds  Sugar order UUIDs (pcrm_salesorder.id)
+     * @return array [sugar_order_id => [note_data, ...]]
+     */
+    public function extractNoteActivitiesForOrders(array $sugarOrderIds, string $parentType = 'PCRM_SalesOrder'): array
+    {
+        if (empty($sugarOrderIds)) {
+            return [];
+        }
+
+        try {
+            $this->command->validateTableExists($this->connection, ['notes']);
+
+            $notes = DB::connection($this->connection)
+                ->table('notes')
+                ->select([
+                    'id',
+                    'name',
+                    'date_entered',
+                    'date_modified',
+                    'assigned_user_id',
+                    'created_by',
+                    'description',
+                    'parent_type',
+                    'parent_id',
+                    'filename',
+                ])
+                ->whereIn('parent_id', $sugarOrderIds)
+                ->where('parent_type', '=', $parentType)
+                ->where('deleted', '=', 0)
+                ->orderBy('date_entered', 'asc')
+                ->get();
+
+            $this->command->infoV('Found '.$notes->count().' note activities for orders');
+
+            $result = [];
+            foreach ($notes as $note) {
+                $result[$note->parent_id][] = $note;
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            $this->command->error('Failed to extract note activities for orders: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * Import order-linked notes as Activity (type note), linked via order_id.
+     *
+     * @param  array  $noteActivities  Notes grouped by Sugar order UUID
+     * @param  Collection|null  $existingActivities  Pre-fetched Activity records keyed by external_id
+     * @return array{imported: int, skipped: int}
+     */
+    public function importNoteActivitiesForOrder(
+        Order $order,
+        array $noteActivities,
+        ?Collection $existingActivities = null,
+    ): array {
+        $imported = 0;
+        $skipped = 0;
+
+        $orderNotes = $noteActivities[$order->external_id] ?? [];
+        if (empty($orderNotes)) {
+            return ['imported' => $imported, 'skipped' => $skipped];
+        }
+
+        $this->command->infoV('Importing '.count($orderNotes)." note(s) for order external_id={$order->external_id}");
+
+        foreach ($orderNotes as $noteData) {
+            try {
+                $existing = $existingActivities !== null
+                    ? $existingActivities->get($noteData->id)
+                    : Activity::where('external_id', $noteData->id)->first();
+
+                if ($existing) {
+                    if ($existing->order_id !== $order->id) {
+                        $existing->update(['order_id' => $order->id]);
+                        $this->command->infoV("Re-linked note {$noteData->id} to order {$order->external_id}");
+                    }
+                    $skipped++;
+
+                    continue;
+                }
+
+                // In Sugar the note body is usually in `name`; `description` may hold extra detail.
+                $body = trim((string) ($noteData->description ?: $noteData->name ?: ''));
+                $title = ! empty($noteData->name)
+                    ? Str::limit((string) $noteData->name, 80)
+                    : 'Notitie';
+
+                $activityData = [
+                    'title'       => $title,
+                    'type'        => ActivityType::NOTE->value,
+                    'comment'     => $body,
+                    'external_id' => $noteData->id,
+                    'is_done'     => true,
+                    'user_id'     => $this->mapAssignedUserOrNull($noteData->assigned_user_id),
+                    'order_id'    => $order->id,
+                ];
+
+                $timestamps = [
+                    'created_at' => $this->parseSugarDate($noteData->date_entered),
+                    'updated_at' => $this->parseSugarDate($noteData->date_modified),
+                ];
+
+                $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+                $this->syncActivityStatus($activity);
+
+                $this->command->infoV("✓ Imported note for order {$order->external_id}");
+                $imported++;
+            } catch (Exception $e) {
+                $this->command->error("Failed to import note {$noteData->id}: ".$e->getMessage());
+            }
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
+     * Extract call activities linked to Sugar orders (parent_type = 'PCRM_SalesOrder').
+     *
+     * @param  string[]  $sugarOrderIds  Sugar order UUIDs (pcrm_salesorder.id)
+     * @return array [sugar_order_id => [call_data, ...]]
+     */
+    public function extractCallActivitiesForOrders(array $sugarOrderIds, string $parentType = 'PCRM_SalesOrder'): array
+    {
+        if (empty($sugarOrderIds)) {
+            return [];
+        }
+
+        try {
+            $this->command->validateTableExists($this->connection, ['calls']);
+
+            $calls = DB::connection($this->connection)
+                ->table('calls as c')
+                ->leftJoin('calls_cstm as cc', 'c.id', '=', 'cc.id_c')
+                ->select([
+                    'c.id',
+                    'c.name',
+                    'c.date_entered',
+                    'c.date_modified',
+                    'c.assigned_user_id',
+                    'c.created_by',
+                    'c.description',
+                    'c.date_start',
+                    'c.date_end',
+                    'c.parent_type',
+                    'c.status',
+                    'c.direction',
+                    'c.parent_id',
+                    'cc.belgroep_c',
+                ])
+                ->whereIn('c.parent_id', $sugarOrderIds)
+                ->where('c.parent_type', '=', $parentType)
+                ->where('c.deleted', '=', 0)
+                ->orderBy('c.date_entered', 'asc')
+                ->get();
+
+            $this->command->infoV('Found '.$calls->count().' call activities for orders');
+
+            $result = [];
+            foreach ($calls as $call) {
+                $result[$call->parent_id][] = $call;
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            $this->command->error('Failed to extract call activities for orders: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * Import order-linked call activities as Activity (type call), linked via order_id.
+     *
+     * @param  array  $callActivities  Calls grouped by Sugar order UUID
+     * @param  Collection|null  $existingActivities  Pre-fetched Activity records keyed by external_id
+     * @return array{imported: int, skipped: int}
+     */
+    public function importCallActivitiesForOrder(
+        Order $order,
+        array $callActivities,
+        ?Collection $existingActivities = null,
+    ): array {
+        $imported = 0;
+        $skipped = 0;
+
+        $orderCalls = $callActivities[$order->external_id] ?? [];
+        if (empty($orderCalls)) {
+            return ['imported' => $imported, 'skipped' => $skipped];
+        }
+
+        $this->command->infoV('Importing '.count($orderCalls)." call(s) for order external_id={$order->external_id}");
+
+        foreach ($orderCalls as $callData) {
+            try {
+                $existing = $existingActivities !== null
+                    ? $existingActivities->get($callData->id)
+                    : Activity::where('external_id', $callData->id)->first();
+
+                if ($existing) {
+                    if ($existing->order_id !== $order->id) {
+                        $existing->update(['order_id' => $order->id]);
+                        $this->command->infoV("Re-linked call {$callData->id} to order {$order->external_id}");
+                    }
+                    $skipped++;
+
+                    continue;
+                }
+
+                $activityData = [
+                    'title'         => $callData->name ?? 'Bel activiteit',
+                    'type'          => ActivityType::CALL->value,
+                    'comment'       => $callData->description ?? '',
+                    'external_id'   => $callData->id,
+                    'additional'    => [
+                        'direction' => $callData->direction,
+                        'status'    => $callData->status,
+                        'belgroep'  => $callData->belgroep_c ?? null,
+                    ],
+                    'schedule_from' => $this->parseSugarDate($callData->date_start),
+                    'schedule_to'   => $this->parseSugarDate($callData->date_end),
+                    'is_done'       => $this->mapCallStatusByStatusOnly($callData->status),
+                    'user_id'       => $this->mapAssignedUserOrNull($callData->assigned_user_id),
+                    'order_id'      => $order->id,
+                ];
+
+                $timestamps = [
+                    'created_at' => $this->parseSugarDate($callData->date_entered),
+                    'updated_at' => $this->parseSugarDate($callData->date_modified),
+                ];
+
+                $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+                $this->syncActivityStatus($activity);
+
+                $this->command->infoV("✓ Imported call: {$callData->name} for order {$order->external_id}");
+                $imported++;
+            } catch (Exception $e) {
+                $this->command->error("Failed to import call {$callData->id}: ".$e->getMessage());
+            }
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
      * Get the imported folder ID
      *
      * @return int|null
@@ -645,5 +1042,32 @@ class ActivityImporter
     private function mapTaskStatus(?string $status): bool
     {
         return in_array(strtolower(trim((string) $status)), ['completed', 'deferred'], true);
+    }
+
+    /**
+     * Map call status to is_done based on the status value only (no lead stage available).
+     */
+    private function mapCallStatusByStatusOnly(?string $status): bool
+    {
+        if (! $status) {
+            return false;
+        }
+
+        return in_array(strtolower(trim($status)), ['held', 'completed', 'done', 'finished'], true);
+    }
+
+    /**
+     * Map assigned user from SugarCRM to a local user by external_id, returning null when not found.
+     *
+     * Unlike {@see mapAssignedUser} this never throws, so a missing user never causes an
+     * order-linked activity/email to be skipped entirely.
+     */
+    private function mapAssignedUserOrNull(?string $assignedUserId): ?int
+    {
+        if (empty($assignedUserId)) {
+            return null;
+        }
+
+        return User::where('external_id', $assignedUserId)->first()?->id;
     }
 }

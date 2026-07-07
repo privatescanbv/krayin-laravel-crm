@@ -946,7 +946,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $salesName = $this->stripOrderNumberFromName($record->name ?? '', $record->order_num ?? null);
                     // Same path as createFromWonLead (copyFromLead → persons + anamnesis), without auto-created order
                     $salesLead = $this->salesLeadRepository->createFromLeadForOrderImport($crmLead, [
-                        'name'              => $salesName ?? "Order {$record->order_num}",
+                        'name'              => $salesName,
                         'pipeline_stage_id' => $salesStage->id(),
                         'lost_reason'       => $lostReason,
                         'closed_at'         => $closedAt,

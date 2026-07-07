@@ -78,7 +78,7 @@ class InkoopPdfParser
             return $result;
         } catch (Exception $e) {
             Log::error('Error parsing PDF', [
-                'file_path'  => $pdfPath ?? 'unknown',
+                'file_path'  => $pdfPath,
                 'invoice_id' => $invoice->id,
                 'error'      => $e->getMessage(),
                 'trace'      => $e->getTraceAsString(),

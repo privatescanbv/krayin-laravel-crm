@@ -28,7 +28,7 @@ trait ConcatsEmailActivities
      */
     protected function paginateSystemActivities(Builder $query, ?callable $decorate = null): AnonymousResourceCollection
     {
-        $page    = max(1, (int) request('page', 1));
+        $page = max(1, (int) request('page', 1));
         $perPage = min(100, (int) request('per_page', 20));
 
         $paginated = $query
@@ -58,23 +58,6 @@ trait ConcatsEmailActivities
         };
 
         return $query?->get() ?? collect();
-    }
-
-    private function personThreadQuery(int $personId)
-    {
-        $person = Person::findOrFail($personId);
-        $salesLeadIds = $person->salesLeads->pluck('id')->toArray();
-
-        $orderIds = ! empty($salesLeadIds)
-            ? Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id')->toArray()
-            : [];
-
-        return Email::forPersonThread(
-            $personId,
-            $person->leads->pluck('id')->toArray(),
-            $salesLeadIds,
-            $orderIds,
-        );
     }
 
     /**
@@ -131,7 +114,7 @@ trait ConcatsEmailActivities
             ? Attachment::whereIn('email_id', $threadEmailIds)->get()->groupBy('email_id')
             : collect();
 
-        $mapped = $emails->map(function (Email $email) use ($user, $linkedActivities, $folders, $attachmentsByEmail) {
+        $mapped = $emails->map(function (Email $email) use ($linkedActivities, $folders, $attachmentsByEmail) {
             $linkedActivity = $email->activity_id ? ($linkedActivities[$email->activity_id] ?? null) : null;
             $folder = $email->folder_id ? ($folders[$email->folder_id] ?? null) : null;
 
@@ -166,7 +149,7 @@ trait ConcatsEmailActivities
                 'comment'        => $email->reply,
                 'schedule_from'  => null,
                 'schedule_to'    => null,
-                'user'           => $user,
+                'user'           => $this->emailSenderDisplay($email),
                 'group'          => null,
                 'location'       => null,
                 'additional'     => [
@@ -176,18 +159,66 @@ trait ConcatsEmailActivities
                     'cc'      => $this->toArray($email->cc),
                     'bcc'     => $this->toArray($email->bcc),
                 ],
-                'files'          => $emailAttachments,
+                'files'                 => $emailAttachments,
                 'emailLinkedEntityType' => $linkedEntityType,
-                'activity_id'    => $email->activity_id,
-                'activity_title' => $linkedActivity?->title,
-                'activity_type'  => $linkedActivity?->type?->value,
-                'folder_name'    => $folder?->name,
-                'created_at'     => $email->created_at,
-                'updated_at'     => $email->updated_at,
+                'activity_id'           => $email->activity_id,
+                'activity_title'        => $linkedActivity?->title,
+                'activity_type'         => $linkedActivity?->type?->value,
+                'folder_name'           => $folder?->name,
+                'created_at'            => $email->created_at,
+                'updated_at'            => $email->updated_at,
             ];
         });
 
         return $this->sortActivitiesForOverview($activities->concat($mapped));
+    }
+
+    private function personThreadQuery(int $personId)
+    {
+        $person = Person::findOrFail($personId);
+        $salesLeadIds = $person->salesLeads->pluck('id')->toArray();
+
+        $orderIds = ! empty($salesLeadIds)
+            ? Order::whereIn('sales_lead_id', $salesLeadIds)->pluck('id')->toArray()
+            : [];
+
+        return Email::forPersonThread(
+            $personId,
+            $person->leads->pluck('id')->toArray(),
+            $salesLeadIds,
+            $orderIds,
+        );
+    }
+
+    /**
+     * Build a display object for the email's sender so the activity list shows
+     * who the email is actually from, instead of the logged-in user.
+     */
+    private function emailSenderDisplay(Email $email): object
+    {
+        $from = $this->toArray($email->from) ?? [];
+
+        $address = trim((string) ($from['email'] ?? $email->sender_email ?? ''));
+
+        $name = trim((string) ($from['name'] ?? ''));
+
+        if ($name === '') {
+            $name = $address;
+        }
+
+        // Shape must match every property UserResource reads; otherwise the
+        // "Undefined property" warnings on a bare stdClass are promoted to an
+        // ErrorException during an HTTP request and surface as a 500.
+        return (object) [
+            'id'         => null,
+            'first_name' => null,
+            'last_name'  => null,
+            'name'       => $name,
+            'email'      => $address ?: null,
+            'image'      => null,
+            'created_at' => null,
+            'updated_at' => null,
+        ];
     }
 
     private function toArray($value): ?array

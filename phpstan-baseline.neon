@@ -49,12 +49,6 @@ parameters:
 			path: app/Console/Commands/ImportOrdersFromSugarCRM.php
 
 		-
-			message: '#^Variable \$salesName on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: app/Console/Commands/ImportOrdersFromSugarCRM.php
-
-		-
 			message: '#^Variable \$value on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
@@ -64,13 +58,7 @@ parameters:
 			message: '#^Variable \$shiftBlocks in empty\(\) always exists and is not falsy\.$#'
 			identifier: empty.variable
 			count: 1
-			path: app/Http/Controllers/Admin/Planning/OrderItemPlanningController.php
-
-		-
-			message: '#^Variable \$shiftBlocks in empty\(\) always exists and is not falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: app/Http/Controllers/Admin/Planning/ResourcePlanningMonitorController.php
+			path: app/Http/Controllers/Admin/Planning/Concerns/ResourceAvailabilityTrait.php
 
 		-
 			message: '#^Variable \$events in empty\(\) always exists and is not falsy\.$#'
@@ -91,25 +79,13 @@ parameters:
 			path: app/Models/PurchasePrice.php
 
 		-
-			message: '#^Call to an undefined method class@anonymous/Providers/AuditTrailServiceProvider\.php\:73\:\:belongsTo\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Providers/AuditTrailServiceProvider.php
-
-		-
 			message: '#^Variable \$pdf in empty\(\) always exists and is not falsy\.$#'
 			identifier: empty.variable
 			count: 1
 			path: app/Services/Inkoop/InkoopPdfParser.php
 
 		-
-			message: '#^Variable \$pdfPath on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: app/Services/Inkoop/InkoopPdfParser.php
-
-		-
-			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
-			identifier: larastan.noUnnecessaryCollectionCall
-			count: 1
-			path: app/Services/UserDefaultValueService.php
+			message: '#^Call to an undefined method class@anonymous/Providers/AuditTrailServiceProvider\.php\:73\:\:belongsTo\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Providers/AuditTrailServiceProvider.php

@@ -14,7 +14,6 @@ class UserDefaultValueService
     {
         return UserDefaultValue::where('user_id', $userId)
             ->where('key', 'like', $keyPattern)
-            ->get()
             ->pluck('value', 'key');
     }
 

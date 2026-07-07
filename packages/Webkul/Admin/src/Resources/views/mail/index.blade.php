@@ -346,7 +346,7 @@
                             </div>
 
                             <!-- Col 3: Subject / preview with tags/attachments -->
-                            <div class="min-w-0" :class="{ 'pl-16': record.parent_id }">
+                            <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <p class="line-clamp-1 text-sm text-gray-900 dark:text-gray-100"
                                        :class="{ 'font-bold': !record.is_read }" v-text="record.subject"></p>

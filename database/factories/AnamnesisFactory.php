@@ -21,11 +21,11 @@ class AnamnesisFactory extends Factory
         return [
             'id'                        => (string) Str::uuid(),
             'name'                      => $this->faker->name(),
+            'description'               => $this->faker->optional()->paragraph(),
             'created_at'                => $this->faker->dateTime(),
             'updated_at'                => $this->faker->dateTime(),
             'updated_by'                => null, // Will be set by audit trail if user is authenticated
             'created_by'                => null, // Will be set by audit trail if user is authenticated
-            'description'               => $this->faker->optional()->paragraph(),
             'deleted'                   => 0,
             'team_id'                   => (string) Str::uuid(),
             'team_set_id'               => (string) Str::uuid(),
@@ -46,7 +46,6 @@ class AnamnesisFactory extends Factory
             'implant_notes'             => $this->faker->optional()->sentence(),
             'surgeries'                 => $this->faker->boolean(),
             'surgeries_notes'           => $this->faker->optional()->sentence(),
-            'remarks'                   => $this->faker->optional()->sentence(),
             'hereditary_heart'          => $this->faker->boolean(),
             'hereditary_heart_notes'    => $this->faker->optional()->sentence(),
             'hereditary_vascular'       => $this->faker->boolean(),
@@ -63,13 +62,14 @@ class AnamnesisFactory extends Factory
             'smoking_notes'             => $this->faker->optional()->sentence(),
             'diabetes'                  => $this->faker->boolean(),
             'diabetes_notes'            => $this->faker->optional()->sentence(),
+            'infectious_disease'        => $this->faker->boolean(),
+            'infectious_disease_notes'  => $this->faker->optional()->sentence(),
             'spijsverteringsklachten'   => $this->faker->boolean(),
             'digestive_complaints_notes'=> $this->faker->optional()->sentence(),
             'digestive_problems'        => $this->faker->boolean(),
             'digestive_problems_notes'  => $this->faker->optional()->sentence(),
             'heart_attack_risk'         => $this->faker->words(3, true),
             'active'                    => $this->faker->boolean(),
-            'advice_notes'              => $this->faker->optional()->sentence(),
             'lead_id'                   => Lead::factory(),
             'person_id'                 => Person::factory(),
         ];

@@ -20,6 +20,7 @@ use App\Repositories\AddressRepository;
 use App\Repositories\SalesLeadRepository;
 use App\Services\Importers\SugarCRM\ActivityImporter;
 use App\Services\OrderCheckService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -46,8 +47,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             {--table=pcrm_salesorder : Source table name}
                             {--limit=-1 : Number of records to import}
                             {--order-ids=* : Specific order numbers to import, e.g. 202600625 (ignores limit)}
-                            {--date-from= : Only import orders with date_entered on or after this date (Y-m-d)}
-                            {--date-to= : Only import orders with date_entered before this date (Y-m-d)}
+                            {--date-from= : Only import orders with date_entered on or after this date. Format: YYYY-MM-DD or DD-MM-YYYY (e.g. 2020-01-01 or 01-01-2020)}
+                            {--date-to= : Only import orders with date_entered before this date. Format: YYYY-MM-DD or DD-MM-YYYY (e.g. 2020-01-01 or 01-01-2020)}
                             {--import-leads : Import missing linked leads (with persons) before importing orders}
                             {--dry-run : Show what would be imported without actually importing}
                             {--tasks-only : Only import tasks for all existing orders (skip order import)}
@@ -77,8 +78,14 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $limit = (int) $this->option('limit');
         $orderIds = $this->option('order-ids');
         $dryRun = $this->option('dry-run');
-        $dateFrom = $this->option('date-from') ? $this->option('date-from').' 00:00:00' : null;
-        $dateTo = $this->option('date-to') ? $this->option('date-to').' 00:00:00' : null;
+        try {
+            $dateFrom = $this->parseImportDate($this->option('date-from'), 'date-from');
+            $dateTo = $this->parseImportDate($this->option('date-to'), 'date-to');
+        } catch (Exception $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
         if ($this->option('tasks-only')) {
             $this->importTasksForExistingOrders($connection);
 
@@ -584,6 +591,40 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
 
         return strtolower(trim($normalized));
+    }
+
+    /**
+     * Normalize a CLI date option to a "Y-m-d 00:00:00" string for the query.
+     *
+     * Accepts both YYYY-MM-DD and DD-MM-YYYY (and slash variants) so the command
+     * is forgiving about input order, and throws a clear error on anything else
+     * instead of silently matching zero rows.
+     */
+    private function parseImportDate(?string $value, string $optionName): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        foreach (['Y-m-d', 'd-m-Y', 'Y/m/d', 'd/m/Y'] as $format) {
+            try {
+                $date = Carbon::createFromFormat('!'.$format, $value);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            // Guard against loose parsing (e.g. "01-01-2020" under Y-m-d):
+            // only accept when it round-trips back to the exact input.
+            if ($date && $date->format($format) === $value) {
+                return $date->format('Y-m-d 00:00:00');
+            }
+        }
+
+        throw new Exception(sprintf(
+            'Ongeldige datum voor --%s: "%s". Gebruik het formaat YYYY-MM-DD of DD-MM-YYYY (bijv. 2020-01-01 of 01-01-2020).',
+            $optionName,
+            $value
+        ));
     }
 
     /**

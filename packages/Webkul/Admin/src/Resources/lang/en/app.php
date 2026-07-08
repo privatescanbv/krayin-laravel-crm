@@ -2769,10 +2769,10 @@ return [
             'smoking_notes'              => 'Smoking details',
             'diabetes'                   => 'Do you have diabetes?',
             'diabetes_notes'             => 'Diabetes details',
+            'infectious_disease'         => 'Do you have an infectious disease (HIV/Hepatitis)?',
+            'infectious_disease_notes'   => 'Infectious disease details',
             'active'                     => 'Do you exercise regularly?',
             'heart_attack_risk'          => 'Heart attack risk',
-            'remarks'                    => 'Remark',
-            'advice_notes'               => 'Advice',
         ],
     ],
 ];

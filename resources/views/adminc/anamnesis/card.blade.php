@@ -93,6 +93,7 @@
                     'heart_problems' => 'Hartproblemen',
                     'smoking' => 'Rookt',
                     'diabetes' => 'Diabetes',
+                    'infectious_disease' => 'Infectieziekte (HIV/Hepatitis)',
                     'digestive_problems' => 'Spijsverteringsklachten',
                     'active' => 'Lichamelijk actief'
                 ])->filter(function($label, $field) use ($anamnesis) {

@@ -154,13 +154,14 @@
                 <td colspan="2">{{ $afb['medical']['allergies_notes'] ?? '-' }}</td>
             </tr>
             <tr>
-                <td class="label">Kontraindic.</td>
-                <td>{{ $afb['medical']['contra_indication'] }}</td>
-                <td colspan="2">{{ $afb['medical']['contra_notes'] ?? '-' }}</td>
+                <td class="label">HIV/Hepatitis</td>
+                <td>{{ $afb['medical']['infectious_disease'] }}</td>
+                <td colspan="2">{{ $afb['medical']['infectious_disease_notes'] ?? '-' }}</td>
             </tr>
             <tr>
-                <td class="label">Anmerkung</td>
-                <td colspan="3">{{ $afb['medical']['remark'] ?? '-' }}</td>
+                <td class="label">Medikamente</td>
+                <td colspan="3">{{ $afb['medical']['medications'] }}</td>
+                <td colspan="2">{{ $afb['medical']['medications_notes'] ?? '-' }}</td>
             </tr>
         </table>
     </div>

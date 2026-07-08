@@ -530,6 +530,27 @@
                                 </div>
                             </div>
 
+                            <!-- Infectieziekte (HIV/Hepatitis) -->
+                            <div class="space-y-2">
+                                <x-adminc::components.yes-no
+                                    name="infectious_disease"
+                                    label="{{ __('admin::app.anamnesis.fields.infectious_disease') }}"
+                                    :value="$anamnesis->infectious_disease"
+                                    rules="required"
+                                    comment-field="infectious_disease"
+                                />
+
+                                <div id="infectious_disease_comment" class="mt-2" style="display: {{ $anamnesis->infectious_disease == 1 ? 'block' : 'none' }}">
+                                    <x-adminc::components.field
+                                        type="text"
+                                        name="infectious_disease_notes"
+                                        label="{{ __('admin::app.anamnesis.fields.infectious_disease_notes') }}"
+                                        :value="$anamnesis->infectious_disease_notes"
+                                        placeholder="Toelichting infectieziekte"
+                                    />
+                                </div>
+                            </div>
+
                             <!-- Actief -->
                             <div class="space-y-2">
                                 <x-adminc::components.yes-no
@@ -548,36 +569,6 @@
                                     label="{{ __('admin::app.anamnesis.fields.heart_attack_risk') }}"
                                     :value="$anamnesis->heart_attack_risk"
                                     placeholder="Risico hartinfarct"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    <!-- Final Notes -->
-                    <div class="box-shadow rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <h2 class="mb-4 text-lg font-semibold dark:text-white">Opmerkingen en advies</h2>
-
-                        <div class="space-y-4">
-                            <div>
-                                <x-adminc::components.field
-                                    type="text"
-                                    name="remarks"
-                                    label="{{ __('admin::app.anamnesis.fields.remarks') }}"
-                                    :value="$anamnesis->remarks"
-                                    placeholder="Algemene opmerking"
-                                />
-                            </div>
-
-                            <div>
-                                <x-adminc::components.field
-                                    type="textarea"
-                                    name="advice_notes"
-                                    label="{{ __('admin::app.anamnesis.fields.advice_notes') }}"
-                                    :value="$anamnesis->advice_notes"
-                                    placeholder="Advies voor patiënt"
-                                    rows="3"
                                 />
                             </div>
                         </div>

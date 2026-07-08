@@ -2765,10 +2765,10 @@ return [
             'smoking_notes'              => 'Toelichting roken',
             'diabetes'                   => 'Heeft u diabetes?',
             'diabetes_notes'             => 'Toelichting diabetes',
+            'infectious_disease'         => 'Heeft u een infectieziekte (HIV/Hepatitis)?',
+            'infectious_disease_notes'   => 'Toelichting infectieziekte',
             'active'                     => 'Beweegt u regelmatig?',
             'heart_attack_risk'          => 'Risico hartinfarct',
-            'remarks'                    => 'Opmerking',
-            'advice_notes'               => 'Advies',
         ],
     ],
 

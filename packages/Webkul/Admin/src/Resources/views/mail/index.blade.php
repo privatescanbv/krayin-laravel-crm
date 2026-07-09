@@ -809,7 +809,7 @@
                                 const signature = @json(auth()->guard('user')->user()->signature ?? '');
 
                                 // Combine template content with signature; add blank line before signature so user can type above it
-                                const fullContent = templateContent + (signature ? '<p><br></p><p><br></p>' + signature : '');
+                                const fullContent = templateContent + (signature ? '<p><br></p>' + signature : '');
 
                                 // Set content in TinyMCE or textarea
                                 this.$nextTick(() => {
@@ -855,7 +855,7 @@
 
                         // Add user signature to the email body by default
                         @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                            this.draft.reply = '<p><br></p><p><br></p>' + @json(auth()->guard('user')->user()->signature);
+                            this.draft.reply = '<p><br></p>' + @json(auth()->guard('user')->user()->signature);
                         @endif
 
                             this.$refs.toggleComposeModal.toggle();
@@ -867,7 +867,7 @@
                                     const editor = window.tinymce.get('reply');
                                     @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
                                     if (!editor.getContent() || editor.getContent().trim() === '') {
-                                        editor.setContent('<p><br></p><p><br></p>' + @json(auth()->guard('user')->user()->signature));
+                                        editor.setContent('<p><br></p>' + @json(auth()->guard('user')->user()->signature));
                                     }
                                     @endif
                                 }

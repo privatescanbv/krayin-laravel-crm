@@ -1154,7 +1154,7 @@ test('imports inv_purchase_total_c only into MAIN and resolved purchase total', 
         ->and((float) $resolved->purchase_price_misc)->toBe(99.5);
 });
 
-test('Sugar purchase prices override partner product in resolvedPurchasePrice', function () {
+test('Sugar purchase prices are used in resolvedPurchasePrice from order item row', function () {
     Lead::factory()->create(['external_id' => 'sugar-lead-sugarpp']);
 
     Person::factory()->create(['external_id' => 'contact-sugarpp']);

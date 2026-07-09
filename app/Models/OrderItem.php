@@ -32,6 +32,7 @@ class OrderItem extends Model
         'order_id',
         'external_id',
         'product_id',
+        'partner_product_id',
         'resource_type_id',
         'name',
         'description',
@@ -46,16 +47,17 @@ class OrderItem extends Model
     ];
 
     protected $casts = [
-        'order_id'         => 'integer',
-        'product_id'       => 'integer',
-        'resource_type_id' => 'integer',
-        'person_id'        => 'integer',
-        'quantity'         => 'integer',
-        'total_price'      => 'decimal:2',
-        'currency'         => 'string',
-        'status'           => OrderItemStatus::class,
-        'created_by'       => 'integer',
-        'updated_by'       => 'integer',
+        'order_id'           => 'integer',
+        'product_id'         => 'integer',
+        'partner_product_id' => 'integer',
+        'resource_type_id'   => 'integer',
+        'person_id'          => 'integer',
+        'quantity'           => 'integer',
+        'total_price'        => 'decimal:2',
+        'currency'           => 'string',
+        'status'             => OrderItemStatus::class,
+        'created_by'         => 'integer',
+        'updated_by'         => 'integer',
     ];
 
     public function order(): BelongsTo
@@ -66,6 +68,11 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function partnerProduct(): BelongsTo
+    {
+        return $this->belongsTo(PartnerProduct::class);
     }
 
     /**
@@ -141,11 +148,28 @@ class OrderItem extends Model
     }
 
     /**
+     * Whether the order item has a manually entered or persisted MAIN purchase price (> 0).
+     */
+    public function hasEnteredPurchasePrice(): bool
+    {
+        $orderItemPrice = $this->relationLoaded('purchasePrice')
+            ? $this->purchasePrice
+            : $this->purchasePrice()->first();
+
+        if ($orderItemPrice === null) {
+            return false;
+        }
+
+        return (float) ($orderItemPrice->purchase_price ?? 0) > 0
+            || collect(PurchasePrice::priceSuffixes())
+                ->sum(fn (string $suffix) => (float) ($orderItemPrice->{'purchase_price_'.$suffix} ?? 0)) > 0;
+    }
+
+    /**
      * Returns the effective purchase price for this order item.
      *
-     * When a MAIN {@see PurchasePrice} exists on the line (e.g. from SugarCRM import or admin),
-     * only that row is used — no per-field fallback to the catalog product or partner products.
-     * Otherwise resolution order per field is: 1. product, 2. partner products (summed).
+     * Only the MAIN {@see PurchasePrice} stored on the order item is used.
+     * No fallback to catalog product or partner products.
      */
     public function resolvedPurchasePrice(): object
     {
@@ -154,50 +178,16 @@ class OrderItem extends Model
             ? $this->purchasePrice
             : $this->purchasePrice()->first();
 
-        if ($orderItemPrice !== null) {
-            $data = [];
-            $total = 0.0;
-            foreach ($suffixes as $suffix) {
-                $field = 'purchase_price_'.$suffix;
-                $value = (float) ($orderItemPrice->{$field} ?? 0);
-                $data[$field] = (string) round($value, 2);
-                $total += $value;
-            }
-            $data['purchase_price'] = (string) round($total, 2);
-
-            return (object) $data;
-        }
-
-        $this->loadMissing(['product.partnerProducts.purchasePrice']);
-
-        $product = $this->product;
-        $productPrice = $product && method_exists($product, 'purchasePrice') ? $product->purchasePrice : null;
-
-        $partnerProductTotals = null;
-        if ($product && ! $product->partnerProducts->isEmpty()) {
-            $partnerProductTotals = array_fill_keys($suffixes, 0.0);
-            foreach ($product->partnerProducts as $pp) {
-                if (! $pp->purchasePrice) {
-                    continue;
-                }
-                foreach ($suffixes as $suffix) {
-                    $partnerProductTotals[$suffix] += (float) ($pp->purchasePrice->{'purchase_price_'.$suffix} ?? 0);
-                }
-            }
-        }
-
         $data = [];
         $total = 0.0;
+
         foreach ($suffixes as $suffix) {
             $field = 'purchase_price_'.$suffix;
-            $productValue = $productPrice?->{$field} ?? null;
-            $partnerProductValue = $partnerProductTotals[$suffix] ?? null;
-
-            $value = $productValue ?? $partnerProductValue ?? 0;
-            $value = (float) $value;
+            $value = $orderItemPrice !== null ? (float) ($orderItemPrice->{$field} ?? 0) : 0.0;
             $data[$field] = (string) round($value, 2);
             $total += $value;
         }
+
         $data['purchase_price'] = (string) round($total, 2);
 
         return (object) $data;
@@ -289,6 +279,16 @@ class OrderItem extends Model
     private function retrievePartnerProductOrProductOrError(): PartnerProduct|Product|null
     {
         $product = $this->product;
+
+        if ($this->partner_product_id) {
+            $linked = $this->relationLoaded('partnerProduct')
+                ? $this->partnerProduct
+                : $this->partnerProduct()->first();
+
+            if ($linked !== null) {
+                return $linked;
+            }
+        }
 
         $resourceOrderItem = $this->resourceOrderItem()->with('resource.clinicDepartment')->first();
         if (! is_null($resourceOrderItem)) {

@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\PurchasePrice;
 use App\Models\ResourceType;
 use App\Repositories\OrderItemRepository;
+use App\Services\OrderItemPurchasePriceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,8 @@ class OrderItemController extends SimpleEntityController
 {
     public function __construct(
         protected OrderItemRepository $orderItemRepository,
-        protected PersonRepository $personRepository
+        protected PersonRepository $personRepository,
+        protected OrderItemPurchasePriceService $orderItemPurchasePriceService,
     ) {
         parent::__construct($orderItemRepository);
 
@@ -60,28 +62,6 @@ class OrderItemController extends SimpleEntityController
         return redirect()
             ->route('admin.orders.edit', ['id' => $entity->order_id])
             ->with('success', $this->getUpdateSuccessMessage());
-    }
-
-    public function getPartnerPurchasePrices(int $productId): JsonResponse
-    {
-        $product = Product::with(['partnerProducts.purchasePrice'])
-            ->findOrFail($productId);
-
-        $suffixes = PurchasePrice::priceSuffixes();
-        $totals = array_fill_keys($suffixes, 0.0);
-
-        foreach ($product->partnerProducts as $pp) {
-            if (! $pp->purchasePrice) {
-                continue;
-            }
-            foreach ($suffixes as $suffix) {
-                $totals[$suffix] += (float) ($pp->purchasePrice->{'purchase_price_'.$suffix} ?? 0);
-            }
-        }
-
-        $totals['resource_type_id'] = $product->resource_type_id;
-
-        return response()->json($totals);
     }
 
     public function updateInvoicePrice(Request $request, int $id): JsonResponse
@@ -175,16 +155,12 @@ class OrderItemController extends SimpleEntityController
 
     protected function saveOrderItemPurchasePrice(OrderItem $entity, Request $request): void
     {
-        $fields = PurchasePrice::priceableFieldNames();
         $data = [];
-        $total = 0;
-        foreach ($fields as $field) {
-            $value = floatval($request->input($field, 0));
-            $data[$field] = $value;
-            $total += $value;
+        foreach (PurchasePrice::priceableFieldNames() as $field) {
+            $data[$field] = floatval($request->input($field, 0));
         }
-        $data['purchase_price'] = $total;
-        $entity->purchasePrice()->updateOrCreate([], $data);
+
+        $this->orderItemPurchasePriceService->saveFromRequest($entity, $data);
     }
 
     protected function saveInvoicePurchasePrice(OrderItem $entity, Request $request): void
@@ -239,14 +215,11 @@ class OrderItemController extends SimpleEntityController
             'invoicePurchasePrice',
             'person',
             'resourceType',
-            'product.partnerProducts.purchasePrice',
+            'product',
         ]);
-
-        $resolvedPurchasePrice = $this->resolvePurchasePriceForEdit($entity);
 
         return [
             'order_items'              => $entity,
-            'resolvedPurchasePrice'    => $resolvedPurchasePrice,
             'resourceTypes'            => ResourceType::orderBy('name')->get(['id', 'name']),
             'statuses'                 => collect(OrderItemStatus::cases())
                 ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
@@ -254,11 +227,6 @@ class OrderItemController extends SimpleEntityController
             'currencies'              => Currency::options(),
             'defaultCurrency'         => Currency::default()->value,
         ];
-    }
-
-    protected function resolvePurchasePriceForEdit(OrderItem $entity): object
-    {
-        return $entity->resolvedPurchasePrice();
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

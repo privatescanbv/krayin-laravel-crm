@@ -89,3 +89,45 @@ it('excludes LOST order items from step2', function () {
     expect($ids->contains($activeItem->id))->toBeTrue()
         ->and($ids->contains($lostItem->id))->toBeFalse();
 });
+
+it('includes WON order items in step2', function () {
+    $wonItem = createOrderItemForClinic($this->order, $this->crmPerson, $this->resource, OrderItemStatus::WON->value);
+
+    $response = $this->get(route('admin.inkoop.step2', $this->invoice->id));
+
+    $response->assertOk();
+    expect(step2ItemIds($response)->contains($wonItem->id))->toBeTrue();
+});
+
+it('excludes order items belonging to a different (unlinked) person', function () {
+    // Regression: the invoice person is linked to $this->crmPerson, but the order
+    // item hangs on a different CRM person (e.g. a duplicate record). It must not
+    // appear, since step2 filters strictly on the linked person's crm_id.
+    $otherPerson = Person::factory()->create();
+
+    $linkedItem = createOrderItemForClinic($this->order, $this->crmPerson, $this->resource, OrderItemStatus::WON->value);
+    $otherPersonItem = createOrderItemForClinic($this->order, $otherPerson, $this->resource, OrderItemStatus::WON->value);
+
+    $response = $this->get(route('admin.inkoop.step2', $this->invoice->id));
+
+    $response->assertOk();
+    $ids = step2ItemIds($response);
+    expect($ids->contains($linkedItem->id))->toBeTrue()
+        ->and($ids->contains($otherPersonItem->id))->toBeFalse();
+});
+
+it('excludes order items booked at a different clinic', function () {
+    $otherClinic = Clinic::factory()->create();
+    $otherDept = ClinicDepartment::factory()->create(['clinic_id' => $otherClinic->id]);
+    $otherResource = Resource::factory()->create(['clinic_department_id' => $otherDept->id]);
+
+    $sameClinicItem = createOrderItemForClinic($this->order, $this->crmPerson, $this->resource, OrderItemStatus::WON->value);
+    $otherClinicItem = createOrderItemForClinic($this->order, $this->crmPerson, $otherResource, OrderItemStatus::WON->value);
+
+    $response = $this->get(route('admin.inkoop.step2', $this->invoice->id));
+
+    $response->assertOk();
+    $ids = step2ItemIds($response);
+    expect($ids->contains($sameClinicItem->id))->toBeTrue()
+        ->and($ids->contains($otherClinicItem->id))->toBeFalse();
+});

@@ -2000,6 +2000,20 @@ return [
             'contact-person'             => 'Contact Person',
             'product'                    => 'Product',
 
+            'thread' => [
+                'title'                  => 'Conversation',
+                'mixed-subjects-warning' => 'These messages have different subjects. They may have been linked incorrectly.',
+                'subject'                => 'Subject',
+                'no-subject'             => '(no subject)',
+                'detach'                 => 'Detach',
+                'detach-busy'            => 'Working...',
+                'detach-confirm'         => 'Are you sure you want to detach ":subject" from this conversation? The email will become a separate conversation.',
+                'detach-success'         => 'Email detached from the conversation.',
+                'detach-not-linked'      => 'This email is not linked to another email in the conversation.',
+                'linked-to'              => 'Linked to email #:id',
+                'root'                   => 'Conversation start',
+            ],
+
             'tags' => [
                 'create-success'  => 'Tag created successfully.',
                 'destroy-success' => 'Tag deleted successfully.',

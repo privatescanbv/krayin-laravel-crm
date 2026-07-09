@@ -73,6 +73,8 @@ test('mail view renders full descendant thread when opening a nested reply', fun
     $response->assertSee('Root body', false);
     $response->assertSee('Direct child body', false);
     $response->assertSee('Nested child body', false);
+    $response->assertSee(__('admin::app.mail.view.thread.subject').':', false);
+    $response->assertSee('Thread root subject', false);
 });
 
 test('mail view reply form targets the thread root id', function () {

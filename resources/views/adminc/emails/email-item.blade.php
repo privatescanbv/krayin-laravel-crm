@@ -5,7 +5,12 @@
             delete: '{{ route('admin.mail.delete', ':id') }}',
             move: '{{ route('admin.mail.move', ':id') }}',
             updateStatus: '{{ route('admin.mail.update_status', ':id') }}',
+            detachThread: '{{ route('admin.mail.detach_thread', ':id') }}',
             index: '{{ route('admin.mail.index', ['route' => 'FOLDER_NAME']) }}',
+        };
+        window.emailItemLabels = {
+            detachThread: @json(__('admin::app.mail.view.thread.detach')),
+            detachThreadConfirm: @json(__('admin::app.mail.view.thread.detach-confirm')),
         };
     </script>
     <!-- Email Item Template -->
@@ -62,6 +67,10 @@
                                         @{{ (email.bcc || []).join(', ') }}
                                     </span>
                                 </div>
+
+                                <span class="dark:text-gray-300">
+                                    @lang('admin::app.mail.view.thread.subject'): @{{ email.subject || noSubjectLabel }}
+                                </span>
                             </div>
                         </div>
 
@@ -103,6 +112,19 @@
                                             @lang('admin::app.mail.view.reply')
                                         </div>
                                     </x-admin::dropdown.menu.item>
+
+                                    <template v-if="email.parent_id">
+                                        <x-admin::dropdown.menu.item>
+                                            <div
+                                                class="flex cursor-pointer items-center gap-2"
+                                                @click="detachFromThread()"
+                                            >
+                                                <i class="icon-move text-2xl"></i>
+
+                                                @lang('admin::app.mail.view.thread.detach')
+                                            </div>
+                                        </x-admin::dropdown.menu.item>
+                                    </template>
 
                                     <x-admin::dropdown.menu.item>
                                         <div
@@ -286,8 +308,16 @@
                         delete: '',
                         move: '',
                         updateStatus: '',
+                        detachThread: '',
                         index: '',
                     },
+
+                    labels: window.emailItemLabels || {
+                        detachThread: 'Detach',
+                        detachThreadConfirm: '',
+                    },
+
+                    noSubjectLabel: @json(__('admin::app.mail.view.thread.no-subject')),
                 };
             },
 
@@ -344,6 +374,26 @@
                     })
                     .catch ((error) => {
                          this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                    });
+                },
+
+                detachFromThread() {
+                    const subject = this.email.subject || this.labels.detachThread;
+                    const message = this.labels.detachThreadConfirm.replace(':subject', subject);
+
+                    this.$emitter.emit('open-confirm-modal', {
+                        message,
+                        agree: () => {
+                            this.$axios.post(this.routes.detachThread.replace(':id', this.email.id))
+                                .then(response => {
+                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                    window.location.href = response.data.redirect_url;
+                                })
+                                .catch(error => {
+                                    const errorMessage = error.response?.data?.message ?? 'Loskoppelen mislukt.';
+                                    this.$emitter.emit('add-flash', { type: 'error', message: errorMessage });
+                                });
+                        },
                     });
                 },
 

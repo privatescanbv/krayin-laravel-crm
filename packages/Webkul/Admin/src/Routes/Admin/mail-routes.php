@@ -41,6 +41,8 @@ Route::prefix('mail')->group(function () {
 
         Route::post('mark-processed/{id}', 'markProcessed')->name('admin.mail.mark_processed');
 
+        Route::post('detach-thread/{id}', 'detachFromThread')->name('admin.mail.detach_thread');
+
         Route::post('inbound-parse', 'inboundParse')->name('admin.mail.inbound_parse')->withoutMiddleware('user');
 
         // Catch-all routes must come last

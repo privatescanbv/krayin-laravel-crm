@@ -2039,6 +2039,20 @@ return [
             'contact-person'             => 'Contactpersoon',
             'product'                    => 'Product',
 
+            'thread' => [
+                'title'                  => 'Conversatie',
+                'mixed-subjects-warning' => 'Deze berichten hebben verschillende onderwerpen. Mogelijk zijn ze ten onrechte aan elkaar gekoppeld.',
+                'subject'                => 'Onderwerp',
+                'no-subject'             => '(geen onderwerp)',
+                'detach'                 => 'Loskoppelen',
+                'detach-busy'            => 'Bezig...',
+                'detach-confirm'         => 'Weet je zeker dat je ":subject" wilt loskoppelen van deze conversatie? De e-mail wordt een aparte conversatie.',
+                'detach-success'         => 'E-mail losgekoppeld van de conversatie.',
+                'detach-not-linked'      => 'Deze e-mail is niet gekoppeld aan een andere e-mail in de conversatie.',
+                'linked-to'              => 'Gekoppeld aan e-mail #:id',
+                'root'                   => 'Start van conversatie',
+            ],
+
             'tags' => [
                 'create-success'  => 'Tag succesvol aangemaakt.',
                 'destroy-success' => 'Tag succesvol verwijderd.',

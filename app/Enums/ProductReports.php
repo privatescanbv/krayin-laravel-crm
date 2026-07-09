@@ -14,6 +14,7 @@ enum ProductReports: string
     case HISTO_1 = 'histo_1';
     case RAD_CARD_LAB = 'rad_card_lab';
     case RAD_PET = 'rad_pet';
+    case TRANSLATION = 'translation';
 
     public static function getOptions(): array
     {
@@ -38,6 +39,7 @@ enum ProductReports: string
             self::HISTO_1      => 'Histologie',
             self::RAD_CARD_LAB => 'Radio/Cardio/Lab in één',
             self::RAD_PET      => 'Radiologie PET',
+            self::TRANSLATION  => 'Vertaling',
         };
     }
 }

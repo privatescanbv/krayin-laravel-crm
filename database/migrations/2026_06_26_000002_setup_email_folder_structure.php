@@ -26,6 +26,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Nothing to migrate on a fresh install; FolderSeeder owns the initial folder set.
+        if (! DB::table('folders')->exists()) {
+            return;
+        }
+
         $this->renameFolder(self::LEGACY_INBOX_NAME, EmailFolderEnum::INBOX->value);
         $this->renameFolder(self::LEGACY_SENT_NAME, EmailFolderEnum::SENT_PRIVATESCAN->value);
 

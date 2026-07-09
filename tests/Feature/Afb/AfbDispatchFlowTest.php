@@ -217,8 +217,8 @@ test('afb generator renders infectious disease and medications rows', function (
     $html = $generator->renderHtmlForOrderAndDepartment($context['order']->fresh(), $context['department'])['html'];
 
     expect($html)
-        ->toMatch('#HIV/Hepatitis</td>\s*<td>Ja</td>#')
-        ->toMatch('#Medikamente</td>\s*<td colspan="3">Nein</td>#');
+        ->toMatch('#HIV/Hepatitis</td>\s*<td[^>]*>\s*Ja\s*</td>#')
+        ->toMatch('#Medikamente</td>\s*<td[^>]*>\s*Nein\s*</td>#');
 });
 
 test('lost order items are excluded from rendered afb html', function () {

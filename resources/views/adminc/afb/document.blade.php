@@ -160,7 +160,7 @@
             </tr>
             <tr>
                 <td class="label">Medikamente</td>
-                <td colspan="3">{{ $afb['medical']['medications'] }}</td>
+                <td>{{ $afb['medical']['medications'] }}</td>
                 <td colspan="2">{{ $afb['medical']['medications_notes'] ?? '-' }}</td>
             </tr>
         </table>

@@ -203,6 +203,24 @@ test('afb generator renders boolean anamnesis fields as Ja/Nein not 1/empty', fu
         ->not->toContain('> 1<');
 });
 
+test('afb generator renders infectious disease and medications rows', function () {
+    $context = createOrderForClinic(Carbon::parse('2026-03-31 09:30:00'));
+
+    Anamnesis::where('sales_id', $context['order']->salesLead->id)
+        ->where('person_id', $context['person']->id)
+        ->update([
+            'infectious_disease' => true,
+            'medications'        => false,
+        ]);
+
+    $generator = app(AfbDocumentGenerator::class);
+    $html = $generator->renderHtmlForOrderAndDepartment($context['order']->fresh(), $context['department'])['html'];
+
+    expect($html)
+        ->toMatch('#HIV/Hepatitis</td>\s*<td>Ja</td>#')
+        ->toMatch('#Medikamente</td>\s*<td colspan="3">Nein</td>#');
+});
+
 test('lost order items are excluded from rendered afb html', function () {
     $examAt = Carbon::parse('2026-03-31 09:30:00');
     $context = createOrderForClinic($examAt);

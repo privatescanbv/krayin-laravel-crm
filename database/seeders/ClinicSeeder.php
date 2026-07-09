@@ -36,7 +36,7 @@ class ClinicSeeder extends BaseSeeder
                 ],
             ],
             'ae8ea8a1-95c4-d665-4373-5ecfc67d6096' => [
-                'emails'                                  => ['bielas@suedring.eu'],
+                'emails'                                  => ['mbulthuis+augusta@gmail.com'],
                 'phones'                                  => [],
                 'is_postal_address_same_as_visit_address' => true,
                 'visit'                                   => [
@@ -101,7 +101,7 @@ class ClinicSeeder extends BaseSeeder
                 'postal' => null,
             ],
             'f90e0ef6-e600-b56c-b9af-679b4021bc10' => [
-                'emails'                                  => ['termine@praxis-gradus.de'],
+                'emails'                                  => ['mbulthuis+gradus@gmail.com'],
                 'phones'                                  => ['+49 211 96839654'],
                 'is_postal_address_same_as_visit_address' => true,
                 'visit'                                   => [
@@ -127,7 +127,7 @@ class ClinicSeeder extends BaseSeeder
                 'postal' => null,
             ],
             '65a7b039-8fd3-c49e-1029-567271e9f437' => [
-                'emails'                                  => ['info@grandarc.de'],
+                'emails'                                  => ['mbulthuis+luisenkrankenhaus@gmail.com'],
                 'phones'                                  => ['+49 211 4477 1000'],
                 'is_postal_address_same_as_visit_address' => true,
                 'visit'                                   => [
@@ -166,7 +166,7 @@ class ClinicSeeder extends BaseSeeder
                 'postal' => null,
             ],
             'ccdb4356-923a-8408-1e4a-5cf91286a7c9' => [
-                'emails'                                  => ['info@pradus.de'],
+                'emails'                                  => ['mbulthuis+pradus@gmail.com'],
                 'phones'                                  => ['+49 211 8308 7644'],
                 'is_postal_address_same_as_visit_address' => true,
                 'visit'                                   => [
@@ -205,7 +205,7 @@ class ClinicSeeder extends BaseSeeder
                 'postal' => null,
             ],
             '39bd339d-0b40-4a80-1012-5cf902f1960d' => [
-                'emails'                                  => ['info@radiologie-duesseldorf-mitte.de'],
+                'emails'                                  => ['mbulthuis+dusseldorfmitte@gmail.com'],
                 'phones'                                  => ['+49 211 5422 8000'],
                 'is_postal_address_same_as_visit_address' => true,
                 'visit'                                   => [

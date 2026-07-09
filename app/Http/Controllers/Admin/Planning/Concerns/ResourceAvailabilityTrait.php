@@ -119,7 +119,7 @@ trait ResourceAvailabilityTrait
         }
 
         if (is_array($shiftBlocks)) {
-            $isWeekdayMap = ! empty($shiftBlocks) && array_keys($shiftBlocks) !== range(0, count($shiftBlocks) - 1);
+            $isWeekdayMap = array_keys($shiftBlocks) !== range(0, count($shiftBlocks) - 1);
 
             if ($isWeekdayMap) {
                 foreach ($shiftBlocks as $wk => $entries) {

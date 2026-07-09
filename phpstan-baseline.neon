@@ -3,13 +3,13 @@ parameters:
 		-
 			message: '#^Command "orders\:repair\-sugar\-purchase\-prices" does not have option "date\-from"\.$#'
 			identifier: larastan.console.undefinedOption
-			count: 3
+			count: 2
 			path: app/Console/Commands/ImportOrdersFromSugarCRM.php
 
 		-
 			message: '#^Command "orders\:repair\-sugar\-purchase\-prices" does not have option "date\-to"\.$#'
 			identifier: larastan.console.undefinedOption
-			count: 3
+			count: 2
 			path: app/Console/Commands/ImportOrdersFromSugarCRM.php
 
 		-
@@ -53,12 +53,6 @@ parameters:
 			identifier: nullCoalesce.variable
 			count: 1
 			path: app/Enums/Currency.php
-
-		-
-			message: '#^Variable \$shiftBlocks in empty\(\) always exists and is not falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: app/Http/Controllers/Admin/Planning/Concerns/ResourceAvailabilityTrait.php
 
 		-
 			message: '#^Variable \$events in empty\(\) always exists and is not falsy\.$#'

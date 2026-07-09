@@ -759,31 +759,11 @@ class OrderController extends SimpleEntityController
     }
 
     /**
-     * Return clinics (from order item resource bookings) and unchecked order checks for the report upload modal.
+     * Return the unchecked order checks for the report upload modal.
      */
     public function reportUploadData(int $orderId): JsonResponse
     {
-        $order = $this->orderRepository->with([
-            'orderItems.resourceOrderItem.resource.clinicDepartment.clinic',
-            'orderChecks',
-        ])->findOrFail($orderId);
-
-        $clinics = $order->orderItems
-            ->map(function ($item) {
-                $resource = $item->resourceOrderItem?->resource;
-                if (! $resource) {
-                    return null;
-                }
-
-                return $resource->clinicDepartment?->clinic;
-            })
-            ->filter()
-            ->unique('id')
-            ->values()
-            ->map(fn ($clinic) => [
-                'id'   => $clinic->id,
-                'name' => $clinic->name,
-            ]);
+        $order = $this->orderRepository->with(['orderChecks'])->findOrFail($orderId);
 
         $uncheckedChecks = $order->orderChecks
             ->where('done', false)
@@ -794,20 +774,18 @@ class OrderController extends SimpleEntityController
             ]);
 
         return response()->json([
-            'clinics' => $clinics,
-            'checks'  => $uncheckedChecks,
+            'checks' => $uncheckedChecks,
         ]);
     }
 
     /**
-     * Upload report file(s): create a file Activity per file linked to order + clinic, and mark selected checks as done.
+     * Upload report file(s): create a file Activity per file linked to the order, and mark selected checks as done.
      */
     public function storeReport(Request $request, int $orderId): JsonResponse
     {
         $request->validate([
             'files'             => 'required|array|min:1',
             'files.*'           => 'file|max:20480',
-            'clinic_id'         => 'required|integer|exists:clinics,id',
             'check_ids'         => 'nullable|array',
             'check_ids.*'       => 'integer|exists:order_checks,id',
             'title'             => 'nullable|string|max:255',
@@ -834,14 +812,13 @@ class OrderController extends SimpleEntityController
                 : ($baseTitle ?: $file->getClientOriginalName());
 
             $activity = $activityRepository->create([
-                'type'      => ActivityType::FILE,
-                'title'     => $title,
-                'comment'   => $request->input('comment'),
-                'is_done'   => true,
-                'user_id'   => auth()->id(),
-                'order_id'  => $order->id,
-                'clinic_id' => $request->input('clinic_id'),
-                'file'      => $file,
+                'type'     => ActivityType::FILE,
+                'title'    => $title,
+                'comment'  => $request->input('comment'),
+                'is_done'  => true,
+                'user_id'  => auth()->id(),
+                'order_id' => $order->id,
+                'file'     => $file,
             ]);
 
             if ($publishToPortal) {

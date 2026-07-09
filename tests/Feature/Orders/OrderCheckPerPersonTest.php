@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\ProductReports;
-use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
@@ -10,6 +9,7 @@ use App\Services\OrderCheckService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
@@ -118,29 +118,26 @@ test('report upload succeeds without selecting checks', function () {
     $user = makeUser();
     $this->actingAs($user, 'user');
 
-    $clinic = Clinic::factory()->create();
     $order = Order::factory()->create();
 
     $file = UploadedFile::fake()->create('rapport.pdf', 100, 'application/pdf');
 
     $response = $this->post(
         route('admin.orders.report-upload.store', $order->id),
-        [
-            'files'     => [$file],
-            'clinic_id' => $clinic->id,
-        ],
+        ['files'  => [$file]],
         ['Accept' => 'application/json']
     );
 
     $response->assertOk()
         ->assertJsonPath('message', 'Rapportage succesvol geüpload.');
+
+    expect(Activity::where('order_id', $order->id)->value('clinic_id'))->toBeNull();
 });
 
 test('report upload with checks marks them done', function () {
     $user = makeUser();
     $this->actingAs($user, 'user');
 
-    $clinic = Clinic::factory()->create();
     $order = Order::factory()->create();
 
     $check = OrderCheck::create([
@@ -156,7 +153,6 @@ test('report upload with checks marks them done', function () {
         route('admin.orders.report-upload.store', $order->id),
         [
             'files'     => [$file],
-            'clinic_id' => $clinic->id,
             'check_ids' => [$check->id],
         ],
         ['Accept' => 'application/json']

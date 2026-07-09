@@ -54,36 +54,10 @@
                                 label="Titel (optioneel)"
                             />
 
-                            <!-- Clinic selector -->
-                            <div class="mb-4">
-                                <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">
-                                    Kliniek <span class="text-red-500">*</span>
-                                </label>
-                                <div v-if="loadingData" class="text-sm text-gray-500">
-                                    Laden...
-                                </div>
-                                <div v-else-if="clinics.length === 0" class="text-sm text-gray-500">
-                                    Geen klinieken gevonden voor deze order (Producten dienen ingepland te zijn).
-                                </div>
-                                <select
-                                    v-else
-                                    v-model="selectedClinicId"
-                                    name="clinic_id"
-                                    class="w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    required
-                                >
-                                    <option value="" disabled>Selecteer een kliniek</option>
-                                    <option v-for="clinic in clinics" :key="clinic.id" :value="clinic.id">
-                                        @{{ clinic.name }}
-                                    </option>
-                                </select>
-                                <input type="hidden" name="clinic_id" :value="selectedClinicId" />
-                            </div>
-
                             <!-- Checks selector (multi-select) -->
                             <div class="mb-4">
                                 <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">
-                                    Checks afvinken <span class="text-red-500">*</span>
+                                    Checks afvinken (optioneel)
                                 </label>
                                 <div v-if="loadingData" class="text-sm text-gray-500">
                                     Laden...
@@ -172,7 +146,7 @@
                                 class="primary-button"
                                 title="Uploaden"
                                 ::loading="isStoring"
-                                ::disabled="isStoring || selectedCheckIds.length === 0 || !selectedClinicId || (publishToPortal && persons.length > 1 && !selectedPersonId)"
+                                ::disabled="isStoring || (publishToPortal && persons.length > 1 && !selectedPersonId)"
                             />
                         </x-slot>
                     </x-admin::modal>
@@ -197,9 +171,7 @@
                 return {
                     isStoring: false,
                     loadingData: false,
-                    clinics: [],
                     checks: [],
-                    selectedClinicId: '',
                     selectedCheckIds: [],
                     publishToPortal: false,
                     persons: [],
@@ -210,9 +182,7 @@
 
             methods: {
                 openModal() {
-                    this.selectedClinicId = '';
                     this.selectedCheckIds = [];
-                    this.clinics = [];
                     this.checks = [];
                     this.publishToPortal = false;
                     this.persons = [];
@@ -253,15 +223,9 @@
 
                     this.$axios.get(url)
                         .then(response => {
-                            this.clinics = response.data.clinics ?? [];
                             this.checks = response.data.checks ?? [];
-
-                            if (this.clinics.length === 1) {
-                                this.selectedClinicId = this.clinics[0].id;
-                            }
                         })
                         .catch(() => {
-                            this.clinics = [];
                             this.checks = [];
                         })
                         .finally(() => {
@@ -270,16 +234,12 @@
                 },
 
                 save(params, { setErrors }) {
-                    if (!this.selectedClinicId || this.selectedCheckIds.length === 0) {
-                        return;
-                    }
-
                     this.isStoring = true;
 
                     const formData = new FormData();
 
                     Object.entries(params).forEach(([key, value]) => {
-                        if (value == null || key === 'clinic_id') return;
+                        if (value == null) return;
 
                         if (value instanceof FileList) {
                             Array.from(value).forEach(f => formData.append('files[]', f));
@@ -291,8 +251,6 @@
                             formData.append(key, String(value));
                         }
                     });
-
-                    formData.set('clinic_id', String(this.selectedClinicId));
 
                     this.selectedCheckIds.forEach(id => {
                         formData.append('check_ids[]', String(id));

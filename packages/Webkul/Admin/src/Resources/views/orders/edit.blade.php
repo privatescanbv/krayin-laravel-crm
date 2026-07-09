@@ -109,7 +109,7 @@ use Webkul\Lead\Models\Stage;
                         type="button"
                         class="primary-button"
                         id="order-edit-save"
-                        data-redirect-to="{{ route('admin.orders.index') }}"
+                        data-redirect-to="{{ route('admin.orders.view', $orders->id) }}"
                     >
                         Opslaan
                     </button>

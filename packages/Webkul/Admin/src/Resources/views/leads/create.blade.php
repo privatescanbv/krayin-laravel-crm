@@ -197,7 +197,7 @@ $salutationToGenderMapping = [
                         @if ($returnUrl = request()->input('return_url') ?? request()->query('return_url'))
                             <input type="hidden" name="return_url" value="{{ $returnUrl }}"/>
                         @endif
-                        <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
+                        <input type="hidden" name="lead_pipeline_stage_id" value="{{ $defaultStageId ?? request('stage_id') }}"/>
                         @if(! empty($linkEmailId))
                             <input type="hidden" name="link_email_id" value="{{ $linkEmailId }}"/>
                         @endif
@@ -965,8 +965,14 @@ $salutationToGenderMapping = [
                         try {
                             const formData = new FormData(this.$refs.leadForm);
 
-                            // Add our Vue form data to the FormData
+                            // The rendered form is the source of truth for every field it submits.
+                            // Personal fields (first_name, salutation, ...) are plain inputs without
+                            // v-model, so `this.formData` still holds the prefilled default the user
+                            // has since edited. Only contribute keys the form itself does not submit,
+                            // such as lead_pipeline_id and lead_pipeline_stage_id.
                             Object.keys(this.formData).forEach(key => {
+                                if (formData.has(key)) return;
+
                                 if (this.formData[key] !== null && this.formData[key] !== '' && this.formData[key] !== undefined) {
                                     formData.set(key, this.formData[key]);
                                 }

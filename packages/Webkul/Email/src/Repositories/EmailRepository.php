@@ -231,6 +231,47 @@ class EmailRepository extends Repository
     }
 
     /**
+     * Move an email and its thread siblings to the given folder.
+     *
+     * The mail overview groups a thread under its root and shows it in every folder that
+     * still holds one of its messages, so moving a single message leaves the thread behind
+     * in the source folder. Only siblings sharing the source folder travel along; replies
+     * filed under Sent or Drafts stay where they are.
+     *
+     * @return list<int> the ids that were moved
+     */
+    public function moveThreadToFolder(int $emailId, int $targetFolderId): array
+    {
+        $email = $this->find($emailId);
+
+        if (! $email) {
+            return [];
+        }
+
+        $sourceFolderId = $email->folder_id;
+
+        $movableIds = EmailModel::query()
+            ->whereIn('id', $email->getThreadEmailIds())
+            ->when(
+                $sourceFolderId === null,
+                fn ($query) => $query->whereNull('folder_id'),
+                fn ($query) => $query->where('folder_id', $sourceFolderId),
+            )
+            ->pluck('id')
+            ->all();
+
+        if (! in_array($email->id, $movableIds, true)) {
+            $movableIds[] = $email->id;
+        }
+
+        foreach ($movableIds as $movableId) {
+            parent::update(['folder_id' => $targetFolderId], $movableId);
+        }
+
+        return $movableIds;
+    }
+
+    /**
      * Sanitize emails.
      *
      * @return array

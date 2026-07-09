@@ -473,16 +473,14 @@ class EmailController extends Controller
             'folder_id' => 'required|integer|exists:folders,id',
         ]);
 
-        $email = $this->emailRepository->findOrFail($id);
+        $this->emailRepository->findOrFail($id);
 
         try {
             Event::dispatch('email.move.before', $id);
 
             $folder = Folder::findOrFail(request('folder_id'));
 
-            $this->emailRepository->update([
-                'folder_id' => $folder->id,
-            ], $id);
+            $this->emailRepository->moveThreadToFolder($id, $folder->id);
 
             Event::dispatch('email.move.after', $id);
 

@@ -147,7 +147,7 @@
                                     name="schedule_to"
                                     :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
                                     rules="required"
-                                    :value="now()->addWeeks(2)->format('Y-m-d\TH:i')"
+                                    :value="now()->format('Y-m-d\TH:i')"
                                     class="w-full"
                                 />
                                 {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}

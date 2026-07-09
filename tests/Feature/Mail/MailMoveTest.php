@@ -174,6 +174,57 @@ test('can move email to same folder without error', function () {
     expect($this->email->folder_id)->toBe($this->inboxFolder->id);
 });
 
+test('moving an email also moves the thread siblings that sit in the same folder', function () {
+    // The overview lists a thread under its root as long as any of its messages is still in
+    // the folder, so leaving siblings behind keeps the thread visible in the source folder.
+    $reply = Email::create([
+        'subject'   => 'Re: Test Email',
+        'from'      => ['test@example.com'],
+        'reply'     => 'Reply content',
+        'folder_id' => $this->inboxFolder->id,
+        'parent_id' => $this->email->id,
+    ]);
+
+    $nestedReply = Email::create([
+        'subject'   => 'Re: Re: Test Email',
+        'from'      => ['test@example.com'],
+        'reply'     => 'Nested reply content',
+        'folder_id' => $this->inboxFolder->id,
+        'parent_id' => $reply->id,
+    ]);
+
+    $response = $this->post(route('admin.mail.move', $reply->id), [
+        'folder_id' => $this->archiveFolder->id,
+    ]);
+
+    $response->assertStatus(200);
+
+    expect($this->email->refresh()->folder_id)->toBe($this->archiveFolder->id)
+        ->and($reply->refresh()->folder_id)->toBe($this->archiveFolder->id)
+        ->and($nestedReply->refresh()->folder_id)->toBe($this->archiveFolder->id);
+
+    expect(Email::where('folder_id', $this->inboxFolder->id)->count())->toBe(0);
+});
+
+test('moving an email leaves thread siblings in other folders untouched', function () {
+    $sentReply = Email::create([
+        'subject'   => 'Re: Test Email',
+        'from'      => ['agent@example.com'],
+        'reply'     => 'Our answer',
+        'folder_id' => $this->sentFolder->id,
+        'parent_id' => $this->email->id,
+    ]);
+
+    $response = $this->post(route('admin.mail.move', $this->email->id), [
+        'folder_id' => $this->archiveFolder->id,
+    ]);
+
+    $response->assertStatus(200);
+
+    expect($this->email->refresh()->folder_id)->toBe($this->archiveFolder->id)
+        ->and($sentReply->refresh()->folder_id)->toBe($this->sentFolder->id);
+});
+
 test('move email updates folder relationship correctly', function () {
     // Create another email in different folder
     $anotherEmail = Email::create([

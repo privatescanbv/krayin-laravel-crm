@@ -14,6 +14,19 @@ use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
 
+function setOrderItemPurchasePrice(OrderItem $item, float $amount): void
+{
+    $item->purchasePrice()->updateOrCreate([], [
+        'type'                      => PurchasePriceType::MAIN,
+        'purchase_price_misc'       => $amount,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => $amount,
+    ]);
+}
+
 function setPurchasePrice(PartnerProduct $pp, float $amount): void
 {
     $pp->purchasePrice->update([
@@ -29,13 +42,13 @@ function setPurchasePrice(PartnerProduct $pp, float $amount): void
 test('totalPurchasePrice excludes LOST order items', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create();
-    setPurchasePrice(PartnerProduct::factory()->create(['product_id' => $product->id]), 100.00);
 
-    OrderItem::factory()->create([
+    $activeItem = OrderItem::factory()->create([
         'order_id'   => $order->id,
         'product_id' => $product->id,
         'status'     => OrderItemStatus::NEW->value,
     ]);
+    setOrderItemPurchasePrice($activeItem, 100.00);
 
     OrderItem::factory()->create([
         'order_id'   => $order->id,
@@ -63,13 +76,12 @@ test('totalPurchasePrice returns 0 when all order items are LOST', function () {
 test('totalPurchasePrice sums only non-LOST items', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create();
-    setPurchasePrice(PartnerProduct::factory()->create(['product_id' => $product->id]), 50.00);
 
     OrderItem::factory()->count(2)->create([
         'order_id'   => $order->id,
         'product_id' => $product->id,
         'status'     => OrderItemStatus::PLANNED->value,
-    ]);
+    ])->each(fn (OrderItem $item) => setOrderItemPurchasePrice($item, 50.00));
 
     OrderItem::factory()->count(3)->create([
         'order_id'   => $order->id,
@@ -83,14 +95,14 @@ test('totalPurchasePrice sums only non-LOST items', function () {
 test('purchaseStatus invoiceTotal excludes LOST order items', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create();
-    setPurchasePrice(PartnerProduct::factory()->create(['product_id' => $product->id]), 80.00);
 
     $activeItem = OrderItem::factory()->create([
         'order_id'   => $order->id,
         'product_id' => $product->id,
         'status'     => OrderItemStatus::NEW->value,
     ]);
-    $activeItem->purchasePrice()->create([
+    setOrderItemPurchasePrice($activeItem, 80.00);
+    $activeItem->invoicePurchasePrice()->create([
         'type'                 => PurchasePriceType::INVOICE,
         'purchase_price_misc'  => 80.00,
         'purchase_price'       => 80.00,
@@ -101,7 +113,7 @@ test('purchaseStatus invoiceTotal excludes LOST order items', function () {
         'product_id' => $product->id,
         'status'     => OrderItemStatus::LOST->value,
     ]);
-    $lostItem->purchasePrice()->create([
+    $lostItem->invoicePurchasePrice()->create([
         'type'                => PurchasePriceType::INVOICE,
         'purchase_price_misc' => 500.00,
         'purchase_price'      => 500.00,

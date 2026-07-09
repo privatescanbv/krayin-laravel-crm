@@ -108,8 +108,6 @@ Route::controller(OrderItemController::class)->prefix('order-items')->group(func
     Route::patch('{id}/force-received', 'forceReceived')->name('admin.order_items.force_received');
     Route::delete('', 'destroy')->name('admin.order_items.bulk_delete');
     Route::delete('{id}', 'destroy')->name('admin.order_items.delete');
-    Route::get('partner-purchase-prices/{productId}', 'getPartnerPurchasePrices')
-        ->name('admin.order_items.partner_purchase_prices');
 });
 
 /**

@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->product = Product::factory()->create();
 });
 
-test('resolvedPurchasePrice returns all zeros when product has no partner products', function () {
+test('resolvedPurchasePrice returns all zeros when order item has no purchase price', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create();
 
@@ -28,7 +28,7 @@ test('resolvedPurchasePrice returns all zeros when product has no partner produc
         ->and((float) $resolved->purchase_price_doctor)->toBe(0.0);
 });
 
-test('resolvedPurchasePrice uses partner product when order item has no purchase price', function () {
+test('resolvedPurchasePrice does not fall back to partner product when order item has no purchase price', function () {
     $order = Order::factory()->create();
     $pp = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
     $pp->purchasePrice->update([
@@ -47,9 +47,9 @@ test('resolvedPurchasePrice uses partner product when order item has no purchase
 
     $resolved = $item->resolvedPurchasePrice();
 
-    expect((float) $resolved->purchase_price_misc)->toBe(10.0)
-        ->and((float) $resolved->purchase_price_doctor)->toBe(25.0)
-        ->and((float) $resolved->purchase_price)->toBe(100.0);
+    expect((float) $resolved->purchase_price_misc)->toBe(0.0)
+        ->and((float) $resolved->purchase_price_doctor)->toBe(0.0)
+        ->and((float) $resolved->purchase_price)->toBe(0.0);
 });
 
 test('resolvedPurchasePrice uses order item when it has purchase price', function () {
@@ -85,7 +85,7 @@ test('resolvedPurchasePrice uses order item when it has purchase price', functio
         ->and((float) $resolved->purchase_price)->toBe(125.0);
 });
 
-test('resolvedPurchasePrice uses only order item MAIN row when present, not partner product fields', function () {
+test('resolvedPurchasePrice uses only order item MAIN row when present', function () {
     $order = Order::factory()->create();
     $pp = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
     $pp->purchasePrice->update([
@@ -117,49 +117,25 @@ test('resolvedPurchasePrice uses only order item MAIN row when present, not part
         ->and((float) $resolved->purchase_price)->toBe(99.0);
 });
 
-test('resolvedPurchasePrice returns zeros when all levels are null', function () {
-    $order = Order::factory()->create();
-    $product = Product::factory()->create();
-    $pp = PartnerProduct::factory()->create(['product_id' => $product->id]);
-    $pp->purchasePrice->update([
-        'purchase_price_misc'       => null,
-        'purchase_price_doctor'     => null,
-        'purchase_price_cardiology' => null,
-        'purchase_price_clinic'     => null,
-        'purchase_price_radiology'  => null,
-        'purchase_price'            => null,
-    ]);
-
-    $item = OrderItem::factory()->create([
-        'order_id'   => $order->id,
-        'product_id' => $product->id,
-    ]);
-
-    $resolved = $item->resolvedPurchasePrice();
-
-    expect((float) $resolved->purchase_price)->toBe(0.0)
-        ->and((float) $resolved->purchase_price_misc)->toBe(0.0);
-});
-
-test('resolvedPurchasePrice sums multiple partner products', function () {
+test('resolvedPurchasePrice does not sum multiple partner products', function () {
     $order = Order::factory()->create();
     $pp1 = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
     $pp1->purchasePrice->update([
         'purchase_price_misc'       => 10.00,
-        'purchase_price_doctor'     => 20.00,
+        'purchase_price_doctor'     => 0,
         'purchase_price_cardiology' => 0,
         'purchase_price_clinic'     => 0,
         'purchase_price_radiology'  => 0,
-        'purchase_price'            => 30.00,
+        'purchase_price'            => 10.00,
     ]);
     $pp2 = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
     $pp2->purchasePrice->update([
         'purchase_price_misc'       => 5.00,
-        'purchase_price_doctor'     => 15.00,
+        'purchase_price_doctor'     => 0,
         'purchase_price_cardiology' => 0,
         'purchase_price_clinic'     => 0,
         'purchase_price_radiology'  => 0,
-        'purchase_price'            => 20.00,
+        'purchase_price'            => 5.00,
     ]);
 
     $item = OrderItem::factory()->create([
@@ -169,27 +145,29 @@ test('resolvedPurchasePrice sums multiple partner products', function () {
 
     $resolved = $item->resolvedPurchasePrice();
 
-    expect((float) $resolved->purchase_price_misc)->toBe(15.0)
-        ->and((float) $resolved->purchase_price_doctor)->toBe(35.0)
-        ->and((float) $resolved->purchase_price)->toBe(50.0);
+    expect((float) $resolved->purchase_price_misc)->toBe(0.0)
+        ->and((float) $resolved->purchase_price)->toBe(0.0);
 });
 
-test('resolvedPurchasePrice uses order item zero over explicit zero from partner product', function () {
-    $order = Order::factory()->create();
-    $pp = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
-    $pp->purchasePrice->update([
-        'purchase_price_misc'       => 100.00,
-        'purchase_price_doctor'     => 200.00,
-        'purchase_price_cardiology' => 50.00,
-        'purchase_price_clinic'     => 50.00,
-        'purchase_price_radiology'  => 50.00,
-        'purchase_price'            => 450.00,
+test('hasEnteredPurchasePrice is false when no MAIN row exists', function () {
+    $item = OrderItem::factory()->create(['product_id' => $this->product->id]);
+
+    expect($item->hasEnteredPurchasePrice())->toBeFalse();
+});
+
+test('hasEnteredPurchasePrice is true when MAIN row has positive total', function () {
+    $item = OrderItem::factory()->create(['product_id' => $this->product->id]);
+    $item->purchasePrice()->create([
+        'type'                => PurchasePriceType::MAIN,
+        'purchase_price_misc' => 10.00,
+        'purchase_price'      => 10.00,
     ]);
 
-    $item = OrderItem::factory()->create([
-        'order_id'   => $order->id,
-        'product_id' => $this->product->id,
-    ]);
+    expect($item->fresh()->hasEnteredPurchasePrice())->toBeTrue();
+});
+
+test('hasEnteredPurchasePrice is false when MAIN row is all zeros', function () {
+    $item = OrderItem::factory()->create(['product_id' => $this->product->id]);
     $item->purchasePrice()->create([
         'type'                       => PurchasePriceType::MAIN,
         'purchase_price_misc'        => 0,
@@ -200,25 +178,5 @@ test('resolvedPurchasePrice uses order item zero over explicit zero from partner
         'purchase_price'             => 0,
     ]);
 
-    $resolved = $item->resolvedPurchasePrice();
-
-    expect((float) $resolved->purchase_price_misc)->toBe(0.0)
-        ->and((float) $resolved->purchase_price_doctor)->toBe(0.0)
-        ->and((float) $resolved->purchase_price)->toBe(0.0);
-});
-
-test('resolvedPurchasePrice returns zeros when partner products have no purchase price', function () {
-    $order = Order::factory()->create();
-    $pp = PartnerProduct::factory()->create(['product_id' => $this->product->id]);
-    $pp->purchasePrice->delete();
-
-    $item = OrderItem::factory()->create([
-        'order_id'   => $order->id,
-        'product_id' => $this->product->id,
-    ]);
-
-    $resolved = $item->resolvedPurchasePrice();
-
-    expect((float) $resolved->purchase_price)->toBe(0.0)
-        ->and((float) $resolved->purchase_price_misc)->toBe(0.0);
+    expect($item->fresh()->hasEnteredPurchasePrice())->toBeFalse();
 });

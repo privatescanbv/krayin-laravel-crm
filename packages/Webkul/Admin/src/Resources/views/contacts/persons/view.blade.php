@@ -4,6 +4,23 @@
         {{ $person->name }}
     </x-slot>
 
+    <!-- Duplicate warning (mirrors the indicator shown on the persons list) -->
+    @if (($duplicateCount ?? 0) > 0)
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm dark:border-orange-900 dark:bg-orange-950">
+            <div class="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                <span class="icon-warning text-lg"></span>
+                <span>
+                    Er {{ $duplicateCount === 1 ? 'is' : 'zijn' }} <strong>{{ $duplicateCount }}</strong> mogelijk duplicaat{{ $duplicateCount === 1 ? '' : 'en' }} gevonden voor deze persoon.
+                </span>
+            </div>
+
+            <a href="{{ route('admin.contacts.persons.duplicates.index', $person->id) }}"
+               class="shrink-0 font-medium text-orange-700 underline hover:text-orange-900 dark:text-orange-300 dark:hover:text-orange-200">
+                Bekijk duplicaten
+            </a>
+        </div>
+    @endif
+
     <!-- Content -->
     <div class="relative flex flex-col gap-4 pt-3 max-lg:flex-wrap lg:grid"
          :class="isRightColumnCollapsed ? 'lg:grid-cols-[394px,minmax(0,1fr),0px]' : 'lg:grid-cols-[394px,minmax(0,1fr),280px]'">

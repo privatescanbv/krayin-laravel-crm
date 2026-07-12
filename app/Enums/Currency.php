@@ -85,7 +85,7 @@ enum Currency: string
         }
 
         $value = (string) $value;
-        $value = preg_replace('/\s+/', '', $value ?? '');
+        $value = preg_replace('/\s+/', '', $value);
 
         if ($value === '') {
             return null;

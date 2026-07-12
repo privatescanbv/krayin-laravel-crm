@@ -325,6 +325,15 @@ class ActivityController extends Controller
         $data = request()->all();
         unset($data['schedule_from']);
 
+        // Only allow type changes between user-selectable types (CALL, TASK).
+        // For non-user-selectable types (FILE, NOTE, SYSTEM, PATIENT_MESSAGE), ignore the submitted type.
+        if (isset($data['type'])) {
+            $newType = ActivityType::tryFrom($data['type']);
+            if (! $newType || ! $newType->isUserSelectable() || ! $activity->type?->isUserSelectable()) {
+                $data['type'] = $activity->type?->value;
+            }
+        }
+
         // Non-admins cannot change the description of CALL or TASK activities.
         $restrictedTypes = [ActivityType::CALL->value, ActivityType::TASK->value];
         if (in_array($activity->type?->value, $restrictedTypes, true)

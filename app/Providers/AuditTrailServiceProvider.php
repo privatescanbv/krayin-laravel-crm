@@ -75,6 +75,7 @@ class AuditTrailServiceProvider extends ServiceProvider
             public function creator()
             {
                 return function () {
+                    /** @var \Illuminate\Database\Eloquent\Model $this */
                     return $this->belongsTo(User::class, 'created_by');
                 };
             }
@@ -82,6 +83,7 @@ class AuditTrailServiceProvider extends ServiceProvider
             public function updater()
             {
                 return function () {
+                    /** @var \Illuminate\Database\Eloquent\Model $this */
                     return $this->belongsTo(User::class, 'updated_by');
                 };
             }

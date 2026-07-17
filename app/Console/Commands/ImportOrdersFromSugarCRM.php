@@ -101,7 +101,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         } else {
             $this->infoV("Limit: {$limit}");
         }
-        $this->infoV('Date range: '.($this->option('date-from') ?: 'geen ondergrens').' to '.($this->option('date-to') ?: 'geen bovengrens')); // @phpstan-ignore larastan.console.undefinedOption
+        $dateFromLabel = ($this->option('date-from') ?: 'geen ondergrens'); // @phpstan-ignore larastan.console.undefinedOption
+        $dateToLabel = ($this->option('date-to') ?: 'geen bovengrens'); // @phpstan-ignore larastan.console.undefinedOption
+        $this->infoV("Date range: {$dateFromLabel} to {$dateToLabel}");
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {

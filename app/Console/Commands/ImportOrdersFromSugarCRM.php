@@ -74,20 +74,21 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     public function handle()
     {
         $connection = $this->option('connection');
-        $table = $this->option('table');
+        $table = $this->option('table'); // @phpstan-ignore larastan.console.undefinedOption
         $limit = (int) $this->option('limit');
-        $orderIds = $this->option('order-ids');
-        $dryRun = $this->option('dry-run');
+        $orderIds = $this->option('order-ids'); // @phpstan-ignore larastan.console.undefinedOption
+        $dryRun = $this->option('dry-run'); // @phpstan-ignore larastan.console.undefinedOption
+        $parentType = (string) $this->option('tasks-parent-type'); // @phpstan-ignore larastan.console.undefinedOption
         try {
-            $dateFrom = $this->parseImportDate($this->option('date-from'), 'date-from');
-            $dateTo = $this->parseImportDate($this->option('date-to'), 'date-to');
+            $dateFrom = $this->parseImportDate($this->option('date-from'), 'date-from'); // @phpstan-ignore larastan.console.undefinedOption
+            $dateTo = $this->parseImportDate($this->option('date-to'), 'date-to'); // @phpstan-ignore larastan.console.undefinedOption
         } catch (Exception $e) {
             $this->error($e->getMessage());
 
             return self::FAILURE;
         }
-        if ($this->option('tasks-only')) {
-            $this->importTasksForExistingOrders($connection);
+        if ($this->option('tasks-only')) { // @phpstan-ignore larastan.console.undefinedOption
+            $this->importTasksForExistingOrders($connection, $parentType);
 
             return self::SUCCESS;
         }
@@ -100,11 +101,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         } else {
             $this->infoV("Limit: {$limit}");
         }
-        $this->infoV('Date range: '.($this->option('date-from') ?: 'geen ondergrens').' to '.($this->option('date-to') ?: 'geen bovengrens'));
+        $this->infoV('Date range: '.($this->option('date-from') ?: 'geen ondergrens').' to '.($this->option('date-to') ?: 'geen bovengrens')); // @phpstan-ignore larastan.console.undefinedOption
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {
-            return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $orderIds, $dryRun, $dateFrom, $dateTo) {
+            return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $orderIds, $dryRun, $dateFrom, $dateTo, $parentType) {
                 if (! $dryRun) {
                     $this->startImportRun('orders');
                 }
@@ -228,7 +229,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                 $this->info('Found '.$records->count().' orders to import');
 
-                if ($this->option('import-leads') && ! $dryRun) {
+                if ($this->option('import-leads') && ! $dryRun) { // @phpstan-ignore larastan.console.undefinedOption
                     $this->importMissingLeadsForOrders($records, $connection);
                 }
 
@@ -242,7 +243,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $this->importRecords($records, $connection);
                 });
 
-                $this->importTasksForOrders($records, $connection);
+                $this->importTasksForOrders($records, $connection, $parentType);
             });
         } catch (Exception $e) {
             $this->error('Error: '.$e->getMessage());
@@ -1681,14 +1682,13 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         return 'Particulier';
     }
 
-    private function importTasksForOrders(Collection $records, string $connection): void
+    private function importTasksForOrders(Collection $records, string $connection, string $parentType): void
     {
         $sugarOrderIds = $records->pluck('id')->filter()->values()->all();
         if (empty($sugarOrderIds)) {
             return;
         }
 
-        $parentType = (string) $this->option('tasks-parent-type');
         $this->info('Importing tasks for '.count($sugarOrderIds)." order(s) (parent_type={$parentType})...");
 
         $activityImporter = new ActivityImporter($this, $connection);
@@ -1731,10 +1731,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         $this->importOrderActivities($activityImporter, $sugarOrderIds, $parentType);
     }
 
-    private function importTasksForExistingOrders(string $connection): void
+    private function importTasksForExistingOrders(string $connection, string $parentType): void
     {
-        $parentType = (string) $this->option('tasks-parent-type');
-
         $sugarOrderIds = Order::whereNotNull('external_id')
             ->pluck('external_id')
             ->filter()

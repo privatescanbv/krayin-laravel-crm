@@ -75,20 +75,20 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     public function handle()
     {
         $connection = $this->option('connection');
-        $table = $this->option('table'); // @phpstan-ignore larastan.console.undefinedOption
+        $table = $this->option('table');
         $limit = (int) $this->option('limit');
-        $orderIds = $this->option('order-ids'); // @phpstan-ignore larastan.console.undefinedOption
-        $dryRun = $this->option('dry-run'); // @phpstan-ignore larastan.console.undefinedOption
-        $parentType = (string) $this->option('tasks-parent-type'); // @phpstan-ignore larastan.console.undefinedOption
+        $orderIds = $this->option('order-ids');
+        $dryRun = $this->option('dry-run');
+        $parentType = (string) $this->option('tasks-parent-type');
         try {
-            $dateFrom = $this->parseImportDate($this->option('date-from'), 'date-from'); // @phpstan-ignore larastan.console.undefinedOption
-            $dateTo = $this->parseImportDate($this->option('date-to'), 'date-to'); // @phpstan-ignore larastan.console.undefinedOption
+            $dateFrom = $this->parseImportDate($this->option('date-from'), 'date-from');
+            $dateTo = $this->parseImportDate($this->option('date-to'), 'date-to');
         } catch (Exception $e) {
             $this->error($e->getMessage());
 
             return self::FAILURE;
         }
-        if ($this->option('tasks-only')) { // @phpstan-ignore larastan.console.undefinedOption
+        if ($this->option('tasks-only')) {
             $this->importTasksForExistingOrders($connection, $parentType);
 
             return self::SUCCESS;
@@ -102,7 +102,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         } else {
             $this->infoV("Limit: {$limit}");
         }
-        $this->infoV('Date range: '.($this->option('date-from') ?: 'geen ondergrens').' to '.($this->option('date-to') ?: 'geen bovengrens')); // @phpstan-ignore larastan.console.undefinedOption
+        $this->infoV('Date range: '.($this->option('date-from') ?: 'geen ondergrens').' to '.($this->option('date-to') ?: 'geen bovengrens'));
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {
@@ -230,7 +230,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
                 $this->info('Found '.$records->count().' orders to import');
 
-                if ($this->option('import-leads') && ! $dryRun) { // @phpstan-ignore larastan.console.undefinedOption
+                if ($this->option('import-leads') && ! $dryRun) {
                     $this->importMissingLeadsForOrders($records, $connection);
                 }
 

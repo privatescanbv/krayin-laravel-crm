@@ -10,6 +10,9 @@ use App\Enums\PersonSalutation;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use App\Models\LeadAiFeedback;
+use App\Models\LeadAiSummary;
+use App\Models\LeadAiSummaryGeneration;
 use App\Models\LeadMarketingData;
 use App\Models\LeadPerson;
 use App\Services\LeadStatusTransitionValidator;
@@ -19,12 +22,14 @@ use BackedEnum;
 use Carbon\Carbon;
 use Database\Factories\LeadFactory;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -391,6 +396,19 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Leads without a pipeline stage, or in a stage that is neither won nor lost.
+     */
+    public function scopeInOpenStage(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereNull('lead_pipeline_stage_id')
+                ->orWhereHas('stage', fn (Builder $s) => $s
+                    ->where(Stage::IS_WON, false)
+                    ->where(Stage::IS_LOST, false));
+        });
+    }
+
+    /**
      * Get the activities.
      */
     public function activities(): HasMany
@@ -404,6 +422,21 @@ class Lead extends Model implements LeadContract
     public function emails(): HasMany
     {
         return $this->hasMany(EmailProxy::modelClass());
+    }
+
+    public function aiSummary(): HasOne
+    {
+        return $this->hasOne(LeadAiSummary::class);
+    }
+
+    public function aiSummaryGenerations(): HasMany
+    {
+        return $this->hasMany(LeadAiSummaryGeneration::class);
+    }
+
+    public function aiFeedback(): HasMany
+    {
+        return $this->hasMany(LeadAiFeedback::class);
     }
 
     /**

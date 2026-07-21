@@ -37,12 +37,23 @@ return [
     ], [
         'key'   => 'leads.view',
         'name'  => 'admin::app.acl.view',
-        'route' => 'admin.leads.view',
+        'route' => [
+            'admin.leads.view',
+            'admin.leads.ai-summary.show',
+        ],
         'sort'  => 2,
     ], [
         'key'   => 'leads.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.leads.edit', 'admin.leads.update', 'admin.leads.mass_update'],
+        'route' => [
+            'admin.leads.edit',
+            'admin.leads.update',
+            'admin.leads.mass_update',
+            'admin.leads.ai-summary.generate',
+            'admin.leads.ai-feedback.store',
+            'admin.leads.ai-feedback.update',
+            'admin.leads.ai-feedback.destroy',
+        ],
         'sort'  => 3,
     ], [
         'key'   => 'leads.delete',

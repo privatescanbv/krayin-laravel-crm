@@ -208,7 +208,7 @@
                 class="relative flex min-h-full w-full flex-col gap-4 rounded-lg border text-sm text-gray-500 transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                 :class="isRightColumnCollapsed ? 'translate-x-full opacity-0 pointer-events-none overflow-hidden' :
                     'translate-x-0 opacity-100'">
-                @include('admin::leads.view.right_panel', ['lead' => $lead])
+                <x-admin::ai-summary subject="leads" :id="$lead->id"/>
             </div>
         </div>
 
@@ -324,7 +324,7 @@
                         data() {
                             return {
                                 leadDetailSection: 'algemeen',
-                                isRightColumnCollapsed: true,
+                                isRightColumnCollapsed: false,
                             };
                         },
 

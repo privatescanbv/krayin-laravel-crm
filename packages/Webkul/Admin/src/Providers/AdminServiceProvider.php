@@ -2,8 +2,10 @@
 
 namespace Webkul\Admin\Providers;
 
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
+use App\Models\SalesLead;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\AliasLoader;
@@ -56,6 +58,8 @@ class AdminServiceProvider extends ServiceProvider
             'products'         => Product::class,
             'order_items'      => OrderItem::class,
             'partner_products' => PartnerProduct::class,
+            'orders'           => Order::class,
+            'sales_leads'      => SalesLead::class,
         ]);
 
         $this->app->register(EventServiceProvider::class);

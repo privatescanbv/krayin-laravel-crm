@@ -7,31 +7,31 @@
   },
   "devDependencies": {
     "@marker.io/browser": "^0.20",
-    "@playwright/test": "^1.58",
+    "@playwright/test": "^1.61",
     "@tailwindcss/forms": "^0.5",
     "@vitejs/plugin-vue": "^6.0",
-    "axios": "^1.15",
-    "laravel-vite-plugin": "^3.0",
+    "axios": "^1.18",
+    "laravel-vite-plugin": "^3.1",
     "postcss": "^8",
-    "rollup": "^4.60",
-    "tailwindcss": "^3",
-    "vite": "^8.0"
+    "rollup": "^4.62",
+    "tailwindcss": "^4",
+    "vite": "^8.1"
   },
   "dependencies": {
-    "@heroicons/vue": "^2.1",
-    "@vee-validate/i18n": "^4.12",
-    "@vee-validate/rules": "^4.12",
-    "autoprefixer": "^10.4",
-    "dompurify": "^3.1",
+    "@heroicons/vue": "^2.2",
+    "@vee-validate/i18n": "^4.15",
+    "@vee-validate/rules": "^4.15",
+    "autoprefixer": "^10.5",
+    "dompurify": "^3.4",
     "flatpickr": "^4.6",
-    "lodash": "^4.17",
+    "lodash": "^4.18",
     "mitt": "^3.0",
     "vee-validate": "^4.15",
     "vue": "^3.5",
-    "vue-cal": "^4.8",
+    "vue-cal": "^4.10",
     "vuedraggable": "^4.1"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.52"
+    "@rollup/rollup-linux-arm64-gnu": "^4.62"
   }
 }

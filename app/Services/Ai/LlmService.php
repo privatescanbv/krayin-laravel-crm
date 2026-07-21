@@ -12,21 +12,29 @@ class LlmService
      * Send a chat completion request and return the assistant message content.
      *
      * @param  array<string, mixed>  $context  Extra fields included in log output (e.g. email_id).
+     * @param  array{prompt_tokens?: int, completion_tokens?: int}|null  $usage  Set to the API's token usage, by reference.
      *
      * @throws Exception
      */
-    public function chat(string $useCase, string $userContent, array $context = [], ?string $systemPromptOverride = null): string
-    {
-        $systemPrompt = $systemPromptOverride ?: config("ai_prompts.{$useCase}");
+    public function chat(
+        string $useCase,
+        string $userContent,
+        array $context = [],
+        ?string $systemPromptOverride = null,
+        bool $logContent = true,
+        ?array &$usage = null,
+    ): string {
+        $systemPrompt = $systemPromptOverride ?: AiPromptConfig::prompt($useCase);
 
         if (empty($systemPrompt)) {
             throw new Exception("Unknown AI prompt use case: {$useCase}");
         }
 
-        $baseUrl = rtrim((string) config('services.llm.base_url'), '/');
+        $baseUrl = rtrim(AiPromptConfig::baseUrl($useCase), '/');
         $url = "{$baseUrl}/chat/completions";
-        $model = config('services.llm.model');
-        $temperature = (float) config('services.llm.temperature', 0.7);
+        $model = AiPromptConfig::model($useCase);
+        $temperature = AiPromptConfig::temperature($useCase);
+        $timeout = AiPromptConfig::timeout($useCase);
 
         $requestBody = [
             'model'       => $model,
@@ -48,16 +56,24 @@ class LlmService
         }
 
         Log::info('LLM request', array_merge($context, [
-            'use_case'    => $useCase,
-            'url'         => $url,
-            'model'       => $model,
-            'temperature' => $temperature,
-            'request'     => $requestBody,
+            'use_case'            => $useCase,
+            'url'                 => $url,
+            'model'               => $model,
+            'temperature'         => $temperature,
+            'timeout'             => $timeout,
+            'system_prompt_bytes' => $context['system_prompt_bytes'] ?? strlen($systemPrompt),
+            'user_payload_bytes'  => $context['user_payload_bytes'] ?? strlen($userContent),
+            'request'             => $logContent ? $requestBody : [
+                'model'            => $model,
+                'temperature'      => $temperature,
+                'response_format'  => $requestBody['response_format'] ?? null,
+                'content_redacted' => true,
+            ],
         ]));
 
         $startedAt = microtime(true);
 
-        $response = Http::timeout((int) config('services.llm.timeout', 180))
+        $response = Http::timeout($timeout)
             ->acceptJson()
             ->withHeaders([
                 'Authorization' => 'Bearer '.config('services.llm.api_key'),
@@ -73,7 +89,7 @@ class LlmService
                 'url'          => $url,
                 'status'       => $response->status(),
                 'duration_ms'  => $durationMs,
-                'response_raw' => $response->body(),
+                'response_raw' => $logContent ? $response->body() : '[redacted]',
             ]));
 
             throw new Exception('LLM request failed with status '.$response->status());
@@ -89,10 +105,10 @@ class LlmService
             Log::error('LLM returned error payload', array_merge($context, [
                 'use_case'    => $useCase,
                 'duration_ms' => $durationMs,
-                'error'       => $data['error'],
+                'error'       => $logContent ? $data['error'] : '[redacted]',
             ]));
 
-            throw new Exception('LLM error: '.$message);
+            throw new Exception($logContent ? 'LLM error: '.$message : 'LLM returned an error payload');
         }
 
         $content = $data['choices'][0]['message']['content'] ?? null;
@@ -101,20 +117,21 @@ class LlmService
             Log::error('LLM response missing message content', array_merge($context, [
                 'use_case'      => $useCase,
                 'duration_ms'   => $durationMs,
-                'response_data' => $data,
+                'response_data' => $logContent ? $data : '[redacted]',
             ]));
 
             throw new Exception('LLM response did not contain message content');
         }
 
         $content = trim($content);
+        $usage = $data['usage'] ?? null;
 
         Log::info('LLM response', array_merge($context, [
             'use_case'    => $useCase,
             'duration_ms' => $durationMs,
             'status'      => $response->status(),
-            'usage'       => $data['usage'] ?? null,
-            'content'     => $content,
+            'usage'       => $usage,
+            'content'     => $logContent ? $content : '[redacted]',
         ]));
 
         return $content;
@@ -128,11 +145,16 @@ class LlmService
      *
      * @throws Exception
      */
-    public function chatJson(string $useCase, string $userContent, array $context = [], ?string $systemPromptOverride = null): array
-    {
-        $content = $this->chat($useCase, $userContent, $context, $systemPromptOverride);
+    public function chatJson(
+        string $useCase,
+        string $userContent,
+        array $context = [],
+        ?string $systemPromptOverride = null,
+        bool $logContent = true,
+    ): array {
+        $content = $this->chat($useCase, $userContent, $context, $systemPromptOverride, $logContent);
 
-        return $this->parseJsonResponse($content, $context, $useCase);
+        return $this->parseJsonResponse($content, $context, $useCase, $logContent);
     }
 
     /**
@@ -141,8 +163,12 @@ class LlmService
      *
      * @throws LlmJsonParseException
      */
-    public function parseJsonResponse(string $content, array $context = [], ?string $useCase = null): array
-    {
+    public function parseJsonResponse(
+        string $content,
+        array $context = [],
+        ?string $useCase = null,
+        bool $logContent = true,
+    ): array {
         $json = $this->extractJson($content);
         $decoded = json_decode($json, true);
         $jsonError = json_last_error();
@@ -151,7 +177,7 @@ class LlmService
         if ($jsonError === JSON_ERROR_NONE && is_array($decoded)) {
             Log::info('LLM response parsed', array_merge($context, array_filter([
                 'use_case' => $useCase,
-                'parsed'   => $decoded,
+                'parsed'   => $logContent ? $decoded : '[redacted]',
             ])));
 
             return $decoded;
@@ -159,8 +185,8 @@ class LlmService
 
         Log::error('LLM response is not valid JSON', array_merge($context, array_filter([
             'use_case'          => $useCase,
-            'content'           => $content,
-            'extracted_json'    => $json,
+            'content'           => $logContent ? $content : '[redacted]',
+            'extracted_json'    => $logContent ? $json : '[redacted]',
             'json_error'        => $jsonErrorMessage,
             'json_error_code'   => $jsonError,
         ])));

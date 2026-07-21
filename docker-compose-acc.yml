@@ -464,9 +464,9 @@ services:
       - LD_LIBRARY_PATH=/app
     command: >
       -m /models/Qwen2.5-7B-Instruct-Q4_K_M.gguf
-      --ctx-size 8192
+      --ctx-size 16384
       --threads 8
-      --parallel 1
+      --parallel 2
       --cache-type-k q8_0
       --cache-type-v q8_0
       --jinja

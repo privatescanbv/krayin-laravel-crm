@@ -12,6 +12,7 @@ use App\Enums\OrderPurchaseStatus;
 use App\Enums\PaymentType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
+use App\Models\Concerns\HasAiSummary;
 use App\Traits\HasAuditTrail;
 use BackedEnum;
 use Carbon\Carbon;
@@ -35,7 +36,7 @@ use Webkul\Lead\Models\Stage;
  */
 class Order extends Model
 {
-    use HasAuditTrail, HasFactory;
+    use HasAiSummary, HasAuditTrail, HasFactory;
 
     protected $table = 'orders';
 

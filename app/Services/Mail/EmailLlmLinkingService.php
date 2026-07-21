@@ -5,6 +5,7 @@ namespace App\Services\Mail;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\Ai\AiPromptConfig;
 use App\Services\Ai\LlmJsonParseException;
 use App\Services\Ai\LlmService;
 use Illuminate\Support\Facades\Log;
@@ -56,7 +57,7 @@ class EmailLlmLinkingService
         $metadata = [
             'last_run_at'     => now()->toIso8601String(),
             'trigger'         => $trigger,
-            'system_prompt'   => $systemPrompt ?: config('ai_prompts.email_sender_extraction'),
+            'system_prompt'   => $systemPrompt ?: AiPromptConfig::prompt('email_sender_extraction'),
             'request_payload' => $payload,
             'status'          => 'error',
             'senders'         => [],

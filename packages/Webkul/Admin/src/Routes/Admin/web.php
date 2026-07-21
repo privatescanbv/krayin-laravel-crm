@@ -11,6 +11,11 @@ require 'auth-routes.php';
 require 'leads-routes.php';
 
 /**
+ * AI summary routes (shared by leads, persons, orders and sales leads).
+ */
+require 'ai-summary-routes.php';
+
+/**
  * Email routes.
  */
 require 'mail-routes.php';

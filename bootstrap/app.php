@@ -93,6 +93,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
         $schedule->command('email-templates:verify-codes')->hourly();
         $schedule->command('queue:monitor-failed-jobs')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('leads:refresh-ai-summaries')->daily()->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);

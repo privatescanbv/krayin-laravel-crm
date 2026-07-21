@@ -109,6 +109,13 @@ return [
                 explode(',', (string) env('LLM_EMAIL_TECHNICAL_OUTPUT_USERS', 'mark.bulthuis@privatescan.nl,mark.klaucke@privatescan.nl'))
             ))),
         ],
+        'lead_summary' => [
+            'enabled'         => filter_var(env('LLM_LEAD_SUMMARY_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+            'prompt_version'  => env('LLM_LEAD_SUMMARY_PROMPT_VERSION', 'v3'),
+            'activity_limit'  => (int) env('LLM_LEAD_SUMMARY_ACTIVITY_LIMIT', 12),
+            'email_limit'     => (int) env('LLM_LEAD_SUMMARY_EMAIL_LIMIT', 6),
+            'scheduled_queue' => env('LLM_LEAD_SUMMARY_SCHEDULED_QUEUE', 'lead-ai-summary-scheduled'),
+        ],
         'response_format_json' => filter_var(env('LLM_RESPONSE_FORMAT_JSON', true), FILTER_VALIDATE_BOOLEAN),
     ],
 

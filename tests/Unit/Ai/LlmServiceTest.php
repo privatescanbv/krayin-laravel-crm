@@ -42,6 +42,32 @@ test('chat sends request to completions endpoint with configured settings', func
     });
 });
 
+test('chat prefers the per use case base url, model and temperature overrides', function () {
+    config([
+        'ai_prompts.email_sender_extraction.base_url'    => 'https://other-llm.test/llm/v1/',
+        'ai_prompts.email_sender_extraction.model'       => 'gpt-oss-120b',
+        'ai_prompts.email_sender_extraction.temperature' => 0.3,
+    ]);
+
+    Http::fake([
+        'https://other-llm.test/llm/v1/chat/completions' => Http::response([
+            'choices' => [
+                ['message' => ['content' => 'Hello']],
+            ],
+        ], 200),
+    ]);
+
+    (new LlmService)->chat('email_sender_extraction', '{}');
+
+    Http::assertSent(function ($request) {
+        $body = $request->data();
+
+        return $request->url() === 'https://other-llm.test/llm/v1/chat/completions'
+            && $body['model'] === 'gpt-oss-120b'
+            && $body['temperature'] === 0.3;
+    });
+});
+
 test('chatJson strips markdown code fences', function () {
     Http::fake([
         'https://llm.test/v1/chat/completions' => Http::response([
@@ -147,5 +173,38 @@ test('chat logs request and response with context', function () {
             return $context['email_id'] === 123
                 && $context['parsed'] === ['senders' => []];
         }))
+        ->once();
+});
+
+test('chat can redact sensitive request and response content from logs', function () {
+    Log::spy();
+
+    Http::fake([
+        'https://llm.test/v1/chat/completions' => Http::response([
+            'choices' => [
+                ['message' => ['content' => '{"summary":"gevoelige modeluitvoer"}']],
+            ],
+        ], 200),
+    ]);
+
+    $service = new LlmService;
+    $service->chatJson(
+        'lead_summary',
+        '{"note":"gevoelige broninhoud"}',
+        ['lead_id' => 123],
+        logContent: false,
+    );
+
+    Log::shouldHaveReceived('info')
+        ->with('LLM request', Mockery::on(fn (array $context) => $context['request']['content_redacted'] === true
+            && ! str_contains(json_encode($context), 'gevoelige broninhoud')))
+        ->once();
+
+    Log::shouldHaveReceived('info')
+        ->with('LLM response', Mockery::on(fn (array $context) => $context['content'] === '[redacted]'))
+        ->once();
+
+    Log::shouldHaveReceived('info')
+        ->with('LLM response parsed', Mockery::on(fn (array $context) => $context['parsed'] === '[redacted]'))
         ->once();
 });

@@ -8,6 +8,7 @@ use Webkul\Admin\Http\Controllers\Lead\LeadController;
 use Webkul\Admin\Http\Controllers\Lead\TagController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use App\Http\Controllers\Admin\AnamnesisController;
+use App\Http\Controllers\Admin\LeadAiSummaryController;
 
 Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::get('', 'index')->name('admin.leads.index');
@@ -57,6 +58,14 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::get('{id}/default-group', [ActivityController::class, 'getDefaultGroup'])->name('admin.leads.default-group');
 
     Route::get('{id}/diagnosis-form/download', 'downloadDiagnosisForm')->name('admin.leads.diagnosis-form.download');
+
+    Route::controller(LeadAiSummaryController::class)->prefix('{id}/ai-summary')->group(function () {
+        Route::get('', 'show')->name('admin.leads.ai-summary.show');
+        Route::post('generate', 'generate')->name('admin.leads.ai-summary.generate');
+        Route::post('feedback', 'storeFeedback')->name('admin.leads.ai-feedback.store');
+        Route::put('feedback/{feedback}', 'updateFeedback')->name('admin.leads.ai-feedback.update');
+        Route::delete('feedback/{feedback}', 'destroyFeedback')->name('admin.leads.ai-feedback.destroy');
+    });
 
     Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
         Route::get('', 'index')->name('admin.leads.activities.index');

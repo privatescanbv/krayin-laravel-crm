@@ -60,6 +60,13 @@ abstract class TestCase extends BaseTestCase
         config(['mail-receiver.default' => 'webklex-imap']);
         config(['sentry.dsn' => null]);
         config(['services.llm.base_url' => null]);
+        config(['services.llm.lead_summary.enabled' => false]);
+
+        // Drop the per use case endpoint overrides from config/ai_prompts.php so tests
+        // that fake a base_url are not bypassed by a real URL for a single use case.
+        foreach (array_keys((array) config('ai_prompts', [])) as $useCase) {
+            config(["ai_prompts.{$useCase}.base_url" => null]);
+        }
     }
 
     /**

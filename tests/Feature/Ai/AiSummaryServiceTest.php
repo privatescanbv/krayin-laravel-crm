@@ -1,11 +1,11 @@
 <?php
 
-use App\Models\LeadAiFeedback;
-use App\Models\LeadAiSummary;
-use App\Models\LeadAiSummaryGeneration;
+use App\Models\AiFeedback;
+use App\Models\AiSummary;
+use App\Models\AiSummaryGeneration;
 use App\Models\Order;
 use App\Models\SalesLead;
-use App\Services\Ai\LeadAiSummaryService;
+use App\Services\Ai\AiSummaryService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -18,7 +18,7 @@ beforeEach(function () {
         'services.llm.model'                          => 'test-model',
         'services.llm.temperature'                    => 0.0,
         'services.llm.response_format_json'           => true,
-        'services.llm.lead_summary.prompt_version'    => 'test-v1',
+        'ai_summaries.subjects.leads.prompt_version'  => 'test-v1',
     ]);
 });
 
@@ -33,12 +33,10 @@ test('stores a validated summary generation and marks active feedback as include
         'first_examination_at' => now()->subDays(2),
         'closed_at'            => now()->subDay(),
     ]);
-    $activeFeedback = LeadAiFeedback::factory()->create([
-        'lead_id'  => $lead->id,
+    $activeFeedback = AiFeedback::factory()->forSubject($lead)->create([
         'feedback' => 'Deze klant wil in de ochtend worden gebeld.',
     ]);
-    LeadAiFeedback::factory()->create([
-        'lead_id'   => $lead->id,
+    AiFeedback::factory()->forSubject($lead)->create([
         'feedback'  => 'Niet meer geldig.',
         'is_active' => false,
     ]);
@@ -68,7 +66,7 @@ test('stores a validated summary generation and marks active feedback as include
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('completed')
         ->and($summary->summary)->toBe('De klant wacht op opvolging van de offerte.')
@@ -120,7 +118,7 @@ test('omits the sources catalog from the outgoing llm payload but keeps inline r
         ]),
     ]);
 
-    app(LeadAiSummaryService::class)->generate($lead, 'test');
+    app(AiSummaryService::class)->generate($lead, 'test');
 
     Http::assertSent(function ($request) use ($order) {
         $payload = json_decode($request->data()['messages'][1]['content'], true);
@@ -133,8 +131,7 @@ test('omits the sources catalog from the outgoing llm payload but keeps inline r
 
 test('keeps the previous valid summary visible when the ai response is invalid', function () {
     $lead = Lead::factory()->create();
-    $existing = LeadAiSummary::factory()->create([
-        'lead_id' => $lead->id,
+    $existing = AiSummary::factory()->forSubject($lead)->create([
         'summary' => 'Eerder geldige samenvatting.',
         'status'  => 'completed',
     ]);
@@ -147,7 +144,7 @@ test('keeps the previous valid summary visible when the ai response is invalid',
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->id)->toBe($existing->id)
         ->and($summary->summary)->toBe('Eerder geldige samenvatting.')
@@ -156,7 +153,7 @@ test('keeps the previous valid summary visible when the ai response is invalid',
         ->and($summary->generations)->toHaveCount(1)
         ->and($summary->generations->first()->status)->toBe('failed')
         ->and($summary->generations->first()->raw_response)->toBe('Dit is geen JSON.')
-        ->and(DB::table('lead_ai_summary_generations')->value('raw_response'))->not->toBe('Dit is geen JSON.');
+        ->and(DB::table('ai_summary_generations')->value('raw_response'))->not->toBe('Dit is geen JSON.');
 });
 
 test('accepts an empty next_action for leads that need no follow-up', function () {
@@ -175,7 +172,7 @@ test('accepts an empty next_action for leads that need no follow-up', function (
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('completed')
         ->and($summary->summary)->toBe('Deal is gewonnen, geen verdere actie nodig.')
@@ -207,7 +204,7 @@ test('rejects responses that exceed the fixed output limits', function () {
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('failed')
         ->and($summary->summary)->toBeNull()
@@ -237,7 +234,7 @@ test('drops attention points with an unknown source reference but keeps the summ
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('completed')
         ->and($summary->summary)->toBe('Samenvatting.')
@@ -280,7 +277,7 @@ test('keeps the verifiable attention point when the model also invents one', fun
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('completed')
         ->and($summary->attention_points)->toHaveCount(1)
@@ -318,7 +315,7 @@ test('drops a citation when its order was deleted during generation', function (
         ]);
     });
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('completed')
         ->and($summary->summary)->toBe('Samenvatting.')
@@ -356,7 +353,7 @@ test('drops a citation when its source changed during generation', function () {
         ]);
     });
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($summary->status)->toBe('completed')
         ->and($summary->summary)->toBe('Samenvatting.')
@@ -365,8 +362,7 @@ test('drops a citation when its source changed during generation', function () {
 
 test('rethrows connection failures so the queued job can be retried, while keeping the previous summary visible', function () {
     $lead = Lead::factory()->create();
-    $existing = LeadAiSummary::factory()->create([
-        'lead_id' => $lead->id,
+    $existing = AiSummary::factory()->forSubject($lead)->create([
         'summary' => 'Eerder geldige samenvatting.',
         'status'  => 'completed',
     ]);
@@ -375,7 +371,7 @@ test('rethrows connection failures so the queued job can be retried, while keepi
         throw new ConnectionException('cURL error 28: Failed to connect to llm.test port 443 after 10001 ms');
     });
 
-    expect(fn () => app(LeadAiSummaryService::class)->generate($lead, 'test'))
+    expect(fn () => app(AiSummaryService::class)->generate($lead, 'test'))
         ->toThrow(ConnectionException::class);
 
     $existing->refresh();
@@ -387,13 +383,12 @@ test('rethrows connection failures so the queued job can be retried, while keepi
         ->and($existing->generations->first()->status)->toBe('failed');
 });
 
-test('prunes older generation records for the lead once a new one completes', function () {
+test('prunes older generation records for the subject once a new one completes', function () {
     $lead = Lead::factory()->create();
-    $summary = LeadAiSummary::factory()->create(['lead_id' => $lead->id, 'status' => 'failed']);
-    $staleGeneration = LeadAiSummaryGeneration::factory()->create([
-        'lead_id'            => $lead->id,
-        'lead_ai_summary_id' => $summary->id,
-        'status'             => 'failed',
+    $summary = AiSummary::factory()->forSubject($lead)->create(['status' => 'failed']);
+    $staleGeneration = AiSummaryGeneration::factory()->create([
+        'ai_summary_id' => $summary->id,
+        'status'        => 'failed',
     ]);
 
     Http::fake([
@@ -409,11 +404,11 @@ test('prunes older generation records for the lead once a new one completes', fu
         ]),
     ]);
 
-    $result = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $result = app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($result->generations)->toHaveCount(1)
         ->and($result->generations->first()->status)->toBe('completed')
-        ->and(LeadAiSummaryGeneration::query()->find($staleGeneration->id))->toBeNull();
+        ->and(AiSummaryGeneration::query()->find($staleGeneration->id))->toBeNull();
 });
 
 test('stores payload size observability on the generation snapshot', function () {
@@ -433,7 +428,7 @@ test('stores payload size observability on the generation snapshot', function ()
         ]),
     ]);
 
-    $summary = app(LeadAiSummaryService::class)->generate($lead, 'test');
+    $summary = app(AiSummaryService::class)->generate($lead, 'test');
     $snapshot = $summary->generations->first()->context_snapshot;
 
     expect($snapshot['system_prompt_bytes'])->toBeGreaterThan(0)
@@ -444,8 +439,7 @@ test('stores payload size observability on the generation snapshot', function ()
 
 test('does not mark feedback as included when it changed during generation', function () {
     $lead = Lead::factory()->create();
-    $feedback = LeadAiFeedback::factory()->create([
-        'lead_id'    => $lead->id,
+    $feedback = AiFeedback::factory()->forSubject($lead)->create([
         'feedback'   => 'Oude correctie',
         'updated_at' => now()->subMinute(),
     ]);
@@ -469,7 +463,7 @@ test('does not mark feedback as included when it changed during generation', fun
         ]);
     });
 
-    app(LeadAiSummaryService::class)->generate($lead, 'test');
+    app(AiSummaryService::class)->generate($lead, 'test');
 
     expect($feedback->fresh()->feedback)->toBe('Nieuwe correctie')
         ->and($feedback->fresh()->included_in_generation_at)->toBeNull();

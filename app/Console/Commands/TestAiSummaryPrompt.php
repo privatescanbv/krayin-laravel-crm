@@ -6,17 +6,21 @@ use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
 use App\Enums\Departments;
+use App\Models\AiFeedback;
+use App\Models\AiSummaryGeneration;
 use App\Models\Department;
-use App\Models\LeadAiFeedback;
-use App\Models\LeadAiSummaryGeneration;
 use App\Models\Order;
+use App\Models\OrderCheck;
+use App\Models\OrderItem;
 use App\Models\SalesLead;
 use App\Services\Ai\AiPromptConfig;
-use App\Services\Ai\LeadAiContextService;
-use App\Services\Ai\LeadAiSummaryService;
+use App\Services\Ai\AiSubjectDefinition;
+use App\Services\Ai\AiSubjectRegistry;
+use App\Services\Ai\AiSummaryService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -31,39 +35,83 @@ use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Source;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\Type;
+use Webkul\Product\Models\Product;
 use Webkul\User\Models\User;
 
 /**
- * Builds a fixed, deliberately rich lead scenario (long history, heavy email
- * traffic, an explicit AI-feedback correction and a couple of "does the
- * model track recency correctly" traps) and runs it through the real
- * lead-summary pipeline (LeadAiContextService + LeadAiSummaryService) so the
- * actual prompt, payload size, token usage and LLM output can be reviewed by
- * hand. All synthetic records are created inside a transaction that is
- * always rolled back; nothing is left behind in the database.
+ * Builds a fixed, deliberately rich patient scenario (long history, heavy email
+ * traffic, an explicit AI-feedback correction and a couple of "does the model
+ * track recency correctly" traps) and runs one of its records through the real
+ * summary pipeline (context builder + AiSummaryService), so the actual prompt,
+ * payload size, token usage and LLM output can be reviewed by hand.
+ *
+ * The same scenario serves every subject: it already contains the patient, the
+ * open lead, its sales lead and its order, so the subject argument only picks
+ * which of them gets summarised. Subject-specific detail is added on demand, so
+ * a lead run keeps producing exactly the payload it did before.
+ *
+ * All synthetic records are created inside a transaction that is always rolled
+ * back; nothing is left behind in the database.
  */
-class TestLeadAiSummaryPrompt extends Command
+class TestAiSummaryPrompt extends Command
 {
     /** Gemeten op deze Nederlandse JSON-payload met de qwen-tokenizer; bytes/4 was ~75% te optimistisch. */
     private const BYTES_PER_TOKEN = 2.3;
 
-    private const LOCK_KEY = 'ai:lead-summary:test';
+    private const LOCK_KEY = 'ai:summary:test';
+
+    /**
+     * Friendly spellings for the subject keys in config/ai_summaries.php.
+     *
+     * @var array<string, string>
+     */
+    private const SUBJECT_ALIASES = [
+        'lead'       => 'leads',
+        'person'     => 'persons',
+        'contact'    => 'persons',
+        'contacts'   => 'persons',
+        'order'      => 'orders',
+        'sale'       => 'sales_leads',
+        'sales'      => 'sales_leads',
+        'sales_lead' => 'sales_leads',
+        'saleslead'  => 'sales_leads',
+        'salesleads' => 'sales_leads',
+    ];
 
     /** Ruim boven de langste LLM-timeout, zodat een trage run zijn eigen lock niet verliest. */
     private const LOCK_SECONDS = 1800;
 
-    protected $signature = 'ai:lead-summary:test
+    protected $signature = 'ai:summary:test
+        {subject=leads : Welke entiteit samengevat wordt: leads, persons, orders of sales_leads}
         {--activities=30 : Aantal activiteiten in de synthetische case}
         {--emails=20 : Aantal e-mails in de synthetische case}
         {--historical-leads=5 : Aantal eerdere leads van dezelfde patient}
         {--skip-llm : Bouw en toon alleen de payload, roep de LLM niet aan}';
 
-    protected $description = 'Bouw een vaste, uitgebreide lead-case en test de echte AI-samenvattingsprompt erop (payload, tokens, ruwe LLM-output), zonder iets in de database achter te laten.';
+    protected $description = 'Bouw een vaste, uitgebreide patient-case en test de echte AI-samenvattingsprompt van een lead, persoon, order of sales lead erop (payload, tokens, ruwe LLM-output), zonder iets in de database achter te laten.';
 
     private array $filler = [];
 
-    public function handle(LeadAiContextService $contextService, LeadAiSummaryService $summaryService): int
+    public function __construct()
     {
+        parent::__construct();
+
+        // Keeps the name this command was introduced under working.
+        $this->setAliases(['ai:lead-summary:test']);
+    }
+
+    public function handle(AiSubjectRegistry $registry, AiSummaryService $summaryService): int
+    {
+        $definition = $this->resolveSubject($registry, (string) $this->argument('subject'));
+
+        if ($definition === null) {
+            $this->error('Onbekend subject: '.$this->argument('subject').'. Kies uit: '.implode(', ', $registry->keys()).'.');
+
+            return self::FAILURE;
+        }
+
+        $contextService = $registry->builder($definition);
+
         $historicalLeadsCount = max(0, (int) $this->option('historical-leads'));
         $activityCount = max(0, (int) $this->option('activities'));
         $emailCount = max(0, (int) $this->option('emails'));
@@ -74,7 +122,7 @@ class TestLeadAiSummaryPrompt extends Command
         $lock = Cache::lock(self::LOCK_KEY, self::LOCK_SECONDS);
 
         if (! $lock->get()) {
-            $this->error('Er draait al een ai:lead-summary:test. Wacht tot die klaar is; gelijktijdig draaien geeft database lock timeouts.');
+            $this->error('Er draait al een ai:summary:test. Wacht tot die klaar is; gelijktijdig draaien geeft database lock timeouts.');
             $this->line('Draait er niets meer? Dan is een run afgebroken zonder zijn lock vrij te geven:');
             $this->line('  php artisan tinker --execute=\'Cache::lock("'.self::LOCK_KEY.'")->forceRelease();\'');
 
@@ -86,22 +134,24 @@ class TestLeadAiSummaryPrompt extends Command
         try {
             $this->info('Synthetische case opbouwen (patient met veel historie en e-mailverkeer)...');
 
-            $scenario = $this->buildScenario($historicalLeadsCount, $activityCount, $emailCount);
-            $lead = $scenario['lead'];
+            $scenario = $this->buildScenario($historicalLeadsCount, $activityCount, $emailCount, $definition->key);
+            $subject = $scenario[$definition->key];
 
-            $context = $contextService->build($lead);
+            $this->comment("Samenvatten als {$definition->label} (subject: {$definition->key}, id {$subject->getKey()}).");
+
+            $context = $contextService->build($subject);
             $payload = $contextService->forLlm($context);
             $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
             $compactJson = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-            $this->printPayloadStats($scenario, $context, $compactJson);
+            $this->printPayloadStats($definition, $subject, $scenario, $context, $compactJson);
 
             $reportLines = [];
-            $reportLines[] = "# AI lead-summary prompt test\n";
+            $reportLines[] = "# AI {$definition->key}-summary prompt test\n";
             $reportLines[] = 'Gegenereerd op: '.now()->toIso8601String()."\n";
-            $reportLines[] = "## System prompt (config/ai_prompts.php -> lead_summary)\n";
+            $reportLines[] = "## System prompt (config/ai_prompts.php -> {$definition->useCase})\n";
             $reportLines[] = '```';
-            $reportLines[] = (string) AiPromptConfig::prompt('lead_summary');
+            $reportLines[] = (string) AiPromptConfig::prompt($definition->useCase);
             $reportLines[] = '```';
             $reportLines[] = "\n## User payload (exact JSON dat naar de LLM gaat)\n";
             $reportLines[] = '```json';
@@ -110,24 +160,25 @@ class TestLeadAiSummaryPrompt extends Command
 
             if ($this->option('skip-llm')) {
                 $this->warn('--skip-llm: LLM wordt niet aangeroepen, alleen de payload is getoond.');
-                $this->writeReport($reportLines);
+                $this->writeReport($reportLines, $definition->key);
 
                 return self::SUCCESS;
             }
 
-            $this->info('LLM aanroepen via de echte LeadAiSummaryService::generate() ...');
+            $this->info('LLM aanroepen via de echte AiSummaryService::generate() ...');
 
             try {
-                $summary = $summaryService->generate($lead, 'manual-test-command');
+                $summary = $summaryService->generate($subject, 'manual-test-command');
             } catch (Throwable $exception) {
                 $this->error('Generatie gooide een exception: '.$exception::class.' - '.$exception->getMessage());
-                $this->writeReport($reportLines);
+                $this->writeReport($reportLines, $definition->key);
 
                 return self::FAILURE;
             }
 
-            $generation = LeadAiSummaryGeneration::query()
-                ->where('lead_id', $lead->id)
+            $generation = AiSummaryGeneration::query()
+                ->where('subject_type', $subject->getMorphClass())
+                ->where('subject_id', $subject->getKey())
                 ->latest('id')
                 ->first();
 
@@ -158,7 +209,7 @@ class TestLeadAiSummaryPrompt extends Command
             }
 
             $this->printResult($summary, $generation);
-            $reportPath = $this->writeReport($reportLines);
+            $reportPath = $this->writeReport($reportLines, $definition->key);
 
             $this->line('');
             $this->info("Volledig rapport (prompt + payload + ruwe response): {$reportPath}");
@@ -173,10 +224,22 @@ class TestLeadAiSummaryPrompt extends Command
     }
 
     /**
-     * @return array{lead: Lead, historical_leads: int, activities_created: int, emails_created: int}
+     * @return array{
+     *     leads: Lead,
+     *     persons: Person,
+     *     sales_leads: SalesLead,
+     *     orders: Order,
+     *     historical_leads: int,
+     *     activities_created: int,
+     *     emails_created: int
+     * }
      */
-    private function buildScenario(int $historicalLeadsCount, int $activityCount, int $emailCount): array
-    {
+    private function buildScenario(
+        int $historicalLeadsCount,
+        int $activityCount,
+        int $emailCount,
+        string $subjectKey,
+    ): array {
         $user = User::query()->first() ?? User::factory()->create();
         $source = Source::first() ?? Source::create(['name' => 'Website']);
         $type = Type::first() ?? Type::create(['name' => 'Nieuwe lead']);
@@ -338,14 +401,119 @@ class TestLeadAiSummaryPrompt extends Command
             $emailCount,
         );
 
-        $this->seedFeedback($currentLead);
+        $this->enrichForSubject($subjectKey, $currentSalesLead, $currentOrder, $user, $department);
+
+        // The correction has to hang off the record being summarised, otherwise the
+        // feedback block never reaches the prompt under test.
+        $this->seedFeedback(match ($subjectKey) {
+            'persons'     => $person,
+            'sales_leads' => $currentSalesLead,
+            'orders'      => $currentOrder,
+            default       => $currentLead,
+        });
 
         return [
-            'lead'                => $currentLead,
-            'historical_leads'    => count($historicalLeads),
-            'activities_created'  => $activitiesCreated,
-            'emails_created'      => $emailsCreated,
+            'leads'              => $currentLead,
+            'persons'            => $person,
+            'sales_leads'        => $currentSalesLead,
+            'orders'             => $currentOrder,
+            'historical_leads'   => count($historicalLeads),
+            'activities_created' => $activitiesCreated,
+            'emails_created'     => $emailsCreated,
         ];
+    }
+
+    /**
+     * Detail that only matters for one subject's prompt. Kept out of the base scenario
+     * so a lead run keeps producing the payload it produced before.
+     */
+    private function enrichForSubject(
+        string $subjectKey,
+        SalesLead $currentSalesLead,
+        Order $currentOrder,
+        User $user,
+        Department $department,
+    ): void {
+        if ($subjectKey === 'orders') {
+            // The order prompt reasons about the run-up to the examination: date,
+            // amount still open, confirmations and blocking checks.
+            $currentOrder->forceFill([
+                'title'                => 'Vervolgonderzoek MRI knie rechts',
+                'total_price'          => 785.00,
+                'first_examination_at' => now()->copy()->addDays(9),
+                'order_number'         => 'TEST-'.now()->format('Ymd'),
+            ])->saveQuietly();
+
+            $this->seedOrderItems($currentOrder);
+
+            foreach ([
+                ['name' => 'Vragenlijst retour ontvangen', 'done' => false],
+                ['name' => 'Verwijsbrief compleet', 'done' => false],
+                ['name' => 'Aanbetaling verwerkt', 'done' => true],
+            ] as $check) {
+                OrderCheck::create($check + ['order_id' => $currentOrder->id]);
+            }
+
+            return;
+        }
+
+        if ($subjectKey === 'persons') {
+            // The person prompt weighs "what is still ahead" against the history, so the
+            // open trajectory needs a planned date to show up under upcoming_orders.
+            $currentOrder->forceFill([
+                'total_price'          => 785.00,
+                'first_examination_at' => now()->copy()->addDays(12),
+            ])->saveQuietly();
+
+            return;
+        }
+
+        if ($subjectKey === 'sales_leads') {
+            // A deal is more than one order; give the orders block something to weigh.
+            $second = Order::factory()->create([
+                'sales_lead_id'        => $currentSalesLead->id,
+                'user_id'              => $user->id,
+                'pipeline_stage_id'    => $currentSalesLead->pipeline_stage_id,
+                'title'                => 'Aanvullende echo schouder links',
+                'total_price'          => 240.00,
+                'first_examination_at' => now()->copy()->addDays(16),
+                'closed_at'            => null,
+            ]);
+
+            $this->backdate($second, now()->copy()->subWeeks(2));
+        }
+    }
+
+    /**
+     * Order lines for the order case. Reuses an existing product so the command does not
+     * leave a half-built catalogue behind when the transaction rolls back.
+     */
+    private function seedOrderItems(Order $order): void
+    {
+        $product = Product::query()->first();
+
+        foreach ([
+            ['name' => 'MRI knie rechts (vervolgonderzoek)', 'total_price' => 545.00],
+            ['name' => 'Beoordeling radioloog + verslag', 'total_price' => 240.00],
+        ] as $line) {
+            OrderItem::create([
+                'order_id'    => $order->id,
+                'product_id'  => $product?->id,
+                'name'        => $line['name'],
+                'quantity'    => 1,
+                'total_price' => $line['total_price'],
+            ]);
+        }
+    }
+
+    /**
+     * @return AiSubjectDefinition|null Null when the argument matches no registered subject.
+     */
+    private function resolveSubject(AiSubjectRegistry $registry, string $input): ?AiSubjectDefinition
+    {
+        $key = str_replace('-', '_', mb_strtolower(trim($input)));
+
+        return $registry->find(self::SUBJECT_ALIASES[$key] ?? $key);
     }
 
     /**
@@ -555,13 +723,14 @@ class TestLeadAiSummaryPrompt extends Command
         return 1;
     }
 
-    private function seedFeedback(Lead $currentLead): void
+    private function seedFeedback(Model $subject): void
     {
-        $feedback = LeadAiFeedback::create([
-            'lead_id'   => $currentLead->id,
-            'user_id'   => User::query()->first()?->id ?? User::factory()->create()->id,
-            'feedback'  => 'Correctie: in een oud dossier stond genoteerd dat patiente allergisch zou zijn voor jodiumhoudende contrastvloeistof. Dit is een verwisseling met een andere patiente en inmiddels door de radioloog weerlegd. Er is GEEN contrastallergie bij deze patiente.',
-            'is_active' => true,
+        $feedback = AiFeedback::create([
+            'subject_type' => $subject->getMorphClass(),
+            'subject_id'   => $subject->getKey(),
+            'user_id'      => User::query()->first()?->id ?? User::factory()->create()->id,
+            'feedback'     => 'Correctie: in een oud dossier stond genoteerd dat patiente allergisch zou zijn voor jodiumhoudende contrastvloeistof. Dit is een verwisseling met een andere patiente en inmiddels door de radioloog weerlegd. Er is GEEN contrastallergie bij deze patiente.',
+            'is_active'    => true,
         ]);
 
         $this->backdate($feedback, now()->copy()->subDays(4));
@@ -573,20 +742,25 @@ class TestLeadAiSummaryPrompt extends Command
     }
 
     /**
-     * @param  array{lead: Lead, historical_leads: int, activities_created: int, emails_created: int}  $scenario
+     * @param  array<string, mixed>  $scenario
      * @param  array<string, mixed>  $context
      */
-    private function printPayloadStats(array $scenario, array $context, string $compactJson): void
-    {
-        $systemPrompt = (string) AiPromptConfig::prompt('lead_summary');
+    private function printPayloadStats(
+        AiSubjectDefinition $definition,
+        Model $subject,
+        array $scenario,
+        array $context,
+        string $compactJson,
+    ): void {
+        $systemPrompt = (string) AiPromptConfig::prompt($definition->useCase);
         $bytes = strlen($compactJson);
-        $activityLimit = (int) config('services.llm.lead_summary.activity_limit', 12);
-        $emailLimit = (int) config('services.llm.lead_summary.email_limit', 6);
+        $activityLimit = $definition->activityLimit;
+        $emailLimit = $definition->emailLimit;
         $ctxWindow = 8192;
         $payload = json_decode($compactJson, true) ?: [];
 
         // The system prompt counts against the window too, so measure the whole request.
-        $exactTokens = $this->countTokens($systemPrompt.$compactJson);
+        $exactTokens = $this->countTokens($definition, $systemPrompt.$compactJson);
         $tokens = $exactTokens ?? (int) round(($bytes + strlen($systemPrompt)) / self::BYTES_PER_TOKEN);
         $tokenLabel = $exactTokens !== null
             ? 'Tokens in request (server /tokenize)'
@@ -595,7 +769,9 @@ class TestLeadAiSummaryPrompt extends Command
         $this->line('');
         $this->info('=== Payload statistieken ===');
         $this->table(['Metric', 'Waarde'], [
-            ['Lead ID (huidig)', $scenario['lead']->id],
+            ['Subject', $definition->key.' #'.$subject->getKey()],
+            ['Prompt use case', $definition->useCase],
+            ['Lead ID (huidig)', $scenario['leads']->id],
             ['Historische leads aangemaakt', $scenario['historical_leads']],
             ['Activiteiten aangemaakt', $scenario['activities_created']],
             ['E-mails aangemaakt', $scenario['emails_created']],
@@ -627,9 +803,9 @@ class TestLeadAiSummaryPrompt extends Command
      * Ask the llama.cpp server for the real token count; null when it is unreachable
      * or does not expose /tokenize, so the caller falls back to a byte estimate.
      */
-    private function countTokens(string $content): ?int
+    private function countTokens(AiSubjectDefinition $definition, string $content): ?int
     {
-        $baseUrl = rtrim(AiPromptConfig::baseUrl('lead_summary'), '/');
+        $baseUrl = rtrim(AiPromptConfig::baseUrl($definition->useCase), '/');
 
         try {
             $response = Http::timeout(20)
@@ -679,10 +855,10 @@ class TestLeadAiSummaryPrompt extends Command
     /**
      * @param  array<int, string>  $lines
      */
-    private function writeReport(array $lines): string
+    private function writeReport(array $lines, string $subjectKey): string
     {
         $disk = Storage::disk('local');
-        $relativePath = 'ai-lead-summary-test/report-'.now()->format('Y-m-d_H-i-s').'.md';
+        $relativePath = 'ai-summary-test/'.$subjectKey.'-'.now()->format('Y-m-d_H-i-s').'.md';
         $disk->put($relativePath, implode("\n", $lines));
 
         return $disk->path($relativePath);

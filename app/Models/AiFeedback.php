@@ -2,25 +2,26 @@
 
 namespace App\Models;
 
-use Database\Factories\LeadAiFeedbackFactory;
+use Database\Factories\AiFeedbackFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
-class LeadAiFeedback extends Model
+class AiFeedback extends Model
 {
-    /** @use HasFactory<LeadAiFeedbackFactory> */
+    /** @use HasFactory<AiFeedbackFactory> */
     use HasFactory;
 
     use SoftDeletes;
 
-    protected $table = 'lead_ai_feedback';
+    protected $table = 'ai_feedback';
 
     protected $fillable = [
-        'lead_id',
+        'subject_type',
+        'subject_id',
         'user_id',
         'feedback',
         'is_active',
@@ -28,18 +29,18 @@ class LeadAiFeedback extends Model
     ];
 
     protected $casts = [
-        'is_active'                    => 'boolean',
-        'included_in_generation_at'    => 'datetime',
+        'is_active'                 => 'boolean',
+        'included_in_generation_at' => 'datetime',
     ];
 
-    protected static function newFactory(): LeadAiFeedbackFactory
+    protected static function newFactory(): AiFeedbackFactory
     {
-        return LeadAiFeedbackFactory::new();
+        return AiFeedbackFactory::new();
     }
 
-    public function lead(): BelongsTo
+    public function subject(): MorphTo
     {
-        return $this->belongsTo(Lead::class);
+        return $this->morphTo();
     }
 
     public function user(): BelongsTo

@@ -1,30 +1,41 @@
 <?php
 
-namespace App\Services\Ai;
+namespace App\Services\Ai\Context;
 
 use App\Enums\ActivityType;
-use App\Models\LeadAiFeedback;
+use App\Models\AiFeedback;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\Ai\AiSubjectDefinition;
 use BackedEnum;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 
-class LeadAiContextService
+/**
+ * Shared context gathering for every AI summary subject.
+ *
+ * Subclasses answer only two questions: which records are relevant (resolveScope)
+ * and how the subject itself is described (subjectEntry). Everything else —
+ * commercial history, timeline selection and scoring, feedback, citation sources
+ * and the compact LLM projection — lives here and is identical for all subjects.
+ */
+abstract class AiContextBuilder
 {
     /** @var list<string> */
-    private const CUSTOMER_CONTACT_ACTIVITY_TYPES = [
+    protected const CUSTOMER_CONTACT_ACTIVITY_TYPES = [
         ActivityType::CALL->value,
         ActivityType::PATIENT_MESSAGE->value,
     ];
 
     /** @var list<string> */
-    private const TIMELINE_ACTIVITY_TYPES = [
+    protected const TIMELINE_ACTIVITY_TYPES = [
         ActivityType::CALL->value,
         ActivityType::TASK->value,
         ActivityType::NOTE->value,
@@ -32,11 +43,39 @@ class LeadAiContextService
     ];
 
     /** Domains that mark an email as outgoing staff mail. */
-    private const STAFF_EMAIL_DOMAINS = [
+    protected const STAFF_EMAIL_DOMAINS = [
         'privatescan.nl',
         'herniapoli.nl',
         'mbsoftware.nl',
     ];
+
+    /** How many leads and sales leads of the same patient are considered at most. */
+    protected const RELATED_RECORD_LIMIT = 20;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Projection
+    |--------------------------------------------------------------------------
+    */
+    /** Internal bookkeeping that never reaches the model. */
+    private const INTERNAL_KEYS = ['id', 'updated_at', 'sort_at', 'score'];
+
+    private ?AiSubjectDefinition $definition = null;
+
+    public function for(AiSubjectDefinition $definition): static
+    {
+        $clone = clone $this;
+        $clone->definition = $definition;
+
+        return $clone;
+    }
+
+    public function definition(): AiSubjectDefinition
+    {
+        return $this->definition ?? throw new RuntimeException(
+            static::class.' was used without a subject definition; resolve it through AiSubjectRegistry::builder().'
+        );
+    }
 
     /**
      * Build the internal context used for citation validation, audit snapshots and
@@ -44,116 +83,36 @@ class LeadAiContextService
      *
      * @return array<string, mixed>
      */
-    public function build(Lead $lead): array
+    final public function build(Model $subject): array
     {
-        $lead->loadMissing(['stage', 'source', 'type', 'persons']);
+        $scope = $this->resolveScope($subject);
 
-        $personIds = $lead->persons
-            ->pluck('id')
-            ->when($lead->contact_person_id, fn (Collection $ids) => $ids->push($lead->contact_person_id))
-            ->unique()
-            ->values();
+        $activities = $this->fetchActivities($scope);
+        $emails = $this->fetchEmails($scope);
 
-        // All prior leads for the same person, regardless of owner or stage (won/lost/open).
-        // Commercial history belongs to the patient, not the current assignee.
-        $leadIds = Lead::query()
-            ->where(function ($query) use ($lead, $personIds) {
-                $query->whereKey($lead->id);
-
-                if ($personIds->isNotEmpty()) {
-                    $query->orWhere(function ($samePerson) use ($personIds) {
-                        $samePerson
-                            ->whereIn('contact_person_id', $personIds)
-                            ->orWhereIn('id', DB::table('lead_persons')
-                                ->select('lead_id')
-                                ->whereIn('person_id', $personIds));
-                    });
-                }
-            })
-            ->latest('created_at')
-            ->limit(20)
-            ->pluck('id')
-            ->push($lead->id)
-            ->unique()
-            ->values();
-
-        $historicalLeadIds = $leadIds->reject(fn (int $id) => $id === $lead->id)->values();
-
-        $historicalLeads = $historicalLeadIds->isEmpty()
-            ? collect()
-            : Lead::query()
-                ->with(['stage', 'source', 'type'])
-                ->whereIn('id', $historicalLeadIds)
-                ->latest('created_at')
-                ->get();
-
-        $salesLeads = SalesLead::query()
-            ->with(['stage', 'orders.stage'])
-            ->whereIn('lead_id', $leadIds)
-            ->latest('created_at')
-            ->limit(20)
-            ->get();
-
-        $currentSalesLeads = $salesLeads->where('lead_id', $lead->id)->values();
-        $historicalSalesLeads = $salesLeads->where('lead_id', '!=', $lead->id)->values();
-
-        $salesLeadIds = $salesLeads->pluck('id');
-        $orderIds = $salesLeads->flatMap->orders->pluck('id');
-        $currentOrderIds = $currentSalesLeads->flatMap->orders->pluck('id');
-
-        $activities = $this->fetchActivities($leadIds, $salesLeadIds, $orderIds);
-        $emails = $this->fetchEmails($leadIds, $salesLeadIds, $orderIds);
-
-        $feedback = LeadAiFeedback::query()
+        $feedback = AiFeedback::query()
             ->with('user')
-            ->where('lead_id', $lead->id)
+            ->where('subject_type', $subject->getMorphClass())
+            ->where('subject_id', $subject->getKey())
             ->where('is_active', true)
             ->oldest('created_at')
             ->get();
 
-        $history = $this->historyEntries($historicalLeads, $historicalSalesLeads);
-        $examinedOrderIds = $historicalSalesLeads
-            ->flatMap->orders
-            ->filter(fn (Order $order) => $order->first_examination_at !== null)
-            ->pluck('id');
-
-        $timeline = $this->buildTimeline(
-            $activities,
-            $emails,
-            $lead->id,
-            $currentOrderIds,
-            $examinedOrderIds,
-        );
-
-        $leadSource = $this->source(
-            'lead',
-            $lead->id,
-            'Lead: '.$lead->name,
-            $lead->updated_at ?? $lead->created_at,
-            'Laatst gewijzigd',
-            null,
-            [
-                'updated_at'  => $this->date($lead->updated_at),
-                'description' => $lead->description,
-                'stage'       => $lead->stage?->name,
-                'lost_reason' => $lead->stage?->is_lost ? $lead->lost_reason?->label() : null,
-            ],
-        );
-
-        $currentOrder = $this->currentOrderEntry($currentSalesLeads);
-        $feedbackEntries = $feedback->map(fn (LeadAiFeedback $item) => $this->feedbackEntry($item))->values()->all();
-        $lastCustomerContact = $this->lastCustomerContact($activities, $emails, $timeline);
+        $timeline = $this->buildTimeline($activities, $emails, $scope);
 
         $context = [
-            'lead'                   => $this->compactLead($lead, $leadSource),
-            'current_order'          => $currentOrder,
-            'history'                => $history,
-            'timeline'               => $timeline,
-            'active_feedback'        => $feedbackEntries,
-            'last_customer_contact'  => $lastCustomerContact,
-            // Kept for audit / ownership checks that still reason about related leads.
-            'historical_lead_ids'    => $historicalLeadIds->all(),
-            'sales_ids'              => $salesLeads->pluck('id')->all(),
+            'subject_key'           => $this->definition()->key,
+            'payload_key'           => $this->definition()->payloadKey,
+            'subject'               => $this->subjectEntry($subject, $scope),
+            'current_order'         => $this->currentOrderEntry($scope),
+            'history'               => $this->historyEntries($scope),
+            'timeline'              => $timeline,
+            'extra'                 => $this->extraBlocks($subject, $scope),
+            'active_feedback'       => $feedback->map(fn (AiFeedback $item) => $this->feedbackEntry($item))->values()->all(),
+            'last_customer_contact' => $this->lastCustomerContact($activities, $emails, $timeline),
+            // Kept for audit / ownership checks that still reason about related records.
+            'historical_lead_ids'   => $scope->historicalLeadIds()->all(),
+            'sales_ids'             => $scope->salesLeadIds()->all(),
         ];
 
         $context['sources'] = $this->sourceCatalog($context);
@@ -168,10 +127,10 @@ class LeadAiContextService
      * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
-    public function forLlm(array $context): array
+    final public function forLlm(array $context): array
     {
         $payload = [
-            'lead' => $this->projectLead($context['lead'] ?? []),
+            ($context['payload_key'] ?? 'subject') => $this->project($context['subject'] ?? []),
         ];
 
         if (! empty($context['current_order'])) {
@@ -188,12 +147,20 @@ class LeadAiContextService
         }
 
         $timeline = array_map(
-            fn (array $entry): array => $this->projectTimelineEntry($entry),
+            fn (array $entry): array => $this->projectDatedEntry($entry),
             $context['timeline'] ?? [],
         );
 
         if ($timeline !== []) {
             $payload['timeline'] = $timeline;
+        }
+
+        foreach ($context['extra'] ?? [] as $key => $block) {
+            $projected = $this->project($block);
+
+            if ($projected !== [] && $projected !== null) {
+                $payload[$key] = $projected;
+            }
         }
 
         $feedback = array_values(array_filter(array_map(
@@ -215,7 +182,7 @@ class LeadAiContextService
         }
 
         if (! empty($context['last_customer_contact'])) {
-            $payload['last_customer_contact'] = $this->projectLastContact($context['last_customer_contact']);
+            $payload['last_customer_contact'] = $this->projectDatedEntry($context['last_customer_contact'], withType: false);
         }
 
         return $payload;
@@ -228,11 +195,12 @@ class LeadAiContextService
      * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
-    public function auditSnapshot(array $context): array
+    final public function auditSnapshot(array $context): array
     {
         return [
-            'lead_id'             => $context['lead']['id'] ?? null,
-            'lead_updated_at'     => $context['lead']['updated_at'] ?? null,
+            'subject_key'         => $context['subject_key'] ?? null,
+            'subject_id'          => $context['subject']['id'] ?? null,
+            'subject_updated_at'  => $context['subject']['updated_at'] ?? null,
             'historical_lead_ids' => $context['historical_lead_ids'] ?? [],
             'sales_ids'           => $context['sales_ids'] ?? [],
             'history_count'       => count($context['history'] ?? []),
@@ -245,126 +213,250 @@ class LeadAiContextService
     }
 
     /**
-     * @param  Collection<int, int>  $leadIds
-     * @param  Collection<int, int>  $salesLeadIds
-     * @param  Collection<int, int>  $orderIds
+     * Which records this subject may reason about.
+     */
+    abstract protected function resolveScope(Model $subject): AiContextScope;
+
+    /**
+     * Compact description of the subject itself, including a "_source" entry so it
+     * can be cited. Keys "id" and "updated_at" stay server-side.
+     *
+     * @return array<string, mixed>
+     */
+    abstract protected function subjectEntry(Model $subject, AiContextScope $scope): array;
+
+    /**
+     * Extra payload blocks specific to one subject (e.g. an order's open checks).
+     * Values are projected generically; any nested "_source" is citable.
+     *
+     * @return array<string, mixed>
+     */
+    protected function extraBlocks(Model $subject, AiContextScope $scope): array
+    {
+        return [];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scope resolution
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Resolve the shared scope from the patient(s) involved.
+     *
+     * Commercial history belongs to the patient, not to the current assignee, so all
+     * leads of the same person are pulled in regardless of owner or stage. Which of
+     * them count as "current" is what makes a lead summary differ from an order one.
+     *
+     * @param  Collection<int, int>  $personIds
+     * @param  bool  $patientWide  For subjects that span the whole patient rather than one deal:
+     *                             every lead counts as the running thread, and only orders that
+     *                             are still ahead count as running — executed ones are history.
+     */
+    protected function scopeForPersons(
+        Collection $personIds,
+        ?int $primaryLeadId = null,
+        ?int $currentSalesLeadId = null,
+        ?int $currentOrderId = null,
+        bool $patientWide = false,
+    ): AiContextScope {
+        $personIds = $personIds->filter()->unique()->values();
+
+        $leads = Lead::query()
+            ->with(['stage', 'source', 'type'])
+            ->where(function ($query) use ($personIds, $primaryLeadId) {
+                $query->whereRaw('1 = 0');
+
+                if ($primaryLeadId) {
+                    $query->orWhere('id', $primaryLeadId);
+                }
+
+                if ($personIds->isNotEmpty()) {
+                    $query->orWhere(function ($samePerson) use ($personIds) {
+                        $samePerson
+                            ->whereIn('contact_person_id', $personIds)
+                            ->orWhereIn('id', DB::table('lead_persons')
+                                ->select('lead_id')
+                                ->whereIn('person_id', $personIds));
+                    });
+                }
+            })
+            ->latest('created_at')
+            ->limit(self::RELATED_RECORD_LIMIT)
+            ->get();
+
+        // The subject's own lead can fall outside that window on a long patient history.
+        if ($primaryLeadId !== null && ! $leads->contains('id', $primaryLeadId)) {
+            $primaryLead = Lead::query()->with(['stage', 'source', 'type'])->find($primaryLeadId);
+
+            if ($primaryLead) {
+                $leads = $leads->prepend($primaryLead);
+            }
+        }
+
+        $leadIds = $leads->pluck('id')->values();
+
+        $currentLeadIds = ($patientWide ? $leadIds : collect(array_filter([$primaryLeadId])))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $salesLeads = $leadIds->isEmpty()
+            ? collect()
+            : SalesLead::query()
+                ->with(['stage', 'orders.stage'])
+                ->whereIn('lead_id', $leadIds)
+                ->latest('created_at')
+                ->limit(self::RELATED_RECORD_LIMIT)
+                ->get();
+
+        // A sales lead can be the subject without its lead being reachable (or set),
+        // so make sure it is always part of the scope.
+        if ($currentSalesLeadId !== null && ! $salesLeads->contains('id', $currentSalesLeadId)) {
+            $extra = SalesLead::query()
+                ->with(['stage', 'orders.stage'])
+                ->whereKey($currentSalesLeadId)
+                ->first();
+
+            if ($extra) {
+                $salesLeads = $salesLeads->prepend($extra);
+            }
+        }
+
+        $currentSalesLeads = $currentSalesLeadId !== null
+            ? $salesLeads->where('id', $currentSalesLeadId)->values()
+            : $salesLeads->whereIn('lead_id', $currentLeadIds->all())->values();
+
+        $currentOrderIds = match (true) {
+            $currentOrderId !== null => collect([$currentOrderId]),
+            $patientWide             => $salesLeads->flatMap->orders
+                ->filter(fn (Order $order) => $order->first_examination_at?->isFuture() === true)
+                ->pluck('id')
+                ->values(),
+            default => $currentSalesLeads->flatMap->orders->pluck('id')->values(),
+        };
+
+        return new AiContextScope(
+            leadIds: $leadIds,
+            currentLeadIds: $currentLeadIds,
+            leads: $leads,
+            historicalLeads: $leads->reject(fn (Lead $lead) => $currentLeadIds->contains($lead->id))->values(),
+            salesLeads: $salesLeads,
+            currentSalesLeads: $currentSalesLeads,
+            currentOrderIds: $currentOrderIds,
+        );
+    }
+
+    /**
+     * Every person attached to a lead or sales lead, including its contact person.
+     *
+     * @param  Lead|SalesLead  $record
+     * @return Collection<int, int>
+     */
+    protected function personIdsOf(Model $record): Collection
+    {
+        $record->loadMissing('persons');
+
+        return $record->persons
+            ->pluck('id')
+            ->when($record->contact_person_id, fn (Collection $ids) => $ids->push($record->contact_person_id))
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared gathering
+    |--------------------------------------------------------------------------
+    */
+
+    /**
      * @return Collection<int, Activity>
      */
-    private function fetchActivities(Collection $leadIds, Collection $salesLeadIds, Collection $orderIds): Collection
+    protected function fetchActivities(AiContextScope $scope): Collection
     {
-        $limit = max(1, (int) config('services.llm.lead_summary.activity_limit', 12));
+        $limit = $this->definition()->activityLimit;
 
         return Activity::query()
             ->without('user')
-            ->where(function ($query) use ($leadIds, $salesLeadIds, $orderIds) {
-                $query->whereIn('lead_id', $leadIds);
-
-                if ($salesLeadIds->isNotEmpty()) {
-                    $query->orWhereIn('sales_lead_id', $salesLeadIds);
-                }
-
-                if ($orderIds->isNotEmpty()) {
-                    $query->orWhereIn('order_id', $orderIds);
-                }
-            })
-            ->whereIn('type', self::TIMELINE_ACTIVITY_TYPES)
+            ->where(fn ($query) => $this->scopeToRelatedRecords($query, $scope))
+            ->whereIn('type', static::TIMELINE_ACTIVITY_TYPES)
             ->latest('created_at')
             ->limit($limit * 2)
             ->get();
     }
 
     /**
-     * @param  Collection<int, int>  $leadIds
-     * @param  Collection<int, int>  $salesLeadIds
-     * @param  Collection<int, int>  $orderIds
      * @return Collection<int, Email>
      */
-    private function fetchEmails(Collection $leadIds, Collection $salesLeadIds, Collection $orderIds): Collection
+    protected function fetchEmails(AiContextScope $scope): Collection
     {
-        $limit = max(1, (int) config('services.llm.lead_summary.email_limit', 6));
+        $limit = $this->definition()->emailLimit;
 
         return Email::query()
-            ->where(function ($query) use ($leadIds, $salesLeadIds, $orderIds) {
-                $query->whereIn('lead_id', $leadIds);
-
-                if ($salesLeadIds->isNotEmpty()) {
-                    $query->orWhereIn('sales_lead_id', $salesLeadIds);
-                }
-
-                if ($orderIds->isNotEmpty()) {
-                    $query->orWhereIn('order_id', $orderIds);
-                }
-            })
+            ->where(fn ($query) => $this->scopeToRelatedRecords($query, $scope))
             ->latest('created_at')
             ->limit($limit * 3)
             ->get();
     }
 
     /**
-     * Compact commercial history for earlier leads of the same person.
+     * Compact commercial history: everything outside the current thread.
+     *
      * Prefer order/sales rows when present; otherwise fall back to the lead itself
      * (important for lost leads that never became a sales lead/order).
      *
-     * @param  Collection<int, Lead>  $historicalLeads
-     * @param  Collection<int, SalesLead>  $historicalSalesLeads
      * @return list<array<string, mixed>>
      */
-    private function historyEntries(Collection $historicalLeads, Collection $historicalSalesLeads): array
+    protected function historyEntries(AiContextScope $scope): array
     {
         $entries = [];
         $leadIdsCoveredBySales = [];
 
-        foreach ($historicalSalesLeads as $salesLead) {
-            $leadIdsCoveredBySales[$salesLead->lead_id] = true;
-
+        foreach ($scope->salesLeads as $salesLead) {
             if ($salesLead->orders->isEmpty()) {
-                $description = $this->compactText($salesLead->description ?: $salesLead->name, 240);
-                $source = $this->source(
-                    'sales',
-                    $salesLead->id,
-                    'Sales: '.($salesLead->name ?: "#{$salesLead->id}"),
-                    $salesLead->closed_at ?? $salesLead->created_at,
-                    $salesLead->closed_at ? 'Afgesloten' : 'Aangemaakt',
-                    null,
-                    [
-                        'updated_at'  => $this->date($salesLead->updated_at),
-                        'description' => $salesLead->description,
-                        'stage'       => $salesLead->stage?->name,
-                        'closed_at'   => $this->date($salesLead->closed_at),
-                    ],
-                );
-
-                if ($description === null || $source === null) {
+                // A deal without orders only says something as history; as the running
+                // thread it is already described by the subject block.
+                if ($scope->currentSalesLeads->contains('id', $salesLead->id)) {
                     continue;
                 }
 
-                $entry = [
-                    'description' => $description,
-                    'status'      => $salesLead->stage?->name,
-                    'ref'         => $source['ref'],
-                    '_source'     => $source,
-                ];
+                $entry = $this->historyEntryFor($salesLead, $this->salesLeadSource($salesLead));
 
-                if ($salesLead->stage?->is_lost && $salesLead->lost_reason) {
-                    $entry['lost_reason'] = $salesLead->lost_reason->label();
+                if ($entry !== null) {
+                    $entries[] = $entry;
+
+                    if ($salesLead->lead_id) {
+                        $leadIdsCoveredBySales[$salesLead->lead_id] = true;
+                    }
                 }
-
-                $entries[] = $entry;
 
                 continue;
             }
 
+            // Everything that is not part of the running thread is history, including
+            // sibling orders of the order or deal being summarised.
             foreach ($salesLead->orders as $order) {
+                if ($scope->currentOrderIds->contains($order->id)) {
+                    continue;
+                }
+
                 $entries[] = $this->orderEntry($order, $salesLead);
+
+                if ($salesLead->lead_id) {
+                    $leadIdsCoveredBySales[$salesLead->lead_id] = true;
+                }
             }
         }
 
-        foreach ($historicalLeads as $historicalLead) {
+        foreach ($scope->historicalLeads as $historicalLead) {
             if (isset($leadIdsCoveredBySales[$historicalLead->id])) {
                 continue;
             }
 
-            $leadEntry = $this->historicalLeadEntry($historicalLead);
+            $leadEntry = $this->historyEntryFor($historicalLead, $this->leadSource($historicalLead));
 
             if ($leadEntry !== null) {
                 $entries[] = $leadEntry;
@@ -375,25 +467,16 @@ class LeadAiContextService
     }
 
     /**
+     * A lead or sales lead as one history line. Null when it carries no usable text
+     * or has no date to cite.
+     *
+     * @param  Lead|SalesLead  $record
+     * @param  array<string, mixed>|null  $source
      * @return array<string, mixed>|null
      */
-    private function historicalLeadEntry(Lead $lead): ?array
+    protected function historyEntryFor(Model $record, ?array $source): ?array
     {
-        $description = $this->compactText($lead->description ?: $lead->name, 240);
-        $source = $this->source(
-            'lead',
-            $lead->id,
-            'Lead: '.$lead->name,
-            $lead->closed_at ?? $lead->updated_at ?? $lead->created_at,
-            $lead->closed_at ? 'Afgesloten' : ($lead->stage?->is_lost ? 'Verloren' : ($lead->stage?->is_won ? 'Gewonnen' : 'Laatst gewijzigd')),
-            null,
-            [
-                'updated_at'  => $this->date($lead->updated_at),
-                'description' => $lead->description,
-                'stage'       => $lead->stage?->name,
-                'lost_reason' => $lead->stage?->is_lost ? $lead->lost_reason?->label() : null,
-            ],
-        );
+        $description = $this->compactText($record->description ?: $record->name, 240);
 
         if ($description === null || $source === null) {
             return null;
@@ -401,26 +484,37 @@ class LeadAiContextService
 
         $entry = [
             'description' => $description,
-            'status'      => $lead->stage?->name,
+            'status'      => $record->stage?->name,
             'ref'         => $source['ref'],
             '_source'     => $source,
         ];
 
-        if ($lead->stage?->is_lost && $lead->lost_reason) {
-            $entry['lost_reason'] = $lead->lost_reason->label();
+        if ($record->stage?->is_lost && $record->lost_reason) {
+            $entry['lost_reason'] = $record->lost_reason->label();
         }
 
         return $entry;
     }
 
     /**
-     * @param  Collection<int, SalesLead>  $currentSalesLeads
+     * A separate "current_order" block, for subjects that have exactly one running order
+     * worth calling out. Subjects that render their orders themselves leave this null.
+     *
      * @return array<string, mixed>|null
      */
-    private function currentOrderEntry(Collection $currentSalesLeads): ?array
+    protected function currentOrderEntry(AiContextScope $scope): ?array
     {
-        $order = $currentSalesLeads
-            ->flatMap->orders
+        return null;
+    }
+
+    /**
+     * The newest running order of the scope, as a "current_order" block.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function newestCurrentOrderEntry(AiContextScope $scope): ?array
+    {
+        $order = $scope->currentOrders()
             ->sortByDesc(fn (Order $order) => $order->created_at?->getTimestamp() ?? 0)
             ->first();
 
@@ -428,7 +522,7 @@ class LeadAiContextService
             return null;
         }
 
-        $salesLead = $currentSalesLeads->firstWhere('id', $order->sales_lead_id);
+        $salesLead = $scope->salesLeads->firstWhere('id', $order->sales_lead_id);
 
         return $this->orderEntry($order, $salesLead instanceof SalesLead ? $salesLead : null);
     }
@@ -436,7 +530,7 @@ class LeadAiContextService
     /**
      * @return array<string, mixed>
      */
-    private function orderEntry(Order $order, ?SalesLead $salesLead = null): array
+    protected function orderEntry(Order $order, ?SalesLead $salesLead = null): array
     {
         $label = 'Order: '.($order->order_number ?: $order->title ?: "#{$order->id}");
         $description = $this->compactText(
@@ -493,31 +587,7 @@ class LeadAiContextService
     /**
      * @return array<string, mixed>
      */
-    private function compactLead(Lead $lead, ?array $source): array
-    {
-        $data = [
-            'id'          => $lead->id,
-            'name'        => $lead->name,
-            'description' => $this->compactText($lead->description, 800),
-            'stage'       => $lead->stage?->name,
-            'source'      => $lead->source?->name,
-            'type'        => $lead->type?->name,
-            'updated_at'  => $this->date($lead->updated_at),
-            'ref'         => $source['ref'] ?? null,
-            '_source'     => $source,
-        ];
-
-        if ($lead->stage?->is_lost && $lead->lost_reason) {
-            $data['lost_reason'] = $lead->lost_reason->label();
-        }
-
-        return $data;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function feedbackEntry(LeadAiFeedback $item): array
+    protected function feedbackEntry(AiFeedback $item): array
     {
         $source = $this->source(
             'feedback',
@@ -543,42 +613,27 @@ class LeadAiContextService
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Timeline
+    |--------------------------------------------------------------------------
+    */
+
     /**
      * @param  Collection<int, Activity>  $activities
      * @param  Collection<int, Email>  $emails
-     * @param  Collection<int, int>  $currentOrderIds
-     * @param  Collection<int, int>  $examinedOrderIds
      * @return list<array<string, mixed>>
      */
-    private function buildTimeline(
-        Collection $activities,
-        Collection $emails,
-        int $currentLeadId,
-        Collection $currentOrderIds,
-        Collection $examinedOrderIds,
-    ): array {
-        $activityLimit = max(1, (int) config('services.llm.lead_summary.activity_limit', 12));
-        $emailLimit = max(1, (int) config('services.llm.lead_summary.email_limit', 6));
-
-        $selectedActivities = $this->selectActivities(
-            $activities,
-            $currentLeadId,
-            $currentOrderIds,
-            $examinedOrderIds,
-            $activityLimit,
-        );
+    protected function buildTimeline(Collection $activities, Collection $emails, AiContextScope $scope): array
+    {
+        $selectedActivities = $this->selectActivities($activities, $scope);
 
         $activityTexts = $selectedActivities
             ->map(fn (array $entry) => mb_strtolower((string) ($entry['text'] ?? '')))
             ->filter()
             ->values();
 
-        $selectedEmails = $this->selectEmails(
-            $emails,
-            $currentLeadId,
-            $activityTexts,
-            $emailLimit,
-        );
+        $selectedEmails = $this->selectEmails($emails, $scope, $activityTexts);
 
         return collect($selectedActivities)
             ->merge($selectedEmails)
@@ -594,24 +649,19 @@ class LeadAiContextService
 
     /**
      * @param  Collection<int, Activity>  $activities
-     * @param  Collection<int, int>  $currentOrderIds
-     * @param  Collection<int, int>  $examinedOrderIds
      * @return Collection<int, array<string, mixed>>
      */
-    private function selectActivities(
-        Collection $activities,
-        int $currentLeadId,
-        Collection $currentOrderIds,
-        Collection $examinedOrderIds,
-        int $limit,
-    ): Collection {
+    protected function selectActivities(Collection $activities, AiContextScope $scope): Collection
+    {
+        $limit = $this->definition()->activityLimit;
+        $examinedOrderIds = $scope->examinedHistoricalOrderIds();
         $open = collect();
         $candidates = collect();
 
         foreach ($activities as $activity) {
             $type = $this->enumValue($activity->type);
 
-            if ($type === null || ! in_array($type, self::TIMELINE_ACTIVITY_TYPES, true)) {
+            if ($type === null || ! in_array($type, static::TIMELINE_ACTIVITY_TYPES, true)) {
                 continue;
             }
 
@@ -627,7 +677,6 @@ class LeadAiContextService
             if (
                 $activity->order_id
                 && $examinedOrderIds->contains($activity->order_id)
-                && ! $currentOrderIds->contains($activity->order_id)
                 && $this->looksLikeExecutionNote($activity)
             ) {
                 continue;
@@ -635,10 +684,7 @@ class LeadAiContextService
 
             // Commercial history already covers earlier eras; keep the timeline focused
             // on the current thread unless the activity is an open task.
-            $onCurrentThread = $activity->lead_id === $currentLeadId
-                || $currentOrderIds->contains($activity->order_id);
-
-            if (! $onCurrentThread && ! (! $activity->is_done && $type === ActivityType::TASK->value)) {
+            if (! $this->isOnCurrentThread($activity, $scope) && ! (! $activity->is_done && $type === ActivityType::TASK->value)) {
                 continue;
             }
 
@@ -678,7 +724,7 @@ class LeadAiContextService
                 'type'    => $type,
                 'text'    => $text,
                 'sort_at' => $this->date($at),
-                'score'   => $this->activityScore($activity, $currentLeadId, $currentOrderIds),
+                'score'   => $this->activityScore($activity, $scope),
                 '_source' => $source,
             ];
 
@@ -704,18 +750,15 @@ class LeadAiContextService
      * @param  Collection<int, string>  $activityTexts
      * @return Collection<int, array<string, mixed>>
      */
-    private function selectEmails(
-        Collection $emails,
-        int $currentLeadId,
-        Collection $activityTexts,
-        int $limit,
-    ): Collection {
+    protected function selectEmails(Collection $emails, AiContextScope $scope, Collection $activityTexts): Collection
+    {
+        $limit = $this->definition()->emailLimit;
         $seenFingerprints = [];
         $candidates = collect();
 
         foreach ($emails as $email) {
             // Prefer the current commercial thread; historical eras are covered by history[].
-            if ($email->lead_id !== null && $email->lead_id !== $currentLeadId) {
+            if ($email->lead_id !== null && ! $scope->currentLeadIds->contains($email->lead_id)) {
                 continue;
             }
 
@@ -727,7 +770,7 @@ class LeadAiContextService
                 continue;
             }
 
-            if ($this->isLowValueEmail($subject, $body, $email, $currentLeadId)) {
+            if ($this->isLowValueEmail($subject, $body, $email, $scope)) {
                 continue;
             }
 
@@ -743,20 +786,7 @@ class LeadAiContextService
 
             $seenFingerprints[$fingerprint] = true;
 
-            $source = $this->source(
-                'email',
-                $email->id,
-                'E-mail: '.($subject ?: 'Zonder onderwerp'),
-                $email->created_at,
-                'Ontvangen/verzonden',
-                null,
-                [
-                    'updated_at' => $this->date($email->updated_at),
-                    'subject'    => $email->subject,
-                    'from'       => $email->from,
-                    'body'       => $body,
-                ],
-            );
+            $source = $this->emailSource($email, $subject, $body);
 
             if ($source === null) {
                 continue;
@@ -771,7 +801,7 @@ class LeadAiContextService
                 'text'      => $text,
                 'direction' => $direction,
                 'sort_at'   => $this->date($email->created_at),
-                'score'     => $this->emailScore($email, $currentLeadId, $direction, $subject, $body),
+                'score'     => $this->emailScore($email, $scope, $direction, $subject, $body),
                 '_source'   => $source,
             ]);
         }
@@ -788,14 +818,14 @@ class LeadAiContextService
      * @param  list<array<string, mixed>>  $timeline
      * @return array<string, mixed>|null
      */
-    private function lastCustomerContact(Collection $activities, Collection $emails, array $timeline): ?array
+    protected function lastCustomerContact(Collection $activities, Collection $emails, array $timeline): ?array
     {
         $contacts = collect();
 
         foreach ($activities as $activity) {
             $type = $this->enumValue($activity->type);
 
-            if ($type === null || ! in_array($type, self::CUSTOMER_CONTACT_ACTIVITY_TYPES, true)) {
+            if ($type === null || ! in_array($type, static::CUSTOMER_CONTACT_ACTIVITY_TYPES, true)) {
                 continue;
             }
 
@@ -848,21 +878,7 @@ class LeadAiContextService
             $body = $this->compactText($email->reply, 600);
             $text = $this->emailText($subject, $body);
             $direction = $this->emailDirection($email);
-
-            $source = $this->source(
-                'email',
-                $email->id,
-                'E-mail: '.($subject ?: 'Zonder onderwerp'),
-                $email->created_at,
-                'Ontvangen/verzonden',
-                null,
-                [
-                    'updated_at' => $this->date($email->updated_at),
-                    'subject'    => $email->subject,
-                    'from'       => $email->from,
-                    'body'       => $body,
-                ],
-            );
+            $source = $this->emailSource($email, $subject, $body);
 
             if ($source === null || $text === null) {
                 continue;
@@ -896,7 +912,19 @@ class LeadAiContextService
         return $last;
     }
 
-    private function activityText(Activity $activity): ?string
+    /*
+    |--------------------------------------------------------------------------
+    | Relevance filters and scoring
+    |--------------------------------------------------------------------------
+    */
+
+    protected function isOnCurrentThread(Activity $activity, AiContextScope $scope): bool
+    {
+        return $scope->currentLeadIds->contains($activity->lead_id)
+            || $scope->currentOrderIds->contains($activity->order_id);
+    }
+
+    protected function activityText(Activity $activity): ?string
     {
         $title = $this->compactText($activity->title, 400);
         $comment = $this->compactText($activity->comment, 800);
@@ -908,7 +936,7 @@ class LeadAiContextService
         return $comment ?? $title;
     }
 
-    private function emailText(?string $subject, ?string $body): ?string
+    protected function emailText(?string $subject, ?string $body): ?string
     {
         if ($subject !== null && $body !== null) {
             return $this->compactText($subject.': '.$body, 700);
@@ -917,7 +945,7 @@ class LeadAiContextService
         return $body ?? $subject;
     }
 
-    private function isMeaninglessSystemLikeActivity(Activity $activity): bool
+    protected function isMeaninglessSystemLikeActivity(Activity $activity): bool
     {
         if ($this->enumValue($activity->type) === ActivityType::SYSTEM->value) {
             return true;
@@ -932,7 +960,7 @@ class LeadAiContextService
             && ($comment === '' || $comment === $title);
     }
 
-    private function isLowValueActivity(Activity $activity): bool
+    protected function isLowValueActivity(Activity $activity): bool
     {
         // Open tasks are always commercially relevant.
         if (! $activity->is_done && $this->enumValue($activity->type) === ActivityType::TASK->value) {
@@ -953,22 +981,19 @@ class LeadAiContextService
         return false;
     }
 
-    private function looksLikeExecutionNote(Activity $activity): bool
+    protected function looksLikeExecutionNote(Activity $activity): bool
     {
         $text = mb_strtolower((string) ($activity->comment ?: $activity->title));
 
         return (bool) preg_match('/\b(scan uitgevoerd|onderzoek uitgevoerd|mri uitgevoerd|uitslag besproken)\b/u', $text);
     }
 
-    /**
-     * @param  Collection<int, int>  $currentOrderIds
-     */
-    private function activityScore(Activity $activity, int $currentLeadId, Collection $currentOrderIds): int
+    protected function activityScore(Activity $activity, AiContextScope $scope): int
     {
         $score = 0;
         $at = $activity->completed_at ?? $activity->schedule_from ?? $activity->created_at;
 
-        if ($activity->lead_id === $currentLeadId || $currentOrderIds->contains($activity->order_id)) {
+        if ($this->isOnCurrentThread($activity, $scope)) {
             $score += 50;
         }
 
@@ -990,9 +1015,9 @@ class LeadAiContextService
         return $score;
     }
 
-    private function emailScore(
+    protected function emailScore(
         Email $email,
-        int $currentLeadId,
+        AiContextScope $scope,
         string $direction,
         ?string $subject,
         ?string $body,
@@ -1000,7 +1025,7 @@ class LeadAiContextService
         $score = 0;
         $daysAgo = $email->created_at ? max(0, (int) $email->created_at->diffInDays(now())) : 999;
 
-        if ($email->lead_id === $currentLeadId) {
+        if ($scope->currentLeadIds->contains($email->lead_id)) {
             $score += 40;
         }
 
@@ -1023,13 +1048,13 @@ class LeadAiContextService
         return $score;
     }
 
-    private function isLowValueEmail(?string $subject, ?string $body, Email $email, int $currentLeadId): bool
+    protected function isLowValueEmail(?string $subject, ?string $body, Email $email, AiContextScope $scope): bool
     {
         if ($this->looksLikeAppointmentConfirmation($subject, $body)) {
             $daysAgo = $email->created_at ? max(0, (int) $email->created_at->diffInDays(now())) : 999;
 
-            // Keep a recent confirmation on the current lead; drop older/historical ones.
-            if ($daysAgo > 14 || $email->lead_id !== $currentLeadId) {
+            // Keep a recent confirmation on the current thread; drop older/historical ones.
+            if ($daysAgo > 14 || ! $scope->currentLeadIds->contains($email->lead_id)) {
                 return true;
             }
         }
@@ -1040,7 +1065,7 @@ class LeadAiContextService
             && ! preg_match('/\b(vraag|wanneer|planning|akkoord|bezwaar)\b/u', $haystack);
     }
 
-    private function looksLikeAppointmentConfirmation(?string $subject, ?string $body): bool
+    protected function looksLikeAppointmentConfirmation(?string $subject, ?string $body): bool
     {
         $haystack = mb_strtolower(($subject ?? '').' '.($body ?? ''));
 
@@ -1050,7 +1075,7 @@ class LeadAiContextService
     /**
      * @param  Collection<int, string>  $activityTexts
      */
-    private function isRepresentedByActivity(string $emailText, Collection $activityTexts): bool
+    protected function isRepresentedByActivity(string $emailText, Collection $activityTexts): bool
     {
         $needle = mb_strtolower(Str::limit($emailText, 120, ''));
 
@@ -1065,11 +1090,11 @@ class LeadAiContextService
         return false;
     }
 
-    private function emailDirection(Email $email): string
+    protected function emailDirection(Email $email): string
     {
         $from = strtolower((string) $email->sender_email);
 
-        foreach (self::STAFF_EMAIL_DOMAINS as $domain) {
+        foreach (static::STAFF_EMAIL_DOMAINS as $domain) {
             if (str_ends_with($from, '@'.$domain)) {
                 return 'outgoing';
             }
@@ -1079,20 +1104,37 @@ class LeadAiContextService
     }
 
     /**
-     * @param  array<string, mixed>  $lead
-     * @return array<string, mixed>
+     * Drop internal bookkeeping and empty values, recursively. This is what keeps a
+     * new subject block or extra data block from needing its own projection code.
      */
-    private function projectLead(array $lead): array
+    protected function project(mixed $value): mixed
     {
-        $projected = array_filter([
-            'name'        => $lead['name'] ?? null,
-            'stage'       => $lead['stage'] ?? null,
-            'description' => $lead['description'] ?? null,
-            'source'      => $lead['source'] ?? null,
-            'type'        => $lead['type'] ?? null,
-            'lost_reason' => $lead['lost_reason'] ?? null,
-            'ref'         => $lead['ref'] ?? ($lead['_source']['ref'] ?? null),
-        ], fn ($value) => $value !== null && $value !== '');
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        if (array_is_list($value)) {
+            return array_values(array_filter(
+                array_map(fn (mixed $item) => $this->project($item), $value),
+                fn (mixed $item) => $item !== null && $item !== '' && $item !== [],
+            ));
+        }
+
+        $projected = [];
+
+        foreach ($value as $key => $item) {
+            if (str_starts_with((string) $key, '_') || in_array($key, self::INTERNAL_KEYS, true)) {
+                continue;
+            }
+
+            $item = $this->project($item);
+
+            if ($item === null || $item === '' || $item === []) {
+                continue;
+            }
+
+            $projected[$key] = $item;
+        }
 
         return $projected;
     }
@@ -1101,7 +1143,7 @@ class LeadAiContextService
      * @param  array<string, mixed>  $order
      * @return array<string, mixed>
      */
-    private function projectOrder(array $order): array
+    protected function projectOrder(array $order): array
     {
         $ref = $order['ref'] ?? null;
 
@@ -1128,35 +1170,97 @@ class LeadAiContextService
     }
 
     /**
+     * A dated row (timeline entry or last contact). Direction only carries meaning on
+     * mail, so it is dropped for other timeline types.
+     *
      * @param  array<string, mixed>  $entry
      * @return array<string, mixed>
      */
-    private function projectTimelineEntry(array $entry): array
+    protected function projectDatedEntry(array $entry, bool $withType = true): array
     {
+        $type = $entry['type'] ?? null;
+
         return array_filter([
             'ref'       => $entry['ref'] ?? null,
             'date'      => $entry['date'] ?? null,
-            'type'      => $entry['type'] ?? null,
-            'direction' => ($entry['type'] ?? null) === 'email' ? ($entry['direction'] ?? null) : null,
+            'type'      => $withType ? $type : null,
+            'direction' => ! $withType || $type === 'email' ? ($entry['direction'] ?? null) : null,
             'text'      => $entry['text'] ?? null,
         ], fn ($value) => $value !== null && $value !== '');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sources and primitives
+    |--------------------------------------------------------------------------
+    */
+
     /**
-     * @param  array<string, mixed>  $contact
-     * @return array<string, mixed>
+     * @return array<string, mixed>|null
      */
-    private function projectLastContact(array $contact): array
+    protected function leadSource(Lead $lead): ?array
     {
-        return array_filter([
-            'ref'       => $contact['ref'] ?? null,
-            'date'      => $contact['date'] ?? null,
-            'direction' => $contact['direction'] ?? null,
-            'text'      => $contact['text'] ?? null,
-        ], fn ($value) => $value !== null && $value !== '');
+        return $this->source(
+            'lead',
+            $lead->id,
+            'Lead: '.$lead->name,
+            $lead->closed_at ?? $lead->updated_at ?? $lead->created_at,
+            $lead->closed_at
+                ? 'Afgesloten'
+                : ($lead->stage?->is_lost ? 'Verloren' : ($lead->stage?->is_won ? 'Gewonnen' : 'Laatst gewijzigd')),
+            null,
+            [
+                'updated_at'  => $this->date($lead->updated_at),
+                'description' => $lead->description,
+                'stage'       => $lead->stage?->name,
+                'lost_reason' => $lead->stage?->is_lost ? $lead->lost_reason?->label() : null,
+            ],
+        );
     }
 
-    private function compactText(?string $value, int $limit): ?string
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function salesLeadSource(SalesLead $salesLead): ?array
+    {
+        return $this->source(
+            'sales',
+            $salesLead->id,
+            'Sales: '.($salesLead->name ?: "#{$salesLead->id}"),
+            $salesLead->closed_at ?? $salesLead->created_at,
+            $salesLead->closed_at ? 'Afgesloten' : 'Aangemaakt',
+            null,
+            [
+                'updated_at'  => $this->date($salesLead->updated_at),
+                'description' => $salesLead->description,
+                'stage'       => $salesLead->stage?->name,
+                'closed_at'   => $this->date($salesLead->closed_at),
+            ],
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function emailSource(Email $email, ?string $subject, ?string $body): ?array
+    {
+        return $this->source(
+            'email',
+            $email->id,
+            'E-mail: '.($subject ?: 'Zonder onderwerp'),
+            $email->created_at,
+            'Ontvangen/verzonden',
+            null,
+            [
+                'updated_at' => $this->date($email->updated_at),
+                'subject'    => $email->subject,
+                'from'       => $email->from,
+                'body'       => $body,
+            ],
+        );
+    }
+
+    protected function compactText(?string $value, int $limit): ?string
     {
         if ($value === null || trim($value) === '') {
             return null;
@@ -1168,7 +1272,7 @@ class LeadAiContextService
         return Str::limit(trim($text), $limit, '');
     }
 
-    private function enumValue(mixed $value): ?string
+    protected function enumValue(mixed $value): ?string
     {
         if ($value instanceof BackedEnum) {
             return (string) $value->value;
@@ -1189,7 +1293,7 @@ class LeadAiContextService
      *     version: string
      * }|null
      */
-    private function source(
+    protected function source(
         string $type,
         int $entityId,
         string $label,
@@ -1219,17 +1323,9 @@ class LeadAiContextService
 
     /**
      * @param  array<string, mixed>  $context
-     * @return list<array{
-     *     ref: string,
-     *     type: string,
-     *     entity_id: int,
-     *     label: string,
-     *     date: string,
-     *     date_label: string,
-     *     version: string
-     * }>
+     * @return list<array<string, mixed>>
      */
-    private function sourceCatalog(array $context): array
+    protected function sourceCatalog(array $context): array
     {
         $sources = [];
         $this->collectSources($context, $sources);
@@ -1237,16 +1333,41 @@ class LeadAiContextService
         return array_values($sources);
     }
 
+    protected function date(?CarbonInterface $date): ?string
+    {
+        return $date?->toIso8601String();
+    }
+
+    protected function dateOnly(?CarbonInterface $date): ?string
+    {
+        return $date?->toDateString();
+    }
+
     /**
-     * @param  array<string, array{
-     *     ref: string,
-     *     type: string,
-     *     entity_id: int,
-     *     label: string,
-     *     date: string,
-     *     date_label: string,
-     *     version: string
-     * }>  $sources
+     * Activities and e-mails hang off a lead, a sales lead or an order; match any of them.
+     */
+    private function scopeToRelatedRecords(mixed $query, AiContextScope $scope): void
+    {
+        $salesLeadIds = $scope->salesLeadIds();
+        $orderIds = $scope->orderIds();
+
+        $query->whereRaw('1 = 0');
+
+        if ($scope->leadIds->isNotEmpty()) {
+            $query->orWhereIn('lead_id', $scope->leadIds);
+        }
+
+        if ($salesLeadIds->isNotEmpty()) {
+            $query->orWhereIn('sales_lead_id', $salesLeadIds);
+        }
+
+        if ($orderIds->isNotEmpty()) {
+            $query->orWhereIn('order_id', $orderIds);
+        }
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $sources
      */
     private function collectSources(mixed $value, array &$sources): void
     {
@@ -1269,15 +1390,5 @@ class LeadAiContextService
                 $this->collectSources($child, $sources);
             }
         }
-    }
-
-    private function date(?CarbonInterface $date): ?string
-    {
-        return $date?->toIso8601String();
-    }
-
-    private function dateOnly(?CarbonInterface $date): ?string
-    {
-        return $date?->toDateString();
     }
 }

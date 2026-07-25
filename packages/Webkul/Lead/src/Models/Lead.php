@@ -10,9 +10,7 @@ use App\Enums\PersonSalutation;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
-use App\Models\LeadAiFeedback;
-use App\Models\LeadAiSummary;
-use App\Models\LeadAiSummaryGeneration;
+use App\Models\Concerns\HasAiSummary;
 use App\Models\LeadMarketingData;
 use App\Models\LeadPerson;
 use App\Services\LeadStatusTransitionValidator;
@@ -29,7 +27,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -50,7 +47,7 @@ use Webkul\User\Models\UserProxy;
 
 class Lead extends Model implements LeadContract
 {
-    use HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SelectsBestContactPerson, SoftDeletes;
+    use HasAiSummary, HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SelectsBestContactPerson, SoftDeletes;
 
     protected $casts = [
         'closed_at'                      => 'datetime',
@@ -422,21 +419,6 @@ class Lead extends Model implements LeadContract
     public function emails(): HasMany
     {
         return $this->hasMany(EmailProxy::modelClass());
-    }
-
-    public function aiSummary(): HasOne
-    {
-        return $this->hasOne(LeadAiSummary::class);
-    }
-
-    public function aiSummaryGenerations(): HasMany
-    {
-        return $this->hasMany(LeadAiSummaryGeneration::class);
-    }
-
-    public function aiFeedback(): HasMany
-    {
-        return $this->hasMany(LeadAiFeedback::class);
     }
 
     /**

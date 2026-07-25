@@ -2,8 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Models\LeadAiSummary;
-use App\Services\Ai\LeadAiSummaryService;
+use App\Models\AiSummary;
+use App\Services\Ai\AiSubjectRegistry;
+use App\Services\Ai\AiSummaryService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,9 +15,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use Webkul\Lead\Models\Lead;
 
-class GenerateLeadAiSummaryJob implements ShouldBeUnique, ShouldQueue
+class GenerateAiSummaryJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -29,13 +29,14 @@ class GenerateLeadAiSummaryJob implements ShouldBeUnique, ShouldQueue
     public int $uniqueFor = 7200;
 
     public function __construct(
-        public readonly int $leadId,
+        public readonly string $subjectKey,
+        public readonly int $subjectId,
         public readonly string $trigger = 'automatic',
     ) {}
 
     public function uniqueId(): string
     {
-        return (string) $this->leadId;
+        return $this->subjectKey.':'.$this->subjectId;
     }
 
     /**
@@ -54,32 +55,35 @@ class GenerateLeadAiSummaryJob implements ShouldBeUnique, ShouldQueue
         return [60, 300, 900];
     }
 
-    public function handle(LeadAiSummaryService $service): void
+    public function handle(AiSummaryService $service, AiSubjectRegistry $registry): void
     {
-        if (! config('services.llm.lead_summary.enabled', true)) {
+        $definition = $registry->find($this->subjectKey);
+
+        if (! $definition || ! $registry->isEnabled($definition)) {
             return;
         }
 
-        $lead = Lead::find($this->leadId);
+        $subject = $definition->find($this->subjectId);
 
-        if (! $lead) {
+        if (! $subject) {
             return;
         }
 
         try {
-            $summary = $service->generate($lead, $this->trigger);
+            $summary = $service->generate($subject, $this->trigger);
         } catch (ConnectionException $exception) {
             // The service already recorded this attempt as 'failed'. While the queue
             // still has retries left, reflect that here so a manual "vernieuwen"
             // click sees 'retrying' instead of a misleadingly final 'failed'.
-            LeadAiSummary::where('lead_id', $this->leadId)->update(['status' => 'retrying']);
+            $this->updateStatus('retrying', $definition->morphClass());
 
             throw $exception;
         }
 
         if ($summary->status === 'failed') {
-            Log::warning('Lead AI summary job completed with a generation failure', [
-                'lead_id' => $this->leadId,
+            Log::warning('AI summary job completed with a generation failure', [
+                'subject_type' => $this->subjectKey,
+                'subject_id'   => $this->subjectId,
             ]);
         }
     }
@@ -87,12 +91,25 @@ class GenerateLeadAiSummaryJob implements ShouldBeUnique, ShouldQueue
     public function failed(Throwable $exception): void
     {
         // Called once the queue gives up for good (retries exhausted or retryUntil() passed).
-        LeadAiSummary::where('lead_id', $this->leadId)->update(['status' => 'failed']);
+        $morphClass = app(AiSubjectRegistry::class)->find($this->subjectKey)?->morphClass();
 
-        Log::error('Lead AI summary job permanently failed', [
-            'lead_id'         => $this->leadId,
+        if ($morphClass) {
+            $this->updateStatus('failed', $morphClass);
+        }
+
+        Log::error('AI summary job permanently failed', [
+            'subject_type'    => $this->subjectKey,
+            'subject_id'      => $this->subjectId,
             'exception_class' => $exception::class,
             'error'           => $exception->getMessage(),
         ]);
+    }
+
+    private function updateStatus(string $status, string $morphClass): void
+    {
+        AiSummary::query()
+            ->where('subject_type', $morphClass)
+            ->where('subject_id', $this->subjectId)
+            ->update(['status' => $status]);
     }
 }

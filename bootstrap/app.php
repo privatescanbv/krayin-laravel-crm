@@ -82,7 +82,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->command('emails:sync-graph')->everyMinute()->withoutOverlapping();
+        // Frequentie per omgeving instelbaar; zie config/schedule.php.
+        $schedule->command('emails:sync-graph')
+            ->cron((string) config('schedule.emails_sync_graph_cron', '* * * * *'))
+            ->withoutOverlapping();
         $schedule->command('activities:release-overdue')->hourly();
         $schedule->command('activities:sync-statuses')->hourly();
         $schedule->command('duplicates:refresh-cache --clear')->hourly();

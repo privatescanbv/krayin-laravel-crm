@@ -29,15 +29,28 @@
                     <button
                         v-if="canEdit"
                         type="button"
-                        class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800 dark:hover:text-white"
+                        class="flex shrink-0 items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                         :disabled="isGenerating"
-                        title="Samenvatting opnieuw genereren"
+                        title="Zet een nieuwe AI-samenvatting op de wachtrij; deze vervangt de huidige."
                         @click="generate"
                     >
-                        <span
-                            class="icon-refresh text-base"
-                            :class="{ 'animate-spin': isGenerating || ['queued', 'processing', 'retrying'].includes(summary?.status) }"
-                        ></span>
+                        {{-- Inline SVG: het icoonlettertype van de admin heeft geen refresh-glyph. --}}
+                        <svg
+                            class="h-3.5 w-3.5"
+                            :class="{ 'animate-spin': isBusy }"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+                            <polyline points="21 3 21 9 15 9"/>
+                        </svg>
+
+                        <span>@{{ isBusy ? 'Bezig…' : 'Vernieuwen' }}</span>
                     </button>
                 </div>
 
@@ -122,15 +135,15 @@
                     <div v-if="summary && summary.attention_points && summary.attention_points.length" class="flex flex-col gap-1">
                         <strong class="text-xs text-gray-900 dark:text-white">Aandachtspunten</strong>
 
-                        <ul class="list-disc space-y-1 pl-4 text-xs">
+                        <ul class="list-disc space-y-2 pl-4 text-xs">
                             <li
                                 v-for="(point, index) in summary.attention_points.slice(0, 3)"
                                 :key="`attention-${index}`"
                                 class="break-words"
                             >
-                                <span class="block max-h-10 overflow-hidden">@{{ point.text }}</span>
+                                <span class="block leading-5">@{{ point.text }}</span>
 
-                                <span v-if="point.source" class="mt-0.5 block text-[11px] text-gray-400">
+                                <span v-if="point.source" class="mt-1 block leading-4 text-[11px] text-gray-400">
                                     <a
                                         v-if="point.source.url"
                                         :href="point.source.url"
@@ -273,6 +286,14 @@
                     pollTimer: null,
                     pollAttempts: 0,
                 };
+            },
+
+            computed: {
+                /** A refresh is pointless while one is already on its way. */
+                isBusy() {
+                    return this.isGenerating
+                        || ['queued', 'processing', 'retrying'].includes(this.summary?.status);
+                },
             },
 
             mounted() {

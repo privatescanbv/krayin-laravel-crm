@@ -16,6 +16,9 @@ class AiSummary extends Model
     /** Statuses in which a generation is already on its way; a new dispatch would be a no-op. */
     public const PENDING_STATUSES = ['queued', 'processing', 'retrying'];
 
+    /** Comfortably past the job timeout (240s) and its retry backoff. */
+    public const STALE_PENDING_MINUTES = 30;
+
     protected $fillable = [
         'subject_type',
         'subject_id',
@@ -56,5 +59,16 @@ class AiSummary extends Model
     public function isPending(): bool
     {
         return in_array($this->status, self::PENDING_STATUSES, true);
+    }
+
+    /**
+     * A pending state that has not moved for far longer than a generation takes. The
+     * job itself times out after 240s; anything past this window means the attempt
+     * died without ever reporting back, so a manual retry should be allowed.
+     */
+    public function pendingSinceLooksStale(): bool
+    {
+        return $this->updated_at !== null
+            && $this->updated_at->lt(now()->subMinutes(self::STALE_PENDING_MINUTES));
     }
 }

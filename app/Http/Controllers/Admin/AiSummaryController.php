@@ -83,7 +83,10 @@ class AiSummaryController extends Controller
         // A job for this subject is already queued, running, or waiting on a retry
         // (GenerateAiSummaryJob is unique per subject); dispatching another one
         // would silently no-op, so tell the user instead of a false "started" message.
-        if (! $summary->wasRecentlyCreated && $summary->isPending()) {
+        //
+        // Only while that state is fresh, though: a worker killed mid-run leaves the
+        // status pending forever, and refusing on that would strand the button.
+        if (! $summary->wasRecentlyCreated && $summary->isPending() && ! $summary->pendingSinceLooksStale()) {
             return response()->json([
                 'message' => 'Er loopt al een verversing voor deze '.$definition->label.'.',
             ], 409);

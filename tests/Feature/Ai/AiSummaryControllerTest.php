@@ -344,3 +344,22 @@ test('a read only lead user cannot regenerate summaries or mutate feedback', fun
         ->assertOk()
         ->assertSee(':can-edit="false"', false);
 });
+
+test('a pending generation that never reported back can be retried from the button', function () {
+    Queue::fake();
+    config(['ai_summaries.enabled' => true]);
+
+    $summary = AiSummary::factory()->forSubject($this->lead)->create(['status' => 'processing']);
+
+    // Fresh: the run really is under way, so refuse.
+    $this->postJson(route('admin.ai-summary.generate', ['leads', $this->lead->id]))
+        ->assertStatus(409);
+
+    // Stale: the worker died without reporting back; the user must be able to retry.
+    $summary->forceFill(['updated_at' => now()->subHour()])->saveQuietly();
+
+    $this->postJson(route('admin.ai-summary.generate', ['leads', $this->lead->id]))
+        ->assertAccepted();
+
+    Queue::assertPushed(GenerateAiSummaryJob::class);
+});

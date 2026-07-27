@@ -28,7 +28,11 @@ test('the ai summary panel renders on every subject view', function (string $rou
     $this->get(route($routeName, $id))
         ->assertOk()
         ->assertSee('AI-samenvatting')
-        ->assertSee(route('admin.ai-summary.show', [$subjectKey, $id]), false);
+        ->assertSee(route('admin.ai-summary.show', [$subjectKey, $id]), false)
+        // The refresh button posts here; without it the panel is read-only.
+        ->assertSee(route('admin.ai-summary.generate', [$subjectKey, $id]), false)
+        ->assertSee(':can-edit="true"', false)
+        ->assertSee('Vernieuwen', false);
 })->with([
     ['admin.leads.view', 'leads'],
     ['admin.contacts.persons.view', 'persons'],

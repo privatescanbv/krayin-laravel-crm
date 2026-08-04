@@ -163,6 +163,9 @@
                             <p class="text-base font-semibold text-gray-800 dark:text-gray-300">
                                 @{{ periodLabel }}
                             </p>
+                            <p class="mt-0.5 text-xs text-gray-400">
+                                Klik op een kolom om de onderliggende orders te tonen (behalve omzet netto/bruto).
+                            </p>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -172,31 +175,174 @@
                                         <th class="px-4 py-3">Maand</th>
                                         <th v-if="selectedGroups.includes('option')" class="px-4 py-3 text-right">Option</th>
                                         <th v-if="selectedGroups.includes('nearly_won')" class="px-4 py-3 text-right">Bijna gewonnen</th>
-                                        <th v-if="selectedGroups.includes('won')" class="px-4 py-3 text-right">Gewonnen</th>
+                                        <th
+                                            v-if="selectedGroups.includes('won')"
+                                            class="px-4 py-3 text-right"
+                                        >
+                                            <span
+                                                class="inline-flex cursor-help items-center justify-end gap-1"
+                                                v-tooltip="omzetNettoTooltip"
+                                            >
+                                                Omzet netto
+                                                <span class="icon-info text-[10px] opacity-60"></span>
+                                            </span>
+                                        </th>
                                         <th v-if="selectedGroups.includes('lost')" class="px-4 py-3 text-right">Verloren</th>
                                         <th class="px-4 py-3 text-right">Inkoop</th>
-                                        <th class="px-4 py-3 text-right">Totaal</th>
+                                        <th class="px-4 py-3 text-right">
+                                            <span
+                                                class="inline-flex cursor-help items-center justify-end gap-1"
+                                                v-tooltip="omzetBrutoTooltip"
+                                            >
+                                                Omzet bruto
+                                                <span class="icon-info text-[10px] opacity-60"></span>
+                                            </span>
+                                        </th>
                                     </tr>
                                 </thead>
 
                                 <tbody>
-                                    <tr
+                                    <template
                                         v-for="row in monthsData"
                                         :key="row.key"
-                                        class="border-b dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                     >
-                                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">@{{ row.label }}</td>
-                                        <td v-if="selectedGroups.includes('option')" class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">@{{ formatCurrency(row.option) }}</td>
-                                        <td v-if="selectedGroups.includes('nearly_won')" class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">@{{ formatCurrency(row.nearly_won) }}</td>
-                                        <td v-if="selectedGroups.includes('won')" class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">@{{ formatCurrency(row.won) }}</td>
-                                        <td v-if="selectedGroups.includes('lost')" class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">@{{ formatCurrency(row.lost) }}</td>
-                                        <td class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">@{{ formatCurrency(row.inkoop) }}</td>
-                                        <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">@{{ formatCurrency(row.total) }}</td>
-                                    </tr>
+                                        <tr class="border-b dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                            <td
+                                                class="cursor-pointer px-4 py-3 text-sm text-gray-700 dark:text-gray-300"
+                                                :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'all') }"
+                                                @click="toggleExpand(row.key, 'all')"
+                                            >
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-medium">@{{ row.label }}</span>
+                                                    <span class="text-xs text-gray-400">(@{{ (row.orders?.all || []).length }})</span>
+                                                    <span
+                                                        class="text-xs text-gray-400"
+                                                        :class="isExpanded(row.key, 'all') ? 'icon-up-arrow' : 'icon-down-arrow'"
+                                                    ></span>
+                                                </div>
+                                            </td>
+
+                                            <td
+                                                v-if="selectedGroups.includes('option')"
+                                                class="cursor-pointer px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'option') }"
+                                                @click="toggleExpand(row.key, 'option')"
+                                            >
+                                                @{{ formatCurrency(row.option) }}
+                                            </td>
+
+                                            <td
+                                                v-if="selectedGroups.includes('nearly_won')"
+                                                class="cursor-pointer px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'nearly_won') }"
+                                                @click="toggleExpand(row.key, 'nearly_won')"
+                                            >
+                                                @{{ formatCurrency(row.nearly_won) }}
+                                            </td>
+
+                                            <td
+                                                v-if="selectedGroups.includes('won')"
+                                                class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white"
+                                            >
+                                                @{{ formatCurrency(row.won) }}
+                                            </td>
+
+                                            <td
+                                                v-if="selectedGroups.includes('lost')"
+                                                class="cursor-pointer px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'lost') }"
+                                                @click="toggleExpand(row.key, 'lost')"
+                                            >
+                                                @{{ formatCurrency(row.lost) }}
+                                            </td>
+
+                                            <td
+                                                class="cursor-pointer px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'inkoop') }"
+                                                @click="toggleExpand(row.key, 'inkoop')"
+                                            >
+                                                @{{ formatCurrency(row.inkoop) }}
+                                            </td>
+
+                                            <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
+                                                @{{ formatCurrency(row.total) }}
+                                            </td>
+                                        </tr>
+
+                                        <template v-if="expandedMonthKey === row.key && expandedGroup">
+                                            <tr class="border-b bg-gray-50 dark:border-gray-800 dark:bg-gray-800/20">
+                                                <td
+                                                    :colspan="tableColspan"
+                                                    class="px-4 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                                                >
+                                                    @{{ expandedGroupLabel }} — @{{ expandedOrders(row).length }} order(s)
+                                                </td>
+                                            </tr>
+
+                                            <tr
+                                                v-for="order in expandedOrders(row)"
+                                                :key="order.id"
+                                                class="border-b bg-gray-50 dark:border-gray-800 dark:bg-gray-800/30"
+                                            >
+                                                <td class="py-2 pl-10 pr-4 text-sm">
+                                                    <div class="flex flex-col gap-0.5">
+                                                        <a
+                                                            :href="order.url"
+                                                            class="font-medium text-brandColor hover:underline"
+                                                            @click.stop
+                                                        >@{{ order.label }}</a>
+
+                                                        <div class="flex items-center gap-2 text-xs text-gray-400">
+                                                            <span>@{{ order.created_at }}</span>
+                                                            <span>·</span>
+                                                            <span>@{{ order.stage }}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <td
+                                                    v-if="selectedGroups.includes('option')"
+                                                    class="px-4 py-2 text-right text-sm text-gray-400"
+                                                ></td>
+                                                <td
+                                                    v-if="selectedGroups.includes('nearly_won')"
+                                                    class="px-4 py-2 text-right text-sm text-gray-400"
+                                                ></td>
+                                                <td
+                                                    v-if="selectedGroups.includes('won')"
+                                                    class="px-4 py-2 text-right text-sm text-gray-400"
+                                                ></td>
+                                                <td
+                                                    v-if="selectedGroups.includes('lost')"
+                                                    class="px-4 py-2 text-right text-sm text-gray-400"
+                                                ></td>
+
+                                                <td class="px-4 py-2 text-right text-sm text-gray-700 dark:text-gray-300">
+                                                    @{{ formatCurrency(order.inkoop_price) }}
+                                                </td>
+
+                                                <td class="px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">
+                                                    @{{ formatCurrency(order.total_price) }}
+                                                </td>
+                                            </tr>
+
+                                            <tr
+                                                v-if="! expandedOrders(row).length"
+                                                class="border-b bg-gray-50 dark:border-gray-800 dark:bg-gray-800/30"
+                                            >
+                                                <td
+                                                    :colspan="tableColspan"
+                                                    class="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400"
+                                                >
+                                                    Geen orders in deze selectie.
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
 
                                     <tr v-if="! monthsData.length">
                                         <td
-                                            colspan="7"
+                                            :colspan="tableColspan"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                                         >
                                             Geen gegevens gevonden.
@@ -241,21 +387,20 @@
                         datasets: [],
                         monthsData: [],
                         selectedGroups: ['option', 'nearly_won', 'won'],
-                        selectedDepartments: ['privatescan', 'hernia'],
+                        selectedDepartments: @json(array_column($departments, 'id')),
                         groups: [
                             { id: 'option',     label: 'Option',         color: '#3CC3DF' },
                             { id: 'nearly_won', label: 'Bijna gewonnen', color: '#FFD166' },
                             { id: 'won',        label: 'Gewonnen',        color: '#6BCB77' },
                             { id: 'lost',       label: 'Verloren',        color: '#FF928A' },
                         ],
-                        departments: [
-                            { id: 'privatescan', label: 'Privatescan' },
-                            { id: 'hernia',      label: 'Hernia' },
-                        ],
+                        departments: @json($departments),
                         isInitialLoad: true,
                         isLoading: true,
                         groupDropdownOpen: false,
                         departmentDropdownOpen: false,
+                        expandedMonthKey: null,
+                        expandedGroup: null,
                     };
                 },
 
@@ -274,6 +419,36 @@
                             .map(d => d.label)
                             .join(', ');
                     },
+
+                    tableColspan() {
+                        return 3 + this.selectedGroups.length;
+                    },
+
+                    omzetNettoTooltip() {
+                        return 'Omzet van gewonnen orders (status Gewonnen).';
+                    },
+
+                    omzetBrutoTooltip() {
+                        const labels = this.groups
+                            .filter(g => this.selectedGroups.includes(g.id))
+                            .map(g => g.label);
+
+                        if (! labels.length) {
+                            return 'Som van de geselecteerde statusgroepen.';
+                        }
+
+                        return 'Som van: ' + labels.join(' + ') + '.';
+                    },
+
+                    expandedGroupLabel() {
+                        if (this.expandedGroup === 'all' || this.expandedGroup === 'inkoop') {
+                            return this.expandedGroup === 'inkoop' ? 'Inkoop (alle orders)' : 'Alle orders';
+                        }
+
+                        const group = this.groups.find(g => g.id === this.expandedGroup);
+
+                        return group ? group.label : '';
+                    },
                 },
 
                 mounted() {
@@ -291,6 +466,9 @@
                 methods: {
                     async loadData() {
                         this.isLoading = true;
+                        this.expandedMonthKey = null;
+                        this.expandedGroup = null;
+
                         try {
                             const response = await this.$axios.get('{{ route('admin.reports.revenue-by-month.data') }}', {
                                 params: {
@@ -310,6 +488,33 @@
                             this.isLoading    = false;
                             this.isInitialLoad = false;
                         }
+                    },
+
+                    toggleExpand(monthKey, group) {
+                        if (this.expandedMonthKey === monthKey && this.expandedGroup === group) {
+                            this.expandedMonthKey = null;
+                            this.expandedGroup = null;
+                            return;
+                        }
+
+                        this.expandedMonthKey = monthKey;
+                        this.expandedGroup = group;
+                    },
+
+                    isExpanded(monthKey, group) {
+                        return this.expandedMonthKey === monthKey && this.expandedGroup === group;
+                    },
+
+                    expandedOrders(row) {
+                        if (! row.orders) {
+                            return [];
+                        }
+
+                        if (this.expandedGroup === 'all' || this.expandedGroup === 'inkoop') {
+                            return row.orders.all || [];
+                        }
+
+                        return row.orders[this.expandedGroup] || [];
                     },
 
                     renderChart() {
@@ -346,7 +551,7 @@
                                             label:  (ctx) => ' ' + ctx.dataset.label + ': ' + self.formatCurrency(ctx.parsed.y),
                                             footer: (items) => {
                                                 const total = items.reduce((sum, item) => sum + item.parsed.y, 0);
-                                                return 'Totaal: ' + self.formatCurrency(total);
+                                                return 'Omzet bruto: ' + self.formatCurrency(total);
                                             },
                                         },
                                     },

@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Reports;
 
+use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Models\Order;
@@ -9,6 +10,7 @@ use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -16,9 +18,14 @@ use Webkul\User\Models\User;
 
 class RevenueByEmployeeController extends Controller
 {
+    /**
+     * Afdelingen in weergavevolgorde. De filterwaarde op de wire is `Departments::key()`.
+     *
+     * @var list<Departments>
+     */
     private const DEPARTMENTS = [
-        'privatescan' => 'Privatescan',
-        'hernia'      => 'Hernia',
+        Departments::PRIVATESCAN,
+        Departments::HERNIA,
     ];
 
     private const PALETTE = [
@@ -38,9 +45,13 @@ class RevenueByEmployeeController extends Controller
 
     public function index(Request $request): View
     {
+        $period = $request->input('period', 'week') === 'month' ? 'month' : 'week';
+
         return view('admin::reports.revenue-by-employee.index', [
-            'initialWeek' => $request->integer('week', now()->isoWeek()),
-            'initialYear' => $request->integer('year', now()->year),
+            'initialPeriod' => $period,
+            'initialWeek'   => $request->integer('week', now()->isoWeek()),
+            'initialYear'   => $request->integer('year', now()->year),
+            'initialMonth'  => $request->input('month', now()->format('Y-m')),
         ]);
     }
 
@@ -51,14 +62,17 @@ class RevenueByEmployeeController extends Controller
             ->map(fn (PipelineStage $stage) => [
                 'id'         => $stage->id(),
                 'label'      => $stage->label(),
-                'department' => $this->departmentForPipeline($stage->pipeline()),
+                'department' => $this->departmentForPipeline($stage->pipeline())?->key(),
                 'is_lost'    => $stage->isLost(),
             ])
             ->filter(fn (array $stage) => $stage['department'] !== null)
             ->values();
 
         $departments = collect(self::DEPARTMENTS)
-            ->map(fn (string $label, string $id) => compact('id', 'label'))
+            ->map(fn (Departments $department) => [
+                'id'    => $department->key(),
+                'label' => $department->value,
+            ])
             ->values();
 
         return response()->json([
@@ -69,19 +83,19 @@ class RevenueByEmployeeController extends Controller
 
     public function data(Request $request): JsonResponse
     {
-        $week = (int) $request->query('week', now()->isoWeek());
-        $year = (int) $request->query('year', now()->year);
+        $period = $request->query('period', 'week') === 'month' ? 'month' : 'week';
 
-        $weekStart = Carbon::now()->setISODate($year, $week)->startOfWeek(CarbonInterface::MONDAY);
-        $weekEnd = $weekStart->copy()->endOfWeek(CarbonInterface::SUNDAY);
+        [$periodStart, $periodEnd, $days, $periodMeta] = $this->resolvePeriod($request, $period);
+
+        $departmentKeys = array_map(fn (Departments $department) => $department->key(), self::DEPARTMENTS);
 
         $selectedDepartments = $request->has('departments')
-            ? array_values(array_intersect($this->arrayQuery($request, 'departments'), array_keys(self::DEPARTMENTS)))
-            : array_keys(self::DEPARTMENTS);
+            ? array_values(array_intersect($this->arrayQuery($request, 'departments'), $departmentKeys))
+            : $departmentKeys;
 
         $stageIds = collect(PipelineStage::cases())
             ->filter(fn (PipelineStage $stage) => $stage->isOrder())
-            ->filter(fn (PipelineStage $stage) => in_array($this->departmentForPipeline($stage->pipeline()), $selectedDepartments, true))
+            ->filter(fn (PipelineStage $stage) => in_array($this->departmentForPipeline($stage->pipeline())?->key(), $selectedDepartments, true))
             ->map(fn (PipelineStage $stage) => $stage->id())
             ->values()
             ->all();
@@ -95,26 +109,19 @@ class RevenueByEmployeeController extends Controller
             $stageIds = array_values(array_intersect($stageIds, $requestedStageIds));
         }
 
-        $days = collect(range(0, 6))
-            ->map(function (int $offset) use ($weekStart) {
-                $date = $weekStart->copy()->addDays($offset)->locale('nl');
-
-                return [
-                    'date'       => $date->toDateString(),
-                    'label'      => $date->isoFormat('dd D'),
-                    'is_weekend' => $date->isWeekend(),
-                ];
-            })
-            ->values();
-
         $stageLabelMap = collect(PipelineStage::cases())
             ->filter(fn (PipelineStage $s) => $s->isOrder())
             ->mapWithKeys(fn (PipelineStage $s) => [$s->id() => $s->label()]);
 
+        $wonStageIds = collect(PipelineStage::cases())
+            ->filter(fn (PipelineStage $s) => $s->isOrder() && $s->statusCategory()?->value === 'won')
+            ->map(fn (PipelineStage $s) => $s->id())
+            ->all();
+
         $rows = empty($stageIds)
             ? collect()
             : Order::query()
-                ->whereBetween('created_at', [$weekStart, $weekEnd])
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
                 ->whereIn('pipeline_stage_id', $stageIds)
                 ->whereNotNull('user_id')
                 ->select('user_id')
@@ -126,7 +133,7 @@ class RevenueByEmployeeController extends Controller
         $ordersByUser = empty($stageIds)
             ? collect()
             : Order::query()
-                ->whereBetween('created_at', [$weekStart, $weekEnd])
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
                 ->whereIn('pipeline_stage_id', $stageIds)
                 ->whereNotNull('user_id')
                 ->with([
@@ -143,6 +150,7 @@ class RevenueByEmployeeController extends Controller
             ->keyBy('id');
 
         $dayIndex = $days->pluck('date')->flip();
+        $dayCount = $days->count();
 
         $groupedRows = $rows->groupBy('user_id');
 
@@ -152,7 +160,7 @@ class RevenueByEmployeeController extends Controller
         foreach ($groupedRows as $userId => $userRows) {
             $user = $users->get((int) $userId);
             $color = self::PALETTE[count($datasets) % count(self::PALETTE)];
-            $data = array_fill(0, 7, 0.0);
+            $data = array_fill(0, $dayCount, 0.0);
 
             foreach ($userRows as $row) {
                 $index = $dayIndex->get($row->day);
@@ -163,6 +171,7 @@ class RevenueByEmployeeController extends Controller
             }
 
             $name = $user?->name ?: 'Onbekende medewerker';
+            $userOrders = $ordersByUser->get($userId) ?? collect();
 
             $datasets[] = [
                 'label'           => $name,
@@ -173,23 +182,29 @@ class RevenueByEmployeeController extends Controller
             ];
 
             $employees[] = [
-                'user_id'    => (int) $userId,
-                'name'       => $name,
-                'color'      => $color,
-                'week_total' => round(array_sum($data), 2),
-                'week_inkoop' => round(
-                    ($ordersByUser->get($userId) ?? collect())
-                        ->sum(fn ($o) => $o->totalPurchasePrice()),
+                'user_id' => (int) $userId,
+                'name'    => $name,
+                'color'   => $color,
+                'bruto'   => round(array_sum($data), 2),
+                'netto'   => round(
+                    $userOrders
+                        ->filter(fn ($o) => in_array($o->pipeline_stage_id, $wonStageIds, true))
+                        ->sum(fn ($o) => (float) $o->total_price),
                     2
                 ),
-                'orders'     => ($ordersByUser->get($userId) ?? collect())
+                'inkoop'  => round(
+                    $userOrders->sum(fn ($o) => $o->totalPurchasePrice()),
+                    2
+                ),
+                'orders'  => $userOrders
                     ->map(fn ($o) => [
-                        'id'          => $o->id,
-                        'label'       => $o->order_number ?: $o->title ?: "Order #{$o->id}",
-                        'url'         => route('admin.orders.view', $o->id),
-                        'created_at'  => $o->created_at->toDateString(),
-                        'stage'       => $stageLabelMap->get($o->pipeline_stage_id, '—'),
-                        'total_price' => round((float) $o->total_price, 2),
+                        'id'           => $o->id,
+                        'label'        => $o->order_number ?: $o->title ?: "Order #{$o->id}",
+                        'url'          => route('admin.orders.view', $o->id),
+                        'created_at'   => $o->created_at->toDateString(),
+                        'stage'        => $stageLabelMap->get($o->pipeline_stage_id, '—'),
+                        'is_won'       => in_array($o->pipeline_stage_id, $wonStageIds, true),
+                        'total_price'  => round((float) $o->total_price, 2),
                         'inkoop_price' => $o->totalPurchasePrice(),
                     ])
                     ->values()
@@ -197,23 +212,95 @@ class RevenueByEmployeeController extends Controller
             ];
         }
 
-        usort($employees, fn (array $a, array $b) => $b['week_total'] <=> $a['week_total']);
+        usort($employees, fn (array $a, array $b) => $b['bruto'] <=> $a['bruto']);
 
-        return response()->json([
-            'week'       => $weekStart->isoWeek(),
-            'year'       => $weekStart->isoWeekYear(),
-            'week_label' => $this->weekLabel($weekStart, $weekEnd),
-            'days'       => $days,
-            'datasets'   => $datasets,
-            'employees'  => $employees,
-        ]);
+        return response()->json(array_merge([
+            'period'       => $period,
+            'period_label' => $periodMeta['period_label'],
+            'days'         => $days,
+            'datasets'     => $datasets,
+            'employees'    => $employees,
+        ], $periodMeta['response']));
     }
 
-    private function departmentForPipeline(int $pipelineId): ?string
+    /**
+     * @return array{0: Carbon, 1: Carbon, 2: Collection<int, array{date: string, label: string, is_weekend: bool}>, 3: array{period_label: string, response: array<string, mixed>}}
+     */
+    private function resolvePeriod(Request $request, string $period): array
+    {
+        if ($period === 'month') {
+            $month = (string) $request->query('month', now()->format('Y-m'));
+
+            if (! preg_match('/^\d{4}-\d{2}$/', $month)) {
+                $month = now()->format('Y-m');
+            }
+
+            $periodStart = Carbon::parse("{$month}-01")->startOfMonth();
+            $periodEnd = $periodStart->copy()->endOfMonth();
+
+            $days = collect();
+            $cursor = $periodStart->copy();
+
+            while ($cursor->lte($periodEnd)) {
+                $date = $cursor->copy()->locale('nl');
+                $days->push([
+                    'date'       => $date->toDateString(),
+                    'label'      => $date->isoFormat('D'),
+                    'is_weekend' => $date->isWeekend(),
+                ]);
+                $cursor->addDay();
+            }
+
+            return [
+                $periodStart,
+                $periodEnd,
+                $days->values(),
+                [
+                    'period_label' => $periodStart->copy()->locale('nl')->isoFormat('MMMM YYYY'),
+                    'response'     => [
+                        'month' => $periodStart->format('Y-m'),
+                    ],
+                ],
+            ];
+        }
+
+        $week = (int) $request->query('week', now()->isoWeek());
+        $year = (int) $request->query('year', now()->year);
+
+        $periodStart = Carbon::now()->setISODate($year, $week)->startOfWeek(CarbonInterface::MONDAY);
+        $periodEnd = $periodStart->copy()->endOfWeek(CarbonInterface::SUNDAY);
+
+        $days = collect(range(0, 6))
+            ->map(function (int $offset) use ($periodStart) {
+                $date = $periodStart->copy()->addDays($offset)->locale('nl');
+
+                return [
+                    'date'       => $date->toDateString(),
+                    'label'      => $date->isoFormat('dd D'),
+                    'is_weekend' => $date->isWeekend(),
+                ];
+            })
+            ->values();
+
+        return [
+            $periodStart,
+            $periodEnd,
+            $days,
+            [
+                'period_label' => $this->weekLabel($periodStart, $periodEnd),
+                'response'     => [
+                    'week' => $periodStart->isoWeek(),
+                    'year' => $periodStart->isoWeekYear(),
+                ],
+            ],
+        ];
+    }
+
+    private function departmentForPipeline(int $pipelineId): ?Departments
     {
         return match ($pipelineId) {
-            PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value => 'privatescan',
-            PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value      => 'hernia',
+            PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value => Departments::PRIVATESCAN,
+            PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value      => Departments::HERNIA,
             default                                                    => null,
         };
     }

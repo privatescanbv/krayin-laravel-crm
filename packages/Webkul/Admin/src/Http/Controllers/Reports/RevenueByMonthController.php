@@ -2,13 +2,14 @@
 
 namespace Webkul\Admin\Http\Controllers\Reports;
 
+use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 
@@ -21,9 +22,14 @@ class RevenueByMonthController extends Controller
         'lost'       => ['label' => 'Verloren',        'color' => '#FF928A'],
     ];
 
-    private const DEPARTMENT_LABELS = [
-        'privatescan' => 'Privatescan',
-        'hernia'      => 'Hernia',
+    /**
+     * Afdelingen in weergavevolgorde. De filterwaarde op de wire is `Departments::key()`.
+     *
+     * @var list<Departments>
+     */
+    private const DEPARTMENTS = [
+        Departments::PRIVATESCAN,
+        Departments::HERNIA,
     ];
 
     public function index(Request $request): View
@@ -31,6 +37,13 @@ class RevenueByMonthController extends Controller
         return view('admin::reports.revenue-by-month.index', [
             'initialFrom' => $request->input('from', now()->subMonths(11)->format('Y-m')),
             'initialTo'   => $request->input('to', now()->format('Y-m')),
+            'departments' => array_map(
+                fn (Departments $department) => [
+                    'id'    => $department->key(),
+                    'label' => $department->value,
+                ],
+                self::DEPARTMENTS
+            ),
         ]);
     }
 
@@ -53,17 +66,19 @@ class RevenueByMonthController extends Controller
             $selectedGroups = ['option', 'nearly_won', 'won'];
         }
 
+        $departmentKeys = array_map(fn (Departments $department) => $department->key(), self::DEPARTMENTS);
+
         $selectedDepartments = $this->arrayQuery($request, 'departments');
-        $selectedDepartments = array_values(array_intersect($selectedDepartments, array_keys(self::DEPARTMENT_LABELS)));
+        $selectedDepartments = array_values(array_intersect($selectedDepartments, $departmentKeys));
 
         if (empty($selectedDepartments)) {
-            $selectedDepartments = array_keys(self::DEPARTMENT_LABELS);
+            $selectedDepartments = $departmentKeys;
         }
 
         // Build all order stages from enum, filtered by department
         $allOrderStages = collect(PipelineStage::cases())
             ->filter(fn (PipelineStage $s) => $s->isOrder())
-            ->filter(fn (PipelineStage $s) => in_array($this->departmentForPipeline($s->pipeline()), $selectedDepartments, true))
+            ->filter(fn (PipelineStage $s) => in_array($this->departmentForPipeline($s->pipeline())?->key(), $selectedDepartments, true))
             ->filter(fn (PipelineStage $s) => $s->statusCategory() !== null);
 
         // Map group key -> stage IDs (only for selected groups)
@@ -76,7 +91,7 @@ class RevenueByMonthController extends Controller
                 ->all();
         }
 
-        $allStageIds = array_unique(array_merge(...array_values($groupStageMap)));
+        $allStageIds = array_values(array_unique(array_merge([], ...array_values($groupStageMap))));
 
         $stageToGroup = [];
 
@@ -85,6 +100,10 @@ class RevenueByMonthController extends Controller
                 $stageToGroup[$id] = $group;
             }
         }
+
+        $stageLabelMap = collect(PipelineStage::cases())
+            ->filter(fn (PipelineStage $s) => $s->isOrder())
+            ->mapWithKeys(fn (PipelineStage $s) => [$s->id() => $s->label()]);
 
         $months = [];
         $cursor = $periodStart->copy()->startOfMonth();
@@ -98,47 +117,50 @@ class RevenueByMonthController extends Controller
             $cursor->addMonth();
         }
 
-        $rows = empty($allStageIds)
+        $orders = empty($allStageIds)
             ? collect()
             : Order::query()
                 ->whereBetween('created_at', [$periodStart, $periodEnd])
                 ->whereIn('pipeline_stage_id', $allStageIds)
-                ->select([
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
-                    'pipeline_stage_id',
-                    DB::raw('SUM(total_price) as total'),
+                ->with([
+                    'orderItems.purchasePrice',
+                    'orderItems.product.partnerProducts.purchasePrice',
                 ])
-                ->groupBy(DB::raw('YEAR(created_at)'), DB::raw('MONTH(created_at)'), 'pipeline_stage_id')
-                ->get();
-
-        $inkooByMonth = [];
-
-        if (! empty($allStageIds)) {
-            Order::query()
-                ->whereBetween('created_at', [$periodStart, $periodEnd])
-                ->whereIn('pipeline_stage_id', $allStageIds)
-                ->with(['orderItems.purchasePrice', 'orderItems.product.partnerProducts.purchasePrice'])
-                ->get(['id', 'created_at', 'pipeline_stage_id'])
-                ->each(function ($order) use (&$inkooByMonth) {
-                    $key = $order->created_at->format('Y-m');
-                    $inkooByMonth[$key] = ($inkooByMonth[$key] ?? 0.0) + $order->totalPurchasePrice();
-                });
-        }
+                ->orderBy('created_at')
+                ->get(['id', 'order_number', 'title', 'total_price', 'created_at', 'pipeline_stage_id']);
 
         $monthlyRevenue = [];
+        $inkooByMonth = [];
+        $ordersByMonthGroup = [];
 
         foreach ($months as $m) {
             $monthlyRevenue[$m['key']] = array_fill_keys(array_keys(self::GROUPS), 0.0);
+            $inkooByMonth[$m['key']] = 0.0;
+            $ordersByMonthGroup[$m['key']] = array_fill_keys(array_keys(self::GROUPS), []);
         }
 
-        foreach ($rows as $row) {
-            $key = sprintf('%04d-%02d', $row->year, $row->month);
-            $group = $stageToGroup[$row->pipeline_stage_id] ?? null;
+        foreach ($orders as $order) {
+            $key = $order->created_at->format('Y-m');
+            $group = $stageToGroup[$order->pipeline_stage_id] ?? null;
 
-            if ($group && isset($monthlyRevenue[$key])) {
-                $monthlyRevenue[$key][$group] += (float) $row->total;
+            if (! $group || ! isset($monthlyRevenue[$key])) {
+                continue;
             }
+
+            $inkoop = $order->totalPurchasePrice();
+            $monthlyRevenue[$key][$group] += (float) $order->total_price;
+            $inkooByMonth[$key] += $inkoop;
+
+            $ordersByMonthGroup[$key][$group][] = [
+                'id'           => $order->id,
+                'label'        => $order->order_number ?: $order->title ?: "Order #{$order->id}",
+                'url'          => route('admin.orders.view', $order->id),
+                'created_at'   => $order->created_at->toDateString(),
+                'stage'        => $stageLabelMap->get($order->pipeline_stage_id, '—'),
+                'group'        => $group,
+                'total_price'  => round((float) $order->total_price, 2),
+                'inkoop_price' => round($inkoop, 2),
+            ];
         }
 
         $datasets = [];
@@ -156,9 +178,21 @@ class RevenueByMonthController extends Controller
             ];
         }
 
-        $monthsData = array_map(function ($m) use ($monthlyRevenue, $inkooByMonth, $selectedGroups) {
+        $monthsData = array_map(function ($m) use ($monthlyRevenue, $inkooByMonth, $selectedGroups, $ordersByMonthGroup) {
             $row = $monthlyRevenue[$m['key']];
             $groupTotal = array_sum(array_map(fn ($g) => $row[$g] ?? 0, $selectedGroups));
+            $groupOrders = $ordersByMonthGroup[$m['key']];
+
+            $ordersByGroup = [];
+            foreach ($selectedGroups as $group) {
+                $ordersByGroup[$group] = $groupOrders[$group] ?? [];
+            }
+
+            /** @var Collection<int, array<string, mixed>> $allOrders */
+            $allOrders = collect($ordersByGroup)
+                ->flatten(1)
+                ->sortBy('created_at')
+                ->values();
 
             return array_merge($m, [
                 'option'     => round($row['option'] ?? 0, 2),
@@ -167,6 +201,9 @@ class RevenueByMonthController extends Controller
                 'lost'       => round($row['lost'] ?? 0, 2),
                 'inkoop'     => round($inkooByMonth[$m['key']] ?? 0, 2),
                 'total'      => round($groupTotal, 2),
+                'orders'     => array_merge($ordersByGroup, [
+                    'all' => $allOrders->all(),
+                ]),
             ]);
         }, $months);
 
@@ -199,11 +236,11 @@ class RevenueByMonthController extends Controller
         return is_array($value) ? array_values($value) : [];
     }
 
-    private function departmentForPipeline(int $pipelineId): ?string
+    private function departmentForPipeline(int $pipelineId): ?Departments
     {
         return match ($pipelineId) {
-            PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value => 'privatescan',
-            PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value      => 'hernia',
+            PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value => Departments::PRIVATESCAN,
+            PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value      => Departments::HERNIA,
             default                                                    => null,
         };
     }

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 
 uses(RefreshDatabase::class);
 
@@ -36,13 +37,16 @@ test('dry run lists incorrect items on won orders without persisting changes', f
         'status'   => OrderItemStatus::LOST->value,
     ]);
 
-    $this->artisan(FixWonOrderItemStatuses::class, ['--dry-run' => true])
-        ->expectsOutputToContain((string) $newItem->id)
-        ->expectsOutputToContain((string) $plannedItem->id)
-        ->expectsOutputToContain('Dry-run')
-        ->assertSuccessful();
+    $exitCode = Artisan::call(FixWonOrderItemStatuses::class, ['--dry-run' => true]);
+    $output = Artisan::output();
 
-    expect($newItem->fresh()->status)->toBe(OrderItemStatus::NEW)
+    expect($exitCode)->toBe(0)
+        ->and($output)->toContain('Order item ID')
+        ->and($output)->toContain((string) $newItem->id)
+        ->and($output)->toContain((string) $plannedItem->id)
+        ->and($output)->toContain('zouden naar won worden gezet')
+        ->and($output)->toContain('zonder --dry-run')
+        ->and($newItem->fresh()->status)->toBe(OrderItemStatus::NEW)
         ->and($plannedItem->fresh()->status)->toBe(OrderItemStatus::PLANNED)
         ->and($wonItem->fresh()->status)->toBe(OrderItemStatus::WON)
         ->and($lostItem->fresh()->status)->toBe(OrderItemStatus::LOST);

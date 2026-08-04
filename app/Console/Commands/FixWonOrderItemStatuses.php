@@ -92,10 +92,10 @@ class FixWonOrderItemStatuses extends Command
         );
 
         if ($dryRun) {
-            $this->warn("Dry-run: {$updatedItemCount} orderregel(s) zouden naar won worden gezet.");
+            $this->info("Dry-run: {$updatedItemCount} orderregel(s) zouden naar won worden gezet.");
             $this->info('Voer uit zonder --dry-run om deze wijzigingen door te voeren.');
         } else {
-            $this->info("✓ {$updatedItemCount} orderregel(s) bijgewerkt naar won.");
+            $this->info("{$updatedItemCount} orderregel(s) bijgewerkt naar won.");
         }
 
         return self::SUCCESS;
